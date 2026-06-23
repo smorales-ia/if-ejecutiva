@@ -1,16 +1,31 @@
-export default function Home() {
+"use client"
+
+import { useState } from "react"
+import { AppHeader } from "@/components/console/app-header"
+import { SolicitudList } from "@/components/console/solicitud-list"
+import { SolicitudDetail } from "@/components/console/solicitud-detail"
+import { SOLICITUDES } from "@/lib/console-data"
+
+export default function Page() {
+  const [selectedId, setSelectedId] = useState(SOLICITUDES[0].id)
+  const selected =
+    SOLICITUDES.find((s) => s.id === selectedId) ?? SOLICITUDES[0]
+
   return (
-    <div className="flex min-h-screen items-center justify-center font-sans">
-      <main className="flex w-full max-w-3xl flex-col items-center gap-8 px-6 py-16 text-center sm:items-start sm:text-left">
-        <div className="flex flex-col gap-4">
-          <h1 className="text-4xl font-bold tracking-tight">
-            IF EJECUTIVA
-          </h1>
-          <p className="max-w-md text-lg text-muted-foreground">
-            To get started, send a prompt or modify this page directly.
-          </p>
+    <div className="flex h-screen min-w-[1280px] flex-col overflow-hidden">
+      <AppHeader />
+      <main className="flex min-h-0 flex-1">
+        <div className="w-2/5 max-w-[480px] min-w-[380px]">
+          <SolicitudList
+            solicitudes={SOLICITUDES}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <SolicitudDetail solicitud={selected} />
         </div>
       </main>
     </div>
-  );
+  )
 }
