@@ -305,7 +305,15 @@ function DataRow({
   )
 }
 
-function DatosTab({ solicitud: s }: { solicitud: Solicitud }) {
+function DatosTab({
+  solicitud: s,
+  tasador,
+  visador,
+}: {
+  solicitud: Solicitud
+  tasador: string
+  visador: string
+}) {
   return (
     <div className="flex flex-col gap-6">
       <Section title="Cliente y tipo">
@@ -338,15 +346,15 @@ function DatosTab({ solicitud: s }: { solicitud: Solicitud }) {
       <Section title="Asignaciones">
         <DataRow label="Tasador">
           <span className="inline-flex items-center gap-2">
-            {s.tasador}
-            {s.tasador !== "Sin asignar" && (
+            {tasador}
+            {tasador !== "Sin asignar" && (
               <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
                 Asignado
               </span>
             )}
           </span>
         </DataRow>
-        <DataRow label="Visador">{s.visador}</DataRow>
+        <DataRow label="Visador">{visador}</DataRow>
         <DataRow label="Fecha visita">{s.fechaVisita}</DataRow>
       </Section>
 
@@ -375,12 +383,12 @@ function DatosTab({ solicitud: s }: { solicitud: Solicitud }) {
   )
 }
 
-function HistorialTab() {
+function HistorialTab({ eventos }: { eventos: EventoHistorial[] }) {
   return (
     <ol className="flex flex-col">
-      {HISTORIAL.map((ev, idx) => {
+      {eventos.map((ev, idx) => {
         const Icon = historialIcons[ev.icono]
-        const last = idx === HISTORIAL.length - 1
+        const last = idx === eventos.length - 1
         return (
           <li key={ev.id} className="flex gap-3">
             <div className="flex flex-col items-center">
@@ -402,35 +410,60 @@ function HistorialTab() {
   )
 }
 
-function AdjuntosTab() {
+function AdjuntosTab({
+  adjuntos,
+  onUploaded,
+}: {
+  adjuntos: Adjunto[]
+  onUploaded: (archivos: ArchivoSubido[]) => void
+}) {
   return (
-    <ul className="flex flex-col gap-2">
-      {ADJUNTOS.map((a) => {
-        const isPdf = a.nombre.endsWith(".pdf")
-        const Icon = isPdf ? FileText : ImageIcon
-        return (
-          <li
-            key={a.id}
-            className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
-          >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-              <Icon className="size-4" />
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-medium text-foreground">
-                {a.nombre}
-              </span>
-              <span className="truncate text-xs text-muted-foreground">
-                {a.detalle}
-              </span>
-            </div>
-            <Button variant="outline" size="sm">
-              <Download data-icon="inline-start" />
-              Descargar
-            </Button>
-          </li>
-        )
-      })}
-    </ul>
+    <div className="flex flex-col gap-5">
+      <section className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Plus className="size-4" />
+          <h2 className="text-xs font-semibold tracking-wide uppercase">
+            Subir nuevos adjuntos
+          </h2>
+        </div>
+        <FileUploadZone onUploaded={onUploaded} />
+      </section>
+
+      <Separator />
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Documentos del expediente ({adjuntos.length})
+        </h2>
+        <ul className="flex flex-col gap-2">
+          {adjuntos.map((a) => {
+            const isPdf = a.nombre.toLowerCase().endsWith(".pdf")
+            const Icon = isPdf ? FileText : ImageIcon
+            return (
+              <li
+                key={a.id}
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Icon className="size-4" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {a.nombre}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {a.detalle}
+                  </span>
+                </div>
+                <Button variant="outline" size="sm">
+                  <Download data-icon="inline-start" />
+                  Descargar
+                </Button>
+              </li>
+            )
+          })}
+        </ul>
+      </section>
+    </div>
   )
 }
