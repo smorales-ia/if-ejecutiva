@@ -1,5 +1,6 @@
 "use client"
 
+import * as React from "react"
 import {
   AlertTriangle,
   CheckCircle2,
@@ -10,10 +11,16 @@ import {
   ImageIcon,
   Pause,
   Pencil,
+  Plus,
   PlusCircle,
   UserCog,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  FileUploadZone,
+  type ArchivoSubido,
+} from "@/components/console/file-upload-zone"
+import { ReasignarTasadorDialog } from "@/components/console/reasignar-tasador-dialog"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -34,7 +41,13 @@ import {
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import { ADJUNTOS, HISTORIAL, type Solicitud } from "@/lib/console-data"
+import {
+  ADJUNTOS,
+  HISTORIAL,
+  type Adjunto,
+  type EventoHistorial,
+  type Solicitud,
+} from "@/lib/console-data"
 
 const historialIcons = {
   check: CheckCircle2,
@@ -46,6 +59,57 @@ const historialIcons = {
 export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const s = solicitud
   const editable = s.estado !== "cancelada" && s.estado !== "cerrada"
+
+  // Estado local que se refresca tras reasignar o adjuntar.
+  const [tasador, setTasador] = React.useState(s.tasador)
+  const [visador, setVisador] = React.useState(s.visador)
+  const [historialExtra, setHistorialExtra] = React.useState<
+    EventoHistorial[]
+  >([])
+  const [adjuntos, setAdjuntos] = React.useState<Adjunto[]>(ADJUNTOS)
+
+  // Resetea el estado local cuando cambia la solicitud seleccionada.
+  const prevId = React.useRef(s.id)
+  if (prevId.current !== s.id) {
+    prevId.current = s.id
+    setTasador(s.tasador)
+    setVisador(s.visador)
+    setHistorialExtra([])
+    setAdjuntos(ADJUNTOS)
+  }
+
+  function handleReasignado(
+    role: "tasador" | "visador",
+    anterior: string,
+    nuevo: string
+  ) {
+    if (role === "tasador") setTasador(nuevo)
+    else setVisador(nuevo)
+    setHistorialExtra((prev) => [
+      {
+        id: `reasig-${Date.now()}`,
+        titulo: `Reasignación manual de ${role} · ${
+          anterior || "Sin asignar"
+        } → ${nuevo} · por María Espinoza`,
+        hace: "hace unos segundos",
+        icono: "check",
+      },
+      ...prev,
+    ])
+  }
+
+  function handleAdjuntos(nuevos: ArchivoSubido[]) {
+    setAdjuntos((prev) => [
+      ...nuevos.map((n) => ({
+        id: n.id,
+        nombre: n.nombre,
+        detalle: n.detalle,
+      })),
+      ...prev,
+    ])
+  }
+
+  const historialCompleto = [...historialExtra, ...HISTORIAL]
 
   return (
     <div className="flex h-full w-full flex-col bg-background">
@@ -71,16 +135,38 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
             enabled={editable}
             primary
           />
-          <ActionButton
-            icon={UserCog}
-            label="Reasignar tasador"
-            enabled={editable}
-          />
-          <ActionButton
-            icon={UserCog}
-            label="Reasignar visador"
-            enabled={false}
-          />
+          {editable ? (
+            <ReasignarTasadorDialog
+              role="tasador"
+              solicitud={s}
+              actual={tasador}
+              onReasignado={(ant, nuevo) =>
+                handleReasignado("tasador", ant, nuevo)
+              }
+            />
+          ) : (
+            <ActionButton
+              icon={UserCog}
+              label="Reasignar tasador"
+              enabled={false}
+            />
+          )}
+          {editable ? (
+            <ReasignarTasadorDialog
+              role="visador"
+              solicitud={s}
+              actual={visador}
+              onReasignado={(ant, nuevo) =>
+                handleReasignado("visador", ant, nuevo)
+              }
+            />
+          ) : (
+            <ActionButton
+              icon={UserCog}
+              label="Reasignar visador"
+              enabled={false}
+            />
+          )}
           <ActionButton label="Cambiar prioridad" enabled={editable} />
           <ActionButton icon={Pause} label="Pausar" enabled={editable} />
 
@@ -121,13 +207,13 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <TabsContent value="datos">
-            <DatosTab solicitud={s} />
+            <DatosTab solicitud={s} tasador={tasador} visador={visador} />
           </TabsContent>
           <TabsContent value="historial">
-            <HistorialTab />
+            <HistorialTab eventos={historialCompleto} />
           </TabsContent>
           <TabsContent value="adjuntos">
-            <AdjuntosTab />
+            <AdjuntosTab adjuntos={adjuntos} onUploaded={handleAdjuntos} />
           </TabsContent>
         </div>
       </Tabs>

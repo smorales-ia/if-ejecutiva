@@ -392,6 +392,230 @@ export const HISTORIAL: EventoHistorial[] = [
   },
 ]
 
+// ──────────────────────────────────────────────────────────────────────────
+// Catálogos maestros (mock) para formularios de la consola
+// ──────────────────────────────────────────────────────────────────────────
+
+export const CANALES_ORIGEN = [
+  "WhatsApp",
+  "Email",
+  "Teléfono",
+  "Presencial",
+  "Otro",
+] as const
+
+export const CLIENTES = [
+  "Banco Santander",
+  "Banco de Chile",
+  "BCI",
+  "Banco Estado",
+  "Scotiabank",
+  "Itaú",
+] as const
+
+/** Tipos de informe disponibles por cliente. */
+export const TIPOS_INFORME_POR_CLIENTE: Record<string, string[]> = {
+  "Banco Santander": [
+    "Tasación hipotecaria",
+    "Revisión de tasación",
+    "Tasación comercial",
+  ],
+  "Banco de Chile": ["Tasación hipotecaria", "Tasación comercial"],
+  BCI: ["Tasación comercial", "Tasación judicial", "Tasación hipotecaria"],
+  "Banco Estado": ["Tasación hipotecaria"],
+  Scotiabank: ["Tasación hipotecaria", "Revisión de tasación"],
+  Itaú: ["Tasación hipotecaria", "Tasación comercial"],
+}
+
+/** Productos disponibles por cliente. */
+export const PRODUCTOS_POR_CLIENTE: Record<string, string[]> = {
+  "Banco Santander": ["hipotecario", "refinanciamiento", "comercial"],
+  "Banco de Chile": ["hipotecario", "comercial"],
+  BCI: ["comercial", "hipotecario", "leasing"],
+  "Banco Estado": ["hipotecario", "refinanciamiento"],
+  Scotiabank: ["hipotecario", "refinanciamiento"],
+  Itaú: ["hipotecario", "comercial"],
+}
+
+export const PRODUCTO_LABELS: Record<string, string> = {
+  hipotecario: "Crédito hipotecario",
+  refinanciamiento: "Refinanciamiento",
+  comercial: "Crédito comercial",
+  leasing: "Leasing inmobiliario",
+}
+
+/** Productos que requieren banco financista. */
+export const PRODUCTOS_CON_BANCO = ["hipotecario", "refinanciamiento"]
+
+export const BANCOS = [
+  "Banco Santander",
+  "Banco de Chile",
+  "BCI",
+  "Banco Estado",
+  "Scotiabank",
+  "Itaú",
+  "Banco BICE",
+  "Banco Falabella",
+  "Banco Security",
+] as const
+
+export const TIPOS_PROPIEDAD = [
+  "Casa",
+  "Departamento",
+  "Oficina",
+  "Local comercial",
+  "Terreno",
+  "Bodega",
+  "Estacionamiento",
+] as const
+
+/** Regiones (subconjunto representativo) y sus comunas. */
+export const COMUNAS_POR_REGION: Record<string, string[]> = {
+  Metropolitana: [
+    "Las Condes",
+    "Providencia",
+    "Vitacura",
+    "Ñuñoa",
+    "Santiago",
+    "La Florida",
+    "Maipú",
+    "San Miguel",
+    "Puente Alto",
+  ],
+  Valparaíso: ["Valparaíso", "Viña del Mar", "Quilpué", "Concón"],
+  Biobío: ["Concepción", "Talcahuano", "San Pedro de la Paz"],
+  "O'Higgins": ["Rancagua", "Machalí", "San Fernando"],
+}
+
+export const REGIONES = Object.keys(COMUNAS_POR_REGION)
+
+// ──────────────────────────────────────────────────────────────────────────
+// Tasadores y visadores (mock) para reasignación
+// ──────────────────────────────────────────────────────────────────────────
+
+export interface Profesional {
+  id: string
+  nombre: string
+  rut: string
+  /** Solicitudes activas asignadas. */
+  carga: number
+  /** Comunas que cubre territorialmente. */
+  cobertura: string[]
+  rol: "tasador" | "visador"
+}
+
+export const TASADORES: Profesional[] = [
+  {
+    id: "t1",
+    nombre: "Javier Mora",
+    rut: "13.111.222-3",
+    carga: 8,
+    cobertura: ["Las Condes", "Providencia", "Vitacura"],
+    rol: "tasador",
+  },
+  {
+    id: "t2",
+    nombre: "Carolina Reyes",
+    rut: "14.222.333-4",
+    carga: 5,
+    cobertura: ["Providencia", "Ñuñoa", "Santiago"],
+    rol: "tasador",
+  },
+  {
+    id: "t3",
+    nombre: "Diego Salinas",
+    rut: "15.333.444-5",
+    carga: 3,
+    cobertura: ["La Florida", "Puente Alto", "Maipú"],
+    rol: "tasador",
+  },
+  {
+    id: "t4",
+    nombre: "Valentina Olivares",
+    rut: "16.444.555-6",
+    carga: 6,
+    cobertura: ["Las Condes", "Vitacura", "Lo Barnechea"],
+    rol: "tasador",
+  },
+  {
+    id: "t5",
+    nombre: "Rodrigo Pizarro",
+    rut: "12.555.666-7",
+    carga: 2,
+    cobertura: ["Maipú", "Estación Central", "Pudahuel"],
+    rol: "tasador",
+  },
+  {
+    id: "t6",
+    nombre: "Francisca Bravo",
+    rut: "17.666.777-8",
+    carga: 9,
+    cobertura: ["San Miguel", "La Cisterna", "Ñuñoa"],
+    rol: "tasador",
+  },
+]
+
+export const VISADORES: Profesional[] = [
+  {
+    id: "v1",
+    nombre: "Ana Contreras",
+    rut: "11.777.888-9",
+    carga: 12,
+    cobertura: ["Las Condes", "Providencia", "Vitacura", "Ñuñoa"],
+    rol: "visador",
+  },
+  {
+    id: "v2",
+    nombre: "Diego Salinas",
+    rut: "15.333.444-5",
+    carga: 4,
+    cobertura: ["La Florida", "Maipú", "Puente Alto"],
+    rol: "visador",
+  },
+  {
+    id: "v3",
+    nombre: "Pamela Tapia",
+    rut: "10.888.999-0",
+    carga: 7,
+    cobertura: ["Santiago", "San Miguel", "Providencia"],
+    rol: "visador",
+  },
+]
+
+/**
+ * Valida un RUT chileno usando el algoritmo de módulo 11.
+ * Acepta formatos con o sin puntos y guion.
+ */
+export function validarRut(rut: string): boolean {
+  const limpio = rut.replace(/[.\s]/g, "").replace(/-/g, "").toUpperCase()
+  if (limpio.length < 2) return false
+  const cuerpo = limpio.slice(0, -1)
+  const dv = limpio.slice(-1)
+  if (!/^\d+$/.test(cuerpo)) return false
+
+  let suma = 0
+  let multiplicador = 2
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += Number.parseInt(cuerpo[i], 10) * multiplicador
+    multiplicador = multiplicador === 7 ? 2 : multiplicador + 1
+  }
+  const resto = 11 - (suma % 11)
+  const dvEsperado = resto === 11 ? "0" : resto === 10 ? "K" : String(resto)
+  return dv === dvEsperado
+}
+
+/** Formatea un RUT agregando puntos y guion mientras se escribe. */
+export function formatearRut(valor: string): string {
+  const limpio = valor.replace(/[^0-9kK]/g, "").toUpperCase()
+  if (limpio.length === 0) return ""
+  const cuerpo = limpio.slice(0, -1)
+  const dv = limpio.slice(-1)
+  if (limpio.length === 1) return limpio
+  const cuerpoFormateado = cuerpo
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+  return `${cuerpoFormateado}-${dv}`
+}
+
 export interface Adjunto {
   id: string
   nombre: string
