@@ -1,5 +1,9 @@
 import { z } from "zod"
-import { validarRut, PRODUCTOS_CON_BANCO } from "@/lib/console-data"
+import {
+  validarRut,
+  PRODUCTOS_CON_BANCO,
+  TIPOS_DOCUMENTO,
+} from "@/lib/console-data"
 
 /**
  * Schema de validación del formulario "Nueva solicitud interna" (IF-02).
@@ -12,6 +16,13 @@ export const nuevaSolicitudInternaSchema = z
     canal: z.string().min(1, "Selecciona el canal de origen."),
     cliente: z.string().min(1, "Selecciona un cliente."),
     tipoInforme: z.string().min(1, "Selecciona el tipo de informe."),
+    banco_id: z.string().min(1, "Selecciona un banco."),
+    sucursal_originadora: z.string().optional(),
+    ejecutivo_solicitante: z.string().optional(),
+    n_operacion_cliente: z
+      .string()
+      .min(1, "Necesitamos el N° de operación del banco.")
+      .max(20),
 
     // Sección B · Datos de la propiedad
     direccion: z.string().min(3, "Ingresa la dirección de la propiedad."),
@@ -33,6 +44,29 @@ export const nuevaSolicitudInternaSchema = z
     producto: z.string().min(1, "Selecciona un producto."),
     banco: z.string().optional(),
     observaciones: z.string().optional(),
+
+    // Sección E · Documentos requeridos (checklist)
+    documentos: z
+      .array(
+        z.object({
+          tipo_id: z.number(),
+          codigo: z.string(),
+          requerido_por_ejecutiva: z.boolean(),
+          archivo: z
+            .object({
+              nombre: z.string(),
+              tamanio_kb: z.number(),
+              mime_type: z.string(),
+              url_local: z.string(),
+            })
+            .nullable(),
+        })
+      )
+      .refine(
+        (docs) =>
+          docs.every((d) => !d.requerido_por_ejecutiva || d.archivo !== null),
+        { message: "Faltan documentos marcados sin archivo" }
+      ),
   })
   .refine(
     (data) =>
@@ -52,6 +86,10 @@ export const nuevaSolicitudInternaDefaults: NuevaSolicitudInternaValues = {
   canal: "",
   cliente: "",
   tipoInforme: "",
+  banco_id: "",
+  sucursal_originadora: "",
+  ejecutivo_solicitante: "",
+  n_operacion_cliente: "",
   direccion: "",
   region: "",
   comuna: "",
@@ -64,4 +102,10 @@ export const nuevaSolicitudInternaDefaults: NuevaSolicitudInternaValues = {
   producto: "",
   banco: "",
   observaciones: "",
+  documentos: TIPOS_DOCUMENTO.map((t) => ({
+    tipo_id: t.id,
+    codigo: t.codigo,
+    requerido_por_ejecutiva: false,
+    archivo: null,
+  })),
 }

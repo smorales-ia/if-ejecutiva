@@ -30,9 +30,15 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   FileUploadZone,
   type ArchivoSubido,
 } from "@/components/console/file-upload-zone"
+import { DocumentChecklist } from "@/components/console/document-checklist"
 import {
   nuevaSolicitudInternaDefaults,
   nuevaSolicitudInternaSchema,
@@ -43,6 +49,7 @@ import {
   CANALES_ORIGEN,
   CLIENTES,
   COMUNAS_POR_REGION,
+  M_BANCOS,
   PRODUCTO_LABELS,
   PRODUCTOS_CON_BANCO,
   PRODUCTOS_POR_CLIENTE,
@@ -100,16 +107,22 @@ export function NewRequestSheet() {
     reset,
     watch,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<NuevaSolicitudInternaValues>({
     resolver: zodResolver(nuevaSolicitudInternaSchema),
     defaultValues: nuevaSolicitudInternaDefaults,
-    mode: "onBlur",
+    mode: "onChange",
   })
 
   const cliente = watch("cliente")
   const region = watch("region")
   const producto = watch("producto")
+  const documentos = watch("documentos")
+
+  // Documentos marcados como requeridos pero aún sin archivo en estado success.
+  const docsFaltantes = (documentos ?? []).filter(
+    (d) => d.requerido_por_ejecutiva && d.archivo === null
+  ).length
 
   // Catálogos dependientes.
   const tiposInforme = cliente ? TIPOS_INFORME_POR_CLIENTE[cliente] ?? [] : []
@@ -139,15 +152,18 @@ export function NewRequestSheet() {
     // Simula persistencia.
     return new Promise<void>((resolve) => {
       setTimeout(() => {
-        const codigo = `IF-${Math.floor(1000 + Math.random() * 9000)}`
-        toast.success("Solicitud interna creada", {
-          description: `${codigo} · ${values.cliente} · ${values.comuna}${
-            adjuntos.length
-              ? ` · ${adjuntos.length} adjunto(s)`
-              : ""
-          }`,
-          duration: 3000,
-        })
+        const nDocs = values.documentos.filter(
+          (d) => d.archivo !== null
+        ).length
+        toast.success(
+          `Solicitud creada con ${nDocs} documento${
+            nDocs === 1 ? "" : "s"
+          } adjunto${nDocs === 1 ? "" : "s"}.`,
+          {
+            description: `${values.cliente} · ${values.comuna} · Op. ${values.n_operacion_cliente}`,
+            duration: 3000,
+          }
+        )
         resetAll()
         setOpen(false)
         resolve()
@@ -299,6 +315,94 @@ export function NewRequestSheet() {
                 </Field>
               )}
             />
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Controller
+                control={control}
+                name="banco_id"
+                render={({ field }) => (
+                  <Field
+                    label="Banco"
+                    htmlFor="banco_id"
+                    required
+                    error={errors.banco_id?.message}
+                  >
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger
+                        id="banco_id"
+                        className="w-full"
+                        aria-invalid={!!errors.banco_id}
+                      >
+                        <SelectValue placeholder="Selecciona un banco" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {M_BANCOS.map((b) => (
+                            <SelectItem key={b.id} value={b.id}>
+                              {b.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="n_operacion_cliente"
+                render={({ field }) => (
+                  <Field
+                    label="N° de operación cliente"
+                    htmlFor="n_operacion_cliente"
+                    required
+                    error={errors.n_operacion_cliente?.message}
+                  >
+                    <Input
+                      id="n_operacion_cliente"
+                      placeholder="Ej. 900158881"
+                      maxLength={20}
+                      aria-invalid={!!errors.n_operacion_cliente}
+                      {...field}
+                    />
+                  </Field>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Controller
+                control={control}
+                name="sucursal_originadora"
+                render={({ field }) => (
+                  <Field label="Sucursal originadora" htmlFor="sucursal_originadora">
+                    <Input
+                      id="sucursal_originadora"
+                      placeholder="Ej. Sucursal Providencia"
+                      {...field}
+                    />
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="ejecutivo_solicitante"
+                render={({ field }) => (
+                  <Field
+                    label="Ejecutivo solicitante"
+                    htmlFor="ejecutivo_solicitante"
+                  >
+                    <Input
+                      id="ejecutivo_solicitante"
+                      placeholder="Nombre del ejecutivo del banco"
+                      {...field}
+                    />
+                  </Field>
+                )}
+              />
+            </div>
           </section>
 
           <Separator />
@@ -637,6 +741,30 @@ export function NewRequestSheet() {
 
           <Separator />
 
+          {/* Sección · Documentos requeridos */}
+          <section className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <SectionTitle>Documentos requeridos</SectionTitle>
+              <p className="text-xs text-muted-foreground">
+                Marca los documentos que vienen con la solicitud y adjunta el
+                archivo de cada uno. La solicitud sólo puede crearse cuando
+                todos los marcados tengan archivo.
+              </p>
+            </div>
+            <Controller
+              control={control}
+              name="documentos"
+              render={({ field }) => (
+                <DocumentChecklist
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </section>
+
+          <Separator />
+
           {/* Sección E · Adjuntos */}
           <section className="flex flex-col gap-3">
             <SectionTitle>Adjuntos (opcional)</SectionTitle>
@@ -682,14 +810,38 @@ export function NewRequestSheet() {
               </Button>
             }
           />
-          <Button
-            type="submit"
-            form="nueva-solicitud-form"
-            disabled={isSubmitting}
-            className="flex-none bg-brand text-brand-foreground hover:bg-brand/90"
-          >
-            {isSubmitting ? "Creando…" : "Crear solicitud"}
-          </Button>
+          {!isValid && docsFaltantes > 0 ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span tabIndex={0} className="flex-none">
+                    <Button
+                      type="submit"
+                      form="nueva-solicitud-form"
+                      disabled
+                      className="bg-brand text-brand-foreground hover:bg-brand/90"
+                    >
+                      Crear solicitud
+                    </Button>
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {`Faltan ${docsFaltantes} documento${
+                  docsFaltantes === 1 ? "" : "s"
+                } marcado${docsFaltantes === 1 ? "" : "s"} sin archivo.`}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              type="submit"
+              form="nueva-solicitud-form"
+              disabled={isSubmitting || !isValid}
+              className="flex-none bg-brand text-brand-foreground hover:bg-brand/90"
+            >
+              {isSubmitting ? "Creando…" : "Crear solicitud"}
+            </Button>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>
