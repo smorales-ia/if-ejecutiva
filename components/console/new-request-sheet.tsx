@@ -107,7 +107,7 @@ export function NewRequestSheet() {
     reset,
     watch,
     setValue,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isSubmitting },
   } = useForm<NuevaSolicitudInternaValues>({
     resolver: zodResolver(nuevaSolicitudInternaSchema),
     defaultValues: nuevaSolicitudInternaDefaults,
@@ -810,7 +810,7 @@ export function NewRequestSheet() {
               </Button>
             }
           />
-          {!isValid && docsFaltantes > 0 ? (
+          {docsFaltantes > 0 ? (
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -836,7 +836,7 @@ export function NewRequestSheet() {
             <Button
               type="submit"
               form="nueva-solicitud-form"
-              disabled={isSubmitting || !isValid}
+              disabled={isSubmitting}
               className="flex-none bg-brand text-brand-foreground hover:bg-brand/90"
             >
               {isSubmitting ? "Creando…" : "Crear solicitud"}
