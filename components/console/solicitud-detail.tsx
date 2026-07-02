@@ -78,17 +78,12 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     setAdjuntos(ADJUNTOS)
   }
 
-  function handleReasignado(
-    role: "tasador" | "visador",
-    anterior: string,
-    nuevo: string
-  ) {
-    if (role === "tasador") setTasador(nuevo)
-    else setVisador(nuevo)
+  function handleReasignado(anterior: string, nuevo: string) {
+    setTasador(nuevo)
     setHistorialExtra((prev) => [
       {
         id: `reasig-${Date.now()}`,
-        titulo: `Reasignación manual de ${role} · ${
+        titulo: `Reasignación manual de tasador · ${
           anterior || "Sin asignar"
         } → ${nuevo} · por María Espinoza`,
         hace: "hace unos segundos",
@@ -140,30 +135,12 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
               role="tasador"
               solicitud={s}
               actual={tasador}
-              onReasignado={(ant, nuevo) =>
-                handleReasignado("tasador", ant, nuevo)
-              }
+              onReasignado={handleReasignado}
             />
           ) : (
             <ActionButton
               icon={UserCog}
               label="Reasignar tasador"
-              enabled={false}
-            />
-          )}
-          {editable ? (
-            <ReasignarTasadorDialog
-              role="visador"
-              solicitud={s}
-              actual={visador}
-              onReasignado={(ant, nuevo) =>
-                handleReasignado("visador", ant, nuevo)
-              }
-            />
-          ) : (
-            <ActionButton
-              icon={UserCog}
-              label="Reasignar visador"
               enabled={false}
             />
           )}
