@@ -1,0 +1,49 @@
+Eres un equipo de expertos (Arquitecto Next.js, Ingeniero Airtable, DevOps, Especialista UX). 
+Analicen en consenso este proyecto.
+
+Tarea 1: Revisa el código actual del repo /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva
+
+y compáralo con los documentos del proyecto VProperty que tengo en 
+/mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva/doc_este_proyecto
+
+(VProperty_Especificacion_Proyecto_v1_4.docx,
+Arquitectura_Enterprise_VProperty_v2_6.docx,
+VProperty_Diseno_Capa_Datos_Enterprise_v2_6_2.docx,
+VProperty_Blueprint_Interfaces_v2_7.docx,
+VProperty_Motor_Calculo_AT01_AT10_v2_5.docx,
+VProperty_Origen_Datos_Informe_v1.0.docx).
+
+Ubica los planes ya creados: 
+PLAN_IMPLEMENTACION_IF02.md, 
+CHECKLIST_PRE_EJECUCION.md, 
+ROADMAP_PRE_EJECUCION.md, 
+CLAUDE_MD_ADENDA.md, 
+schema-2026-07-04.json.
+
+
+Tarea 2: Dime en máximo 10 líneas:
+
+Qué encontraste en el repo actual
+Cuál es el primer paso concreto para conectar la app con Airtable real (base app9G7lLkIV3CpeLa)
+Qué variables de entorno necesito agregar a Railway
+
+No generes código todavía. Solo diagnóstico y siguiente paso.
+
+
+
+==============
+Paso 2: Pedir a Claude Code el primer conector real
+Vuelve a la terminal de Claude Code y pégale este prompt:
+
+
+Equipo, construyan el primer paso desbloqueador del diagnóstico:
+
+lib/airtable-client.ts — cliente fetch tipado con retry
+app/api/solicitudes/route.ts — GET a TX_Solicitudes (tblaHTyMHYfmy7Fg6), filtrado por vista "Activas"
+Reemplazar el array mock en solicitud-list.tsx para consumir el endpoint real
+
+Al terminar: hagan commit y push a main. No toquen middleware Clerk ni webhooks Make aún.
+
+
+
+Claude Code hará todo, subirá al repo, y Railway redespliega automáticamente en ~2 min.
