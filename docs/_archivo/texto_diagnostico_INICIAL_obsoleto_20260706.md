@@ -1,3 +1,15 @@
+<!--
+  ARCHIVO HISTÓRICO · Movido a docs/_archivo/ el 2026-07-06
+  Origen: "texto diagnostico INICIAL.txt" (raíz del repo)
+  Razón: prompt de trabajo previo al plan v1.1; referencia ruta "doc_este_proyecto/"
+         eliminada. No es un artefacto documental del proyecto — es el input de
+         sesión que originó el primer diagnóstico y los primeros commits de conexión
+         con Airtable real. Conservado como registro histórico.
+  Plan v1.2 prevalece. Ver docs/DIAGNOSTICO_ESTADO_ACTUAL.md para el estado actual.
+-->
+
+# Prompt original — Diagnóstico inicial (pre-plan v1.1)
+
 Eres un equipo de expertos (Arquitecto Next.js, Ingeniero Airtable, DevOps, Especialista UX). 
 Analicen en consenso este proyecto.
 

@@ -1,3 +1,15 @@
+<!--
+  ARCHIVO HISTÓRICO · Movido a docs/_archivo/ el 2026-07-06
+  Origen: "texto_para_docConsistentes.txt" (raíz del repo)
+  Razón: prompt de trabajo que originó la sesión de auditoría (AUDITORIA_ALINEAMIENTO_v1_2.md).
+         No es un artefacto documental del proyecto — es el input de sesión del
+         "Paso 4" del flujo de alineamiento de documentación. Conservado como registro histórico.
+  El resultado de ejecutar este prompt es docs/AUDITORIA_ALINEAMIENTO_v1_2.md y todos los
+  documentos v1.2 en docs/. Plan v1.2 prevalece.
+-->
+
+# Prompt original — Alineamiento de documentación (originó este ciclo de trabajo)
+
 Paso 1 — Sube el plan al repo
 Guarda el archivo como docs/PLAN_IMPLEMENTACION_IF02_v1_2.md en tu carpeta local del proyecto (/mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva).
 
