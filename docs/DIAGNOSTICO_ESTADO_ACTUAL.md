@@ -40,16 +40,16 @@ Implementar Layout + Clerk (paso 1 del orden §1.7.3 del plan) desde `app/(ejecu
 |---|---|
 | `AIRTABLE_TOKEN` | ✅ en `.env.local` → cargar en Railway |
 | `AIRTABLE_BASE_ID` | `app9G7lLkIV3CpeLa` ✅ |
-| `AUTH_CLERK_PUBLISHABLE_KEY` | ✅ en `.env.local` (RF-52 · antes: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`) → cargar en Railway |
-| `AUTH_CLERK_SECRET_KEY` | ✅ en `.env.local` (RF-52 · antes: `CLERK_SECRET_KEY`) → cargar en Railway |
-| `AUTH_CLERK_SIGN_IN_URL` | ❌ falta definir (`/sign-in` · RF-52) |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | ✅ en `.env.local` → cargar en Railway *(Clerk excepción RF-52)* |
+| `CLERK_SECRET_KEY` | ✅ en `.env.local` → cargar en Railway *(Clerk excepción RF-52)* |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` | ❌ falta definir (`/sign-in` · Clerk excepción RF-52) |
 | `NEXT_PUBLIC_APP_URL` | ❌ falta definir (URL Railway del servicio) |
 | `MAKE_WEBHOOK_URL_SC01` | ❌ falta — bloqueador BQ-3; SC01 no existe aún |
 | `MAKE_WEBHOOK_URL_SC05` | ❌ falta — bloqueador BQ-3; SC05 no existe aún |
 | `MAKE_WEBHOOK_URL_RF09` | ❌ falta — bloqueador BQ-3-c; RF-09 no existe aún |
 | `MAKE_HMAC_SECRET` | ❌ falta definir (secreto HMAC-SHA256 para firmar payloads a Make · D-03) |
 
-> **Regla de seguridad (RF-52)**: las variables de autenticación llevan prefijo `AUTH_`. `AUTH_CLERK_PUBLISHABLE_KEY` se pasa explícitamente a `<ClerkProvider>` — no necesita prefijo `NEXT_PUBLIC_`. Solo `NEXT_PUBLIC_APP_URL` se expone al cliente.
+> **Regla de seguridad (RF-52 + excepción Clerk)**: las variables de autenticación llevan prefijo `AUTH_`, excepto Clerk: Clerk usa sus nombres propios de SDK (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`). Solo `NEXT_PUBLIC_*` se exponen al cliente.
 
 > **SC13 fuera de alcance CU-002**: no se requiere variable `MAKE_WEBHOOK_SC13` en este CU. Las acciones de reasignación/pausa/prioridad actualizan Airtable y `A_Eventos` pero no envían email. Deuda técnica para un CU posterior.
 

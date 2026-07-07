@@ -72,7 +72,7 @@ La carcasa protegida de la aplicación. Cualquier acceso a `/consola` sin sesió
 
 ### Bloqueadores
 
-- Variables `AUTH_CLERK_PUBLISHABLE_KEY`, `AUTH_CLERK_SECRET_KEY`, `AUTH_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_APP_URL` cargadas en Railway y en `.env.local`. (RF-52: dominio AUTH_ para vars de autenticación.)
+- Variables `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_APP_URL` cargadas en Railway y en `.env.local`. *(Clerk es excepción a RF-52: usa los nombres propios de su SDK.)*
 
 ### Criterios de aceptación
 

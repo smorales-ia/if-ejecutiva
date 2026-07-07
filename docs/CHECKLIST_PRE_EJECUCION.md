@@ -126,7 +126,7 @@
   Verificación MCP 07-jul-2026: 1 registro `estado=activo`.
 
 - [ ] **Aplicación Clerk creada** con dominio productivo VProperty.  
-  Verificación: dashboard Clerk muestra la app; `AUTH_CLERK_PUBLISHABLE_KEY` y `AUTH_CLERK_SECRET_KEY` copiadas a un vault fuera del repo. ⚠ Nota: Clerk SDK ≥ v5 permite pasar la clave explícitamente a `<ClerkProvider publishableKey={process.env.AUTH_CLERK_PUBLISHABLE_KEY}>` — no es necesario el nombre `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+  Verificación: dashboard Clerk muestra la app; `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` y `CLERK_SECRET_KEY` copiadas a un vault fuera del repo. *(Clerk es excepción a RF-52: usa sus nombres propios de SDK.)*
 
 - [ ] **Rol `ejecutivo_comercial` verificado en Clerk** (Organization Roles o `public_metadata.role`).  
   Verificación: al menos 1 usuario de prueba con ese rol; `useUser()` en sandbox devuelve el rol.
@@ -141,9 +141,9 @@
 - [ ] Proyecto Railway creado con nombre `vproperty-ejecutiva`.  
   Verificación: dashboard Railway lo muestra; dominio `vproperty-ejecutiva-*.up.railway.app` responde `200` al deploy inicial.
 
-- [ ] Variables de entorno cargadas en Railway (ninguna con prefijo `NEXT_PUBLIC_` que exponga secretos):  
-  `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID=app9G7lLkIV3CpeLa`, `MAKE_WEBHOOK_URL_SC01`, `MAKE_WEBHOOK_URL_SC05`, `MAKE_WEBHOOK_URL_RF09`, `MAKE_HMAC_SECRET`, `AUTH_CLERK_PUBLISHABLE_KEY`, `AUTH_CLERK_SECRET_KEY`, `AUTH_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_APP_URL`.  
-  Verificación: `railway variables` los lista; ningún valor sensible aparece en logs. (RF-52: prefijo AUTH_ para vars de autenticación.)
+- [ ] Variables de entorno cargadas en Railway:  
+  `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID=app9G7lLkIV3CpeLa`, `MAKE_WEBHOOK_URL_SC01`, `MAKE_WEBHOOK_URL_SC05`, `MAKE_WEBHOOK_URL_RF09`, `MAKE_HMAC_SECRET`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_APP_URL`.  
+  *(Clerk es excepción a RF-52: usa sus nombres propios de SDK.)* Verificación: `railway variables` los lista; ningún valor sensible aparece en logs.
 
 ---
 

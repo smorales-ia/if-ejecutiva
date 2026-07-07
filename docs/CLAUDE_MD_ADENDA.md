@@ -185,7 +185,7 @@ schema real:
 | SC13 | Notificaciones reasignación/prioridad/pausa | **FUERA DE ALCANCE CU-002** — no provisionar en este CU |
 | E1/E2/E3 | Pipeline PDF (IF-04 aguas abajo) | ✅ ACTIVO — no tocar desde IF-02 |
 
-Variables de entorno esperadas (dominio AUTH_ · RF-52):
+Variables de entorno esperadas:
 ```
 AIRTABLE_TOKEN=patxMFmnYmU30RLIl.***
 AIRTABLE_BASE_ID=app9G7lLkIV3CpeLa
@@ -193,13 +193,13 @@ MAKE_WEBHOOK_URL_SC01=https://hook.eu1.make.com/***
 MAKE_WEBHOOK_URL_SC05=https://hook.eu1.make.com/***
 MAKE_WEBHOOK_URL_RF09=https://hook.eu1.make.com/***
 MAKE_HMAC_SECRET=***
-AUTH_CLERK_PUBLISHABLE_KEY=***
-AUTH_CLERK_SECRET_KEY=***
-AUTH_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=***
+CLERK_SECRET_KEY=***
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_APP_URL=https://<railway>
 ANTHROPIC_API_KEY=***
 ```
-> Convención AUTH_ (RF-52): las variables de autenticación llevan prefijo `AUTH_`. `AUTH_CLERK_PUBLISHABLE_KEY` se pasa explícitamente como prop a `<ClerkProvider publishableKey={process.env.AUTH_CLERK_PUBLISHABLE_KEY}>`. No se usa el nombre automático `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+> **Clerk es excepción a RF-52**: las variables de Clerk conservan sus nombres propios de SDK (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`) para que la detección automática funcione. El resto de variables de autenticación (tablas Airtable `AUTH_*`) sí siguen el dominio RF-52.
 
 ## Comandos pnpm canónicos
 
