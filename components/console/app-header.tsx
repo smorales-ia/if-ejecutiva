@@ -1,13 +1,26 @@
-import { Search } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { currentUser } from '@clerk/nextjs/server'
+import { Search } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
 const navItems = [
-  { label: "Consola", active: true },
-  { label: "Cola operativa", active: false },
-  { label: "Expediente", active: false },
+  { label: 'Consola', active: true },
+  { label: 'Cola operativa', active: false },
+  { label: 'Expediente', active: false },
 ]
 
-export function AppHeader() {
+export async function AppHeader() {
+  const user = await currentUser()
+
+  const initials = user
+    ? [user.firstName, user.lastName]
+        .filter(Boolean)
+        .map((n) => n![0].toUpperCase())
+        .join('')
+        .slice(0, 2)
+    : 'ME'
+
+  const fullName = user?.fullName ?? ''
+
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center gap-6 border-b border-border bg-card px-5">
       {/* Brand + nav */}
@@ -20,11 +33,11 @@ export function AppHeader() {
             <a
               key={item.label}
               href="#"
-              aria-current={item.active ? "page" : undefined}
+              aria-current={item.active ? 'page' : undefined}
               className={
                 item.active
-                  ? "rounded-md bg-brand/10 px-3 py-1.5 text-sm font-medium text-brand"
-                  : "rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  ? 'rounded-md bg-brand/10 px-3 py-1.5 text-sm font-medium text-brand'
+                  : 'rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground'
               }
             >
               {item.label}
@@ -46,13 +59,16 @@ export function AppHeader() {
       {/* Right side */}
       <div className="flex items-center gap-4">
         <span className="hidden text-xs text-muted-foreground xl:inline">
-          En tu cartera:{" "}
-          <span className="font-medium text-foreground">12 activas</span> ·{" "}
+          En tu cartera:{' '}
+          <span className="font-medium text-foreground">12 activas</span> ·{' '}
           <span className="font-medium text-[#b91c1c]">3 en SLA rojo</span>
         </span>
         <Avatar className="size-8">
+          {user?.imageUrl && (
+            <AvatarImage src={user.imageUrl} alt={fullName} />
+          )}
           <AvatarFallback className="bg-brand text-xs font-semibold text-brand-foreground">
-            ME
+            {initials}
           </AvatarFallback>
         </Avatar>
       </div>
