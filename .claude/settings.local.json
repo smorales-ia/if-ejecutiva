@@ -8,7 +8,13 @@
       "Bash(curl -s http://localhost:3000/api/health)",
       "Bash(/home/smorales/.npm-global/bin/pnpm install *)",
       "Bash(ln -sf /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva/node_modules/.pnpm/@next+swc-linux-x64-gnu@16.2.6/node_modules/@next/swc-linux-x64-gnu node_modules/@next/swc-linux-x64-gnu)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(pnpm build *)",
+      "Bash(node *)",
+      "Bash(node_modules/.bin/next build *)",
+      "Bash(node_modules/.bin/tsc *)",
+      "Bash(node_modules/.bin/next dev *)",
+      "Bash(pkill -f \"next dev\")"
     ]
   }
 }

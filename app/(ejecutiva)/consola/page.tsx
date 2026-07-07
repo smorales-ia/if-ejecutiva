@@ -1,14 +1,13 @@
 import { ConsoleShell } from '@/components/console/console-shell'
-import { fetchSolicitudes } from '@/lib/solicitudes'
-import type { Solicitud } from '@/lib/console-data'
+import { fetchSolicitudes, type Vista } from '@/lib/solicitudes'
 
-export default async function ConsolaPage() {
-  let solicitudes: Solicitud[] = []
-  try {
-    solicitudes = await fetchSolicitudes()
-  } catch (err) {
-    console.error('[ConsolaPage] fetchSolicitudes failed:', err)
-  }
-
-  return <ConsoleShell solicitudes={solicitudes} />
+export default async function ConsolaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ vista?: string }>
+}) {
+  const sp = await searchParams
+  const vista = (sp.vista ?? 'activas') as Vista
+  const { data: solicitudes, degraded } = await fetchSolicitudes(vista)
+  return <ConsoleShell solicitudes={solicitudes} vistaActiva={vista} degraded={degraded} />
 }

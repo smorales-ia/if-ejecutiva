@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, SlidersHorizontal } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -19,27 +20,41 @@ import {
   StateBadge,
 } from "@/components/console/status-badges"
 import type { Solicitud } from "@/lib/console-data"
+import type { Vista } from "@/lib/solicitudes"
 
-const tabs = [
-  { id: "cartera", label: "Mi cartera", badge: null },
-  { id: "sla", label: "SLA en riesgo", badge: 3 },
-  { id: "reasignar", label: "Por reasignar", badge: 1 },
-  { id: "pausadas", label: "Pausadas", badge: null },
-  { id: "aprobadas", label: "Aprobadas", badge: null },
-  { id: "todas", label: "Todas", badge: null },
+const tabs: { id: Vista; label: string }[] = [
+  { id: "cartera",    label: "Mi cartera" },
+  { id: "sla_riesgo", label: "SLA en riesgo" },
+  { id: "reasignar",  label: "Por reasignar" },
+  { id: "pausadas",   label: "Pausadas" },
+  { id: "aprobadas",  label: "Aprobadas" },
+  { id: "activas",    label: "Todas" },
 ]
 
 export function SolicitudList({
   solicitudes,
   selectedId,
   onSelect,
+  vistaActiva,
+  degraded,
 }: {
   solicitudes: Solicitud[]
   selectedId: string
   onSelect: (id: string) => void
+  vistaActiva: Vista
+  degraded?: boolean
 }) {
-  const [activeTab, setActiveTab] = useState("cartera")
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
+
+  function handleTabClick(tabId: Vista) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('vista', tabId)
+    router.push(`/consola?${params.toString()}`, { scroll: false })
+  }
+
+  const showDegradedMessage = degraded === true && vistaActiva === 'cartera'
 
   return (
     <div className="flex h-full w-full flex-col border-r border-border bg-card">
@@ -49,27 +64,15 @@ export function SolicitudList({
           <button
             key={tab.id}
             type="button"
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabClick(tab.id)}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors",
-              activeTab === tab.id
+              vistaActiva === tab.id
                 ? "bg-brand text-brand-foreground"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
             {tab.label}
-            {tab.badge != null && (
-              <span
-                className={cn(
-                  "inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none",
-                  activeTab === tab.id
-                    ? "bg-brand-foreground/20 text-brand-foreground"
-                    : "bg-muted-foreground/15 text-muted-foreground"
-                )}
-              >
-                {tab.badge}
-              </span>
-            )}
           </button>
         ))}
       </div>
@@ -135,56 +138,63 @@ export function SolicitudList({
 
       {/* List */}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <ul className="flex flex-col">
-          {solicitudes.map((s) => {
-            const selected = s.id === selectedId
-            return (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(s.id)}
-                  className={cn(
-                    "flex w-full flex-col gap-1.5 border-l-2 border-b border-b-border px-4 py-3 text-left transition-colors",
-                    selected
-                      ? "border-l-brand bg-brand/5"
-                      : "border-l-transparent hover:bg-muted/50"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold tracking-tight text-foreground">
-                      {s.codigoExt}
-                    </span>
-                    <SLABadge dias={s.slaDias} total={s.slaTotal} />
-                  </div>
+        {showDegradedMessage ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            Aún no está configurada la asignación por ejecutiva. Pídeselo al administrador de Airtable.
+          </p>
+        ) : (
+          <>
+            <ul className="flex flex-col">
+              {solicitudes.map((s) => {
+                const isSelected = s.id === selectedId
+                return (
+                  <li key={s.id}>
+                    <button
+                      type="button"
+                      onClick={() => onSelect(s.id)}
+                      className={cn(
+                        "flex w-full flex-col gap-1.5 border-l-2 border-b border-b-border px-4 py-3 text-left transition-colors",
+                        isSelected
+                          ? "border-l-brand bg-brand/5"
+                          : "border-l-transparent hover:bg-muted/50"
+                      )}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold tracking-tight text-foreground">
+                          {s.codigoExt}
+                        </span>
+                        <SLABadge dias={s.slaDias} total={s.slaTotal} />
+                      </div>
 
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="truncate text-sm font-medium text-foreground">
-                      {s.cliente}
-                    </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {s.comuna}
-                    </span>
-                  </div>
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="truncate text-sm font-medium text-foreground">
+                          {s.cliente}
+                        </span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {s.comuna}
+                        </span>
+                      </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <StateBadge estado={s.estado} />
-                    <PriorityChip prioridad={s.prioridad} />
-                  </div>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StateBadge estado={s.estado} />
+                        <PriorityChip prioridad={s.prioridad} />
+                      </div>
 
-                  <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                    <span className="truncate">{s.tasador}</span>
-                    <span className="shrink-0">Límite {s.fechaLimite}</span>
-                  </div>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                        <span className="truncate">{s.tasador}</span>
+                        <span className="shrink-0">Límite {s.fechaLimite}</span>
+                      </div>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
 
-        <p className="px-4 py-3 text-center text-[11px] text-muted-foreground">
-          Mostrando {solicitudes.length} de 12 · Listas &gt; 200 ítems usan
-          virtualización (react-window)
-        </p>
+            <p className="px-4 py-3 text-center text-[11px] text-muted-foreground">
+              Mostrando {solicitudes.length} solicitudes
+            </p>
+          </>
+        )}
       </div>
     </div>
   )

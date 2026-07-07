@@ -1,8 +1,41 @@
-import { listRecords } from '@/lib/airtable-client'
+import { listRecords, AirtableError } from '@/lib/airtable-client'
 import type { EstadoSolicitud, Prioridad, Solicitud } from '@/lib/console-data'
 
 // TX_Solicitudes verified via MCP 2026-07-04
 export const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
+
+export type Vista = 'activas' | 'sla_riesgo' | 'reasignar' | 'pausadas' | 'aprobadas' | 'cartera'
+
+export const VISTAS_VALIDAS: Vista[] = [
+  'activas',
+  'sla_riesgo',
+  'reasignar',
+  'pausadas',
+  'aprobadas',
+  'cartera',
+]
+
+export function buildFormula(vista: Vista, userId?: string): string {
+  switch (vista) {
+    case 'activas':
+      return 'NOT(OR({estado}="cancelada",{estado}="cerrada",{estado}="entregada"))'
+    case 'sla_riesgo':
+      return 'OR({semaforo_sla}="rojo",{semaforo_sla}="ámbar",{semaforo_sla}="ambar")'
+    case 'reasignar':
+      return 'AND({estado}="creada",DATETIME_DIFF(NOW(),CREATED_TIME(),"hours")>48)'
+    case 'pausadas':
+      return '{estado}="pausada"'
+    case 'aprobadas':
+      return '{estado}="aprobada"'
+    case 'cartera':
+      return `{ejecutiva_asignada}="${userId ?? ''}"`
+  }
+}
+
+export interface FetchResult {
+  data: Solicitud[]
+  degraded?: boolean
+}
 
 // Airtable returns all values as strings when cellFormat=string.
 // Linked record fields return comma-separated primary field values.
@@ -110,16 +143,28 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
   }
 }
 
-export async function fetchSolicitudes(): Promise<Solicitud[]> {
-  const records = await listRecords<RawFields>(TX_SOLICITUDES, {
-    cellFormat: 'string',
-    timeZone: 'America/Santiago',
-    userLocale: 'es-CL',
-    filterByFormula: "NOT(OR({estado}='cancelada',{estado}='cerrada',{estado}='entregada'))",
-    'sort[0][field]': 'fecha_limite_entrega',
-    'sort[0][direction]': 'asc',
-    fields: SOLICITUD_FIELDS,
-  })
-
-  return records.map((r) => mapRecord(r.id, r.createdTime, r.fields))
+export async function fetchSolicitudes(vista: Vista = 'activas', userId?: string): Promise<FetchResult> {
+  const formula = buildFormula(vista, userId)
+  try {
+    const records = await listRecords<RawFields>(TX_SOLICITUDES, {
+      cellFormat: 'string',
+      timeZone: 'America/Santiago',
+      userLocale: 'es-CL',
+      filterByFormula: formula,
+      'sort[0][field]': 'fecha_limite_entrega',
+      'sort[0][direction]': 'asc',
+      fields: SOLICITUD_FIELDS,
+    })
+    return { data: records.map((r) => mapRecord(r.id, r.createdTime, r.fields)) }
+  } catch (err) {
+    // ejecutiva_asignada not yet created in TX_Solicitudes (D-08 pending)
+    if (
+      err instanceof AirtableError &&
+      vista === 'cartera' &&
+      (err.message.includes('ejecutiva_asignada') || err.message.includes('Unknown field names'))
+    ) {
+      return { data: [], degraded: true }
+    }
+    throw err
+  }
 }
