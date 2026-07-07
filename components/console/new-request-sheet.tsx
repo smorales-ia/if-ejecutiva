@@ -148,27 +148,35 @@ export function NewRequestSheet() {
     setAdjuntos([])
   }
 
-  function onSubmit(values: NuevaSolicitudInternaValues) {
-    // Simula persistencia.
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        const nDocs = values.documentos.filter(
-          (d) => d.archivo !== null
-        ).length
-        toast.success(
-          `Solicitud creada con ${nDocs} documento${
-            nDocs === 1 ? "" : "s"
-          } adjunto${nDocs === 1 ? "" : "s"}.`,
-          {
-            description: `${values.cliente} · ${values.comuna} · Op. ${values.n_operacion_cliente}`,
-            duration: 3000,
-          }
-        )
-        resetAll()
-        setOpen(false)
-        resolve()
-      }, 800)
-    })
+  async function onSubmit(values: NuevaSolicitudInternaValues) {
+    try {
+      const res = await fetch("/api/solicitudes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      })
+      if (!res.ok) throw new Error("submit falló")
+
+      const nDocs = values.documentos.filter(
+        (d) => d.archivo !== null
+      ).length
+      toast.success(
+        `Solicitud creada con ${nDocs} documento${
+          nDocs === 1 ? "" : "s"
+        } adjunto${nDocs === 1 ? "" : "s"}.`,
+        {
+          description: `${values.cliente} · ${values.comuna} · Op. ${values.n_operacion_cliente}`,
+          duration: 3000,
+        }
+      )
+      resetAll()
+      setOpen(false)
+    } catch {
+      toast.error(
+        "No pudimos completar la acción. Intenta nuevamente en unos segundos.",
+        { duration: 3000 }
+      )
+    }
   }
 
   function onInvalid() {

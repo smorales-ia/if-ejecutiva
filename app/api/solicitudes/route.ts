@@ -1,7 +1,9 @@
+import { randomUUID } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { listRecords, AirtableError } from '@/lib/airtable-client'
 import { mapRecord, SOLICITUD_FIELDS, TX_SOLICITUDES } from '@/lib/solicitudes'
+import { nuevaSolicitudInternaSchema } from '@/lib/validators/nueva-solicitud-interna'
 
 export const dynamic = 'force-dynamic'
 
@@ -73,4 +75,41 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
+}
+
+/**
+ * Tanda 4A · endpoint SIMULADO: valida y responde 201, sin llamar a Make
+ * ni escribir en Airtable. La escritura real queda para Tanda 4B.
+ *
+ * Notas para Tanda 4B (no implementadas aquí, son solo la estrategia acordada):
+ *  - `origen_canal` se fija a "ingreso_manual" (único valor válido del singleSelect
+ *    real: tally_externo · ingreso_manual · api · migracion_inicial). El valor libre
+ *    de `canal` (WhatsApp/Email/Teléfono/...) NO se guarda en origen_canal: se antepone
+ *    a `observaciones_internas` como prefijo "Canal: <canal>. ".
+ *  - `telefono` mapea a TX_Solicitudes.solicitante_telefono.
+ *  - `email` y `banco_id` no tienen campo destino todavía en TX_Solicitudes — son
+ *    prerrequisito de Tanda 4B (crear `email_contacto` y un campo equivalente a
+ *    `banco_id`, o decidir eliminarlos del formulario).
+ */
+export async function POST(request: NextRequest) {
+  let body: unknown
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { error: 'No pudimos completar la acción. Intenta nuevamente en unos segundos.' },
+      { status: 400 }
+    )
+  }
+
+  const parsed = nuevaSolicitudInternaSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: 'Revisa el formulario: hay campos obligatorios sin completar o con errores.' },
+      { status: 400 }
+    )
+  }
+
+  const id = `sim-${randomUUID()}`
+  return NextResponse.json({ id, ...parsed.data }, { status: 201 })
 }

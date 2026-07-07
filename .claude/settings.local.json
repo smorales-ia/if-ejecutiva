@@ -15,7 +15,10 @@
       "Bash(node_modules/.bin/tsc *)",
       "Bash(node_modules/.bin/next dev *)",
       "Bash(pkill -f \"next dev\")",
-      "Bash(pnpm typecheck *)"
+      "Bash(pnpm typecheck *)",
+      "mcp__claude_ai_Airtable__list_tables_for_base",
+      "Bash(python3 *)",
+      "mcp__claude_ai_Airtable__get_table_schema"
     ]
   }
 }

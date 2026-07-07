@@ -62,6 +62,7 @@ export const SOLICITUD_FIELDS: string[] = [
   'cliente_final_rut',
   'semaforo_sla',
   'direccion',
+  'monto_estimado_uf',
 ]
 
 function parseDate(str: string | undefined): Date | null {
@@ -100,6 +101,12 @@ function computeSlaDias(fechaLimite: string | undefined, semaforo: string | unde
   return 3
 }
 
+function formatMontoUf(str: string | undefined): string {
+  if (!str) return '—'
+  const n = Number(str)
+  return Number.isNaN(n) ? `${str} UF` : `${n.toLocaleString('es-CL')} UF`
+}
+
 export function relativeTime(iso: string): string {
   const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3_600_000)
   if (h < 1) return 'hace menos de 1 hora'
@@ -130,7 +137,7 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     producto: f['producto'] ?? '—',
     direccion: f['direccion'] ?? '—',
     region: '—',
-    montoUf: '—',
+    montoUf: formatMontoUf(f['monto_estimado_uf']),
     propietario: f['cliente_final_nombre'] ?? '—',
     rut: f['cliente_final_rut'] ?? '—',
     email: '—',
