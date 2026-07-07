@@ -1,0 +1,15 @@
+# Forzar LF en todo el repo (evita ruido CRLF en WSL)
+* text=auto eol=lf
+
+# Binarios — sin conversión
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary
+*.zip binary
