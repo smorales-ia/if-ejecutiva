@@ -191,7 +191,7 @@ Campos agrupados en secciones. Editables si la solicitud no está cerrada.
 | Visador | Link | Cond. | `M_Visadores` → `.visador` (`fldhm86amyekWsEFY`) | `activo=true` · `especialidades ∋ tipo_propiedad`. La Ejecutiva **no** reasigna visador (D-01) — campo visible, sin acción |
 | Fecha estimada de visita | Fecha | Cond. | `.fecha_visita_programada` (`fldPUFd9YuQdkcrOI`) | `>= hoy`. Obligatoria para pasar a asignada |
 | Prioridad | Select | No | `.prioridad` (`fld9FKZ9siAeSsH54`) | Normal · Urgente · Crítico. Cambio a Urgente/Crítico exige justificación (RF-07) |
-| Ejecutiva asignada | Link | Sí | `.ejecutiva_asignada` → M_Usuarios (⚙ crear D-08) | Auto = usuario Clerk de la sesión. Alimenta "Mi cartera" |
+| Ejecutiva asignada | Link | Sí | `.ejecutiva_asignada` → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) (⚙ crear D-08) | Auto = usuario Clerk de la sesión. Alimenta "Mi cartera" |
 | Notas para el tasador | Texto largo | No | `.notas_tasador` (⚙ crear D-08) | — |
 | Notas para el visador | Texto largo | No | `.notas_visador` (⚙ crear D-08) | — |
 | Observaciones internas | Texto largo | No | `.observaciones_internas` | — |
@@ -499,7 +499,7 @@ Ver Plan v1.2 §1.7.3 para rationale completo.
 | ID | Decisión | Resultado |
 |---|---|---|
 | D-01 | Reasignación de visador por la Ejecutiva | **Ocultada**. Campo visible en TabDatos sin acción. |
-| D-02 | Vista "Mi cartera" | Crear `TX_Solicitudes.ejecutiva_asignada` (link → M_Usuarios). |
+| D-02 | Vista "Mi cartera" | Crear `TX_Solicitudes.ejecutiva_asignada` (link → AUTH_Usuarios · `tblbX3hPD2uhqhl5v` · RF-52). |
 | D-03 | Firma webhook Make | `X-VP-Signature` HMAC-SHA256 en SC01 y SC05. |
 | D-04 | Override manual de tasador | AT02 respeta asignación previa; registra `A_Cambios(motivo=override_manual)`. |
 | D-05 (revocada) | Extracción Claude API diferida | **Revocada**: pasa a RF-09 dentro de CU-002. |

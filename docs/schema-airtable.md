@@ -1,6 +1,6 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.2 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 (06-jul-2026)
+> **Versión**: 1.2 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026)
 > **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
@@ -85,6 +85,33 @@
 | `H_FormulasAnteriores` | `tblQEFpHo9dIIScco` | |
 | `H_PreciosUF` | `tblWPRuIYfzdlveHM` | |
 
+### Dominio AUTH_ · Autenticación (RF-52 · 07-jul-2026)
+
+> Dominio único para todas las interfaces VProperty (IF-01, IF-02 y siguientes). Tablas presentes y **pobladas con registros mínimos** al 07-jul-2026.
+
+| Tabla lógica | TABLE_ID | Estado | Uso en IF-02 |
+|---|---|---|---|
+| `AUTH_Roles` | `tblhJSBD9xh3ftwbs` | ✅ Poblada — 3 roles activos | Categoriza usuarios: `ejecutiva_comercial · visador · tasador` |
+| `AUTH_Usuarios` | `tblbX3hPD2uhqhl5v` | ✅ Poblada — 1 usuario de prueba | Linked record de `TX_Solicitudes.ejecutiva_asignada` (D-02/D-08) |
+| `AUTH_DatosAcceso` | `tbl7Rcw912UM01nlB` | ⚠ Vacía | Hash de contraseña + control de intentos (no requerida en IF-02 v1) |
+| `AUTH_FuncionalidadesPorRol` | `tbljDFSC6ElWVoEF6` | ⚠ Vacía | Permisos por rol (no requerida en IF-02 v1) |
+
+**Roles creados en AUTH_Roles (07-jul-2026)**:
+
+| record_id | nombre_rol | descripcion |
+|---|---|---|
+| `recJBitusYjl6HLuk` | `ejecutiva_comercial` | Acceso a IF-02 Consola Ejecutiva |
+| `recQoNbLQIhLMzUlw` | `visador` | Acceso a IF-03 Portal Visador |
+| `receKuqReKggoLGar` | `tasador` | Acceso a portal de tasadores |
+
+**Usuario de prueba en AUTH_Usuarios (07-jul-2026)**:
+
+| record_id | nombre | email | rol |
+|---|---|---|---|
+| `rec8XzHkBKWMb4CO1` | Sergio Morales | nutricionsaludketo@gmail.com | ejecutiva_comercial |
+
+---
+
 ### Dominio Z_ · Automatizaciones
 
 | Tabla lógica | TABLE_ID | Notas |
@@ -152,7 +179,7 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `comision_ov` | — | Number (4 dec) | [v2.6 TBD-09] Pendiente confirmación semántica |
 | `notas_tasador` | ⚙ pendiente | Long text | **Crear** (D-08). Instrucciones para el tasador |
 | `notas_visador` | ⚙ pendiente | Long text | **Crear** (D-08). Contexto para la revisión |
-| `ejecutiva_asignada` | ⚙ pendiente | Link → M_Usuarios | **Crear** (D-08 + D-02). Alimenta vista "Mi cartera". Asignación automática = usuario Clerk |
+| `ejecutiva_asignada` | ⚙ pendiente | Link → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) | **Crear** (D-08 + D-02). Alimenta vista "Mi cartera". Asignación automática = usuario Clerk |
 | *(campo trigger AT02)* | ⚠ H-04 | Checkbox (probable) | **Nombre desconocido**. Confirmar en UI Airtable Automations antes de RF-06 |
 
 ---
@@ -331,7 +358,7 @@ Estos campos deben existir en Airtable antes de escribir los Route Handlers corr
 |---|---|---|---|---|
 | `TX_Solicitudes` | `notas_tasador` | Long text | D-08 | RF-05 (detalle) |
 | `TX_Solicitudes` | `notas_visador` | Long text | D-08 | RF-05 (detalle) |
-| `TX_Solicitudes` | `ejecutiva_asignada` | Link → M_Usuarios | D-08 + D-02 | RF-05 vista "Mi cartera" |
+| `TX_Solicitudes` | `ejecutiva_asignada` | Link → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) | D-08 + D-02 | RF-05 vista "Mi cartera" |
 | `TX_Solicitudes` | *(campo trigger AT02)* | Checkbox | H-04 (nombre a confirmar) | RF-06 "Pasar a asignada" |
 | `TX_Adjuntos` | `estado_extraccion` | Single select | D-08 | RF-09 |
 | `M_Tasadores` | `casos_en_curso` | Count link | H-05 | RF-06 selector inteligente |
@@ -364,7 +391,35 @@ Definidos en tres fuentes canónicas (Capa Datos v2.6.2, Motor Cálculo v2.5, Bl
 
 ---
 
-## 15. Endpoint base y autenticación
+## 15. AUTH_Usuarios y AUTH_Roles — campos detallados (RF-52)
+
+### AUTH_Usuarios
+
+**TABLE_ID**: `tblbX3hPD2uhqhl5v`
+
+| Campo | FIELD_ID | Tipo Airtable | Notas |
+|---|---|---|---|
+| `nombre` | `fldQicWUYaPc0w6bX` | Single line text | Nombre completo |
+| `email` | `fldcWdlfA7duo2Je6` | Email | Correo corporativo |
+| `estado` | `fldy3Xe6BXHYYxe2A` | Single select | `activo · inactivo · suspendido` |
+| `rol` | `fldDJQacR69IMsM7Y` | Link → AUTH_Roles | FK. Define permisos por interfaz |
+| `AUTH_DatosAcceso` | `fld2vdl2gR4DBDIvc` | Link → AUTH_DatosAcceso | Back-link. No usar en IF-02 v1 |
+
+> `TX_Solicitudes.ejecutiva_asignada` enlaza a **esta tabla** (no a `M_Usuarios` — ese nombre no existe en el schema real). Al crear el campo en Airtable, apuntar a `tblbX3hPD2uhqhl5v`.
+
+### AUTH_Roles
+
+**TABLE_ID**: `tblhJSBD9xh3ftwbs`
+
+| Campo | FIELD_ID | Tipo Airtable | Notas |
+|---|---|---|---|
+| `nombre_rol` | `fldAK2NkFnARPZHl1` | Single line text | `ejecutiva_comercial · visador · tasador` |
+| `descripcion` | `fldUFGCjlva4WrvBB` | Long text | Descripción del rol y acceso |
+| `activo` | `fldwTcSuxDlwK2Eeg` | Checkbox | Sólo roles activos válidos para asignar |
+
+---
+
+## 16. Endpoint base y autenticación
 
 ```
 BASE_URL = https://api.airtable.com/v0/app9G7lLkIV3CpeLa/{TABLE_ID}
@@ -375,7 +430,7 @@ El token vive **exclusivamente** en la variable de entorno server-only `AIRTABLE
 
 ---
 
-## 16. Reglas de uso en código
+## 17. Reglas de uso en código
 
 1. **Referenciar por FIELD_ID** cuando el nombre tenga espacio extra (`sucursal_originadora ` → `fldd56pLZyKYoi2Vi`) o riesgo de colisión.
 2. **Tipos TS derivados de este archivo** — no de Capa Datos v2.6.2 cuando hay divergencia (ej. `n_operacion_cliente` es `number`, no `string`).

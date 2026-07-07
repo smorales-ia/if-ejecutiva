@@ -72,7 +72,7 @@ La carcasa protegida de la aplicación. Cualquier acceso a `/consola` sin sesió
 
 ### Bloqueadores
 
-- Variables `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_APP_URL` cargadas en Railway y en `.env.local`.
+- Variables `AUTH_CLERK_PUBLISHABLE_KEY`, `AUTH_CLERK_SECRET_KEY`, `AUTH_CLERK_SIGN_IN_URL=/sign-in`, `NEXT_PUBLIC_APP_URL` cargadas en Railway y en `.env.local`. (RF-52: dominio AUTH_ para vars de autenticación.)
 
 ### Criterios de aceptación
 
@@ -109,7 +109,7 @@ La bandeja principal de solicitudes: lista con pestañas por vista Airtable, fil
 
 ### Bloqueadores
 
-- Campo `ejecutiva_asignada` creado en `TX_Solicitudes` → `M_Usuarios` (D-08-ejecución). Sin él la vista "Mi cartera" no funciona. El Route Handler puede degradar "Mi cartera" a vacío si el campo aún no existe.
+- Campo `ejecutiva_asignada` creado en `TX_Solicitudes` → `AUTH_Usuarios` (`tblbX3hPD2uhqhl5v` · RF-52). Sin él la vista "Mi cartera" no funciona. El Route Handler puede degradar "Mi cartera" a vacío si el campo aún no existe. `AUTH_Usuarios` existe y está poblada (07-jul-2026).
 - Campos `disponible` y `casos_en_curso` en `M_Tasadores` (H-05): el selector de tasadores del Paso 4 los usará, pero no bloquean este paso.
 
 ### Vistas Airtable requeridas
@@ -225,7 +225,7 @@ El Route Handler firma y envía a `MAKE_WEBHOOK_URL_SC01`:
   "origen_canal":         "ingreso_manual",
   "fldd56pLZyKYoi2Vi":    "Casa Central",
   "ejecutivo_solicitante":"Carla Rojas",
-  "ejecutiva_asignada":   "<record_id M_Usuarios | id Clerk>",
+  "ejecutiva_asignada":   "<record_id AUTH_Usuarios tblbX3hPD2uhqhl5v>",
   "prioridad":            "Normal",
   "adjuntos":             ["<dropbox_url_1>", "<dropbox_url_2>"]
 }

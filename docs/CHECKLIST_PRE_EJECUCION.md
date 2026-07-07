@@ -31,8 +31,8 @@
 - [ ] **Campos discrepantes en `TX_Solicitudes` reconciliados (D-08)**: nombres reales son `n_operacion_cliente` (number · `fldb1vmKk7y3hi4uY`), `sucursal_originadora ` (con espacio final, requiere corrección a `sucursal_originadora`), `ejecutivo_solicitante` (`fldRweQyq3tTQGmPR`).  
   Verificación: `GET /meta/bases/.../tables` refleja el espacio eliminado de `sucursal_originadora`.
 
-- [ ] **Campos ausentes creados en `TX_Solicitudes`** (D-02 + D-08): `notas_tasador` (multilineText), `notas_visador` (multilineText), `ejecutiva_asignada` (link a `M_Usuarios`).  
-  Verificación: schema endpoint los muestra tras cierre de D-08-ejecución.
+- [ ] **Campos ausentes creados en `TX_Solicitudes`** (D-02 + D-08): `notas_tasador` (multilineText), `notas_visador` (multilineText), `ejecutiva_asignada` (link a `AUTH_Usuarios` · `tblbX3hPD2uhqhl5v` · RF-52).  
+  Verificación: schema endpoint los muestra tras cierre de D-08-ejecución. `AUTH_Usuarios` existe y está poblada (07-jul-2026).
 
 - [ ] ⛔ **P0 · H-04 · Campo trigger de AT02 confirmado y creado en `TX_Solicitudes`**. El nombre exacto del campo (checkbox) que AT02 observa para disparar la transición `creada → asignada` debe confirmarse revisando la configuración actual de AT02 en Airtable Automations. Si no existe, crearlo antes de construir RF-06.  
   Verificación: en Airtable Automations → AT02, el trigger muestra el campo checkbox y su nombre exacto. El nombre queda documentado en `docs/schema-airtable.md`.
@@ -115,15 +115,23 @@
 
 ---
 
-## 5. Clerk
+## 5. Autenticación — dominio AUTH_ (RF-52) · Clerk
 
-- [ ] Aplicación Clerk creada con dominio productivo VProperty.  
-  Verificación: dashboard Clerk muestra la app; `CLERK_PUBLISHABLE_KEY` y `CLERK_SECRET_KEY` copiadas a un vault fuera del repo.
+> Todas las tablas Airtable de autenticación usan prefijo `AUTH_`. Las variables de entorno de autenticación usan prefijo `AUTH_`. Las tablas `AUTH_Roles` y `AUTH_Usuarios` existen y están pobladas (07-jul-2026).
 
-- [ ] Rol `ejecutivo_comercial` definido en Clerk (Organization Roles o custom `public_metadata.role`).  
+- [x] ✅ **AUTH_Roles poblada** (`tblhJSBD9xh3ftwbs`) con 3 roles activos: `ejecutiva_comercial` · `visador` · `tasador`.  
+  Verificación MCP 07-jul-2026: 3 registros con `activo=true`.
+
+- [x] ✅ **AUTH_Usuarios poblada** (`tblbX3hPD2uhqhl5v`) con 1 usuario de prueba (ejecutiva_comercial · nutricionsaludketo@gmail.com).  
+  Verificación MCP 07-jul-2026: 1 registro `estado=activo`.
+
+- [ ] **Aplicación Clerk creada** con dominio productivo VProperty.  
+  Verificación: dashboard Clerk muestra la app; `AUTH_CLERK_PUBLISHABLE_KEY` y `AUTH_CLERK_SECRET_KEY` copiadas a un vault fuera del repo. ⚠ Nota: Clerk SDK ≥ v5 permite pasar la clave explícitamente a `<ClerkProvider publishableKey={process.env.AUTH_CLERK_PUBLISHABLE_KEY}>` — no es necesario el nombre `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
+
+- [ ] **Rol `ejecutivo_comercial` verificado en Clerk** (Organization Roles o `public_metadata.role`).  
   Verificación: al menos 1 usuario de prueba con ese rol; `useUser()` en sandbox devuelve el rol.
 
-- [ ] Middleware Clerk protege `/consola/*` y redirige a `/sign-in`.  
+- [ ] **Middleware Clerk protege `/consola/*`** y redirige a `/sign-in`.  
   Verificación: `curl -I https://<dev-host>/consola` responde `302` hacia sign-in cuando no hay sesión.
 
 ---
@@ -134,8 +142,8 @@
   Verificación: dashboard Railway lo muestra; dominio `vproperty-ejecutiva-*.up.railway.app` responde `200` al deploy inicial.
 
 - [ ] Variables de entorno cargadas en Railway (ninguna con prefijo `NEXT_PUBLIC_` que exponga secretos):  
-  `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID=app9G7lLkIV3CpeLa`, `MAKE_WEBHOOK_URL_SC01`, `MAKE_WEBHOOK_URL_SC05`, `MAKE_WEBHOOK_URL_RF09`, `MAKE_HMAC_SECRET`, `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_APP_URL`.  
-  Verificación: `railway variables` los lista; ningún valor sensible aparece en logs.
+  `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID=app9G7lLkIV3CpeLa`, `MAKE_WEBHOOK_URL_SC01`, `MAKE_WEBHOOK_URL_SC05`, `MAKE_WEBHOOK_URL_RF09`, `MAKE_HMAC_SECRET`, `AUTH_CLERK_PUBLISHABLE_KEY`, `AUTH_CLERK_SECRET_KEY`, `AUTH_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_APP_URL`.  
+  Verificación: `railway variables` los lista; ningún valor sensible aparece en logs. (RF-52: prefijo AUTH_ para vars de autenticación.)
 
 ---
 

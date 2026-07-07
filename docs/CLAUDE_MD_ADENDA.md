@@ -172,7 +172,7 @@ schema real:
 | `origen_canal` (singleSelect, `fldPphw1FWfYdZI2Z`) | ✅ existe. |
 | `codigo_ext` (formula, `fldSuJx1fDNYYwDcD`) | Read-only. |
 | `semaforo_sla` (formula, `fldW4oUq7LvQUZq7W`) | Fórmula del semáforo. |
-| `notas_tasador` · `notas_visador` · `ejecutiva_asignada` | ⚠ **Pendientes de creación** (D-08-ejecución). Su creación es obligatoria antes de los Route Handlers de escritura. |
+| `notas_tasador` · `notas_visador` · `ejecutiva_asignada` (Link → `AUTH_Usuarios` · `tblbX3hPD2uhqhl5v` · RF-52) | ⚠ **Pendientes de creación** (D-08-ejecución). Su creación es obligatoria antes de los Route Handlers de escritura. `AUTH_Usuarios` existe y está poblada (07-jul-2026). |
 | campo trigger AT02 | ⚠ **Nombre desconocido** (H-04). Confirmar en UI de Airtable Automations antes de RF-06. |
 
 ### Make (org 1594725 · `eu1.make.com`)
@@ -185,7 +185,7 @@ schema real:
 | SC13 | Notificaciones reasignación/prioridad/pausa | **FUERA DE ALCANCE CU-002** — no provisionar en este CU |
 | E1/E2/E3 | Pipeline PDF (IF-04 aguas abajo) | ✅ ACTIVO — no tocar desde IF-02 |
 
-Variables de entorno esperadas:
+Variables de entorno esperadas (dominio AUTH_ · RF-52):
 ```
 AIRTABLE_TOKEN=patxMFmnYmU30RLIl.***
 AIRTABLE_BASE_ID=app9G7lLkIV3CpeLa
@@ -193,12 +193,13 @@ MAKE_WEBHOOK_URL_SC01=https://hook.eu1.make.com/***
 MAKE_WEBHOOK_URL_SC05=https://hook.eu1.make.com/***
 MAKE_WEBHOOK_URL_RF09=https://hook.eu1.make.com/***
 MAKE_HMAC_SECRET=***
-CLERK_PUBLISHABLE_KEY=***
-CLERK_SECRET_KEY=***
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+AUTH_CLERK_PUBLISHABLE_KEY=***
+AUTH_CLERK_SECRET_KEY=***
+AUTH_CLERK_SIGN_IN_URL=/sign-in
 NEXT_PUBLIC_APP_URL=https://<railway>
 ANTHROPIC_API_KEY=***
 ```
+> Convención AUTH_ (RF-52): las variables de autenticación llevan prefijo `AUTH_`. `AUTH_CLERK_PUBLISHABLE_KEY` se pasa explícitamente como prop a `<ClerkProvider publishableKey={process.env.AUTH_CLERK_PUBLISHABLE_KEY}>`. No se usa el nombre automático `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`.
 
 ## Comandos pnpm canónicos
 

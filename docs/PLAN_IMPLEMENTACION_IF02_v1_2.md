@@ -90,7 +90,7 @@ Tabla base: `TX_Solicitudes` (`tblaHTyMHYfmy7Fg6`). TABLE_IDs y nombres de campo
 | Canal de origen | Select | Sí (alta interna) | `TX_Solicitudes.origen_canal` | `email · telefono · whatsapp · presencial · otro` (auto `ingreso_manual` en alta interna). |
 | Sucursal originadora | Texto | Sí (alta interna) | `TX_Solicitudes.sucursal_originadora` (espacio final **corregido** en Airtable por D-08) | Referencia por FIELD_ID (`fldd56pLZyKYoi2Vi`) hasta que el rename esté propagado. |
 | Ejecutivo solicitante | Texto | Sí (alta interna) | `TX_Solicitudes.ejecutivo_solicitante` (nombre real conservado por D-08) | — |
-| Ejecutiva asignada (VProperty) | Link | Sí | `TX_Solicitudes.ejecutiva_asignada` → `M_Usuarios` (**creado por D-02/D-08**) | Filtra vista "Mi cartera". Asignación automática = usuario Clerk autenticado en la sesión. |
+| Ejecutiva asignada (VProperty) | Link | Sí | `TX_Solicitudes.ejecutiva_asignada` → `AUTH_Usuarios` (`tblbX3hPD2uhqhl5v` · **RF-52**) (**creado por D-02/D-08**) | Filtra vista "Mi cartera". Asignación automática = usuario Clerk autenticado en la sesión. |
 | Prioridad | Select | No | `TX_Solicitudes.prioridad` | Normal/Urgente/Crítico. Cambio a Urgente/Crítico exige justificación (RF-07). |
 | Rol SII | Texto | No | `TX_Solicitudes.rol_sii` | Opcional en alta; RF-09 lo completa después. |
 | Tasador asignado | Link | Cond. | `M_Tasadores` (`tblEi5jp18c1j00bQ`) → `.tasador` | `activo=true` · comuna en `zonas_cobertura`. Disponibilidad = `capacidad_activa` vs conteo de solicitudes activas. Obligatorio para pasar a `asignada`. |
@@ -115,7 +115,7 @@ Tabla base: `TX_Solicitudes` (`tblaHTyMHYfmy7Fg6`). TABLE_IDs y nombres de campo
 | `TX_Solicitudes` | `tblaHTyMHYfmy7Fg6` | Read cartera / write vía SC01 y AT02 | ✅ |
 | `M_Tasadores` | `tblEi5jp18c1j00bQ` | Read selector inteligente | ✅ |
 | `M_Visadores` | `tbludtgDtHWvt0Q3D` | Read selector visador | ✅ |
-| `M_Usuarios` | *(verificar TABLE_ID vía MCP antes de S1)* | Alimenta `ejecutiva_asignada` (D-02) | ⚠ |
+| `AUTH_Usuarios` | `tblbX3hPD2uhqhl5v` | Alimenta `ejecutiva_asignada` (D-02 · RF-52) | ✅ verificado MCP 07-jul-2026 |
 | `M_Clientes` | `tblpK7AcYBMH93apK` | Read para filtros | ✅ |
 | `M_Bancos` | `tblGlYuJo5AeMehhs` | Read banco financista | ✅ |
 | `M_Productos` | `tbll6D4KQ5aDdjjaj` | Read producto | ✅ |
@@ -203,7 +203,7 @@ Comportamiento UI:
 | C-08 | Notificación en reasignación / cambio prioridad / pausa | v0: por definirse | Spec v1.4 §1.6: SC13 notifica al destinatario | **SC13 fuera de alcance CU-002**. La acción se ejecuta en UI + Airtable + `A_Eventos`, sin email. Registrar como deuda técnica para CU posterior. | Bajo (se documenta explícitamente). |
 | C-09 | `next-themes` requerido por sonner | En `package.json` v0 | No mencionado en spec | Mantener; no exponer toggle de tema en IF-02. | Nulo. |
 | C-10 | Nombres de campo en `TX_Solicitudes` | Plan borrador asumía `op_cliente`, `sucursal`, `ejec_solicitante` | Schema real: `n_operacion_cliente` (number), `sucursal_originadora ` (con espacio), `ejecutivo_solicitante` | **D-08 opción C aplicada**: corregir espacio final en Airtable; mantener los otros dos nombres reales; adaptar tipos TS. | Medio (una sola corrección en Airtable + tipos TS). |
-| C-11 | Campos ausentes: `notas_tasador`, `notas_visador`, `ejecutiva_asignada` | Plan borrador los asumía | No existen en schema real | **D-08 + D-02 aplicadas**: crear los tres campos en `TX_Solicitudes` (multilineText para notas; link a `M_Usuarios` para `ejecutiva_asignada`). | Medio. |
+| C-11 | Campos ausentes: `notas_tasador`, `notas_visador`, `ejecutiva_asignada` | Plan borrador los asumía | No existen en schema real | **D-08 + D-02 aplicadas**: crear los tres campos en `TX_Solicitudes` (multilineText para notas; link a `AUTH_Usuarios` (`tblbX3hPD2uhqhl5v` · RF-52) para `ejecutiva_asignada`). | Medio. |
 | C-12 | Campos `disponible` y `casos_en_curso` en `M_Tasadores` | Plan borrador los asumía · MCP snapshot 04-jul-2026 no los encontró en Airtable real | **Sí están definidos** en tres fuentes canónicas: Capa Datos v2.6.2 (`disponible` = Formula `IF(casos_en_curso < capacidad_activa, TRUE, FALSE)`; `casos_en_curso` = Count link a `TX_Solicitudes` activas) · Motor Cálculo v2.5 (PASO 3: `WHERE disponible = TRUE`; PASO 4: `ORDER BY casos_en_curso ASC`) · Blueprint v2.7 §7.2 ("disponible=true, zona compatible; despliega carga (casos_en_curso/capacidad)") | **Pendiente Ingeniero Airtable**: crear `disponible` (Formula) y `casos_en_curso` (Count link) en M_Tasadores si no existen en la instancia real. El Route Handler `/api/tasadores` debe filtrar por `disponible = TRUE` y ordenar por `casos_en_curso ASC`. | Medio (creación en Airtable + uso en Route Handler). |
 
 ---
@@ -278,7 +278,7 @@ Estado tras la aprobación del propietario el 06-jul-2026. Ya no hay preguntas a
 | ID | Decisión | Resultado |
 |---|---|---|
 | **D-01** | Reasignación de visador por la Ejecutiva | **Ocultada**. Prevalece Spec v1.4. El dato queda visible en `TabDatos` sin acción. Aplicado en §1.2, §1.6 C-01. |
-| **D-02** | Vista "Mi cartera" por ejecutiva autenticada | **Crear** `TX_Solicitudes.ejecutiva_asignada` (link a `M_Usuarios`). Aplicado en §1.3, §1.6 C-11. |
+| **D-02** | Vista "Mi cartera" por ejecutiva autenticada | **Crear** `TX_Solicitudes.ejecutiva_asignada` (link a `AUTH_Usuarios` · `tblbX3hPD2uhqhl5v` · RF-52). Aplicado en §1.3, §1.6 C-11. |
 | **D-03** | Firma HMAC en webhook Make | **Header `X-VP-Signature` con HMAC-SHA256** en SC01 y SC05. Aplicado en §1.4, §1.5. |
 | **D-04** | Override manual de asignación de tasador | **AT02 respeta la asignación previa** si existe y registra `A_Cambios(motivo=override_manual)`. Aplicado en §1.4, §1.5. |
 | **D-05** | Extracción con Claude API (era SC07) | **REVOCADA**: pasa a **RF-09** dentro de CU-002. Diseñada para reuso en IF-03/IF-04/IF-05. Aplicado en §1.2, §1.4, orden §1.7.3 paso 6. |
@@ -298,7 +298,7 @@ Estos ítems son los únicos que restan antes de generar `/docs/diseno.md` y `/d
 | **BQ-3-b** | JSON de escenario **SC05** | Integrador Make | Archivo `sc05_notificar_tasador.blueprint.json` importable en Make + activación. Módulo Gmail aislado para futuro swap al servidor VProperty. |
 | **BQ-3-c** | JSON de escenario **RF-09 · Extracción Claude API** | Integrador Make + Panel | `rf09_extraccion_claude.blueprint.json`. Puede quedar para el paso 6 del orden §1.7.3 sin bloquear los anteriores. |
 | **BQ-4-residual** | Script **AT08** | Ingeniero Airtable | `at08_sla_diario.js` para pegar en Airtable Automations + activación. Puede quedar para el paso 7. |
-| **D-08-ejecución** | Ajustes de schema en Airtable | Ingeniero Airtable | (a) Renombrar `sucursal_originadora ` → `sucursal_originadora` (quitar espacio); (b) crear campos `notas_tasador`, `notas_visador`, `ejecutiva_asignada`; (c) verificar existencia de `M_Usuarios` y su TABLE_ID; (d) crear `disponible` (Formula) y `casos_en_curso` (Count link) en `M_Tasadores` si no existen. |
+| **D-08-ejecución** | Ajustes de schema en Airtable | Ingeniero Airtable | (a) Renombrar `sucursal_originadora ` → `sucursal_originadora` (quitar espacio); (b) crear campos `notas_tasador`, `notas_visador`, `ejecutiva_asignada`; (c) `AUTH_Usuarios` confirmado: `tblbX3hPD2uhqhl5v` ✅ (RF-52 · 07-jul-2026) — usar como destino del link `ejecutiva_asignada`; (d) crear `disponible` (Formula) y `casos_en_curso` (Count link) en `M_Tasadores` si no existen. |
 | **Railway `MAKE_*`** | Variables de entorno | Sergio | `MAKE_WEBHOOK_URL_SC01`, `MAKE_WEBHOOK_URL_SC05`, `MAKE_WEBHOOK_URL_RF09`, `MAKE_HMAC_SECRET`. Quedan **pendientes** por decisión del propietario; sin ellas se puede avanzar hasta el paso 3 del orden §1.7.3. |
 
 ---
