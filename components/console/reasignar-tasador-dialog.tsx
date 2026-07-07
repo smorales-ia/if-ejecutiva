@@ -1,16 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { AlertTriangle, Check, ChevronsUpDown, UserCog } from "lucide-react"
+import { Check, ChevronsUpDown, UserCog } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
-import {
-  TASADORES,
-  VISADORES,
-  type Profesional,
-  type Solicitud,
-} from "@/lib/console-data"
+import type { Solicitud } from "@/lib/console-data"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -45,7 +40,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const MOTIVOS = [
   "Sobrecarga del profesional actual",
@@ -55,6 +49,13 @@ const MOTIVOS = [
   "Reasignación por especialidad",
   "Otro",
 ] as const
+
+/** Pool de reasignación: /api/tasadores (capacidadActiva) o /api/visadores (casosEnCola). */
+interface PoolItem {
+  id: string
+  nombre: string
+  metrica: number
+}
 
 function cargaTono(carga: number) {
   if (carga >= 8) return "text-red-600"
@@ -74,13 +75,15 @@ export function ReasignarTasadorDialog({
   onReasignado: (anterior: string, nuevo: string) => void
 }) {
   const roleLabel = role === "tasador" ? "tasador" : "visador"
-  const pool = role === "tasador" ? TASADORES : VISADORES
+  const metricaLabel = role === "tasador" ? "cupos de capacidad" : "casos en cola"
+  const endpoint = role === "tasador" ? "/api/tasadores" : "/api/visadores"
 
   const [open, setOpen] = React.useState(false)
   const [pickerOpen, setPickerOpen] = React.useState(false)
-  const [seleccionado, setSeleccionado] = React.useState<Profesional | null>(
-    null
-  )
+  const [pool, setPool] = React.useState<PoolItem[]>([])
+  const [poolLoading, setPoolLoading] = React.useState(false)
+  const [poolError, setPoolError] = React.useState(false)
+  const [seleccionado, setSeleccionado] = React.useState<PoolItem | null>(null)
   const [motivo, setMotivo] = React.useState("")
   const [nota, setNota] = React.useState("")
   const [enviando, setEnviando] = React.useState(false)
@@ -89,20 +92,44 @@ export function ReasignarTasadorDialog({
     motivo?: string
   }>({})
 
-  // Resetea el formulario cada vez que se abre.
+  // Resetea el formulario y carga el pool cada vez que se abre.
   React.useEffect(() => {
-    if (open) {
-      setSeleccionado(null)
-      setMotivo("")
-      setNota("")
-      setErrores({})
-      setEnviando(false)
-    }
-  }, [open])
+    if (!open) return
+    setSeleccionado(null)
+    setMotivo("")
+    setNota("")
+    setErrores({})
+    setEnviando(false)
 
-  const fueraDeCobertura =
-    seleccionado != null &&
-    !seleccionado.cobertura.includes(solicitud.comuna)
+    let cancelado = false
+    setPoolLoading(true)
+    setPoolError(false)
+    fetch(endpoint)
+      .then((res) => {
+        if (!res.ok) throw new Error("fetch pool falló")
+        return res.json() as Promise<{ data: Array<{ id: string; nombre: string; capacidadActiva?: number; casosEnCola?: number }> }>
+      })
+      .then((json) => {
+        if (cancelado) return
+        setPool(
+          json.data.map((p) => ({
+            id: p.id,
+            nombre: p.nombre,
+            metrica: p.capacidadActiva ?? p.casosEnCola ?? 0,
+          }))
+        )
+      })
+      .catch(() => {
+        if (!cancelado) setPoolError(true)
+      })
+      .finally(() => {
+        if (!cancelado) setPoolLoading(false)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [open, endpoint])
+
   const mismaPersona =
     seleccionado != null && seleccionado.nombre === actual
 
@@ -193,48 +220,53 @@ export function ReasignarTasadorDialog({
                 align="start"
               >
                 <Command>
-                  <CommandInput placeholder={`Buscar por nombre o RUT…`} />
+                  <CommandInput placeholder={`Buscar por nombre…`} />
                   <CommandList>
-                    <CommandEmpty>Sin resultados.</CommandEmpty>
-                    <CommandGroup>
-                      {pool.map((p) => (
-                        <CommandItem
-                          key={p.id}
-                          value={`${p.nombre} ${p.rut}`}
-                          onSelect={() => {
-                            setSeleccionado(p)
-                            setPickerOpen(false)
-                            setErrores((e) => ({ ...e, profesional: undefined }))
-                          }}
-                        >
-                          <div className="flex min-w-0 flex-1 flex-col">
-                            <span className="truncate text-sm font-medium">
-                              {p.nombre}
-                            </span>
-                            <span className="truncate text-xs text-muted-foreground">
-                              {p.rut} · {p.carga} activas
-                            </span>
-                          </div>
-                          {p.cobertura.includes(solicitud.comuna) ? (
-                            <span className="ml-2 shrink-0 text-[11px] font-medium text-emerald-600">
-                              En cobertura
-                            </span>
-                          ) : (
-                            <span className="ml-2 shrink-0 text-[11px] font-medium text-amber-600">
-                              Fuera
-                            </span>
-                          )}
-                          <Check
-                            className={cn(
-                              "ml-2 size-4 shrink-0",
-                              seleccionado?.id === p.id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                    {poolLoading && (
+                      <p className="px-3 py-4 text-center text-sm text-muted-foreground">
+                        Cargando {roleLabel}es…
+                      </p>
+                    )}
+                    {!poolLoading && poolError && (
+                      <p className="px-3 py-4 text-center text-sm text-destructive">
+                        No pudimos completar la acción. Intenta nuevamente en unos segundos.
+                      </p>
+                    )}
+                    {!poolLoading && !poolError && (
+                      <>
+                        <CommandEmpty>Sin resultados.</CommandEmpty>
+                        <CommandGroup>
+                          {pool.map((p) => (
+                            <CommandItem
+                              key={p.id}
+                              value={p.nombre}
+                              onSelect={() => {
+                                setSeleccionado(p)
+                                setPickerOpen(false)
+                                setErrores((e) => ({ ...e, profesional: undefined }))
+                              }}
+                            >
+                              <div className="flex min-w-0 flex-1 flex-col">
+                                <span className="truncate text-sm font-medium">
+                                  {p.nombre}
+                                </span>
+                                <span className="truncate text-xs text-muted-foreground">
+                                  {p.metrica} {metricaLabel}
+                                </span>
+                              </div>
+                              <Check
+                                className={cn(
+                                  "ml-2 size-4 shrink-0",
+                                  seleccionado?.id === p.id
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </>
+                    )}
                   </CommandList>
                 </Command>
               </PopoverContent>
@@ -246,38 +278,19 @@ export function ReasignarTasadorDialog({
 
           {/* Ficha del profesional seleccionado */}
           {seleccionado && (
-            <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-card p-3">
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-muted-foreground">
-                  Carga actual
-                </span>
-                <span
-                  className={cn(
-                    "text-sm font-semibold",
-                    cargaTono(seleccionado.carga)
-                  )}
-                >
-                  {seleccionado.carga} solicitudes activas
-                </span>
-              </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-muted-foreground">Cobertura</span>
-                <span className="text-sm font-medium text-foreground">
-                  {seleccionado.cobertura.length} comunas
-                </span>
-              </div>
+            <div className="rounded-lg border border-border bg-card p-3">
+              <span className="text-xs text-muted-foreground">
+                {roleLabel === "tasador" ? "Capacidad" : "Carga actual"}
+              </span>
+              <p
+                className={cn(
+                  "text-sm font-semibold",
+                  cargaTono(seleccionado.metrica)
+                )}
+              >
+                {seleccionado.metrica} {metricaLabel}
+              </p>
             </div>
-          )}
-
-          {/* Aviso fuera de cobertura */}
-          {fueraDeCobertura && (
-            <Alert variant="destructive">
-              <AlertTriangle />
-              <AlertTitle>Fuera de cobertura territorial</AlertTitle>
-              <AlertDescription>
-                {`${seleccionado?.nombre} no cubre ${solicitud.comuna}. Puedes continuar, pero la asignación quedará marcada como excepción.`}
-              </AlertDescription>
-            </Alert>
           )}
 
           {/* Motivo */}

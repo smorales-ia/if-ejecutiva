@@ -100,7 +100,7 @@ function computeSlaDias(fechaLimite: string | undefined, semaforo: string | unde
   return 3
 }
 
-function relativeTime(iso: string): string {
+export function relativeTime(iso: string): string {
   const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3_600_000)
   if (h < 1) return 'hace menos de 1 hora'
   if (h < 24) return `hace ${h} hora${h !== 1 ? 's' : ''}`

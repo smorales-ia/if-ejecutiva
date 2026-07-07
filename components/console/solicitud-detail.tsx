@@ -41,20 +41,19 @@ import {
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import {
-  ADJUNTOS,
-  HISTORIAL,
-  type Adjunto,
-  type EventoHistorial,
-  type Solicitud,
-} from "@/lib/console-data"
+import type { Solicitud } from "@/lib/console-data"
+import type { Evento, IconoEvento } from "@/lib/eventos"
+import type { Adjunto } from "@/lib/adjuntos"
 
-const historialIcons = {
+const historialIcons: Record<IconoEvento, typeof CheckCircle2> = {
   check: CheckCircle2,
   plus: PlusCircle,
   alert: AlertTriangle,
   eye: Eye,
 }
+
+/** Item local optimista, agregado antes de que el próximo fetch lo confirme. */
+type AdjuntoLocal = Adjunto & { urlDropbox: string }
 
 export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const s = solicitud
@@ -63,10 +62,16 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   // Estado local que se refresca tras reasignar o adjuntar.
   const [tasador, setTasador] = React.useState(s.tasador)
   const [visador, setVisador] = React.useState(s.visador)
-  const [historialExtra, setHistorialExtra] = React.useState<
-    EventoHistorial[]
-  >([])
-  const [adjuntos, setAdjuntos] = React.useState<Adjunto[]>(ADJUNTOS)
+  const [historialExtra, setHistorialExtra] = React.useState<Evento[]>([])
+  const [adjuntosExtra, setAdjuntosExtra] = React.useState<AdjuntoLocal[]>([])
+
+  const [historialBase, setHistorialBase] = React.useState<Evento[]>([])
+  const [historialLoading, setHistorialLoading] = React.useState(true)
+  const [historialError, setHistorialError] = React.useState(false)
+
+  const [adjuntosBase, setAdjuntosBase] = React.useState<Adjunto[]>([])
+  const [adjuntosLoading, setAdjuntosLoading] = React.useState(true)
+  const [adjuntosError, setAdjuntosError] = React.useState(false)
 
   // Resetea el estado local cuando cambia la solicitud seleccionada.
   const prevId = React.useRef(s.id)
@@ -75,14 +80,60 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     setTasador(s.tasador)
     setVisador(s.visador)
     setHistorialExtra([])
-    setAdjuntos(ADJUNTOS)
+    setAdjuntosExtra([])
   }
+
+  React.useEffect(() => {
+    let cancelado = false
+    setHistorialLoading(true)
+    setHistorialError(false)
+    fetch(`/api/solicitudes/${s.id}/eventos`)
+      .then((res) => {
+        if (!res.ok) throw new Error("fetch eventos falló")
+        return res.json() as Promise<{ data: Evento[] }>
+      })
+      .then((json) => {
+        if (!cancelado) setHistorialBase(json.data)
+      })
+      .catch(() => {
+        if (!cancelado) setHistorialError(true)
+      })
+      .finally(() => {
+        if (!cancelado) setHistorialLoading(false)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [s.id])
+
+  React.useEffect(() => {
+    let cancelado = false
+    setAdjuntosLoading(true)
+    setAdjuntosError(false)
+    fetch(`/api/solicitudes/${s.id}/adjuntos`)
+      .then((res) => {
+        if (!res.ok) throw new Error("fetch adjuntos falló")
+        return res.json() as Promise<{ data: Adjunto[] }>
+      })
+      .then((json) => {
+        if (!cancelado) setAdjuntosBase(json.data)
+      })
+      .catch(() => {
+        if (!cancelado) setAdjuntosError(true)
+      })
+      .finally(() => {
+        if (!cancelado) setAdjuntosLoading(false)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [s.id])
 
   function handleReasignado(anterior: string, nuevo: string) {
     setTasador(nuevo)
     setHistorialExtra((prev) => [
       {
-        id: `reasig-${Date.now()}`,
+        id: `reasig-${prev.length}`,
         titulo: `Reasignación manual de tasador · ${
           anterior || "Sin asignar"
         } → ${nuevo} · por María Espinoza`,
@@ -94,17 +145,19 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   }
 
   function handleAdjuntos(nuevos: ArchivoSubido[]) {
-    setAdjuntos((prev) => [
+    setAdjuntosExtra((prev) => [
       ...nuevos.map((n) => ({
         id: n.id,
         nombre: n.nombre,
         detalle: n.detalle,
+        urlDropbox: "",
       })),
       ...prev,
     ])
   }
 
-  const historialCompleto = [...historialExtra, ...HISTORIAL]
+  const historialCompleto = [...historialExtra, ...historialBase]
+  const adjuntosCompleto = [...adjuntosExtra, ...adjuntosBase]
 
   return (
     <div className="flex h-full w-full flex-col bg-background">
@@ -187,10 +240,19 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
             <DatosTab solicitud={s} tasador={tasador} visador={visador} />
           </TabsContent>
           <TabsContent value="historial">
-            <HistorialTab eventos={historialCompleto} />
+            <HistorialTab
+              eventos={historialCompleto}
+              loading={historialLoading}
+              error={historialError}
+            />
           </TabsContent>
           <TabsContent value="adjuntos">
-            <AdjuntosTab adjuntos={adjuntos} onUploaded={handleAdjuntos} />
+            <AdjuntosTab
+              adjuntos={adjuntosCompleto}
+              loading={adjuntosLoading}
+              error={adjuntosError}
+              onUploaded={handleAdjuntos}
+            />
           </TabsContent>
         </div>
       </Tabs>
@@ -360,7 +422,39 @@ function DatosTab({
   )
 }
 
-function HistorialTab({ eventos }: { eventos: EventoHistorial[] }) {
+function HistorialTab({
+  eventos,
+  loading,
+  error,
+}: {
+  eventos: Evento[]
+  loading: boolean
+  error: boolean
+}) {
+  if (loading) {
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        Cargando historial…
+      </p>
+    )
+  }
+
+  if (error) {
+    return (
+      <p className="py-6 text-center text-sm text-destructive">
+        No pudimos completar la acción. Intenta nuevamente en unos segundos.
+      </p>
+    )
+  }
+
+  if (eventos.length === 0) {
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        Sin eventos registrados todavía.
+      </p>
+    )
+  }
+
   return (
     <ol className="flex flex-col">
       {eventos.map((ev, idx) => {
@@ -389,9 +483,13 @@ function HistorialTab({ eventos }: { eventos: EventoHistorial[] }) {
 
 function AdjuntosTab({
   adjuntos,
+  loading,
+  error,
   onUploaded,
 }: {
   adjuntos: Adjunto[]
+  loading: boolean
+  error: boolean
   onUploaded: (archivos: ArchivoSubido[]) => void
 }) {
   return (
@@ -412,34 +510,68 @@ function AdjuntosTab({
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Documentos del expediente ({adjuntos.length})
         </h2>
-        <ul className="flex flex-col gap-2">
-          {adjuntos.map((a) => {
-            const isPdf = a.nombre.toLowerCase().endsWith(".pdf")
-            const Icon = isPdf ? FileText : ImageIcon
-            return (
-              <li
-                key={a.id}
-                className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
-              >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                  <Icon className="size-4" />
-                </span>
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <span className="truncate text-sm font-medium text-foreground">
-                    {a.nombre}
+
+        {loading && (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            Cargando adjuntos…
+          </p>
+        )}
+
+        {!loading && error && (
+          <p className="py-4 text-center text-sm text-destructive">
+            No pudimos completar la acción. Intenta nuevamente en unos segundos.
+          </p>
+        )}
+
+        {!loading && !error && adjuntos.length === 0 && (
+          <p className="py-4 text-center text-sm text-muted-foreground">
+            Sin documentos adjuntos todavía.
+          </p>
+        )}
+
+        {!loading && !error && adjuntos.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {adjuntos.map((a) => {
+              const isPdf = a.nombre.toLowerCase().endsWith(".pdf")
+              const Icon = isPdf ? FileText : ImageIcon
+              return (
+                <li
+                  key={a.id}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+                >
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    <Icon className="size-4" />
                   </span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {a.detalle}
-                  </span>
-                </div>
-                <Button variant="outline" size="sm">
-                  <Download data-icon="inline-start" />
-                  Descargar
-                </Button>
-              </li>
-            )
-          })}
-        </ul>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-sm font-medium text-foreground">
+                      {a.nombre}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {a.detalle}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!a.urlDropbox}
+                    render={
+                      a.urlDropbox ? (
+                        <a
+                          href={a.urlDropbox}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      ) : undefined
+                    }
+                  >
+                    <Download data-icon="inline-start" />
+                    Descargar
+                  </Button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
       </section>
     </div>
   )

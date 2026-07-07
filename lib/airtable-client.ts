@@ -36,6 +36,13 @@ export interface AirtableRecord<T> {
   fields: T
 }
 
+/** Formato de record ID de Airtable (`recXXXXXXXXXXXXXX`). */
+const RECORD_ID_RE = /^rec[a-zA-Z0-9]{14}$/
+
+export function isValidRecordId(id: string): boolean {
+  return RECORD_ID_RE.test(id)
+}
+
 type Params = Record<string, string | string[]>
 
 export async function listRecords<T>(
@@ -73,4 +80,30 @@ export async function listRecords<T>(
   } while (offset)
 
   return all
+}
+
+export async function getRecord<T>(
+  tableId: string,
+  recordId: string,
+  params: Params = {}
+): Promise<AirtableRecord<T> | null> {
+  const baseId = process.env.AIRTABLE_BASE_ID
+  if (!baseId) throw new Error('AIRTABLE_BASE_ID is not configured')
+
+  const url = new URL(`${API_BASE}/${baseId}/${tableId}/${recordId}`)
+  for (const [key, val] of Object.entries(params)) {
+    if (Array.isArray(val)) {
+      for (const v of val) url.searchParams.append(`${key}[]`, v)
+    } else {
+      url.searchParams.set(key, val)
+    }
+  }
+
+  const res = await request(url.toString())
+  if (res.status === 404) return null
+  if (!res.ok) {
+    throw new AirtableError(res.status, await res.text())
+  }
+
+  return (await res.json()) as AirtableRecord<T>
 }

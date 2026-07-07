@@ -399,3 +399,24 @@ app/
 - Deploy v0 base: <https://v0.app/nutricionsaludketo-8075s-projects/chat/if-ejecutiva-gfvE6z3qTyX>
 
 <!-- === Fin adenda CU-002 · IF-02 v1.2 === -->
+
+## Aprendizajes de sesión (obligatorio al cerrar)
+
+Al finalizar cada sesión de trabajo, antes de despedirte, DEBES agregar una entrada nueva al archivo `docs/aprendizajes.md` únicamente si durante la sesión se resolvió al menos un inconveniente, error, bloqueo o hallazgo no trivial.
+
+Reglas:
+- No sobrescribas entradas anteriores. Solo agrega al final.
+- No inventes aprendizajes: si la sesión fue solo lectura o no hubo inconvenientes, no escribas nada y avísalo en una línea.
+- Una entrada por sesión, con una o varias sub-entradas por cada inconveniente resuelto.
+- Escribe en español, en prosa breve. Nada de relleno.
+
+Formato de cada entrada:
+
+### YYYY-MM-DD — <título corto de la sesión>
+**Contexto:** <en qué paso/RF/tarea estábamos>
+**Inconveniente:** <qué falló o qué no se sabía>
+**Causa raíz:** <por qué ocurrió>
+**Solución aplicada:** <qué se hizo, con archivos/comandos concretos>
+**Prevención futura:** <cómo evitar que vuelva a pasar>
+
+Si hay más de un inconveniente en la misma sesión, repite el bloque bajo el mismo encabezado de fecha.
