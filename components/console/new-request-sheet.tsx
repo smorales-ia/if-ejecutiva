@@ -256,7 +256,7 @@ export function NewRequestSheet() {
                 >
                   <Select
                     value={field.value}
-                    onValueChange={(v) => handleClienteChange(v, field.onChange)}
+                    onValueChange={(v) => handleClienteChange(v ?? '', field.onChange)}
                   >
                     <SelectTrigger
                       id="cliente"
@@ -443,7 +443,7 @@ export function NewRequestSheet() {
                   >
                     <Select
                       value={field.value}
-                      onValueChange={(v) => handleRegionChange(v, field.onChange)}
+                      onValueChange={(v) => handleRegionChange(v ?? '', field.onChange)}
                     >
                       <SelectTrigger
                         id="region"
@@ -661,8 +661,8 @@ export function NewRequestSheet() {
                   <Select
                     value={field.value}
                     onValueChange={(v) => {
-                      field.onChange(v)
-                      if (!PRODUCTOS_CON_BANCO.includes(v))
+                      field.onChange(v ?? '')
+                      if (!PRODUCTOS_CON_BANCO.includes(v ?? ''))
                         setValue("banco", "", { shouldValidate: false })
                     }}
                     disabled={!cliente}

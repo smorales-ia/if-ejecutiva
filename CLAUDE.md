@@ -23,6 +23,8 @@ Este repo implementa **IF-02**: la consola diaria de la Ejecutiva Comercial de V
 
 ## Cómo trabajar en este repo
 
+> **Antes de proponer cualquier comando de terminal, lee `docs/aprendizajes.md`.**
+
 1. Lee `docs/diseno.md`, `docs/construccion.md` y `docs/schema-airtable.md` al inicio de la sesión.
 2. Implementa **una RF por sesión**. Nunca "construir toda la consola" de golpe.
 3. Después de cada RF: `pnpm build` debe salir limpio antes del commit.

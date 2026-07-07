@@ -2,11 +2,34 @@ import { listRecords } from '@/lib/airtable-client'
 import type { EstadoSolicitud, Prioridad, Solicitud } from '@/lib/console-data'
 
 // TX_Solicitudes verified via MCP 2026-07-04
-const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
+export const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
 
 // Airtable returns all values as strings when cellFormat=string.
 // Linked record fields return comma-separated primary field values.
 type RawFields = Record<string, string | undefined>
+
+export const SOLICITUD_FIELDS: string[] = [
+  'codigo_ext',
+  'estado',
+  'prioridad',
+  'cliente',
+  'tasador',
+  'visador',
+  'comuna',
+  'tipo_informe',
+  'tipo_propiedad',
+  'banco',
+  'producto',
+  'fecha_limite_entrega',
+  'fecha_visita_programada',
+  'observaciones_internas',
+  'origen_canal',
+  'ejecutivo_solicitante',
+  'cliente_final_nombre',
+  'cliente_final_rut',
+  'semaforo_sla',
+  'direccion',
+]
 
 function parseDate(str: string | undefined): Date | null {
   if (!str) return null
@@ -52,7 +75,7 @@ function relativeTime(iso: string): string {
   return `hace ${d} día${d !== 1 ? 's' : ''}`
 }
 
-function mapRecord(id: string, createdTime: string, f: RawFields): Solicitud {
+export function mapRecord(id: string, createdTime: string, f: Record<string, string | undefined>): Solicitud {
   return {
     id,
     codigoExt: f['codigo_ext'] ?? id,
@@ -95,28 +118,7 @@ export async function fetchSolicitudes(): Promise<Solicitud[]> {
     filterByFormula: "NOT(OR({estado}='cancelada',{estado}='cerrada',{estado}='entregada'))",
     'sort[0][field]': 'fecha_limite_entrega',
     'sort[0][direction]': 'asc',
-    fields: [
-      'codigo_ext',
-      'estado',
-      'prioridad',
-      'cliente',
-      'tasador',
-      'visador',
-      'comuna',
-      'tipo_informe',
-      'tipo_propiedad',
-      'banco',
-      'producto',
-      'fecha_limite_entrega',
-      'fecha_visita_programada',
-      'observaciones_internas',
-      'origen_canal',
-      'ejecutivo_solicitante',
-      'cliente_final_nombre',
-      'cliente_final_rut',
-      'semaforo_sla',
-      'direccion',
-    ],
+    fields: SOLICITUD_FIELDS,
   })
 
   return records.map((r) => mapRecord(r.id, r.createdTime, r.fields))
