@@ -125,36 +125,64 @@ export const CANALES_ORIGEN = [
 ] as const
 
 export const CLIENTES = [
-  "Banco Santander",
+  "Santander Hipotecaria",
   "Banco de Chile",
-  "BCI",
+  "BCI Mutuos",
   "Banco Estado",
   "Scotiabank",
-  "Itaú",
+  "Banco Itaú",
 ] as const
+
+/**
+ * Tipos de informe reales de M_TiposInforme (Airtable, verificado vía MCP).
+ * Sin criterio de negocio para filtrar por cliente todavía (pendiente,
+ * ver docs/_notas/reinicio_construccion_5.md) — se ofrecen los 8 a todos.
+ */
+const TIPOS_INFORME_DISPONIBLES = [
+  "Pericial",
+  "Compraventa",
+  "Mutuo Hipotecario",
+  "Comercial",
+  "Leasing Habitacional",
+  "Piloto",
+  "Refinanciamiento",
+  "Seguro",
+]
 
 /** Tipos de informe disponibles por cliente. */
 export const TIPOS_INFORME_POR_CLIENTE: Record<string, string[]> = {
-  "Banco Santander": [
-    "Tasación hipotecaria",
-    "Revisión de tasación",
-    "Tasación comercial",
-  ],
-  "Banco de Chile": ["Tasación hipotecaria", "Tasación comercial"],
-  BCI: ["Tasación comercial", "Tasación judicial", "Tasación hipotecaria"],
-  "Banco Estado": ["Tasación hipotecaria"],
-  Scotiabank: ["Tasación hipotecaria", "Revisión de tasación"],
-  Itaú: ["Tasación hipotecaria", "Tasación comercial"],
+  "Santander Hipotecaria": TIPOS_INFORME_DISPONIBLES,
+  "Banco de Chile": TIPOS_INFORME_DISPONIBLES,
+  "BCI Mutuos": TIPOS_INFORME_DISPONIBLES,
+  "Banco Estado": TIPOS_INFORME_DISPONIBLES,
+  Scotiabank: TIPOS_INFORME_DISPONIBLES,
+  "Banco Itaú": TIPOS_INFORME_DISPONIBLES,
 }
+
+/**
+ * Productos reales de M_Productos (Airtable, verificado vía MCP).
+ * "Credito Hipotecario" sin tilde — así está en Airtable real.
+ * Sin criterio de negocio para filtrar por cliente todavía (pendiente,
+ * ver docs/_notas/reinicio_construccion_5.md) — se ofrecen los 7 a todos.
+ */
+const PRODUCTOS_DISPONIBLES = [
+  "Refinanciamiento",
+  "Pericial Judicial",
+  "Leasing Habitacional",
+  "Compraventa",
+  "Seguro Incendio",
+  "Credito Hipotecario",
+  "Refinanciamiento Hipotecario",
+]
 
 /** Productos disponibles por cliente. */
 export const PRODUCTOS_POR_CLIENTE: Record<string, string[]> = {
-  "Banco Santander": ["hipotecario", "refinanciamiento", "comercial"],
-  "Banco de Chile": ["hipotecario", "comercial"],
-  BCI: ["comercial", "hipotecario", "leasing"],
-  "Banco Estado": ["hipotecario", "refinanciamiento"],
-  Scotiabank: ["hipotecario", "refinanciamiento"],
-  Itaú: ["hipotecario", "comercial"],
+  "Santander Hipotecaria": PRODUCTOS_DISPONIBLES,
+  "Banco de Chile": PRODUCTOS_DISPONIBLES,
+  "BCI Mutuos": PRODUCTOS_DISPONIBLES,
+  "Banco Estado": PRODUCTOS_DISPONIBLES,
+  Scotiabank: PRODUCTOS_DISPONIBLES,
+  "Banco Itaú": PRODUCTOS_DISPONIBLES,
 }
 
 export const PRODUCTO_LABELS: Record<string, string> = {
@@ -165,7 +193,7 @@ export const PRODUCTO_LABELS: Record<string, string> = {
 }
 
 /** Productos que requieren banco financista. */
-export const PRODUCTOS_CON_BANCO = ["hipotecario", "refinanciamiento"]
+export const PRODUCTOS_CON_BANCO = ["Credito Hipotecario", "Refinanciamiento Hipotecario"]
 
 export const BANCOS = [
   "Banco Santander",
@@ -191,19 +219,23 @@ export const TIPOS_PROPIEDAD = [
 
 /**
  * Bancos originadores (M_BANCOS) para el campo "Banco" de ORIGEN DE LA SOLICITUD.
- * El valor persistido en TX_Solicitudes.banco es el `id`.
+ * `id` = `nombre` (nombre real de M_Bancos en Airtable) para que el valor que
+ * viaja en el Select sea directamente el texto a persistir en
+ * TX_Solicitudes.banco (texto libre) — sin transformación en el servidor.
+ * "Banco Estado" y "Banco Security" no existen en M_Bancos real (pendiente,
+ * ver docs/_notas/reinicio_construccion_5.md); el resto está verificado vía MCP.
  */
 export const M_BANCOS = [
-  { id: "banco_estado", nombre: "BancoEstado" },
-  { id: "santander", nombre: "Santander" },
-  { id: "bci", nombre: "BCI" },
-  { id: "banco_chile", nombre: "Banco de Chile" },
-  { id: "itau", nombre: "Itaú" },
-  { id: "scotiabank", nombre: "Scotiabank" },
-  { id: "security", nombre: "Security" },
-  { id: "bice", nombre: "BICE" },
-  { id: "falabella", nombre: "Falabella" },
-  { id: "ripley", nombre: "Ripley" },
+  { id: "Banco Estado", nombre: "Banco Estado" },
+  { id: "Banco Santander", nombre: "Banco Santander" },
+  { id: "Banco BCI", nombre: "Banco BCI" },
+  { id: "Banco de Chile", nombre: "Banco de Chile" },
+  { id: "Banco Itau", nombre: "Banco Itau" },
+  { id: "Scotiabank Chile", nombre: "Scotiabank Chile" },
+  { id: "Banco Security", nombre: "Banco Security" },
+  { id: "BICE Hipotecaria", nombre: "BICE Hipotecaria" },
+  { id: "Banco Falabella", nombre: "Banco Falabella" },
+  { id: "Banco Ripley", nombre: "Banco Ripley" },
 ] as const
 
 export interface TipoDocumento {
@@ -298,7 +330,7 @@ export const COMUNAS_POR_REGION: Record<string, string[]> = {
     "Puente Alto",
   ],
   Valparaíso: ["Valparaíso", "Viña del Mar", "Quilpué", "Concón"],
-  Biobío: ["Concepción", "Talcahuano", "San Pedro de la Paz"],
+  Biobío: ["Concepción", "Talcahuano", "San Pedro de La Paz"],
   "O'Higgins": ["Rancagua", "Machalí", "San Fernando"],
 }
 

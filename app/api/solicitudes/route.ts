@@ -78,18 +78,19 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Tanda 4A · endpoint SIMULADO: valida y responde 201, sin llamar a Make
- * ni escribir en Airtable. La escritura real queda para Tanda 4B.
+ * Fase 2 · alta interna real vía SC01 (Make). Si MAKE_WEBHOOK_URL_SC01 no está
+ * configurada, cae a modo simulado (sim-<uuid>) sin llamar a Make ni escribir
+ * en Airtable — así el formulario sigue siendo usable en entornos sin Make.
  *
- * Notas para Tanda 4B (no implementadas aquí, son solo la estrategia acordada):
+ * Notas heredadas de Tanda 4A (siguen vigentes):
  *  - `origen_canal` se fija a "ingreso_manual" (único valor válido del singleSelect
  *    real: tally_externo · ingreso_manual · api · migracion_inicial). El valor libre
  *    de `canal` (WhatsApp/Email/Teléfono/...) NO se guarda en origen_canal: se antepone
  *    a `observaciones_internas` como prefijo "Canal: <canal>. ".
  *  - `telefono` mapea a TX_Solicitudes.solicitante_telefono.
  *  - `email` y `banco_id` no tienen campo destino todavía en TX_Solicitudes — son
- *    prerrequisito de Tanda 4B (crear `email_contacto` y un campo equivalente a
- *    `banco_id`, o decidir eliminarlos del formulario).
+ *    prerrequisito de una tanda posterior (crear `email_contacto` y un campo
+ *    equivalente a `banco_id`, o decidir eliminarlos del formulario).
  */
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -110,6 +111,63 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const id = `sim-${randomUUID()}`
-  return NextResponse.json({ id, ...parsed.data }, { status: 201 })
+  const payload = { ...parsed.data, origen_canal: 'ingreso_manual' as const }
+
+  const webhookUrl = process.env.MAKE_WEBHOOK_URL_SC01
+  if (!webhookUrl) {
+    console.warn('MAKE_WEBHOOK_URL_SC01 no definida, usando modo simulado')
+    const id = `sim-${randomUUID()}`
+    return NextResponse.json({ id, ...payload }, { status: 201 })
+  }
+
+  let makeRes: Response
+  try {
+    makeRes = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000),
+    })
+  } catch (err) {
+    console.error('[POST /api/solicitudes] error de red/timeout hacia Make SC01', err)
+    return NextResponse.json(
+      { error: 'No pudimos registrar la solicitud. Intenta de nuevo.' },
+      { status: 502 }
+    )
+  }
+
+  if (!makeRes.ok) {
+    const responseBody = await makeRes.text().catch(() => '<sin cuerpo>')
+    console.error('[POST /api/solicitudes] Make SC01 respondió con error', {
+      status: makeRes.status,
+      body: responseBody,
+    })
+    return NextResponse.json(
+      { error: 'No pudimos registrar la solicitud. Intenta de nuevo.' },
+      { status: 502 }
+    )
+  }
+
+  let makeJson: unknown
+  try {
+    makeJson = await makeRes.json()
+  } catch (err) {
+    console.error('[POST /api/solicitudes] respuesta de Make SC01 no es JSON válido', err)
+    return NextResponse.json(
+      { error: 'No pudimos registrar la solicitud. Intenta de nuevo.' },
+      { status: 502 }
+    )
+  }
+
+  const id =
+    typeof makeJson === 'object' && makeJson !== null && 'id' in makeJson
+      ? (makeJson as { id: unknown }).id
+      : undefined
+
+  if (typeof id !== 'string' || !id.startsWith('rec')) {
+    console.error('[POST /api/solicitudes] Make SC01 no retornó ID de solicitud', { makeJson })
+    return NextResponse.json({ error: 'Make no retornó ID de solicitud' }, { status: 502 })
+  }
+
+  return NextResponse.json({ id, ...payload }, { status: 201 })
 }

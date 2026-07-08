@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus } from "lucide-react"
@@ -98,6 +99,7 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function NewRequestSheet() {
+  const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [adjuntos, setAdjuntos] = React.useState<ArchivoSubido[]>([])
 
@@ -149,34 +151,43 @@ export function NewRequestSheet() {
   }
 
   async function onSubmit(values: NuevaSolicitudInternaValues) {
+    let res: Response
     try {
-      const res = await fetch("/api/solicitudes", {
+      res = await fetch("/api/solicitudes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       })
-      if (!res.ok) throw new Error("submit falló")
-
-      const nDocs = values.documentos.filter(
-        (d) => d.archivo !== null
-      ).length
-      toast.success(
-        `Solicitud creada con ${nDocs} documento${
-          nDocs === 1 ? "" : "s"
-        } adjunto${nDocs === 1 ? "" : "s"}.`,
-        {
-          description: `${values.cliente} · ${values.comuna} · Op. ${values.n_operacion_cliente}`,
-          duration: 3000,
-        }
-      )
-      resetAll()
-      setOpen(false)
     } catch {
+      toast.error("Sin conexión. Intenta de nuevo.", { duration: 3000 })
+      return
+    }
+
+    if (!res.ok) {
       toast.error(
-        "No pudimos completar la acción. Intenta nuevamente en unos segundos.",
+        "No pudimos registrar la solicitud. Intenta de nuevo.",
         { duration: 3000 }
       )
+      return
     }
+
+    const { id } = (await res.json()) as { id: string }
+
+    const nDocs = values.documentos.filter(
+      (d) => d.archivo !== null
+    ).length
+    toast.success(
+      `Solicitud creada con ${nDocs} documento${
+        nDocs === 1 ? "" : "s"
+      } adjunto${nDocs === 1 ? "" : "s"}.`,
+      {
+        description: `${id} · ${values.cliente} · ${values.comuna} · Op. ${values.n_operacion_cliente}`,
+        duration: 3000,
+      }
+    )
+    resetAll()
+    setOpen(false)
+    router.refresh()
   }
 
   function onInvalid() {

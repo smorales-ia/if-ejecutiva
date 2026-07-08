@@ -1,0 +1,283 @@
+{
+  "name": "SC01 - Crear solicitud",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": null,
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "hook": {
+              "data": {
+                "editable": "true"
+              },
+              "label": "SC01 - Crear solicitud"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "hook",
+            "type": "hook:gateway-webhook",
+            "label": "Webhook",
+            "required": true
+          },
+          {
+            "name": "maxResults",
+            "type": "number",
+            "label": "Maximum number of results"
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__"
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblpK7AcYBMH93apK",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.cliente}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" }
+          },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "M_Clientes (tblpK7AcYBMH93apK)" }
+          }
+        },
+        "note": "Busca el recXXX de M_Clientes cuyo campo primario 'nombre' coincide (sin distinguir mayusculas) con el 'cliente' que mando el webhook."
+      }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__"
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblOcsdiwxQLfD178",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.tipoInforme}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" }
+          },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "M_TiposInforme (tblOcsdiwxQLfD178)" }
+          }
+        },
+        "note": "Busca el recXXX de M_TiposInforme cuyo campo primario 'nombre' coincide (sin distinguir mayusculas) con 'tipoInforme'."
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__"
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbl8rxZA14xFIBGU6",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.tipoPropiedad}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" }
+          },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "M_TiposPropiedad (tbl8rxZA14xFIBGU6)" }
+          }
+        },
+        "note": "Busca el recXXX de M_TiposPropiedad cuyo campo primario 'nombre' coincide (sin distinguir mayusculas) con 'tipoPropiedad'. Este es el campo con mas duplicados de formato (CASA/Casa) en Airtable real -- la formula UPPER() cubre ambos casos."
+      }
+    },
+    {
+      "id": 5,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__"
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbll6D4KQ5aDdjjaj",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.producto}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" }
+          },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "M_Productos (tbll6D4KQ5aDdjjaj)" }
+          }
+        },
+        "note": "Busca el recXXX de M_Productos cuyo campo primario 'nombre' coincide (sin distinguir mayusculas) con 'producto'."
+      }
+    },
+    {
+      "id": 6,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__"
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblyggAfQfq682XHK",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.comuna}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 1500, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" }
+          },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "M_Comunas (tblyggAfQfq682XHK)" }
+          }
+        },
+        "note": "Busca el recXXX de M_Comunas cuyo campo primario 'nombre' coincide (sin distinguir mayusculas) con 'comuna'."
+      }
+    },
+    {
+      "id": 7,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__"
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblaHTyMHYfmy7Fg6",
+        "fields": {
+          "cliente": [{ "id": "{{2.id}}" }],
+          "tipo_informe": [{ "id": "{{3.id}}" }],
+          "tipo_propiedad": [{ "id": "{{4.id}}" }],
+          "producto": [{ "id": "{{5.id}}" }],
+          "comuna": [{ "id": "{{6.id}}" }],
+          "direccion": "{{1.direccion}}",
+          "cliente_final_rut": "{{1.rut}}",
+          "cliente_final_nombre": "{{1.nombre}}",
+          "solicitante_telefono": "{{1.telefono}}",
+          "fldd56pLZyKYoi2Vi": "{{1.sucursal_originadora}}",
+          "fldRweQyq3tTQGmPR": "{{1.ejecutivo_solicitante}}",
+          "fldb1vmKk7y3hi4uY": "{{parseNumber(1.n_operacion_cliente)}}",
+          "observaciones_internas": "{{if(1.canal; \"Canal: \" + 1.canal + \". \"; \"\")}}{{if(1.email; \"Email: \" + 1.email + \". \"; \"\")}}{{if(1.banco; \"Banco financista: \" + 1.banco + \". \"; \"\")}}{{1.observaciones}}",
+          "fldPphw1FWfYdZI2Z": "{{1.origen_canal}}",
+          "estado": "creada",
+          "banco": "{{1.banco_id}}"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 1800, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" }
+          },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "TX_Solicitudes (tblaHTyMHYfmy7Fg6)" }
+          }
+        },
+        "note": "Los 5 campos Link usan el recXXX resuelto por su Search Records (modulos 2-6), no el texto crudo del webhook. 'banco' es texto libre y recibe banco_id (nombre del banco originador) directo, sin Search Records -- ver Fase 1 y Fase 1.9. 'estado' es un valor fijo 'creada', no viene del webhook (RF-04). 'observaciones_internas' concatena Canal/Email/Banco financista solo si vienen no vacios, para no perder el email ni el banco financista que hoy no tienen campo propio en TX_Solicitudes.",
+        "parameters": [
+          {
+            "name": "__IMTCONN__",
+            "type": "account:airtable2",
+            "label": "Connection",
+            "required": true
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "module": "gateway:WebhookRespond",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "status": "200",
+        "body": "{\"id\": \"{{7.id}}\"}",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": { "x": 2100, "y": 0 },
+        "parameters": [
+          {
+            "name": "status",
+            "type": "text",
+            "label": "Status"
+          },
+          {
+            "name": "body",
+            "type": "text",
+            "label": "Body"
+          },
+          {
+            "name": "headers",
+            "type": "array",
+            "label": "Headers"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com",
+    "notes": "Blueprint generado a mano (Tanda 4B, Fase 1.7). No fue exportado desde una instancia real de Make: revisar docs/make/SC01_import_instrucciones.md antes de importar/actualizar. 8 modulos: Webhook -> 5x Search Records (cliente, tipo_informe, tipo_propiedad, producto, comuna) -> Airtable Create Record -> Webhook Response. Campos primarios de las 5 tablas M_* confirmados como 'nombre' via MCP (Fase 1.6/1.7). Si el import falla o Make reescribe algun modulo, seguir la seccion 'Fallback manual' del README."
+  }
+}
