@@ -1,6 +1,7 @@
 import { z } from "zod"
 import {
   validarRut,
+  CANALES_ORIGEN,
   PRODUCTOS_CON_BANCO,
 } from "@/lib/console-data"
 
@@ -12,7 +13,7 @@ import {
 export const nuevaSolicitudInternaSchema = z
   .object({
     // Sección A · Origen de la solicitud
-    canal: z.string().min(1, "Selecciona el canal de origen."),
+    canal: z.enum(CANALES_ORIGEN, "Selecciona el canal de origen."),
     cliente: z.string().min(1, "Selecciona un cliente."),
     tipoInforme: z.string().min(1, "Selecciona el tipo de informe."),
     banco_id: z.string().min(1, "Selecciona un banco."),
@@ -84,7 +85,10 @@ export type NuevaSolicitudInternaValues = z.infer<
 >
 
 export const nuevaSolicitudInternaDefaults: NuevaSolicitudInternaValues = {
-  canal: "",
+  // "" representa "sin seleccionar" en el Select; no pertenece al enum de
+  // CANALES_ORIGEN, por eso el cast — el resolver igual exige un valor
+  // válido del enum antes de poder enviar el formulario.
+  canal: "" as NuevaSolicitudInternaValues["canal"],
   cliente: "",
   tipoInforme: "",
   banco_id: "",

@@ -53,6 +53,7 @@ export const SOLICITUD_FIELDS: string[] = [
   'tipo_propiedad',
   'banco',
   'producto',
+  'fecha_solicitud',
   'fecha_limite_entrega',
   'fecha_visita_programada',
   'observaciones_internas',
@@ -128,7 +129,10 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     tasador: f['tasador'] || 'Sin asignar',
     visador: f['visador'] || 'Sin asignar',
     fechaLimite: formatDisplay(f['fecha_limite_entrega']),
-    fechaSolicitud: formatDisplay(createdTime),
+    // D-C3 (Fase 3): fecha_solicitud es el dato de negocio real (poblado por
+    // SC01 desde Fase 2); createdTime queda solo como fallback para filas
+    // legacy creadas antes del fix del bug VP-NaN-XXXX.
+    fechaSolicitud: formatDisplay(f['fecha_solicitud'] || createdTime),
     modificado: relativeTime(createdTime),
     modificadoPor: f['ejecutivo_solicitante'] ?? '—',
     tipoInforme: f['tipo_informe'] ?? '—',

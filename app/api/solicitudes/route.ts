@@ -1,9 +1,10 @@
 import { randomUUID } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { listRecords, AirtableError } from '@/lib/airtable-client'
 import { mapRecord, SOLICITUD_FIELDS, TX_SOLICITUDES } from '@/lib/solicitudes'
 import { nuevaSolicitudInternaSchema } from '@/lib/validators/nueva-solicitud-interna'
+import { postToMake } from '@/lib/make-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -86,11 +87,17 @@ export async function GET(request: NextRequest) {
  *  - `origen_canal` se fija a "ingreso_manual" (único valor válido del singleSelect
  *    real: tally_externo · ingreso_manual · api · migracion_inicial). El valor libre
  *    de `canal` (WhatsApp/Email/Teléfono/...) NO se guarda en origen_canal: se antepone
- *    a `observaciones_internas` como prefijo "Canal: <canal>. ".
+ *    a `observaciones_internas` como prefijo "Canal: <canal>. " (D-C1, Fase 3).
  *  - `telefono` mapea a TX_Solicitudes.solicitante_telefono.
  *  - `email` y `banco_id` no tienen campo destino todavía en TX_Solicitudes — son
  *    prerrequisito de una tanda posterior (crear `email_contacto` y un campo
  *    equivalente a `banco_id`, o decidir eliminarlos del formulario).
+ *
+ * Fase 3 · Tanda C ítem 1: se agrega `ejecutiva_email` (email de la sesión Clerk)
+ * al payload para que Make resuelva `ejecutiva_asignada` con un Search Records
+ * contra AUTH_Usuarios por email (gap_solicitud_persistencia.md, caso "d").
+ * El POST a Make ahora va firmado HMAC-SHA256 y logueado en LogEscenarios vía
+ * lib/make-client.ts (D-03).
  */
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -111,7 +118,19 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const payload = { ...parsed.data, origen_canal: 'ingreso_manual' as const }
+  const user = await currentUser()
+  const ejecutivaEmail = user?.primaryEmailAddress?.emailAddress ?? ''
+  if (!ejecutivaEmail) {
+    console.warn(
+      '[POST /api/solicitudes] sesión Clerk sin email primario; ejecutiva_asignada no se podrá resolver en Make'
+    )
+  }
+
+  const payload = {
+    ...parsed.data,
+    origen_canal: 'ingreso_manual' as const,
+    ejecutiva_email: ejecutivaEmail,
+  }
 
   const webhookUrl = process.env.MAKE_WEBHOOK_URL_SC01
   if (!webhookUrl) {
@@ -122,11 +141,9 @@ export async function POST(request: NextRequest) {
 
   let makeRes: Response
   try {
-    makeRes = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: AbortSignal.timeout(15000),
+    makeRes = await postToMake(webhookUrl, payload, {
+      escenario: 'SC01',
+      timeoutMs: 15000,
     })
   } catch (err) {
     console.error('[POST /api/solicitudes] error de red/timeout hacia Make SC01', err)

@@ -107,3 +107,52 @@ export async function getRecord<T>(
 
   return (await res.json()) as AirtableRecord<T>
 }
+
+async function postRequest(url: string, body: unknown, attempt = 1): Promise<Response> {
+  const token = process.env.AIRTABLE_TOKEN
+  if (!token) throw new Error('AIRTABLE_TOKEN is not configured')
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+    cache: 'no-store',
+  })
+
+  if (res.status === 429 && attempt < 3) {
+    const retryAfter = Number(res.headers.get('Retry-After') ?? attempt)
+    await new Promise((r) => setTimeout(r, retryAfter * 1000))
+    return postRequest(url, body, attempt + 1)
+  }
+
+  if (res.status >= 500 && attempt < 3) {
+    await new Promise((r) => setTimeout(r, 500 * attempt))
+    return postRequest(url, body, attempt + 1)
+  }
+
+  return res
+}
+
+/**
+ * Crea un registro en una tabla de Airtable. `typecast: true` permite que
+ * Airtable resuelva valores de singleSelect por nombre sin fallar si el
+ * llamador no conoce el choice id exacto.
+ */
+export async function createRecord<T>(
+  tableId: string,
+  fields: Record<string, unknown>
+): Promise<AirtableRecord<T>> {
+  const baseId = process.env.AIRTABLE_BASE_ID
+  if (!baseId) throw new Error('AIRTABLE_BASE_ID is not configured')
+
+  const url = `${API_BASE}/${baseId}/${tableId}`
+  const res = await postRequest(url, { fields, typecast: true })
+  if (!res.ok) {
+    throw new AirtableError(res.status, await res.text())
+  }
+
+  return (await res.json()) as AirtableRecord<T>
+}
