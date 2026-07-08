@@ -19,7 +19,7 @@ import {
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import type { Solicitud } from "@/lib/console-data"
+import type { Solicitud, TipoDocumento } from "@/lib/console-data"
 import type { Vista } from "@/lib/solicitudes"
 
 const tabs: { id: Vista; label: string }[] = [
@@ -37,12 +37,14 @@ export function SolicitudList({
   onSelect,
   vistaActiva,
   degraded,
+  tiposDocumento,
 }: {
   solicitudes: Solicitud[]
   selectedId: string
   onSelect: (id: string) => void
   vistaActiva: Vista
   degraded?: boolean
+  tiposDocumento: TipoDocumento[]
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -131,7 +133,7 @@ export function SolicitudList({
           </div>
         )}
 
-        <NewRequestSheet />
+        <NewRequestSheet tiposDocumento={tiposDocumento} />
       </div>
 
       <Separator />

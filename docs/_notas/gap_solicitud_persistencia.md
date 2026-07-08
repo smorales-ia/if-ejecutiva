@@ -164,6 +164,7 @@ Ambos hoy van al hack de `observaciones_internas`. Propuesta de campos propios e
 4. `lib/solicitudes.ts`: una vez `fecha_solicitud` esté poblado de forma confiable, evaluar si `mapRecord` debe leer `TX_Solicitudes.fecha_solicitud` en vez de usar `createdTime` de Airtable como proxy (hoy puede divergir del dato de negocio).
 5. `docs/schema-airtable.md`: sincronizar con los cambios reales de Tanda A (si quedó pendiente).
 6. Cierre: `pnpm build` y `pnpm typecheck` limpios antes de commit.
+7. Lista dinámica de tipos de documento: reemplazar el array hardcoded `TIPOS_DOCUMENTO` de `lib/console-data.ts` por lectura server-side de `D_TipoDocumento` (Airtable, dominio D_), filtrada por `activo=true`. Fetcher nuevo en `lib/tipos-documento.ts` siguiendo el patrón de `lib/solicitudes.ts`. Consumidores impactados: `document-checklist.tsx`, `new-request-sheet.tsx`, `nueva-solicitud-interna.ts`, `page.tsx`, `console-shell.tsx`.
 
 ---
 

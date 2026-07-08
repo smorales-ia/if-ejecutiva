@@ -3,17 +3,19 @@
 import { Suspense, useState } from "react"
 import { SolicitudList } from "@/components/console/solicitud-list"
 import { SolicitudDetail } from "@/components/console/solicitud-detail"
-import type { Solicitud } from "@/lib/console-data"
+import type { Solicitud, TipoDocumento } from "@/lib/console-data"
 import type { Vista } from "@/lib/solicitudes"
 
 export function ConsoleShell({
   solicitudes,
   vistaActiva = 'activas',
   degraded,
+  tiposDocumento,
 }: {
   solicitudes: Solicitud[]
   vistaActiva?: Vista
   degraded?: boolean
+  tiposDocumento: TipoDocumento[]
 }) {
   const [selectedId, setSelectedId] = useState(solicitudes[0]?.id ?? "")
   const selected = solicitudes.find((s) => s.id === selectedId) ?? solicitudes[0]
@@ -38,6 +40,7 @@ export function ConsoleShell({
             onSelect={setSelectedId}
             vistaActiva={vistaActiva}
             degraded={degraded}
+            tiposDocumento={tiposDocumento}
           />
         </Suspense>
       </div>

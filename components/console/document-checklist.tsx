@@ -22,7 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { TIPOS_DOCUMENTO } from "@/lib/console-data"
+import type { TipoDocumento } from "@/lib/console-data"
 import { cn } from "@/lib/utils"
 
 const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"]
@@ -39,7 +39,8 @@ export interface DocumentoArchivo {
 
 /** Item del array `documentos` controlado por react-hook-form. */
 export interface DocumentoChecklistItem {
-  tipo_id: number
+  /** Record id (`recXXX`) de D_TipoDocumento en Airtable. */
+  tipo_id: string
   codigo: string
   requerido_por_ejecutiva: boolean
   archivo: DocumentoArchivo | null
@@ -63,12 +64,13 @@ function validar(file: File): string | null {
 
 interface DocumentRowProps {
   item: DocumentoChecklistItem
+  tipos: TipoDocumento[]
   onToggle: (codigo: string, marcado: boolean) => void
   onArchivo: (codigo: string, archivo: DocumentoArchivo | null) => void
 }
 
-function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
-  const meta = TIPOS_DOCUMENTO.find((t) => t.codigo === item.codigo)
+function DocumentRow({ item, tipos, onToggle, onArchivo }: DocumentRowProps) {
+  const meta = tipos.find((t) => t.codigo === item.codigo)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -278,11 +280,12 @@ function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
 }
 
 interface DocumentChecklistProps {
+  tipos: TipoDocumento[]
   value: DocumentoChecklistItem[]
   onChange: (next: DocumentoChecklistItem[]) => void
 }
 
-export function DocumentChecklist({ value, onChange }: DocumentChecklistProps) {
+export function DocumentChecklist({ tipos, value, onChange }: DocumentChecklistProps) {
   function handleToggle(codigo: string, marcado: boolean) {
     onChange(
       value.map((d) =>
@@ -305,6 +308,7 @@ export function DocumentChecklist({ value, onChange }: DocumentChecklistProps) {
         <DocumentRow
           key={item.tipo_id}
           item={item}
+          tipos={tipos}
           onToggle={handleToggle}
           onArchivo={handleArchivo}
         />

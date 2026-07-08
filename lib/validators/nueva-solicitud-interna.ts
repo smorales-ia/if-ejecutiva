@@ -2,7 +2,6 @@ import { z } from "zod"
 import {
   validarRut,
   PRODUCTOS_CON_BANCO,
-  TIPOS_DOCUMENTO,
 } from "@/lib/console-data"
 
 /**
@@ -46,10 +45,12 @@ export const nuevaSolicitudInternaSchema = z
     observaciones: z.string().optional(),
 
     // Sección E · Documentos requeridos (checklist)
+    // `tipo_id` es el record id (`recXXX`) de D_TipoDocumento en Airtable —
+    // sólo se valida la forma del item, sin lista cerrada de códigos.
     documentos: z
       .array(
         z.object({
-          tipo_id: z.number(),
+          tipo_id: z.string(),
           codigo: z.string(),
           requerido_por_ejecutiva: z.boolean(),
           archivo: z
@@ -102,10 +103,7 @@ export const nuevaSolicitudInternaDefaults: NuevaSolicitudInternaValues = {
   producto: "",
   banco: "",
   observaciones: "",
-  documentos: TIPOS_DOCUMENTO.map((t) => ({
-    tipo_id: t.id,
-    codigo: t.codigo,
-    requerido_por_ejecutiva: false,
-    archivo: null,
-  })),
+  // El checklist real se construye en NewRequestSheet a partir del prop
+  // `tiposDocumento` (Airtable D_TipoDocumento vía fetchTiposDocumento()).
+  documentos: [],
 }

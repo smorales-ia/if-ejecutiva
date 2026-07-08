@@ -238,8 +238,13 @@ export const M_BANCOS = [
   { id: "Banco Ripley", nombre: "Banco Ripley" },
 ] as const
 
+/**
+ * `id` es `string` (record id `recXXX` de Airtable `D_TipoDocumento`), no
+ * autonumber — cambiado de `number` a `string` al conectar `fetchTiposDocumento()`
+ * en `lib/tipos-documento.ts` (Fase 2, gap de persistencia).
+ */
 export interface TipoDocumento {
-  id: number
+  id: string
   codigo: string
   nombre: string
   entidad_emisora: string
@@ -249,66 +254,70 @@ export interface TipoDocumento {
 /**
  * Catálogo de tipos de documento requeridos (CSV literal).
  * El id=1 viene ausente del origen; se conserva tal cual.
+ *
+ * @deprecated Reemplazado por fetchTiposDocumento() en lib/tipos-documento.ts.
+ * Mantener temporalmente hasta que ningún consumidor lo importe. Eliminar en
+ * tanda siguiente.
  */
 export const TIPOS_DOCUMENTO: readonly TipoDocumento[] = [
   {
-    id: 2,
+    id: "2",
     codigo: "certificado_recepcion_final",
     nombre: "Certificado de Recepción Definitiva de Obras",
     entidad_emisora: "Dirección de Obras Municipales",
     vigencia_dias: null,
   },
   {
-    id: 3,
+    id: "3",
     codigo: "permiso_edificacion",
     nombre: "Permiso de Edificación",
     entidad_emisora: "Dirección de Obras Municipales",
     vigencia_dias: null,
   },
   {
-    id: 4,
+    id: "4",
     codigo: "certificado_avaluo_fiscal",
     nombre: "Certificado de Avalúo Fiscal",
     entidad_emisora: "Servicio de Impuestos Internos",
     vigencia_dias: 90,
   },
   {
-    id: 5,
+    id: "5",
     codigo: "consulta_antecedentes_bien_raiz",
     nombre: "Consulta de Antecedentes de Bien Raíz",
     entidad_emisora: "Servicio de Impuestos Internos",
     vigencia_dias: 90,
   },
   {
-    id: 6,
+    id: "6",
     codigo: "certificado_deuda_tgr",
     nombre: "Certificado de Deuda de Contribuciones",
     entidad_emisora: "Tesorería General de la República",
     vigencia_dias: 30,
   },
   {
-    id: 7,
+    id: "7",
     codigo: "sello_verde_sec",
     nombre: "Sello SEC de Inspección Periódica de Gas",
     entidad_emisora: "Superintendencia de Electricidad y Combustibles",
     vigencia_dias: 730,
   },
   {
-    id: 8,
+    id: "8",
     codigo: "informe_no_expropiacion_serviu",
     nombre: "Informe de No Expropiación",
     entidad_emisora: "SERVIU",
     vigencia_dias: 180,
   },
   {
-    id: 9,
+    id: "9",
     codigo: "inscripcion_dominio_cbr",
     nombre: "Inscripción de Dominio CBR",
     entidad_emisora: "Conservador de Bienes Raíces",
     vigencia_dias: null,
   },
   {
-    id: 10,
+    id: "10",
     codigo: "plano_cuadro_superficies",
     nombre: "Plano y Cuadro de Superficies",
     entidad_emisora: "Inmobiliaria o Arquitecto",

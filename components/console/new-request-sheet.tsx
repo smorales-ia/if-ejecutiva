@@ -58,6 +58,7 @@ import {
   TIPOS_INFORME_POR_CLIENTE,
   TIPOS_PROPIEDAD,
   formatearRut,
+  type TipoDocumento,
 } from "@/lib/console-data"
 
 function Field({
@@ -98,7 +99,22 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function NewRequestSheet() {
+function buildDocumentosDefaults(
+  tiposDocumento: TipoDocumento[]
+): NuevaSolicitudInternaValues["documentos"] {
+  return tiposDocumento.map((t) => ({
+    tipo_id: t.id,
+    codigo: t.codigo,
+    requerido_por_ejecutiva: false,
+    archivo: null,
+  }))
+}
+
+export function NewRequestSheet({
+  tiposDocumento,
+}: {
+  tiposDocumento: TipoDocumento[]
+}) {
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [adjuntos, setAdjuntos] = React.useState<ArchivoSubido[]>([])
@@ -112,7 +128,10 @@ export function NewRequestSheet() {
     formState: { errors, isSubmitting },
   } = useForm<NuevaSolicitudInternaValues>({
     resolver: zodResolver(nuevaSolicitudInternaSchema),
-    defaultValues: nuevaSolicitudInternaDefaults,
+    defaultValues: {
+      ...nuevaSolicitudInternaDefaults,
+      documentos: buildDocumentosDefaults(tiposDocumento),
+    },
     mode: "onChange",
   })
 
@@ -146,7 +165,10 @@ export function NewRequestSheet() {
   }
 
   function resetAll() {
-    reset(nuevaSolicitudInternaDefaults)
+    reset({
+      ...nuevaSolicitudInternaDefaults,
+      documentos: buildDocumentosDefaults(tiposDocumento),
+    })
     setAdjuntos([])
   }
 
@@ -775,6 +797,7 @@ export function NewRequestSheet() {
               name="documentos"
               render={({ field }) => (
                 <DocumentChecklist
+                  tipos={tiposDocumento}
                   value={field.value}
                   onChange={field.onChange}
                 />
