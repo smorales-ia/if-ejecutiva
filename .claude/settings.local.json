@@ -25,7 +25,12 @@
       "mcp__claude_ai_Airtable__create_field",
       "mcp__claude_ai_Airtable__create_records_for_table",
       "mcp__claude_ai_Airtable__update_records_for_table",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(railway --version)",
+      "Bash(railway whoami *)",
+      "Read(//home/smorales/**)",
+      "Bash(find / -maxdepth 4 -iname \"*railway*\" -not -path \"*/node_modules/*\")",
+      "Bash([ -f \"$F\" ])"
     ]
   }
 }

@@ -14,14 +14,14 @@ export interface Adjunto {
 type RawFields = {
   nombre_archivo?: string
   url_dropbox?: string
-  tamano_bytes?: string
+  tamanio_kb?: string
 }
 
-function formatBytes(bytes: number): string {
-  if (!bytes) return ''
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+/** `tamanio_kb` ya viene en KB desde Airtable (no bytes) — sin dividir por 1024 antes de mostrar KB. */
+function formatTamanioKb(kb: number): string {
+  if (!kb) return ''
+  if (kb < 1024) return `${Math.round(kb)} KB`
+  return `${(kb / 1024).toFixed(1)} MB`
 }
 
 /** `solicitud` es un link field; se filtra con FIND()/ARRAYJOIN() sobre el record ID. */
@@ -31,11 +31,11 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
     timeZone: 'America/Santiago',
     userLocale: 'es-CL',
     filterByFormula: `FIND("${solicitudId}", ARRAYJOIN({solicitud}))`,
-    fields: ['nombre_archivo', 'url_dropbox', 'tamano_bytes'],
+    fields: ['nombre_archivo', 'url_dropbox', 'tamanio_kb'],
   })
 
   return records.map((r) => {
-    const tamano = formatBytes(Number(r.fields.tamano_bytes ?? 0))
+    const tamano = formatTamanioKb(Number(r.fields.tamanio_kb ?? 0))
     const hace = relativeTime(r.createdTime)
     return {
       id: r.id,

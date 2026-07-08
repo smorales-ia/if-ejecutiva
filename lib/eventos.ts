@@ -25,13 +25,13 @@ export interface Evento {
 type RawFields = {
   tipo_evento?: string
   descripcion?: string
-  usuario?: string
+  actor_nombre?: string
 }
 
 function tituloEvento(f: RawFields): string {
   if (f.descripcion) return f.descripcion
   const tipo = f.tipo_evento ?? 'Evento'
-  return f.usuario ? `${tipo} · ${f.usuario}` : tipo
+  return f.actor_nombre ? `${tipo} · ${f.actor_nombre}` : tipo
 }
 
 function iconoEvento(tipoEvento: string | undefined): IconoEvento {
@@ -47,7 +47,7 @@ export async function fetchEventosPorSolicitud(solicitudId: string): Promise<Eve
     filterByFormula: `FIND("${solicitudId}", ARRAYJOIN({solicitud}))`,
     'sort[0][field]': 'timestamp',
     'sort[0][direction]': 'desc',
-    fields: ['tipo_evento', 'descripcion', 'usuario'],
+    fields: ['tipo_evento', 'descripcion', 'actor_nombre'],
   })
 
   return records.map((r) => ({
