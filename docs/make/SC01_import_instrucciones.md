@@ -88,6 +88,35 @@ Cuando esté guardada, avísame que ya está en `.env.local` y en Railway (sin p
 
 ---
 
+## Fix VP-NaN-XXXX (Fase 2 · cierre de pendientes IF-02, 08-jul-2026)
+
+**Si tu escenario SC01 ya está importado y activo** (aunque sea la versión de 8 módulos de la Fase 0/Tanda 4B), aplica este fix — no requiere re-importar ni cambia la URL del webhook.
+
+**Síntoma**: las solicitudes nuevas muestran `codigo_ext` como `VP-NaN-0023` en vez de `VP-2026-00NN`.
+
+**Causa**: el módulo 7 (Airtable → Create a Record) nunca mapea el campo `fecha_solicitud`. Queda vacío, y la fórmula de `codigo_ext` (`'VP-' & YEAR(fecha_solicitud) & '-' & LPAD(solicitud_id,4,'0')`) evalúa `YEAR()` sobre un campo vacío, dando `NaN`.
+
+**Pasos**:
+
+1. Abre el escenario **SC01 - Crear solicitud** en Make (no hace falta apagarlo primero — puedes editar módulos con el escenario `ON`, los cambios solo aplican al guardar).
+2. Haz clic en el módulo **7 — Airtable Create a Record** (el que escribe en `TX_Solicitudes`).
+3. En la lista de campos del módulo, busca `fecha_solicitud`. Si no aparece en la lista visible, usa el buscador de campos del módulo (ícono de lupa o "Add item"/"Show more fields") — el campo existe en Airtable desde antes (`fldvkn9CsORy4eU0Z`), Make debería poder mapearlo.
+4. En ese campo, escribe la fórmula exacta (usa el editor de fórmulas de Make, no la escribas como texto plano):
+   ```
+   {{formatDate(now; "YYYY-MM-DD")}}
+   ```
+5. Clic en **Save** (disquete, esquina inferior izquierda). **No hace falta reactivar el escenario ni tocar la URL del webhook** — sigue siendo la misma.
+6. **Smoke test**: dispara una solicitud de prueba contra la URL del webhook (puedes usar el mismo payload de ejemplo del módulo 1 — botón "Run once" en Make y pega un JSON de prueba con los campos de la sección 3 de este documento). Verifica en Airtable que la fila nueva tenga:
+   - `fecha_solicitud` con la fecha de hoy (no vacío).
+   - `codigo_ext` con formato `VP-2026-00NN` (no `VP-NaN-...`).
+7. Si el smoke test sale bien, revisa (opcional, no bloqueante) que `semaforo_sla` de esa fila de prueba también calculó un valor razonable — dependía del mismo campo vacío, así que debería normalizarse solo a partir de ahora.
+
+**Qué NO hacer**: no reemplaces esto por un default de Airtable ni por lógica en el Route Handler de Next.js — `fecha_solicitud` debe fijarse en Make para cubrir cualquier origen futuro que use SC01, no solo `ingreso_manual` (ver `docs/_notas/gap_solicitud_persistencia.md`, caso "a").
+
+**Fuera de alcance de este fix**: los demás mapeos pendientes de Tanda B (`email_contacto`, `banco_financista` con Search Records nuevo, `canal_contacto_original`, `monto_estimado_uf`, `ejecutiva_asignada` con Search Records por email de sesión, simplificar `observaciones_internas`) siguen pendientes — se abordan en una tanda de Make aparte, no en este fix puntual.
+
+---
+
 ## Actualizar el blueprint importado
 
 Si ya tenías el escenario de 3 módulos de la Fase 0 corriendo y ahora necesitas pasar a los 8 módulos de esta versión (con los 5 Search Records y el rescate de email/banco financista), tienes dos caminos. **Elige uno, no mezcles ambos.**
@@ -188,6 +217,7 @@ Arma el escenario a mano, módulo por módulo, en este orden:
 | `tipo_propiedad` | resultado del módulo 4 → `[{ id: {{4.id}} }]` | Link |
 | `producto` | resultado del módulo 5 → `[{ id: {{5.id}} }]` | Link |
 | `comuna` | resultado del módulo 6 → `[{ id: {{6.id}} }]` | Link |
+| `fecha_solicitud` | fórmula `{{formatDate(now; "YYYY-MM-DD")}}` (fix VP-NaN-XXXX, no viene del webhook) | fecha |
 | `direccion` | webhook `direccion` | texto directo |
 | `cliente_final_rut` | webhook `rut` | texto directo |
 | `cliente_final_nombre` | webhook `nombre` | texto directo |
