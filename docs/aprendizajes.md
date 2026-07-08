@@ -70,6 +70,24 @@ packages:
 **Solución probada:** Se documentó el cambio de decisión en `docs/schema-airtable.md` §13.2, `docs/_notas/gap_solicitud_persistencia.md` (Tanda A punto 8) y aquí, todos referenciándose entre sí.
 **Prevención futura:** Antes de proponer un cambio de schema en Airtable, revisar si el panel ya tomó una decisión al respecto en documentos previos (`gap_solicitud_persistencia.md`, `schema-airtable.md`); si se revierte, dejar rastro explícito de la evidencia nueva que motivó el cambio, no solo ejecutar.
 
+### E-010 — Cambiar un catálogo hardcodeado por uno vivo en Airtable cambia el tipo del `id`
+**Síntoma:** `TIPOS_DOCUMENTO` (hardcoded) usaba `id: number` (autonumber ficticio); al conectar `fetchTiposDocumento()` contra `D_TipoDocumento` real, el `id` pasó a ser `recXXX` (`string`), rompiendo temporalmente el tipado de `tipo_id` en el schema Zod y en `nuevaSolicitudInternaDefaults`.
+**Causa:** Airtable identifica registros por record id (`recXXX`), no por autonumber; un catálogo hardcodeado con `id` numérico no tiene equivalente real cuando se reemplaza por lectura en vivo de Airtable.
+**Solución probada:** cambiar `TipoDocumento.id` a `string` en `lib/console-data.ts`, propagar el cambio a `DocumentoChecklistItem.tipo_id` y al schema Zod (`tipo_id: z.string()`), aceptando una rotura de compilación temporal entre fases (Fase 2 → Fase 3) porque el cierre (`build`/`typecheck`) sólo se valida al final de la tanda completa.
+**Prevención futura:** al planear la migración de un array hardcodeado a un fetcher de Airtable, revisar de entrada si el `id` usado en el hardcode es sintético (`number`) — si lo es, asumir que cambiará a `string` (`recXXX`) y mapear todos los consumidores del tipo antes de tocar el fetcher.
+
+### E-011 — El prop-drilling real no siempre coincide con el que asume el plan
+**Síntoma:** El plan de wiring asumía que `console-shell.tsx` renderizaba `NewRequestSheet` directamente; en realidad lo renderiza `solicitud-list.tsx` (`console-shell.tsx` → `solicitud-list.tsx` → `new-request-sheet.tsx`).
+**Causa:** El plan se escribió sin verificar el árbol de renderizado real; `solicitud-list.tsx` no había sido mencionado como archivo a tocar.
+**Solución probada:** detectarlo en la fase de lectura (Fase 0) con un grep del uso de `<NewRequestSheet`, señalarlo antes de escribir código, y agregar el archivo faltante al alcance de wiring sin esperar una nueva instrucción (era plomería necesaria, no una decisión de negocio).
+**Prevención futura:** antes de aceptar un plan de wiring de props entre componentes, verificar con grep/lectura quién renderiza a quién — no asumir la jerarquía descrita en el prompt.
+
+### E-012 — Filtrar por un campo checkbox en `filterByFormula` de Airtable
+**Síntoma:** no había patrón existente en el repo para filtrar `listRecords` por un campo tipo Checkbox (los filtros previos eran todos sobre singleSelect o texto).
+**Causa:** `D_TipoDocumento.activo` es checkbox; Airtable no lo compara como texto plano en fórmulas.
+**Solución probada:** usar `filterByFormula: '{activo} = TRUE()'` en `fetchTiposDocumento()` (`lib/tipos-documento.ts`).
+**Prevención futura:** para cualquier fetcher nuevo que filtre por un campo checkbox `activo`, reutilizar la sintaxis `{campo} = TRUE()` en vez de comparar contra `"1"` o string vacío.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
