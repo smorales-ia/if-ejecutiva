@@ -1,7 +1,7 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.3 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026)
-> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`)
+> **Versión**: 1.4 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026)
+> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02)
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
 > **Regla**: en código, preferir FIELD_ID (`fld…`) sobre nombre cuando haya riesgo de colisión o espacio extra. Si el FIELD_ID no está listado aquí, usar el nombre lógico de Capa Datos v2.6.2.
@@ -186,8 +186,10 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `ejecutiva_asignada` | `fldv1XDfP7EgYC3km` ✅ | Link → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Alimenta vista "Mi cartera". Pendiente: resolver Search Records en Tanda B para asignación automática = usuario Clerk |
 | `email_contacto` | `fldjzUZsACA0vDlUq` ✅ | Email | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Reemplaza el rescate de `email` en `observaciones_internas` — pendiente mapear en Tanda B |
 | `banco_financista` | `fldxcfdKRctHCgwmB` ✅ | Link → M_Bancos (`tblGlYuJo5AeMehhs`) | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Distinto de `.banco` (banco originador, texto libre). Reemplaza el rescate de "Banco financista" en `observaciones_internas` — pendiente mapear en Tanda B (requiere Search Records nuevo) |
-| `canal_contacto_original` | `fldca1Uza4eicBXL4` ✅ | Single select (`WhatsApp · Email · Teléfono · Presencial · Otro`) | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Guarda el valor libre de `canal` del form; `origen_canal` conserva su semántica de canal de ingreso al sistema (`ingreso_manual` fijo en alta interna) — pendiente mapear en Tanda B |
+| `canal_contacto_original` | `fldca1Uza4eicBXL4` ✅ | Single select (`WhatsApp · Email · Teléfono · Presencial · Otro`) | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Guarda el valor libre de `canal` del form; `origen_canal` conserva su semántica de canal de ingreso al sistema (`ingreso_manual` fijo en alta interna) — pendiente mapear en Tanda B. **Re-verificado vía MCP 08-jul-2026 (Fase 1 cierre de pendientes IF-02)**: decisión de panel — se mantiene como Single select (no se migra a texto libre; el MCP no permite conversión de tipo in-place sobre un campo existente, ver `docs/aprendizajes.md` E-007) |
 | *(campo trigger AT02)* | ⚠ H-04 | Checkbox (probable) | **Nombre desconocido**. Confirmar en UI Airtable Automations antes de RF-06 |
+
+**Cierre Fase 1 (08-jul-2026, sesión "cierre de pendientes IF-02")**: `email_contacto`, `banco_financista`, `canal_contacto_original`, `ejecutiva_asignada`, `fecha_solicitud`, `solicitante_telefono` y `monto_estimado_uf` fueron re-verificados vía MCP contra el schema real y confirmados existentes con los FIELD_ID de la tabla anterior — no requirieron creación. Detalle de la auditoría en §13.
 
 ---
 
@@ -296,7 +298,7 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `orden` | `fld0t0ytqAkd3bzvd` ✅ | Number | |
 | `descripcion` | `fldsG18353kHMw0yQ` ✅ | Single line text | |
 | `requerido_por_ejecutiva` | `fldhKxTGC76faGGv3` ✅ | Checkbox | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Distingue documentos del checklist obligatorio de adjuntos sueltos opcionales |
-| `estado_extraccion` | ⚙ pendiente | Single select | **No existe aún**. `idle · extrayendo · listo · error` — a crear antes de RF-09 |
+| `estado_extraccion` | `fld54epvDJ7YdJIYD` ✅ | Single select | **Creado** 08-jul-2026 (Fase 1 · cierre de pendientes IF-02). Opciones: `idle · extrayendo · listo · error` (choice IDs `selVJKgo84b62ikEp` · `selfPHp5m6o0hPjgV` · `selICqKF879p4Y3r7` · `selMxROzMpcREqA9B`). Bloqueador de RF-09 resuelto — pendiente mapear en el escenario Make RF-09 (aún sin provisionar, BQ-3-c) |
 
 **Decisión pendiente (Tanda B/C)**: ni `tipo` ni `tipo_adjunto` se llaman `tipo_documento` como asumía la documentación previa, y ninguno de los dos está referenciado hoy en código (no existe aún `/api/adjuntos/upload`). Ambos campos ya tienen equivalente de "otro" (`Otro` en `tipo`, `otro` en `tipo_adjunto`), por lo que cualquiera sirve para el checklist de documentos requeridos — el Data Designer debe decidir cuál usar (o si ambos cubren necesidades distintas) antes de mapear el checklist del formulario en Tanda B/C.
 
@@ -382,9 +384,11 @@ Estos campos deben existir en Airtable antes de escribir los Route Handlers corr
 | `TX_Solicitudes` | `notas_visador` | Long text | D-08 | RF-05 (detalle) |
 | ~~`TX_Solicitudes`~~ | ~~`ejecutiva_asignada`~~ | ~~Link → AUTH_Usuarios~~ | ✅ **Creado** 08-jul-2026 (Fase 2 · Tanda A, `fldv1XDfP7EgYC3km`) | Resuelto — ver §2 |
 | `TX_Solicitudes` | *(campo trigger AT02)* | Checkbox | H-04 (nombre a confirmar) | RF-06 "Pasar a asignada" |
-| `TX_Adjuntos` | `estado_extraccion` | Single select | D-08 | RF-09 |
+| ~~`TX_Adjuntos`~~ | ~~`estado_extraccion`~~ | ~~Single select~~ | ✅ **Creado** 08-jul-2026 (Fase 1 · cierre de pendientes IF-02, `fld54epvDJ7YdJIYD`) | Resuelto — ver §8 |
 | `M_Tasadores` | `casos_en_curso` | Count link | H-05 | RF-06 selector inteligente |
 | `M_Tasadores` | `disponible` | Formula | H-05 | RF-06 selector inteligente |
+
+Tras el cierre de Fase 1 (08-jul-2026), los únicos campos genuinamente pendientes de creación son `notas_tasador`, `notas_visador` (D-08), el campo trigger de AT02 (H-04) y `casos_en_curso`/`disponible` en `M_Tasadores` (H-05) — ninguno de ellos estaba en el alcance aprobado de Fase 1.
 
 ### 13.1 Campos creados en Fase 2 · Tanda A (08-jul-2026)
 
@@ -409,6 +413,16 @@ Tras cerrar la Tanda A original, el panel decidió migrar `.banco` (banco origin
 4. `.banco` (texto, `fldAgTlFXeXWfGTdI`) **no se tocó** — queda deprecated en paralelo hasta que Tanda B/C corten sobre `banco_link` (ver §2).
 
 Detalle completo del proceso y aprobaciones en `docs/_notas/gap_solicitud_persistencia.md` (Tanda A, punto 8) y `docs/aprendizajes.md`.
+
+### 13.3 Campo creado en Fase 1 · cierre de pendientes IF-02 (08-jul-2026)
+
+Sesión de 4 fases (Airtable → Make → Frontend → corte `.banco`) para cerrar los pendientes de IF-02. Fase 1 auditó vía MCP los 8 campos de la Fase 2 · Tanda A (todos ya existentes, sin acción) y creó el único campo genuinamente faltante:
+
+| Tabla | Campo | FIELD_ID | Tipo | Opciones |
+|---|---|---|---|---|
+| `TX_Adjuntos` | `estado_extraccion` | `fld54epvDJ7YdJIYD` | Single select | `idle · extrayendo · listo · error` |
+
+Bloqueador de RF-09 (§8) resuelto. Pendiente: mapear en el escenario Make RF-09 (aún sin provisionar, BQ-3-c) y consumir desde `ExtraccionStatusBadge` (Paso 6 de `construccion.md`). `canal_contacto_original` se revisó en la misma fase y se decidió **no migrarlo** de Single select a texto libre (ver nota en §2).
 
 ---
 

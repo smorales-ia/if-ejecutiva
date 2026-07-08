@@ -188,6 +188,7 @@
           "tipo_propiedad": [{ "id": "{{4.id}}" }],
           "producto": [{ "id": "{{5.id}}" }],
           "comuna": [{ "id": "{{6.id}}" }],
+          "fecha_solicitud": "{{formatDate(now; \"YYYY-MM-DD\")}}",
           "direccion": "{{1.direccion}}",
           "cliente_final_rut": "{{1.rut}}",
           "cliente_final_nombre": "{{1.nombre}}",
@@ -212,7 +213,7 @@
             "table": { "label": "TX_Solicitudes (tblaHTyMHYfmy7Fg6)" }
           }
         },
-        "note": "Los 5 campos Link usan el recXXX resuelto por su Search Records (modulos 2-6), no el texto crudo del webhook. 'banco' es texto libre y recibe banco_id (nombre del banco originador) directo, sin Search Records -- ver Fase 1 y Fase 1.9. 'estado' es un valor fijo 'creada', no viene del webhook (RF-04). 'observaciones_internas' concatena Canal/Email/Banco financista solo si vienen no vacios, para no perder el email ni el banco financista que hoy no tienen campo propio en TX_Solicitudes.",
+        "note": "Los 5 campos Link usan el recXXX resuelto por su Search Records (modulos 2-6), no el texto crudo del webhook. 'banco' es texto libre y recibe banco_id (nombre del banco originador) directo, sin Search Records -- ver Fase 1 y Fase 1.9. 'estado' es un valor fijo 'creada', no viene del webhook (RF-04). 'observaciones_internas' concatena Canal/Email/Banco financista solo si vienen no vacios, para no perder el email ni el banco financista que hoy no tienen campo propio en TX_Solicitudes. 'fecha_solicitud' se fija a la fecha de creacion via formatDate(now) -- fix del bug VP-NaN-XXXX (Fase 2, 08-jul-2026): antes quedaba vacio y 'codigo_ext' (formula 'VP-' & YEAR(fecha_solicitud) & ...) evaluaba YEAR() sobre vacio, dando NaN. Ver docs/aprendizajes.md E-008.",
         "parameters": [
           {
             "name": "__IMTCONN__",
@@ -278,6 +279,6 @@
       "orphans": []
     },
     "zone": "eu1.make.com",
-    "notes": "Blueprint generado a mano (Tanda 4B, Fase 1.7). No fue exportado desde una instancia real de Make: revisar docs/make/SC01_import_instrucciones.md antes de importar/actualizar. 8 modulos: Webhook -> 5x Search Records (cliente, tipo_informe, tipo_propiedad, producto, comuna) -> Airtable Create Record -> Webhook Response. Campos primarios de las 5 tablas M_* confirmados como 'nombre' via MCP (Fase 1.6/1.7). Si el import falla o Make reescribe algun modulo, seguir la seccion 'Fallback manual' del README."
+    "notes": "Blueprint generado a mano (Tanda 4B, Fase 1.7). No fue exportado desde una instancia real de Make: revisar docs/make/SC01_import_instrucciones.md antes de importar/actualizar. 8 modulos: Webhook -> 5x Search Records (cliente, tipo_informe, tipo_propiedad, producto, comuna) -> Airtable Create Record -> Webhook Response. Campos primarios de las 5 tablas M_* confirmados como 'nombre' via MCP (Fase 1.6/1.7). Si el import falla o Make reescribe algun modulo, seguir la seccion 'Fallback manual' del README. Fix 08-jul-2026 (Fase 2 cierre de pendientes IF-02): modulo 7 agrega 'fecha_solicitud' al mapper -- corrige el bug VP-NaN-XXXX en 'codigo_ext'. Aplicar en Make como edicion manual de un solo campo (no re-importar), ver docs/make/SC01_import_instrucciones.md seccion 'Fix VP-NaN-XXXX'."
   }
 }
