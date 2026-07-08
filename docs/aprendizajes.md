@@ -52,6 +52,28 @@ packages:
 **Causa:** Base UI Select emite `string | null`; los handlers esperan `string`.
 **Solución probada:** `onValueChange={(v) => handler(v ?? '')}`. Defensivo, no cambia lógica.
 
+### E-007 — El MCP de Airtable no permite convertir el tipo de un campo existente
+**Síntoma:** Se necesitaba cambiar `TX_Solicitudes.banco` de texto libre a Link → M_Bancos; no existe ninguna herramienta MCP para "cambiar tipo de campo" sobre uno ya creado (`update_field` solo edita nombre/descripción/fórmula; `create_field` solo crea campos nuevos).
+**Causa:** El servidor MCP de Airtable expone un subconjunto de la API oficial que no incluye conversión de tipo de campo in-place (esa operación en la API real de Airtable requiere resolver manualmente el mapeo de valores existentes, algo que el MCP no automatiza).
+**Solución probada:** Estrategia de migración paralela: (1) crear campo nuevo con el tipo destino (`banco_link`, Link → M_Bancos), (2) migrar los valores de las filas existentes con `update_records_for_table` usando un mapeo texto→recXXX resuelto a mano, (3) dejar el campo viejo (`banco`) como deprecated conviviendo con el nuevo, (4) programar su eliminación para una tanda posterior una vez que blueprint Make y código lean/escriban del campo nuevo.
+**Prevención futura:** Antes de pedir una "conversión de tipo" de un campo Airtable vía MCP, asumir que no es posible en un solo paso — planificar directamente la migración paralela (campo nuevo + migración de filas + deprecación) en vez de intentar buscar una herramienta de conversión que no existe.
+
+### E-008 — `codigo_ext` genera valores `VP-NaN-0023` en producción
+**Síntoma:** Las solicitudes creadas en Fase 2 (Paso 4B) muestran `codigo_ext` como `VP-NaN-0020`, `VP-NaN-0021`, etc., en vez de `VP-2026-00NN`.
+**Causa:** `codigo_ext` es una fórmula que depende de `YEAR(fecha_solicitud)`, y `fecha_solicitud` no se mapea en el módulo 7 del blueprint SC01 — queda vacío en cada alta nueva, por lo que `YEAR()` evalúa a `NaN`.
+**Solución probada:** Ninguna aplicada todavía en esta sesión — el fix (mapear `fecha_solicitud = {{formatDate(now; "YYYY-MM-DD")}}` en el módulo 7) pertenece a la **Tanda B** del gap de persistencia (`docs/_notas/gap_solicitud_persistencia.md`, caso a), no a la migración de `banco`.
+**Prevención futura:** Al confirmar el tipo/existencia de un campo vía MCP, revisar también si alguna fórmula de solo lectura depende de él (`codigo_ext` depende de `fecha_solicitud`) — un campo "existente pero no mapeado en Make" puede romper fórmulas aguas abajo sin que el schema lo delate.
+
+### E-009 — Revertir una decisión de panel requiere dejar rastro explícito, no solo actuar
+**Síntoma:** El panel de arquitectura había decidido en la sesión anterior "no migrar `.banco`, solo documentar la divergencia" (Tanda A, punto 8 original); esta sesión revirtió esa decisión con evidencia nueva (5 filas con datos reales + bug `codigo_ext` confirmado) y migró el campo.
+**Causa:** Sin dejar constancia explícita de que la decisión anterior fue revisada y por qué, una sesión futura podría asumir que "no migrar" seguía vigente y entrar en conflicto con el estado real del schema.
+**Solución probada:** Se documentó el cambio de decisión en `docs/schema-airtable.md` §13.2, `docs/_notas/gap_solicitud_persistencia.md` (Tanda A punto 8) y aquí, todos referenciándose entre sí.
+**Prevención futura:** Antes de proponer un cambio de schema en Airtable, revisar si el panel ya tomó una decisión al respecto en documentos previos (`gap_solicitud_persistencia.md`, `schema-airtable.md`); si se revierte, dejar rastro explícito de la evidencia nueva que motivó el cambio, no solo ejecutar.
+
+## Estado de tareas
+
+- **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
+
 ## Reglas operativas aprendidas
 - Antes de escribir código nuevo: leer archivos que se van a tocar y reportar qué existe reutilizable.
 - Nunca commitear ni pushear: el usuario lo hace vía GitHub Desktop.

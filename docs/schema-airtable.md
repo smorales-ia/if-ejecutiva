@@ -1,7 +1,7 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.2 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026)
-> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2
+> **Versión**: 1.3 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026)
+> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`)
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
 > **Regla**: en código, preferir FIELD_ID (`fld…`) sobre nombre cuando haya riesgo de colisión o espacio extra. Si el FIELD_ID no está listado aquí, usar el nombre lógico de Capa Datos v2.6.2.
@@ -137,7 +137,7 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `codigo_ext` | `fldSuJx1fDNYYwDcD` ✅ | Formula | `'VP-' & YEAR(fecha_solicitud) & '-' & LPAD(solicitud_id,4,'0')`. Read-only |
 | `fecha_solicitud` | — | Date | Cuándo se recibió |
 | `cliente` | — | Link → M_Clientes | FK. Solo activos en selectores |
-| `banco` | — | Link → M_Bancos | FK. Opcional salvo hipotecario |
+| `banco` | ver fila detallada más abajo (⚠ **no** es Link → M_Bancos; ver corrección 08-jul-2026) | — | — |
 | `tipo_informe` | — | Link → M_TiposInforme | FK. Filtrado por M_Clientes.productos |
 | `tipo_propiedad` | — | Link → M_TiposPropiedad | FK |
 | `producto` | — | Link → M_Productos | FK |
@@ -171,15 +171,22 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `contacto_nombre` | — | Single line text | [v2.4] Nombre de contacto |
 | `contacto_fono` | — | Single line text | [v2.4] Teléfono de contacto |
 | `casa_numero` | — | Single line text | [v2.4] Número de dirección |
-| `solicitante_nombre` | — | Single line text | [v2.6] Persona natural titular del trámite |
-| `solicitante_telefono` | — | Phone number | [v2.6] Teléfono del solicitante |
+| `solicitante_nombre` | `fld2rd2p4Qpz6NFQ2` ✅ | Single line text | [v2.6] Persona natural titular del trámite |
+| `solicitante_telefono` | `fldzHrLeO3Fe0xtvn` ✅ | Phone number | [v2.6] Teléfono del solicitante. Verificado vía MCP 08-jul-2026 (Fase 2 · Tanda A) |
 | `n_operacion_cliente` | `fldb1vmKk7y3hi4uY` ✅ | **Number** (⚠ H-07) | [v2.6] Capa Datos v2.6.2 lo define como text; el Airtable real lo tiene como number. Usar tipo `number` en TS |
 | `sucursal_originadora` | `fldd56pLZyKYoi2Vi` ✅ | Single line text | [v2.6] ⚠ **Nombre con espacio final** en Airtable real (`sucursal_originadora `). Corregir con D-08. Hasta entonces referenciar por FIELD_ID |
 | `ejecutivo_solicitante` | `fldRweQyq3tTQGmPR` ✅ | Single line text | [v2.6] Spec usaba `ejec_solicitante`; nombre real conservado (D-08) |
-| `comision_ov` | — | Number (4 dec) | [v2.6 TBD-09] Pendiente confirmación semántica |
+| `comision_ov` | `fldTB51XKDhncrL0K` ✅ | Number (4 dec) | [v2.6 TBD-09] Pendiente confirmación semántica |
+| `fecha_solicitud` | `fldvkn9CsORy4eU0Z` ✅ | Date | Verificado vía MCP 08-jul-2026 (Fase 2 · Tanda A). **No estaba mapeado en el módulo 7 de SC01** — pendiente Tanda B. `codigo_ext` depende de `YEAR(fecha_solicitud)` |
+| `monto_estimado_uf` | `fldKZW799xIqMFN1I` ✅ | Number | Verificado vía MCP 08-jul-2026 (Fase 2 · Tanda A). Antes no documentado en esta tabla pese a usarse en `lib/solicitudes.ts`. **No mapeado en SC01** — pendiente Tanda B |
+| `banco` | `fldAgTlFXeXWfGTdI` ✅ | **Single line text** — ⚠ **DEPRECATED en migración** (08-jul-2026) | Banco originador. Verificado vía MCP: es texto libre, **no** Link → M_Bancos como decía esta tabla antes de la Fase 2 · Tanda A. Recibe `banco_id` del form tal cual, sin Search Records. **No borrar todavía** — convive con `banco_link` hasta que Tanda B (blueprint SC01) escriba en `banco_link` y Tanda C (`lib/solicitudes.ts` y demás lectores) lea de `banco_link`. Recién entonces se elimina este campo en una tanda posterior |
+| `banco_link` | `fldxlBazQKgQwureX` ✅ | Link → M_Bancos (`tblGlYuJo5AeMehhs`) | **Creado y poblado** 08-jul-2026 (Fase 2 · Tanda A, migración de `.banco`). **Este es el campo a usar de aquí en adelante** para el banco originador. Migradas las 5 filas que tenían `.banco` poblado al momento de la migración (ver `docs/aprendizajes.md` y `docs/_notas/gap_solicitud_persistencia.md`). ⚠ La API no permite restringir el link a un solo record (`prefersSingleRecordLink` no configurable vía MCP) — la disciplina de "un solo banco" se aplica en Make/código, no en el schema. Pendiente mapear en Tanda B (requiere Search Records, como banco_financista) y leer desde Tanda C |
 | `notas_tasador` | ⚙ pendiente | Long text | **Crear** (D-08). Instrucciones para el tasador |
 | `notas_visador` | ⚙ pendiente | Long text | **Crear** (D-08). Contexto para la revisión |
-| `ejecutiva_asignada` | ⚙ pendiente | Link → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) | **Crear** (D-08 + D-02). Alimenta vista "Mi cartera". Asignación automática = usuario Clerk |
+| `ejecutiva_asignada` | `fldv1XDfP7EgYC3km` ✅ | Link → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Alimenta vista "Mi cartera". Pendiente: resolver Search Records en Tanda B para asignación automática = usuario Clerk |
+| `email_contacto` | `fldjzUZsACA0vDlUq` ✅ | Email | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Reemplaza el rescate de `email` en `observaciones_internas` — pendiente mapear en Tanda B |
+| `banco_financista` | `fldxcfdKRctHCgwmB` ✅ | Link → M_Bancos (`tblGlYuJo5AeMehhs`) | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Distinto de `.banco` (banco originador, texto libre). Reemplaza el rescate de "Banco financista" en `observaciones_internas` — pendiente mapear en Tanda B (requiere Search Records nuevo) |
+| `canal_contacto_original` | `fldca1Uza4eicBXL4` ✅ | Single select (`WhatsApp · Email · Teléfono · Presencial · Otro`) | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Guarda el valor libre de `canal` del form; `origen_canal` conserva su semántica de canal de ingreso al sistema (`ingreso_manual` fijo en alta interna) — pendiente mapear en Tanda B |
 | *(campo trigger AT02)* | ⚠ H-04 | Checkbox (probable) | **Nombre desconocido**. Confirmar en UI Airtable Automations antes de RF-06 |
 
 ---
@@ -267,16 +274,31 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 
 **TABLE_ID**: `tblur71x1oItbmKZc`
 
-| Campo | Tipo Airtable | Notas |
-|---|---|---|
-| `adjunto_id` | Autonumber (PK) | |
-| `solicitud` | Link → TX_Solicitudes | FK |
-| `tipo_documento` | Single select | SII · CBR · Permiso · RecepcionFinal · Foto · Otro |
-| `url_dropbox` | URL | Path en Dropbox |
-| `nombre_archivo` | Single line text | |
-| `tamano_bytes` | Number | |
-| `estado_extraccion` | Single select | ⚙ **Crear si no existe**. `idle · extrayendo · listo · error` — escrito por RF-09 |
-| `creado_en` | Created time | |
+> ⚠ **Tabla corregida 08-jul-2026 (Fase 2 · Tanda A)**. La versión anterior de esta sección documentaba campos que **no existen** en el Airtable real (`tipo_documento`, `tamano_bytes`, `creado_en`) — probablemente aspiracionales de una fuente canónica, nunca creados. `lib/adjuntos.ts` hoy referencia `tamano_bytes`, que tampoco existe (el campo real es `tamanio_kb`); ese código quedará en `0`/vacío hasta corregirse en una tanda de código.
+
+| Campo | FIELD_ID | Tipo Airtable | Notas |
+|---|---|---|---|
+| `adjunto_id` | `fldVt7Lk1ptvmgbtT` ✅ | Autonumber (PK) | |
+| `solicitud` | `fldZTVpXDRtXXPjyv` ✅ | Link → TX_Solicitudes | FK |
+| `nombre_archivo` | `fldhnCIY8yPHW8XEj` ✅ | Single line text | |
+| `tipo` | `fldUYBO3LeOHxiIGW` ✅ | Single select | Foto fachada · Foto interior · Plano · Certificado dominio · Escritura · Permiso edificacion · Recepcion final · Certificado avaluo · Informe borrador · Otro · sii · cbr · plano (11+ valores, mezcla de nomenclaturas) |
+| `tipo_adjunto` | `fld1ocY8ug1vzBQsj` ✅ | Single select | foto_exterior · foto_interior · plano · cbr · escritura · cert_no_expropiacion · otro |
+| `url_dropbox` | `fldEccoUrOjV7oKZ5` ✅ | URL | Path en Dropbox |
+| `thumbnail_url` | `fld3AAAV0P496yZP0` ✅ | URL | |
+| `tamanio_kb` | `fldLgyE0fdGOvuFAy` ✅ | Number | ⚠ Nombre real; `lib/adjuntos.ts` usa `tamano_bytes` (no existe) |
+| `mime_type` | `fldyhpVhzD5eVfbRZ` ✅ | Single line text | |
+| `subido_por` | `fldqAZk4Jf0C5Z4uH` ✅ | Single select | Tasador · Ejecutivo · Sistema · Cliente · tasador (mezcla de mayúsc/minúsc) |
+| `subido_en` | `fldLdCyamAmiNAb6f` ✅ | Date time | |
+| `fecha_subida` | `fldjGUehgdgZ5XvR1` ✅ | Created time | |
+| `procesado_por_ia` | `fldNlxI8UVQTebdFQ` ✅ | Checkbox | |
+| `hash_md5` | `fld9shmoBhZyNTK8x` ✅ | Single line text | |
+| `clave_adjunto` | `fldaLLtzAaEn1O8IW` ✅ | Single line text | |
+| `orden` | `fld0t0ytqAkd3bzvd` ✅ | Number | |
+| `descripcion` | `fldsG18353kHMw0yQ` ✅ | Single line text | |
+| `requerido_por_ejecutiva` | `fldhKxTGC76faGGv3` ✅ | Checkbox | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Distingue documentos del checklist obligatorio de adjuntos sueltos opcionales |
+| `estado_extraccion` | ⚙ pendiente | Single select | **No existe aún**. `idle · extrayendo · listo · error` — a crear antes de RF-09 |
+
+**Decisión pendiente (Tanda B/C)**: ni `tipo` ni `tipo_adjunto` se llaman `tipo_documento` como asumía la documentación previa, y ninguno de los dos está referenciado hoy en código (no existe aún `/api/adjuntos/upload`). Ambos campos ya tienen equivalente de "otro" (`Otro` en `tipo`, `otro` en `tipo_adjunto`), por lo que cualquiera sirve para el checklist de documentos requeridos — el Data Designer debe decidir cuál usar (o si ambos cubren necesidades distintas) antes de mapear el checklist del formulario en Tanda B/C.
 
 ---
 
@@ -358,11 +380,35 @@ Estos campos deben existir en Airtable antes de escribir los Route Handlers corr
 |---|---|---|---|---|
 | `TX_Solicitudes` | `notas_tasador` | Long text | D-08 | RF-05 (detalle) |
 | `TX_Solicitudes` | `notas_visador` | Long text | D-08 | RF-05 (detalle) |
-| `TX_Solicitudes` | `ejecutiva_asignada` | Link → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) | D-08 + D-02 | RF-05 vista "Mi cartera" |
+| ~~`TX_Solicitudes`~~ | ~~`ejecutiva_asignada`~~ | ~~Link → AUTH_Usuarios~~ | ✅ **Creado** 08-jul-2026 (Fase 2 · Tanda A, `fldv1XDfP7EgYC3km`) | Resuelto — ver §2 |
 | `TX_Solicitudes` | *(campo trigger AT02)* | Checkbox | H-04 (nombre a confirmar) | RF-06 "Pasar a asignada" |
 | `TX_Adjuntos` | `estado_extraccion` | Single select | D-08 | RF-09 |
 | `M_Tasadores` | `casos_en_curso` | Count link | H-05 | RF-06 selector inteligente |
 | `M_Tasadores` | `disponible` | Formula | H-05 | RF-06 selector inteligente |
+
+### 13.1 Campos creados en Fase 2 · Tanda A (08-jul-2026)
+
+| Tabla | Campo | FIELD_ID | Tipo |
+|---|---|---|---|
+| `TX_Solicitudes` | `email_contacto` | `fldjzUZsACA0vDlUq` | Email |
+| `TX_Solicitudes` | `banco_financista` | `fldxcfdKRctHCgwmB` | Link → M_Bancos |
+| `TX_Solicitudes` | `canal_contacto_original` | `fldca1Uza4eicBXL4` | Single select |
+| `TX_Solicitudes` | `ejecutiva_asignada` | `fldv1XDfP7EgYC3km` | Link → AUTH_Usuarios |
+| `AUTH_Usuarios` | `clerk_user_id` | `fldg3UHBuBfsWlxd0` | Single line text (⚠ sin unicidad forzada por Airtable) |
+| `TX_Adjuntos` | `requerido_por_ejecutiva` | `fldhKxTGC76faGGv3` | Checkbox |
+
+Ninguno de estos 6 campos está todavía mapeado en el blueprint SC01 (Tanda B) ni consumido por código (Tanda C).
+
+### 13.2 Migración `TX_Solicitudes.banco` → Link (decisión de panel, 08-jul-2026)
+
+Tras cerrar la Tanda A original, el panel decidió migrar `.banco` (banco originador) de texto libre a Link → M_Bancos, en vez de solo documentar la divergencia. Ejecutado vía MCP en 4 pasos:
+
+1. Creados en `M_Bancos` los registros faltantes: `Banco Estado` (`rec8946QxRZRCN3yS`) y `Banco Security` (`recE6Q8aM8P3c9Qqw`).
+2. Creado `TX_Solicitudes.banco_link` (`fldxlBazQKgQwureX`, Link → M_Bancos).
+3. Migradas las 5 filas con `.banco` poblado a `banco_link` (mapeo exacto, incluyendo `METLIFE` → `MetLife Chile S.A.` por decisión de panel).
+4. `.banco` (texto, `fldAgTlFXeXWfGTdI`) **no se tocó** — queda deprecated en paralelo hasta que Tanda B/C corten sobre `banco_link` (ver §2).
+
+Detalle completo del proceso y aprobaciones en `docs/_notas/gap_solicitud_persistencia.md` (Tanda A, punto 8) y `docs/aprendizajes.md`.
 
 ---
 
@@ -404,8 +450,9 @@ Definidos en tres fuentes canónicas (Capa Datos v2.6.2, Motor Cálculo v2.5, Bl
 | `estado` | `fldy3Xe6BXHYYxe2A` | Single select | `activo · inactivo · suspendido` |
 | `rol` | `fldDJQacR69IMsM7Y` | Link → AUTH_Roles | FK. Define permisos por interfaz |
 | `AUTH_DatosAcceso` | `fld2vdl2gR4DBDIvc` | Link → AUTH_DatosAcceso | Back-link. No usar en IF-02 v1 |
+| `clerk_user_id` | `fldg3UHBuBfsWlxd0` ✅ | Single line text | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Para lookup exacto desde la sesión Clerk. ⚠ Airtable no impone unicidad de campo vía API — si se requiere, validar en el Route Handler o en el escenario Make antes de crear/actualizar |
 
-> `TX_Solicitudes.ejecutiva_asignada` enlaza a **esta tabla** (no a `M_Usuarios` — ese nombre no existe en el schema real). Al crear el campo en Airtable, apuntar a `tblbX3hPD2uhqhl5v`.
+> `TX_Solicitudes.ejecutiva_asignada` (`fldv1XDfP7EgYC3km`, creado 08-jul-2026) enlaza a **esta tabla** (no a `M_Usuarios` — ese nombre no existe en el schema real).
 
 ### AUTH_Roles
 

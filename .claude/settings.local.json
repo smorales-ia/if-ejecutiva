@@ -21,7 +21,11 @@
       "mcp__claude_ai_Airtable__get_table_schema",
       "mcp__claude_ai_Airtable__list_records_for_table",
       "Bash(git stash *)",
-      "Bash(pnpm lint *)"
+      "Bash(pnpm lint *)",
+      "mcp__claude_ai_Airtable__create_field",
+      "mcp__claude_ai_Airtable__create_records_for_table",
+      "mcp__claude_ai_Airtable__update_records_for_table",
+      "Bash(grep *)"
     ]
   }
 }
