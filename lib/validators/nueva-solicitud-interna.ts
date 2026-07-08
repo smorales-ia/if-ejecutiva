@@ -10,10 +10,12 @@ import {
  * La ejecutiva ingresa todos los datos que en el flujo externo capturaba
  * el solicitante. Mensajes en español de Chile, sin tecnicismos.
  */
+const CANALES_ORIGEN_VALUES = CANALES_ORIGEN.map((c) => c.value)
+
 export const nuevaSolicitudInternaSchema = z
   .object({
     // Sección A · Origen de la solicitud
-    canal: z.enum(CANALES_ORIGEN, "Selecciona el canal de origen."),
+    canal: z.enum(CANALES_ORIGEN_VALUES, "Selecciona el canal de origen."),
     cliente: z.string().min(1, "Selecciona un cliente."),
     tipoInforme: z.string().min(1, "Selecciona el tipo de informe."),
     banco_id: z.string().min(1, "Selecciona un banco."),

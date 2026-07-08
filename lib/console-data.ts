@@ -116,12 +116,19 @@ export function slaLabel(dias: number): string {
 // Catálogos maestros (mock) para formularios de la consola
 // ──────────────────────────────────────────────────────────────────────────
 
+/**
+ * Canal de origen de la solicitud. `value` es el enum canónico que viaja al
+ * payload de SC01 (Make) y al campo `canal_contacto_original` de Airtable;
+ * `label` es solo para mostrar en el Select (Tanda B refinado, 08-jul-2026).
+ */
 export const CANALES_ORIGEN = [
-  "WhatsApp",
-  "Email",
-  "Teléfono",
-  "Presencial",
-  "Otro",
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "email", label: "Email" },
+  { value: "telefono", label: "Teléfono" },
+  { value: "presencial", label: "Presencial" },
+  { value: "web", label: "Web" },
+  { value: "ingreso_manual", label: "Ingreso manual" },
+  { value: "otro", label: "Otro" },
 ] as const
 
 export const CLIENTES = [

@@ -175,7 +175,7 @@ export function NewRequestSheet({
   async function onSubmit(values: NuevaSolicitudInternaValues) {
     let res: Response
     try {
-      res = await fetch("/api/solicitudes", {
+      res = await fetch("/api/webhooks/crear-solicitud", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
@@ -185,28 +185,31 @@ export function NewRequestSheet({
       return
     }
 
-    if (!res.ok) {
+    const { ok } = (await res.json().catch(() => ({ ok: false }))) as {
+      ok: boolean
+    }
+
+    if (!res.ok || !ok) {
       toast.error(
-        "No pudimos registrar la solicitud. Intenta de nuevo.",
+        "No pudimos completar la acción. Intenta nuevamente en unos segundos.",
         { duration: 3000 }
       )
       return
     }
 
-    const { id } = (await res.json()) as { id: string }
-
     const nDocs = values.documentos.filter(
       (d) => d.archivo !== null
     ).length
-    toast.success(
-      `Solicitud creada con ${nDocs} documento${
-        nDocs === 1 ? "" : "s"
-      } adjunto${nDocs === 1 ? "" : "s"}.`,
-      {
-        description: `${id} · ${values.cliente} · ${values.comuna} · Op. ${values.n_operacion_cliente}`,
-        duration: 3000,
-      }
-    )
+    const mensaje =
+      nDocs === 0
+        ? "Solicitud creada."
+        : `Solicitud creada con ${nDocs} documento${
+            nDocs === 1 ? "" : "s"
+          } adjunto${nDocs === 1 ? "" : "s"}.`
+    toast.success(mensaje, {
+      description: `${values.cliente} · ${values.comuna} · Op. ${values.n_operacion_cliente}`,
+      duration: 3000,
+    })
     resetAll()
     setOpen(false)
     router.refresh()
@@ -274,8 +277,8 @@ export function NewRequestSheet({
                     <SelectContent>
                       <SelectGroup>
                         {CANALES_ORIGEN.map((c) => (
-                          <SelectItem key={c} value={c}>
-                            {c}
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
                           </SelectItem>
                         ))}
                       </SelectGroup>
