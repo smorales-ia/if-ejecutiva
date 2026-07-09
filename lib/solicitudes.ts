@@ -1,5 +1,12 @@
 import { listRecords, AirtableError } from '@/lib/airtable-client'
-import type { EstadoSolicitud, Prioridad, Solicitud } from '@/lib/console-data'
+import {
+  CLIENTES,
+  ESTADO_LABELS,
+  regionDeComuna,
+  type EstadoSolicitud,
+  type Prioridad,
+  type Solicitud,
+} from '@/lib/console-data'
 
 // TX_Solicitudes verified via MCP 2026-07-04
 export const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
@@ -15,7 +22,20 @@ export const VISTAS_VALIDAS: Vista[] = [
   'cartera',
 ]
 
-export function buildFormula(vista: Vista, userId?: string): string {
+export type SlaFiltro = 'verde' | 'ambar' | 'rojo'
+
+export const SLA_FILTROS_VALIDOS: SlaFiltro[] = ['verde', 'ambar', 'rojo']
+
+// D-07: filtros de FiltrosBar persistidos como URL params (RF-05 Subtarea C).
+export interface SolicitudesFiltros {
+  cliente?: string
+  estado?: string
+  sla?: string
+  desde?: string // YYYY-MM-DD
+  hasta?: string // YYYY-MM-DD
+}
+
+function buildVistaFormula(vista: Vista, userId?: string): string {
   switch (vista) {
     case 'activas':
       return 'NOT(OR({estado}="cancelada",{estado}="cerrada",{estado}="entregada"))'
@@ -30,6 +50,45 @@ export function buildFormula(vista: Vista, userId?: string): string {
     case 'cartera':
       return `{ejecutiva_asignada}="${userId ?? ''}"`
   }
+}
+
+const FECHA_VALIDA = /^\d{4}-\d{2}-\d{2}$/
+
+// Cada valor se valida contra una lista cerrada antes de interpolarse en la
+// fórmula Airtable — nunca se inyecta texto libre del usuario (RF-05 D-07).
+function buildFiltrosClauses(filtros?: SolicitudesFiltros): string[] {
+  if (!filtros) return []
+  const clauses: string[] = []
+
+  if (filtros.cliente && (CLIENTES as readonly string[]).includes(filtros.cliente)) {
+    clauses.push(`{cliente}="${filtros.cliente}"`)
+  }
+  if (filtros.estado && filtros.estado in ESTADO_LABELS) {
+    clauses.push(`{estado}="${filtros.estado}"`)
+  }
+  if (filtros.sla && SLA_FILTROS_VALIDOS.includes(filtros.sla as SlaFiltro)) {
+    // semaforo_sla real usa "ámbar" (con tilde); se acepta también sin tilde.
+    clauses.push(
+      filtros.sla === 'ambar'
+        ? 'OR({semaforo_sla}="ámbar",{semaforo_sla}="ambar")'
+        : `{semaforo_sla}="${filtros.sla}"`
+    )
+  }
+  if (filtros.desde && FECHA_VALIDA.test(filtros.desde)) {
+    clauses.push(`NOT(IS_BEFORE({fecha_solicitud},DATETIME_PARSE("${filtros.desde}","YYYY-MM-DD")))`)
+  }
+  if (filtros.hasta && FECHA_VALIDA.test(filtros.hasta)) {
+    clauses.push(`NOT(IS_AFTER({fecha_solicitud},DATETIME_PARSE("${filtros.hasta}","YYYY-MM-DD")))`)
+  }
+
+  return clauses
+}
+
+export function buildFormula(vista: Vista, userId?: string, filtros?: SolicitudesFiltros): string {
+  const vistaFormula = buildVistaFormula(vista, userId)
+  const filtrosClauses = buildFiltrosClauses(filtros)
+  if (filtrosClauses.length === 0) return vistaFormula
+  return `AND(${vistaFormula},${filtrosClauses.join(',')})`
 }
 
 export interface FetchResult {
@@ -64,7 +123,31 @@ export const SOLICITUD_FIELDS: string[] = [
   'semaforo_sla',
   'direccion',
   'monto_estimado_uf',
+  // Paso 3 (RF-05 detalle) — espejo 1:1 de NewRequestSheet + Asignación y Gestión.
+  'canal_contacto_original',
+  'n_operacion_cliente',
+  // FIELD_ID por el espacio final del nombre real en Airtable (D-08, H-04 nota).
+  'fldd56pLZyKYoi2Vi', // sucursal_originadora
+  'solicitante_telefono',
+  'email_contacto',
+  'ejecutiva_asignada',
+  'regla_aplicada',
+  // 'notas_tasador' y 'notas_visador' (D-08) NO se piden aquí: aún no existen
+  // en Airtable y pedir un campo inexistente en `fields` hace fallar TODA la
+  // consulta con 422 UNKNOWN_FIELD_NAME. mapRecord los degrada a "—" solo.
 ]
+
+/**
+ * Busca un campo tolerando espacios extra en el nombre real de Airtable
+ * (ej. `sucursal_originadora ` con espacio final — D-08). Se pide por
+ * FIELD_ID en `SOLICITUD_FIELDS`, pero la respuesta de Airtable sigue
+ * viniendo con el nombre como clave (`returnFieldsByFieldId` no se usa aquí).
+ */
+function getFieldLoose(f: RawFields, name: string): string | undefined {
+  if (f[name] !== undefined) return f[name]
+  const key = Object.keys(f).find((k) => k.trim() === name)
+  return key ? f[key] : undefined
+}
 
 function parseDate(str: string | undefined): Date | null {
   if (!str) return null
@@ -140,22 +223,35 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     banco: f['banco'] ?? '—',
     producto: f['producto'] ?? '—',
     direccion: f['direccion'] ?? '—',
-    region: '—',
+    region: regionDeComuna(f['comuna'] ?? ''),
     montoUf: formatMontoUf(f['monto_estimado_uf']),
     propietario: f['cliente_final_nombre'] ?? '—',
     rut: f['cliente_final_rut'] ?? '—',
-    email: '—',
+    email: f['email_contacto'] ?? '—',
     fechaVisita: f['fecha_visita_programada']
       ? formatDisplay(f['fecha_visita_programada'])
       : 'Por agendar',
     slaAplicable: '5 días hábiles',
     observaciones: f['observaciones_internas'] ?? '',
     canal: f['origen_canal'] ?? '—',
+    canalOrigen: f['canal_contacto_original'] ?? '—',
+    nOperacionCliente: f['n_operacion_cliente'] ?? '—',
+    sucursalOriginadora: getFieldLoose(f, 'sucursal_originadora') ?? '—',
+    ejecutivoSolicitante: f['ejecutivo_solicitante'] ?? '—',
+    telefono: f['solicitante_telefono'] ?? '—',
+    ejecutivaAsignada: f['ejecutiva_asignada'] ?? '—',
+    notasTasador: f['notas_tasador'] ?? '—',
+    notasVisador: f['notas_visador'] ?? '—',
+    reglaAplicada: f['regla_aplicada'] ?? '—',
   }
 }
 
-export async function fetchSolicitudes(vista: Vista = 'activas', userId?: string): Promise<FetchResult> {
-  const formula = buildFormula(vista, userId)
+export async function fetchSolicitudes(
+  vista: Vista = 'activas',
+  userId?: string,
+  filtros?: SolicitudesFiltros
+): Promise<FetchResult> {
+  const formula = buildFormula(vista, userId, filtros)
   try {
     const records = await listRecords<RawFields>(TX_SOLICITUDES, {
       cellFormat: 'string',

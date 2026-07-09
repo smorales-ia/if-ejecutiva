@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ChevronDown, SlidersHorizontal } from "lucide-react"
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Select,
@@ -19,8 +19,34 @@ import {
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import type { Solicitud, TipoDocumento } from "@/lib/console-data"
+import { CLIENTES, ESTADO_LABELS, type EstadoSolicitud, type Solicitud, type TipoDocumento } from "@/lib/console-data"
 import type { Vista } from "@/lib/solicitudes"
+
+const ESTADOS_FILTRABLES = Object.keys(ESTADO_LABELS) as EstadoSolicitud[]
+
+const SLA_OPCIONES = [
+  { value: "verde", label: "Verde" },
+  { value: "ambar", label: "Ámbar" },
+  { value: "rojo", label: "Rojo" },
+] as const
+
+/** Todos los filtros (Cliente · Estado · SLA · Fecha) viven en URL params (D-07). */
+const FILTER_KEYS = ["cliente", "estado", "sla", "desde", "hasta"] as const
+
+function useUrlFilter(key: (typeof FILTER_KEYS)[number]) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const value = searchParams.get(key) ?? ""
+
+  function setValue(next: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (next) params.set(key, next)
+    else params.delete(key)
+    router.push(`/consola?${params.toString()}`, { scroll: false })
+  }
+
+  return [value, setValue] as const
+}
 
 const tabs: { id: Vista; label: string }[] = [
   { id: "cartera",    label: "Mi cartera" },
@@ -50,9 +76,24 @@ export function SolicitudList({
   const searchParams = useSearchParams()
   const [showFilters, setShowFilters] = useState(false)
 
+  const [clienteFiltro, setClienteFiltro] = useUrlFilter("cliente")
+  const [estadoFiltro, setEstadoFiltro] = useUrlFilter("estado")
+  const [slaFiltro, setSlaFiltro] = useUrlFilter("sla")
+  const [desdeFiltro, setDesdeFiltro] = useUrlFilter("desde")
+  const [hastaFiltro, setHastaFiltro] = useUrlFilter("hasta")
+
+  const hayFiltrosActivos =
+    Boolean(clienteFiltro) || Boolean(estadoFiltro) || Boolean(slaFiltro) || Boolean(desdeFiltro) || Boolean(hastaFiltro)
+
   function handleTabClick(tabId: Vista) {
     const params = new URLSearchParams(searchParams.toString())
     params.set('vista', tabId)
+    router.push(`/consola?${params.toString()}`, { scroll: false })
+  }
+
+  function handleLimpiarFiltros() {
+    const params = new URLSearchParams(searchParams.toString())
+    for (const key of FILTER_KEYS) params.delete(key)
     router.push(`/consola?${params.toString()}`, { scroll: false })
   }
 
@@ -116,20 +157,61 @@ export function SolicitudList({
 
         {showFilters && (
           <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-background p-2.5">
-            <FilterSelect label="Cliente" placeholder="Todos" />
-            <FilterSelect label="Tasador" placeholder="Todos" />
-            <FilterSelect label="Estado" placeholder="Todos" />
-            <FilterSelect label="Prioridad" placeholder="Todas" />
-            <div className="col-span-2 flex flex-col gap-1">
-              <span className="text-[11px] font-medium text-muted-foreground">
-                Fecha solicitud
-              </span>
-              <input
-                type="text"
-                placeholder="01 jun 2026 – 30 jun 2026"
-                className="h-8 w-full rounded-md border border-input bg-card px-2.5 text-xs outline-none focus-visible:border-ring"
-              />
+            <FilterSelect
+              label="Cliente"
+              placeholder="Todos"
+              value={clienteFiltro}
+              onValueChange={setClienteFiltro}
+              options={CLIENTES.map((c) => ({ value: c, label: c }))}
+            />
+            <FilterSelect
+              label="Estado"
+              placeholder="Todos"
+              value={estadoFiltro}
+              onValueChange={setEstadoFiltro}
+              options={ESTADOS_FILTRABLES.map((e) => ({ value: e, label: ESTADO_LABELS[e] }))}
+            />
+            <FilterSelect
+              label="SLA"
+              placeholder="Todos"
+              value={slaFiltro}
+              onValueChange={setSlaFiltro}
+              options={SLA_OPCIONES.map((o) => ({ value: o.value, label: o.label }))}
+            />
+            <div className="col-span-2 grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Fecha desde
+                </span>
+                <input
+                  type="date"
+                  value={desdeFiltro}
+                  onChange={(e) => setDesdeFiltro(e.target.value)}
+                  className="h-8 w-full rounded-md border border-input bg-card px-2.5 text-xs outline-none focus-visible:border-ring"
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Fecha hasta
+                </span>
+                <input
+                  type="date"
+                  value={hastaFiltro}
+                  onChange={(e) => setHastaFiltro(e.target.value)}
+                  className="h-8 w-full rounded-md border border-input bg-card px-2.5 text-xs outline-none focus-visible:border-ring"
+                />
+              </div>
             </div>
+            {hayFiltrosActivos && (
+              <button
+                type="button"
+                onClick={handleLimpiarFiltros}
+                className="col-span-2 inline-flex items-center justify-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <X className="size-3" />
+                Limpiar filtros
+              </button>
+            )}
           </div>
         )}
 
@@ -202,25 +284,41 @@ export function SolicitudList({
   )
 }
 
+const FILTER_SELECT_ALL = "__todos__"
+
 function FilterSelect({
   label,
   placeholder,
+  value,
+  onValueChange,
+  options,
 }: {
   label: string
   placeholder: string
+  value: string
+  onValueChange: (value: string) => void
+  options: { value: string; label: string }[]
 }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-[11px] font-medium text-muted-foreground">
         {label}
       </span>
-      <Select>
+      <Select
+        value={value || FILTER_SELECT_ALL}
+        onValueChange={(v) => onValueChange(v === FILTER_SELECT_ALL ? "" : (v ?? ""))}
+      >
         <SelectTrigger size="sm" className="h-8 w-full">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
-            <SelectItem value="todos">{placeholder}</SelectItem>
+            <SelectItem value={FILTER_SELECT_ALL}>{placeholder}</SelectItem>
+            {options.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
           </SelectGroup>
         </SelectContent>
       </Select>

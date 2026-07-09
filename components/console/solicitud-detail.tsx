@@ -4,11 +4,11 @@ import * as React from "react"
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronDown,
   Download,
   Eye,
   FileText,
   ImageIcon,
+  MoreHorizontal,
   Pause,
   Pencil,
   Plus,
@@ -20,7 +20,6 @@ import {
   FileUploadZone,
   type ArchivoSubido,
 } from "@/components/console/file-upload-zone"
-import { ReasignarTasadorDialog } from "@/components/console/reasignar-tasador-dialog"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -28,20 +27,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Badge } from "@/components/ui/badge"
 import {
   PriorityChip,
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import type { Solicitud } from "@/lib/console-data"
+import type { Solicitud, TipoDocumento } from "@/lib/console-data"
 import type { Evento, IconoEvento } from "@/lib/eventos"
 import type { Adjunto } from "@/lib/adjuntos"
 
@@ -53,33 +45,30 @@ const historialIcons: Record<IconoEvento, typeof CheckCircle2> = {
 }
 
 /** Item local optimista, agregado antes de que el próximo fetch lo confirme. */
-type AdjuntoLocal = Adjunto & { urlDropbox: string }
+type AdjuntoLocal = Adjunto
 
-export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
+export function SolicitudDetail({
+  solicitud,
+  tiposDocumento,
+}: {
+  solicitud: Solicitud
+  tiposDocumento: TipoDocumento[]
+}) {
   const s = solicitud
-  const editable = s.estado !== "cancelada" && s.estado !== "cerrada"
-
-  // Estado local que se refresca tras reasignar o adjuntar.
-  const [tasador, setTasador] = React.useState(s.tasador)
-  const [visador, setVisador] = React.useState(s.visador)
-  const [historialExtra, setHistorialExtra] = React.useState<Evento[]>([])
-  const [adjuntosExtra, setAdjuntosExtra] = React.useState<AdjuntoLocal[]>([])
 
   const [historialBase, setHistorialBase] = React.useState<Evento[]>([])
   const [historialLoading, setHistorialLoading] = React.useState(true)
   const [historialError, setHistorialError] = React.useState(false)
 
+  const [adjuntosExtra, setAdjuntosExtra] = React.useState<AdjuntoLocal[]>([])
   const [adjuntosBase, setAdjuntosBase] = React.useState<Adjunto[]>([])
   const [adjuntosLoading, setAdjuntosLoading] = React.useState(true)
   const [adjuntosError, setAdjuntosError] = React.useState(false)
 
-  // Resetea el estado local cuando cambia la solicitud seleccionada.
+  // Resetea el estado local optimista cuando cambia la solicitud seleccionada.
   const prevId = React.useRef(s.id)
   if (prevId.current !== s.id) {
     prevId.current = s.id
-    setTasador(s.tasador)
-    setVisador(s.visador)
-    setHistorialExtra([])
     setAdjuntosExtra([])
   }
 
@@ -129,34 +118,23 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     }
   }, [s.id])
 
-  function handleReasignado(anterior: string, nuevo: string) {
-    setTasador(nuevo)
-    setHistorialExtra((prev) => [
-      {
-        id: `reasig-${prev.length}`,
-        titulo: `Reasignación manual de tasador · ${
-          anterior || "Sin asignar"
-        } → ${nuevo} · por María Espinoza`,
-        hace: "hace unos segundos",
-        icono: "check",
-      },
-      ...prev,
-    ])
-  }
-
   function handleAdjuntos(nuevos: ArchivoSubido[]) {
     setAdjuntosExtra((prev) => [
-      ...nuevos.map((n) => ({
-        id: n.id,
-        nombre: n.nombre,
-        detalle: n.detalle,
-        urlDropbox: "",
-      })),
+      ...nuevos.map(
+        (n): AdjuntoLocal => ({
+          id: n.id,
+          nombre: n.nombre,
+          tipo: "—",
+          detalle: n.detalle,
+          urlDropbox: "",
+          requeridoPorEjecutiva: false,
+        })
+      ),
       ...prev,
     ])
   }
 
-  const historialCompleto = [...historialExtra, ...historialBase]
+  const historialCompleto = historialBase
   const adjuntosCompleto = [...adjuntosExtra, ...adjuntosBase]
 
   return (
@@ -171,57 +149,25 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
           <SLABadge dias={s.slaDias} total={s.slaTotal} />
           <PriorityChip prioridad={s.prioridad} />
         </div>
-        <p className="text-xs text-muted-foreground">
-          Modificado {s.modificado} por {s.modificadoPor}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          <p>
+            Modificado {s.modificado} por {s.modificadoPor}
+          </p>
+          <p>
+            Decisión del motor:{" "}
+            <span className="font-medium text-foreground">
+              {s.reglaAplicada}
+            </span>
+          </p>
+        </div>
 
-        {/* Action bar */}
+        {/* Action bar — mock deshabilitado, disponible recién en Paso 5 (RF-06) */}
         <div className="flex flex-wrap items-center gap-2">
-          <ActionButton
-            icon={Pencil}
-            label="Editar"
-            enabled={editable}
-            primary
-          />
-          {editable ? (
-            <ReasignarTasadorDialog
-              role="tasador"
-              solicitud={s}
-              actual={tasador}
-              onReasignado={handleReasignado}
-            />
-          ) : (
-            <ActionButton
-              icon={UserCog}
-              label="Reasignar tasador"
-              enabled={false}
-            />
-          )}
-          <ActionButton label="Cambiar prioridad" enabled={editable} />
-          <ActionButton icon={Pause} label="Pausar" enabled={editable} />
-
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="outline" size="sm">
-                  Más opciones
-                  <ChevronDown data-icon="inline-end" />
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end">
-              <DropdownMenuGroup>
-                <DropdownMenuItem>Duplicar solicitud</DropdownMenuItem>
-                <DropdownMenuItem>Exportar expediente</DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuItem variant="destructive">
-                  Cancelar solicitud
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <ActionButton icon={Pencil} label="Editar" />
+          <ActionButton icon={UserCog} label="Reasignar tasador" />
+          <ActionButton label="Cambiar prioridad" />
+          <ActionButton icon={Pause} label="Pausar" />
+          <ActionButton icon={MoreHorizontal} label="Más opciones" />
         </div>
       </div>
 
@@ -237,7 +183,12 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <TabsContent value="datos">
-            <DatosTab solicitud={s} tasador={tasador} visador={visador} />
+            <DatosTab
+              solicitud={s}
+              tiposDocumento={tiposDocumento}
+              adjuntos={adjuntosCompleto}
+              adjuntosLoading={adjuntosLoading}
+            />
           </TabsContent>
           <TabsContent value="historial">
             <HistorialTab
@@ -263,31 +214,10 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
 function ActionButton({
   icon: Icon,
   label,
-  enabled,
-  primary,
 }: {
   icon?: React.ComponentType
   label: string
-  enabled: boolean
-  primary?: boolean
 }) {
-  if (enabled) {
-    return (
-      <Button
-        size="sm"
-        variant={primary ? "default" : "outline"}
-        className={
-          primary
-            ? "bg-brand text-brand-foreground hover:bg-brand/90"
-            : undefined
-        }
-      >
-        {Icon && <Icon data-icon="inline-start" />}
-        {label}
-      </Button>
-    )
-  }
-
   return (
     <Tooltip>
       <TooltipTrigger
@@ -305,7 +235,7 @@ function ActionButton({
           </span>
         }
       />
-      <TooltipContent>Bloqueado · estado no permite edición</TooltipContent>
+      <TooltipContent>Disponible en Paso 5</TooltipContent>
     </Tooltip>
   )
 }
@@ -344,80 +274,179 @@ function DataRow({
   )
 }
 
+/**
+ * Espejo 1:1 de NewRequestSheet (RF-05 detalle, Paso 3): mismas 4 secciones
+ * y labels literales del formulario de alta interna, más Documentos
+ * requeridos/Adjuntos (resumen) y Asignación y Gestión (no está en el Sheet;
+ * es del expediente).
+ */
 function DatosTab({
   solicitud: s,
-  tasador,
-  visador,
+  tiposDocumento,
+  adjuntos,
+  adjuntosLoading,
 }: {
   solicitud: Solicitud
-  tasador: string
-  visador: string
+  tiposDocumento: TipoDocumento[]
+  adjuntos: Adjunto[]
+  adjuntosLoading: boolean
 }) {
+  const adjuntosRequeridos = adjuntos.filter((a) => a.requeridoPorEjecutiva)
+
   return (
     <div className="flex flex-col gap-6">
-      <Section title="Cliente y tipo">
+      <Section title="Origen de la solicitud">
+        <DataRow label="Canal de origen">{s.canalOrigen}</DataRow>
         <DataRow label="Cliente">{s.cliente}</DataRow>
         <DataRow label="Tipo de informe">{s.tipoInforme}</DataRow>
-        <DataRow label="Tipo de propiedad">{s.tipoPropiedad}</DataRow>
         <DataRow label="Banco">{s.banco}</DataRow>
-        <DataRow label="Producto">{s.producto}</DataRow>
+        <DataRow label="N° de operación cliente">{s.nOperacionCliente}</DataRow>
+        <DataRow label="Sucursal originadora">{s.sucursalOriginadora}</DataRow>
+        <DataRow label="Ejecutivo solicitante">{s.ejecutivoSolicitante}</DataRow>
       </Section>
 
       <Separator />
 
-      <Section title="Propiedad">
+      <Section title="Datos de la propiedad">
         <DataRow label="Dirección">{s.direccion}</DataRow>
-        <DataRow label="Comuna">{s.comuna}</DataRow>
         <DataRow label="Región">{s.region}</DataRow>
-        <DataRow label="Monto estimado">{s.montoUf}</DataRow>
+        <DataRow label="Comuna">{s.comuna}</DataRow>
+        <DataRow label="Tipo de propiedad">{s.tipoPropiedad}</DataRow>
+        <DataRow label="Valor estimado (UF)">{s.montoUf}</DataRow>
       </Section>
 
       <Separator />
 
-      <Section title="Propietario / Solicitante final">
-        <DataRow label="Nombre">{s.propietario}</DataRow>
+      <Section title="Solicitante final">
+        <DataRow label="Nombre completo">{s.propietario}</DataRow>
         <DataRow label="RUT">{s.rut}</DataRow>
+        <DataRow label="Teléfono">{s.telefono}</DataRow>
         <DataRow label="Email">{s.email}</DataRow>
       </Section>
 
       <Separator />
 
-      <Section title="Asignaciones">
-        <DataRow label="Tasador">
-          <span className="inline-flex items-center gap-2">
-            {tasador}
-            {tasador !== "Sin asignar" && (
-              <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
-                Asignado
-              </span>
-            )}
-          </span>
-        </DataRow>
-        <DataRow label="Visador">{visador}</DataRow>
-        <DataRow label="Fecha visita">{s.fechaVisita}</DataRow>
-      </Section>
-
-      <Separator />
-
-      <Section title="SLA">
-        <DataRow label="SLA aplicable">{s.slaAplicable}</DataRow>
-        <DataRow label="Fecha límite entrega">{s.fechaLimite}</DataRow>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">Días restantes</span>
-          <SLABadge dias={s.slaDias} total={s.slaTotal} className="w-fit" />
+      <Section title="Producto y observaciones">
+        <DataRow label="Producto">{s.producto}</DataRow>
+        <div className="col-span-1 flex flex-col gap-0.5 sm:col-span-2">
+          <span className="text-xs text-muted-foreground">Observaciones</span>
+          <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
+            {s.observaciones || "—"}
+          </p>
         </div>
       </Section>
 
       <Separator />
 
-      <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Observaciones
+          Documentos requeridos
         </h2>
-        <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
-          {s.observaciones}
+        <p className="text-xs text-muted-foreground">
+          Catálogo vigente al momento de crear la solicitud. Airtable aún no
+          vincula cada adjunto a un documento específico del catálogo
+          (decisión pendiente, ver <code>docs/schema-airtable.md</code> §8) —
+          se muestra el catálogo de referencia y, por separado, los adjuntos
+          que la ejecutiva marcó como parte del checklist obligatorio.
+        </p>
+        <ul className="flex flex-col gap-1.5">
+          {tiposDocumento.map((t) => (
+            <li
+              key={t.id}
+              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2"
+            >
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm font-medium text-foreground">
+                  {t.nombre}
+                </span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {t.entidad_emisora}
+                </span>
+              </div>
+              {t.vigencia_dias != null && (
+                <Badge variant="secondary" className="shrink-0 text-muted-foreground">
+                  Vigencia {t.vigencia_dias} días
+                </Badge>
+              )}
+            </li>
+          ))}
+        </ul>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-xs font-medium text-muted-foreground">
+            Marcados como requeridos en este expediente ({adjuntosRequeridos.length})
+          </span>
+          {adjuntosLoading ? (
+            <p className="text-sm text-muted-foreground">Cargando…</p>
+          ) : adjuntosRequeridos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Ningún adjunto marcado todavía.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {adjuntosRequeridos.map((a) => (
+                <li
+                  key={a.id}
+                  className="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span className="truncate text-foreground">{a.nombre}</span>
+                  {a.urlDropbox ? (
+                    <a
+                      href={a.urlDropbox}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-xs font-medium text-brand hover:underline"
+                    >
+                      Ver enlace
+                    </a>
+                  ) : (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      Sin enlace
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <Separator />
+
+      <section className="flex flex-col gap-1">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Adjuntos
+        </h2>
+        <p className="text-sm text-foreground">
+          {adjuntosLoading
+            ? "Cargando…"
+            : `${adjuntos.length} adjunto${adjuntos.length === 1 ? "" : "s"} en el expediente`}{" "}
+          <span className="text-muted-foreground">— ver pestaña Adjuntos.</span>
         </p>
       </section>
+
+      <Separator />
+
+      <Section title="Asignación y gestión">
+        <DataRow label="Tasador asignado">{s.tasador}</DataRow>
+        <DataRow label="Visador">{s.visador}</DataRow>
+        <DataRow label="Fecha estimada de visita">{s.fechaVisita}</DataRow>
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs text-muted-foreground">Prioridad</span>
+          <PriorityChip prioridad={s.prioridad} className="w-fit" />
+        </div>
+        <DataRow label="Ejecutiva asignada">{s.ejecutivaAsignada}</DataRow>
+        <DataRow label="Notas para el tasador">{s.notasTasador}</DataRow>
+        <DataRow label="Notas para el visador">{s.notasVisador}</DataRow>
+        <div className="col-span-1 flex flex-col gap-0.5 sm:col-span-2">
+          <span className="text-xs text-muted-foreground">
+            Observaciones internas
+          </span>
+          <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
+            {s.observaciones || "—"}
+          </p>
+        </div>
+      </Section>
     </div>
   )
 }
@@ -547,7 +576,7 @@ function AdjuntosTab({
                       {a.nombre}
                     </span>
                     <span className="truncate text-xs text-muted-foreground">
-                      {a.detalle}
+                      {a.tipo} · {a.detalle}
                     </span>
                   </div>
                   <Button

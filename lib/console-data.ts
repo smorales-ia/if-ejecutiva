@@ -46,6 +46,20 @@ export interface Solicitud {
   slaAplicable: string
   observaciones: string
   canal: string
+  // Paso 3 (RF-05 detalle) — espejo 1:1 de NewRequestSheet + sección Asignación y Gestión.
+  /** Canal de origen elegido por la ejecutiva (`canal_contacto_original`), distinto de `canal` (`origen_canal`, fijo `ingreso_manual`). */
+  canalOrigen: string
+  nOperacionCliente: string
+  sucursalOriginadora: string
+  ejecutivoSolicitante: string
+  telefono: string
+  ejecutivaAsignada: string
+  /** ⚙ Pendiente de creación en Airtable (D-08) — degrada a "—". */
+  notasTasador: string
+  /** ⚙ Pendiente de creación en Airtable (D-08) — degrada a "—". */
+  notasVisador: string
+  /** `regla_aplicada` — regla ganadora escrita por AT01. */
+  reglaAplicada: string
 }
 
 export const ESTADO_LABELS: Record<EstadoSolicitud, string> = {
@@ -86,9 +100,10 @@ export const PRIORIDAD_LABELS: Record<Prioridad, string> = {
 }
 
 export const PRIORIDAD_CLASSES: Record<Prioridad, string> = {
-  normal: "bg-gray-100 text-gray-600 border-gray-200",
-  urgente: "bg-orange-50 text-[#b45309] border-orange-200",
-  critico: "bg-red-50 text-red-700 border-red-200",
+  normal: "bg-slate-100 text-slate-600 border-slate-200",
+  // Ámbar operacional (#D97706) — nunca el naranja de marca (#F5A213).
+  urgente: "bg-amber-50 text-[#d97706] border-amber-200",
+  critico: "bg-red-50 text-[#b91c1c] border-red-200",
 }
 
 export type SlaTone = "green" | "amber" | "red"
@@ -351,6 +366,19 @@ export const COMUNAS_POR_REGION: Record<string, string[]> = {
 }
 
 export const REGIONES = Object.keys(COMUNAS_POR_REGION)
+
+/**
+ * Deriva la región a partir de la comuna usando el mismo catálogo del Sheet
+ * (`COMUNAS_POR_REGION`), ya que `TX_Solicitudes` no guarda la región propia.
+ * `COMUNAS_POR_REGION` es un subconjunto representativo — comunas fuera de él
+ * devuelven "—" (RF-05 detalle, Paso 3).
+ */
+export function regionDeComuna(comuna: string): string {
+  for (const [region, comunas] of Object.entries(COMUNAS_POR_REGION)) {
+    if (comunas.includes(comuna)) return region
+  }
+  return "—"
+}
 
 /**
  * Valida un RUT chileno usando el algoritmo de módulo 11.

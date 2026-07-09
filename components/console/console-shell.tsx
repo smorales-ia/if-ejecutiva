@@ -46,7 +46,7 @@ export function ConsoleShell({
       </div>
       {selected && (
         <div className="min-w-0 flex-1">
-          <SolicitudDetail solicitud={selected} />
+          <SolicitudDetail solicitud={selected} tiposDocumento={tiposDocumento} />
         </div>
       )}
     </main>

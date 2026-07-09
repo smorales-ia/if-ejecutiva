@@ -1,37 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { listRecords, AirtableError } from '@/lib/airtable-client'
-import { mapRecord, SOLICITUD_FIELDS, TX_SOLICITUDES } from '@/lib/solicitudes'
+import {
+  buildFormula,
+  mapRecord,
+  SOLICITUD_FIELDS,
+  TX_SOLICITUDES,
+  VISTAS_VALIDAS,
+  type SolicitudesFiltros,
+  type Vista,
+} from '@/lib/solicitudes'
 
 export const dynamic = 'force-dynamic'
-
-type Vista = 'activas' | 'sla_riesgo' | 'reasignar' | 'pausadas' | 'aprobadas' | 'cartera'
-
-const VISTAS_VALIDAS: Vista[] = [
-  'activas',
-  'sla_riesgo',
-  'reasignar',
-  'pausadas',
-  'aprobadas',
-  'cartera',
-]
-
-function buildFormula(vista: Vista, userId?: string): string {
-  switch (vista) {
-    case 'activas':
-      return 'NOT(OR({estado}="cancelada",{estado}="cerrada",{estado}="entregada"))'
-    case 'sla_riesgo':
-      return 'OR({semaforo_sla}="rojo",{semaforo_sla}="ámbar",{semaforo_sla}="ambar")'
-    case 'reasignar':
-      return 'AND({estado}="creada",DATETIME_DIFF(NOW(),CREATED_TIME(),"hours")>48)'
-    case 'pausadas':
-      return '{estado}="pausada"'
-    case 'aprobadas':
-      return '{estado}="aprobada"'
-    case 'cartera':
-      return `{ejecutiva_asignada}="${userId}"`
-  }
-}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
@@ -39,6 +19,15 @@ export async function GET(request: NextRequest) {
   const vista: Vista = VISTAS_VALIDAS.includes(rawVista as Vista)
     ? (rawVista as Vista)
     : 'activas'
+
+  // D-07: filtros de FiltrosBar leídos server-side desde query params.
+  const filtros: SolicitudesFiltros = {
+    cliente: searchParams.get('cliente') ?? undefined,
+    estado: searchParams.get('estado') ?? undefined,
+    sla: searchParams.get('sla') ?? undefined,
+    desde: searchParams.get('desde') ?? undefined,
+    hasta: searchParams.get('hasta') ?? undefined,
+  }
 
   let userId: string | undefined
   if (vista === 'cartera') {
@@ -50,7 +39,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const formula = buildFormula(vista, userId)
+    const formula = buildFormula(vista, userId, filtros)
     const records = await listRecords<Record<string, string | undefined>>(TX_SOLICITUDES, {
       cellFormat: 'string',
       timeZone: 'America/Santiago',

@@ -7,14 +7,19 @@ export const TX_ADJUNTOS = 'tblur71x1oItbmKZc'
 export interface Adjunto {
   id: string
   nombre: string
+  tipo: string
   detalle: string
   urlDropbox: string
+  /** `requerido_por_ejecutiva` — distingue el checklist obligatorio de adjuntos sueltos (Fase 2 Tanda A). */
+  requeridoPorEjecutiva: boolean
 }
 
 type RawFields = {
   nombre_archivo?: string
+  tipo?: string
   url_dropbox?: string
   tamanio_kb?: string
+  requerido_por_ejecutiva?: string
 }
 
 /** `tamanio_kb` ya viene en KB desde Airtable (no bytes) — sin dividir por 1024 antes de mostrar KB. */
@@ -31,7 +36,7 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
     timeZone: 'America/Santiago',
     userLocale: 'es-CL',
     filterByFormula: `FIND("${solicitudId}", ARRAYJOIN({solicitud}))`,
-    fields: ['nombre_archivo', 'url_dropbox', 'tamanio_kb'],
+    fields: ['nombre_archivo', 'tipo', 'url_dropbox', 'tamanio_kb', 'requerido_por_ejecutiva'],
   })
 
   return records.map((r) => {
@@ -40,8 +45,10 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
     return {
       id: r.id,
       nombre: r.fields.nombre_archivo ?? 'Sin nombre',
+      tipo: r.fields.tipo ?? '—',
       detalle: tamano ? `${tamano} · subido ${hace}` : `Subido ${hace}`,
       urlDropbox: r.fields.url_dropbox ?? '',
+      requeridoPorEjecutiva: r.fields.requerido_por_ejecutiva === '1' || r.fields.requerido_por_ejecutiva === 'true',
     }
   })
 }

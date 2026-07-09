@@ -88,6 +88,36 @@ packages:
 **Solución probada:** usar `filterByFormula: '{activo} = TRUE()'` en `fetchTiposDocumento()` (`lib/tipos-documento.ts`).
 **Prevención futura:** para cualquier fetcher nuevo que filtre por un campo checkbox `activo`, reutilizar la sintaxis `{campo} = TRUE()` en vez de comparar contra `"1"` o string vacío.
 
+### E-013 — Nomenclatura de `construccion.md` diverge de los archivos reales del repo
+**Síntoma:** `construccion.md` §4 esperaba crear `components/console/filtros-bar.tsx` y `components/console/prioridad-badge.tsx`; ninguno existe en el repo — los filtros viven inline en `solicitud-list.tsx` y el badge de prioridad es `PriorityChip` en `status-badges.tsx`.
+**Causa raíz:** `construccion.md` documenta el plan original de v0; el código evolucionó consolidando ambos componentes en archivos ya existentes sin que la guía se actualizara.
+**Solución aplicada:** se extendió `solicitud-list.tsx` (filtros Cliente/Estado/SLA/Fecha por URL params) y se ajustó `PRIORIDAD_CLASSES` en `console-data.ts`, en vez de crear archivos nuevos duplicados.
+**Prevención futura:** antes de crear un archivo que `construccion.md` marca como "no existe", grep primero por el nombre del componente (`PriorityChip`, `FiltrosBar`, etc.) — puede que ya exista bajo otro nombre de archivo.
+
+### E-014 — `PRIORIDAD_CLASSES` usaba la paleta "orange" de Tailwind, chocando con el naranja de marca
+**Síntoma:** el badge "Urgente" usaba `bg-orange-50 border-orange-200`, visualmente cercano al naranja de marca `#F5A213` que CLAUDE.md prohíbe explícitamente colisionar con el ámbar operacional.
+**Causa raíz:** la implementación original no distinguió la paleta Tailwind "orange" de la paleta "amber" al mapear el semáforo operacional de prioridad.
+**Solución aplicada:** cambiado a `bg-amber-50 border-amber-200 text-[#d97706]` (y `text-[#b91c1c]` exacto para Crítico), alineado con el mismo patrón ya usado en `SLA_CLASSES`. "Normal" pasó de `gray` a `slate` per especificación.
+**Prevención futura:** cualquier badge de estado operacional (ámbar) debe usar clases Tailwind `amber-*`, nunca `orange-*` — reservar `orange` solo para elementos de marca.
+
+### E-015 — `buildFormula`/`Vista`/`VISTAS_VALIDAS` duplicados entre Route Handler y lib
+**Síntoma:** `app/api/solicitudes/route.ts` mantenía su propia copia de `buildFormula`, `Vista` y `VISTAS_VALIDAS`, divergiendo silenciosamente de `lib/solicitudes.ts` (el Route Handler no tenía los filtros Cliente/Estado/SLA/Fecha que sí necesitaba `page.tsx`).
+**Causa raíz:** el Route Handler se escribió antes de que `page.tsx` migrara a llamar `fetchSolicitudes()` directamente desde `lib/solicitudes.ts`; nadie consolidó ambos después.
+**Solución aplicada:** el Route Handler ahora importa `buildFormula`, `Vista` y `VISTAS_VALIDAS` desde `lib/solicitudes.ts` en vez de duplicarlos.
+**Prevención futura:** al agregar lógica de filtrado sobre `TX_Solicitudes`, verificar si existe más de un punto de entrada (Route Handler vs. Server Component) y consolidar en `lib/` antes de duplicar.
+
+### E-016 — Pedir en `fields[]` un campo que no existe en Airtable rompe TODA la consulta (422), no solo ese campo
+**Síntoma:** al preparar el fetch de `TX_Solicitudes` para el Paso 3 (TabDatos espejo de NewRequestSheet) se agregaron `notas_tasador` y `notas_visador` al array `fields` de `listRecords` — ambos ⚙ pendientes de creación (D-08) según `docs/schema-airtable.md`.
+**Causa raíz:** la API de Airtable devuelve `422 UNKNOWN_FIELD_NAME` para la solicitud completa si CUALQUIER nombre en el parámetro `fields` no existe en la tabla — no lo ignora en silencio. Pedirlo habría roto `GET /api/solicitudes` y `GET /api/solicitudes/[id]` enteros (Paso 2 y Paso 3), no solo esos dos labels.
+**Solución aplicada:** se retiraron `notas_tasador`/`notas_visador` de `SOLICITUD_FIELDS` en `lib/solicitudes.ts`; `mapRecord` ya degrada a `"—"` cuando la clave no viene en la respuesta, así que no hace falta pedirlos. Se verificó en vivo contra la base real (`node` + `fetch` a la API de Airtable con el token de `.env.local`, solo lectura) que el resto de campos nuevos (`canal_contacto_original`, `n_operacion_cliente`, `fldd56pLZyKYoi2Vi`/`sucursal_originadora`, `solicitante_telefono`, `email_contacto`, `ejecutiva_asignada`, `regla_aplicada`) sí existen y devuelven `200`.
+**Prevención futura:** antes de agregar un campo a cualquier array `fields` de `listRecords`/`getRecord`, confirmar en `docs/schema-airtable.md` que no tiene el marcador ⚙ (pendiente de creación). Si un label depende de un campo pendiente, dejar que `mapRecord` lo degrade a `"—"` por ausencia de clave — nunca pedirlo explícitamente en `fields`. Ante duda, un `fetch` de solo lectura directo a la API de Airtable (fuera de Next.js, sin pasar por Clerk) es la forma más rápida de confirmar el nombre exacto de un campo sin arriesgar builds.
+
+### E-017 — `sucursal_originadora` con espacio final: pedir por FIELD_ID no alcanza, la respuesta igual usa el nombre con espacio como clave
+**Síntoma:** se pidió el campo vía FIELD_ID (`fldd56pLZyKYoi2Vi`) en `fields[]` para evitar el problema del espacio final (D-08); la duda era si la respuesta JSON vendría con la clave `"sucursal_originadora"` o `"sucursal_originadora "`.
+**Causa raíz:** `fields[]` acepta nombre o FIELD_ID para *seleccionar* qué campos incluir, pero no cambia cómo se *serializan* las claves del objeto `fields` de la respuesta — eso solo lo controla `returnFieldsByFieldId` (no usado en este repo). Verificado en vivo: la respuesta trae literalmente la clave `"sucursal_originadora "` (con espacio final).
+**Solución aplicada:** `getFieldLoose()` en `lib/solicitudes.ts` — busca primero la clave exacta y, si no está, la busca tolerando espacios (`k.trim() === name`). Se usa solo para este campo.
+**Prevención futura:** pedir un campo por FIELD_ID resuelve el problema de "no puedo referenciar el nombre real porque no sé cuántos espacios tiene", pero para LEER el valor de la respuesta sigue haciendo falta tolerancia a espacios en la clave — las dos partes del problema (pedir vs. leer) se resuelven por separado.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
