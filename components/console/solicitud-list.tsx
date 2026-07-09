@@ -20,7 +20,7 @@ import {
   StateBadge,
 } from "@/components/console/status-badges"
 import { CLIENTES, ESTADO_LABELS, type EstadoSolicitud, type Solicitud, type TipoDocumento } from "@/lib/console-data"
-import type { Vista } from "@/lib/solicitudes"
+import type { FetchResult, Vista } from "@/lib/solicitudes"
 
 const ESTADOS_FILTRABLES = Object.keys(ESTADO_LABELS) as EstadoSolicitud[]
 
@@ -63,6 +63,7 @@ export function SolicitudList({
   onSelect,
   vistaActiva,
   degraded,
+  motivo,
   tiposDocumento,
 }: {
   solicitudes: Solicitud[]
@@ -70,6 +71,7 @@ export function SolicitudList({
   onSelect: (id: string) => void
   vistaActiva: Vista
   degraded?: boolean
+  motivo?: FetchResult['motivo']
   tiposDocumento: TipoDocumento[]
 }) {
   const router = useRouter()
@@ -97,6 +99,7 @@ export function SolicitudList({
     router.push(`/consola?${params.toString()}`, { scroll: false })
   }
 
+  const showEjecutivaNoEncontrada = motivo === 'ejecutiva_no_encontrada' && vistaActiva === 'cartera'
   const showDegradedMessage = degraded === true && vistaActiva === 'cartera'
 
   return (
@@ -222,7 +225,11 @@ export function SolicitudList({
 
       {/* List */}
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {showDegradedMessage ? (
+        {showEjecutivaNoEncontrada ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            No pudimos encontrar tu usuario en AUTH_Usuarios. Verifica con el administrador.
+          </p>
+        ) : showDegradedMessage ? (
           <p className="px-4 py-6 text-center text-sm text-muted-foreground">
             Aún no está configurada la asignación por ejecutiva. Pídeselo al administrador de Airtable.
           </p>

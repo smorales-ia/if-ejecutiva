@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { listRecords, AirtableError } from '@/lib/airtable-client'
 import {
-  buildFormula,
-  mapRecord,
-  SOLICITUD_FIELDS,
-  TX_SOLICITUDES,
+  fetchSolicitudes,
   VISTAS_VALIDAS,
   type SolicitudesFiltros,
   type Vista,
@@ -39,23 +35,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const formula = buildFormula(vista, userId, filtros)
-    const records = await listRecords<Record<string, string | undefined>>(TX_SOLICITUDES, {
-      cellFormat: 'string',
-      timeZone: 'America/Santiago',
-      userLocale: 'es-CL',
-      filterByFormula: formula,
-      'sort[0][field]': 'fecha_limite_entrega',
-      'sort[0][direction]': 'asc',
-      fields: SOLICITUD_FIELDS,
-    })
-    const data = records.map((r) => mapRecord(r.id, r.createdTime, r.fields))
-    return NextResponse.json({ data, total: data.length })
+    // fetchSolicitudes resuelve clerk_user_id -> AUTH_Usuarios internamente
+    // para "cartera" (ver lib/solicitudes.ts, resolveEjecutiva).
+    const { data, degraded, motivo } = await fetchSolicitudes(vista, userId, filtros)
+    return NextResponse.json({ data, total: data.length, degraded, motivo })
   } catch (err) {
-    if (err instanceof AirtableError && err.status === 422 && vista === 'cartera') {
-      // ejecutiva_asignada not yet created in TX_Solicitudes (D-08 pending)
-      return NextResponse.json({ data: [], degraded: true, total: 0 })
-    }
     console.error('[GET /api/solicitudes]', err)
     return NextResponse.json(
       { error: 'No se pudo cargar la lista de solicitudes.' },

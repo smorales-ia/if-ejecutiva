@@ -11,6 +11,9 @@ import {
 // TX_Solicitudes verified via MCP 2026-07-04
 export const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
 
+// AUTH_Usuarios verified via MCP 2026-07-07 (RF-52)
+const AUTH_USUARIOS = 'tblbX3hPD2uhqhl5v'
+
 export type Vista = 'activas' | 'sla_riesgo' | 'reasignar' | 'pausadas' | 'aprobadas' | 'cartera'
 
 export const VISTAS_VALIDAS: Vista[] = [
@@ -35,7 +38,19 @@ export interface SolicitudesFiltros {
   hasta?: string // YYYY-MM-DD
 }
 
-function buildVistaFormula(vista: Vista, userId?: string): string {
+function escapeFormulaString(value: string): string {
+  return value.replace(/"/g, '\\"')
+}
+
+/**
+ * `ejecutivaNombre`: el *primary field* (nombre) del registro de AUTH_Usuarios
+ * ya resuelto — NUNCA el clerk_user_id ni el recordId. Ver E-018/E-019 en
+ * docs/aprendizajes.md: un campo Link, dentro de una fórmula de Airtable, se
+ * evalúa contra el primary field del registro vinculado, no contra su
+ * recordId (verificado en vivo). La resolución clerk_user_id → nombre vive en
+ * `resolveEjecutiva()`, más abajo.
+ */
+function buildVistaFormula(vista: Vista, ejecutivaNombre?: string): string {
   switch (vista) {
     case 'activas':
       return 'NOT(OR({estado}="cancelada",{estado}="cerrada",{estado}="entregada"))'
@@ -48,7 +63,7 @@ function buildVistaFormula(vista: Vista, userId?: string): string {
     case 'aprobadas':
       return '{estado}="aprobada"'
     case 'cartera':
-      return `{ejecutiva_asignada}="${userId ?? ''}"`
+      return `FIND("${escapeFormulaString(ejecutivaNombre ?? '')}", ARRAYJOIN({ejecutiva_asignada}))`
   }
 }
 
@@ -84,8 +99,8 @@ function buildFiltrosClauses(filtros?: SolicitudesFiltros): string[] {
   return clauses
 }
 
-export function buildFormula(vista: Vista, userId?: string, filtros?: SolicitudesFiltros): string {
-  const vistaFormula = buildVistaFormula(vista, userId)
+export function buildFormula(vista: Vista, ejecutivaNombre?: string, filtros?: SolicitudesFiltros): string {
+  const vistaFormula = buildVistaFormula(vista, ejecutivaNombre)
   const filtrosClauses = buildFiltrosClauses(filtros)
   if (filtrosClauses.length === 0) return vistaFormula
   return `AND(${vistaFormula},${filtrosClauses.join(',')})`
@@ -94,6 +109,37 @@ export function buildFormula(vista: Vista, userId?: string, filtros?: Solicitude
 export interface FetchResult {
   data: Solicitud[]
   degraded?: boolean
+  /** "Mi cartera" sin match en AUTH_Usuarios para el clerk_user_id de la sesión. */
+  motivo?: 'ejecutiva_no_encontrada'
+}
+
+interface EjecutivaResuelta {
+  recordId: string
+  nombre: string
+}
+
+const EJECUTIVA_CACHE_TTL_MS = 5 * 60 * 1000
+// Cache en memoria de proceso, sin persistencia — se pierde en cada redeploy/restart.
+const ejecutivaCache = new Map<string, { data: EjecutivaResuelta | null; expiresAt: number }>()
+
+/**
+ * Resuelve un clerk_user_id (ej. `user_3GBF...`) al registro de AUTH_Usuarios
+ * correspondiente. Cachea en memoria de proceso por 5 min. `null` si no hay
+ * fila con ese `clerk_user_id` (caso legítimo: usuario nunca sincronizado).
+ */
+export async function resolveEjecutiva(clerkUserId: string): Promise<EjecutivaResuelta | null> {
+  const cached = ejecutivaCache.get(clerkUserId)
+  if (cached && cached.expiresAt > Date.now()) return cached.data
+
+  const records = await listRecords<{ nombre?: string }>(AUTH_USUARIOS, {
+    filterByFormula: `{clerk_user_id}="${escapeFormulaString(clerkUserId)}"`,
+    fields: ['nombre'],
+  })
+  const data: EjecutivaResuelta | null = records[0]
+    ? { recordId: records[0].id, nombre: records[0].fields.nombre ?? '' }
+    : null
+  ejecutivaCache.set(clerkUserId, { data, expiresAt: Date.now() + EJECUTIVA_CACHE_TTL_MS })
+  return data
 }
 
 // Airtable returns all values as strings when cellFormat=string.
@@ -251,7 +297,18 @@ export async function fetchSolicitudes(
   userId?: string,
   filtros?: SolicitudesFiltros
 ): Promise<FetchResult> {
-  const formula = buildFormula(vista, userId, filtros)
+  // "Mi cartera": resolver clerk_user_id -> AUTH_Usuarios ANTES de armar la
+  // fórmula. Sin esto, {ejecutiva_asignada} nunca puede matchear un
+  // clerk_user_id (E-018/E-019 en docs/aprendizajes.md).
+  let ejecutivaNombre: string | undefined
+  if (vista === 'cartera') {
+    if (!userId) return { data: [], motivo: 'ejecutiva_no_encontrada' }
+    const ejecutiva = await resolveEjecutiva(userId)
+    if (!ejecutiva) return { data: [], motivo: 'ejecutiva_no_encontrada' }
+    ejecutivaNombre = ejecutiva.nombre
+  }
+
+  const formula = buildFormula(vista, ejecutivaNombre, filtros)
   try {
     const records = await listRecords<RawFields>(TX_SOLICITUDES, {
       cellFormat: 'string',

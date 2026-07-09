@@ -33,7 +33,7 @@ export default async function ConsolaPage({
     userId = clerkUserId ?? undefined
   }
 
-  const [{ data: solicitudes, degraded }, { data: tiposDocumento }] = await Promise.all([
+  const [{ data: solicitudes, degraded, motivo }, { data: tiposDocumento }] = await Promise.all([
     fetchSolicitudes(vista, userId, filtros),
     fetchTiposDocumento(),
   ])
@@ -42,6 +42,7 @@ export default async function ConsolaPage({
       solicitudes={solicitudes}
       vistaActiva={vista}
       degraded={degraded}
+      motivo={motivo}
       tiposDocumento={tiposDocumento}
     />
   )
