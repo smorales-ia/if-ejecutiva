@@ -80,6 +80,7 @@ export function FileUploadZone({
   const [dragActivo, setDragActivo] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const timers = React.useRef<Record<string, ReturnType<typeof setInterval>>>({})
+  const archivosRef = React.useRef<Record<string, File>>({})
 
   React.useEffect(() => {
     return () => {
@@ -90,37 +91,81 @@ export function FileUploadZone({
   const subiendo = items.filter((i) => i.status === "uploading")
   const totalEnLote = items.length
 
-  function simularSubida(id: string, file: File) {
-    // Limpia timer previo si existe (retry)
+  /**
+   * Streaming real hacia /api/adjuntos/upload → Make → Dropbox. Mientras el
+   * escenario Make de adjuntos no esté provisionado, el endpoint degrada con
+   * el mensaje canónico y esta función lo deja como fila en estado error
+   * (con Reintentar) — nunca bloquea el resto del formulario ni finge un
+   * éxito que no ocurrió.
+   */
+  async function subirArchivo(id: string, file: File) {
     if (timers.current[id]) clearInterval(timers.current[id])
     timers.current[id] = setInterval(() => {
       setItems((prev) =>
-        prev.map((it) => {
-          if (it.id !== id) return it
-          const next = Math.min(it.progress + Math.round(8 + Math.random() * 18), 100)
-          if (next >= 100) {
-            clearInterval(timers.current[id])
-            delete timers.current[id]
-            // Éxito: notifica al padre y descarta de la zona
-            window.setTimeout(() => {
-              setItems((cur) => cur.filter((c) => c.id !== id))
-              onUploaded?.([
-                {
-                  id,
-                  nombre: file.name,
-                  detalle: `Subido hace unos segundos · por ${usuarioActual}`,
-                },
-              ])
-              toast.success("Archivo adjuntado correctamente", {
-                duration: 3000,
-              })
-            }, 350)
-            return { ...it, progress: 100, status: "success" }
-          }
-          return { ...it, progress: next }
-        })
+        prev.map((it) =>
+          it.id === id && it.status === "uploading" && it.progress < 90
+            ? {
+                ...it,
+                progress: Math.min(it.progress + Math.round(5 + Math.random() * 10), 90),
+              }
+            : it
+        )
       )
     }, 280)
+
+    let ok = false
+    let mensaje = "No pudimos adjuntar el archivo. Intenta nuevamente en unos segundos."
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const res = await fetch("/api/adjuntos/upload", {
+        method: "POST",
+        body: formData,
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean
+        degraded?: boolean
+        error?: string
+      }
+      ok = res.ok && data.ok === true
+      if (data.error) mensaje = data.error
+    } catch {
+      mensaje = "Sin conexión. Intenta de nuevo."
+    }
+
+    if (timers.current[id]) {
+      clearInterval(timers.current[id])
+      delete timers.current[id]
+    }
+
+    if (ok) {
+      setItems((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, progress: 100, status: "success" } : it))
+      )
+      window.setTimeout(() => {
+        setItems((cur) => cur.filter((c) => c.id !== id))
+        delete archivosRef.current[id]
+        onUploaded?.([
+          {
+            id,
+            nombre: file.name,
+            detalle: `Subido hace unos segundos · por ${usuarioActual}`,
+          },
+        ])
+        toast.success("Archivo adjuntado correctamente", { duration: 3000 })
+      }, 350)
+      return
+    }
+
+    // Adjunto no disponible (degradado) o error real: la fila queda en estado
+    // error con Reintentar; el resto del formulario sigue disponible y la
+    // solicitud puede crearse igual sin este adjunto.
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id ? { ...it, status: "error", progress: 0, errorMsg: mensaje } : it
+      )
+    )
   }
 
   function agregarArchivos(fileList: FileList | null) {
@@ -146,7 +191,10 @@ export function FileUploadZone({
     setItems((prev) => (permiteMultiple ? [...prev, ...nuevos] : nuevos))
 
     nuevos.forEach((item, idx) => {
-      if (item.status === "uploading") simularSubida(item.id, archivos[idx])
+      if (item.status === "uploading") {
+        archivosRef.current[item.id] = archivos[idx]
+        void subirArchivo(item.id, archivos[idx])
+      }
     })
 
     if (nuevos.some((n) => n.status === "error")) {
@@ -161,10 +209,13 @@ export function FileUploadZone({
       clearInterval(timers.current[id])
       delete timers.current[id]
     }
+    delete archivosRef.current[id]
     setItems((prev) => prev.filter((i) => i.id !== id))
   }
 
   function reintentar(id: string) {
+    const file = archivosRef.current[id]
+    if (!file) return
     setItems((prev) =>
       prev.map((i) =>
         i.id === id
@@ -172,12 +223,7 @@ export function FileUploadZone({
           : i
       )
     )
-    // Reintento simulado: en este mock, el reintento completa la subida.
-    const item = items.find((i) => i.id === id)
-    if (item) {
-      const fakeFile = new File([""], item.name)
-      simularSubida(id, fakeFile)
-    }
+    void subirArchivo(id, file)
   }
 
   return (

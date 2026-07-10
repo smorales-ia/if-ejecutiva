@@ -12,6 +12,19 @@ import {
  */
 const CANALES_ORIGEN_VALUES = CANALES_ORIGEN.map((c) => c.value)
 
+// Mensajes literales §6 Blueprint / §8 diseno.md — no admiten variación.
+const MSG_RUT_INVALIDO =
+  "Necesitamos el RUT del propietario con su dígito verificador. Ej.: 12.345.678-9."
+const MSG_EMAIL_INVALIDO =
+  "Revisa el email de contacto: debe ser de la forma nombre@dominio.cl."
+const MSG_DIRECCION_INCOMPLETA =
+  "Ingresa la dirección con calle y número. Ej.: Av. Apoquindo 5230."
+
+/** Mín. calle + número (RN de diseno.md §5 Tab Datos): exige al menos un dígito. */
+function tieneCalleYNumero(direccion: string): boolean {
+  return /\d/.test(direccion) && direccion.trim().split(/\s+/).length >= 2
+}
+
 export const nuevaSolicitudInternaSchema = z
   .object({
     // Sección A · Origen de la solicitud
@@ -27,7 +40,10 @@ export const nuevaSolicitudInternaSchema = z
       .max(20),
 
     // Sección B · Datos de la propiedad
-    direccion: z.string().min(3, "Ingresa la dirección de la propiedad."),
+    direccion: z
+      .string()
+      .min(1, MSG_DIRECCION_INCOMPLETA)
+      .refine(tieneCalleYNumero, MSG_DIRECCION_INCOMPLETA),
     region: z.string().min(1, "Selecciona una región."),
     comuna: z.string().min(1, "Selecciona una comuna."),
     tipoPropiedad: z.string().min(1, "Selecciona el tipo de propiedad."),
@@ -36,11 +52,11 @@ export const nuevaSolicitudInternaSchema = z
     // Sección C · Datos del solicitante final
     rut: z
       .string()
-      .min(1, "Ingresa el RUT del propietario.")
-      .refine((v) => validarRut(v), "RUT inválido"),
+      .min(1, MSG_RUT_INVALIDO)
+      .refine((v) => validarRut(v), MSG_RUT_INVALIDO),
     nombre: z.string().min(3, "Ingresa el nombre completo."),
     telefono: z.string().optional(),
-    email: z.string().min(1, "Ingresa el email.").email("Email inválido"),
+    email: z.string().min(1, MSG_EMAIL_INVALIDO).email(MSG_EMAIL_INVALIDO),
 
     // Sección D · Producto y observaciones
     producto: z.string().min(1, "Selecciona un producto."),
