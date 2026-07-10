@@ -20,9 +20,15 @@ const MENSAJE_ERROR_RED = 'No pudimos completar la acción. Intenta nuevamente e
  *  - `ejecutivaClerkId` se agrega server-side desde la sesión Clerk activa,
  *    nunca desde el cliente — Make resuelve `ejecutiva_asignada` con un
  *    Search Records contra `AUTH_Usuarios.clerk_user_id`.
- *  - Make no devuelve body estructurado: éxito = 200 sin id. La respuesta de
- *    este endpoint es siempre `{ ok, error? }`, nunca expone el detalle
- *    técnico del error al cliente.
+ *  - Fase Adjuntos 1 (D-12, Opción C, 10-jul-2026): SC01 ahora devuelve
+ *    `{ id, codigo_ext }` en el body del webhook (fix aplicado al módulo 8
+ *    del blueprint). Este endpoint parsea esos dos campos y los agrega a la
+ *    respuesta como `solicitud_id`/`codigo_ext` — el frontend los necesita
+ *    para subir los adjuntos después de crear la solicitud, sin ellos no
+ *    puede identificar dónde subirlos. Si Make no los trae (degradación o
+ *    escenario desactualizado), la respuesta sigue siendo `{ ok: true }`
+ *    sin esos campos — la solicitud ya se creó igual, sólo no se pueden
+ *    subir adjuntos hasta que la Ejecutiva reintente desde el detalle.
  */
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -89,5 +95,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: MENSAJE_ERROR_RED }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true }, { status: 200 })
+  const makeBody = (await makeRes.json().catch(() => ({}))) as {
+    id?: string
+    codigo_ext?: string
+  }
+
+  return NextResponse.json(
+    {
+      ok: true,
+      solicitud_id: makeBody.id ?? null,
+      codigo_ext: makeBody.codigo_ext ?? null,
+    },
+    { status: 200 }
+  )
 }

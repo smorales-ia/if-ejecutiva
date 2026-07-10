@@ -1,0 +1,273 @@
+{
+  "name": "SC-Adjuntos-Upload",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": null,
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "hook": {
+              "data": { "editable": "true" },
+              "label": "SC-Adjuntos-Upload"
+            }
+          }
+        },
+        "parameters": [
+          { "name": "hook", "type": "hook:gateway-webhook", "label": "Webhook", "required": true },
+          { "name": "maxResults", "type": "number", "label": "Maximum number of results" }
+        ],
+        "note": "Payload esperado (JSON): solicitud_id (record_id TX_Solicitudes, OBLIGATORIO), codigo_ext, nombre_archivo, mime_type, tamanio_kb (number, ya en KB), hash_md5, subido_por (default 'Ejecutivo'), contenido_base64. Header X-VP-Signature se ignora en Make por ahora (deuda de seguridad conocida, D-11)."
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__"
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblur71x1oItbmKZc",
+        "formula": "{hash_md5} = \"{{1.hash_md5}}\"",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" }
+          },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+          }
+        },
+        "note": "Idempotencia D-14.4. IMPORTANTE (hallazgo 10-jul-2026, ver docs/aprendizajes.md E-024): el primary field de TX_Solicitudes es 'codigo_solicitud' y está vacío en todas las filas -- por la misma razón que E-018 (un campo Link, DENTRO de una formula, se evalua contra el primary field del registro vinculado, nunca contra su record ID), NO se puede combinar '{solicitud}=...' en esta formula: siempre evaluaria contra un texto vacio y nunca haria match. Por eso este modulo filtra SOLO por hash_md5 (maxRecords 1) y la verificacion de 'misma solicitud' se hace en el Router (modulo 3) leyendo el campo estructurado 2.solicitud (que SI trae los record IDs reales, igual que la lectura normal via API REST -- ver E-018). Si no hay match de hash, este modulo simplemente no produce bundle/campos (mismo comportamiento ya usado en SC01 para sus Search Records de cliente/producto/etc. -- no hace falta agregar un manejador de error especial)."
+      }
+    },
+    {
+      "id": 3,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {},
+      "mapper": null,
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "note": "Bifurca reused (mismo hash_md5 Y misma solicitud) vs nuevo (sin match de hash, o el hash coincide pero pertenece a OTRA solicitud -- en ese caso SI se sube y se crea fila nueva, porque D-14.4 solo dedupe dentro de la MISMA solicitud)."
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 4,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblR4VWpUHw1CSyIS",
+                "fields": {
+                  "escenario": "ADJUNTOS_UPLOAD",
+                  "solicitud_id": "{{1.codigo_ext}}",
+                  "estado": "ok",
+                  "payload_enviado": "{\"hash_md5\":\"{{1.hash_md5}}\",\"nombre_archivo\":\"{{1.nombre_archivo}}\",\"reused\":true}",
+                  "respuesta": "reused=true, adjunto existente {{2.id}}"
+                }
+              },
+              "metadata": {
+                "designer": { "x": 900, "y": -150 },
+                "restore": {
+                  "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+                  "expect": {
+                    "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+                    "table": { "label": "LogEscenarios (tblR4VWpUHw1CSyIS)" }
+                  }
+                },
+                "note": "Log obligatorio de cada llamada (construccion.md §11). 'solicitud_id' de LogEscenarios es texto libre -- se guarda el codigo_ext legible, no el record id."
+              },
+              "filter": {
+                "name": "Ya existe (mismo hash + misma solicitud)",
+                "conditions": [
+                  [
+                    { "a": "{{2.id}}", "o": "exist" },
+                    { "a": "{{contains(2.solicitud; 1.solicitud_id)}}", "b": "true", "o": "text:equal" }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 5,
+              "module": "gateway:WebhookRespond",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "status": "200",
+                "body": "{\"ok\": true, \"adjunto_id\": \"{{2.adjunto_id}}\", \"url_dropbox\": \"{{2.url_dropbox}}\", \"nombre_archivo\": \"{{2.nombre_archivo}}\", \"tamanio_kb\": {{2.tamanio_kb}}, \"reused\": true}",
+                "headers": [{ "key": "Content-Type", "value": "application/json" }]
+              },
+              "metadata": {
+                "designer": { "x": 1200, "y": -150 },
+                "parameters": [
+                  { "name": "status", "type": "text", "label": "Status" },
+                  { "name": "body", "type": "text", "label": "Body" },
+                  { "name": "headers", "type": "array", "label": "Headers" }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 6,
+              "module": "dropbox:uploadLargeFile",
+              "version": 5,
+              "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_DROPBOX__" },
+              "mapper": {
+                "data": "{{toBinary(1.contenido_base64; \"base64\")}}",
+                "path": "/VProperty/Tasaciones/{{1.codigo_ext}}",
+                "filename": "{{1.nombre_archivo}}",
+                "overwrite": false
+              },
+              "metadata": {
+                "designer": { "x": 900, "y": 150 },
+                "restore": {
+                  "expect": {
+                    "path": { "mode": "chose" },
+                    "overwrite": { "mode": "chose" }
+                  },
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": { "scoped": "true", "connection": "dropbox" },
+                      "label": "My Dropbox connection (nutricionsaludketo@gmail.com)"
+                    }
+                  }
+                },
+                "parameters": [
+                  {
+                    "name": "__IMTCONN__",
+                    "type": "account:dropbox",
+                    "label": "Connection",
+                    "required": true
+                  }
+                ],
+                "expect": [
+                  { "name": "path", "type": "folder", "label": "Folder", "required": true },
+                  { "name": "filename", "type": "filename", "label": "File Name", "required": true },
+                  { "name": "data", "type": "buffer", "label": "Data", "required": true },
+                  { "name": "overwrite", "type": "boolean", "label": "Overwrite an existing file", "required": true }
+                ],
+                "note": "Modulo dropbox:uploadLargeFile v5 -- mismo modulo que E3 (verificado en E3_Carbone_Download_Dropbox_blueprint export, 10-jul-2026). Los IDs dropbox:uploadFile v1 y dropbox:createSharedLink NO existen en esta instancia de Make; por eso el import original fallo con 'Module Not Found' (ver E-025/E-026 en docs/aprendizajes.md). 'path' es solo la CARPETA (subcarpeta = codigo_ext); 'filename' es el nombre del archivo por separado -- Make los concatena. 'data' recibe binario ya decodificado desde el base64 del webhook via toBinary(), no el string base64 crudo."
+              }
+            },
+            {
+              "id": 8,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblur71x1oItbmKZc",
+                "fields": {
+                  "nombre_archivo": "{{1.nombre_archivo}}",
+                  "url_dropbox": "{{6.path_display}}",
+                  "tamanio_kb": "{{parseNumber(1.tamanio_kb)}}",
+                  "mime_type": "{{1.mime_type}}",
+                  "hash_md5": "{{1.hash_md5}}",
+                  "subido_por": "{{if(1.subido_por; 1.subido_por; \"Ejecutivo\")}}",
+                  "solicitud": [{ "id": "{{1.solicitud_id}}" }],
+                  "estado_extraccion": "idle"
+                }
+              },
+              "metadata": {
+                "designer": { "x": 1500, "y": 150 },
+                "restore": {
+                  "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+                  "expect": {
+                    "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+                    "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+                  }
+                },
+                "note": "'solicitud' recibe directo el record id que ya llego en el webhook (1.solicitud_id) -- a diferencia de SC01, aqui NO hace falta Search Records porque el frontend ya conoce el record id real (Opcion C, D-12: la solicitud se crea primero). 'subido_por' default 'Ejecutivo' (opcion existente del singleSelect, NO crear opciones nuevas -- correccion E del prompt). 'estado_extraccion' arranca en 'idle' (Fase 2 la mueve a extrayendo/listo/error, fuera de alcance de esta sesion)."
+              }
+            },
+            {
+              "id": 9,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblR4VWpUHw1CSyIS",
+                "fields": {
+                  "escenario": "ADJUNTOS_UPLOAD",
+                  "solicitud_id": "{{1.codigo_ext}}",
+                  "estado": "ok",
+                  "payload_enviado": "{\"hash_md5\":\"{{1.hash_md5}}\",\"nombre_archivo\":\"{{1.nombre_archivo}}\",\"reused\":false}",
+                  "respuesta": "reused=false, adjunto nuevo {{8.id}}"
+                }
+              },
+              "metadata": {
+                "designer": { "x": 1800, "y": 150 },
+                "restore": {
+                  "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+                  "expect": {
+                    "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+                    "table": { "label": "LogEscenarios (tblR4VWpUHw1CSyIS)" }
+                  }
+                },
+                "note": "Log obligatorio de cada llamada (construccion.md §11)."
+              }
+            },
+            {
+              "id": 10,
+              "module": "gateway:WebhookRespond",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "status": "200",
+                "body": "{\"ok\": true, \"adjunto_id\": \"{{8.adjunto_id}}\", \"url_dropbox\": \"{{6.path_display}}\", \"nombre_archivo\": \"{{1.nombre_archivo}}\", \"tamanio_kb\": {{1.tamanio_kb}}, \"reused\": false}",
+                "headers": [{ "key": "Content-Type", "value": "application/json" }]
+              },
+              "metadata": {
+                "designer": { "x": 2100, "y": 150 },
+                "parameters": [
+                  { "name": "status", "type": "text", "label": "Status" },
+                  { "name": "body", "type": "text", "label": "Body" },
+                  { "name": "headers", "type": "array", "label": "Headers" }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": { "orphans": [] },
+    "zone": "eu1.make.com",
+    "notes": "Blueprint generado a mano (Fase Adjuntos 1, D-11 a D-14, 10-jul-2026). NO fue exportado desde una instancia real de Make -- revisar docs/make-blueprints/SC-Adjuntos-Upload_import_instrucciones.md antes de importar. 9 modulos activos (id 7 queda vacante a proposito, ver fix abajo): Webhook -> Search Records (hash_md5) -> Router [Ruta reused: Log -> Webhook Response] / [Ruta nuevo: Dropbox Upload (uploadLargeFile) -> Airtable Create Record -> Log -> Webhook Response]. Fix 10-jul-2026 (post primer intento de import): los modulos 'dropbox:uploadFile' v1 y 'dropbox:createSharedLink' v1 (mejor esfuerzo original) NO existen en la instancia Make de VProperty -- fallaron con 'Module Not Found'. Se reemplazo el modulo 6 por 'dropbox:uploadLargeFile' v5, confirmado contra el blueprint real y activo de E3_Carbone_Download_Dropbox (mismo patron que ya usa produccion). El modulo 7 (createSharedLink) se elimino: no existe equivalente confirmado en esta instancia; 'url_dropbox' guarda por ahora el path_display interno de Dropbox, no un link publico clickeable (deuda tecnica documentada en docs/aprendizajes.md E-025). Ver tambien E-026 (aprendizaje: inspeccionar un blueprint existente del mismo connector antes de asumir nombres/version de modulo). OBSERVACION PENDIENTE DE VALIDAR: el filtro de la Ruta 'reused' del Router usa `{{contains(2.solicitud; 1.solicitud_id)}}` = 'true' (operador text:equal) en el campo 'a' -- no esta confirmado que Make evalue una formula completa dentro de ese campo de filtro de esta forma; puede requerir refactor a un operador nativo (ej. 'text:contains' directo entre 2.solicitud y 1.solicitud_id) tras la primera prueba manual en Make. No se toco en esta correccion -- ver Checkpoint de pruebas."
+  }
+}

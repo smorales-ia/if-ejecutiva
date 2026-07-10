@@ -32,7 +32,9 @@
       "Bash(find / -maxdepth 4 -iname \"*railway*\" -not -path \"*/node_modules/*\")",
       "Bash([ -f \"$F\" ])",
       "Bash(sort -t: -k2 -u)",
-      "Bash(sort -t C -k2 -n -u)"
+      "Bash(sort -t C -k2 -n -u)",
+      "WebSearch",
+      "Bash(pnpm add *)"
     ]
   }
 }

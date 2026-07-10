@@ -1,6 +1,6 @@
 # diseno.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.2 · Alineado a Blueprint v2.7 · Auditoría v1.2 (06-jul-2026)
+> **Versión**: 1.4 · Alineado a Blueprint v2.7 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026)
 > **Fuentes canónicas**: Blueprint Interfaces v2.7 §2.2 + §7.2 · Especificación v1.4 · Capa Datos v2.6.2 · Plan v1.2
 > **Propósito**: diseño funcional y visual de IF-02 para Claude Code. Leer al inicio de cada sesión junto con `schema-airtable.md` y `construccion.md`.
 > **Principio rector**: la UI muestra y captura; nunca decide. Todo estado, regla, asignación y cálculo vive en Airtable.
@@ -99,13 +99,15 @@ Origen v0 = deploy `if-ejecutiva-gfvE6z3qTyX`.
 | `EmailField` | `components/vp/email-field.tsx` | CU-000.A | — | RF crear |
 | `AddressField` | `components/vp/address-field.tsx` | CU-000.A | — | RF crear |
 | `RegionComunaSelector` | `components/vp/region-comuna-selector.tsx` | CU-000.A | — | RF crear |
-| `DocumentChecklist` | `components/vp/document-checklist.tsx` | v0 | — | RF crear |
-| `FileUploadZone` | `components/vp/file-upload-zone.tsx` | CU-000.A | — | RF crear |
+| `DocumentChecklist` | `components/console/document-checklist.tsx` | v0 | — | RF crear |
+| `FileUploadZone` | `components/console/file-upload-zone.tsx` | CU-000.A · reescrito Fase Adjuntos 1 | — | RF crear · **modo Opción C: state-first (`value`/`onFilesChange`), no sube al drop — sube recién al presionar "Crear solicitud" (D-12)** |
+| `AdjuntosSubmitTracker` | `components/console/adjuntos-submit-tracker.tsx` | ❌ nuevo (Fase Adjuntos 1) | — | RF crear · progreso de la subida en batching tras crear la solicitud (D-12, D-14) |
 | `ReasignarTasadorDialog` | `components/console/reasignar-tasador-dialog.tsx` | v0 | — | RF-06 |
 | `BarraAccionesDetalle` | `components/console/acciones-detalle.tsx` | v0 | — | RF-06 |
 | `EventTimeline` | `components/vp/event-timeline.tsx` | CU-000.A | — | RF detalle |
 | `lib/airtable-client.ts` | `lib/airtable-client.ts` | ❌ nuevo | — | RF-05 |
 | `lib/make-client.ts` | `lib/make-client.ts` | ❌ nuevo | — | RF crear |
+| `lib/adjuntos-uploader.ts` | `lib/adjuntos-uploader.ts` | ❌ nuevo (Fase Adjuntos 1) | — | RF crear · MD5, base64, XMLHttpRequest con progreso, reintentos con backoff, batching de concurrencia 3 |
 | `lib/claude-extractor.ts` | `lib/claude-extractor.ts` | ❌ nuevo | — | RF-09 |
 | `lib/schemas.ts` (zod) | `lib/schemas.ts` | v0 parcial | — | RF-05 |
 | `middleware.ts` (Clerk) | `middleware.ts` | ❌ nuevo | — | Layout |
@@ -218,6 +220,34 @@ Lista de `TX_Adjuntos` de la solicitud. Para cada adjunto:
 
 `FileUploadZone` (CU-000.A): sube por streaming vía Route Handler → Make → Dropbox. Al confirmar subida, encadena RF-09 en background.
 
+Desde el Tab Adjuntos (solicitud ya existe), la subida es **directa por archivo, con progreso** — no pasa por el modo state-first de `FileUploadZone` (ese modo es exclusivo de `NewRequestSheet`, ver §5bis). Cada archivo soltado en el drop dispara `uploadConReintentos()` (`lib/adjuntos-uploader.ts`) de inmediato, con barra de progreso individual y reintento manual si falla tras los 3 intentos automáticos.
+
+---
+
+## 5bis. Flujo de subida de adjuntos (D-11, D-12, D-13, D-14)
+
+Fase Adjuntos 1 (10-jul-2026) — guardado en Dropbox + registro en `TX_Adjuntos`, resiliente a fallos de red y abandono del usuario. Documentos huérfanos = cero por diseño (D-12).
+
+**Storage**: escenario Make `SC-Adjuntos-Upload` (D-11), payload JSON+base64 vía `lib/make-client.ts` (misma firma HMAC que SC01, sin tocarla). Ver `docs/make-blueprints/SC-Adjuntos-Upload.blueprint.json`.
+
+**Ruta A — "Nueva solicitud" (Opción C, D-12)**: los adjuntos se guardan como `File[]` en el state del `NewRequestSheet` mientras el usuario los agrega — **no se suben** a Dropbox todavía. Al presionar "Crear solicitud":
+1. Se crea la solicitud vía `/api/webhooks/crear-solicitud` (SC01, sin archivos) → devuelve `solicitud_id` + `codigo_ext`.
+2. El Sheet cambia a la vista `AdjuntosSubmitTracker` y sube los adjuntos en batching de 3 (`uploadEnLotes`), ya con `solicitud_id` real.
+3. Si todos suben: toast de éxito, se cierra el Sheet, se refresca la lista.
+4. Si algunos fallan tras los 3 reintentos automáticos: el tracker se queda abierto con "Reintentar los faltantes" / "Continuar sin ellos" — nunca bloquea el cierre.
+
+**Ruta B — "Detalle de solicitud" (Tab Adjuntos)**: como ya existe `solicitud_id`, sube directo al soltar el archivo (ver §5 Tab Adjuntos).
+
+**Mitigación de fallos (D-14)**:
+1. Batching de concurrencia 3 — nunca `Promise.all` sin control.
+2. Reintentos automáticos por archivo: 3 intentos, backoff 0s → 2s → 5s.
+3. Progreso real de upload vía `XMLHttpRequest.upload.onprogress` (`fetch` no lo soporta).
+4. Idempotencia por `hash_md5` (D-14.4): el cliente calcula MD5 antes de subir; Make hace Search Records en `TX_Adjuntos` por `hash_md5` y verifica en un Router si el resultado pertenece a la misma solicitud — si sí, devuelve el `adjunto_id` existente sin duplicar ni resubir a Dropbox.
+5. Botón Cancelar por archivo y global (`AbortController`).
+6. Recuperación gradual: solicitud creada + algunos adjuntos fallidos no es un estado de error — es un estado válido que la Ejecutiva resuelve después desde el detalle.
+
+**Límites (D-13)**: por archivo, máximo 7 MB (bloqueante). Total < 40 MB sin advertencia; 40–80 MB advertencia ámbar no bloqueante; > 80 MB bloqueo del botón "Crear solicitud".
+
 ---
 
 ## 6. Botón "Pasar a asignada" — precondiciones exactas
@@ -300,6 +330,10 @@ Sólo se listan los faltantes reales, separados por ` · `. Si solo falta la fec
 
 > **"Solicitud creada con {n} documento(s) adjunto(s)."** *(pluraliza según n; si n=0: "Solicitud creada.")*
 
+**Documento subido correctamente** (Tab Adjuntos, subida directa):
+
+> **"Documento subido correctamente."**
+
 ### Advertencias (ámbar · no bloqueantes)
 
 **Tasador fuera de cobertura** (banner en `ReasignarTasadorDialog`):
@@ -309,6 +343,26 @@ Sólo se listan los faltantes reales, separados por ` · `. Si solo falta la fec
 **Documento marcado sin archivo** (tooltip botón "Crear solicitud"):
 
 > **"Faltan {n} documento(s) marcado(s) sin archivo."**
+
+**Total de adjuntos entre 40 y 80 MB** (banner en `FileUploadZone`, Fase Adjuntos 1 · D-13):
+
+> **"Esto puede tardar hasta 2 minutos."**
+
+### Bloqueos (Fase Adjuntos 1 · D-13)
+
+**Archivo individual > 7 MB** (tooltip en `FileUploadZone`):
+
+> **"Este archivo supera el límite de 7 MB. Comprímelo o divídelo."**
+
+**Total de adjuntos > 80 MB** (banner rojo, bloquea "Crear solicitud"):
+
+> **"Divide la subida en tandas o comprime los planos."**
+
+### Recuperación parcial (Fase Adjuntos 1 · D-14.6)
+
+**Algunos adjuntos fallaron tras los reintentos automáticos** (`AdjuntosSubmitTracker`):
+
+> **"Subieron {x} de {y} documentos. Puedes reintentar los faltantes o completarlos después desde el detalle de la solicitud."**
 
 ### Errores de red / Make
 
@@ -416,6 +470,14 @@ Ver Plan v1.2 §1.7.3 para rationale completo.
 - Hook en `FileUploadZone`: encadena RF-09 tras confirmar Dropbox
 - Criterio de aceptación: badge actualiza en tiempo real; errores muestran mensaje humano §8; cada llamada loggea en `LogEscenarios`
 
+### RF Adjuntos · Fase 1 (D-11 a D-14, 10-jul-2026)
+
+- Escenario Make `SC-Adjuntos-Upload` (D-11): Webhook → Search Records (`hash_md5`) → Router [reused / nuevo] → Dropbox `uploadLargeFile` → Airtable Create Record → Log → Webhook Response
+- `NewRequestSheet` (Opción C, D-12): archivos en state hasta crear la solicitud; sube en batching de 3 recién con `solicitud_id` real
+- `AdjuntosSubmitTracker`: progreso por archivo, cancelar por archivo/global, reintentar los faltantes
+- Tab Adjuntos del detalle: subida directa reutilizando `lib/adjuntos-uploader.ts`
+- Criterios de aceptación: ver `docs/construccion.md` §7bis
+
 ### RF-07/RF-08 · Prioridad con justificación + reglas SLA (paso 7)
 
 - Diálogo de justificación obligatoria al cambiar prioridad a Urgente/Crítico
@@ -461,9 +523,27 @@ Ver Plan v1.2 §1.7.3 para rationale completo.
 
 ### POST /api/adjuntos/upload
 
-- Streaming: Route Handler → Make → Dropbox (nunca token Dropbox en el cliente)
-- Al completar: escribe `TX_Adjuntos` con `estado_extraccion=idle`
-- Encadena `/api/extraccion/iniciar` en background
+Reescrito completo en Fase Adjuntos 1 (10-jul-2026, D-11 a D-14): de `formData`/`Blob` a **JSON+base64**. Body validado con Zod:
+
+```ts
+{
+  solicitud_id: string,      // record_id TX_Solicitudes, OBLIGATORIO (D-12, Opción C — E-023 SUPERSEDED)
+  codigo_ext: string,
+  nombre_archivo: string,
+  mime_type: string,
+  tamanio_kb: number,        // ya en KB, calculado en el cliente desde file.size/1024
+  hash_md5: string,          // calculado en el cliente (D-14.4)
+  subido_por: string,        // default "Ejecutivo" (opción existente, no crear nuevas)
+  contenido_base64: string,
+}
+```
+
+- Auth Clerk server-side obligatoria · `runtime = 'nodejs'` · `maxDuration = 60`
+- Valida `tamanio_kb <= 7168` (7 MB) server-side además del cliente → `413` con mensaje §8 si excede
+- Firma HMAC-SHA256 y envía a `MAKE_WEBHOOK_URL_ADJUNTOS` vía `postToMake()` (misma firma de `lib/make-client.ts`, sin tocar)
+- Devuelve la respuesta de Make tal cual: `{ ok, adjunto_id, url_dropbox, nombre_archivo, tamanio_kb, reused }` o `{ ok: false, error, reintentable }`
+- Si `MAKE_WEBHOOK_URL_ADJUNTOS`/`MAKE_HMAC_SECRET` faltan: degrada con `{ ok: false, degraded: true, error }`
+- Límite de body de Next.js: `next.config.mjs` sube `experimental.proxyClientMaxBodySize` a `12mb` (un archivo de 7MB en base64 pesa ~9.3MB de JSON; el default de Next 16 es 10MB cuando hay `middleware.ts`, que cubre `/api/**`)
 
 ### POST /api/extraccion/iniciar
 
@@ -506,3 +586,7 @@ Ver Plan v1.2 §1.7.3 para rationale completo.
 | D-06 | Ruta base | `/consola` |
 | D-07 | Persistencia de filtros | URL params + cookie httpOnly como fallback. |
 | D-08 | Reconciliación nomenclatura | Opción C: corregir espacio `sucursal_originadora`; crear `notas_tasador`, `notas_visador`, `ejecutiva_asignada`. |
+| D-11 | Storage de adjuntos vía Make | Escenario `SC-Adjuntos-Upload`, payload JSON+base64, misma firma HMAC de `lib/make-client.ts`. |
+| D-12 | Flujo de subida (Opción C) | Adjuntos en `File[]` del state hasta crear la solicitud; se suben en batching después, con `solicitud_id` real — cero adjuntos huérfanos. |
+| D-13 | Límites de tamaño | 7 MB por archivo (bloqueante) · 40–80 MB advertencia ámbar · > 80 MB bloqueo total. |
+| D-14 | Mitigación de fallos | Batching 3 · reintentos 3x con backoff 0/2/5s · progreso vía XHR · idempotencia por `hash_md5` · cancelar por archivo/global · recuperación gradual sin bloquear el cierre. |

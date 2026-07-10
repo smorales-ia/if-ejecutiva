@@ -231,7 +231,7 @@
       "parameters": {},
       "mapper": {
         "status": "200",
-        "body": "{\"id\": \"{{7.id}}\"}",
+        "body": "{\"id\": \"{{7.id}}\", \"codigo_ext\": \"{{7.codigo_ext}}\"}",
         "headers": [
           {
             "key": "Content-Type",
@@ -279,6 +279,6 @@
       "orphans": []
     },
     "zone": "eu1.make.com",
-    "notes": "Blueprint generado a mano (Tanda 4B, Fase 1.7). No fue exportado desde una instancia real de Make: revisar docs/make/SC01_import_instrucciones.md antes de importar/actualizar. 8 modulos: Webhook -> 5x Search Records (cliente, tipo_informe, tipo_propiedad, producto, comuna) -> Airtable Create Record -> Webhook Response. Campos primarios de las 5 tablas M_* confirmados como 'nombre' via MCP (Fase 1.6/1.7). Si el import falla o Make reescribe algun modulo, seguir la seccion 'Fallback manual' del README. Fix 08-jul-2026 (Fase 2 cierre de pendientes IF-02): modulo 7 agrega 'fecha_solicitud' al mapper -- corrige el bug VP-NaN-XXXX en 'codigo_ext'. Aplicar en Make como edicion manual de un solo campo (no re-importar), ver docs/make/SC01_import_instrucciones.md seccion 'Fix VP-NaN-XXXX'."
+    "notes": "Blueprint generado a mano (Tanda 4B, Fase 1.7). No fue exportado desde una instancia real de Make: revisar docs/make/SC01_import_instrucciones.md antes de importar/actualizar. 8 modulos: Webhook -> 5x Search Records (cliente, tipo_informe, tipo_propiedad, producto, comuna) -> Airtable Create Record -> Webhook Response. Campos primarios de las 5 tablas M_* confirmados como 'nombre' via MCP (Fase 1.6/1.7). Si el import falla o Make reescribe algun modulo, seguir la seccion 'Fallback manual' del README. Fix 08-jul-2026 (Fase 2 cierre de pendientes IF-02): modulo 7 agrega 'fecha_solicitud' al mapper -- corrige el bug VP-NaN-XXXX en 'codigo_ext'. Aplicar en Make como edicion manual de un solo campo (no re-importar), ver docs/make/SC01_import_instrucciones.md seccion 'Fix VP-NaN-XXXX'. Fix 10-jul-2026 (D-12, Fase Adjuntos 1): modulo 8 (Webhook Response) agrega 'codigo_ext' al body -- sin esto, Opcion C (adjuntos post-creacion) no puede identificar la solicitud recien creada. Aplicar en Make como edicion manual del campo 'Body' del modulo 8, ver docs/make/SC01_import_instrucciones.md seccion 'Fix Opcion C - agregar codigo_ext a la respuesta'."
   }
 }

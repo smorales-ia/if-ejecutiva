@@ -1,6 +1,6 @@
 # GUÍA DE CONSTRUCCIÓN · CU-002 · IF-02 Consola de la Ejecutiva Comercial
 
-> **Versión**: 1.2 — alineada a Plan v1.2 · Blueprint v2.7 · Capa de Datos v2.6.2 · schema-airtable.md · diseno.md · 06-jul-2026.  
+> **Versión**: 1.4 — alineada a Plan v1.2 · Blueprint v2.7 · Capa de Datos v2.6.2 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026).  
 > **Propósito**: referencia operativa que Claude Code lee al inicio de cada sesión para saber qué construir, en qué orden, con qué criterios de aceptación y qué advertencias aplican por paso.  
 > **Regla dorada**: una RF por sesión de Claude Code — nunca "construye toda la consola".
 
@@ -45,11 +45,14 @@ Sustituir `N` y el título con el paso del orden de implementación (§2).
 | 3 | Detalle de solicitud (lectura) | Paso 2 | — |
 | 4 | Crear solicitud interna (SC01) | Paso 3 | SC01 activo en Make · MAKE_* en Railway |
 | 5 | RF-06 · Acciones sobre solicitud | Paso 4 | AT02 trigger (H-04) · SC05 activo |
-| 6 | RF-09 · Extracción Claude API | Paso 3 | RF-09 Make activo · ANTHROPIC_API_KEY |
+| 5bis | **Fase Adjuntos 1 · Guardado (D-11 a D-14)** ✅ 10-jul-2026 | Paso 4 | `SC-Adjuntos-Upload` activo en Make · `MAKE_WEBHOOK_URL_ADJUNTOS` en Railway |
+| 6 | RF-09 · Extracción Claude API | Paso 3 · Fase Adjuntos 1 | RF-09 Make activo · ANTHROPIC_API_KEY |
 | 7 | RF-07/RF-08 · Prioridad con justificación + SLA | Paso 5 | AT08 activo en Airtable |
 | 8 | QA regresivo + pulido | Todos los anteriores | — |
 
 Los pasos 1–3 pueden avanzar sin las variables `MAKE_*` ni los escenarios Make activos. Son el camino seguro para empezar.
+
+Fase Adjuntos 1 (D-11 a D-14) se intercala antes del Paso 6 (RF-09) porque RF-09 depende de que los adjuntos ya se guarden de forma confiable — extraer datos de un archivo que puede no haber llegado a Dropbox no tiene sentido. D-09 (Panel Asignar Tasador) y D-10 (borrador de alta interna) siguen postergados al final por decisión de Sergio, sin fecha.
 
 ---
 
@@ -342,6 +345,42 @@ La acción **no está bloqueada** — es una advertencia ámbar no bloqueante. R
 
 ---
 
+## §7bis Fase Adjuntos 1 — Guardado (D-11 a D-14, 10-jul-2026) ✅
+
+### Qué construye
+
+Guardado resiliente de adjuntos en Dropbox + registro en `TX_Adjuntos`, con cero documentos huérfanos por diseño. No incluye extracción con Claude API (eso es Fase Adjuntos 2, fuera de esta sesión) ni D-09/D-10 (postergados aparte).
+
+### Archivos creados/modificados
+
+| Archivo | Acción |
+|---|---|
+| `docs/make-blueprints/SC-Adjuntos-Upload.blueprint.json` | Creado. Escenario Make: Webhook → Search Records (`hash_md5`) → Router → Dropbox `uploadLargeFile` → Airtable Create Record → Log → Webhook Response. |
+| `app/api/webhooks/crear-solicitud/route.ts` | Modificado. Parsea `{ id, codigo_ext }` de la respuesta de SC01 y los devuelve como `solicitud_id`/`codigo_ext` — la Opción C los necesita para subir adjuntos después. |
+| `app/api/adjuntos/upload/route.ts` | Reescrito completo: `formData`/`Blob` → JSON+base64, `solicitud_id` obligatorio, límite 7MB server-side, Zod. |
+| `lib/adjuntos-uploader.ts` | Creado. `calcularMD5`, `fileToBase64`, `uploadUnArchivo` (XHR con progreso), `uploadConReintentos` (backoff), `uploadEnLotes` (concurrencia 3). |
+| `lib/adjuntos.ts` | Corregido: `fetchAdjuntosPorSolicitud` filtraba por un campo Link dentro de `filterByFormula` — nunca hacía match (ver E-024). Ahora filtra en memoria por record ID. |
+| `components/console/adjuntos-submit-tracker.tsx` | Creado. Progreso por archivo, cancelar, reintentar los faltantes. |
+| `components/console/file-upload-zone.tsx` | Reescrito a modo state-first: `value`/`onFilesChange`, sin red, validación 7/40/80 MB. |
+| `components/console/new-request-sheet.tsx` | Flujo Opción C: crea la solicitud primero, luego sube adjuntos con el tracker. |
+| `components/console/solicitud-detail.tsx` (`AdjuntosTab`) | Subida directa reutilizando `lib/adjuntos-uploader.ts`, con progreso. |
+| `next.config.mjs` | `experimental.proxyClientMaxBodySize: '12mb'` (D corrección C). |
+
+### Flujo Opción C (D-12)
+
+Ver `docs/diseno.md` §5bis para el detalle completo de las dos rutas (Nueva solicitud vs Detalle).
+
+### Criterios de aceptación
+
+- Un archivo de 5 MB sube con progreso visible (barra + %).
+- Un archivo de 8 MB se rechaza en el cliente, sin llegar a pegarle al servidor (tooltip §8).
+- 10 archivos suben respetando batching de 3 concurrentes (nunca los 10 a la vez).
+- Un archivo con `hash_md5` ya existente **para la misma solicitud** devuelve `reused: true` y no duplica fila en `TX_Adjuntos`.
+- Una pérdida de red simulada (DevTools → Offline) dispara los 3 reintentos automáticos y luego deja el botón "Reintentar" manual.
+- `pnpm build` limpio.
+
+---
+
 ## §8 Paso 6 — RF-09 · Extracción con Claude API
 
 ### Qué construir
@@ -605,6 +644,13 @@ Detectar la ausencia del campo `disponible` consultando el schema de `M_Tasadore
 | "construye toda la consola en esta sesión" | Una RF por sesión (§1.7.4). |
 | Importar `lib/claude-extractor.ts` desde cliente | Server-only; jamás en componente cliente. |
 | Introducir mocks nuevos después del Paso 1 | Los mocks de v0 se reemplazan; no agregar nuevos. |
+| Dividir `tamanio_kb` por 1024 al mostrar | Ya viene en KB desde Airtable. |
+| Usar `Promise.all` sin control de concurrencia para subidas | Batching de 3 (`uploadEnLotes`, D-14.1). |
+| Usar `fetch` para subidas con progreso | `fetch` no expone `upload.onprogress` — usar `XMLHttpRequest` (`lib/adjuntos-uploader.ts`). |
+| Habilitar `ExtraccionStatusBadge` en Fase Adjuntos 1 | Es de Fase Adjuntos 2 (RF-09), fuera de alcance hasta que se provisione el escenario Make. |
+| Hacer `solicitud_id` opcional en `/api/adjuntos/upload` | Es OBLIGATORIO (D-12, Opción C) — E-023 queda SUPERSEDED. |
+| Usar `codigo_solicitud` como nombre de campo en el código | Es `codigo_ext` — `codigo_solicitud` es el primary field de Airtable (interno, no se referencia en TS). |
+| Crear opciones nuevas en `TX_Adjuntos.subido_por` | Usar la opción existente `"Ejecutivo"` (con E mayúscula). |
 
 ---
 

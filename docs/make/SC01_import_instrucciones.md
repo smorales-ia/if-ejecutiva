@@ -117,6 +117,32 @@ Cuando esté guardada, avísame que ya está en `.env.local` y en Railway (sin p
 
 ---
 
+## Fix Opción C — agregar codigo_ext a la respuesta (10-jul-2026, Fase Adjuntos 1)
+
+**Si tu escenario SC01 ya está importado y activo**, aplica este fix — no requiere re-importar ni cambia la URL del webhook.
+
+**Por qué**: a partir de esta sesión, "Nueva solicitud" primero crea la solicitud (SC01) y **después** sube los adjuntos usando el ID de esa solicitud recién creada (decisión D-12, Opción C — evita adjuntos huérfanos). Para eso, Next.js necesita que SC01 le devuelva el `id` de la fila creada (ya lo hacía) **y también** su `codigo_ext` (el código legible tipo `VP-2026-00NN`, usado para nombrar la carpeta de Dropbox de los adjuntos).
+
+**Pasos**:
+
+1. Abre el escenario **SC01 - Crear solicitud** en Make (puedes editarlo con el escenario `ON`).
+2. Haz clic en el módulo **8 — Webhook response** (el último, al final del flujo).
+3. En el campo **Body**, donde hoy dice:
+   ```json
+   {"id": "{{7.id}}"}
+   ```
+   cámbialo a:
+   ```json
+   {"id": "{{7.id}}", "codigo_ext": "{{7.codigo_ext}}"}
+   ```
+   Usa el ícono de mapeo del editor de Make para insertar `codigo_ext` del módulo 7 (Airtable Create a Record) — no lo escribas a mano, así te aseguras de que Make lo reconozca como referencia al campo real.
+4. Clic en **Save**. No hace falta reactivar el escenario ni tocar la URL del webhook.
+5. **Smoke test**: dispara una solicitud de prueba (botón "Run once" + JSON de ejemplo de la sección 3). Verifica que la respuesta del webhook incluya `codigo_ext` con un valor tipo `VP-2026-00NN` (no vacío, no `undefined`).
+
+**Qué NO hacer**: no agregues más campos al Body de los estrictamente necesarios (`id`, `codigo_ext`) — el Route Handler de Next.js solo espera esos dos.
+
+---
+
 ## Actualizar el blueprint importado
 
 Si ya tenías el escenario de 3 módulos de la Fase 0 corriendo y ahora necesitas pasar a los 8 módulos de esta versión (con los 5 Search Records y el rescate de email/banco financista), tienes dos caminos. **Elige uno, no mezcles ambos.**

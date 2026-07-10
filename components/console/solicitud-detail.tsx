@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  AlertCircle,
   AlertTriangle,
   CheckCircle2,
   Download,
@@ -13,13 +14,14 @@ import {
   Pencil,
   Plus,
   PlusCircle,
+  RotateCcw,
   UserCog,
+  X,
 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import {
-  FileUploadZone,
-  type ArchivoSubido,
-} from "@/components/console/file-upload-zone"
+import { FileUploadZone } from "@/components/console/file-upload-zone"
+import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -36,6 +38,7 @@ import {
 import type { Solicitud, TipoDocumento } from "@/lib/console-data"
 import type { Evento, IconoEvento } from "@/lib/eventos"
 import type { Adjunto } from "@/lib/adjuntos"
+import { uploadConReintentos } from "@/lib/adjuntos-uploader"
 
 const historialIcons: Record<IconoEvento, typeof CheckCircle2> = {
   check: CheckCircle2,
@@ -118,20 +121,8 @@ export function SolicitudDetail({
     }
   }, [s.id])
 
-  function handleAdjuntos(nuevos: ArchivoSubido[]) {
-    setAdjuntosExtra((prev) => [
-      ...nuevos.map(
-        (n): AdjuntoLocal => ({
-          id: n.id,
-          nombre: n.nombre,
-          tipo: "—",
-          detalle: n.detalle,
-          urlDropbox: "",
-          requeridoPorEjecutiva: false,
-        })
-      ),
-      ...prev,
-    ])
+  function handleAdjuntoSubido(nuevo: AdjuntoLocal) {
+    setAdjuntosExtra((prev) => [nuevo, ...prev])
   }
 
   const historialCompleto = historialBase
@@ -199,10 +190,11 @@ export function SolicitudDetail({
           </TabsContent>
           <TabsContent value="adjuntos">
             <AdjuntosTab
+              solicitud={s}
               adjuntos={adjuntosCompleto}
               loading={adjuntosLoading}
               error={adjuntosError}
-              onUploaded={handleAdjuntos}
+              onSubido={handleAdjuntoSubido}
             />
           </TabsContent>
         </div>
@@ -510,17 +502,94 @@ function HistorialTab({
   )
 }
 
+interface SubidaDirectaItem {
+  id: string
+  file: File
+  nombre: string
+  tamanioKb: number
+  progreso: number
+  error?: string
+  controller: AbortController
+}
+
 function AdjuntosTab({
+  solicitud,
   adjuntos,
   loading,
   error,
-  onUploaded,
+  onSubido,
 }: {
+  solicitud: Solicitud
   adjuntos: Adjunto[]
   loading: boolean
   error: boolean
-  onUploaded: (archivos: ArchivoSubido[]) => void
+  onSubido: (nuevo: Adjunto) => void
 }) {
+  const [subiendo, setSubiendo] = React.useState<SubidaDirectaItem[]>([])
+
+  function subirArchivo(file: File) {
+    const id = `${file.name}-${file.size}-${Date.now()}`
+    const controller = new AbortController()
+    setSubiendo((prev) => [
+      ...prev,
+      {
+        id,
+        file,
+        nombre: file.name,
+        tamanioKb: Math.round(file.size / 1024),
+        progreso: 0,
+        controller,
+      },
+    ])
+
+    void uploadConReintentos({
+      file,
+      solicitud_id: solicitud.id,
+      codigo_ext: solicitud.codigoExt,
+      signal: controller.signal,
+      onProgress: (pct) =>
+        setSubiendo((prev) =>
+          prev.map((it) => (it.id === id ? { ...it, progreso: pct } : it))
+        ),
+    }).then((resultado) => {
+      if (resultado.ok) {
+        setSubiendo((prev) => prev.filter((it) => it.id !== id))
+        onSubido({
+          id: String(resultado.adjunto_id ?? id),
+          nombre: resultado.nombre_archivo ?? file.name,
+          tipo: "—",
+          detalle: "subido hace unos segundos",
+          urlDropbox: resultado.url_dropbox ?? "",
+          requeridoPorEjecutiva: false,
+        })
+        toast.success("Documento subido correctamente.", { duration: 3000 })
+      } else if (resultado.error === "Subida cancelada.") {
+        setSubiendo((prev) => prev.filter((it) => it.id !== id))
+      } else {
+        setSubiendo((prev) =>
+          prev.map((it) =>
+            it.id === id ? { ...it, error: resultado.error ?? "No se pudo subir." } : it
+          )
+        )
+      }
+    })
+  }
+
+  function reintentar(id: string) {
+    const item = subiendo.find((it) => it.id === id)
+    if (!item) return
+    setSubiendo((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, error: undefined, progreso: 0 } : it))
+    )
+    subirArchivo(item.file)
+    setSubiendo((prev) => prev.filter((it) => it.id !== id))
+  }
+
+  function cancelar(id: string) {
+    subiendo.find((it) => it.id === id)?.controller.abort()
+    setSubiendo((prev) => prev.filter((it) => it.id !== id))
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <section className="flex flex-col gap-3">
@@ -530,7 +599,61 @@ function AdjuntosTab({
             Subir nuevos adjuntos
           </h2>
         </div>
-        <FileUploadZone onUploaded={onUploaded} />
+        <FileUploadZone value={[]} onFilesChange={(files) => files.forEach(subirArchivo)} />
+
+        {subiendo.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {subiendo.map((item) => (
+              <li
+                key={item.id}
+                className={`flex items-center gap-3 rounded-lg border bg-card p-3 ${
+                  item.error ? "border-destructive/60" : "border-border"
+                }`}
+              >
+                <span
+                  className={`flex size-9 shrink-0 items-center justify-center rounded-md ${
+                    item.error
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {item.error ? <AlertCircle className="size-4" /> : <FileText className="size-4" />}
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="truncate text-sm font-medium text-foreground">
+                    {item.nombre}
+                  </span>
+                  {item.error ? (
+                    <span className="text-xs font-medium text-destructive">{item.error}</span>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Progress value={item.progreso} className="flex-1" />
+                      <span className="w-9 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                        {item.progreso}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  {item.error && (
+                    <Button variant="outline" size="sm" onClick={() => reintentar(item.id)}>
+                      <RotateCcw data-icon="inline-start" />
+                      Reintentar
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Cancelar"
+                    onClick={() => cancelar(item.id)}
+                  >
+                    <X />
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <Separator />

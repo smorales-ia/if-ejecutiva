@@ -1,7 +1,7 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.4 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026)
-> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02)
+> **Versión**: 1.5 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026)
+> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02) + hallazgo `TX_Solicitudes.codigo_solicitud` (primary field) y llave de idempotencia `hash_md5` (10-jul-2026, Fase Adjuntos 1)
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
 > **Regla**: en código, preferir FIELD_ID (`fld…`) sobre nombre cuando haya riesgo de colisión o espacio extra. Si el FIELD_ID no está listado aquí, usar el nombre lógico de Capa Datos v2.6.2.
@@ -134,6 +134,7 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | Campo | FIELD_ID | Tipo Airtable | Notas |
 |---|---|---|---|
 | `solicitud_id` | — | Autonumber (PK) | Read-only |
+| `codigo_solicitud` | `fldDXEE1ejMNVDlpB` ✅ | Single line text | **Primary field de la tabla** (hallazgo 10-jul-2026, Fase Adjuntos 1, ver `docs/aprendizajes.md` E-024). SC01 nunca lo mapeó — quedaba vacío en las 14 filas existentes hasta que Sergio lo pobló manualmente con el valor de `codigo_ext`. **Importante**: como primary field, cualquier campo Link hacia `TX_Solicitudes` (ej. `TX_Adjuntos.solicitud`) se evalúa contra ESTE campo — no contra `codigo_ext` ni contra el record ID — dentro de un `filterByFormula` (misma lección que E-018). Pendiente: mapear `codigo_solicitud = {{7.codigo_ext}}` en el módulo 7 de SC01 para que las solicitudes futuras nazcan pobladas. |
 | `codigo_ext` | `fldSuJx1fDNYYwDcD` ✅ | Formula | `'VP-' & YEAR(fecha_solicitud) & '-' & LPAD(solicitud_id,4,'0')`. Read-only |
 | `fecha_solicitud` | — | Date | Cuándo se recibió |
 | `cliente` | — | Link → M_Clientes | FK. Solo activos en selectores |
@@ -287,18 +288,18 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `tipo_adjunto` | `fld1ocY8ug1vzBQsj` ✅ | Single select | foto_exterior · foto_interior · plano · cbr · escritura · cert_no_expropiacion · otro |
 | `url_dropbox` | `fldEccoUrOjV7oKZ5` ✅ | URL | Path en Dropbox |
 | `thumbnail_url` | `fld3AAAV0P496yZP0` ✅ | URL | |
-| `tamanio_kb` | `fldLgyE0fdGOvuFAy` ✅ | Number | ⚠ Nombre real; `lib/adjuntos.ts` usa `tamano_bytes` (no existe) |
+| `tamanio_kb` | `fldLgyE0fdGOvuFAy` ✅ | Number | Ya viene en KB — nunca dividir por 1024 al mostrar. `lib/adjuntos.ts` corregido 10-jul-2026 (Fase Adjuntos 1) para leerlo directo, sin `cellFormat: 'string'` |
 | `mime_type` | `fldyhpVhzD5eVfbRZ` ✅ | Single line text | |
-| `subido_por` | `fldqAZk4Jf0C5Z4uH` ✅ | Single select | Tasador · Ejecutivo · Sistema · Cliente · tasador (mezcla de mayúsc/minúsc) |
+| `subido_por` | `fldqAZk4Jf0C5Z4uH` ✅ | Single select | Opciones existentes: `Tasador · Ejecutivo · Sistema · Cliente · tasador` (mezcla de mayúsc/minúsc heredada — no crear opciones nuevas). El blueprint `SC-Adjuntos-Upload` (Fase Adjuntos 1) usa `Ejecutivo` como default |
 | `subido_en` | `fldLdCyamAmiNAb6f` ✅ | Date time | |
 | `fecha_subida` | `fldjGUehgdgZ5XvR1` ✅ | Created time | |
 | `procesado_por_ia` | `fldNlxI8UVQTebdFQ` ✅ | Checkbox | |
-| `hash_md5` | `fld9shmoBhZyNTK8x` ✅ | Single line text | |
+| `hash_md5` | `fld9shmoBhZyNTK8x` ✅ | Single line text | **Llave de idempotencia** (D-14.4, Fase Adjuntos 1, 10-jul-2026). El cliente calcula MD5 antes de subir (`lib/adjuntos-uploader.ts`); el blueprint `SC-Adjuntos-Upload` hace Search Records por `hash_md5` y verifica en el Router si el resultado pertenece a la misma `solicitud` (no puede combinarlo en la fórmula del Search Records — ver nota de `codigo_solicitud` más arriba y E-018/E-024) antes de decidir si reusa el adjunto existente o sube uno nuevo |
 | `clave_adjunto` | `fldaLLtzAaEn1O8IW` ✅ | Single line text | |
 | `orden` | `fld0t0ytqAkd3bzvd` ✅ | Number | |
 | `descripcion` | `fldsG18353kHMw0yQ` ✅ | Single line text | |
 | `requerido_por_ejecutiva` | `fldhKxTGC76faGGv3` ✅ | Checkbox | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Distingue documentos del checklist obligatorio de adjuntos sueltos opcionales |
-| `estado_extraccion` | `fld54epvDJ7YdJIYD` ✅ | Single select | **Creado** 08-jul-2026 (Fase 1 · cierre de pendientes IF-02). Opciones: `idle · extrayendo · listo · error` (choice IDs `selVJKgo84b62ikEp` · `selfPHp5m6o0hPjgV` · `selICqKF879p4Y3r7` · `selMxROzMpcREqA9B`). Bloqueador de RF-09 resuelto — pendiente mapear en el escenario Make RF-09 (aún sin provisionar, BQ-3-c) |
+| `estado_extraccion` | `fld54epvDJ7YdJIYD` ✅ | Single select | Opciones: `idle · extrayendo · listo · error` (choice IDs `selVJKgo84b62ikEp` · `selfPHp5m6o0hPjgV` · `selICqKF879p4Y3r7` · `selMxROzMpcREqA9B`). El blueprint `SC-Adjuntos-Upload` (Fase Adjuntos 1) escribe `idle` al crear cada adjunto nuevo. Bloqueador de RF-09 resuelto — pendiente mapear en el escenario Make RF-09 (Fase Adjuntos 2, aún sin provisionar, BQ-3-c) |
 
 **Decisión pendiente (Tanda B/C)**: ni `tipo` ni `tipo_adjunto` se llaman `tipo_documento` como asumía la documentación previa, y ninguno de los dos está referenciado hoy en código (no existe aún `/api/adjuntos/upload`). Ambos campos ya tienen equivalente de "otro" (`Otro` en `tipo`, `otro` en `tipo_adjunto`), por lo que cualquiera sirve para el checklist de documentos requeridos — el Data Designer debe decidir cuál usar (o si ambos cubren necesidades distintas) antes de mapear el checklist del formulario en Tanda B/C.
 
