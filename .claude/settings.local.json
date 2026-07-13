@@ -37,7 +37,9 @@
       "Bash(pnpm add *)",
       "Bash(pkill -f \"pnpm dev\")",
       "Bash(echo \"EXIT_CODE=$?\")",
-      "mcp__airtable__list_tables_for_base"
+      "mcp__airtable__list_tables_for_base",
+      "mcp__airtable__list_records_for_table",
+      "mcp__airtable__create_field"
     ]
   },
   "enableAllProjectMcpServers": true,
