@@ -208,6 +208,32 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** al diseñar un blueprint Make sobre una tabla de Airtable, listar el schema COMPLETO de esa tabla (todos los campos, no sólo los que se recuerdan de una sesión anterior o los documentados en CLAUDE.md) antes de dar el mapper por completo — un campo real puede pasar desapercibido durante varias sesiones si nadie vuelve a auditar el schema entero. Cuando TODOS los campos de una fila salen vacíos (no sólo uno), sospechar primero de un problema sistémico en el mapeo del módulo completo (import parcial, campo sin enlazar) antes que de un mismatch de nombre en un campo individual — un mismatch de nombre normalmente sólo afecta a ESE campo, no a todos. Ante un bug de Make que no se puede inspeccionar directamente (sin MCP ni History disponibles), la verificación más confiable que se puede dejar documentada es un checklist campo-por-campo con el módulo/campo de origen exacto para cada mapeo, más la sugerencia de borrar y reconstruir en vez de editar sobre un import posiblemente corrupto.
 
+### E-031 — Cierre Fase Adjuntos 1 confirmado + auditoría dominio D_ para RF-09 (12-jul-2026)
+
+**Contexto:** sesión "Cerrar Fase Adjuntos 1 + Lectura de datos por dominio D_". Diagnóstico previo a cualquier cambio de código, continuación directa de E-030.
+
+**Hallazgo 1 — A2 (AdjuntosTab) y A3 (DocumentChecklist) nunca fueron bugs de código:** el prompt de arranque pedía confirmar `AdjuntosTab` y restaurar `DocumentChecklist` si seguía oculto. La verificación completa del código (no solo grep) confirmó que ninguno de los dos tenía bug real: `AdjuntosTab` usa correctamente `fetchAdjuntosPorSolicitud` vía `/api/solicitudes/[id]/adjuntos` (patrón E-018 en memoria, sin cambios necesarios), y `DocumentChecklist` recibe `tiposDocumento` correcto desde `fetchTiposDocumento()` → `page.tsx` → `solicitud-list.tsx` → `NewRequestSheet`, con los 9 códigos reales coincidiendo 1:1 contra los defaults de `lib/schemas.ts`. Sergio confirmó que reconstruyó el escenario Make `SC-Adjuntos-Upload` siguiendo el checklist de `SC-Adjuntos-Upload_import_instrucciones.md` (sección "Diagnóstico 11-jul-2026") y probó una subida real — `TX_Adjuntos` ya no queda vacío.
+
+**Causa raíz:** el único bug real de E-030 estaba en el wiring del Módulo 8 (Create Record) del escenario ACTIVO de Make, no en ningún archivo de este repo. Los tres síntomas reportados (fila vacía en Airtable, `AdjuntosTab` sin datos, `DocumentChecklist` "desaparecido") eran manifestaciones de la misma única causa (adjuntos vacíos en Airtable), no bugs independientes.
+
+**Solución aplicada:** ninguna en código — se cierra Fase Adjuntos 1 sin tocar Next.js.
+
+**Prevención futura:** cuando un bug reportado tiene varios síntomas aparentemente distintos (tabla vacía + tab sin datos + componente "desaparecido"), verificar primero si comparten una única causa raíz antes de investigar cada síntoma por separado — evita reabrir investigaciones de código ya cerradas cuando el problema real sigue siendo 100% de configuración externa (Make).
+
+**Hallazgo 2 — 2 campos reales faltantes en el dominio D_:** al auditar vía MCP las 8 tablas D_ contra `docs/_md/VProperty_Diseno_Capa_Datos_Enterprise_v2_6_2.md` §6.7 (paso previo obligatorio antes de diseñar RF-09), se encontraron 2 campos documentados en la fuente canónica pero ausentes en Airtable real: `D_Atributo.version` (Number, snapshot de versión para reproducibilidad histórica de prompts Claude, paralelo a RN-28) y `D_Documento.extraccion_incompleta` (Checkbox, adenda v2.6.2/D-3, marca documentos con al menos un atributo extraído en null).
+
+**Causa raíz:** ambos campos están documentados como adiciones v8.1/v2.6.2 en la fuente canónica pero nunca se materializaron en el Airtable real — mismo patrón que D-08 en `TX_Solicitudes` (campo documentado ≠ campo creado), esta vez en un dominio nuevo (D_) que nadie había auditado hasta ahora.
+
+**Solución aplicada:** con aprobación explícita de Sergio (campos aislados, sin impacto en producción — RN-33 reverificada: cero FK cruzada del dominio D_ hacia M_/C_/TX_/A_/H_/Z_), se crearon ambos vía MCP: `D_Atributo.version` (`fldVa989k1aO6gVXV`) y `D_Documento.extraccion_incompleta` (`fldewUdLQOpVpSe7M`). Documentado en `docs/schema-airtable.md` §18 (nueva sección del dominio D_, con FIELD_IDs completos de las 8 tablas).
+
+**Prevención futura:** antes de diseñar cualquier escritor (Make/Automation) hacia una tabla ya descrita en una fuente canónica (Capa Datos, Blueprint, Especificación), re-verificar el schema completo vía MCP en vez de asumir que "documentado" implica "creado" — el patrón D-08 se repite en dominios nuevos si nadie los audita explícitamente antes de construir sobre ellos.
+
+**Decisiones abiertas para la sesión de construcción de RF-09** (no resueltas esta sesión; documentadas en `docs/_notas/rf09_diseno.md`):
+1. Dónde resolver el paso EAV polimórfico tipado (RN-32: exactamente 1 de 5 columnas de valor poblada según `tipo_dato` del atributo) — Router de 5 ramas dentro de Make (consume operaciones del plan Free) vs. delegarlo a un Airtable Script/Automation (`AT-D01`, nombrada en Capa Datos v2.6.2 pero sin confirmar si existe activa).
+2. Confirmar vía MCP el primary field real de `D_TipoDocumento` antes de escribir cualquier `filterByFormula` que compare su Link — mismo riesgo E-018/E-024 (un Link dentro de una fórmula se evalúa contra el primary field del registro vinculado, no contra su record ID).
+
+**Estado al cierre:** RF-09 queda únicamente en fase de DISEÑO (`docs/_notas/rf09_diseno.md` — contrato de `/api/extraccion/iniciar`, módulos del escenario Make, diseño de `ExtraccionStatusBadge`). Ningún archivo de código ni blueprint Make se creó — bloqueado hasta que Sergio confirme `MAKE_WEBHOOK_URL_RF09` y `ANTHROPIC_API_KEY` en Railway y `.env.local`.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
