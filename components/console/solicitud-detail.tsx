@@ -40,6 +40,18 @@ import type { Evento, IconoEvento } from "@/lib/eventos"
 import type { Adjunto } from "@/lib/adjuntos"
 import { uploadConReintentos } from "@/lib/adjuntos-uploader"
 
+/**
+ * `TX_Adjuntos.url_dropbox` puede traer el path interno de Dropbox
+ * (`/VProperty/Tasaciones/...`) en vez de un link público clickeable —
+ * deuda técnica aceptada para Fase Adjuntos 1 (docs/aprendizajes.md E-025,
+ * no hay módulo `createSharedLink` confirmado en esta instancia de Make).
+ * Un `<a href>` con ese path navegaría dentro del propio dominio de la app,
+ * no a Dropbox — hay que distinguirlo antes de ofrecer el link como activo.
+ */
+function esUrlPublica(url: string): boolean {
+  return /^https?:\/\//i.test(url)
+}
+
 const historialIcons: Record<IconoEvento, typeof CheckCircle2> = {
   check: CheckCircle2,
   plus: PlusCircle,
@@ -382,7 +394,7 @@ function DatosTab({
                   className="flex items-center justify-between gap-2 text-sm"
                 >
                   <span className="truncate text-foreground">{a.nombre}</span>
-                  {a.urlDropbox ? (
+                  {a.urlDropbox && esUrlPublica(a.urlDropbox) ? (
                     <a
                       href={a.urlDropbox}
                       target="_blank"
@@ -391,6 +403,19 @@ function DatosTab({
                     >
                       Ver enlace
                     </a>
+                  ) : a.urlDropbox ? (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <span className="shrink-0 text-xs text-muted-foreground/70">
+                            Ver enlace
+                          </span>
+                        }
+                      />
+                      <TooltipContent>
+                        Enlace directo disponible en próxima versión
+                      </TooltipContent>
+                    </Tooltip>
                   ) : (
                     <span className="shrink-0 text-xs text-muted-foreground">
                       Sin enlace
@@ -702,23 +727,46 @@ function AdjuntosTab({
                       {a.tipo} · {a.detalle}
                     </span>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={!a.urlDropbox}
-                    render={
-                      a.urlDropbox ? (
-                        <a
-                          href={a.urlDropbox}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        />
-                      ) : undefined
-                    }
-                  >
-                    <Download data-icon="inline-start" />
-                    Descargar
-                  </Button>
+                  {a.urlDropbox && !esUrlPublica(a.urlDropbox) ? (
+                    <Tooltip>
+                      <TooltipTrigger
+                        render={
+                          <span className="inline-flex">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled
+                              className="pointer-events-none"
+                            >
+                              <Download data-icon="inline-start" />
+                              Descargar
+                            </Button>
+                          </span>
+                        }
+                      />
+                      <TooltipContent>
+                        Enlace directo disponible en próxima versión
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!a.urlDropbox}
+                      render={
+                        a.urlDropbox ? (
+                          <a
+                            href={a.urlDropbox}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          />
+                        ) : undefined
+                      }
+                    >
+                      <Download data-icon="inline-start" />
+                      Descargar
+                    </Button>
+                  )}
                 </li>
               )
             })}

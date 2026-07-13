@@ -44,6 +44,7 @@ Pega esto en el módulo 1 cuando Make te pida la "Data structure":
 {
   "solicitud_id": "text",
   "codigo_ext": "text",
+  "tipo_documento": "text",
   "nombre_archivo": "text",
   "mime_type": "text",
   "tamanio_kb": "number",
@@ -52,6 +53,8 @@ Pega esto en el módulo 1 cuando Make te pida la "Data structure":
   "contenido_base64": "text"
 }
 ```
+
+`tipo_documento` es el código de `D_TipoDocumento` (ej. `permiso_edificacion`) cuando el archivo viene del checklist de documentos requeridos; llega vacío si es un adjunto suelto sin tipo asociado.
 
 ---
 
@@ -102,6 +105,7 @@ Si no encuentras la función `contains` en el editor de Make, o el filtro no te 
 | `subido_por` | webhook `subido_por`; si viene vacío, usa el texto fijo **"Ejecutivo"** (opción existente del select — no crear opciones nuevas) |
 | `solicitud` | Link → `[{ id: {{1.solicitud_id}} }]` (el record id que ya trae el webhook — a diferencia de SC01, aquí no hace falta buscar nada, el frontend ya conoce la solicitud) |
 | `estado_extraccion` | valor fijo **"idle"** |
+| `clave_adjunto` | webhook `tipo_documento` (código de `D_TipoDocumento`, ej. `permiso_edificacion`) — **no** uses los campos `tipo` ni `tipo_adjunto`, ver sección "Fix tipo_documento" abajo |
 
 ---
 
@@ -187,6 +191,38 @@ El módulo `createSharedLink` se eliminó por completo (id 7 queda vacante en el
 Si vuelves a importar el blueprint desde cero, ya no deberías ver el error de "Module Not Found" en el módulo Dropbox — si aun así aparece, revisa que tu cuenta tenga el connector Dropbox en la misma versión que usa `E3_Carbone_Download_Dropbox`.
 
 **Pendiente sin resolver (no bloquea Fase Adjuntos 1):** el filtro de la Ruta "Ya existe" del Router usa una fórmula completa (`contains(...)`) dentro del campo `a` de una condición `text:equal` — no está confirmado que Make evalúe eso correctamente en producción. Probarlo en la primera prueba manual (Escenario 4 de las pruebas de Sergio: subir el mismo adjunto dos veces) y, si falla, ajustar a un operador nativo del editor de filtros de Make.
+
+---
+
+## Fix tipo_documento + restore checklist (10-jul-2026)
+
+El checklist "Documentos requeridos" del formulario nunca subía archivos de verdad (era una simulación local) — ahora sí, y cada archivo viaja con `tipo_documento` (código de `D_TipoDocumento`). `TX_Adjuntos` tiene dos singleSelect de tipo (`tipo`, `tipo_adjunto`) pero ninguno tiene esos códigos como opción, así que `tipo_documento` se mapea a `clave_adjunto` (texto libre, sin uso previo) para no crear opciones nuevas sin tu aprobación. Si vuelves a importar el blueprint desde cero, confirma que el módulo 1 (Webhook) tenga `tipo_documento` en su Data structure y que el módulo 8 (Create Record) tenga `clave_adjunto` mapeado a `{{1.tipo_documento}}`.
+
+---
+
+## Diagnóstico 11-jul-2026: filas de TX_Adjuntos creadas VACÍAS
+
+Pruebas reales mostraron filas nuevas en `TX_Adjuntos` con **todos los campos vacíos** excepto `fecha_subida` (que Airtable rellena solo, sin depender de ningún mapeo). Se verificó contra el schema real de Airtable (vía API, de solo lectura) que los nombres de campo del Módulo 8 en este JSON son exactamente correctos — no es un problema de nombre de campo. Como hasta los campos más simples (`nombre_archivo`, `hash_md5`, que vienen directo del Webhook sin pasar por Dropbox) están vacíos, la causa más probable es que **el mapeo del Módulo 8 en el escenario activo de Make nunca quedó realmente enlazado a los campos del Webhook** — puede pasar en un import parcial, o si al construir el escenario a mano quedó algún campo sin seleccionar del picker de variables de Make.
+
+**Antes de volver a probar, borra las 3 filas vacías** en Airtable (`TX_Adjuntos`, filas con `fecha_subida` 11/7/2026 11:35 y todo lo demás vacío): ábrelas, selecciona las 3 filas con el checkbox de la izquierda y usa "Delete records" del menú contextual.
+
+**Para re-armar el escenario de forma confiable:**
+
+1. Borra el escenario `SC-Adjuntos-Upload` actual por completo (menú **(⋯)** → **Delete**) — no lo edites sobre lo que ya existe, es más fácil que quede algo a medias.
+2. Vuelve a importar `SC-Adjuntos-Upload.blueprint.json` siguiendo la sección 1 de este documento.
+3. **Antes de guardar**, entra al módulo 8 (Create a Record, tabla TX_Adjuntos) y verifica, campo por campo, que cada casilla muestre una **pastilla de color** (el token de Make, ej. "1. Nombre archivo") — no texto plano ni la casilla vacía. Si alguna casilla aparece vacía o con texto literal en vez de pastilla, haz clic ahí y vuelve a insertar el valor desde el buscador de variables de Make (ícono de mapeo), eligiendo el módulo correcto:
+   - `nombre_archivo` ← 1. Webhook → `nombre_archivo`
+   - `url_dropbox` ← 6. Upload a File → `path_display` (si no ves `path_display` en la lista, mira qué nombres SÍ aparecen y avísame — puede que el módulo real use `path_lower` o similar)
+   - `tamanio_kb` ← 1. Webhook → `tamanio_kb`
+   - `mime_type` ← 1. Webhook → `mime_type`
+   - `hash_md5` ← 1. Webhook → `hash_md5`
+   - `subido_por` ← 1. Webhook → `subido_por`
+   - `solicitud` ← 1. Webhook → `solicitud_id`
+   - `clave_adjunto` ← 1. Webhook → `tipo_documento`
+   - `estado_extraccion` ← valor fijo `idle` (sin pastilla, texto literal está bien aquí porque es un valor fijo)
+4. Guarda, activa el interruptor, y sube UN solo archivo de prueba desde la app. Revisa la fila nueva en Airtable — si sigue vacía, entra a **History** del escenario en Make (columna izquierda del escenario) y abre la ejecución: ahí se ve, módulo por módulo, qué datos entraron y salieron de cada uno — eso confirma de una vez si el problema está en el Módulo 8 o más arriba.
+
+Los campos `tipo_adjunto`, `orden` y `descripcion` (existen en `TX_Adjuntos` pero el frontend todavía no envía datos para ellos) se dejan sin mapear por ahora — no hay nada que escribir ahí todavía, y mapearlos vacíos no aporta nada. Se retoman en una tanda futura si se necesitan.
 
 ---
 

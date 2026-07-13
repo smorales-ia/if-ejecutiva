@@ -26,6 +26,9 @@ const MAX_TAMANIO_KB = 7 * 1024 // 7MB, ya en KB (D-13)
 const uploadSchema = z.object({
   solicitud_id: z.string().min(1, 'Falta el identificador de la solicitud.'),
   codigo_ext: z.string().min(1, 'Falta el código de la solicitud.'),
+  // Código de D_TipoDocumento (ej. "permiso_edificacion") cuando el archivo viene
+  // del checklist de documentos requeridos; ausente/vacío para adjuntos sueltos.
+  tipo_documento: z.string().optional(),
   nombre_archivo: z.string().min(1, 'Falta el nombre del archivo.'),
   mime_type: z.string().min(1, 'Falta el tipo de archivo.'),
   tamanio_kb: z.number().positive('Tamaño de archivo inválido.'),

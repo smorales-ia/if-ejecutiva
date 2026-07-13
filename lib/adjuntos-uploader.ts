@@ -20,6 +20,8 @@ export interface UploadUnArchivoParams {
   file: File
   solicitud_id: string
   codigo_ext: string
+  /** Código de D_TipoDocumento (ej. "permiso_edificacion") si el archivo viene del checklist; vacío si es un adjunto suelto. */
+  tipo_documento?: string
   subido_por?: string
   onProgress?: (pct: number) => void
   signal?: AbortSignal
@@ -77,7 +79,15 @@ export function fileToBase64(file: File): Promise<string> {
  * upload (`upload.onprogress`) — fetch no expone progreso de subida nativo.
  */
 export async function uploadUnArchivo(params: UploadUnArchivoParams): Promise<UploadResult> {
-  const { file, solicitud_id, codigo_ext, subido_por = 'Ejecutivo', onProgress, signal } = params
+  const {
+    file,
+    solicitud_id,
+    codigo_ext,
+    tipo_documento,
+    subido_por = 'Ejecutivo',
+    onProgress,
+    signal,
+  } = params
 
   if (signal?.aborted) {
     return { ok: false, error: 'Subida cancelada.', reintentable: false }
@@ -139,6 +149,7 @@ export async function uploadUnArchivo(params: UploadUnArchivoParams): Promise<Up
       JSON.stringify({
         solicitud_id,
         codigo_ext,
+        tipo_documento,
         nombre_archivo: file.name,
         mime_type: file.type || 'application/octet-stream',
         tamanio_kb: Math.round(file.size / 1024),
@@ -193,6 +204,7 @@ export interface ArchivoEnLote {
   file: File
   solicitud_id: string
   codigo_ext: string
+  tipo_documento?: string
   subido_por?: string
   signal?: AbortSignal
   onProgress?: (pct: number) => void
@@ -223,6 +235,7 @@ export async function uploadEnLotes(
         file: item.file,
         solicitud_id: item.solicitud_id,
         codigo_ext: item.codigo_ext,
+        tipo_documento: item.tipo_documento,
         subido_por: item.subido_por,
         signal: item.signal,
         onProgress: item.onProgress,

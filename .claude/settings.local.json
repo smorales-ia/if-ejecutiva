@@ -34,7 +34,14 @@
       "Bash(sort -t: -k2 -u)",
       "Bash(sort -t C -k2 -n -u)",
       "WebSearch",
-      "Bash(pnpm add *)"
+      "Bash(pnpm add *)",
+      "Bash(pkill -f \"pnpm dev\")",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "mcp__airtable__list_tables_for_base"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "airtable"
+  ]
 }

@@ -4,7 +4,6 @@ import * as React from "react"
 import {
   AlertCircle,
   CheckCircle2,
-  Loader2,
   Paperclip,
   X,
 } from "lucide-react"
@@ -46,7 +45,7 @@ export interface DocumentoChecklistItem {
   archivo: DocumentoArchivo | null
 }
 
-type EstadoCarga = "idle" | "uploading" | "error"
+type EstadoCarga = "idle" | "error"
 
 function truncar(nombre: string, max = 24): string {
   if (nombre.length <= max) return nombre
@@ -67,47 +66,21 @@ interface DocumentRowProps {
   tipos: TipoDocumento[]
   onToggle: (codigo: string, marcado: boolean) => void
   onArchivo: (codigo: string, archivo: DocumentoArchivo | null) => void
+  onFile: (codigo: string, file: File | null) => void
 }
 
-function DocumentRow({ item, tipos, onToggle, onArchivo }: DocumentRowProps) {
+function DocumentRow({ item, tipos, onToggle, onArchivo, onFile }: DocumentRowProps) {
   const meta = tipos.find((t) => t.codigo === item.codigo)
   const inputRef = React.useRef<HTMLInputElement>(null)
-  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
 
   const [estado, setEstado] = React.useState<EstadoCarga>("idle")
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = React.useState(false)
 
-  React.useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
-  }, [])
-
   if (!meta) return null
 
   const marcado = item.requerido_por_ejecutiva
   const tieneArchivo = item.archivo !== null
-
-  function simularSubida(file: File) {
-    if (timerRef.current) clearInterval(timerRef.current)
-    let progreso = 0
-    setEstado("uploading")
-    timerRef.current = setInterval(() => {
-      progreso = Math.min(progreso + 25, 100)
-      if (progreso >= 100) {
-        if (timerRef.current) clearInterval(timerRef.current)
-        timerRef.current = null
-        setEstado("idle")
-        onArchivo(item.codigo, {
-          nombre: file.name,
-          tamanio_kb: Math.round(file.size / 1024),
-          mime_type: file.type || "application/octet-stream",
-          url_local: URL.createObjectURL(file),
-        })
-      }
-    }, 200)
-  }
 
   function seleccionar(fileList: FileList | null) {
     const file = fileList?.[0]
@@ -119,7 +92,14 @@ function DocumentRow({ item, tipos, onToggle, onArchivo }: DocumentRowProps) {
       return
     }
     setErrorMsg(null)
-    simularSubida(file)
+    setEstado("idle")
+    onArchivo(item.codigo, {
+      nombre: file.name,
+      tamanio_kb: Math.round(file.size / 1024),
+      mime_type: file.type || "application/octet-stream",
+      url_local: URL.createObjectURL(file),
+    })
+    onFile(item.codigo, file)
   }
 
   function handleCheckedChange(next: boolean) {
@@ -137,6 +117,7 @@ function DocumentRow({ item, tipos, onToggle, onArchivo }: DocumentRowProps) {
 
   function confirmarQuitar() {
     onArchivo(item.codigo, null)
+    onFile(item.codigo, null)
     onToggle(item.codigo, false)
     setEstado("idle")
     setErrorMsg(null)
@@ -145,6 +126,7 @@ function DocumentRow({ item, tipos, onToggle, onArchivo }: DocumentRowProps) {
 
   function removerArchivo() {
     onArchivo(item.codigo, null)
+    onFile(item.codigo, null)
     setEstado("idle")
     setErrorMsg(null)
   }
@@ -155,7 +137,6 @@ function DocumentRow({ item, tipos, onToggle, onArchivo }: DocumentRowProps) {
         "grid grid-cols-[auto_1fr_auto] items-start gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-3 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center",
         item.requerido_por_ejecutiva &&
           !tieneArchivo &&
-          estado !== "uploading" &&
           "border-amber-200 bg-amber-50/40"
       )}
     >
@@ -205,11 +186,6 @@ function DocumentRow({ item, tipos, onToggle, onArchivo }: DocumentRowProps) {
         {!marcado ? (
           <span className="block text-right text-xs text-muted-foreground/70">
             No incluido
-          </span>
-        ) : estado === "uploading" ? (
-          <span className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Subiendo…
           </span>
         ) : estado === "error" ? (
           <div className="flex items-center justify-end gap-2">
@@ -283,9 +259,16 @@ interface DocumentChecklistProps {
   tipos: TipoDocumento[]
   value: DocumentoChecklistItem[]
   onChange: (next: DocumentoChecklistItem[]) => void
+  /** Lifting del `File` real (no serializable, por eso va aparte del `onChange` de RHF/Zod) hacia el padre, para la subida real post-creación (Opción C). */
+  onFileChange: (codigo: string, file: File | null) => void
 }
 
-export function DocumentChecklist({ tipos, value, onChange }: DocumentChecklistProps) {
+export function DocumentChecklist({
+  tipos,
+  value,
+  onChange,
+  onFileChange,
+}: DocumentChecklistProps) {
   function handleToggle(codigo: string, marcado: boolean) {
     onChange(
       value.map((d) =>
@@ -311,6 +294,7 @@ export function DocumentChecklist({ tipos, value, onChange }: DocumentChecklistP
           tipos={tipos}
           onToggle={handleToggle}
           onArchivo={handleArchivo}
+          onFile={onFileChange}
         />
       ))}
     </div>

@@ -122,6 +122,12 @@ function esImagen(file: File): boolean {
   return file.type.startsWith("image/") || /\.(jpe?g|png)$/i.test(file.name)
 }
 
+/** Un archivo a subir junto con su tipo_documento asociado (código de D_TipoDocumento, o undefined si es un adjunto suelto). */
+interface ArchivoConTipo {
+  file: File
+  tipoDocumento?: string
+}
+
 export function NewRequestSheet({
   tiposDocumento,
 }: {
@@ -130,6 +136,11 @@ export function NewRequestSheet({
   const router = useRouter()
   const [open, setOpen] = React.useState(false)
   const [archivos, setArchivos] = React.useState<File[]>([])
+  // Archivos reales adjuntados desde el checklist "Documentos requeridos", por
+  // código de D_TipoDocumento. Separado del array `documentos` de RHF/Zod
+  // porque ese sólo guarda metadata serializable (nombre/tamaño/mime/url_local),
+  // nunca el `File` — ver docs/aprendizajes.md E-027 (addendum 10-jul-2026).
+  const [checklistArchivos, setChecklistArchivos] = React.useState<Record<string, File>>({})
   const [fase, setFase] = React.useState<"formulario" | "subiendo">("formulario")
   const [solicitudCreada, setSolicitudCreada] = React.useState<{
     solicitud_id: string
@@ -137,6 +148,7 @@ export function NewRequestSheet({
   } | null>(null)
   const [trackerItems, setTrackerItems] = React.useState<AdjuntoSubmitItem[]>([])
   const archivosPorIdRef = React.useRef<Record<string, File>>({})
+  const tipoPorIdRef = React.useRef<Record<string, string | undefined>>({})
   const abortControllersRef = React.useRef<Record<string, AbortController>>({})
 
   const {
@@ -165,8 +177,18 @@ export function NewRequestSheet({
     (d) => d.requerido_por_ejecutiva && d.archivo === null
   ).length
 
-  const totalBytesArchivos = archivos.reduce((sum, f) => sum + f.size, 0)
+  const totalBytesArchivos =
+    archivos.reduce((sum, f) => sum + f.size, 0) +
+    Object.values(checklistArchivos).reduce((sum, f) => sum + f.size, 0)
   const bloqueadoPorTamano = totalBytesArchivos >= UMBRAL_BLOQUEO_BYTES
+
+  function handleChecklistFile(codigo: string, file: File | null) {
+    setChecklistArchivos((prev) => {
+      if (file) return { ...prev, [codigo]: file }
+      const { [codigo]: _omitido, ...resto } = prev
+      return resto
+    })
+  }
 
   // Catálogos dependientes.
   const tiposInforme = cliente ? TIPOS_INFORME_POR_CLIENTE[cliente] ?? [] : []
@@ -191,11 +213,13 @@ export function NewRequestSheet({
     Object.values(abortControllersRef.current).forEach((c) => c.abort())
     abortControllersRef.current = {}
     archivosPorIdRef.current = {}
+    tipoPorIdRef.current = {}
     reset({
       ...nuevaSolicitudInternaDefaults,
       documentos: buildDocumentosDefaults(tiposDocumento),
     })
     setArchivos([])
+    setChecklistArchivos({})
     setFase("formulario")
     setSolicitudCreada(null)
     setTrackerItems([])
@@ -204,26 +228,29 @@ export function NewRequestSheet({
   async function iniciarSubidaAdjuntos(
     solicitud_id: string,
     codigo_ext: string,
-    lista: File[]
+    lista: ArchivoConTipo[]
   ) {
-    const items: AdjuntoSubmitItem[] = lista.map((f, idx) => ({
+    const items: AdjuntoSubmitItem[] = lista.map((l, idx) => ({
       id: `adj-${idx}`,
-      nombre: f.name,
-      tamanioKb: Math.round(f.size / 1024),
+      nombre: l.file.name,
+      tamanioKb: Math.round(l.file.size / 1024),
       estado: "pendiente",
       progreso: 0,
-      esImagen: esImagen(f),
+      esImagen: esImagen(l.file),
     }))
     archivosPorIdRef.current = {}
+    tipoPorIdRef.current = {}
     abortControllersRef.current = {}
     items.forEach((it, idx) => {
-      archivosPorIdRef.current[it.id] = lista[idx]
+      archivosPorIdRef.current[it.id] = lista[idx].file
+      tipoPorIdRef.current[it.id] = lista[idx].tipoDocumento
       abortControllersRef.current[it.id] = new AbortController()
     })
     setTrackerItems(items)
 
     const lote: ArchivoEnLote[] = items.map((it) => ({
       file: archivosPorIdRef.current[it.id],
+      tipo_documento: tipoPorIdRef.current[it.id],
       solicitud_id,
       codigo_ext,
       signal: abortControllersRef.current[it.id].signal,
@@ -289,6 +316,7 @@ export function NewRequestSheet({
 
     const lote: ArchivoEnLote[] = faltantes.map((it) => ({
       file: archivosPorIdRef.current[it.id],
+      tipo_documento: tipoPorIdRef.current[it.id],
       solicitud_id: solicitudCreada.solicitud_id,
       codigo_ext: solicitudCreada.codigo_ext,
       signal: abortControllersRef.current[it.id].signal,
@@ -374,10 +402,12 @@ export function NewRequestSheet({
     // Solicitud creada. Sin solicitud_id/codigo_ext no se puede identificar
     // dónde subir los adjuntos ahora — se avisa y se deja para el detalle.
     if (!data.solicitud_id || !data.codigo_ext) {
+      const hayArchivos =
+        archivos.length > 0 || Object.keys(checklistArchivos).length > 0
       toast.success(
-        archivos.length === 0
-          ? "Solicitud creada."
-          : "Solicitud creada. Agrega los documentos desde el detalle de la solicitud.",
+        hayArchivos
+          ? "Solicitud creada. Agrega los documentos desde el detalle de la solicitud."
+          : "Solicitud creada.",
         { duration: 4000 }
       )
       resetAll()
@@ -388,7 +418,15 @@ export function NewRequestSheet({
 
     setSolicitudCreada({ solicitud_id: data.solicitud_id, codigo_ext: data.codigo_ext })
 
-    if (archivos.length === 0) {
+    const archivosParaSubir: ArchivoConTipo[] = [
+      ...Object.entries(checklistArchivos).map(([codigo, file]) => ({
+        file,
+        tipoDocumento: codigo,
+      })),
+      ...archivos.map((file) => ({ file, tipoDocumento: undefined })),
+    ]
+
+    if (archivosParaSubir.length === 0) {
       toast.success("Solicitud creada.", { duration: 3000 })
       resetAll()
       setOpen(false)
@@ -397,7 +435,7 @@ export function NewRequestSheet({
     }
 
     setFase("subiendo")
-    void iniciarSubidaAdjuntos(data.solicitud_id, data.codigo_ext, archivos)
+    void iniciarSubidaAdjuntos(data.solicitud_id, data.codigo_ext, archivosParaSubir)
   }
 
   function onInvalid() {
@@ -1007,6 +1045,7 @@ export function NewRequestSheet({
                       tipos={tiposDocumento}
                       value={field.value}
                       onChange={field.onChange}
+                      onFileChange={handleChecklistFile}
                     />
                   )}
                 />
