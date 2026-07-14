@@ -154,6 +154,25 @@ interface ExtraccionStatusBadgeProps {
 
 ---
 
+## Pendientes registrados al cierre de Tanda D (14-jul-2026)
+
+> Ver `docs/aprendizajes.md` E-034 a E-038 para el detalle técnico de cada
+> hallazgo. Estos son los 4 puntos de acción concretos antes de retomar RF-09.
+
+1. **Rotar la API key de Anthropic** — quedó expuesta en texto plano en un
+   blueprint Make exportado durante debugging (E-037). Tratar como
+   comprometida y rotar en Anthropic Console antes de seguir usando el
+   escenario.
+2. **Confirmar en Railway**: `MAKE_WEBHOOK_URL_RF09` y `ANTHROPIC_API_KEY`
+   (con el valor rotado del punto 1).
+3. **Verificar `TX_Adjuntos.estado_extraccion`** (singleSelect) — confirmar
+   que las opciones agregadas en Checkpoint 1 (`skipped`, `no_corresponde`,
+   `delegado_visador`) siguen ahí y no se perdieron entre sesiones.
+4. **Confirmar plan Make** — RF-09 requiere un 3er escenario activo, y Make
+   Free solo permite 2. Sin resolver esto, el escenario no puede quedar
+   encendido en paralelo a los demás (ver §4.5 de `docs/_notas/rf09_diseno.md`
+   sección "Cupo de Make" más arriba).
+
 ## Checklist para la sesión de construcción (no ejecutar todavía)
 
 1. Confirmar `MAKE_WEBHOOK_URL_RF09` y `ANTHROPIC_API_KEY` en `.env.local` y Railway.

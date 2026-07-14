@@ -10,113 +10,11 @@ Debe leerse al inicio de cada sesión antes de proponer comandos.
 
 ## Entradas
 
-### E-001 — pnpm global roto con Node 20
-**Síntoma:** `pnpm` falla con `ERR_UNKNOWN_BUILTIN_MODULE: node:sqlite`.
-**Causa:** El pnpm global instalado exige Node ≥ 22.13.
-**Solución probada:** configurar prefix de npm en carpeta de usuario y reinstalar pnpm 9:
-```
-mkdir -p ~/.npm-global
-npm config set prefix ~/.npm-global
-echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
-npm install -g pnpm@9
-```
-Verificar con `cd ~ && pnpm --version` → debe mostrar 9.15.9.
-
-### E-002 — pnpm de Windows toma precedencia sobre el de WSL
-**Síntoma:** `which pnpm` apunta a `/mnt/c/Users/.../AppData/Roaming/npm/pnpm`.
-**Causa:** El PATH de WSL hereda el de Windows y lo pone primero.
-**Solución probada:** instalar pnpm dentro de WSL con `npm install -g pnpm@9` tras configurar el prefix a `~/.npm-global`.
-
-### E-003 — pnpm 9 rechaza pnpm-workspace.yaml sin `packages`
-**Síntoma:** `pnpm --version` desde el proyecto: `ERROR: packages field missing or empty`.
-**Causa:** pnpm 9 exige el campo `packages` explícito.
-**Solución probada:** agregar al inicio de `pnpm-workspace.yaml`:
-```yaml
-packages:
-  - '.'
-```
-
-### E-004 — Next.js crashea por falta de SWC binary
-**Síntoma:** server llega a "Ready" pero muere con error de `@next/swc-linux-x64-gnu`.
-**Causa:** SWC binary es dependencia opcional; a veces pnpm no la instala.
-**Solución probada:** `pnpm install`. Si el binary está en el store pero sin symlink, crear symlink manual desde `node_modules/@next/swc-linux-x64-gnu` al store de pnpm.
-
-### E-005 — Puerto 3000 ocupado, Next arranca en 3001
-**Síntoma:** server arranca pero no responde en 3000.
-**Causa:** proceso anterior quedó vivo en 3000.
-**Solución probada:** verificar el puerto real reportado por Next al arrancar y usarlo en las pruebas.
-
-### E-006 — TypeScript rechaza onValueChange de Base UI Select
-**Síntoma:** `Argument of type 'string | null' is not assignable to parameter of type 'string'`.
-**Causa:** Base UI Select emite `string | null`; los handlers esperan `string`.
-**Solución probada:** `onValueChange={(v) => handler(v ?? '')}`. Defensivo, no cambia lógica.
-
-### E-007 — El MCP de Airtable no permite convertir el tipo de un campo existente
-**Síntoma:** Se necesitaba cambiar `TX_Solicitudes.banco` de texto libre a Link → M_Bancos; no existe ninguna herramienta MCP para "cambiar tipo de campo" sobre uno ya creado (`update_field` solo edita nombre/descripción/fórmula; `create_field` solo crea campos nuevos).
-**Causa:** El servidor MCP de Airtable expone un subconjunto de la API oficial que no incluye conversión de tipo de campo in-place (esa operación en la API real de Airtable requiere resolver manualmente el mapeo de valores existentes, algo que el MCP no automatiza).
-**Solución probada:** Estrategia de migración paralela: (1) crear campo nuevo con el tipo destino (`banco_link`, Link → M_Bancos), (2) migrar los valores de las filas existentes con `update_records_for_table` usando un mapeo texto→recXXX resuelto a mano, (3) dejar el campo viejo (`banco`) como deprecated conviviendo con el nuevo, (4) programar su eliminación para una tanda posterior una vez que blueprint Make y código lean/escriban del campo nuevo.
-**Prevención futura:** Antes de pedir una "conversión de tipo" de un campo Airtable vía MCP, asumir que no es posible en un solo paso — planificar directamente la migración paralela (campo nuevo + migración de filas + deprecación) en vez de intentar buscar una herramienta de conversión que no existe.
-
-### E-008 — `codigo_ext` genera valores `VP-NaN-0023` en producción
-**Síntoma:** Las solicitudes creadas en Fase 2 (Paso 4B) muestran `codigo_ext` como `VP-NaN-0020`, `VP-NaN-0021`, etc., en vez de `VP-2026-00NN`.
-**Causa:** `codigo_ext` es una fórmula que depende de `YEAR(fecha_solicitud)`, y `fecha_solicitud` no se mapea en el módulo 7 del blueprint SC01 — queda vacío en cada alta nueva, por lo que `YEAR()` evalúa a `NaN`.
-**Solución probada:** Ninguna aplicada todavía en esta sesión — el fix (mapear `fecha_solicitud = {{formatDate(now; "YYYY-MM-DD")}}` en el módulo 7) pertenece a la **Tanda B** del gap de persistencia (`docs/_notas/gap_solicitud_persistencia.md`, caso a), no a la migración de `banco`.
-**Prevención futura:** Al confirmar el tipo/existencia de un campo vía MCP, revisar también si alguna fórmula de solo lectura depende de él (`codigo_ext` depende de `fecha_solicitud`) — un campo "existente pero no mapeado en Make" puede romper fórmulas aguas abajo sin que el schema lo delate.
-
-### E-009 — Revertir una decisión de panel requiere dejar rastro explícito, no solo actuar
-**Síntoma:** El panel de arquitectura había decidido en la sesión anterior "no migrar `.banco`, solo documentar la divergencia" (Tanda A, punto 8 original); esta sesión revirtió esa decisión con evidencia nueva (5 filas con datos reales + bug `codigo_ext` confirmado) y migró el campo.
-**Causa:** Sin dejar constancia explícita de que la decisión anterior fue revisada y por qué, una sesión futura podría asumir que "no migrar" seguía vigente y entrar en conflicto con el estado real del schema.
-**Solución probada:** Se documentó el cambio de decisión en `docs/schema-airtable.md` §13.2, `docs/_notas/gap_solicitud_persistencia.md` (Tanda A punto 8) y aquí, todos referenciándose entre sí.
-**Prevención futura:** Antes de proponer un cambio de schema en Airtable, revisar si el panel ya tomó una decisión al respecto en documentos previos (`gap_solicitud_persistencia.md`, `schema-airtable.md`); si se revierte, dejar rastro explícito de la evidencia nueva que motivó el cambio, no solo ejecutar.
-
-### E-010 — Cambiar un catálogo hardcodeado por uno vivo en Airtable cambia el tipo del `id`
-**Síntoma:** `TIPOS_DOCUMENTO` (hardcoded) usaba `id: number` (autonumber ficticio); al conectar `fetchTiposDocumento()` contra `D_TipoDocumento` real, el `id` pasó a ser `recXXX` (`string`), rompiendo temporalmente el tipado de `tipo_id` en el schema Zod y en `nuevaSolicitudInternaDefaults`.
-**Causa:** Airtable identifica registros por record id (`recXXX`), no por autonumber; un catálogo hardcodeado con `id` numérico no tiene equivalente real cuando se reemplaza por lectura en vivo de Airtable.
-**Solución probada:** cambiar `TipoDocumento.id` a `string` en `lib/console-data.ts`, propagar el cambio a `DocumentoChecklistItem.tipo_id` y al schema Zod (`tipo_id: z.string()`), aceptando una rotura de compilación temporal entre fases (Fase 2 → Fase 3) porque el cierre (`build`/`typecheck`) sólo se valida al final de la tanda completa.
-**Prevención futura:** al planear la migración de un array hardcodeado a un fetcher de Airtable, revisar de entrada si el `id` usado en el hardcode es sintético (`number`) — si lo es, asumir que cambiará a `string` (`recXXX`) y mapear todos los consumidores del tipo antes de tocar el fetcher.
-
-### E-011 — El prop-drilling real no siempre coincide con el que asume el plan
-**Síntoma:** El plan de wiring asumía que `console-shell.tsx` renderizaba `NewRequestSheet` directamente; en realidad lo renderiza `solicitud-list.tsx` (`console-shell.tsx` → `solicitud-list.tsx` → `new-request-sheet.tsx`).
-**Causa:** El plan se escribió sin verificar el árbol de renderizado real; `solicitud-list.tsx` no había sido mencionado como archivo a tocar.
-**Solución probada:** detectarlo en la fase de lectura (Fase 0) con un grep del uso de `<NewRequestSheet`, señalarlo antes de escribir código, y agregar el archivo faltante al alcance de wiring sin esperar una nueva instrucción (era plomería necesaria, no una decisión de negocio).
-**Prevención futura:** antes de aceptar un plan de wiring de props entre componentes, verificar con grep/lectura quién renderiza a quién — no asumir la jerarquía descrita en el prompt.
-
-### E-012 — Filtrar por un campo checkbox en `filterByFormula` de Airtable
-**Síntoma:** no había patrón existente en el repo para filtrar `listRecords` por un campo tipo Checkbox (los filtros previos eran todos sobre singleSelect o texto).
-**Causa:** `D_TipoDocumento.activo` es checkbox; Airtable no lo compara como texto plano en fórmulas.
-**Solución probada:** usar `filterByFormula: '{activo} = TRUE()'` en `fetchTiposDocumento()` (`lib/tipos-documento.ts`).
-**Prevención futura:** para cualquier fetcher nuevo que filtre por un campo checkbox `activo`, reutilizar la sintaxis `{campo} = TRUE()` en vez de comparar contra `"1"` o string vacío.
-
-### E-013 — Nomenclatura de `construccion.md` diverge de los archivos reales del repo
-**Síntoma:** `construccion.md` §4 esperaba crear `components/console/filtros-bar.tsx` y `components/console/prioridad-badge.tsx`; ninguno existe en el repo — los filtros viven inline en `solicitud-list.tsx` y el badge de prioridad es `PriorityChip` en `status-badges.tsx`.
-**Causa raíz:** `construccion.md` documenta el plan original de v0; el código evolucionó consolidando ambos componentes en archivos ya existentes sin que la guía se actualizara.
-**Solución aplicada:** se extendió `solicitud-list.tsx` (filtros Cliente/Estado/SLA/Fecha por URL params) y se ajustó `PRIORIDAD_CLASSES` en `console-data.ts`, en vez de crear archivos nuevos duplicados.
-**Prevención futura:** antes de crear un archivo que `construccion.md` marca como "no existe", grep primero por el nombre del componente (`PriorityChip`, `FiltrosBar`, etc.) — puede que ya exista bajo otro nombre de archivo.
-
-### E-014 — `PRIORIDAD_CLASSES` usaba la paleta "orange" de Tailwind, chocando con el naranja de marca
-**Síntoma:** el badge "Urgente" usaba `bg-orange-50 border-orange-200`, visualmente cercano al naranja de marca `#F5A213` que CLAUDE.md prohíbe explícitamente colisionar con el ámbar operacional.
-**Causa raíz:** la implementación original no distinguió la paleta Tailwind "orange" de la paleta "amber" al mapear el semáforo operacional de prioridad.
-**Solución aplicada:** cambiado a `bg-amber-50 border-amber-200 text-[#d97706]` (y `text-[#b91c1c]` exacto para Crítico), alineado con el mismo patrón ya usado en `SLA_CLASSES`. "Normal" pasó de `gray` a `slate` per especificación.
-**Prevención futura:** cualquier badge de estado operacional (ámbar) debe usar clases Tailwind `amber-*`, nunca `orange-*` — reservar `orange` solo para elementos de marca.
-
-### E-015 — `buildFormula`/`Vista`/`VISTAS_VALIDAS` duplicados entre Route Handler y lib
-**Síntoma:** `app/api/solicitudes/route.ts` mantenía su propia copia de `buildFormula`, `Vista` y `VISTAS_VALIDAS`, divergiendo silenciosamente de `lib/solicitudes.ts` (el Route Handler no tenía los filtros Cliente/Estado/SLA/Fecha que sí necesitaba `page.tsx`).
-**Causa raíz:** el Route Handler se escribió antes de que `page.tsx` migrara a llamar `fetchSolicitudes()` directamente desde `lib/solicitudes.ts`; nadie consolidó ambos después.
-**Solución aplicada:** el Route Handler ahora importa `buildFormula`, `Vista` y `VISTAS_VALIDAS` desde `lib/solicitudes.ts` en vez de duplicarlos.
-**Prevención futura:** al agregar lógica de filtrado sobre `TX_Solicitudes`, verificar si existe más de un punto de entrada (Route Handler vs. Server Component) y consolidar en `lib/` antes de duplicar.
-
-### E-016 — Pedir en `fields[]` un campo que no existe en Airtable rompe TODA la consulta (422), no solo ese campo
-**Síntoma:** al preparar el fetch de `TX_Solicitudes` para el Paso 3 (TabDatos espejo de NewRequestSheet) se agregaron `notas_tasador` y `notas_visador` al array `fields` de `listRecords` — ambos ⚙ pendientes de creación (D-08) según `docs/schema-airtable.md`.
-**Causa raíz:** la API de Airtable devuelve `422 UNKNOWN_FIELD_NAME` para la solicitud completa si CUALQUIER nombre en el parámetro `fields` no existe en la tabla — no lo ignora en silencio. Pedirlo habría roto `GET /api/solicitudes` y `GET /api/solicitudes/[id]` enteros (Paso 2 y Paso 3), no solo esos dos labels.
-**Solución aplicada:** se retiraron `notas_tasador`/`notas_visador` de `SOLICITUD_FIELDS` en `lib/solicitudes.ts`; `mapRecord` ya degrada a `"—"` cuando la clave no viene en la respuesta, así que no hace falta pedirlos. Se verificó en vivo contra la base real (`node` + `fetch` a la API de Airtable con el token de `.env.local`, solo lectura) que el resto de campos nuevos (`canal_contacto_original`, `n_operacion_cliente`, `fldd56pLZyKYoi2Vi`/`sucursal_originadora`, `solicitante_telefono`, `email_contacto`, `ejecutiva_asignada`, `regla_aplicada`) sí existen y devuelven `200`.
-**Prevención futura:** antes de agregar un campo a cualquier array `fields` de `listRecords`/`getRecord`, confirmar en `docs/schema-airtable.md` que no tiene el marcador ⚙ (pendiente de creación). Si un label depende de un campo pendiente, dejar que `mapRecord` lo degrade a `"—"` por ausencia de clave — nunca pedirlo explícitamente en `fields`. Ante duda, un `fetch` de solo lectura directo a la API de Airtable (fuera de Next.js, sin pasar por Clerk) es la forma más rápida de confirmar el nombre exacto de un campo sin arriesgar builds.
-
-### E-017 — `sucursal_originadora` con espacio final: pedir por FIELD_ID no alcanza, la respuesta igual usa el nombre con espacio como clave
-**Síntoma:** se pidió el campo vía FIELD_ID (`fldd56pLZyKYoi2Vi`) en `fields[]` para evitar el problema del espacio final (D-08); la duda era si la respuesta JSON vendría con la clave `"sucursal_originadora"` o `"sucursal_originadora "`.
-**Causa raíz:** `fields[]` acepta nombre o FIELD_ID para *seleccionar* qué campos incluir, pero no cambia cómo se *serializan* las claves del objeto `fields` de la respuesta — eso solo lo controla `returnFieldsByFieldId` (no usado en este repo). Verificado en vivo: la respuesta trae literalmente la clave `"sucursal_originadora "` (con espacio final).
-**Solución aplicada:** `getFieldLoose()` en `lib/solicitudes.ts` — busca primero la clave exacta y, si no está, la busca tolerando espacios (`k.trim() === name`). Se usa solo para este campo.
-**Prevención futura:** pedir un campo por FIELD_ID resuelve el problema de "no puedo referenciar el nombre real porque no sé cuántos espacios tiene", pero para LEER el valor de la respuesta sigue haciendo falta tolerancia a espacios en la clave — las dos partes del problema (pedir vs. leer) se resuelven por separado.
+> **E-001 a E-017 archivadas el 14-jul-2026** en
+> `docs/_archivo/aprendizajes_20260714.md` (entorno local pnpm/Node/SWC/puertos
+> y patrones de código ya asimilados, sin referencias por ID desde entradas
+> posteriores a E-018). Consultar ese archivo solo si se necesita el detalle
+> histórico completo.
 
 ### E-018 — Los campos Link de Airtable, DENTRO de una fórmula, comparan contra el primary field del registro vinculado — nunca contra el recordId, aunque la API REST sí devuelva recordIds
 **Síntoma:** "Mi cartera" seguía vacía tras el fix anterior (pasar el `userId` de Clerk a `{ejecutiva_asignada}="user_XXXX"`). La hipótesis de esta sesión era que hacían falta 2 saltos (Clerk → `AUTH_Usuarios.clerk_user_id` → recordId) y luego `FIND("recXYZ", ARRAYJOIN({ejecutiva_asignada}))`.
@@ -233,6 +131,65 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 2. Confirmar vía MCP el primary field real de `D_TipoDocumento` antes de escribir cualquier `filterByFormula` que compare su Link — mismo riesgo E-018/E-024 (un Link dentro de una fórmula se evalúa contra el primary field del registro vinculado, no contra su record ID).
 
 **Estado al cierre:** RF-09 queda únicamente en fase de DISEÑO (`docs/_notas/rf09_diseno.md` — contrato de `/api/extraccion/iniciar`, módulos del escenario Make, diseño de `ExtraccionStatusBadge`). Ningún archivo de código ni blueprint Make se creó — bloqueado hasta que Sergio confirme `MAKE_WEBHOOK_URL_RF09` y `ANTHROPIC_API_KEY` en Railway y `.env.local`.
+
+### E-032 — Re-auditoría de `TX_Solicitudes`: `codigo_solicitud` cambió de texto a fórmula sin registro en el repo (13-jul-2026)
+
+**Contexto:** sesión de solo verificación ("verifica el schema de TX_Solicitudes contra docs/schema-airtable.md"), sin cambios de código. Se comparó campo por campo `docs/schema-airtable.md` §2 contra `list_tables_for_base` + `get_table_schema` vía MCP.
+
+**Hallazgo:** `codigo_solicitud` (`fldDXEE1ejMNVDlpB`, primary field), documentado desde E-024 (10-jul-2026) como Single line text poblado manualmente por Sergio, hoy es un campo **formula read-only**: `"VP-" & YEAR({fecha_solicitud}) & "-" & RIGHT("0000" & {solicitud_id} & "", 4)` — casi idéntica a `codigo_ext`. Nadie documentó este cambio de tipo en ninguna sesión de Claude Code registrada en este archivo.
+
+**Causa raíz:** el campo se convirtió de texto a fórmula directamente en la UI de Airtable, fuera de una sesión con Claude Code (ninguna herramienta MCP disponible permite convertir el tipo de un campo existente — ver E-007), probablemente por Sergio o alguien del equipo, entre el 10-jul y el 13-jul-2026.
+
+**Solución aplicada:** se actualizó `docs/schema-airtable.md` §2 y se agregó §19 con el detalle completo de la re-auditoría (incluye la fórmula exacta, la divergencia menor `fecha_solicitud` Date→Date time, y 9 campos v2.3/v2.4 documentados que no existen en el Airtable real: `hora_visita`, `hora_entrega`, `contacto_observaciones`, `codigo_corto`, `vivienda_social`, `ejecutivo`, `contacto_nombre`, `contacto_fono`, `casa_numero`). La tarea pendiente "mapear `codigo_solicitud` en el módulo 7 de SC01" (E-024) queda obsoleta — el campo ya no acepta escritura desde Make.
+
+**Prevención futura:** un campo documentado como "poblado manualmente" o "editable" en una sesión puede cambiar de tipo en Airtable sin que ninguna sesión de Claude Code lo registre, porque la UI de Airtable permite ediciones fuera del flujo MCP. Antes de diseñar un escenario Make que escriba en un campo marcado como texto en la documentación, re-verificar su tipo real vía `get_table_schema` si han pasado varios días desde la última auditoría — no asumir que el tipo documentado sigue vigente solo porque el FIELD_ID no cambió.
+
+### E-033 — RF-09 Fase 0/Tanda A: 4 hallazgos que corrigen el diseño de sesión antes de construir (13-jul-2026)
+
+**Contexto:** sesión autónoma de construcción de RF-09 (panel de expertos). Fase 0 (verificación MCP, solo lectura) + Tanda A (5 campos nuevos vía MCP) antes de escribir el blueprint Make y los scripts de Airtable Automation.
+
+**Hallazgo 1 — `mcp__airtable__update_field` no soporta agregar `choices` a un `singleSelect` existente:** el schema de la herramienta sólo acepta `options.formula` (campos formula). A diferencia de E-007 (no se puede *convertir* el tipo de un campo), aquí ni siquiera se puede *ampliar* las opciones de un select ya existente sin recrear el campo. Confirmado antes de intentar la llamada, revisando el JSON schema de la tool. **Solución:** las 2 expansiones necesarias (`TX_Adjuntos.estado_extraccion` +3 opciones, `LogEscenarios.Escenario` +1 opción) quedan documentadas como paso manual para Sergio en el instructivo de Checkpoint 1, en vez de intentar una migración paralela de campo (que aquí sería desproporcionado — no es un cambio de tipo, sólo de opciones).
+
+**Hallazgo 2 — `D_Atributo.tipo_dato` es `multipleRecordLinks` → `D_TipoDato`, no `singleSelect`:** el prompt de la sesión pedía verificar "sus opciones singleSelect" en Fase 0, asumiendo el tipo incorrecto. `get_table_schema` confirmó que es un Link. El script `AT03-Ext` tuvo que diseñarse para resolver ese Link (leer `D_TipoDato.codigo` del registro vinculado) antes de aplicar RN-32, no leer un valor de select directo.
+
+**Hallazgo 3 — `TX_Solicitudes.estado` no tiene la opción `anulada`:** el prompt de sesión definía la blacklist de estados terminales como `{cerrada, cancelada, anulada}`. `get_table_schema` mostró las 12 opciones reales (`creada, asignada, visitada, calculada, pdf_listo, devuelta, aprobada, pendiente_final, entregada, cerrada, cancelada, requiere_atencion`) — sin `anulada`. Es fácil de confundir con `D_Documento.estado`, que sí tiene la opción `anulado` (tabla distinta, dominio D_). **Solución:** `AT-RF09-Trigger_script.js` usa una blacklist de 2 estados (`cerrada`, `cancelada`), con comentario explícito en el código explicando la corrección para que nadie la revierta por error creyendo que "faltaba" `anulada`.
+
+**Hallazgo 4 — `LogEscenarios` tiene schema real completamente distinto al documentado, y el blueprint activo `SC-Adjuntos-Upload` probablemente falla en silencio al loguear:** ver detalle completo en `docs/schema-airtable.md` §13.5. Los nombres de campo documentados (`log_id`, `escenario`, `solicitud_id`, `estado` con `ok/error/retry`, `payload_enviado`, `respuesta`) no existen — los reales son `Titulo Log` (primary), `Fecha / Hora`, `Escenario` (singleSelect con opciones fijas que no incluyen ningún escenario de IF-02), `Estado` (`✓ OK · ✗ Error · ⚠ Parcial · ⏭ Omitido`), `Trigger`, `Destinatario`, `Detalle`, `Duracion ms`, `Reintentos`, `ID Make`, `Solicitud`, `ultima_modificacion`. El blueprint `SC-Adjuntos-Upload` (módulos 4 y 9, ya activo en producción) escribe con los nombres viejos — sus `Create Record` en `LogEscenarios` muy probablemente fallan silenciosamente desde que el escenario está activo. **No se corrigió en esta sesión** (fuera de alcance, riesgo de tocar un blueprint en producción sin que Sergio lo pruebe) — queda como hallazgo para una tanda de reparación futura. El blueprint nuevo `SC-RF09-ExtraccionClaude` usa los nombres reales.
+
+**Decisión de arquitectura adicional (no bug, pero corrige el prompt de sesión):** el prompt original describía el módulo 10 del blueprint Make como "Airtable Run Script — ejecuta AT03-Ext", asumiendo que Make puede invocar un Airtable Script como un módulo más del escenario. **Make no tiene ningún módulo nativo para eso** — Airtable Scripting sólo corre dentro de Airtable Automations (trigger propio), nunca invocado desde afuera como acción de otro sistema. Se corrigió el diseño: `AT03-Ext` corre como Airtable Automation independiente, disparada por el propio `UPDATE` que el blueprint Make hace sobre `TX_Adjuntos.atributos_obtenidos` (rama Éxito). Documentado en el blueprint (nota del módulo 22) y en el instructivo de Checkpoint 1.
+
+**Prevención futura:** antes de aceptar como cierto cualquier detalle de tipo/opciones de campo que venga en un prompt de sesión (aunque el prompt diga "ya verificado, no revalidar" para OTROS campos), re-verificar en Fase 0 los campos que el prompt SÍ pide verificar — en este caso 3 de los 4 hallazgos vinieron de simplemente ejecutar el checklist de Fase 0 tal cual estaba pedido, no de escepticismo extra. Cuando un prompt describe una arquitectura de integración entre dos sistemas (Make ↔ Airtable Scripting), verificar primero si el módulo/acción que el prompt asume realmente existe en la plataforma — "Make ejecuta un Airtable Script" es la clase de asunción de nombre de módulo que ya causó el incidente E-026 (Dropbox), sólo que aquí el módulo directamente no existe en ninguna versión.
+
+### E-034 — Extended thinking altera la forma del array `content[]` de Claude API: nunca indexar fijo
+**Contexto:** `SC-RF09-ExtraccionClaude`, Módulo 10 llama a `claude-sonnet-5` vía HTTP; Módulo 11 parsea el JSON de la respuesta.
+**Causa raíz:** el modelo devuelve extended thinking por defecto en esta corrida de llamadas. `content[]` puede traer 1 elemento (solo `text`) o 2 elementos (`thinking` + `text`) según si el modelo activó razonamiento esa vez — la posición del bloque de texto no es fija.
+**Solución aplicada / regla:** nunca mapear con índice fijo (`content[1]`, `content[2]`). Usar `last(content[])` para tomar siempre el último bloque (el de texto). Si se prefiere desactivar thinking para tener una forma predecible, agregar en el body de la request: `"thinking": {"type": "disabled"}`.
+**Prevención futura:** cualquier integración nueva contra Messages API que parsee `content[]` por posición debe asumir que el array es de longitud variable — usar `last()`/filtrar por `type: "text"`, no un índice literal.
+
+### E-035 — En Make.com, acceder a una propiedad después de una función requiere `get()`, no notación de punto
+**Contexto:** Módulo 25 (ParseJSON) intentó leer `last(11.content).text` con notación de punto directa sobre el resultado de `last()`.
+**Causa raíz:** el editor visual de Make parsea la función pero descarta silenciosamente el `.propiedad` cuando se encadena tras una función — devuelve el objeto completo (`{"type":"text","text":"..."}`) en vez del string esperado. Se detecta porque el output de ParseJSON trae ese objeto crudo en lugar del contenido.
+**Solución aplicada / regla:** para leer una propiedad tras una función en Make, usar `get(funcion(...); "nombre_propiedad")` — ej. `get(last(11.content); "text")`. La sintaxis interna que Make guarda en el blueprint exportado es `funcion(...) + .propiedad`; si al reimportar aparece así, es correcto y no hay que "corregirlo" a notación de punto plana.
+**Prevención futura:** ante cualquier encadenamiento función→propiedad en una fórmula de Make, usar `get()` desde el inicio en vez de notación de punto — el fallo es silencioso (no hay error, solo un valor con forma incorrecta), así que verificar siempre el output real del módulo antes de asumir que el mapeo funcionó.
+
+### E-036 — HTTP 500 devuelto al cliente del webhook = rollback automático de un módulo posterior en Make, no error del webhook en sí
+**Contexto:** una prueba desde PowerShell contra el webhook de `SC-RF09-ExtraccionClaude` recibió HTTP 500, aunque el payload sí había llegado completo al escenario.
+**Causa raíz:** cuando un módulo posterior al webhook falla y no hay Error Handler configurado en esa rama, Make ejecuta rollback del bundle completo y responde 500 al llamador del webhook. El error real vive en el módulo que falló más adelante en la cadena, no en el módulo Webhook ni en Next.js.
+**Solución aplicada / regla de diagnóstico:** ante un 500 del webhook, (1) revisar el Output del módulo que falló en el History de Make, (2) confirmar que el Input del módulo siguiente efectivamente recibió lo esperado del anterior, (3) revisar filtros de Router y cuántos bundles procesó cada rama. No asumir que el problema está en el Route Handler de Next.js solo porque la respuesta HTTP vino "del webhook".
+**Prevención futura:** cuando un webhook de Make devuelve 500, tratarlo como síntoma de un módulo posterior fallando (rollback), no como bug del propio webhook — ir directo al History del escenario antes de tocar código Next.js.
+
+### E-037 — API key de Anthropic quedó expuesta en texto plano en un blueprint Make exportado durante debugging
+**Contexto:** el blueprint JSON de `SC-RF09-ExtraccionClaude`, exportado desde Make para diagnóstico, contenía el header `x-api-key` de Anthropic en texto plano dentro del Módulo 10 (HTTP → Claude API).
+**Causa raíz:** cuando un header de autenticación se configura manualmente en un módulo HTTP genérico (en vez de vía una Connection nativa de Make), Make lo persiste tal cual al exportar el blueprint — no hay redacción automática de secretos en headers custom.
+**Solución aplicada / regla:** (a) nunca compartir blueprints exportados sin sanitizar antes los headers de auth (buscar `x-api-key`, `Authorization`, `Bearer` y reemplazar por placeholder), (b) preferir una Connection nativa de Make cuando la app la soporte (evita que el secreto viaje dentro del JSON del módulo), (c) si un blueprint con la key ya se compartió (chat, archivo, repo), rotar la key en Anthropic Console de inmediato — asumir la key comprometida, no esperar confirmación de uso indebido.
+**Prevención futura:** antes de exportar o pegar un blueprint Make en cualquier canal (incluida esta sesión de Claude Code), grep el JSON por `api-key`/`Authorization`/`Bearer`/`secret` y sanitizar — tratarlo con la misma disciplina que un `.env`.
+
+### E-038 — RF-09 al cierre del 14-jul-2026: transporte (webhook→Dropbox→Claude→ParseJSON→Router) funcional, persistencia EAV sin construir
+**Contexto:** cierre de la sesión de Tanda D. El pipeline de extracción con IA corre end-to-end hasta obtener la respuesta de Claude y enrutarla.
+**Hallazgo:** los 10 módulos Airtable del escenario (IDs 2, 8, 13, 15, 16, 18, 19, 20, 22, 23) tienen `Record: {}` vacío — ningún campo mapeado todavía. Falta además un Iterator entre el Módulo 25 (que produce `items[]`) y el `Create Record` que debería persistir el EAV (`D_DocumentoValorAtributo`).
+**Causa raíz:** la Tanda D priorizó validar que el transporte (llamada a Claude + parseo) funcionara antes de invertir tiempo mapeando los 10 módulos de escritura — decisión de secuencia, no un olvido puntual, pero deja el escenario en un estado que parece "casi listo" y no lo está.
+**Solución aplicada / regla:** ninguna de código esta sesión — se documenta el estado real para que la próxima sesión no asuma que RF-09 está cerca de producción. **RF-09 NO está completo.** Próxima sesión debe, en orden: (1) resolver la decisión RN-32 pendiente (Router de 5 ramas dentro de Make vs. delegarlo a `AT03-Ext`/Airtable Script — ver `docs/_notas/rf09_diseno.md` B3), (2) mapear campo por campo los 10 módulos Airtable listados arriba, (3) insertar el Iterator faltante antes del Create Record del EAV, (4) validar con un PDF real de principio a fin (incluyendo `D_Documento`/`D_DocumentoValorAtributo`/`LogEscenarios`).
+**Prevención futura:** al cerrar una sesión de construcción de un escenario Make de varios módulos, no reportar "funcional" solo porque el tramo probado (transporte/API externa) corrió sin error — verificar explícitamente si los módulos de persistencia (`Create Record`/`Update Record`) tienen campos mapeados antes de calificar el conjunto como listo.
 
 ## Estado de tareas
 

@@ -1,0 +1,404 @@
+{
+  "name": "SC-RF09-ExtraccionClaude",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": { "hook": null, "maxResults": 1 },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "hook": { "data": { "editable": "true" }, "label": "SC-RF09-ExtraccionClaude" }
+          }
+        },
+        "parameters": [
+          { "name": "hook", "type": "hook:gateway-webhook", "label": "Webhook", "required": true },
+          { "name": "maxResults", "type": "number", "label": "Maximum number of results" }
+        ],
+        "note": "Payload esperado (JSON), enviado por la Airtable Automation AT-RF09-Trigger (NO por Next.js -- este CU no crea /api/extraccion/iniciar, decision de la sesion de construccion RF-09, contradice y reemplaza docs/_notas/rf09_diseno.md B2): { adjunto_id (record_id TX_Adjuntos), solicitud_id (record_id TX_Solicitudes), tipo_documento_codigo (codigo de D_TipoDocumento, ej 'permiso_edificacion' -- viene de TX_Adjuntos.clave_adjunto), url_dropbox, mime_type, intentos_carga (number, tratar como 1 si viene vacio -- Airtable no soporta default real, ver docs/schema-airtable.md §13.4) }. Firma HMAC-SHA256 en header X-VP-Signature con MAKE_RF09_HMAC_SECRET, verificada por el modulo 2."
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionUpdateRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblur71x1oItbmKZc",
+        "id": "{{1.adjunto_id}}",
+        "fields": { "estado_extraccion": "extrayendo" }
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": {
+          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+          }
+        },
+        "note": "Marca 'extrayendo' de inmediato para que ExtraccionStatusBadge refleje el estado sin esperar la respuesta lenta de Claude. La opcion 'extrayendo' ya existe en el singleSelect (fld54epvDJ7YdJIYD) desde Fase 1 cierre de pendientes -- no requiere ampliacion de choices."
+      }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblkPhBnpdDmUWOl3",
+        "formula": "{codigo} = \"{{1.tipo_documento_codigo}}\"",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": -150 },
+        "restore": {
+          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "D_TipoDocumento (tblkPhBnpdDmUWOl3)" }
+          }
+        },
+        "note": "D_TipoDocumento.codigo (fldmUdfw7C85mC4Yq) ES el primary field de la tabla (confirmado via MCP get_table_schema/list_tables_for_base, 13-jul-2026) -- filtrar por {codigo} directo es seguro aqui porque es un campo propio de la tabla, no un Link evaluado en formula (ese es el problema E-018/E-024, que NO aplica en este modulo). Si no hay match (tipo_documento_codigo invalido), AT-RF09-Trigger ya deberia haber marcado 'error' antes de disparar este escenario (ver RN-25 en el script) -- este modulo asume que siempre hay match."
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbldI86ieVKpjpL7E",
+        "formula": "FIND(\"{{1.tipo_documento_codigo}}\", ARRAYJOIN({tipo_documento}))",
+        "maxRecords": 100
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": -150 },
+        "restore": {
+          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "D_TipoDocumentoAtributo (tbldI86ieVKpjpL7E)" }
+          }
+        },
+        "note": "D_TipoDocumentoAtributo.tipo_documento es Link -> D_TipoDocumento. DENTRO de una formula, un campo Link se evalua contra el PRIMARY FIELD del registro vinculado (leccion E-018/E-024), y el primary field de D_TipoDocumento es 'codigo' (confirmado modulo 3) -- por eso FIND(tipo_documento_codigo, ARRAYJOIN({tipo_documento})) funciona sin necesitar el record ID del modulo 3. Este modulo trae TODAS las filas de D_TipoDocumentoAtributo para este tipo_documento (obligatorias y no); el filtro por D_Atributo.uso_interfaz_negocio=TRUE ocurre despues (modulo 6), porque ese campo vive en D_Atributo, no en D_TipoDocumentoAtributo -- no hay forma de filtrarlo en esta misma formula sin un campo lookup adicional que no existe en el schema real. Search Records emite un bundle por fila -- los modulos 5-7 corren una vez por cada bundle (no hace falta un modulo Iterator separado)."
+      }
+    },
+    {
+      "id": 5,
+      "module": "airtable:ActionGetRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblOI0Su3ogySNeHm",
+        "id": "{{4.atributo[1]}}"
+      },
+      "metadata": {
+        "designer": { "x": 1200, "y": -150 },
+        "restore": {
+          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "D_Atributo (tblOI0Su3ogySNeHm)" }
+          }
+        },
+        "note": "Trae nombre, descripcion, tipo_dato (Link -> D_TipoDato), unidad_medida, patron_validacion, uso_interfaz_negocio (checkbox), ejemplo_atributo, version del atributo esperado por esta fila de D_TipoDocumentoAtributo. '{{4.atributo[1]}}' asume que el Link es de un solo record (verificar en Make tras el primer test -- si Make expone 'atributo' como array de 1 elemento, el indice [1] es correcto; si lo expone como string plano, quitar el indice)."
+      }
+    },
+    {
+      "id": 6,
+      "module": "airtable:ActionGetRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tble0Na4Neon7Vz3z",
+        "id": "{{5.tipo_dato[1]}}"
+      },
+      "metadata": {
+        "designer": { "x": 1500, "y": -150 },
+        "restore": {
+          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "D_TipoDato (tble0Na4Neon7Vz3z)" }
+          }
+        },
+        "note": "HALLAZGO Fase 0 (13-jul-2026): D_Atributo.tipo_dato es multipleRecordLinks -> D_TipoDato, NO singleSelect como asumia el prompt original de esta sesion. Este modulo resuelve el Link para obtener D_TipoDato.codigo (uno de: texto · numero_entero · numero_decimal · fecha · booleano · rut · catalogo), necesario para RN-32 (que columna de D_DocumentoValorAtributo poblar). Filtro de este modulo aplicado despues (modulo 7): solo continuar si el atributo del modulo 5 tiene uso_interfaz_negocio=true."
+      },
+      "filter": {
+        "name": "Solo atributos de uso_interfaz_negocio",
+        "conditions": [[{ "a": "{{5.uso_interfaz_negocio}}", "b": "1", "o": "boolean:equal" }]]
+      }
+    },
+    {
+      "id": 7,
+      "module": "builtin:BasicAggregator",
+      "version": 1,
+      "parameters": { "rowSeparator": ",", "feeder": 4 },
+      "mapper": {
+        "atributo_id": "{{5.id}}",
+        "codigo_atributo": "{{5.codigo}}",
+        "nombre": "{{5.nombre}}",
+        "tipo_dato_codigo": "{{6.codigo}}",
+        "ejemplo_atributo": "{{5.ejemplo_atributo}}",
+        "obligatorio": "{{4.obligatorio}}",
+        "etiqueta_local": "{{4.etiqueta_local}}",
+        "version": "{{5.version}}"
+      },
+      "metadata": {
+        "designer": { "x": 1800, "y": -150 },
+        "note": "Array Aggregator con Source Module = modulo 4 (agrega de vuelta a un solo JSON todas las filas que pasaron el filtro del modulo 6). Salida: array de objetos {atributo_id, codigo_atributo, nombre, tipo_dato_codigo, ejemplo_atributo, obligatorio, etiqueta_local, version} -- esta es la lista de 'atributos esperados' que alimenta tanto el prompt de Claude (modulo 9) como TX_Adjuntos.atributos_esperados (modulo 8)."
+      }
+    },
+    {
+      "id": 8,
+      "module": "airtable:ActionUpdateRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblur71x1oItbmKZc",
+        "id": "{{1.adjunto_id}}",
+        "fields": { "atributos_esperados": "{{7}}" }
+      },
+      "metadata": {
+        "designer": { "x": 2100, "y": -150 },
+        "restore": {
+          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+          "expect": {
+            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+            "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+          }
+        },
+        "note": "atributos_esperados (fldDFSPcRtbYbx1pB) -- ver §13.4 schema-airtable.md."
+      }
+    },
+    {
+      "id": 9,
+      "module": "dropbox:getFile",
+      "version": 5,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_DROPBOX__" },
+      "mapper": { "path": "{{1.url_dropbox}}" },
+      "metadata": {
+        "designer": { "x": 2400, "y": -150 },
+        "note": "⚠ NO VERIFICADO contra un blueprint real (a diferencia de dropbox:uploadLargeFile v5 en SC-Adjuntos-Upload, que si se confirmo contra E3_Carbone_Download_Dropbox -- ver E-026). Antes de importar, inspeccionar el modulo de descarga que ya usa el pipeline E1/E2/E3 activo (probablemente 'dropbox:downloadFile' o similar, mismo patron de verificacion que E-026: exportar un blueprint real de la organizacion y copiar el module id/version exacto en vez de asumir). 'path' recibe TX_Adjuntos.url_dropbox, que hoy guarda el path interno de Dropbox (deuda E-025), no una URL publica -- consistente con que este modulo espera un path de Dropbox, no una URL HTTP."
+      }
+    },
+    {
+      "id": 10,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "headers": [
+          { "name": "x-api-key", "value": "{{env.ANTHROPIC_API_KEY}}" },
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "content-type", "value": "application/json" }
+        ],
+        "bodyType": "raw",
+        "contentType": "application/json",
+        "data": "{\"model\": \"claude-sonnet-5\", \"max_tokens\": 4096, \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"document\", \"source\": {\"type\": \"base64\", \"media_type\": \"{{1.mime_type}}\", \"data\": \"{{toBase64(9.data)}}\"}}, {\"type\": \"text\", \"text\": \"Extrae los siguientes atributos de este documento. Devuelve SOLO un JSON array (sin texto adicional) con la forma [{\\\"atributo_id\\\": string, \\\"valor\\\": string|number|boolean|null, \\\"confianza\\\": number}]. Si un atributo no aparece en el documento o no puedes leerlo con confianza razonable, usa valor=null. Atributos esperados: {{7}}\"}]}]}"
+      },
+      "metadata": {
+        "designer": { "x": 2700, "y": -150 },
+        "note": "Modelo 'claude-sonnet-5' -- confirmar el id vigente al momento de construir (docs/claude-api si esta disponible como referencia). ANTHROPIC_API_KEY se referencia como variable de entorno de Make (Data Store / Custom Variable), NUNCA hardcodeada en el mapper -- configurar en el escenario tras importar. El prompt es deliberadamente generico y dirigido por datos (RN-25: Make es transportista puro, ninguna regla de negocio hardcodeada) -- toda la logica de 'que atributo pedir' viene de D_Atributo/D_TipoDocumentoAtributo via el modulo 7, no de este texto."
+      }
+    },
+    {
+      "id": 11,
+      "module": "json:ParseJSON",
+      "version": 1,
+      "parameters": { "type": "" },
+      "mapper": { "json": "{{10.data.content[1].text}}" },
+      "metadata": {
+        "designer": { "x": 3000, "y": -150 },
+        "note": "Parsea el array JSON de la respuesta de Claude. Si Claude envuelve el JSON en texto adicional pese a la instruccion del prompt, este modulo fallara -- considerar un paso de limpieza (regex extraccion del primer '[' al ultimo ']') si se observa en las primeras pruebas reales."
+      }
+    },
+    {
+      "id": 12,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {},
+      "mapper": null,
+      "metadata": {
+        "designer": { "x": 3300, "y": -150 },
+        "note": "Bifurca segun RN de mismatch: si TODOS los atributos_esperados (modulo 7) tienen valor=null en la respuesta de Claude (modulo 11) -> rama Mismatch. Si al menos 1 tiene valor no-null -> rama Exito (incluye el caso parcial, que ademas marca D_Documento.extraccion_incompleta=TRUE dentro de AT03-Ext)."
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 13,
+              "module": "airtable:ActionUpdateRecords",
+              "version": 3,
+              "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblur71x1oItbmKZc",
+                "id": "{{1.adjunto_id}}",
+                "fields": { "atributos_obtenidos": "{{11}}" }
+              },
+              "metadata": {
+                "designer": { "x": 3600, "y": -300 },
+                "restore": {
+                  "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+                  "expect": {
+                    "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+                    "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+                  }
+                },
+                "note": "Solo guarda atributos_obtenidos (todos null). estado_extraccion pasa a 'no_corresponde' o 'delegado_visador' en el modulo 15/16 segun intentos_carga -- ninguna opcion nueva se escribe aqui todavia."
+              },
+              "filter": {
+                "name": "Mismatch: 100% valores null",
+                "conditions": [[{ "a": "{{length(filter(11; valor != null))}}", "b": "0", "o": "number:equal" }]]
+              }
+            },
+            {
+              "id": 14,
+              "module": "builtin:BasicRouter",
+              "version": 1,
+              "parameters": {},
+              "mapper": null,
+              "metadata": {
+                "designer": { "x": 3900, "y": -300 },
+                "note": "Router interno por intentos_carga (tratar vacio/null como 1, ver §13.4). El script AT-RF09-Trigger es quien incrementa intentos_carga a 2 en el 2do intento (via SC-Adjuntos-Reemplazar, Tanda D) -- este modulo solo lee el valor que llego en el payload del webhook (modulo 1)."
+              },
+              "routes": [
+                {
+                  "flow": [
+                    {
+                      "id": 15,
+                      "module": "airtable:ActionUpdateRecords",
+                      "version": 3,
+                      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+                      "mapper": {
+                        "base": "app9G7lLkIV3CpeLa",
+                        "table": "tblur71x1oItbmKZc",
+                        "id": "{{1.adjunto_id}}",
+                        "fields": { "estado_extraccion": "no_corresponde" }
+                      },
+                      "metadata": {
+                        "designer": { "x": 4200, "y": -400 },
+                        "restore": {
+                          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+                          "expect": {
+                            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+                            "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+                          }
+                        },
+                        "note": "REQUIERE que 'no_corresponde' exista como choice del singleSelect estado_extraccion -- pendiente manual, ver §13.4 schema-airtable.md. Si Sergio no amplio las opciones antes del primer test, este modulo falla con 'invalid value for single select'."
+                      },
+                      "filter": {
+                        "name": "1er intento",
+                        "conditions": [[{ "a": "{{if(1.intentos_carga; 1.intentos_carga; 1)}}", "b": "1", "o": "number:equal" }]]
+                      }
+                    },
+                    { "id": 16, "module": "airtable:ActionCreateRecord", "version": 3, "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" }, "mapper": { "base": "app9G7lLkIV3CpeLa", "table": "tblR4VWpUHw1CSyIS", "fields": { "Titulo Log": "SC-RF09-ExtraccionClaude · no_corresponde 1er intento", "Escenario": "SC-RF09-ExtraccionClaude", "Estado": "⚠ Parcial", "Solicitud": "{{1.solicitud_id}}", "Detalle": "adjunto_id={{1.adjunto_id}} · intento=1 · resultado=no_corresponde (100% atributos null)" } }, "metadata": { "designer": { "x": 4500, "y": -400 }, "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "LogEscenarios (tblR4VWpUHw1CSyIS)" } } }, "note": "Nombres de campo REALES de LogEscenarios (Titulo Log/Escenario/Estado/Solicitud/Detalle) -- ver §13.5 schema-airtable.md, corrige el patron incorrecto usado por SC-Adjuntos-Upload. 'SC-RF09-ExtraccionClaude' debe agregarse como choice nuevo en el singleSelect Escenario antes del primer test (pendiente manual, §13.4)." } },
+                    { "id": 17, "module": "gateway:WebhookRespond", "version": 1, "parameters": {}, "mapper": { "status": "200", "body": "{\"ok\": true, \"estado\": \"no_corresponde\"}", "headers": [{ "key": "Content-Type", "value": "application/json" }] }, "metadata": { "designer": { "x": 4800, "y": -400 }, "parameters": [{ "name": "status", "type": "text", "label": "Status" }, { "name": "body", "type": "text", "label": "Body" }, { "name": "headers", "type": "array", "label": "Headers" }] } }
+                  ]
+                },
+                {
+                  "flow": [
+                    {
+                      "id": 18,
+                      "module": "airtable:ActionUpdateRecords",
+                      "version": 3,
+                      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+                      "mapper": {
+                        "base": "app9G7lLkIV3CpeLa",
+                        "table": "tblur71x1oItbmKZc",
+                        "id": "{{1.adjunto_id}}",
+                        "fields": { "estado_extraccion": "delegado_visador", "datos_pendientes_visador": "{{7}}" }
+                      },
+                      "metadata": {
+                        "designer": { "x": 4200, "y": -200 },
+                        "restore": {
+                          "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+                          "expect": {
+                            "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+                            "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+                          }
+                        },
+                        "note": "2do fallo consecutivo (RN sesion RF-09, decision 9). datos_pendientes_visador = lista completa de atributos_esperados (modulo 7), ya que ninguno se obtuvo en ningun intento. REQUIERE que 'delegado_visador' exista como choice -- pendiente manual §13.4."
+                      },
+                      "filter": {
+                        "name": "2do intento",
+                        "conditions": [[{ "a": "{{if(1.intentos_carga; 1.intentos_carga; 1)}}", "b": "2", "o": "number:equal" }]]
+                      }
+                    },
+                    { "id": 19, "module": "airtable:ActionUpdateRecords", "version": 3, "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" }, "mapper": { "base": "app9G7lLkIV3CpeLa", "table": "tblaHTyMHYfmy7Fg6", "id": "{{1.solicitud_id}}", "fields": { "tiene_pendientes_visador": true } }, "metadata": { "designer": { "x": 4500, "y": -200 }, "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "TX_Solicitudes (tblaHTyMHYfmy7Fg6)" } } }, "note": "tiene_pendientes_visador (fldxozXDsho55PMd6) -- ver §13.4. Notificacion al Visador queda fuera de alcance de RF-09 (decision 9 del prompt de sesion) -- se resuelve en IF-04." } },
+                    { "id": 20, "module": "airtable:ActionCreateRecord", "version": 3, "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" }, "mapper": { "base": "app9G7lLkIV3CpeLa", "table": "tblR4VWpUHw1CSyIS", "fields": { "Titulo Log": "SC-RF09-ExtraccionClaude · delegado_visador 2do intento", "Escenario": "SC-RF09-ExtraccionClaude", "Estado": "⚠ Parcial", "Solicitud": "{{1.solicitud_id}}", "Detalle": "adjunto_id={{1.adjunto_id}} · intento=2 · resultado=delegado_visador (100% atributos null en ambos intentos)" } }, "metadata": { "designer": { "x": 4800, "y": -200 }, "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "LogEscenarios (tblR4VWpUHw1CSyIS)" } } }, "note": "Ver nota de modulo 16 sobre nombres reales de campo." } },
+                    { "id": 21, "module": "gateway:WebhookRespond", "version": 1, "parameters": {}, "mapper": { "status": "200", "body": "{\"ok\": true, \"estado\": \"delegado_visador\"}", "headers": [{ "key": "Content-Type", "value": "application/json" }] }, "metadata": { "designer": { "x": 5100, "y": -200 }, "parameters": [{ "name": "status", "type": "text", "label": "Status" }, { "name": "body", "type": "text", "label": "Body" }, { "name": "headers", "type": "array", "label": "Headers" }] } }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 22,
+              "module": "airtable:ActionUpdateRecords",
+              "version": 3,
+              "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblur71x1oItbmKZc",
+                "id": "{{1.adjunto_id}}",
+                "fields": { "atributos_obtenidos": "{{11}}" }
+              },
+              "metadata": {
+                "designer": { "x": 3600, "y": 150 },
+                "restore": {
+                  "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } },
+                  "expect": {
+                    "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" },
+                    "table": { "label": "TX_Adjuntos (tblur71x1oItbmKZc)" }
+                  }
+                },
+                "note": "Rama Exito (al menos 1 atributo con valor no-null). NO se toca estado_extraccion aqui -- queda en 'extrayendo' hasta que AT03-Ext (Airtable Automation independiente, disparada por este UPDATE de atributos_obtenidos) termine el fan-out EAV (D_Documento + D_DocumentoValorAtributo) y recien ahi ponga 'listo'. Esta es una correccion de diseno respecto al modulo 10 propuesto en el prompt original de sesion ('Airtable Run Script -- ejecuta AT03-Ext' como paso DENTRO de Make): Make NO tiene un modulo nativo para invocar un Airtable Script (esa accion solo existe dentro de Airtable Automations). AT03-Ext corre como automation separada, gatillada por el cambio de este campo -- ver instructivo de importacion."
+              },
+              "filter": {
+                "name": "Exito: al menos 1 valor no-null",
+                "conditions": [[{ "a": "{{length(filter(11; valor != null))}}", "b": "0", "o": "number:notequal" }]]
+              }
+            },
+            { "id": 23, "module": "airtable:ActionCreateRecord", "version": 3, "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" }, "mapper": { "base": "app9G7lLkIV3CpeLa", "table": "tblR4VWpUHw1CSyIS", "fields": { "Titulo Log": "SC-RF09-ExtraccionClaude · extraccion ok", "Escenario": "SC-RF09-ExtraccionClaude", "Estado": "✓ OK", "Solicitud": "{{1.solicitud_id}}", "Detalle": "adjunto_id={{1.adjunto_id}} · atributos_obtenidos guardado, a la espera de AT03-Ext" } }, "metadata": { "designer": { "x": 3900, "y": 150 }, "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "LogEscenarios (tblR4VWpUHw1CSyIS)" } } }, "note": "Ver nota de modulo 16 sobre nombres reales de campo." } },
+            { "id": 24, "module": "gateway:WebhookRespond", "version": 1, "parameters": {}, "mapper": { "status": "200", "body": "{\"ok\": true, \"estado\": \"extrayendo\"}", "headers": [{ "key": "Content-Type", "value": "application/json" }] }, "metadata": { "designer": { "x": 4200, "y": 150 }, "parameters": [{ "name": "status", "type": "text", "label": "Status" }, { "name": "body", "type": "text", "label": "Body" }, { "name": "headers", "type": "array", "label": "Headers" }] } }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": { "orphans": [] },
+    "zone": "eu1.make.com",
+    "notes": "Blueprint generado a mano (13-jul-2026, sesion autonoma de construccion RF-09) -- NO exportado desde una instancia real de Make, mismo patron y mismas advertencias que SC-Adjuntos-Upload.blueprint.json (ver su campo 'notes'). Riesgos NO verificados que Sergio debe confirmar antes/durante el primer import real: (1) modulo 9 'dropbox:downloadFile' v1 -- id/version no confirmados contra ningun blueprint real de esta instancia Make, a diferencia de dropbox:uploadLargeFile v5 (ver E-026); inspeccionar el pipeline E1/E2/E3 activo para el modulo real de descarga antes de asumir. (2) modulo 10 'http:ActionSendData' -- nombre generico de 'HTTP > Make a request', confirmar en la UI de Make. (3) modulo 11 'json:ParseJSON' -- confirmar que Claude devuelve JSON limpio sin texto envolvente; si no, agregar paso de limpieza regex. (4) Filtros que usan 'filter(11; valor != null)' -- sintaxis de funciones de array de Make (FILTER/LENGTH) debe verificarse contra la version real del motor de formulas de Make al construir, puede requerir ajuste. (5) AT03-Ext NO se invoca desde este blueprint (Make no tiene modulo para 'Run Airtable Script') -- corre como Airtable Automation independiente, disparada por el modulo 22 (rama Exito) al actualizar TX_Adjuntos.atributos_obtenidos. Diferencia de diseno respecto al prompt de sesion original (que listaba 'Airtable Run Script' como modulo 10 del Make) -- correccion tecnica necesaria, documentada tambien en docs/aprendizajes.md E-033. (6) Firma HMAC (X-VP-Signature, MAKE_RF09_HMAC_SECRET) verificada del lado de AT-RF09-Trigger antes de disparar el webhook -- este blueprint no la revalida (mismo patron de deuda tecnica D-11 que SC-Adjuntos-Upload). Requiere ampliar antes del primer test: TX_Adjuntos.estado_extraccion con 'skipped/no_corresponde/delegado_visador' y LogEscenarios.Escenario con 'SC-RF09-ExtraccionClaude' (pendiente manual, MCP no soporta agregar choices -- ver §13.4 schema-airtable.md)."
+  }
+}

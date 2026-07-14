@@ -1,7 +1,7 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.6 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026)
-> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02) + hallazgo `TX_Solicitudes.codigo_solicitud` (primary field) y llave de idempotencia `hash_md5` (10-jul-2026, Fase Adjuntos 1) + auditoría completa del dominio D_ y creación de `D_Atributo.version` + `D_Documento.extraccion_incompleta` (12-jul-2026, ver §18)
+> **Versión**: 1.8 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026) · Re-auditoría `TX_Solicitudes` completa (13-jul-2026, ver §19) · Construcción RF-09: 5 campos nuevos + corrección `LogEscenarios` (13-jul-2026, ver §13.4/§13.5)
+> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02) + hallazgo `TX_Solicitudes.codigo_solicitud` (primary field) y llave de idempotencia `hash_md5` (10-jul-2026, Fase Adjuntos 1) + auditoría completa del dominio D_ y creación de `D_Atributo.version` + `D_Documento.extraccion_incompleta` (12-jul-2026, ver §18) + re-auditoría completa de campos reales de `TX_Solicitudes` vía `list_tables_for_base`/`get_table_schema` (13-jul-2026, ver §19)
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
 > **Regla**: en código, preferir FIELD_ID (`fld…`) sobre nombre cuando haya riesgo de colisión o espacio extra. Si el FIELD_ID no está listado aquí, usar el nombre lógico de Capa Datos v2.6.2.
@@ -134,9 +134,9 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | Campo | FIELD_ID | Tipo Airtable | Notas |
 |---|---|---|---|
 | `solicitud_id` | — | Autonumber (PK) | Read-only |
-| `codigo_solicitud` | `fldDXEE1ejMNVDlpB` ✅ | Single line text | **Primary field de la tabla** (hallazgo 10-jul-2026, Fase Adjuntos 1, ver `docs/aprendizajes.md` E-024). SC01 nunca lo mapeó — quedaba vacío en las 14 filas existentes hasta que Sergio lo pobló manualmente con el valor de `codigo_ext`. **Importante**: como primary field, cualquier campo Link hacia `TX_Solicitudes` (ej. `TX_Adjuntos.solicitud`) se evalúa contra ESTE campo — no contra `codigo_ext` ni contra el record ID — dentro de un `filterByFormula` (misma lección que E-018). Pendiente: mapear `codigo_solicitud = {{7.codigo_ext}}` en el módulo 7 de SC01 para que las solicitudes futuras nazcan pobladas. |
+| `codigo_solicitud` | `fldDXEE1ejMNVDlpB` ✅ | **Formula** (⚠ corregido 13-jul-2026, ver §19) | **Primary field de la tabla**. Hasta el 10-jul-2026 este campo era Single line text poblado manualmente (ver `docs/aprendizajes.md` E-024) — la re-auditoría del 13-jul-2026 confirmó vía `get_table_schema` que **hoy es un campo formula, read-only**: `"VP-" & YEAR({fecha_solicitud}) & "-" & RIGHT("0000" & {solicitud_id} & "", 4)`, prácticamente idéntica a `codigo_ext`. Alguien convirtió el campo de texto a fórmula entre el 10-jul y el 13-jul; no hay registro de quién/cuándo exacto. **La tarea "mapear codigo_solicitud en el módulo 7 de SC01" queda obsoleta** — el campo ya no acepta escritura. **Importante**: como primary field, cualquier campo Link hacia `TX_Solicitudes` (ej. `TX_Adjuntos.solicitud`) se evalúa contra ESTE campo — no contra `codigo_ext` ni contra el record ID — dentro de un `filterByFormula` (misma lección que E-018). |
 | `codigo_ext` | `fldSuJx1fDNYYwDcD` ✅ | Formula | `'VP-' & YEAR(fecha_solicitud) & '-' & LPAD(solicitud_id,4,'0')`. Read-only |
-| `fecha_solicitud` | — | Date | Cuándo se recibió |
+| `fecha_solicitud` | — | Date (⚠ real es **Date time**, ver §19) | Cuándo se recibió |
 | `cliente` | — | Link → M_Clientes | FK. Solo activos en selectores |
 | `banco` | ver fila detallada más abajo (⚠ **no** es Link → M_Bancos; ver corrección 08-jul-2026) | — | — |
 | `tipo_informe` | — | Link → M_TiposInforme | FK. Filtrado por M_Clientes.productos |
@@ -162,23 +162,23 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `origen_canal` | `fldPphw1FWfYdZI2Z` ✅ | Single select | app_cliente · ingreso_manual · email · telefono · whatsapp · presencial · otro |
 | `pdf_final_url` | — | URL | Link al PDF vigente |
 | `observaciones_internas` | — | Long text | Solo equipo VProperty |
-| `hora_visita` | — | Duration | [v2.3] Hora real de la visita |
-| `hora_entrega` | — | Duration | [v2.3] Hora comprometida de entrega |
-| `profesion_solicitante` | — | Single line text | [v2.3] Override por caso |
-| `contacto_observaciones` | — | Long text | [v2.3] Datos de contacto y restricciones de acceso |
-| `codigo_corto` | — | Single line text | [v2.4] Últimos 4 dígitos de solicitud_id |
-| `vivienda_social` | — | Single select | [v2.4] Si/No |
-| `ejecutivo` | — | Single line text | [v2.4] Nombre del ejecutivo del cliente |
-| `contacto_nombre` | — | Single line text | [v2.4] Nombre de contacto |
-| `contacto_fono` | — | Single line text | [v2.4] Teléfono de contacto |
-| `casa_numero` | — | Single line text | [v2.4] Número de dirección |
+| ~~`hora_visita`~~ | — | Duration | [v2.3] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
+| ~~`hora_entrega`~~ | — | Duration | [v2.3] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
+| `profesion_solicitante` | `fld63DYDVnVaAmhAH` ✅ | Single line text | [v2.3] Override por caso. Confirmado existente vía MCP 13-jul-2026 |
+| ~~`contacto_observaciones`~~ | — | Long text | [v2.3] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
+| ~~`codigo_corto`~~ | — | Single line text | [v2.4] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
+| ~~`vivienda_social`~~ | — | Single select | [v2.4] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
+| ~~`ejecutivo`~~ | — | Single line text | [v2.4] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). No confundir con `ejecutivo_solicitante`, que sí existe |
+| ~~`contacto_nombre`~~ | — | Single line text | [v2.4] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
+| ~~`contacto_fono`~~ | — | Single line text | [v2.4] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
+| ~~`casa_numero`~~ | — | Single line text | [v2.4] ⚠ **No existe en el Airtable real** (re-auditoría 13-jul-2026, ver §19). Aspiracional, nunca creado |
 | `solicitante_nombre` | `fld2rd2p4Qpz6NFQ2` ✅ | Single line text | [v2.6] Persona natural titular del trámite |
 | `solicitante_telefono` | `fldzHrLeO3Fe0xtvn` ✅ | Phone number | [v2.6] Teléfono del solicitante. Verificado vía MCP 08-jul-2026 (Fase 2 · Tanda A) |
 | `n_operacion_cliente` | `fldb1vmKk7y3hi4uY` ✅ | **Number** (⚠ H-07) | [v2.6] Capa Datos v2.6.2 lo define como text; el Airtable real lo tiene como number. Usar tipo `number` en TS |
 | `sucursal_originadora` | `fldd56pLZyKYoi2Vi` ✅ | Single line text | [v2.6] ⚠ **Nombre con espacio final** en Airtable real (`sucursal_originadora `). Corregir con D-08. Hasta entonces referenciar por FIELD_ID |
 | `ejecutivo_solicitante` | `fldRweQyq3tTQGmPR` ✅ | Single line text | [v2.6] Spec usaba `ejec_solicitante`; nombre real conservado (D-08) |
 | `comision_ov` | `fldTB51XKDhncrL0K` ✅ | Number (4 dec) | [v2.6 TBD-09] Pendiente confirmación semántica |
-| `fecha_solicitud` | `fldvkn9CsORy4eU0Z` ✅ | Date | Verificado vía MCP 08-jul-2026 (Fase 2 · Tanda A). **No estaba mapeado en el módulo 7 de SC01** — pendiente Tanda B. `codigo_ext` depende de `YEAR(fecha_solicitud)` |
+| `fecha_solicitud` | `fldvkn9CsORy4eU0Z` ✅ | **Date time** (⚠ corregido 13-jul-2026 — se documentaba como Date; re-verificado vía `get_table_schema`: `dateTime`, formato ISO `YYYY-MM-DD` + hora 12h, timezone client) | Verificado vía MCP 08-jul-2026 (Fase 2 · Tanda A). **No estaba mapeado en el módulo 7 de SC01** — pendiente Tanda B. `codigo_ext` y `codigo_solicitud` dependen de `YEAR(fecha_solicitud)` |
 | `monto_estimado_uf` | `fldKZW799xIqMFN1I` ✅ | Number | Verificado vía MCP 08-jul-2026 (Fase 2 · Tanda A). Antes no documentado en esta tabla pese a usarse en `lib/solicitudes.ts`. **No mapeado en SC01** — pendiente Tanda B |
 | `banco` | `fldAgTlFXeXWfGTdI` ✅ | **Single line text** — ⚠ **DEPRECATED en migración** (08-jul-2026) | Banco originador. Verificado vía MCP: es texto libre, **no** Link → M_Bancos como decía esta tabla antes de la Fase 2 · Tanda A. Recibe `banco_id` del form tal cual, sin Search Records. **No borrar todavía** — convive con `banco_link` hasta que Tanda B (blueprint SC01) escriba en `banco_link` y Tanda C (`lib/solicitudes.ts` y demás lectores) lea de `banco_link`. Recién entonces se elimina este campo en una tanda posterior |
 | `banco_link` | `fldxlBazQKgQwureX` ✅ | Link → M_Bancos (`tblGlYuJo5AeMehhs`) | **Creado y poblado** 08-jul-2026 (Fase 2 · Tanda A, migración de `.banco`). **Este es el campo a usar de aquí en adelante** para el banco originador. Migradas las 5 filas que tenían `.banco` poblado al momento de la migración (ver `docs/aprendizajes.md` y `docs/_notas/gap_solicitud_persistencia.md`). ⚠ La API no permite restringir el link a un solo record (`prefersSingleRecordLink` no configurable vía MCP) — la disciplina de "un solo banco" se aplica en Make/código, no en el schema. Pendiente mapear en Tanda B (requiere Search Records, como banco_financista) y leer desde Tanda C |
@@ -363,15 +363,22 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 
 **TABLE_ID**: `tblR4VWpUHw1CSyIS`
 
-| Campo | Tipo Airtable | Notas |
-|---|---|---|
-| `log_id` | Autonumber (PK) | |
-| `escenario` | Single line text | SC01 · SC05 · RF-09 · ... |
-| `solicitud_id` | Single line text | Referencia al código VP-AAAA-NNNN |
-| `estado` | Single select | ok · error · retry |
-| `payload_enviado` | Long text (JSON) | |
-| `respuesta` | Long text | |
-| `timestamp` | Created time | |
+> ⚠ **Sección corregida 13-jul-2026** (construcción RF-09, ver §13.5 para el detalle de la auditoría). La versión anterior de esta tabla documentaba campos que **no existen** en el Airtable real (`log_id`, `escenario`, `solicitud_id`, `estado` con opciones `ok/error/retry`, `payload_enviado`, `respuesta`, `timestamp`) — probablemente aspiracionales de una fuente canónica, nunca creados así. El escenario activo `SC-Adjuntos-Upload` todavía usa esos nombres viejos en su mapper (módulos 4 y 9) y sus writes a esta tabla probablemente fallan en silencio — ver §13.5.
+
+| Campo | FIELD_ID | Tipo Airtable | Notas |
+|---|---|---|---|
+| `Titulo Log` | `fldOLYPMstZl1cct6` | Single line text | **Primary field** |
+| `Fecha / Hora` | `fldGRchH2Cc82fO4b` | Date time | |
+| `Escenario` | `fldPktGeTzNCRQ319` | Single select | Opciones fijas: `Email tasador · Email cliente visita · Alerta SLA 2d · Alerta SLA 3d · Email informe PDF · UF diaria · Solicitud repetida · Informe visado · E1_Airtable_Make · E2_Carbone_Render · E3_Carbone_Download_Dropbox · E4_Notificacion_Email`. Ninguna corresponde a un escenario de IF-02 — falta agregar `SC-RF09-ExtraccionClaude` a mano (§13.4) |
+| `Estado` | `fldTzSpyzbj1EOa7F` | Single select | Opciones reales: `✓ OK · ✗ Error · ⚠ Parcial · ⏭ Omitido` |
+| `Trigger` | `fldvgIczpgBQJe2Lx` | Single line text | |
+| `Destinatario` | `fld8wqOuOfUuN1RCo` | Single line text | |
+| `Detalle` | `fldv9dn00kM8kNjDL` | Long text | Sin campos separados de payload/respuesta — usar este único campo para ambos, ej. `payload: {...} · respuesta: {...}` |
+| `Duracion ms` | `fldFQYOwb1eHkLtbl` | Number | |
+| `Reintentos` | `flddQtQpV0jveyjEC` | Number | |
+| `ID Make` | `fldsBdTiOOKnDsE9K` | Single line text | |
+| `Solicitud` | `fldLHWGlkTZNTESOF` | Single line text | Texto libre — guardar `codigo_ext` legible, no record ID |
+| `ultima_modificacion` | `fldwS2YXDHHXNRhe1` | Last modified time | |
 
 ---
 
@@ -424,6 +431,48 @@ Sesión de 4 fases (Airtable → Make → Frontend → corte `.banco`) para cerr
 | `TX_Adjuntos` | `estado_extraccion` | `fld54epvDJ7YdJIYD` | Single select | `idle · extrayendo · listo · error` |
 
 Bloqueador de RF-09 (§8) resuelto. Pendiente: mapear en el escenario Make RF-09 (aún sin provisionar, BQ-3-c) y consumir desde `ExtraccionStatusBadge` (Paso 6 de `construccion.md`). `canal_contacto_original` se revisó en la misma fase y se decidió **no migrarlo** de Single select a texto libre (ver nota en §2).
+
+### 13.4 Campos creados para RF-09 · Extracción con Claude API (13-jul-2026)
+
+Creados vía MCP en la sesión autónoma de construcción de RF-09 (panel de expertos), Fase 1 · Tanda A. Diseño consolidado en el prompt de sesión — reemplaza el modelo de `docs/_notas/rf09_diseno.md` (ver nota de superación en ese archivo).
+
+| Tabla | Campo | FIELD_ID | Tipo | Notas |
+|---|---|---|---|---|
+| `TX_Adjuntos` | `intentos_carga` | `fldmVd6GodswRoeAN` | Number (integer) | Intento de carga (1 o 2). Máximo 2, con archivos distintos — no hay reintento del mismo archivo. **Airtable no soporta valor por defecto vía API** — si el campo viene vacío/null, todo lector (`AT-RF09-Trigger`, `AT03-Ext`, UI) debe tratarlo como `1`, nunca asumir que existe un default real poblado por Airtable. |
+| `TX_Adjuntos` | `atributos_esperados` | `flddFSPcRtbYbx1pB` | Long text (JSON) | Lista de atributos esperados según `D_TipoDocumentoAtributo` para el `tipo_documento` declarado (`clave_adjunto`). Poblado por el blueprint `SC-RF09-ExtraccionClaude` antes de llamar a Claude. |
+| `TX_Adjuntos` | `atributos_obtenidos` | `fldeCH15RrL8f4TZk` | Long text (JSON) | Atributos efectivamente extraídos por Claude. |
+| `TX_Adjuntos` | `datos_pendientes_visador` | `fldRRgtfu6xxmhNEr` | Long text (JSON) | Lista de atributos no obtenidos tras 2 intentos fallidos. Se puebla solo cuando `estado_extraccion = delegado_visador`. |
+| `TX_Solicitudes` | `tiene_pendientes_visador` | `fldxozXDsho55PMd6` | Checkbox | `TRUE` cuando al menos un `TX_Adjuntos` de la solicitud queda en `delegado_visador`. Lo marca `AT03-Ext`/`AT-RF09-Trigger` directamente (no hay rollup automático — Airtable Automations no exponen "rollup" como tipo creable vía API de forma confiable para este caso, se escribe explícito). |
+
+**⚠ Pendiente manual — limitación real del MCP (no del diseño):** `mcp__airtable__update_field` sólo acepta `options.formula` en su schema — **no expone ningún parámetro para agregar `choices` a un campo `singleSelect` existente** (confirmado contra el schema de la herramienta, 13-jul-2026; ver `docs/aprendizajes.md` E-033, mismo patrón de limitación que E-007 pero para "agregar opción" en vez de "cambiar tipo"). Dos campos quedan con expansión de opciones **pendiente de hacerse a mano en la UI de Airtable** antes del Checkpoint 1:
+
+| Tabla | Campo | Opciones a agregar |
+|---|---|---|
+| `TX_Adjuntos` | `estado_extraccion` (`fld54epvDJ7YdJIYD`) | `skipped` · `no_corresponde` · `delegado_visador` (ya existen: `idle · extrayendo · listo · error`) |
+| `LogEscenarios` | `Escenario` (`fldPktGeTzNCRQ319`) | `SC-RF09-ExtraccionClaude` (ver §13.5 — ninguna opción real actual corresponde a un escenario de IF-02) |
+
+### 13.5 Hallazgo crítico: `LogEscenarios` tiene schema real distinto al documentado
+
+Re-auditado vía MCP el 13-jul-2026 durante la construcción de RF-09. El §12 de este documento (y el mapper de `SC-Adjuntos-Upload.blueprint.json`, módulos 4 y 9) usan nombres de campo que **no existen** en la tabla real:
+
+| Documentado / usado en blueprint | Campo real | Tipo real |
+|---|---|---|
+| `log_id` | *(no existe — el primary field real es `Titulo Log`, singleLineText)* | — |
+| `escenario` | `Escenario` (`fldPktGeTzNCRQ319`) | singleSelect — opciones fijas: `Email tasador · Email cliente visita · Alerta SLA 2d · Alerta SLA 3d · Email informe PDF · UF diaria · Solicitud repetida · Informe visado · E1_Airtable_Make · E2_Carbone_Render · E3_Carbone_Download_Dropbox · E4_Notificacion_Email`. **Ninguna corresponde a SC01, SC-Adjuntos-Upload ni RF-09** |
+| `solicitud_id` | `Solicitud` (`fldLHWGlkTZNTESOF`) | singleLineText |
+| `estado` | `Estado` (`fldTzSpyzbj1EOa7F`) | singleSelect — opciones reales: `✓ OK · ✗ Error · ⚠ Parcial · ⏭ Omitido` (no `ok/error/retry` como documentaba este archivo) |
+| `payload_enviado` | *(no existe un campo equivalente — usar `Detalle`, multilineText)* | — |
+| `respuesta` | *(no existe — usar también `Detalle`)* | — |
+| — | `Titulo Log` (`fldOLYPMstZl1cct6`, **primary field**) | singleLineText — sin equivalente documentado antes |
+| — | `Fecha / Hora` (`fldGRchH2Cc82fO4b`) | dateTime |
+| — | `Trigger` (`fldvgIczpgBQJe2Lx`) | singleLineText |
+| — | `Destinatario` (`fld8wqOuOfUuN1RCo`) | singleLineText |
+| — | `Duracion ms` (`fldFQYOwb1eHkLtbl`) | number |
+| — | `Reintentos` (`flddQtQpV0jveyjEC`) | number |
+| — | `ID Make` (`fldsBdTiOOKnDsE9K`) | singleLineText |
+| — | `ultima_modificacion` (`fldwS2YXDHHXNRhe1`) | lastModifiedTime |
+
+**Impacto**: el escenario **activo** `SC-Adjuntos-Upload` (módulos 4 y 9 de su blueprint) escribe a `escenario`/`solicitud_id`/`estado`/`payload_enviado`/`respuesta` — ninguno de esos 5 nombres existe en la tabla real. Esas llamadas a `Create Record` en `LogEscenarios` muy probablemente están fallando en silencio (o Airtable las rechaza con 422 y Make las reintenta/descarta según su política de error) desde que el escenario está activo. **No se corrige en esta sesión** (fuera de alcance de RF-09, tocar un blueprint ya importado y en producción sin que Sergio lo pruebe es riesgoso) — queda como hallazgo para que Sergio decida si vale la pena una tanda de reparación de `SC-Adjuntos-Upload`. El blueprint nuevo de esta sesión (`SC-RF09-ExtraccionClaude`) usa los nombres reales confirmados arriba.
 
 ---
 
@@ -616,3 +665,43 @@ RN-32 (validación EAV polimórfica): exactamente una de las 5 columnas de valor
 | `D_Documento` | `extraccion_incompleta` | `fldewUdLQOpVpSe7M` | Creado vía MCP, aprobado por Sergio |
 
 Ningún otro campo documentado en Capa Datos v2.6.2 §6.7 falta en el Airtable real — el resto del dominio D_ coincide exactamente entre documentación y schema real.
+
+---
+
+## 19. Re-auditoría completa de `TX_Solicitudes` (13-jul-2026)
+
+Verificación campo por campo de §2 contra `list_tables_for_base` + `get_table_schema` vía MCP, a solicitud de Sergio ("verifica el schema de TX_Solicitudes contra docs/schema-airtable.md"). Sin escritura de código en esta sesión — solo lectura/comparación.
+
+### 19.1 Divergencia crítica: `codigo_solicitud` cambió de texto a fórmula
+
+Documentado desde el 10-jul-2026 (Fase Adjuntos 1) como Single line text, primary field, poblado manualmente por Sergio. La re-auditoría confirmó vía `get_table_schema` que **hoy es un campo `formula`, read-only**:
+
+```
+"VP-" & YEAR({fecha_solicitud}) & "-" & RIGHT("0000" & {solicitud_id} & "", 4)
+```
+
+Es funcionalmente idéntica a `codigo_ext` (`fldSuJx1fDNYYwDcD`). No hay registro en este repo de quién convirtió el campo ni cuándo exactamente entre el 10-jul y el 13-jul — probablemente un cambio hecho directamente en la UI de Airtable fuera de una sesión de Claude Code.
+
+**Impacto**: la tarea pendiente "mapear `codigo_solicitud = {{7.codigo_ext}}` en el módulo 7 de SC01" (documentada en §2 hasta esta sesión) queda **obsoleta** — el campo ya no acepta escritura desde Make ni desde ningún Route Handler. Corregido en §2.
+
+### 19.2 Divergencia menor: `fecha_solicitud` es Date time, no Date
+
+`get_table_schema` confirma tipo `dateTime` (formato ISO `YYYY-MM-DD`, hora 12h, timezone client), no `date` como documentaba §2. No se detectó impacto en código existente, pero cualquier Route Handler que parsee este campo asumiendo solo fecha debe tolerar el componente de hora. Corregido en §2.
+
+### 19.3 Campos v2.3/v2.4 documentados que no existen en el Airtable real
+
+`hora_visita`, `hora_entrega`, `contacto_observaciones`, `codigo_corto`, `vivienda_social`, `ejecutivo`, `contacto_nombre`, `contacto_fono`, `casa_numero` — ninguno aparece en el schema real de `TX_Solicitudes`. Mismo patrón que ya se había detectado en `TX_Adjuntos` (§8): campos aspiracionales de una fuente canónica que nunca se crearon en Airtable. `profesion_solicitante` (también v2.3) sí existe y fue confirmado con FIELD_ID (`fld63DYDVnVaAmhAH`). Tachados en §2 con nota de esta auditoría.
+
+### 19.4 Confirmado: H-04 sigue vigente — no existe ningún campo `checkbox` en toda la tabla
+
+Se listaron los ~90 campos reales de `TX_Solicitudes` y ninguno es de tipo `checkbox`. Esto descarta que el campo trigger de AT02 (H-04) ya exista con otro nombre: sigue siendo un bloqueador real y pendiente para RF-06, no una omisión de documentación.
+
+### 19.5 Campos reales sin documentar (fuera de alcance IF-02)
+
+No corregidos individualmente en §2 por ser de dominio Motor de Cálculo (AT01–AT10) o metadatos internos, ajenos al contrato de IF-02. Se dejan listados aquí para referencia futura si algún RF de IF-02 llegara a necesitarlos:
+
+`region`, `nro_interno`, `sup_terreno_m2`, `sup_construccion_m2`, `valor_comercial_uf`, `avaluo_fiscal_clp`, `anio_construccion`, `numero_solicitud`, `uf_dia_visita`, `velocidad_venta`, `notas` (⚠ genérico — no confundir con los pendientes `notas_tasador`/`notas_visador` de §13), `dias_desde_visita`, `fecha_limite_entrega`, `fecha_creacion` (createdTime, distinto de `fecha_solicitud`), `lookup_rango_min`, `lookup_rango_max`, `fuera_rango`, `ultima_modificacion`, más ~17 campos `*_override` (tasa_cap_rate, vida_util, valor_final, valor_reposicion, valor_garantia, valor_seguro, valor_liquidacion, valor_remate, valor_remate_65, renta_perpetua, ingreso_liquido_anual, factor_depreciacion, uf_m2_nuevo, factor_remate, factor_liquidacion, override_motivo, override_autor) y los links de vuelta a otras tablas (`TX_DatosTasacion`, `TX_Calculos`, `A_DecisionesMotor`, `TX_Comparables`, `TX_ItemsCuadroValoracion`, `TX_ObrasComplementarias`, `TX_Adjuntos`, `TX_DocumentosGenerados`, `TX_Notificaciones`, `A_Eventos`, `A_ErroresMake`, `Z_EjecucionesMake`, `Z_ColaPendientes`, `TX_CasosRegresion`, `TX_Ampliaciones`, `TX_HabitacionesPorNivel`, `TX_TerminacionesPorRecinto`, `TX_DocumentosLegales`).
+
+### 19.6 Todo lo demás coincide
+
+`fecha_visita_programada`, `visador`, `semaforo_sla`, `prioridad`, `origen_canal`, `solicitante_nombre`, `solicitante_telefono`, `n_operacion_cliente`, `sucursal_originadora ` (espacio final confirmado), `ejecutivo_solicitante`, `comision_ov`, `monto_estimado_uf`, `banco`, `banco_link`, `ejecutiva_asignada`, `email_contacto`, `banco_financista`, `canal_contacto_original`, `codigo_ext`, `solicitud_id` — FIELD_IDs y tipos verificados coinciden exactamente entre documentación y schema real.
