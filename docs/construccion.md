@@ -1,6 +1,6 @@
 # GUÍA DE CONSTRUCCIÓN · CU-002 · IF-02 Consola de la Ejecutiva Comercial
 
-> **Versión**: 1.4 — alineada a Plan v1.2 · Blueprint v2.7 · Capa de Datos v2.6.2 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026).  
+> **Versión**: 1.4 — alineada a Plan v1.2 · Blueprint v2.7 · Capa de Datos v2.6.3 · Especificación v1.8.2 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Re-alineamiento a Especificación v1.8.2 (17-jul-2026).  
 > **Propósito**: referencia operativa que Claude Code lee al inicio de cada sesión para saber qué construir, en qué orden, con qué criterios de aceptación y qué advertencias aplican por paso.  
 > **Regla dorada**: una RF por sesión de Claude Code — nunca "construye toda la consola".
 
@@ -242,7 +242,7 @@ El Route Handler firma y envía a `MAKE_WEBHOOK_URL_SC01`:
 - AT01 se dispara automáticamente y popula `regla_aplicada` en < 10 s.
 - Toast de confirmación: **"Solicitud creada con {n} documento(s) adjunto(s)."**
 - Submit inválido (RUT malformado, email inválido, dirección incompleta, doc marcado sin archivo) muestra el mensaje bloqueante exacto de §6 del Blueprint (ver `docs/diseno.md` §8).
-- El Sheet bloquea "Crear" sólo si `docsFaltantes > 0` — no si hay campos de adjuntos vacíos (Spec v1.4 §1.5.1.1).
+- El Sheet bloquea "Crear" sólo si `docsFaltantes > 0` — no si hay campos de adjuntos vacíos (Spec v1.8.2 §1.5.1.1).
 - `pnpm build` limpio.
 
 ### Precauciones

@@ -1,5 +1,37 @@
 # SC-RF09-ExtraccionClaude · Instructivo de importación — CHECKPOINT EXTERNO 1
 
+> ✅ **RECONSTRUIDO contra Especificación v1.8.2 (17-jul-2026).** El
+> blueprint `SC-RF09-ExtraccionClaude.blueprint.json` estaba construido
+> contra el dominio D_ de 8 tablas EAV (`D_Atributo`, `D_TipoDato`, etc.),
+> ya deprecadas en la base real. Se reconstruyó a 11 módulos (de 13) contra
+> el modelo vigente: `D_TipoDocumentoAtributo` como fuente única (sin
+> `D_Atributo`/`D_TipoDato`), prompt de Claude reconstruido para usar la
+> lista dinámica de atributos esperados (antes el aggregator del módulo 7
+> no se usaba en ningún lado — bug real, no solo el literal hardcodeado
+> "Atributos esperados: 7"), reconocimiento del patrón "NO REGISTRA"
+> (RN-37), y **todos los módulos de escritura que estaban con `record: {}`
+> vacío ahora tienen los campos mapeados** (ver §4.1 más abajo para el
+> detalle). El script `AT03-Ext_script.js` también se reescribió contra el
+> modelo consolidado — ya no hace fan-out EAV, enruta directo a
+> `TX_DatosTasacion`/`TX_Unidades` por `uso_cardinalidad_destino`.
+>
+> **Nada de esto se probó contra una instancia real de Make/Airtable.**
+> Antes de activar, revisa el checklist de verificación en §4.1 — hay al
+> menos dos supuestos de comportamiento de Make (auto-stringify de
+> `{{7.array}}` a JSON al mapearlo en un campo de texto, y la sintaxis
+> `map()`/`join()` del prompt del módulo 10) que sólo se pueden confirmar
+> corriendo el escenario una vez con datos reales, mismo patrón de
+> verificación que E-034/E-035/E-036 en `docs/aprendizajes.md`.
+>
+> La API key de Anthropic que traía el módulo 10 en texto plano fue
+> sanitizada (reemplazada por `{{ANTHROPIC_API_KEY}}`) el 17-jul-2026 —
+> si esa key no se ha rotado todavía en Anthropic Console, tratarla como
+> comprometida. `{{ANTHROPIC_API_KEY}}` **no es sintaxis válida de Make**
+> tal cual — reemplázala en el módulo 10 por una Connection nativa de
+> Make hacia Anthropic si existe, o por la variable de escenario según
+> §5, nunca pegando la key en texto plano otra vez (ver
+> `docs/aprendizajes.md` E-037).
+>
 > RF-09 · Extracción con Claude API. Generado 13-jul-2026, sesión autónoma de
 > construcción (panel de expertos). Sigue el mismo patrón de verificación
 > campo-por-campo que `docs/make-blueprints/SC-Adjuntos-Upload_import_instrucciones.md`
@@ -90,10 +122,14 @@ Archivo: `docs/make/AT-RF09-Trigger_script.js`
 
 ## 4. Blueprint Make `SC-RF09-ExtraccionClaude`
 
-Archivo: `docs/make-blueprints/SC-RF09-ExtraccionClaude.blueprint.json`
+Archivo: `docs/make-blueprints/SC-RF09-ExtraccionClaude.blueprint.json` (11
+módulos top-level: 1 webhook, 2 update inicial, 3-4 búsquedas D_TipoDocumento/
+D_TipoDocumentoAtributo, 7 aggregator, 8 update atributos_esperados, 9
+Dropbox, 10 Claude, 11/25 parseo JSON, 12 router éxito/mismatch con 12
+sub-módulos anidados 13-24).
 
-⚠ **Más riesgoso que el import de `SC-Adjuntos-Upload`** porque incluye 3
-módulos sin verificar contra un blueprint real de tu organización Make:
+⚠ **Más riesgoso que el import de `SC-Adjuntos-Upload`** — nada de esto se
+probó contra Make real:
 
 - Módulo 9 (`dropbox:downloadFile`) — antes de importar, exporta el
   blueprint de `E3_Carbone_Download_Dropbox` (o cualquier escenario activo
@@ -101,11 +137,29 @@ módulos sin verificar contra un blueprint real de tu organización Make:
   se hizo para `dropbox:uploadLargeFile` v5 en Fase Adjuntos 1 (ver
   `docs/aprendizajes.md` E-026). Reemplaza el módulo 9 si el nombre real es
   distinto.
-- Módulo 10 (`http:ActionSendData`, llamada a Claude API) — confirma en la
-  UI de Make que el nombre del módulo "HTTP → Make a request" coincide.
+- Módulo 10 (`http:ActionSendData`, llamada a Claude API) — el prompt ahora
+  usa `{{join(map(7.array; "codigo_atributo"); ", ")}}` y
+  `{{length(7.array)}}` para construir la lista de atributos dinámicamente
+  (antes el aggregator del módulo 7 no se usaba en el prompt — ver banner al
+  inicio de este archivo). **Verificar en el editor de fórmulas de Make que
+  `map()`/`join()`/`length()` aceptan una referencia de array cruzando desde
+  dentro de un router/rama distinta** (módulo 7 vive antes del router 12,
+  módulo 10 también — deberían estar en el mismo nivel de flujo, pero
+  confírmalo en el diseñador visual antes de guardar).
+- Módulos 8 y 22 (`atributos_esperados`/`atributos_obtenidos` = `{{7.array}}`
+  / `{{25.items}}`) — Make normalmente serializa un array/colección a JSON
+  automáticamente cuando el campo destino es texto, pero **no está
+  confirmado en esta versión de Make**. Después de la primera corrida de
+  prueba, abre el record en Airtable y confirma que el campo contiene JSON
+  válido (`[{"codigo_atributo":...}]`), no `[object Object]` ni vacío. Si
+  sale mal, inserta un módulo `json:CreateJSON` (o similar) antes de 8/22.
 - Módulo 11 (`json:ParseJSON`) — si Claude devuelve texto envolviendo el
   JSON pese a la instrucción del prompt, este módulo falla; en ese caso
   agrega un paso de limpieza (regex `\[.*\]` con flag `s`) antes de parsear.
+- Contrato de datos cambiado: Claude ahora debe devolver `codigo_atributo`
+  (string, ej. `"rol_sii"`) en vez de `atributo_id` (antes era un record ID
+  de `D_Atributo`, tabla que ya no existe). `AT03-Ext_script.js` espera
+  `codigo_atributo`.
 
 Pasos:
 
@@ -114,14 +168,40 @@ Pasos:
    existente (la misma que usa `SC-Adjuntos-Upload`).
 3. Agrega una conexión Dropbox (`__REEMPLAZAR_CONEXION_DROPBOX__`) — reusa
    "My Dropbox connection" ya configurada.
-4. Configura `ANTHROPIC_API_KEY` como variable de entorno del escenario
-   (Make → Scenario settings → Variables), no hardcodeada en el módulo 10.
+4. Reemplaza `{{ANTHROPIC_API_KEY}}` en el módulo 10 por una Connection
+   nativa de Anthropic si Make la ofrece, o por la variable de escenario de
+   §5 — **nunca pegar la key en texto plano** (ver `docs/aprendizajes.md`
+   E-037, y el hallazgo de esta sesión E-039: la key anterior quedó
+   commiteada en git).
 5. **Verifica campo por campo** cada módulo `airtable:Action*` contra el
    picker de variables de Make antes de guardar — mismo checklist que
    `SC-Adjuntos-Upload_import_instrucciones.md` "Diagnóstico 11-jul-2026": un
    import parcial deja campos sin enlazar a los tokens del módulo anterior,
    y todo sale vacío sin error visible.
 6. Deja el escenario en **modo manual (no programado)** hasta completar §6.
+
+### 4.1 Checklist de verificación específico de la reconstrucción (17-jul-2026)
+
+No probado — verificar en orden antes de dar RF-09 por listo:
+
+1. Importar y confirmar que Make no rechaza el JSON (estructura de 11
+   módulos, router anidado 12→14).
+2. Correr una vez con un PDF real de un tipo de documento con **un solo**
+   atributo `una_por_unidad` y uno `una_por_solicitud`, y confirmar en
+   Airtable que ambos llegaron a `TX_Unidades`/`TX_DatosTasacion`
+   respectivamente (la automation `AT03-Ext` debe estar activa para esto).
+3. Correr con un documento que declare el patrón "NO REGISTRA" (o forzarlo
+   editando la respuesta simulada) y confirmar `avaluo_no_registra=TRUE` +
+   `avaluo_total_raw` en `TX_DatosTasacion`.
+4. Correr con dos adjuntos del mismo `tipo_documento` para la misma
+   solicitud (ej. depto + estacionamiento) y confirmar que `AT03-Ext` crea
+   **dos** filas distintas en `TX_Unidades`, no una sola sobrescrita.
+5. Forzar 0 atributos extraídos dos veces seguidas (mismo adjunto,
+   `intentos_carga=1` y luego `=2`) y confirmar que la 2ª vez marca
+   `TX_Adjuntos.estado_extraccion=delegado_visador` y
+   `TX_Solicitudes.tiene_pendientes_visador=TRUE`.
+6. Confirmar que `LogEscenarios` recibe una fila por corrida, con
+   `Escenario=SC-RF09-ExtraccionClaude` (opción agregada en §1.2).
 
 ---
 

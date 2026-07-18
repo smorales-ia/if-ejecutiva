@@ -3,7 +3,7 @@
 > **Versión**: 1.2 (D-01…D-08 incorporadas · SC13 fuera de alcance · SC07 promovido a RF-09 · restricciones §4.4 inlineadas · `disponible`/`casos_en_curso` corregidos · 06-jul-2026).
 > **Fase**: Pre-construcción — se generan `/docs/diseno.md`, `/docs/construccion.md` y `/docs/schema-airtable.md` antes de escribir código.
 > **Objetivo**: dejar el repo listo para que Claude Code implemente **una RF por sesión** con validación en Railway entre iteraciones.
-> **Alineado a**: Especificación v1.4 · Arquitectura Enterprise v2.6 · Capa de Datos v2.6.2 · Blueprint Interfaces v2.7 · Motor de Cálculo AT01–AT10 v2.5 · Credenciales API v3.
+> **Alineado a**: Especificación v1.8.2 (sucede a v1.4 citada originalmente en este plan; sin impacto en el contrato de IF-02 — los cambios v1.4→v1.8.2 son íntegramente del dominio D_/RF-09, ver `docs/schema-airtable.md` §18) · Arquitectura Enterprise v2.6 · Capa de Datos v2.6.3 · Blueprint Interfaces v2.7 · Motor de Cálculo AT01–AT10 v2.5 · Credenciales API v3.
 > **Fuente visual**: `Imagenes_IF_Ejecutiva.pdf`.
 > **Fuente de estructura de componentes**: deploy v0.dev (`if-ejecutiva-gfvE6z3qTyX`).
 > **Equipo firmante**: Arquitecto Enterprise · UX/UI · Ingeniero Next.js · Ingeniero Airtable · Integrador Make · QA Lead · Redactor Técnico.
@@ -14,7 +14,7 @@
 
 CU-002 materializa IF-02 (Tipo A · Next.js 16 + Clerk · Railway) sobre el prototipo v0 ya generado, reemplazando mocks por Route Handlers de lectura contra Airtable y dos webhooks Make: **SC01** para crear la solicitud y **SC05** para notificar al tasador por email. El motor de estados sigue viviendo en Airtable (AT01/AT02); la UI sólo captura y muestra.
 
-**Recordatorio operativo · Restricciones técnicas transversales** (fuente: Especificación v1.4 §1.8 · Blueprint de trabajo: v2.7):
+**Recordatorio operativo · Restricciones técnicas transversales** (fuente: Especificación v1.8.2 §1.8 · Blueprint de trabajo: v2.7):
 
 1. **Tailwind CSS v4** — tokens declarados en `@theme` dentro de `app/globals.css`. **Nunca crear `tailwind.config.js`**. Custom properties en `:root` vía arbitrary value syntax.
 2. **`@base-ui/react`, no Radix** — todos los primitivos de UI provienen de `@base-ui/react 1.5`. Si un snippet de shadcn usa `asChild`, refactorizar a `render` prop + `nativeButton`. Ejemplo correcto: `<SheetTrigger render={<Button>Abrir</Button>} />`.
@@ -52,7 +52,7 @@ Origen v0 se refiere al deploy `if-ejecutiva-gfvE6z3qTyX`. "Reutiliza CU-000" in
 | `EmailField` | v0 (CU-000.A) | `components/vp/email-field.tsx` | **Sí** | Compartido. |
 | `AddressField` (Google Places) | v0 (CU-000.A) | `components/vp/address-field.tsx` | **Sí** | Compartido. |
 | `RegionComunaSelector` (cascada) | v0 (CU-000.A) | `components/vp/region-comuna-selector.tsx` | **Sí** | Compartido. |
-| `DocumentChecklist` (TIPOS_DOCUMENTO) | v0 | `components/vp/document-checklist.tsx` | No (nuevo en IF-02) | RF v1.4 §1.5.1.1: solicitud sin adjuntos permitida; sólo bloquea si un documento marcado no tiene archivo. |
+| `DocumentChecklist` (TIPOS_DOCUMENTO) | v0 | `components/vp/document-checklist.tsx` | No (nuevo en IF-02) | RF v1.8.2 §1.5.1.1: solicitud sin adjuntos permitida; sólo bloquea si un documento marcado no tiene archivo. |
 | `FileUploadZone` (Dropbox directo) | v0 (CU-000.A) | `components/vp/file-upload-zone.tsx` | **Sí** | 4 estados; sube por streaming vía Route Handler, no pasa por Airtable. Encadena RF-09 tras confirmación. |
 | `ReasignarTasadorDialog` (cmdk + ficha carga + alerta "fuera de cobertura") | v0 | `components/console/reasignar-tasador-dialog.tsx` | No | Específico IF-02 · RF-06. Sin envío de notificación (SC13 fuera de alcance). |
 | `BarraAccionesDetalle` (Pasar a asignada · Reasignar tasador · Cambiar prioridad · Pausar · Cancelar) | v0 | `components/console/acciones-detalle.tsx` | No | Inline, no sticky (§4.4 con portales Select conviven). Sin acción "Reasignar visador" (D-01). |
@@ -101,7 +101,7 @@ Tabla base: `TX_Solicitudes` (`tblaHTyMHYfmy7Fg6`). TABLE_IDs y nombres de campo
 | Observaciones internas | Texto largo | No | `TX_Solicitudes.observaciones_internas` | — |
 | Adjuntos iniciales | Upload | No | `TX_Adjuntos` (`tblur71x1oItbmKZc`) | Sube directo a Dropbox vía Route Handler. Dispara RF-09 en background. |
 | Estado extracción (RF-09) | Auto | — | `TX_Adjuntos.estado_extraccion` (a crear si no existe) | `idle · extrayendo · listo · error`. Escrito por SC/Route Handler de extracción. |
-| Documentos requeridos (checklist) | Compuesto | Cond. | catálogo `TIPOS_DOCUMENTO` + `TX_Adjuntos` | Sólo bloquea si un doc marcado no tiene archivo (Spec v1.4 §1.5.1.1). |
+| Documentos requeridos (checklist) | Compuesto | Cond. | catálogo `TIPOS_DOCUMENTO` + `TX_Adjuntos` | Sólo bloquea si un doc marcado no tiene archivo (Spec v1.8.2 §1.5.1.1). |
 | Motivo reasignación | Texto | Sí (al reasignar) | escribe en `A_Eventos` (`tblMKmDg2KrO5fMn8`) con `tipo_evento=reasignacion_manual` | RF-06. Sin envío de email (SC13 fuera de alcance). |
 | Estado | Auto | — | `TX_Solicitudes.estado` | Read-only. Cambio por AT02. |
 | SLA semáforo | Auto | — | `TX_Solicitudes.semaforo_sla` (fórmula) | Verde/ámbar/rojo derivado de `dias_desde_solicitud`, `fecha_limite_entrega` y `C_SLA`. |
@@ -159,7 +159,7 @@ Tabla base: `TX_Solicitudes` (`tblaHTyMHYfmy7Fg6`). TABLE_IDs y nombres de campo
 
 ## 1.5 Precondiciones exactas del botón "Pasar a asignada"
 
-Regla oficial (Blueprint §7.2 · Spec v1.4 §1.3 · RN-09):
+Regla oficial (Blueprint §7.2 · Spec v1.8.2 §1.3 · RN-09):
 
 ```
 puede_pasar_a_asignada = (
@@ -193,14 +193,14 @@ Comportamiento UI:
 
 | # | Conflicto | Fuente v0 | Fuente spec | Resolución aplicada | Impacto |
 |---|---|---|---|---|---|
-| C-01 | Reasignación de **visador** desde la barra de acciones | v0 y Blueprint §7.2 permiten "asignar/reasignar tasador y visador" | Spec v1.4 §1.6 Nota v0: *"la Ejecutiva no reasigna Visador desde la barra de acciones"* | **D-01 aprobada**: prevalece Spec v1.4. Acción oculta; el dato queda visible en `TabDatos`, sin acción. | Bajo. |
-| C-02 | Datos mock vs Airtable real | `components/dashboard/mock-data.ts`, `lib/tasador-store.ts`, `lib/tasaciones.ts` | Spec v1.4: Route Handlers con token Airtable server-side; escrituras vía Make | Reemplazar mocks por `fetch` desde Route Handlers server-side. Tipos TS derivados del schema real (snapshot MCP). | Alto (rewrite total de la capa de datos del prototipo). |
-| C-03 | Versión Next.js | Blueprint declara Next.js 14 | Spec v1.4 y v0 real: Next.js 16.2.6 (RT-01 conserva 14 como piso mínimo) | Usar 16.2.6 real; RT-01 sigue vigente. | Nulo. |
+| C-01 | Reasignación de **visador** desde la barra de acciones | v0 y Blueprint §7.2 permiten "asignar/reasignar tasador y visador" | Spec v1.8.2 §1.6 Nota v0: *"la Ejecutiva no reasigna Visador desde la barra de acciones"* | **D-01 aprobada**: prevalece Spec v1.8.2. Acción oculta; el dato queda visible en `TabDatos`, sin acción. | Bajo. |
+| C-02 | Datos mock vs Airtable real | `components/dashboard/mock-data.ts`, `lib/tasador-store.ts`, `lib/tasaciones.ts` | Spec v1.8.2: Route Handlers con token Airtable server-side; escrituras vía Make | Reemplazar mocks por `fetch` desde Route Handlers server-side. Tipos TS derivados del schema real (snapshot MCP). | Alto (rewrite total de la capa de datos del prototipo). |
+| C-03 | Versión Next.js | Blueprint declara Next.js 14 | Spec v1.8.2 y v0 real: Next.js 16.2.6 (RT-01 conserva 14 como piso mínimo) | Usar 16.2.6 real; RT-01 sigue vigente. | Nulo. |
 | C-04 | `asChild` de Radix | Frecuente en snippets estándar shadcn | Blueprint §4.4 + Spec §1.8: usar `render` prop + `nativeButton` sobre `@base-ui/react` | Blueprint §4.4 es ley. Cualquier snippet con `asChild` se refactoriza a `render`. | Medio. |
 | C-05 | `tailwind.config.js` | Shadcn tradicional lo requiere | Spec/Blueprint: tokens en `@theme` dentro de `app/globals.css` | No crear `tailwind.config.js`. Custom properties en `:root` vía arbitrary values. | Alto. |
 | C-06 | Sticky action bar en `DetallePanel` | Idiomático en dashboards | Blueprint §4.4: evitar sticky cuando conviven portales Select | Botones inline al final de la cabecera del panel; no sticky bottom bar. | Bajo. |
-| C-07 | Comportamiento "Crear solicitud" bloqueado por documentos | v0 heredado: botón deshabilitado hasta que todo esté válido | Spec v1.4 §1.5.1.1: sólo bloquea si un doc marcado no tiene archivo | Alinear al Spec v1.4: `disabled` sólo si `docsFaltantes > 0`. El sheet actual ya lo hace correctamente ✅. | Nulo. |
-| C-08 | Notificación en reasignación / cambio prioridad / pausa | v0: por definirse | Spec v1.4 §1.6: SC13 notifica al destinatario | **SC13 fuera de alcance CU-002**. La acción se ejecuta en UI + Airtable + `A_Eventos`, sin email. Registrar como deuda técnica para CU posterior. | Bajo (se documenta explícitamente). |
+| C-07 | Comportamiento "Crear solicitud" bloqueado por documentos | v0 heredado: botón deshabilitado hasta que todo esté válido | Spec v1.8.2 §1.5.1.1: sólo bloquea si un doc marcado no tiene archivo | Alinear al Spec v1.8.2: `disabled` sólo si `docsFaltantes > 0`. El sheet actual ya lo hace correctamente ✅. | Nulo. |
+| C-08 | Notificación en reasignación / cambio prioridad / pausa | v0: por definirse | Spec v1.8.2 §1.6: SC13 notifica al destinatario | **SC13 fuera de alcance CU-002**. La acción se ejecuta en UI + Airtable + `A_Eventos`, sin email. Registrar como deuda técnica para CU posterior. | Bajo (se documenta explícitamente). |
 | C-09 | `next-themes` requerido por sonner | En `package.json` v0 | No mencionado en spec | Mantener; no exponer toggle de tema en IF-02. | Nulo. |
 | C-10 | Nombres de campo en `TX_Solicitudes` | Plan borrador asumía `op_cliente`, `sucursal`, `ejec_solicitante` | Schema real: `n_operacion_cliente` (number), `sucursal_originadora ` (con espacio), `ejecutivo_solicitante` | **D-08 opción C aplicada**: corregir espacio final en Airtable; mantener los otros dos nombres reales; adaptar tipos TS. | Medio (una sola corrección en Airtable + tipos TS). |
 | C-11 | Campos ausentes: `notas_tasador`, `notas_visador`, `ejecutiva_asignada` | Plan borrador los asumía | No existen en schema real | **D-08 + D-02 aplicadas**: crear los tres campos en `TX_Solicitudes` (multilineText para notas; link a `AUTH_Usuarios` (`tblbX3hPD2uhqhl5v` · RF-52) para `ejecutiva_asignada`). | Medio. |
@@ -218,7 +218,7 @@ Tres documentos viven en `/docs/` y son la **fuente de verdad permanente** que C
 
 | Archivo | Contenido | Generado por |
 |---|---|---|
-| `/docs/diseno.md` | Diseño funcional y visual: componentes, estados, mensajes literales, flujos por RF, wireframes en referencia. Traducción legible del Blueprint v2.7 + Spec v1.4 aplicada a IF-02. | Opus 4.7 (esta sesión o siguiente) |
+| `/docs/diseno.md` | Diseño funcional y visual: componentes, estados, mensajes literales, flujos por RF, wireframes en referencia. Traducción legible del Blueprint v2.7 + Spec v1.8.2 aplicada a IF-02. | Opus 4.7 (esta sesión o siguiente) |
 | `/docs/construccion.md` | Guía de construcción por RF: prompts base para Claude Code, orden de merge, criterios de aceptación, cómo validar en Railway. Traducción operativa de este plan (§1.7). | Opus 4.7 |
 | `/docs/schema-airtable.md` | Snapshot MCP del schema: TABLE_IDs, FIELD_IDs, tipos, links, con nota de campos creados por D-08. | Ya listo en §1.3; se exporta como archivo aparte para consumo por Claude Code. |
 
@@ -277,7 +277,7 @@ Estado tras la aprobación del propietario el 06-jul-2026. Ya no hay preguntas a
 
 | ID | Decisión | Resultado |
 |---|---|---|
-| **D-01** | Reasignación de visador por la Ejecutiva | **Ocultada**. Prevalece Spec v1.4. El dato queda visible en `TabDatos` sin acción. Aplicado en §1.2, §1.6 C-01. |
+| **D-01** | Reasignación de visador por la Ejecutiva | **Ocultada**. Prevalece Spec v1.8.2. El dato queda visible en `TabDatos` sin acción. Aplicado en §1.2, §1.6 C-01. |
 | **D-02** | Vista "Mi cartera" por ejecutiva autenticada | **Crear** `TX_Solicitudes.ejecutiva_asignada` (link a `AUTH_Usuarios` · `tblbX3hPD2uhqhl5v` · RF-52). Aplicado en §1.3, §1.6 C-11. |
 | **D-03** | Firma HMAC en webhook Make | **Header `X-VP-Signature` con HMAC-SHA256** en SC01 y SC05. Aplicado en §1.4, §1.5. |
 | **D-04** | Override manual de asignación de tasador | **AT02 respeta la asignación previa** si existe y registra `A_Cambios(motivo=override_manual)`. Aplicado en §1.4, §1.5. |

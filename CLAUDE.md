@@ -280,7 +280,7 @@ docs/
 ├─ schema-2026-07-04.json             (snapshot JSON crudo del schema MCP)
 ├─ _md/                               (fuentes canónicas en MD — no editar)
 │  ├─ VProperty_Blueprint_Interfaces_v2_7.md
-│  ├─ VProperty_Especificacion_Proyecto_v1_4.md
+│  ├─ VProperty_Especificacion_Proyecto_v1_8_2.md
 │  ├─ Arquitectura_Enterprise_VProperty_v2_6.md
 │  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_2.md
 │  ├─ VProperty_Motor_Calculo_AT01_AT10_v2_5.md
@@ -365,7 +365,7 @@ app/
 - Poner el token Airtable/Make/Dropbox en el cliente (`NEXT_PUBLIC_*`).
 - Invocar el MCP Airtable desde código productivo compilado.
 - Escribir a Airtable durante la ejecución de tests contra la base productiva.
-- Reasignar visador desde la UI de la Ejecutiva (Spec v1.4 §1.6 Nota v0 · D-01).
+- Reasignar visador desde la UI de la Ejecutiva (Spec v1.8.2 §1.6 Nota v0 · D-01).
 - Emitir mensajes de error técnicos al usuario — siempre humano.
 - Modificar los escenarios E1/E2/E3 activos (son del pipeline PDF, no de IF-02).
 - Introducir sesiones de negocio en el cliente (state machine vive en Airtable).

@@ -41,7 +41,9 @@
       "mcp__airtable__list_records_for_table",
       "mcp__airtable__create_field",
       "mcp__airtable__get_table_schema",
-      "mcp__airtable__update_records_for_table"
+      "mcp__airtable__update_records_for_table",
+      "Bash(awk -F: '$1>2234 && $1<2526')",
+      "Bash(awk -F: '$1>3000')"
     ]
   },
   "enableAllProjectMcpServers": true,

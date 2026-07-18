@@ -1,10 +1,10 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.8 · Alineado a Capa de Datos v2.6.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026) · Re-auditoría `TX_Solicitudes` completa (13-jul-2026, ver §19) · Construcción RF-09: 5 campos nuevos + corrección `LogEscenarios` (13-jul-2026, ver §13.4/§13.5)
-> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02) + hallazgo `TX_Solicitudes.codigo_solicitud` (primary field) y llave de idempotencia `hash_md5` (10-jul-2026, Fase Adjuntos 1) + auditoría completa del dominio D_ y creación de `D_Atributo.version` + `D_Documento.extraccion_incompleta` (12-jul-2026, ver §18) + re-auditoría completa de campos reales de `TX_Solicitudes` vía `list_tables_for_base`/`get_table_schema` (13-jul-2026, ver §19)
+> **Versión**: 1.9 · Alineado a Capa de Datos v2.6.3 · Especificación v1.8.2 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026) · Re-auditoría `TX_Solicitudes` completa (13-jul-2026, ver §19) · Construcción RF-09: 5 campos nuevos + corrección `LogEscenarios` (13-jul-2026, ver §13.4/§13.5) · **Re-auditoría dominio D_ (17-jul-2026, ver §18): confirmado que la migración a 2 tablas + TX_Unidades ya se ejecutó en la base real — D_TipoDato/D_Catalogo/D_CatalogoValor/D_Atributo/D_Documento/D_DocumentoValorAtributo ya no existen**
+> **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02) + hallazgo `TX_Solicitudes.codigo_solicitud` (primary field) y llave de idempotencia `hash_md5` (10-jul-2026, Fase Adjuntos 1) + auditoría completa del dominio D_ y creación de `D_Atributo.version` + `D_Documento.extraccion_incompleta` (12-jul-2026, ver §18 histórico) + re-auditoría completa de campos reales de `TX_Solicitudes` vía `list_tables_for_base`/`get_table_schema` (13-jul-2026, ver §19) + re-auditoría dominio D_ vía MCP confirmando migración a 2 tablas + TX_Unidades (17-jul-2026, ver §18)
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
-> **Regla**: en código, preferir FIELD_ID (`fld…`) sobre nombre cuando haya riesgo de colisión o espacio extra. Si el FIELD_ID no está listado aquí, usar el nombre lógico de Capa Datos v2.6.2.
+> **Regla**: en código, preferir FIELD_ID (`fld…`) sobre nombre cuando haya riesgo de colisión o espacio extra. Si el FIELD_ID no está listado aquí, usar el nombre lógico de Capa Datos v2.6.3.
 
 ---
 
@@ -552,119 +552,111 @@ El token vive **exclusivamente** en la variable de entorno server-only `AIRTABLE
 
 ---
 
-## 18. Dominio D_ · Documentos paramétricos (auditado vía MCP 12-jul-2026, para RF-09)
+## 18. Dominio D_ · Documentos paramétricos (re-auditado vía MCP 17-jul-2026, alineado a Especificación v1.8.2)
 
-Séptimo dominio del modelo (Capa Datos v2.6.2 §6.7). Patrón EAV polimórfico tipado. **Independiente**: verificado vía MCP que ninguna de las 8 tablas tiene link record hacia M_, C_, TX_, A_, H_ o Z_ (RN-33 se cumple). Todas las tablas ya tienen datos semilla/referencia poblados (no son producción viva — nadie ha escrito ahí desde Next.js/Make todavía; RF-09 es quien lo hará).
+Séptimo dominio del modelo (Capa Datos v2.6.3 §6.7). **Migración de schema ya ejecutada en la base real**: las 6 tablas EAV que documentaba esta sección hasta el 12-jul-2026 (`D_TipoDato`, `D_Catalogo`, `D_CatalogoValor`, `D_Atributo`, `D_Documento`, `D_DocumentoValorAtributo`) **ya no existen** en `app9G7lLkIV3CpeLa` — confirmado vía `list_tables_for_base` el 17-jul-2026. El dominio D_ real tiene únicamente 2 tablas, más `TX_Unidades` como destino del enrutamiento por cardinalidad. **Independiente**: verificado que ninguna de las 2 tablas D_ tiene link record hacia M_, C_, TX_, A_, H_ o Z_ (RN-33 se cumple).
 
-| Tabla lógica | TABLE_ID | Filas (12-jul-2026) |
-|---|---|---|
-| `D_TipoDato` | `tble0Na4Neon7Vz3z` | 7 |
-| `D_Catalogo` | `tbljstH0ueFdiwgZX` | 11 |
-| `D_CatalogoValor` | `tbliFo74Rge2yBsZ5` | — (no auditado fila por fila) |
-| `D_TipoDocumento` | `tblkPhBnpdDmUWOl3` | 9 activas |
-| `D_Atributo` | `tblOI0Su3ogySNeHm` | 67 |
-| `D_TipoDocumentoAtributo` | `tbldI86ieVKpjpL7E` | 111 |
-| `D_Documento` | `tblbGI2g0md8x3wCC` | 10 (datos de 2 informes reales METLIFE-6280 Avila Duran y METLIFE-6283 Vergara Undurraga) |
-| `D_DocumentoValorAtributo` | `tblGcU6ZG7bf49mCO` | 92 |
+| Tabla lógica | TABLE_ID | Campos | Estado |
+|---|---|---|---|
+| `D_TipoDocumento` | `tblkPhBnpdDmUWOl3` | 7 | Vigente |
+| `D_TipoDocumentoAtributo` | `tbldI86ieVKpjpL7E` | 19 | Vigente — fuente única (antes relación N:M) |
+| `TX_Unidades` | `tbl2QDLvJDyy3Rg2I` | 16 | Vigente — nueva desde v1.6, ampliada v1.8 |
+| ~~`D_TipoDato`~~ | ~~`tble0Na4Neon7Vz3z`~~ | — | **Deprecada.** Ya no existe en la base real. Contenido consolidado como `singleSelect` en `D_TipoDocumentoAtributo.tipo_dato`. |
+| ~~`D_Catalogo`~~ | ~~`tbljstH0ueFdiwgZX`~~ | — | **Deprecada.** Ya no existe en la base real. |
+| ~~`D_CatalogoValor`~~ | ~~`tbliFo74Rge2yBsZ5`~~ | — | **Deprecada.** Ya no existe en la base real. |
+| ~~`D_Atributo`~~ | ~~`tblOI0Su3ogySNeHm`~~ | — | **Deprecada.** Ya no existe en la base real. Sus columnas se promovieron a `D_TipoDocumentoAtributo`. |
+| ~~`D_Documento`~~ | ~~`tblbGI2g0md8x3wCC`~~ | — | **Deprecada.** Ya no existe en la base real. Reemplazada por `TX_Adjuntos.atributos_obtenidos` (JSON). |
+| ~~`D_DocumentoValorAtributo`~~ | ~~`tblGcU6ZG7bf49mCO`~~ | — | **Deprecada.** Ya no existe en la base real. Reemplazada por `TX_Adjuntos.atributos_obtenidos` (JSON). |
 
-### D_TipoDato
-
-| Campo | FIELD_ID | Tipo Airtable |
-|---|---|---|
-| `codigo` | `fld8aoTEAzUQ94lv7` | Single line text |
-| `nombre` | `fldC6lbOM9e5QU7OT` | Single line text |
-| `descripcion` | `fldGTA4u7s58I5z09` | Long text |
-
-Valores reales poblados: `texto · numero_entero · numero_decimal · fecha · booleano · rut · catalogo` (7, coincide exacto con Capa Datos v2.6.2).
-
-### D_Catalogo / D_CatalogoValor
-
-`D_Catalogo` (`codigo` `fldQLqLLBbfojgo9S` · `nombre` `fldTTfV9dBAzHkf7W` · `descripcion` `fld9BavMrQOS07JgY`). 11 catálogos reales: `material_estructura · calidad_sii · tipo_obra · tipo_propiedad · comuna · estado_conservacion · estado_documento · zona_ubicacion · tipo_agrupamiento · color_sello_sec · destino_sii`.
-
-`D_CatalogoValor` (`codigo` `fldbdBt0hD6QWQcSP` · `catalogo` `fldpdkmJWKPptXcsX` Link → D_Catalogo · `valor` `fldvWFka6xS3HK5n0` · `orden` `fldjAhzuqQeQQsggA` · `activo` `fldRotIo0GpIsj6Uc`).
+Los TABLE_IDs deprecados se conservan tachados sólo para trazabilidad histórica de la migración (no reutilizar, no consultar — la API de Airtable devolverá error 404 si algún código todavía los referencia).
 
 ### D_TipoDocumento
 
 | Campo | FIELD_ID | Tipo Airtable |
 |---|---|---|
-| `codigo` | `fldmUdfw7C85mC4Yq` | Single line text (UQ) |
+| `codigo` | `fldmUdfw7C85mC4Yq` | Single line text (UQ, primary) |
 | `nombre` | `fldZFV4MViUpVzEz8` | Single line text |
 | `descripcion` | `fldU5qCEGXS1BvVFc` | Long text |
 | `entidad_emisora` | `fldVS6wwQj6Soy6Ze` | Single line text |
 | `vigencia_dias` | `fldJRNPgz6PWejZ81` | Number |
 | `activo` | `fldiSXRPd2mqgKOci` | Checkbox |
+| `D_TipoDocumentoAtributo` | `fldNsN343wkTRiEmD` | Link → D_TipoDocumentoAtributo (multipleRecordLinks) |
 
-Los 9 `codigo` activos coinciden 1:1 con los defaults de `nuevaSolicitudInternaDefaults` en `lib/schemas.ts` y con el checklist de `NewRequestSheet`: `certificado_recepcion_final · plano_cuadro_superficies · certificado_avaluo_fiscal · permiso_edificacion · certificado_deuda_tgr · informe_no_expropiacion_serviu · inscripcion_dominio_cbr · consulta_antecedentes_bien_raiz · sello_verde_sec`.
-
-### D_Atributo
-
-| Campo | FIELD_ID | Tipo Airtable |
-|---|---|---|
-| `codigo` | `fldsPSr4DuE8aHidf` | Single line text (UQ) |
-| `nombre` | `fldma4jDxIXUssG7f` | Single line text |
-| `descripcion` | `fldQXzIafQLpz0XKM` | Long text |
-| `tipo_dato` | `fldoPVhfLCkMRfVAw` | Link → D_TipoDato |
-| `catalogo` | `fldddTUMlInSq4OJl` | Link → D_Catalogo |
-| `unidad_medida` | `fldQooJOeHVF07YhA` | Single line text |
-| `patron_validacion` | `fldHjHU6nLTquvIkM` | Single line text |
-| `usado_motor_calculo` | `fldsNCE34vaUq45dp` | Checkbox |
-| `uso_interfaz_negocio` | `fldhUnsTjcjY4Jnqs` | Checkbox |
-| `ejemplo_atributo` | `fld4TmoH8f64A8Rom` | Single line text |
-| `uso_tabla_destino` | `fldymPEoX5yTNXuTm` | Single line text |
-| `uso_campo_destino` | `fldpjvQNI0Kpzn3Wv` | Single line text |
-| `version` | `fldVa989k1aO6gVXV` ✅ | Number (integer) | **Creado 12-jul-2026.** Faltaba — documentado en Capa Datos v2.6.2 como campo nuevo v8.1 para reproducibilidad histórica del prompt Claude, pero nunca creado en Airtable real. Sin valor poblado en las 67 filas existentes; RF-09 debe inicializarlo en 1 la primera vez que escriba cada atributo. |
+Los `codigo` activos deben coincidir con los defaults de `nuevaSolicitudInternaDefaults` en `lib/schemas.ts` y con el checklist de `NewRequestSheet`. Verificar contra la base real antes de asumir la lista de 9 documentada en versiones previas de este archivo — sin re-auditar fila por fila el 17-jul-2026.
 
 ### D_TipoDocumentoAtributo
 
+Fuente única desde v1.6 (blueprint v8.2). Ya no es una relación N:M — cada fila consolida la definición completa de un atributo para un tipo de documento, incluido el enrutamiento por cardinalidad. 19 campos reales, verificados vía MCP el 17-jul-2026:
+
 | Campo | FIELD_ID | Tipo Airtable |
 |---|---|---|
-| `codigo` | `fldUhfgFj18G0caux` | Single line text |
+| `codigo` | `fldUhfgFj18G0caux` | Single line text (primary) |
 | `tipo_documento` | `fldZXsrFr8HlsM70j` | Link → D_TipoDocumento |
-| `atributo` | `fldlPYqhzJGvxb5nL` | Link → D_Atributo |
+| `codigo_atributo` | `fldlPYqhzJGvxb5nL` | Single line text |
+| `nombre_atributo` | `fldUpC3x8x669P4LD` | Single line text |
+| `tipo_dato` | `fldtR5PXQARHkrNWG` | Single select (`number · text · date · boolean`) |
+| `unidad_medida` | `fldydHLPXI9TlDMcR` | Single line text |
 | `obligatorio` | `fldrySOzNz7iBhJ4K` | Checkbox |
 | `orden` | `fld8LT1GoIAxlxJdF` | Number |
 | `etiqueta_local` | `fld0Idiu35Grg7pjO` | Single line text |
 | `valor_por_defecto` | `fldkkeOf20GrGgBas` | Single line text |
+| `uso_interfaz_ejecutiva` | `fldlKzDTew6JUrb1K` | Checkbox |
+| `uso_interfaz_tasador` | `fldgK3ZcRdWgeswNL` | Checkbox |
+| `uso_interfaz_visador` | `fldYsBQU0mC4hY7Dg` | Checkbox |
+| `usado_motor_calculo` | `fldmtcnmcPTyyQv3u` | Checkbox |
+| `uso_tabla_destino` | `fldNJh73ocKS3AIrR` | Single line text |
+| `uso_campo_destino` | `fld8qt6J2vDHytiHL` | Single line text |
+| `ejemplo_atributo` | `fldga8TLbuYBCfjxo` | Single line text |
+| `uso_cardinalidad_destino` | `fldWQZyPiU2f47RHm` | Single select (`una_por_solicitud · una_por_unidad · muchas_por_solicitud · PENDIENTE_VALIDACION`) |
+| `uso_campo_link_unidad` | `fldJHASJBN6nYwupU` | Single line text |
 
-`codigo` sigue el patrón `<tipo_documento>__<atributo>` (ej. `permiso_edificacion__direccion`). 111 filas reales, todas con `tipo_documento`/`atributo` poblados.
+⚠ **Divergencia con la Especificación v1.8.2 §4**: el campo `uso_interfaz_negocio` que describe la Especificación **no existe** en la base real — coexisten 3 flags separados (`uso_interfaz_ejecutiva`, `uso_interfaz_tasador`, `uso_interfaz_visador`). Cualquier filtro que replique la semántica de "uso_interfaz_negocio" (Set B) debe usar el OR de los tres. Tampoco existe `version` (Number, snapshot de reproducibilidad — documentado en Capa Datos v2.6.3 pero no creado en Airtable real; ni `patron_validacion` ni un campo `catalogo_cerrado` dedicado — el `tipo_dato='catalogo'` no tiene contraparte real de opciones cerradas más allá del propio `singleSelect` de `tipo_dato`.
 
-### D_Documento
+`codigo` sigue el patrón `<tipo_documento>__<atributo>` (ej. `permiso_edificacion__direccion`). Un mismo `codigo_atributo` (ej. `rol_sii`) puede repetirse en varias filas si se reutiliza en distintos tipos de documento.
+
+### TX_Unidades (nueva v1.6, ampliada v1.8)
+
+Tabla transaccional que persiste una fila por unidad física del inmueble. Destino de los atributos con `uso_cardinalidad_destino = una_por_unidad`. 16 campos reales, verificados vía MCP el 17-jul-2026 (`tbl2QDLvJDyy3Rg2I`):
 
 | Campo | FIELD_ID | Tipo Airtable |
 |---|---|---|
-| `codigo_documento` | `fldIKM3dnfQ8jCBjc` | Single line text (UQ) |
-| `tipo_documento` | `fldt3LXQ2QmMKR4dm` | Link → D_TipoDocumento |
-| `nombre_archivo` | `fld1TSQxxudi9J7eI` | Single line text |
-| `ruta_archivo` | `fld5nHT8eVMuPjzAJ` | URL |
-| `fecha_emision` | `fldqAujLM63iqq6FT` | Date |
-| `fecha_carga` | `fldqE5hKaLYvg8xDx` | Date time |
-| `estado` | `fldUJdYCXggB7JiLn` | Single select (`vigente · vencido · observado · anulado`) |
-| `hash_archivo` | `fld0CeVfsRRZxmM0C` | Single line text |
-| `extraccion_incompleta` | `fldewUdLQOpVpSe7M` ✅ | Checkbox | **Creado 12-jul-2026.** Faltaba — adenda v2.6.2 (Especificación v1.4 §4.4, decisión D-3). TRUE cuando RF-09 produce al menos un atributo con valor null por fallo de extracción o baja confianza; no bloquea el guardado, la UI resalta los campos afectados. |
+| `clave_natural` | `fldehh0Qqzo8U6z5a` | Single line text (primary) |
+| `solicitud` | `fldmBd2bzOWjPX0eW` | Link → TX_Solicitudes |
+| `subtipo` | `fldNU8ee30AvvRWHZ` | Single select (`Departamento · Casa · Bodega · Estacionamiento · Terreno · Local · Terraza · Piscina · OO.CC. · Servidumbre`) |
+| `es_principal` | `flduvn0eU2lfG6RqR` | Checkbox |
+| `rol_sii` | `fldC5yUYC2wTTLJBV` | Single line text |
+| `sup_m2` | `fldZLvJKuXuWhRV8P` | Number |
+| `numero_unidad` | `fldJGXS8jGDKZDdWM` | Single line text |
+| `avaluo_uf` | `fld3fwTUt4GN8pYXf` | Number |
+| `orden` | `fld9iRM3hhCNNj4DJ` | Number |
+| `notas` | `fld08OmgUPgIWHyCk` | Long text |
+| `TX_Adjuntos` | `fld9RWDHlpeaUMguI` | Link → TX_Adjuntos |
+| `TX_ItemsCuadroValoracion` | `fldgZTZ4qMWHWbZc0` | Link → TX_ItemsCuadroValoracion |
+| `sup_terreno_m2` | `fld6lgF0KxUh9oPCB` | Number (v1.8) |
+| `tipo_material` | `fldnG1nEod0V1IkKZ` | Single select (v1.8: `madera · albanileria · hormigon · mixto · perfiles_metalicos`) |
+| `estado_unidad` | `fldIwZtnqbbnfF6Zx` | Single select (v1.8, RN-38: `nueva · usada`) |
+| `anio_construccion` | `fldM46x4ECE9B0pfM` | Number |
 
-### D_DocumentoValorAtributo
+Complementa — no reemplaza — a `TX_ItemsCuadroValoracion` (cuadro de valoración granular de IF-03/E1).
 
-| Campo | FIELD_ID | Tipo Airtable |
-|---|---|---|
-| `codigo` | `fldg8aX24cCQZgUMw` | Single line text |
-| `documento` | `fldysmZpM1rifUigK` | Link → D_Documento |
-| `tipo_documento_atributo` | `fldU249WyZE5rVCP2` | Link → D_TipoDocumentoAtributo |
-| `valor_texto` | `fldcIfYLXQVRQtvDi` | Long text |
-| `valor_numero` | `fldVwJDIZIDpf96s9` | Number (decimal) |
-| `valor_fecha` | `fldDbaBG4CqHfyLCJ` | Date |
-| `valor_booleano` | `fldsU5C0nTtg8Y5Zo` | Checkbox |
-| `catalogo_valor` | `fldma8qGnQMRqjB3j` | Link → D_CatalogoValor |
+### Persistencia del resultado de extracción: `TX_Adjuntos.atributos_obtenidos`
 
-RN-32 (validación EAV polimórfica): exactamente una de las 5 columnas de valor debe estar poblada, correspondiente al `tipo_dato` del atributo referenciado. No hay Airtable Automation `AT-D01` verificable desde el MCP (fuera de su alcance) — RF-09 debe respetar esta regla en el escritor (Airtable Script o Make), no asumir que Airtable la valida sola.
+Reemplaza al patrón EAV (`D_Documento` + `D_DocumentoValorAtributo`, ambas deprecadas). El JSON con los atributos extraídos (manual por la Ejecutiva o automático por Claude API vía RF-09) se guarda en `TX_Adjuntos.atributos_obtenidos` (`fldeCH15RrL8f4TZk`, Long text/JSON — ver §2). Desde ahí se propaga por `uso_cardinalidad_destino`: `una_por_solicitud` → `TX_DatosTasacion`; `una_por_unidad` → `TX_Unidades` (unidad resuelta por `uso_campo_link_unidad`).
 
-### Gaps cerrados en esta auditoría (12-jul-2026)
+RN-32 (vigente, redefinida v1.6): exactamente uno de los tipos de valor esperados por `tipo_dato` debe corresponder al valor persistido en el JSON para ese atributo. Ya no se valida vía Airtable Automation sobre una tabla EAV intermedia — el escritor (Airtable Script `AT03-Ext`, invocado desde el blueprint Make SC-RF09) es responsable de respetar el contrato de tipos al construir el JSON.
 
-| Tabla | Campo | FIELD_ID | Acción |
+### Estado del blueprint Make `SC-RF09-ExtraccionClaude` frente a este schema (17-jul-2026)
+
+⚠ El blueprint en `docs/make-blueprints/SC-RF09-ExtraccionClaude.blueprint.json` **todavía tiene 13 módulos** y sus módulos 5 y 6 (`airtable:ActionGetRecord`) **referencian los TABLE_IDs deprecados** `tblOI0Su3ogySNeHm` (D_Atributo) y `tble0Na4Neon7Vz3z` (D_TipoDato), que ya no existen en la base real. **Riesgo alto: la ejecución fallará al llegar al módulo 5.** Además, el prompt del módulo 10 tiene la cadena literal `"Atributos esperados: 7"` en vez de un valor dinámico. Ver nota en el propio archivo del blueprint y `docs/_notas/rf09_diseno.md`. Reconstrucción pendiente — no es un cambio de documentación, requiere sesión de construcción aparte.
+
+### Gaps cerrados en auditorías anteriores (12-jul-2026, sobre tablas hoy deprecadas)
+
+Contexto histórico únicamente — las tablas y FIELD_IDs de esta tabla ya no existen en la base real:
+
+| Tabla (deprecada) | Campo | FIELD_ID | Acción |
 |---|---|---|---|
-| `D_Atributo` | `version` | `fldVa989k1aO6gVXV` | Creado vía MCP, aprobado por Sergio |
-| `D_Documento` | `extraccion_incompleta` | `fldewUdLQOpVpSe7M` | Creado vía MCP, aprobado por Sergio |
-
-Ningún otro campo documentado en Capa Datos v2.6.2 §6.7 falta en el Airtable real — el resto del dominio D_ coincide exactamente entre documentación y schema real.
+| `D_Atributo` | `version` | `fldVa989k1aO6gVXV` | Creado vía MCP 12-jul-2026, luego consolidado en la migración a `D_TipoDocumentoAtributo` (el campo `version` no reapareció en la tabla consolidada — ver divergencia arriba) |
+| `D_Documento` | `extraccion_incompleta` | `fldewUdLQOpVpSe7M` | Creado vía MCP 12-jul-2026, tabla deprecada en la migración posterior |
 
 ---
 

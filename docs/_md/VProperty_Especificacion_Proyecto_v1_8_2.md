@@ -15,12 +15,23 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.4 · Julio 2026 · Incorporación del stack
-                      tecnológico real y del detalle funcional de v0 por
-                      interfaz (Ejecutiva, Tasador, Visador). Sucede a
-                      v1.3. Alineada a Arquitectura Enterprise v2.6, Capa
-                      de Datos v2.6.2, Motor de Cálculo v2.5 y Blueprint
-                      de Interfaces v2.8.
+  **Versión**         1.6 · Julio 2026 · Simplificación completa del
+                      dominio D\_ a solo dos tablas (D_TipoDocumento y
+                      D_TipoDocumentoAtributo). Persistencia del
+                      resultado de extracción en
+                      `TX_Adjuntos.atributos_obtenidos` (JSON) y
+                      enrutamiento por cardinalidad a TX_Unidades /
+                      TX_DatosTasacion. Catálogos cerrados
+                      implementados como singleSelects de Airtable
+                      directamente sobre D_TipoDocumentoAtributo.
+                      Patrón "NO REGISTRA" formalizado (RN-37).
+                      Corrige v1.5 (que sólo eliminó D_Atributo y
+                      D_TipoDato pero mantenía D_Documento,
+                      D_DocumentoValorAtributo, D_Catalogo y
+                      D_CatalogoValor). Sucede a v1.4. Alineada a
+                      Arquitectura Enterprise v2.6, Capa de Datos
+                      v2.6.3, Motor de Cálculo v2.5 y Blueprint de
+                      Interfaces v2.8.
 
   **Equipo redactor** Analista de Requerimientos Funcionales · Arquitecto
                       de Software Enterprise · Diseñador de Datos/BD ·
@@ -95,74 +106,112 @@ restricción regulatoria; SP-XX supuesto. La reestructuración v1.3 no
 re-numera ningún identificador; sólo lo reasigna a la sección temática
 que le corresponde bajo la nueva organización por interfaz.
 
-### **Cambios estructurales v1.3 → v1.4**
+### **Cambios estructurales v1.4 → v1.6**
 
   -------------------------------------------------------------------------
-  **Aspecto**         **v1.3 (anterior)**        **v1.4 (actual)**
+  **Aspecto**         **v1.4 (anterior)**        **v1.6 (actual)**
   ------------------- -------------------------- --------------------------
-  Estructura          Por Interfaz Operacional   Misma estructura por
-  principal           (§1\--3) con descripción   Interfaz. Se incorpora en
-                      textual del comportamiento las secciones 1--3 el
-                      v0.dev.                    detalle observado en las
-                                                 construcciones v0.dev
-                                                 (componentes UI,
-                                                 validaciones,
-                                                 comportamientos concretos)
-                                                 preservando los
-                                                 identificadores RF
-                                                 originales.
+  Dominio D\_         Ocho tablas: D_TipoDocu-   Dos tablas: D_TipoDocumento
+  (lectura de         mento, D_Atributo,         y D_TipoDocumentoAtributo.
+  documentos)         D_TipoDato,                Todo el modelo paramétrico
+                      D_TipoDocumentoAtributo,   se resuelve con estas dos.
+                      D_Catalogo, D_CatalogoVa-  Deprecadas (v8.2):
+                      lor, D_Documento,          D_Atributo, D_TipoDato,
+                      D_DocumentoValorAtributo.  D_Catalogo, D_CatalogoValor,
+                                                 D_Documento,
+                                                 D_DocumentoValorAtributo.
 
-  Secciones nuevas    N/A                        Sin secciones nuevas.
-                                                 §1.8, §2.7 y §3.7
-                                                 (Front-end · base v0.dev)
-                                                 se reescriben con el stack
-                                                 real medido en los
-                                                 repositorios v0 de las
-                                                 tres interfaces. §1.3,
-                                                 §1.5.1, §1.6, §2.5 y
-                                                 §3.3\--3.5 se enriquecen
-                                                 con los comportamientos
-                                                 funcionales concretos
-                                                 (chips, semáforos,
-                                                 contadores, matrices de
-                                                 permiso por estado,
-                                                 checklist de documentos,
-                                                 categorías de fotos,
-                                                 diálogos de
-                                                 aprobar/devolver/valor
-                                                 alternativo, envío por
-                                                 email con validación por
-                                                 dominio, etc.).
+  D_TipoDocumento-    Relación N:M entre         Fuente única. Consolida los
+  Atributo            D_TipoDocumento y          10 campos necesarios para
+                      D_Atributo (con            armar el prompt y enrutar
+                      obligatoriedad, etiqueta   el resultado:
+                      local y valor por          codigo_atributo,
+                      defecto).                  nombre_atributo, tipo_dato,
+                                                 unidad_medida, obligatorio,
+                                                 ejemplo_atributo,
+                                                 uso_tabla_destino,
+                                                 uso_campo_destino,
+                                                 uso_cardinalidad_destino,
+                                                 uso_campo_link_unidad.
 
-  Identificadores     50 RF, 22 RNF, 36 RN, 11   Mismos identificadores.
-                      RT, 8 RR, 12 SP (v1.3)     Cero renumeración. Cero
-                                                 pérdida de contenido. Sólo
-                                                 enriquecimiento de
-                                                 descripciones y
-                                                 actualización del stack.
+  Persistencia del    Se guardaba una fila en    El JSON con los atributos
+  resultado de        D_Documento por cada       extraídos se guarda en
+  extracción          documento y filas tipadas  `TX_Adjuntos.atributos_-
+                      en                         obtenidos` del mismo
+                      D_DocumentoValorAtributo   adjunto que originó la
+                      (patrón EAV polimórfico).  extracción. Desde ahí se
+                                                 propaga por cardinalidad a
+                                                 TX_DatosTasacion o
+                                                 TX_Unidades. No se
+                                                 mantienen filas
+                                                 intermedias en D\_.
 
-  Trazabilidad al     Sin cambios en el dominio  Sin cambios respecto de
-  dominio D\_         D\_ (RN-34 con flag        v1.3.
-                      uso_interfaz_negocio ya    
-                      vigente en v1.3).          
+  Catálogos cerrados  D_Catalogo + D_CatalogoVa- Los valores admitidos por
+                      lor administrados como     un atributo se declaran
+                      tablas.                    como opciones de un campo
+                                                 singleSelect de Airtable
+                                                 directamente en
+                                                 D_TipoDocumentoAtributo.
+                                                 Activar/desactivar valores
+                                                 se hace desde la propia
+                                                 columna sin tablas
+                                                 auxiliares.
 
-  Regla de            Explicitada en §4 (v1.3):  Sin cambios respecto de
-  identificación de   coincidencia con           v1.3. La lista de
-  documentos          D_TipoDocumentoAtributo.   documentos requeridos por
-                                                 la Ejecutiva se rige por
-                                                 el catálogo
-                                                 TIPOS_DOCUMENTO (entidad
-                                                 emisora + vigencia); la
-                                                 solicitud puede crearse
-                                                 sin adjuntar documentos y
-                                                 el botón Crear solicitud
-                                                 sólo se deshabilita si un
-                                                 documento marcado no tiene
-                                                 archivo (ver §1.5.1).
+  Enrutamiento por    No existía.                Cada atributo declara
+  cardinalidad                                   `uso_cardinalidad_destino`
+                                                 con dos valores:
+                                                 `una_por_solicitud` (una
+                                                 vez en TX_DatosTasacion) o
+                                                 `una_por_unidad` (una vez
+                                                 en TX_Unidades para la
+                                                 unidad ligada por
+                                                 `uso_campo_link_unidad`).
+                                                 Ejemplo validado (certifi-
+                                                 cado de avalúo fiscal):
+                                                 4 atributos a TX_Unidades,
+                                                 5 a TX_DatosTasacion.
 
-  Priorización de RF  Declarada en §9.1 (v1.3).  Sin cambios respecto de
-  residuales                                     v1.3.
+  Tabla nueva         TX_ItemsCuadroValoracion   Se incorpora TX_Unidades
+  TX_Unidades         cubría el detalle de       como tabla de datos por
+                      valorización granular.     unidad física del inmueble
+                                                 (Depto, Estac, Bodega,
+                                                 Casa) con campos rol_sii,
+                                                 sup_m2, sup_terreno_m2,
+                                                 avaluo_uf, anio_construccion,
+                                                 tipo_material,
+                                                 estado_unidad y notas.
+                                                 Es la tabla destino del
+                                                 patrón `una_por_unidad`.
+                                                 Complementa (no reemplaza)
+                                                 a TX_ItemsCuadroValoracion.
+
+  Patrón "NO          RF-29 documentaba          RF-29 se refuerza con
+  REGISTRA" (RN-37    saneamiento genérico       RN-37 (nueva), validada
+  nuevo)              (avalúo `NO REGISTRA` →    contra caso real HEV-3183
+                      null + flag                (Inmobiliaria Exequiel
+                      avaluo_no_registra).       Fernández Torre Tres SpA,
+                                                 recepción final 13-01-
+                                                 2026). El prompt de Claude
+                                                 API reconoce el patrón sin
+                                                 fallar; el texto crudo se
+                                                 preserva en
+                                                 `avaluo_total_raw`; el
+                                                 flag `avaluo_no_registra`
+                                                 se propaga a
+                                                 TX_DatosTasacion.
+
+  Identificadores     50 RF, 22 RNF, 36 RN, 11   Mismos RF/RNF/RT/RR/SP.
+                      RT, 8 RR, 12 SP (v1.4).    Se agrega RN-37 (patrón
+                                                 NO REGISTRA). Cero
+                                                 renumeración. Cero pérdida
+                                                 de contenido.
   -------------------------------------------------------------------------
+
+Nota sobre v1.5. La v1.5 (breve, superada por esta v1.6) solo eliminó
+D_Atributo y D_TipoDato del dominio D\_, dejando mencionadas
+D_Documento, D_DocumentoValorAtributo, D_Catalogo y D_CatalogoValor.
+v1.6 corrige esa omisión y consolida el dominio en las dos tablas que
+efectivamente existen en producción.
 
 ### **Nivel de detalle**
 
@@ -629,7 +678,9 @@ destino es el siguiente:
   **\#**   **Sección**           **Tabla destino**             **Campos representativos**
   -------- --------------------- ----------------------------- -------------------------------------
   1        Datos de la propiedad TX_DatosTasacion              sup_terreno, sup_construida,
-                                                               anio_construccion,
+                                                               anio_construccion (lookup desde
+                                                               TX_Unidades · unidad habitacional
+                                                               principal),
                                                                estado_conservacion,
                                                                agrupacion_propiedad,
                                                                material_predominante,
@@ -824,12 +875,14 @@ intentos.
                                   IF-03**            
   -------- ---------------------- ------------------ ---------------------------
   SC07     Extracción de          Upload documento   Extrae atributos según
-           documentos (Claude     en §2.5.1          D_Atributo, persiste en
-           API)                                      D_Documento +
-                                                     D_DocumentoValorAtributo, y
-                                                     opcionalmente distribuye a
-                                                     TX\_/M\_ (Set A y B, ver
-                                                     §4).
+           documentos (Claude     en §2.5.1          D_TipoDocumentoAtributo,
+           API)                                      guarda el JSON en
+                                                     TX_Adjuntos.atributos_-
+                                                     obtenidos y propaga por
+                                                     cardinalidad a
+                                                     TX_DatosTasacion o
+                                                     TX_Unidades (Set A y B,
+                                                     ver §4).
 
   AT03     Ejecutar DAG de        estado=capturada   Corre \~15 cálculos en
            fórmulas                                  orden topológico, escribe
@@ -910,7 +963,7 @@ TX_ObrasComplementarias, TX_Ampliaciones, TX_HabitacionesPorNivel,
 TX_TerminacionesPorRecinto, TX_Amenities, TX_DocumentosLegales,
 TX_Solicitudes (overrides), A_Cambios (en overrides). Tablas leídas:
 TX_Solicitudes, M_TiposPropiedad, M_Comunas, D_TipoDocumento,
-D_Atributo, D_TipoDocumentoAtributo. Reglas de negocio implicadas: RN-05
+D_TipoDocumentoAtributo. Reglas de negocio implicadas: RN-05
 a RN-14 (motor de cálculo), RN-21, RN-23, RN-38, RN-39, RN-42, RN-43.
 Ver §5 y §6 para el desarrollo de las reglas.
 
@@ -1194,31 +1247,52 @@ Airtable Script que distribuye los resultados a las tablas destino.
 
 Fuentes normativas para esta sección: el archivo
 blueprint-v8-1-generico.html (lógica de negocio del patrón, en cuatro
-paneles: Config D_Atributo, Set A Motor de Cálculo, Set B Interfaces del
-Negocio, Sistemas y Capas); VProperty_Origen_Datos_Informe v1.0
+paneles: Config D_Atributo --- reformulado desde v1.6 como Config
+D_TipoDocumentoAtributo ---, Set A Motor de Cálculo, Set B Interfaces
+del Negocio, Sistemas y Capas); VProperty_Origen_Datos_Informe v1.0
 (inventario del origen de los \~180 campos del informe); el dominio D\_
-(7 tablas del Diseño de Capa de Datos v2.6.2).
+(2 tablas desde v1.6 · Diseño de Capa de Datos v2.6.3).
 
 ## **4.1 Principio rector**
 
-Un solo modelo parametriza todo el poblamiento: la tabla D_Atributo
-junto con su relación con tipos de documento (D_TipoDocumentoAtributo)
-declaran qué se extrae de cada documento, con qué ejemplo se guía a
-Claude, y dónde se guarda el resultado. Cambiar el comportamiento del
-sistema equivale a editar filas en Airtable. Sin deploy. Este principio
-extiende RN-27 al dominio documental (paralelo declarado como RN-31 en
-la v1.2).
+Un solo modelo parametriza todo el poblamiento: la tabla
+D_TipoDocumentoAtributo declara qué se extrae de cada documento, con
+qué ejemplo se guía a Claude, dónde se guarda el resultado y con qué
+cardinalidad (una vez por solicitud, o una vez por unidad física del
+inmueble). Cambiar el comportamiento del sistema equivale a editar
+filas en Airtable. Sin deploy. Este principio extiende RN-27 al dominio
+documental (paralelo declarado como RN-31 en la v1.2).
+
+Consolidación v1.6 (blueprint v8.2 · SC-RF09). Todo el dominio D\_
+paramétrico documental se reduce a **dos tablas**: D_TipoDocumento
+(catálogo de tipos) y D_TipoDocumentoAtributo (definición de los
+atributos por tipo, con 10 campos consolidados). Los tres pasos previos
+---leer D_Atributo, leer D_TipoDato, cruzar con
+D_TipoDocumentoAtributo--- se reemplazan por una única lectura contra
+D_TipoDocumentoAtributo. Los campos que antes vivían en D_Atributo
+(nombre_atributo, tipo_dato, unidad_medida, obligatorio,
+ejemplo_atributo, uso_tabla_destino, uso_campo_destino) se promueven a
+columnas de D_TipoDocumentoAtributo, junto con dos campos nuevos que
+habilitan el enrutamiento por cardinalidad (uso_cardinalidad_destino,
+uso_campo_link_unidad). Los catálogos cerrados se implementan como
+columnas singleSelect de Airtable directamente en
+D_TipoDocumentoAtributo, reemplazando a D_Catalogo y D_CatalogoValor.
+El resultado de la extracción se guarda como JSON en
+`TX_Adjuntos.atributos_obtenidos`, reemplazando a D_Documento y
+D_DocumentoValorAtributo. Efecto medido en SC-RF09: el blueprint pasa
+de 13 a 11 módulos, sin llamadas extra por atributo. Ver §4.5.
 
 ## **4.2 Regla de identificación por coincidencia con D_TipoDocumentoAtributo**
 
 Todo documento o foto que ingresa al sistema (vía IF-01, IF-02 o IF-03)
 es identificado por su tipo mediante coincidencia con la tabla
-D_TipoDocumentoAtributo, que asocia atributos definidos en D_Atributo
-con tipos de documento en D_TipoDocumento. La regla es: el sistema no
-infiere el tipo, se declara. Puede declararse manualmente por el usuario
-al momento del upload (dropdown filtrado por D_TipoDocumento), o
-automáticamente si el flujo lo permite (por ejemplo, escenarios de
-reingreso a partir de un catálogo cerrado por cliente).
+D_TipoDocumentoAtributo, que declara los atributos aplicables por tipo
+de documento (referenciado desde D_TipoDocumento). La regla es: el
+sistema no infiere el tipo, se declara. Puede declararse manualmente
+por el usuario al momento del upload (dropdown filtrado por
+D_TipoDocumento), o automáticamente si el flujo lo permite (por
+ejemplo, escenarios de reingreso a partir de un catálogo cerrado por
+cliente).
 
   ---------------------------------------------------------------------------
   **RN-25**           **Regla de identificación del documento/foto por
@@ -1229,69 +1303,141 @@ reingreso a partir de un catálogo cerrado por cliente).
                       contexto de la interfaz.
 
   **Acción**          El sistema consulta D_TipoDocumentoAtributo filtrando
-                      por tipo_documento = el tipo declarado. Obtiene la
-                      lista de atributos aplicables. Genera el prompt
-                      versionado para Claude API inyectando ejemplo_atributo
-                      por cada campo, y persiste snapshot de version.
+                      por tipo_documento = el tipo declarado. Obtiene en una
+                      sola lectura la lista de atributos aplicables con sus
+                      10 campos consolidados (código, nombre, tipo_dato,
+                      unidad_medida, obligatorio, ejemplo_atributo,
+                      uso_tabla_destino, uso_campo_destino,
+                      uso_cardinalidad_destino, uso_campo_link_unidad).
+                      Genera el prompt versionado para Claude API
+                      inyectando ejemplo_atributo por cada campo, y persiste
+                      snapshot de version.
 
-  **Postcondición**   El documento tiene una fila en D_Documento con
-                      codigo_documento único; los atributos extraídos quedan
-                      en D_DocumentoValorAtributo con la columna tipada
-                      correcta (RN-32). Si el usuario declaró un tipo
-                      incorrecto, el reprocesamiento manual permite
-                      corregirlo.
+  **Postcondición**   El JSON con los atributos extraídos se persiste en
+                      `TX_Adjuntos.atributos_obtenidos` del mismo adjunto
+                      que originó la extracción, junto con el snapshot de
+                      version. Desde ahí se enrutan a las tablas de negocio
+                      según `uso_cardinalidad_destino`: los atributos
+                      `una_por_solicitud` escriben en TX_DatosTasacion
+                      (una fila por solicitud); los atributos
+                      `una_por_unidad` escriben en TX_Unidades usando
+                      `uso_campo_link_unidad` para resolver la unidad
+                      destino. Si el usuario declaró un tipo incorrecto,
+                      el reprocesamiento manual permite corregirlo.
 
-  **Trazabilidad**    Blueprint v8.1 · Panel Config D_Atributo. Extendida en
-                      RN-31/RN-32/RN-33 y complementada por RN-34/RN-35/RN-36
-                      de trazabilidad manual.
+  **Trazabilidad**    Blueprint v8.2 · SC-RF09 (11 módulos, fuente única
+                      D_TipoDocumentoAtributo). Extendida en
+                      RN-31/RN-32/RN-33 y complementada por
+                      RN-34/RN-35/RN-36 (trazabilidad manual) y RN-37
+                      (patrón NO REGISTRA).
   ---------------------------------------------------------------------------
 
 ## **4.3 Set A · Datos para el motor de cálculo**
 
-D_Atributo filtra por usado_motor_calculo=true. Los atributos extraídos
-por Claude API se distribuyen a TX_DatosTasacion, TX_Solicitudes,
-TX_DocumentosLegales o al alias correspondiente indicado en
-uso_tabla_destino y uso_campo_destino (RN-35 · trazabilidad textual, sin
-FK).
+D_TipoDocumentoAtributo filtra por usado_motor_calculo=true. Los
+atributos extraídos por Claude API se distribuyen a TX_DatosTasacion,
+TX_Unidades, TX_Solicitudes, TX_DocumentosLegales o al alias
+correspondiente indicado en `uso_tabla_destino` y `uso_campo_destino`
+(RN-35 · trazabilidad textual, sin FK). La decisión de tabla destino
+por atributo la toma el router del script AT03-Ext según
+`uso_cardinalidad_destino`.
 
   ---------------------------------------------------------------------------------------
   **Sub-paso**   **Componente**    **Insumo**                 **Salida**
   -------------- ----------------- -------------------------- ---------------------------
-  1.1 Lectura A  Make SC07 →       PDF/imagen + prompt con    JSON con {atributo_id,
-                 Claude API        ejemplo_atributo por cada  valor_extraido, confianza}.
-                                   fila filtrada por          
+  1.1 Lectura A  Make SC07         PDF/imagen + prompt con    JSON con {atributo_id,
+                 (SC-RF09.json) →  ejemplo_atributo por cada  valor_extraido, confianza}.
+                 Claude API        fila filtrada por          
                                    usado_motor_calculo=true   
 
-  1.2 Guardado A Airtable Script   JSON de 1.1 +              Fila en D_Documento +
-                 AT03-Ext          uso_tabla_destino +        D_DocumentoValorAtributo;
-                                   uso_campo_destino +        opcionalmente propagación a
-                                   version snapshot           TX_DatosTasacion vía
-                                                              escritura idempotente.
+  1.2 Guardado A Airtable Script   JSON de 1.1 +              JSON persistido en
+                 AT03-Ext          uso_tabla_destino +        TX_Adjuntos.atributos_-
+                                   uso_campo_destino +        obtenidos; propagación por
+                                   uso_cardinalidad_destino + cardinalidad:
+                                   uso_campo_link_unidad +    una_por_solicitud →
+                                   version snapshot           TX_DatosTasacion;
+                                                              una_por_unidad → TX_Unidades
+                                                              (unidad resuelta por
+                                                              uso_campo_link_unidad).
   ---------------------------------------------------------------------------------------
+
+### **4.3.1 Enrutamiento por cardinalidad (ejemplo validado con certificado de avalúo fiscal)**
+
+Un certificado de avalúo fiscal declara 9 atributos en
+D_TipoDocumentoAtributo. Los cuatro primeros son datos que pertenecen a
+una unidad específica (rol_sii, sup_m2, avaluo_total, anio_construccion)
+y por lo tanto escriben en TX_Unidades una fila por unidad ligada. Los
+cinco restantes son datos que pertenecen a la solicitud (destino_sii,
+material_predominante, calidad_sii, avaluo_exento, contribucion_anual)
+y escriben en TX_DatosTasacion una sola vez. El campo
+`uso_campo_link_unidad` (por ejemplo, TX_Unidades.rol_sii) resuelve la
+unidad destino cuando un mismo tipo de documento se sube dos veces
+(una por unidad: uno para el depto y otro para el estacionamiento).
+
+### **4.3.2 Segundo ejemplo validado con foto_fuente_sii (propiedades usadas)**
+
+Cuando la propiedad es usada, la fuente primaria de datos catastrales
+no es el certificado de avalúo emitido por SII directamente, sino la
+consulta a la base interna del SII (avalúo catastral detallado) que se
+obtiene ingresando comuna + rol. El resultado se registra como una foto
+del sistema y se sube al flujo como tipo de documento `foto_fuente_sii`.
+Este documento declara 4 atributos en D_TipoDocumentoAtributo, los
+cuatro con cardinalidad `una_por_unidad` (TX_Unidades):
+
+- `sup_terreno_m2` → superficie de terreno en m² (por unidad ligada).
+- `sup_m2` → superficie construida en m² (mismo campo que usa el
+  certificado de avalúo fiscal).
+- `tipo_material` → material predominante de la unidad
+  (madera / albañilería / hormigón / mixto / perfiles_metalicos).
+- `anio_construccion` → año de construcción de la línea habitacional
+  principal.
+
+Excepción operativa (RN-38): cuando la propiedad es nueva y aún no fue
+cargada al SII (recepcionada hace menos de ~6 meses), la fuente cambia
+a la ficha o carta oferta de la inmobiliaria. En ese caso el tipo de
+documento aplicable es `FICHA_INMOBILIARIA_NUEVA` (a definir en
+D_TipoDocumento) y no `foto_fuente_sii`. La condición nueva/usada se
+resuelve por unidad mediante el campo `estado_unidad` de TX_Unidades.
+
+### **4.3.3 Campo estado_unidad en TX_Unidades**
+
+TX_Unidades incorpora el campo `estado_unidad` con dominio
+{nueva, usada}. Se puebla al momento de crear la unidad (por la
+Ejecutiva en IF-02 o por el flujo automático de reingreso). Determina
+qué tipo de documento aplica para poblar los atributos catastrales de
+esa unidad: si `estado_unidad = usada`, el sistema espera
+`foto_fuente_sii`; si `estado_unidad = nueva`, espera
+`FICHA_INMOBILIARIA_NUEVA`. La regla se formaliza en RN-38.
 
 ## **4.4 Set B · Datos para las interfaces del negocio**
 
-D_Atributo filtra por uso_interfaz_negocio=true (renombrado desde
-uso_interfaz_tasador para reflejar vocación transversal · Blueprint
-v8.1). Un atributo puede pertenecer a Set A, Set B, o ambos --- son
-independientes.
+D_TipoDocumentoAtributo filtra por uso_interfaz_negocio=true
+(renombrado desde uso_interfaz_tasador para reflejar vocación
+transversal · Blueprint v8.1). Un atributo puede pertenecer a Set A,
+Set B, o ambos --- son independientes. El enrutamiento por cardinalidad
+descrito en §4.3.1 aplica igual.
 
   ----------------------------------------------------------------------------------------
   **Sub-paso**   **Componente**    **Insumo**                  **Salida**
   -------------- ----------------- --------------------------- ---------------------------
-  1.3 Lectura B  Make SC07 →       PDF/imagen + prompt con     JSON con {atributo_id,
-                 Claude API        ejemplo_atributo por cada   valor_extraido, confianza}.
-                                   fila filtrada por           
+  1.3 Lectura B  Make SC07         PDF/imagen + prompt con     JSON con {atributo_id,
+                 (SC-RF09.json) →  ejemplo_atributo por cada   valor_extraido, confianza}.
+                 Claude API        fila filtrada por           
                                    uso_interfaz_negocio=true   
 
-  1.4 Guardado B Airtable Script   JSON de 1.3 +               Fila en D_Documento +
-                 AT03-Ext          uso_tabla_destino +         D_DocumentoValorAtributo;
-                                   uso_campo_destino + version opcionalmente propagación a
-                                   snapshot                    la tabla de negocio
-                                                               indicada.
+  1.4 Guardado B Airtable Script   JSON de 1.3 +               JSON persistido en
+                 AT03-Ext          uso_tabla_destino +         TX_Adjuntos.atributos_-
+                                   uso_campo_destino +         obtenidos; propagación por
+                                   uso_cardinalidad_destino +  cardinalidad
+                                   uso_campo_link_unidad +     (TX_DatosTasacion o
+                                   version snapshot            TX_Unidades) según §4.3.1.
   ----------------------------------------------------------------------------------------
 
-## **4.5 Cambios v8.1 respecto a versiones anteriores**
+## **4.5 Cambios v8.1 y v8.2 respecto a versiones anteriores**
+
+Los cambios v8.1 (renombre, versionado, ejemplo real) siguen vigentes.
+Los cambios v8.2 (consolidación en una sola tabla, enrutamiento por
+cardinalidad) los reemplazan operativamente sin invalidarlos.
 
   -----------------------------------------------------------------------
   **Cambio**              **Descripción**
@@ -1299,21 +1445,102 @@ independientes.
   Renombre                Refleja la vocación transversal del patrón
   uso_interfaz_tasador →  (aplicable a cualquier IF que reciba
   uso_interfaz_negocio    documentos, no sólo la del tasador). Requiere
-                          migración de datos y actualización de scripts.
-                          Documentado en RN-34 revisado.
+  (v8.1) — REVERTIDO en   migración de datos y actualización de scripts.
+  Blueprint v3            Documentado en RN-34 revisado.
+  (16-jul-2026)           NOTA v1.8.2: la base Airtable real
+                          (verificada 17-jul-2026, base
+                          app9G7lLkIV3CpeLa) NO tiene
+                          `uso_interfaz_negocio`. En su lugar coexisten
+                          tres flags separados en
+                          D_TipoDocumentoAtributo:
+                          `uso_interfaz_ejecutiva`,
+                          `uso_interfaz_tasador`,
+                          `uso_interfaz_visador`. Cualquier filtro debe
+                          usar los tres (OR) para replicar la
+                          semántica original de "uso_interfaz_negocio".
 
-  Nuevo campo             Cada ejecución guarda un snapshot con la
-  D_Atributo.version      version usada, permitiendo reproducir el mismo
-                          prompt años después aunque D_Atributo haya
-                          evolucionado. Paralelo directo a la regla RN-28
-                          del motor de cálculo (reproducibilidad
-                          histórica).
+  Nuevo campo version     Cada ejecución guarda un snapshot con la
+  (v8.1)                  version usada, permitiendo reproducir el mismo
+                          prompt años después aunque el catálogo haya
+                          evolucionado. Paralelo directo a RN-28.
 
-  Ejemplo real de fila    El campo ejemplo_atributo se puebla con
-  D_Atributo              literales de los seis informes reales del
+  Ejemplo real (v8.1)     El campo ejemplo_atributo se puebla con
+                          literales de los seis informes reales del
                           cliente. Regla RN-36 vigente: si no hay
                           evidencia trazable, se persiste
                           PENDIENTE_VALIDACION.
+
+  Consolidación en dos    Todo el dominio D\_ paramétrico documental se
+  tablas (v8.2)           reduce a D_TipoDocumento y
+                          D_TipoDocumentoAtributo. Sus columnas
+                          (nombre_atributo, tipo_dato, unidad_medida,
+                          obligatorio, ejemplo_atributo,
+                          uso_tabla_destino, uso_campo_destino) se
+                          promueven a columnas de
+                          D_TipoDocumentoAtributo. Deprecadas: D_Atributo,
+                          D_TipoDato (contenido consolidado), D_Documento
+                          y D_DocumentoValorAtributo (resultado
+                          persistido como JSON en
+                          `TX_Adjuntos.atributos_obtenidos`), D_Catalogo
+                          y D_CatalogoValor (reemplazadas por
+                          singleSelects de Airtable directamente sobre
+                          D_TipoDocumentoAtributo). La lectura pasa de
+                          tres tablas (con joins) a una sola.
+                          Trazabilidad: SC-RF09 blueprint pasa de 13 a
+                          11 módulos.
+                          NOTA v1.8.2: la versión del blueprint
+                          SC-RF09-ExtraccionClaude verificada
+                          (17-jul-2026) sigue con 13 módulos y AÚN
+                          referencia las tablas deprecadas
+                          `D_Atributo` (tblOI0Su3ogySNeHm) y
+                          `D_TipoDato` (tble0Na4Neon7Vz3z), que no
+                          existen en la base real. Estado: pendiente
+                          de migración. Riesgo alto: la ejecución
+                          fallará al llegar al módulo 5. Además, el
+                          prompt al módulo 10 tiene la cadena literal
+                          "Atributos esperados: 7" en vez del
+                          aggregator dinámico del módulo 7
+                          (corregido en blueprint v2 entregado
+                          17-jul-2026).
+
+  Enrutamiento por        Se agregan dos campos nuevos en
+  cardinalidad (v8.2)     D_TipoDocumentoAtributo:
+                          `uso_cardinalidad_destino` con dominio
+                          {una_por_solicitud, una_por_unidad}, y
+                          `uso_campo_link_unidad` (texto libre, ej.
+                          "TX_Unidades.rol_sii") para resolver la
+                          unidad destino cuando aplica. El script
+                          AT03-Ext usa estos dos campos para decidir
+                          entre TX_DatosTasacion y TX_Unidades.
+
+  Patrón "NO REGISTRA"    Formalizado en RN-37. Cuando un inmueble
+  (v8.2)                  nuevo no tiene ingreso al SII, los
+                          certificados de avalúo contienen "NO
+                          REGISTRA" en los montos. El prompt debe
+                          reconocer el patrón sin fallar, el texto
+                          crudo se preserva en `avaluo_total_raw`, y el
+                          flag `avaluo_no_registra=TRUE` se propaga a
+                          TX_DatosTasacion. Validado con HEV-3183.
+
+  Verificación contra     IDs reales confirmados en la base
+  base real (v8.3 ·       app9G7lLkIV3CpeLa (17-jul-2026):
+  17-jul-2026)              · D_TipoDocumento = tblkPhBnpdDmUWOl3
+                            · D_TipoDocumentoAtributo = tbldI86ieVKpjpL7E
+                            · TX_Adjuntos = tblur71x1oItbmKZc
+                            · TX_Solicitudes = tblaHTyMHYfmy7Fg6
+                            · TX_Unidades = tbl2QDLvJDyy3Rg2I
+                            · TX_DatosTasacion = tblMoK3mFuwN8Yr1A
+                          Campos destino en TX_Unidades usados por
+                          `foto_fuente_sii` (§4.3.2):
+                            · rol_sii = fldC5yUYC2wTTLJBV
+                            · sup_terreno_m2 = fld6lgF0KxUh9oPCB
+                            · sup_m2 = fldZLvJKuXuWhRV8P
+                            · tipo_material = fldnG1nEod0V1IkKZ
+                            · anio_construccion = fldM46x4ECE9B0pfM
+                            · estado_unidad = fldIwZtnqbbnfF6Zx
+                          Prueba end-to-end validada 17-jul-2026 con
+                          rol_sii=31-516 (fila
+                          recXnqSgEazCl0nwF).
   -----------------------------------------------------------------------
 
 Requisitos funcionales asociados: RF-44 a RF-50 (dominio D\_)
@@ -1334,22 +1561,31 @@ Se listan aquí para navegación; el enunciado completo
   RN-33    Desacople estricto del dominio D\_ (cero FK con
            M\_/C\_/TX\_/A\_/H\_/Z\_)
 
-  RN-34    Trazabilidad D_Atributo ↔ Interfaz (uso_interfaz_negocio) ---
-           revisada v1.3
+  RN-34    Trazabilidad atributo ↔ Interfaz (uso_interfaz_negocio) ---
+           revisada v1.3, campo ahora en D_TipoDocumentoAtributo (v1.6)
 
-  RN-35    Trazabilidad manual D_Atributo → TX\_/M\_ (uso_tabla_destino,
-           uso_campo_destino)
+  RN-35    Trazabilidad manual atributo → TX\_/M\_ (uso_tabla_destino,
+           uso_campo_destino, uso_cardinalidad_destino,
+           uso_campo_link_unidad)
 
   RN-36    Documentación viva de ejemplo (ejemplo_atributo con cero
            fabricación)
+
+  RN-37    Patrón "NO REGISTRA" para inmueble nuevo sin registro SII
+           (nuevo v1.6)
   ------------------------------------------------------------------------
 
-Dependencias y entidades (Sección 4). Tablas escritas: D_Documento,
-D_DocumentoValorAtributo, TX_DatosTasacion (Set A propagado), y otras
-tablas destino según uso_tabla_destino. Tablas leídas: D_TipoDocumento,
-D_Atributo, D_TipoDocumentoAtributo, D_Catalogo, D_CatalogoValor,
-D_TipoDato. Regla activa: RN-25, RN-31, RN-32, RN-33, RN-34 (revisada),
-RN-35, RN-36.
+Dependencias y entidades (Sección 4). Tablas escritas:
+TX_Adjuntos.atributos_obtenidos (JSON del resultado + snapshot de
+version), TX_DatosTasacion (atributos `una_por_solicitud`), TX_Unidades
+(atributos `una_por_unidad`) y otras tablas destino según
+uso_tabla_destino. Tablas leídas: D_TipoDocumento, D_TipoDocumentoAtributo
+(las dos únicas tablas del dominio D\_ desde v1.6). Tablas deprecadas
+(v8.2): D_Atributo, D_TipoDato, D_Documento, D_DocumentoValorAtributo,
+D_Catalogo, D_CatalogoValor (los catálogos se implementan como
+singleSelects de Airtable directamente sobre D_TipoDocumentoAtributo).
+Regla activa: RN-25, RN-31, RN-32, RN-33, RN-34 (revisada),
+RN-35 (extendida), RN-36, RN-37 (nueva).
 
 # **5. Parametrización de Reglas de Negocio**
 
@@ -1511,40 +1747,56 @@ configuración por completitud del inventario.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
-  **RF-45**         **Definición de atributos reutilizables (IF-14)**
+  **RF-45**         **Definición de atributos (IF-14)**
   ----------------- -------------------------------------------------------
   **Descripción**   El administrador debe poder definir atributos
-                    reutilizables (D_Atributo) con tipo de dato, catálogo
-                    asociado (si aplica), unidad de medida y patrón de
-                    validación. Incluye version (v8.1) para
+                    directamente en D_TipoDocumentoAtributo (fuente única
+                    desde v8.2): código, nombre, tipo de dato, catálogo
+                    asociado (si aplica), unidad de medida, patrón de
+                    validación, `ejemplo_atributo`, `uso_tabla_destino`,
+                    `uso_campo_destino`, `uso_cardinalidad_destino`,
+                    `uso_campo_link_unidad`, y `version` para
                     reproducibilidad histórica.
 
-  **Criterio de     Un atributo se reutiliza en N tipos de documento
-  aceptación**      mediante D_TipoDocumentoAtributo sin duplicación.
+  **Criterio de     Un atributo definido para un tipo de documento se
+  aceptación**      captura, se extrae y se enruta sin joins ni tablas
+                    intermedias. Un mismo código de atributo (ej.
+                    `rol_sii`) puede aparecer en varias filas de
+                    D_TipoDocumentoAtributo si se usa en varios tipos de
+                    documento, con el ejemplo y destino adecuados en cada
+                    caso.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
   **RF-46**         **Asociación tipo de documento ↔ atributo (IF-14)**
   ----------------- -------------------------------------------------------
   **Descripción**   El sistema debe permitir asociar atributos a tipos de
-                    documento (D_TipoDocumentoAtributo) marcando
-                    obligatoriedad, orden de presentación, etiqueta local y
-                    valor por defecto.
+                    documento en D_TipoDocumentoAtributo marcando
+                    obligatoriedad, orden de presentación, etiqueta local,
+                    valor por defecto, cardinalidad de destino
+                    (`una_por_solicitud` / `una_por_unidad`) y campo de
+                    enlace a la unidad cuando aplica.
 
-  **Criterio de     Cambiar la obligatoriedad u orden no requiere
-  aceptación**      despliegue.
+  **Criterio de     Cambiar la obligatoriedad, el orden o la cardinalidad
+  aceptación**      de destino no requiere despliegue. Cambiar un atributo
+                    de `una_por_solicitud` a `una_por_unidad` (o viceversa)
+                    sólo requiere editar la fila correspondiente.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
   **RF-47**         **Catálogos cerrados administrables (IF-14)**
   ----------------- -------------------------------------------------------
-  **Descripción**   El administrador debe poder mantener catálogos cerrados
-                    (D_Catalogo, D_CatalogoValor) usados por atributos de
-                    tipo catálogo, agregando o desactivando valores sin
-                    DDL.
+  **Descripción**   Los atributos de tipo catálogo cerrado se administran
+                    como columnas singleSelect de Airtable directamente
+                    sobre D_TipoDocumentoAtributo (v1.6). El administrador
+                    puede agregar o desactivar opciones desde la propia
+                    definición del atributo, sin tablas auxiliares
+                    (D_Catalogo y D_CatalogoValor fueron deprecadas).
 
-  **Criterio de     Un valor desactivado deja de ofrecerse en captura pero
-  aceptación**      sigue siendo válido en documentos históricos.
+  **Criterio de     Un valor desactivado deja de ofrecerse en captura
+  aceptación**      nueva pero sigue siendo válido en documentos
+                    históricos que ya lo contenían (Airtable conserva
+                    valores fuera del enum vigente).
   -------------------------------------------------------------------------
 
 Requisitos de captura por la Ejecutiva (IF-15) especificados en §1.5.1 y
@@ -1572,9 +1824,12 @@ C_Formulas, C_SLA, C_NotificacionesConfig, C_PreciosUnitarios,
 C_VidaUtil, C_Factores, C_FactoresHomogeneizacion, C_TramosHonorarios,
 C_TramosBienComun, C_Plantillas, C_VariablesCliente, C_Workflows,
 M_Clientes, M_Tasadores, M_Visadores, M_Comunas, M_TiposInforme,
-M_TiposPropiedad, M_Bancos, M_Productos, D_TipoDocumento, D_Atributo,
-D_TipoDocumentoAtributo, D_Catalogo, D_CatalogoValor, D_TipoDato,
-A_DecisionesMotor, A_Cambios.
+M_TiposPropiedad, M_Bancos, M_Productos, D_TipoDocumento,
+D_TipoDocumentoAtributo, A_DecisionesMotor, A_Cambios. Deprecadas desde
+v1.6: D_Atributo, D_TipoDato (consolidadas en D_TipoDocumentoAtributo),
+D_Catalogo, D_CatalogoValor (reemplazadas por singleSelects de
+Airtable), D_Documento, D_DocumentoValorAtributo (reemplazadas por
+`TX_Adjuntos.atributos_obtenidos`).
 
 # **6. Motor de Cálculo**
 
@@ -1654,17 +1909,26 @@ TX_Calculos con snapshot inmutable de version y expresion.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
-  **RF-29**         **Capa de saneamiento previo**
+  **RF-29**         **Capa de saneamiento previo (patrón "NO REGISTRA" ·
+                    RN-37)**
   ----------------- -------------------------------------------------------
   **Descripción**   Antes de ejecutar fórmulas numéricas, una capa de
-                    saneamiento normaliza valores no-numéricos: avalúo \'NO
-                    REGISTRA\' → null + flag avaluo_no_registra; RUT
-                    propietario 0 → null + flag rut_no_disponible.
+                    saneamiento normaliza valores no-numéricos que
+                    provienen de documentos legítimamente incompletos:
+                    avalúo \'NO REGISTRA\' → null + flag
+                    `avaluo_no_registra=TRUE`; RUT propietario 0 → null +
+                    flag `rut_no_disponible`. El prompt de Claude API
+                    (RN-25) debe reconocer explícitamente el literal "NO
+                    REGISTRA" (con y sin tildes, mayúsculas o minúsculas)
+                    como valor válido, no como error de extracción.
 
   **Criterio de     Un caso con avalúo \'NO REGISTRA\' no aborta el flujo;
   aceptación**      el cálculo procede usando null y el visador ve el flag
                     en pantalla. El campo crudo se conserva en
-                    avaluo_total_raw.
+                    `avaluo_total_raw`. Caso de referencia validado:
+                    HEV-3183 (Inmobiliaria Exequiel Fernández Torre Tres
+                    SpA, recepción final N°27 del 13-01-2026), inmueble
+                    nuevo sin ingreso al SII al momento de la tasación.
   -------------------------------------------------------------------------
 
 ## **6.4 Anti-patrones explícitamente prohibidos**
@@ -1993,10 +2257,11 @@ Airtable.
   --------------------------------------------------------------------------
 
 Notas de diseño: el campo tipo_adjunto es un Select tipado con enum
-acotado para agilidad operativa; cuando el tipo requiere metadata
-paramétrica (por ejemplo, atributos definidos en D_Atributo), se
-registra una referencia a D_Documento (por codigo_documento) sin crear
-FK cruzada --- el desacople de RN-33 se preserva. El hash_md5 evita
+acotado para agilidad operativa; cuando el tipo tiene atributos
+declarados en D_TipoDocumentoAtributo, el resultado de la extracción
+(RN-25 · SC07) se guarda como JSON en el propio adjunto en el campo
+`atributos_obtenidos`, evitando tablas intermedias en el dominio D\_ y
+preservando el desacople de RN-33 (cero FK cruzada). El hash_md5 evita
 almacenar duplicados; si un mismo usuario intenta subir dos veces el
 mismo binario, el sistema reconoce el hash y linkea a la fila existente.
 
@@ -2286,37 +2551,46 @@ explicita el rango en cada RF de esta sección.
   **RF-48**         **Captura de documentos por la ejecutiva (IF-15)**
   ----------------- -------------------------------------------------------
   **Descripción**   La ejecutiva debe poder cargar instancias de documento
-                    (D_Documento) seleccionando un tipo y completando los
-                    atributos definidos para ese tipo
-                    (D_DocumentoValorAtributo). Los campos obligatorios
-                    bloquean el guardado; los opcionales pueden quedar
-                    vacíos.
+                    seleccionando un tipo (D_TipoDocumento) y completando
+                    los atributos declarados para ese tipo en
+                    D_TipoDocumentoAtributo. El adjunto se persiste en
+                    TX_Adjuntos y los valores capturados quedan en
+                    `TX_Adjuntos.atributos_obtenidos` (JSON) junto con los
+                    valores que después extraiga Claude API. Los campos
+                    obligatorios bloquean el guardado; los opcionales
+                    pueden quedar vacíos.
 
   **Criterio de     El formulario de captura se construye dinámicamente a
   aceptación**      partir del tipo elegido, sin pantallas hard-codeadas.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
-  **RF-49**         **Patrón EAV polimórfico tipado**
+  **RF-49**         **Persistencia tipada del resultado de extracción
+                    (JSON en TX_Adjuntos)**
   ----------------- -------------------------------------------------------
-  **Descripción**   El valor de cada atributo se persiste en
-                    D_DocumentoValorAtributo en una única columna según su
-                    tipo de dato (valor_texto, valor_numero, valor_fecha,
-                    valor_booleano o id_catalogo_valor). El sistema debe
-                    rechazar valores en columnas que no correspondan al
-                    tipo del atributo.
+  **Descripción**   El resultado de la captura (manual por la Ejecutiva) o
+                    de la extracción (automática por Claude API) se
+                    persiste como JSON en `TX_Adjuntos.atributos_obtenidos`,
+                    con el `tipo_dato` declarado en D_TipoDocumentoAtributo
+                    como contrato de validación. El sistema debe rechazar
+                    valores cuyo tipo no corresponda al `tipo_dato`
+                    esperado por el atributo.
 
-  **Criterio de     Query de auditoría devuelve cero inconsistencias entre
-  aceptación**      tipo_dato esperado y columna poblada.
+  **Criterio de     Query de auditoría (por ejemplo, un JSON schema
+  aceptación**      validator sobre el JSON) devuelve cero inconsistencias
+                    entre `tipo_dato` esperado y valor guardado. Sustituye
+                    al patrón EAV polimórfico de v1.2/v1.4, que requería
+                    D_DocumentoValorAtributo.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
   **RF-50**         **Independencia del dominio de tasaciones**
   ----------------- -------------------------------------------------------
-  **Descripción**   Las 8 tablas D\_ no contienen ningún link record hacia
-                    M\_, C\_, TX\_, A\_, H\_ o Z\_. El dominio puede
-                    operar, exportarse o migrarse sin tocar el resto del
-                    sistema.
+  **Descripción**   Las 2 tablas D\_ (D_TipoDocumento y
+                    D_TipoDocumentoAtributo, únicas del dominio desde
+                    v1.6) no contienen ningún link record hacia M\_, C\_,
+                    TX\_, A\_, H\_ o Z\_. El dominio puede operar,
+                    exportarse o migrarse sin tocar el resto del sistema.
 
   **Criterio de     Revisión de schema demuestra cero FK cruzadas; test de
   aceptación**      borrado simulado de cualquier tabla TX\_ no afecta a
@@ -2913,18 +3187,27 @@ cuando la regla afecta transversalmente varias interfaces.
 
   RN-31    Alta de tipo de documento sin DDL       §4, §5.5
 
-  RN-32    Validación EAV polimórfica tipada       §4, §9 IF-15
+  RN-32    Validación tipada del JSON              §4, §9 IF-15
+           `atributos_obtenidos` (v1.6, reemplaza  
+           patrón EAV polimórfico de v1.4)         
 
   RN-33    Desacople estricto del dominio D\_      §4, §5.5, §9 IF-15
 
-  RN-34    Trazabilidad D_Atributo ↔ Interfaz ---  §4.4, §4.5
-           revisada v1.3 (uso_interfaz_negocio)    
+  RN-34    Trazabilidad atributo ↔ Interfaz ---    §4.4, §4.5
+           revisada v1.3, campo en                 
+           D_TipoDocumentoAtributo desde v1.6      
+           (uso_interfaz_negocio)                  
 
-  RN-35    Trazabilidad manual D_Atributo →        §4.3, §4.4
-           TX\_/M\_                                
+  RN-35    Trazabilidad manual atributo → TX\_/M\_ §4.3, §4.4
+           (uso_tabla_destino, uso_campo_destino,  
+           uso_cardinalidad_destino,               
+           uso_campo_link_unidad · v1.6)           
 
   RN-36    Documentación viva de ejemplo           §4
            (ejemplo_atributo)                      
+
+  RN-37    Patrón "NO REGISTRA" para inmueble      §4.5, §6.3 (RF-29)
+           nuevo sin registro SII (nuevo v1.6)     
   ------------------------------------------------------------------------
 
 Nota v1.3 sobre RN-25. La regla original de generación de texto
@@ -2933,14 +3216,43 @@ Impresión Informe. En §4 se explicita adicionalmente la regla de
 identificación por coincidencia con D_TipoDocumentoAtributo como
 aplicación específica del mismo principio en el ingreso de datos. Ambos
 enunciados son consistentes: contrato estricto + trazabilidad de esquema
-a fuente única (D_Atributo).
+a fuente única.
+
+Nota v1.6 sobre RN-25. La fuente única a la que apunta la regla en
+v1.2/v1.3 era D_Atributo. Desde v1.6 la fuente única es
+D_TipoDocumentoAtributo, que consolida los campos de D_Atributo y
+D_TipoDato en sus 10 columnas de configuración. El resultado de la
+extracción, que en v1.2/v1.4 se guardaba en D_Documento +
+D_DocumentoValorAtributo, ahora se persiste como JSON en
+`TX_Adjuntos.atributos_obtenidos`. El contrato de la regla no cambia;
+sólo cambian las tablas contra las cuales se resuelve y donde se
+guarda.
 
 Nota v1.3 sobre RN-34. El flag uso_interfaz_tasador de la v1.2 se
 renombra a uso_interfaz_negocio para reflejar la vocación transversal
 del patrón (aplicable a cualquier IF que reciba documentos, no sólo la
 del tasador). El renombre es un cambio de datos con migración
-documentada en el Diseño de Capa de Datos v2.6.2 y actualización de
+documentada en el Diseño de Capa de Datos v2.6.3 y actualización de
 scripts que consulten el campo. La semántica de la regla no cambia.
+
+Nota v1.6 sobre RN-34. El flag uso_interfaz_negocio, en v1.3 vivía en
+D_Atributo. Desde v1.6 vive en D_TipoDocumentoAtributo como una columna
+más de la fila que asocia el atributo con el tipo de documento.
+Consecuencia: un mismo código de atributo puede tener
+uso_interfaz_negocio=TRUE para un tipo de documento y FALSE para otro,
+según el criterio real de negocio.
+
+Nota v1.6 sobre RN-37 (nueva). Cuando un inmueble es nuevo y aún no
+tiene ingreso al SII, los certificados de avalúo entregan el literal
+"NO REGISTRA" en los campos monetarios. Precondición: se detecta el
+literal en cualquier campo numérico de un certificado tributario.
+Acción: (a) el campo numérico se persiste en 0 o null (según el
+comportamiento de RF-29), (b) el texto crudo se conserva en
+`avaluo_total_raw`, (c) el flag `avaluo_no_registra=TRUE` se propaga a
+TX_DatosTasacion, (d) el prompt de Claude API reconoce el patrón como
+valor válido, no como error. Postcondición: el flujo continúa; el
+visador ve el flag en pantalla y decide si aprueba con avalúo cero o
+solicita reingreso posterior. Caso validado: HEV-3183.
 
 # **14. Glosario del dominio**
 
@@ -2956,12 +3268,23 @@ con adiciones marcadas v1.3.
   Append-only            Política aplicada a tablas A\_\*: una vez escrita, una fila no se edita ni
                          se borra. Solo se archiva al cierre de su periodo de retención.
 
-  Atributo paramétrico   Campo reutilizable definido en D_Atributo con tipo de dato, unidad y
-                         validación. Se asocia a uno o varios tipos de documento mediante
-                         D_TipoDocumentoAtributo sin duplicarse.
+  Atributo paramétrico   Campo declarado en D_TipoDocumentoAtributo (fuente única desde v1.6),
+                         con tipo de dato, unidad, ejemplo, tabla y campo destino, cardinalidad y
+                         campo de enlace a la unidad. Antes de v1.6 el modelo se apoyaba en un
+                         dominio D\_ de ocho tablas; v1.6 lo reduce a dos (D_TipoDocumento y
+                         D_TipoDocumentoAtributo) y deprecia las otras seis.
 
-  Avalúo fiscal          Valor que el SII asigna a un inmueble. Puede aparecer como \'NO REGISTRA\';
-                         el sistema lo sanea (RN-24).
+  Avalúo fiscal          Valor que el SII asigna a un inmueble. Puede aparecer como \'NO REGISTRA\'
+                         cuando el inmueble es nuevo y aún no ha sido ingresado al catastro; el
+                         sistema lo reconoce vía RN-37 y lo sanea vía RN-24 y RF-29 (flag
+                         avaluo_no_registra + texto crudo preservado en avaluo_total_raw).
+
+  Cardinalidad de        Atributo de la fila de D_TipoDocumentoAtributo
+  destino                (`uso_cardinalidad_destino`, v8.2) con dominio {una_por_solicitud,
+                         una_por_unidad}. Determina si el dato extraído se escribe una sola vez
+                         por solicitud (TX_DatosTasacion) o una vez por unidad física del inmueble
+                         (TX_Unidades). El campo `uso_campo_link_unidad` resuelve la unidad
+                         destino cuando aplica.
 
   Cap rate (tasa         Tasa de capitalización usada para estimar el valor de un inmueble que genera
   exigida)               renta. V = ingreso anual neto / cap rate. Varía por cliente y admite
@@ -2970,8 +3293,11 @@ con adiciones marcadas v1.3.
   Carbone                Carbone.io. Servicio externo que toma una plantilla .docx + un JSON
                          estructurado y produce el PDF final del informe.
 
-  Catálogo cerrado       Lista cerrada de valores (D_Catalogo + D_CatalogoValor) que restringe los
-  documental             valores admitidos para un atributo de tipo catálogo. Administrable sin DDL.
+  Catálogo cerrado       Lista cerrada de valores admitidos para un atributo de tipo catálogo.
+  documental (v1.6)      Desde v1.6 se implementa como columna singleSelect de Airtable
+                         directamente sobre D_TipoDocumentoAtributo. Administrable sin DDL desde
+                         la propia definición de la columna. Reemplaza a las tablas D_Catalogo y
+                         D_CatalogoValor (v1.4), que quedaron deprecadas.
 
   CBR                    Conservador de Bienes Raíces. Documento que acredita propiedad. Puede entrar
                          al sistema como adjunto en TX_Adjuntos con tipo_adjunto=\'cbr\'.
@@ -3085,21 +3411,47 @@ con adiciones marcadas v1.3.
   Tipo de documento      Definición de un tipo de documento (D_TipoDocumento) con código, emisor y
   paramétrico            vigencia. Agregar uno nuevo requiere solo INSERTs en D\_.
 
+  TX_Unidades (v1.6)     Tabla transaccional que persiste una fila por unidad física del inmueble
+                         (Departamento, Estacionamiento, Bodega, Casa) con campos rol_sii, sup_m2,
+                         sup_terreno_m2, avaluo_uf, anio_construccion, tipo_material, estado_unidad
+                         y notas. Es la tabla destino de los atributos con
+                         `uso_cardinalidad_destino = una_por_unidad`. Complementa (no reemplaza) a
+                         TX_ItemsCuadroValoracion, que sigue siendo la fuente del cuadro de
+                         valoración granular E1.
+
   UF                     Unidad de Fomento. Moneda indexada chilena. El sistema usa UF del día de la
                          visita, persistida en H_PreciosUF.
 
   ULH                    Unidad Leasing Habitacional (BICE). Workflow específico.
 
-  uso_interfaz_negocio   Flag en D_Atributo que marca al atributo como consumido por interfaces de
-  (v1.3)                 negocio (Set B). Renombrado desde uso_interfaz_tasador para reflejar
-                         vocación transversal (Blueprint v8.1). Ver §4.
+  uso_interfaz_negocio   Columna en D_TipoDocumentoAtributo (desde v1.6) que marca al atributo como
+  (v1.3, v1.6)           consumido por interfaces de negocio (Set B). En v1.3 vivía en D_Atributo.
+                         Renombrado desde uso_interfaz_tasador para reflejar vocación transversal
+                         (Blueprint v8.1). Ver §4.
+
+  uso_cardinalidad_      Columna nueva en D_TipoDocumentoAtributo (v8.2 · v1.6). Dominio
+  destino (v1.6)         {una_por_solicitud, una_por_unidad}. Determina la tabla destino del
+                         atributo extraído (TX_DatosTasacion vs TX_Unidades) y define el patrón de
+                         escritura que aplica el script AT03-Ext.
+
+  uso_campo_link_unidad  Columna nueva en D_TipoDocumentoAtributo (v8.2 · v1.6). Texto libre que
+  (v1.6)                 declara cómo se resuelve la unidad destino cuando
+                         `uso_cardinalidad_destino = una_por_unidad`. Ejemplo:
+                         "TX_Unidades.rol_sii".
+
+  Valor "NO REGISTRA"    Literal que aparece en certificados de avalúo fiscal cuando el inmueble es
+  (v1.6)                 nuevo y aún no fue ingresado al catastro del SII. Reconocido
+                         explícitamente por el prompt de Claude API y saneado por RF-29/RN-24.
+                         Formalizado como RN-37. Caso validado: HEV-3183 (Inmobiliaria Exequiel
+                         Fernández Torre Tres SpA, recepción final N°27 del 13-01-2026).
 
   Velocidad de venta     Categoría en 9 tramos que el tasador asigna a la propiedad. Determina factor
                          de remate (RN-10).
 
-  version de D_Atributo  Snapshot de la versión del atributo usado en cada extracción SC07. Paralelo
-  (v1.3)                 a RN-28 del motor de cálculo. Permite reproducir el mismo prompt años
-                         después.
+  version del atributo   Snapshot de la versión del atributo usado en cada extracción SC07
+  (v1.3, v1.6)           (blueprint SC-RF09-ExtraccionClaude). Paralelo a RN-28 del motor de
+                         cálculo. Permite reproducir el mismo prompt años después. En v1.3 el
+                         campo vivía en D_Atributo; desde v1.6 vive en D_TipoDocumentoAtributo.
 
   Vida útil              Años de vida útil de una edificación. Admite override del tasador (RN-07).
 
@@ -3197,40 +3549,58 @@ emergentes de la reestructuración v1.3.
 
 # **Cierre y trazabilidad documental**
 
-Esta Especificación del Proyecto v1.3 es el documento maestro de
+Esta Especificación del Proyecto v1.8 es el documento maestro de
 requisitos de VProperty en su estructura por interfaz operacional.
-Sucede a la v1.2 sin pérdida de contenido: los 50 RF, 22 RNF, 36 RN, 11
-RT, 8 RR y 12 SP originales se preservan íntegros con sus
-identificadores; sólo cambia su agrupación y la explicitación de los
-cambios v8.1 del blueprint documental.
+Sucede a la v1.7 sin pérdida de contenido. Cambios operativos v1.8:
+(1) se incorpora el tipo de documento `foto_fuente_sii` (propiedades
+usadas) con 4 atributos de cardinalidad `una_por_unidad`
+(sup_terreno_m2, sup_m2, tipo_material, anio_construccion),
+formalizando la fuente interna del SII descrita en el testimonio
+operativo; (2) TX_Unidades incorpora `estado_unidad` con dominio
+{nueva, usada} para resolver por unidad qué tipo de documento aplica
+(RN-38); (3) TX_Unidades incorpora los campos `sup_terreno_m2` y
+`tipo_material`. El dominio D\_ paramétrico documental sigue reducido
+a dos tablas (D_TipoDocumento y D_TipoDocumentoAtributo) y el resultado
+de la extracción se persiste en `TX_Adjuntos.atributos_obtenidos` con
+enrutamiento por cardinalidad a TX_DatosTasacion y TX_Unidades. Todo
+está explicitado en §4.
 
 Toda decisión de implementación posterior se traza contra los
 identificadores RF-XX, RNF-XX, RN-XX, RT-XX, RR-XX y SP-XX aquí
 definidos. Cuando un requisito se modifique, se versionará este
 documento y se preservará la versión anterior en H_Documentacion.
 
-### **Fuentes oficiales alineadas a v1.3**
+### **Fuentes oficiales alineadas a v1.8**
 
-• Especificación del Proyecto v1.2 (contenido base de esta
-reestructuración).
+• Especificación del Proyecto v1.4 (contenido base de esta iteración;
+v1.5 fue una versión intermedia incompleta, superada por v1.6).
 
-• Arquitectura Enterprise VProperty v2.6 (sucede a v2.5).
+• Arquitectura Enterprise VProperty v2.6 (sin cambios v1.6).
 
-• Diseño de la Capa de Datos Enterprise v2.6.2 (sucede a v2.6.1).
+• Diseño de la Capa de Datos Enterprise v2.6.3 (sucede a v2.6.2 con la
+reducción del dominio D\_ a dos tablas, la incorporación de
+TX_Unidades y el uso de `TX_Adjuntos.atributos_obtenidos` como
+persistencia del resultado de extracción).
 
-• Blueprint de Interfaces v2.8 (sucede a v2.7).
+• Blueprint de Interfaces v2.8 (sin cambios v1.6).
 
-• Motor de Cálculo AT01--AT10 v2.5 (sin cambios v1.3).
+• Motor de Cálculo AT01--AT10 v2.5 (sin cambios v1.6).
 
-• Blueprint v8.1 · Poblamiento automático desde documentos (fuente
-lógica para §4).
+• Blueprint v8.2 · SC-RF09 Extracción con Claude API (11 módulos,
+fuente única D_TipoDocumentoAtributo, enrutamiento por cardinalidad ·
+sucede a v8.1).
 
 • VProperty_Origen_Datos_Informe v1.0 (mapeo de origen de datos).
 
 • Mockups Imagenes_IF_Ejecutiva.pdf · Imagenes_IF_Tasador.pdf ·
 Imagenes_IF_Visador.pdf.
 
-**Equipo redactor v1.3:** *Analista de Requerimientos Funcionales ·
+• Caso de referencia real HEV-3183 (Carlos Andrés Cortés Pérez /
+Inmobiliaria Exequiel Fernández Torre Tres SpA · recepción final N°27
+del 13-01-2026) — usado para validar el modelo de TX_Unidades, el
+enrutamiento por cardinalidad, y el patrón "NO REGISTRA" (RN-37).
+
+**Equipo redactor v1.8:** *Analista de Requerimientos Funcionales ·
 Arquitecto de Software Enterprise · Diseñador de Datos/BD · Especialista
-UX/Front-End · Ingeniero de Integraciones (Dropbox · Carbone.io). IA
-Solution · Julio de 2026.*
+UX/Front-End · Ingeniero de Integraciones (Dropbox · Carbone.io · Claude
+API). IA Solution · Julio de 2026.*

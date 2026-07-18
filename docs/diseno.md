@@ -1,7 +1,7 @@
 # diseno.md · VProperty · IF-02 · CU-002
 
 > **Versión**: 1.4 · Alineado a Blueprint v2.7 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026)
-> **Fuentes canónicas**: Blueprint Interfaces v2.7 §2.2 + §7.2 · Especificación v1.4 · Capa Datos v2.6.2 · Plan v1.2
+> **Fuentes canónicas**: Blueprint Interfaces v2.7 §2.2 + §7.2 · Especificación v1.8.2 · Capa Datos v2.6.3 · Plan v1.2
 > **Propósito**: diseño funcional y visual de IF-02 para Claude Code. Leer al inicio de cada sesión junto con `schema-airtable.md` y `construccion.md`.
 > **Principio rector**: la UI muestra y captura; nunca decide. Todo estado, regla, asignación y cálculo vive en Airtable.
 
@@ -252,7 +252,7 @@ Fase Adjuntos 1 (10-jul-2026) — guardado en Dropbox + registro en `TX_Adjuntos
 
 ## 6. Botón "Pasar a asignada" — precondiciones exactas
 
-Fuente: Blueprint §7.2 · Spec v1.4 §1.3 · RN-09.
+Fuente: Blueprint §7.2 · Spec v1.8.2 §1.3 · RN-09.
 
 ```
 puede_pasar_a_asignada = (
@@ -286,7 +286,7 @@ puede_pasar_a_asignada = (
 
 **Nota**: las acciones de reasignación/prioridad/pausa actualizan Airtable + `A_Eventos` pero **no envían email** en CU-002. SC13 queda como deuda técnica para un CU posterior.
 
-**Restricción D-01**: la Ejecutiva **nunca** reasigna el visador desde la barra de acciones. El campo `visador` es visible en TabDatos pero sin botón de acción. (Fuente: Spec v1.4 §1.6 Nota v0.)
+**Restricción D-01**: la Ejecutiva **nunca** reasigna el visador desde la barra de acciones. El campo `visador` es visible en TabDatos pero sin botón de acción. (Fuente: Spec v1.8.2 §1.6 Nota v0.)
 
 ---
 
@@ -453,7 +453,7 @@ Ver Plan v1.2 §1.7.3 para rationale completo.
 - `NewRequestSheet` completo con secciones: Origen · Propiedad · Solicitante · Producto · Documentos · Adjuntos
 - Route Handler `POST /api/webhooks/crear-solicitud` → SC01 Make con firma HMAC-SHA256 (D-03)
 - Route Handler `POST /api/adjuntos/upload` → streaming → Make → Dropbox
-- Criterio de aceptación: solicitud creada en `TX_Solicitudes` con `estado=creada`; `A_Eventos` registra `solicitud_creada`; bloquea solo si doc marcado sin archivo (Spec v1.4 §1.5.1.1)
+- Criterio de aceptación: solicitud creada en `TX_Solicitudes` con `estado=creada`; `A_Eventos` registra `solicitud_creada`; bloquea solo si doc marcado sin archivo (Spec v1.8.2 §1.5.1.1)
 
 ### RF-06 · Acciones (paso 5)
 

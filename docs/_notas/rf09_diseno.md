@@ -1,5 +1,32 @@
 # RF-09 · Diseño de la Fase 2 de Extracción (Lectura por Dominio D_)
 
+> ⚠ **SUPERSEDED (17-jul-2026).** Este documento (12-jul-2026) diseña RF-09
+> contra el dominio D_ de **8 tablas EAV** (`D_Atributo`, `D_TipoDato`,
+> `D_Catalogo`, `D_CatalogoValor`, `D_Documento`, `D_DocumentoValorAtributo`
+> + `D_TipoDocumento`/`D_TipoDocumentoAtributo`). Ese dominio **ya no existe**
+> en la base real: la Especificación v1.8.2 y una migración de schema ya
+> ejecutada lo consolidaron en **2 tablas** (`D_TipoDocumento` +
+> `D_TipoDocumentoAtributo`, 19 campos) más la tabla nueva `TX_Unidades`,
+> con el resultado de la extracción persistido como JSON en
+> `TX_Adjuntos.atributos_obtenidos` (sin filas EAV intermedias). Ver el
+> modelo vigente en `docs/schema-airtable.md` §18 y
+> `docs/_md/VProperty_Diseno_Capa_Datos_Enterprise_v2_6_2.md` §6.7.
+>
+> Además, la construcción real de RF-09 avanzó en sesiones posteriores
+> (`docs/aprendizajes.md` E-033 a E-038) mucho más allá del esquema de
+> módulos B3 de este documento — el blueprint real
+> (`docs/make-blueprints/SC-RF09-ExtraccionClaude.blueprint.json`) tiene
+> hoy 13 módulos con un pipeline
+> webhook→Dropbox→Claude→ParseJSON→Router distinto al descrito abajo, y
+> **todavía referencia las tablas deprecadas** `D_Atributo`/`D_TipoDato`
+> en sus módulos 5 y 6 (riesgo de fallo — ver nota en el propio blueprint).
+> Reconstruirlo contra el modelo de 2 tablas es trabajo de construcción
+> pendiente, no cubierto por esta actualización de documentación.
+>
+> El contenido original de este documento se conserva íntegro abajo sólo
+> como registro histórico de la Fase 2 de diseño — **no usarlo como
+> referencia para construir o reconstruir el escenario Make**.
+>
 > **Estado: DISEÑO, no implementación.** Ningún archivo de código ni blueprint
 > listo-para-importar se crea todavía — B5 del prompt de sesión exige detenerse
 > antes de crear archivos nuevos de RF-09 si Sergio no ha confirmado

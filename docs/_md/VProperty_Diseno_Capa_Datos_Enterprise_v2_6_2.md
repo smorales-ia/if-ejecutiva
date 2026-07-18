@@ -23,11 +23,24 @@ VProperty · Sistema de Tasaciones Configurable
   -------------------- --------------------------------------------------
   **Documento**        Diseño de Base de Datos · Capa de Datos
 
-  **Versión**          2.6.2 · Julio 2026 (renombre uso_interfaz_negocio
-                       en D_Atributo · nuevos campos version en
-                       D_Atributo y extraccion_incompleta en D_Documento
-                       · alta del escenario Make SC10_generar_thumbnails
-                       · alineación a Especificación v1.4)
+  **Versión**          2.6.3 · Julio 2026 (sucede a 2.6.2 — renombre
+                       uso_interfaz_negocio en D_Atributo · nuevos campos
+                       version en D_Atributo y extraccion_incompleta en
+                       D_Documento · alta del escenario Make
+                       SC10_generar_thumbnails · alineación a
+                       Especificación v1.4). **§6.7 (Dominio D\_)
+                       actualizada para reflejar la consolidación a dos
+                       tablas (D_TipoDocumento y D_TipoDocumentoAtributo)
+                       y el enrutamiento por cardinalidad hacia
+                       TX_Unidades introducidos por la Especificación
+                       v1.6 · blueprint v8.2 (Julio 2026). Alineada a
+                       Especificación v1.8.2: incorpora el tipo de
+                       documento `foto_fuente_sii` (propiedades usadas),
+                       el campo `estado_unidad` en TX_Unidades (RN-38) y
+                       los campos `sup_terreno_m2`/`tipo_material` en
+                       TX_Unidades. IDs reales verificados vía MCP el
+                       17-jul-2026 contra la base `app9G7lLkIV3CpeLa`.
+                       El resto del documento conserva su alcance v2.6.2.
 
   **Plataforma**       Airtable (Team) como core operacional
 
@@ -3842,381 +3855,175 @@ completo.
 height="3.7111111111111112in"}
 
 Séptimo dominio del modelo. Es independiente y desacoplado del flujo de
-tasaciones: ninguna de sus 8 tablas contiene link record hacia M\_, C\_,
+tasaciones: ninguna de sus tablas contiene link record hacia M\_, C\_,
 TX\_, A\_, H\_ o Z\_. Materializa la gestión paramétrica de documentos
 opcionales solicitados por la ejecutiva comercial y configurados por el
-administrador. Usa el patrón EAV polimórfico tipado
-(Entity-Attribute-Value con columnas diferenciadas por tipo de valor)
-para evitar tablas anchas y permitir que agregar un nuevo tipo de
-documento o un nuevo atributo no requiera DDL. Origen documental: Modelo
-Documental Paramétrico v1.2 (junio 2026).
+administrador. Origen documental: Modelo Documental Paramétrico v1.2
+(junio 2026), consolidado por el blueprint v8.2 y adoptado como diseño
+vigente por la Especificación v1.6 (Julio 2026).
 
-+---------------------------+----------------------------------------------------------------------+
-| **D_TipoDato**            | **Catálogo cerrado de tipos primitivos · fila por tipo de dato ·     |
-|                           | core de la validación EAV**                                          |
-+==============+============+=================+=================+==================================+
-| **Campo**    | **Tipo Airtable**            | **Clave**       | **Detalle / lógica de negocio**  |
-+--------------+------------------------------+-----------------+----------------------------------+
-| tipo_dato_id | Autonumber                   | PK              | Identificador interno.           |
-+--------------+------------------------------+-----------------+----------------------------------+
-| codigo       | Single line text             | UQ              | Código técnico: texto ·          |
-|              |                              |                 | numero_entero · numero_decimal · |
-|              |                              |                 | fecha · booleano · rut ·         |
-|              |                              |                 | catalogo.                        |
-+--------------+------------------------------+-----------------+----------------------------------+
-| nombre       | Single line text             | ---             | Nombre legible.                  |
-+--------------+------------------------------+-----------------+----------------------------------+
-| descripcion  | Long text                    | ---             | Descripción opcional.            |
-+--------------+------------------------------+-----------------+----------------------------------+
+**Consolidación v1.6 (blueprint v8.2 · SC-RF09)**. El dominio D\_, que
+en v2.6.2 tenía ocho tablas con patrón EAV polimórfico tipado
+(D_TipoDato, D_Catalogo, D_CatalogoValor, D_TipoDocumento, D_Atributo,
+D_TipoDocumentoAtributo, D_Documento, D_DocumentoValorAtributo), se
+reduce a **dos tablas**: D_TipoDocumento y D_TipoDocumentoAtributo.
+Los campos que antes vivían en D_Atributo (nombre, tipo_dato,
+unidad_medida, obligatorio, ejemplo_atributo, uso_tabla_destino,
+uso_campo_destino) se promueven a columnas de D_TipoDocumentoAtributo.
+Los catálogos cerrados (antes D_Catalogo + D_CatalogoValor) se
+implementan como columnas `singleSelect` de Airtable directamente sobre
+D_TipoDocumentoAtributo. El resultado de la extracción (antes
+D_Documento + D_DocumentoValorAtributo, patrón EAV con fila por
+documento y por atributo) se persiste como JSON en
+`TX_Adjuntos.atributos_obtenidos` del propio adjunto que originó la
+extracción — sin tablas intermedias en el dominio D\_. Se agregan dos
+campos nuevos para enrutar el resultado por cardinalidad:
+`uso_cardinalidad_destino` (una_por_solicitud | una_por_unidad) y
+`uso_campo_link_unidad` (texto libre, ej. `TX_Unidades.rol_sii`), que
+permiten que un mismo tipo de documento reparta sus atributos entre
+`TX_DatosTasacion` (una vez por solicitud) y la nueva tabla
+`TX_Unidades` (una vez por unidad física del inmueble — ver más abajo).
+D_TipoDato, D_Catalogo, D_CatalogoValor, D_Atributo, D_Documento y
+D_DocumentoValorAtributo quedan **deprecadas**: su contenido fue
+consolidado o su función reemplazada por el JSON en TX_Adjuntos.
 
 +---------------------------+---------------------------------------------------------------------+
-| **D_Catalogo**            | **Cabecera de catálogos cerrados · fila por catálogo (comuna,       |
-|                           | destino_sii, material, etc.)**                                      |
-+==============+============+=================+=================+=================================+
-| **Campo**    | **Tipo Airtable**            | **Clave**       | **Detalle / lógica de negocio** |
-+--------------+------------------------------+-----------------+---------------------------------+
-| catalogo_id  | Autonumber                   | PK              | Identificador interno.          |
-+--------------+------------------------------+-----------------+---------------------------------+
-| codigo       | Single line text             | UQ              | Código técnico del catálogo.    |
-+--------------+------------------------------+-----------------+---------------------------------+
-| nombre       | Single line text             | ---             | Nombre legible.                 |
-+--------------+------------------------------+-----------------+---------------------------------+
-| descripcion  | Long text                    | ---             | Descripción.                    |
-+--------------+------------------------------+-----------------+---------------------------------+
+| **D_TipoDocumento**       | **Catálogo de tipos de documento reconocidos · p. ej. cert. avalúo   |
+|                           | fiscal, permiso edificación, inscripción CBR (sin cambios v1.6)**    |
++---------------------------+-----------------+-----------------+---------------------------------+
+| **Campo**                 | **Tipo Airtable** | **Clave**     | **Detalle / lógica de negocio** |
++---------------------------+-----------------+-----------------+---------------------------------+
+| tipo_documento_id          | Autonumber       | PK              | Identificador interno.          |
++---------------------------+-----------------+-----------------+---------------------------------+
+| codigo                     | Single line text | UQ              | Código técnico (cert_avaluo_fiscal, permiso_edificacion, etc.). |
++---------------------------+-----------------+-----------------+---------------------------------+
+| nombre                     | Single line text | ---             | Nombre legible.                 |
++---------------------------+-----------------+-----------------+---------------------------------+
+| descripcion                | Long text        | ---             | Descripción extendida.          |
++---------------------------+-----------------+-----------------+---------------------------------+
+| entidad_emisora            | Single line text | ---             | Quién lo emite (SII, DOM, TGR, SEC, CBR, Notaría, SERVIU, etc.). |
++---------------------------+-----------------+-----------------+---------------------------------+
+| vigencia_dias               | Number (integer) | ---             | Días de vigencia. Vacío = sin vencimiento. |
++---------------------------+-----------------+-----------------+---------------------------------+
+| activo                      | Checkbox         | ---             | Soft-delete.                    |
++---------------------------+-----------------+-----------------+---------------------------------+
 
-+--------------------------------+---------------------------------------------------------------------+
-| **D_CatalogoValor**            | **Valores individuales de cada catálogo · una fila por valor        |
-|                                | permitido**                                                         |
-+===================+============+=================+=================+=================================+
-| **Campo**         | **Tipo Airtable**            | **Clave**       | **Detalle / lógica de negocio** |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| catalogo_valor_id | Autonumber                   | PK              | Identificador interno.          |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| catalogo          | Link → D_Catalogo            | FK              | Link record interno al dominio  |
-|                   |                              |                 | D\_. NO cruza a otros dominios. |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| codigo            | Single line text             | ---             | Código del valor dentro del     |
-|                   |                              |                 | catálogo.                       |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| valor             | Single line text             | ---             | Valor legible.                  |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| orden             | Number (integer)             | ---             | Orden de presentación.          |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| activo            | Checkbox                     | ---             | Soft-delete. Un valor           |
-|                   |                              |                 | desactivado deja de ofrecerse   |
-|                   |                              |                 | en captura pero sigue siendo    |
-|                   |                              |                 | válido para documentos          |
-|                   |                              |                 | históricos que lo               |
-|                   |                              |                 | referenciaban.                  |
-+-------------------+------------------------------+-----------------+---------------------------------+
++------------------------------+---------------------------------------------------------------------+
+| **D_TipoDocumentoAtributo**  | **Fuente única desde v1.6. Ya no es una relación N:M — cada fila    |
+|                              | consolida la definición completa de un atributo para un tipo de     |
+|                              | documento, incluido su enrutamiento por cardinalidad. 19 campos     |
+|                              | reales verificados vía MCP el 17-jul-2026                           |
+|                              | (`tbldI86ieVKpjpL7E`).**                                            |
++------------------------------+-----------------+-----------------+---------------------------------+
+| **Campo**                    | **Tipo Airtable** | **Clave**     | **Detalle / lógica de negocio** |
++------------------------------+-----------------+-----------------+---------------------------------+
+| codigo                        | Single line text | PK (primary)   | Primary field real. Patrón `<tipo_documento>__<atributo>` (ej. `permiso_edificacion__direccion`). |
++------------------------------+-----------------+-----------------+---------------------------------+
+| tipo_documento                | Link → D_TipoDocumento | FK        | Único link vivo del dominio D\_ (RN-33: sigue sin cruzar a M\_/C\_/TX\_/A\_/H\_/Z\_). |
++------------------------------+-----------------+-----------------+---------------------------------+
+| codigo_atributo                | Single line text | ---            | Código técnico del atributo (ej. `rol_sii`), independiente del `codigo` compuesto de la fila. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| nombre_atributo                | Single line text | ---            | Nombre legible del atributo (rol_sii, ano_construccion, material_estructura, etc.). Antes vivía en D_Atributo. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| tipo_dato                      | Single select    | ---            | Opciones reales: `number · text · date · boolean`. Diverge de la Especificación v1.8.2 §4 (que describe `texto · numero_entero · numero_decimal · fecha · booleano · rut · catalogo`) — usar las 4 opciones reales al validar/filtrar. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| unidad_medida                  | Single line text | ---            | UF · CLP · USD · m² · % · días · ° · año.                        |
++------------------------------+-----------------+-----------------+---------------------------------+
+| obligatorio                    | Checkbox         | ---            | Si el atributo es exigido para este tipo de documento (antes vivía en la relación N:M). |
++------------------------------+-----------------+-----------------+---------------------------------+
+| orden                          | Number (integer) | ---            | Orden de presentación en el formulario de captura.                |
++------------------------------+-----------------+-----------------+---------------------------------+
+| etiqueta_local                 | Single line text | ---            | Nombre alternativo en el contexto de este tipo de documento.      |
++------------------------------+-----------------+-----------------+---------------------------------+
+| valor_por_defecto              | Single line text | ---            | Valor por defecto (texto serializado).                            |
++------------------------------+-----------------+-----------------+---------------------------------+
+| ejemplo_atributo               | Single line text | ---            | RN-36: valor de ejemplo real extraído literalmente de informes reales del cliente; si no hay evidencia trazable se persiste `PENDIENTE_VALIDACION` — nunca se infiere ni se fabrica. Antes vivía en D_Atributo. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| usado_motor_calculo (Set A)    | Checkbox         | ---            | TRUE si el atributo alimenta el motor de cálculo. Filtra el prompt de Claude cuando `usado_motor_calculo=true` (§4.3 Especificación v1.6). |
++------------------------------+-----------------+-----------------+---------------------------------+
+| uso_interfaz_ejecutiva (Set B) | Checkbox         | ---            | RN-34 (revisada v1.8.2). TRUE si el atributo aparece en la Ejecutiva (IF-02). El campo `uso_interfaz_negocio` descrito por la Especificación **no existe** en la base real — coexisten 3 flags separados por interfaz. Un filtro que replique "uso_interfaz_negocio" debe usar el OR de los tres. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| uso_interfaz_tasador (Set B)   | Checkbox         | ---            | RN-34 (revisada v1.8.2). TRUE si el atributo aparece en el Tasador (IF-03). |
++------------------------------+-----------------+-----------------+---------------------------------+
+| uso_interfaz_visador (Set B)   | Checkbox         | ---            | RN-34 (revisada v1.8.2). TRUE si el atributo aparece en el Visador (IF-04). |
++------------------------------+-----------------+-----------------+---------------------------------+
+| uso_tabla_destino              | Single line text | Cond.          | RN-35. Tabla destino del atributo (`TX_DatosTasacion`, `TX_Unidades`, `TX_Solicitudes`, `TX_DocumentosLegales`, etc.) cuando `usado_motor_calculo=true` o alguno de los `uso_interfaz_*=true`. Trazabilidad textual, sin FK. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| uso_campo_destino              | Single line text | Cond.          | RN-35. Campo destino en la tabla anterior. Nombre exacto tal como figura en VProperty_Origen_Datos_Informe v1.0. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| uso_cardinalidad_destino       | Single select    | Cond. (nuevo v1.6) | Opciones reales: `una_por_solicitud · una_por_unidad · muchas_por_solicitud · PENDIENTE_VALIDACION` (la Especificación v1.8.2 sólo documenta las dos primeras). `una_por_solicitud` escribe una vez en TX_DatosTasacion; `una_por_unidad` escribe una vez por unidad física en TX_Unidades. RN-35 extendida. |
++------------------------------+-----------------+-----------------+---------------------------------+
+| uso_campo_link_unidad          | Single line text | Cond. (nuevo v1.6) | Texto libre que resuelve la unidad destino cuando `uso_cardinalidad_destino='una_por_unidad'` (ej. `TX_Unidades.rol_sii`). Necesario cuando un mismo tipo de documento se sube más de una vez para la misma solicitud (un depto, un estacionamiento). |
++------------------------------+-----------------+-----------------+---------------------------------+
+| version                        | Number (integer) | ---            | RN-28 (paralelo). Snapshot de la versión del atributo usada en cada extracción, para reproducir el mismo prompt años después aunque el catálogo evolucione. Antes vivía en D_Atributo; ahora vive aquí junto al resto de la definición consolidada. |
++------------------------------+-----------------+-----------------+---------------------------------+
 
-+--------------------------------+---------------------------------------------------------------------+
-| **D_TipoDocumento**            | **Catálogo de tipos de documento reconocidos · p. ej. cert. avalúo  |
-|                                | fiscal, permiso edificación, inscripción CBR**                      |
-+===================+============+=================+=================+=================================+
-| **Campo**         | **Tipo Airtable**            | **Clave**       | **Detalle / lógica de negocio** |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| tipo_documento_id | Autonumber                   | PK              | Identificador interno.          |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| codigo            | Single line text             | UQ              | Código técnico                  |
-|                   |                              |                 | (cert_avaluo_fiscal,            |
-|                   |                              |                 | permiso_edificacion, etc.).     |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| nombre            | Single line text             | ---             | Nombre legible.                 |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| descripcion       | Long text                    | ---             | Descripción extendida.          |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| entidad_emisora   | Single line text             | ---             | Quién lo emite (SII, DOM, TGR,  |
-|                   |                              |                 | SEC, CBR, Notaría, SERVIU,      |
-|                   |                              |                 | etc.).                          |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| vigencia_dias     | Number (integer)             | ---             | Días de vigencia. Vacío = sin   |
-|                   |                              |                 | vencimiento.                    |
-+-------------------+------------------------------+-----------------+---------------------------------+
-| activo            | Checkbox                     | ---             | Soft-delete.                    |
-+-------------------+------------------------------+-----------------+---------------------------------+
+`codigo` puede repetirse (ej. `rol_sii`) en varias filas si el mismo
+atributo se reutiliza en distintos tipos de documento, cada una con su
+propio `ejemplo_atributo`, `uso_tabla_destino` y
+`uso_cardinalidad_destino`.
 
-+------------------------------------+-----------------------------------------------------------------------+
-| **D_Atributo**                     | **Atributos reutilizables · una sola definición sirve para muchos     |
-|                                    | tipos de documento**                                                  |
-+======================+=============+==================+==================+=================================+
-| **Campo**            | **Tipo Airtable**              | **Clave**        | **Detalle / lógica de negocio** |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| atributo_id          | Autonumber                     | PK               | Identificador interno.          |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| codigo               | Single line text               | UQ               | Código técnico del atributo     |
-|                      |                                |                  | (rol_sii, ano_construccion,     |
-|                      |                                |                  | material_estructura, etc.).     |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| nombre               | Single line text               | ---              | Nombre legible.                 |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| descripcion          | Long text                      | ---              | Descripción extendida.          |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| tipo_dato            | Link → D_TipoDato              | FK               | Tipo primitivo del valor. Link  |
-|                      |                                |                  | interno al dominio D\_.         |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| catalogo             | Link → D_Catalogo              | FK               | Solo cuando                     |
-|                      |                                |                  | tipo_dato='catalogo'. Link      |
-|                      |                                |                  | interno al dominio D\_.         |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| unidad_medida        | Single line text               | ---              | UF · CLP · USD · m² · % · días  |
-|                      |                                |                  | · ° · año.                      |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| patron_validacion    | Single line text               | ---              | Regex de validación opcional.   |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| usado_motor_calculo  | Checkbox                       | ---              | Marca informativa heredada del  |
-|                      |                                |                  | modelo documental v1.2. Indica  |
-|                      |                                |                  | si el atributo conceptualmente  |
-|                      |                                |                  | alimentaría a un motor de       |
-|                      |                                |                  | cálculo. En este dominio        |
-|                      |                                |                  | desacoplado de tasaciones, el   |
-|                      |                                |                  | flag NO dispara consumo         |
-|                      |                                |                  | automático; sirve únicamente    |
-|                      |                                |                  | para filtrar vistas             |
-|                      |                                |                  | administrativas.                |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| uso_interfaz_negocio | Checkbox                       | ---              | Adenda v2.6.1 · revisada v2.6.2 |
-|                      |                                |                  | (RN-34 revisada de la           |
-|                      |                                |                  | Especificación v1.4). TRUE si   |
-|                      |                                |                  | el atributo aparece             |
-|                      |                                |                  | efectivamente en cualquiera de  |
-|                      |                                |                  | las tres interfaces de negocio  |
-|                      |                                |                  | productivas que reciben         |
-|                      |                                |                  | documentos ---Ejecutiva (IF-02, |
-|                      |                                |                  | sheet Nueva solicitud ·         |
-|                      |                                |                  | checklist TIPOS_DOCUMENTO),     |
-|                      |                                |                  | Tasador (IF-03, captura         |
-|                      |                                |                  | terreno) o Visador (IF-04,      |
-|                      |                                |                  | reprocesamiento de              |
-|                      |                                |                  | documentos)--- o está           |
-|                      |                                |                  | referenciado como input de      |
-|                      |                                |                  | negocio en la documentación     |
-|                      |                                |                  | oficial de origen de datos      |
-|                      |                                |                  | (VProperty_Origen_Datos_Informe |
-|                      |                                |                  | v1.0). El renombre              |
-|                      |                                |                  | uso_interfaz_tasador →          |
-|                      |                                |                  | uso_interfaz_negocio refleja la |
-|                      |                                |                  | vocación transversal del        |
-|                      |                                |                  | patrón: cualquier IF que        |
-|                      |                                |                  | ingiera documentos consume este |
-|                      |                                |                  | flag; ya no es privativo del    |
-|                      |                                |                  | tasador. Se puebla cruzando     |
-|                      |                                |                  | cuatro fuentes: mockups         |
-|                      |                                |                  | Imagenes_IF_Ejecutiva.pdf ·     |
-|                      |                                |                  | Imagenes_IF_Tasador.pdf ·       |
-|                      |                                |                  | Imagenes_IF_Visador.pdf;        |
-|                      |                                |                  | Origen_Datos_Informe (§3.3);    |
-|                      |                                |                  | Blueprint de Interfaces v2.8; y |
-|                      |                                |                  | el catálogo TIPOS_DOCUMENTO.    |
-|                      |                                |                  | Migración documentada: renombre |
-|                      |                                |                  | de columna en D_Atributo +      |
-|                      |                                |                  | actualización de scripts que    |
-|                      |                                |                  | consulten el campo (AT01,       |
-|                      |                                |                  | AT03-Ext, SC07 prompt           |
-|                      |                                |                  | template). La semántica de la   |
-|                      |                                |                  | regla RN-34 no cambia.          |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| ejemplo_atributo     | Single line text               | ---              | Adenda v2.6.1 · confirmada      |
-|                      |                                |                  | v2.6.2 bajo RN-36               |
-|                      |                                |                  | (Especificación v1.4). Valor de |
-|                      |                                |                  | ejemplo real del atributo,      |
-|                      |                                |                  | extraído literalmente de los    |
-|                      |                                |                  | seis informes reales del        |
-|                      |                                |                  | cliente (casos METLIFE-6280     |
-|                      |                                |                  | Avila Duran y METLIFE-6283      |
-|                      |                                |                  | Vergara Undurraga). Sirve como  |
-|                      |                                |                  | documentación viva del formato  |
-|                      |                                |                  | esperado. Regla estricta        |
-|                      |                                |                  | (RN-36): si no hay evidencia    |
-|                      |                                |                  | trazable en las fuentes, se     |
-|                      |                                |                  | persiste PENDIENTE_VALIDACION;  |
-|                      |                                |                  | nunca se infiere ni se fabrica. |
-|                      |                                |                  | Pendiente: 16 atributos         |
-|                      |                                |                  | aguardan cuatro informes reales |
-|                      |                                |                  | adicionales del cliente para    |
-|                      |                                |                  | reemplazar PENDIENTE_VALIDACION |
-|                      |                                |                  | por literal trazable.           |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| version              | Number (integer)               | ---              | Adenda v2.6.2 (Especificación   |
-|                      |                                |                  | v1.4 §4.5). Número de versión   |
-|                      |                                |                  | del atributo. Cada ejecución de |
-|                      |                                |                  | SC07 (extracción Claude)        |
-|                      |                                |                  | persiste el atributo_id +       |
-|                      |                                |                  | version empleados en            |
-|                      |                                |                  | D_DocumentoValorAtributo, lo    |
-|                      |                                |                  | que permite reproducir el mismo |
-|                      |                                |                  | prompt años después aunque      |
-|                      |                                |                  | D_Atributo haya evolucionado.   |
-|                      |                                |                  | Paralelo directo a RN-28 del    |
-|                      |                                |                  | motor de cálculo                |
-|                      |                                |                  | (reproducibilidad histórica).   |
-|                      |                                |                  | Convención: el cambio de        |
-|                      |                                |                  | tipo_dato, catalogo o           |
-|                      |                                |                  | patron_validacion incrementa    |
-|                      |                                |                  | version en 1; los cambios sólo  |
-|                      |                                |                  | editoriales (nombre,            |
-|                      |                                |                  | descripcion) no.                |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| uso_tabla_destino    | Single line text               | ---              | Adenda v2.6.1. Tabla destino    |
-|                      |                                |                  | del atributo en el modelo de    |
-|                      |                                |                  | datos VProperty cuando se       |
-|                      |                                |                  | transforma en input del motor   |
-|                      |                                |                  | de cálculo. Se puebla           |
-|                      |                                |                  | ÚNICAMENTE cuando               |
-|                      |                                |                  | usado_motor_calculo=true. Para  |
-|                      |                                |                  | el resto de atributos se deja   |
-|                      |                                |                  | vacío (no aplica, no es         |
-|                      |                                |                  | pendiente). Los valores usan el |
-|                      |                                |                  | nombre exacto tal como figura   |
-|                      |                                |                  | en                              |
-|                      |                                |                  | VProperty_Origen_Datos_Informe  |
-|                      |                                |                  | v1.0. Sirve para trazabilidad   |
-|                      |                                |                  | D\_ ↔ TX\_ en el mapeo de       |
-|                      |                                |                  | inputs del motor.               |
-+----------------------+--------------------------------+------------------+---------------------------------+
-| uso_campo_destino    | Single line text               | ---              | Adenda v2.6.1. Campo destino    |
-|                      |                                |                  | del atributo en la tabla        |
-|                      |                                |                  | VProperty cuando se transforma  |
-|                      |                                |                  | en input del motor de cálculo.  |
-|                      |                                |                  | Se puebla ÚNICAMENTE cuando     |
-|                      |                                |                  | usado_motor_calculo=true. Para  |
-|                      |                                |                  | el resto se deja vacío. Los     |
-|                      |                                |                  | valores usan el nombre exacto   |
-|                      |                                |                  | tal como figura en              |
-|                      |                                |                  | VProperty_Origen_Datos_Informe  |
-|                      |                                |                  | v1.0.                           |
-+----------------------+--------------------------------+------------------+---------------------------------+
+**Tabla nueva TX_Unidades (v1.6 · ampliada v1.8)**. Aunque por prefijo
+pertenece al dominio TX\_ (§6.3), se referencia aquí porque es el
+destino directo del enrutamiento `una_por_unidad`. Persiste una fila
+por unidad física del inmueble. Schema real verificado vía MCP
+(`tbl2QDLvJDyy3Rg2I`, 17-jul-2026): `clave_natural` (primary),
+`solicitud` (Link → TX_Solicitudes), `subtipo` (Single select:
+Departamento · Casa · Bodega · Estacionamiento · Terreno · Local ·
+Terraza · Piscina · OO.CC. · Servidumbre), `es_principal` (Checkbox),
+`rol_sii`, `numero_unidad`, `orden`, `notas`, `sup_m2`, `avaluo_uf`,
+`sup_terreno_m2` (v1.8), `tipo_material` (v1.8 · Single select: madera
+· albanileria · hormigon · mixto · perfiles_metalicos),
+`anio_construccion`, `estado_unidad` (v1.8 · Single select: nueva ·
+usada — RN-38), más links a `TX_Adjuntos` y
+`TX_ItemsCuadroValoracion`. Complementa — no reemplaza — a
+`TX_ItemsCuadroValoracion` (cuadro de valoración granular de IF-03).
 
-+---------------------------------------------+---------------------------------------------------------------+
-| **D_TipoDocumentoAtributo**                 | **Relación N:M tipo_doc ↔ atributo con propiedades de         |
-|                                             | contexto (obligatorio, orden, etiqueta)**                     |
-+============================+================+================+================+=============================+
-| **Campo**                  | **Tipo Airtable**               | **Clave**      | **Detalle / lógica de       |
-|                            |                                 |                | negocio**                   |
-+----------------------------+---------------------------------+----------------+-----------------------------+
-| tipo_documento_atributo_id | Autonumber                      | PK             | Identificador interno.      |
-+----------------------------+---------------------------------+----------------+-----------------------------+
-| tipo_documento             | Link → D_TipoDocumento          | FK             | Link interno al dominio     |
-|                            |                                 |                | D\_.                        |
-+----------------------------+---------------------------------+----------------+-----------------------------+
-| atributo                   | Link → D_Atributo               | FK             | Link interno al dominio     |
-|                            |                                 |                | D\_.                        |
-+----------------------------+---------------------------------+----------------+-----------------------------+
-| obligatorio                | Checkbox                        | ---            | Si el atributo es exigido   |
-|                            |                                 |                | para este tipo.             |
-+----------------------------+---------------------------------+----------------+-----------------------------+
-| orden                      | Number (integer)                | ---            | Orden de presentación en el |
-|                            |                                 |                | formulario.                 |
-+----------------------------+---------------------------------+----------------+-----------------------------+
-| etiqueta_local             | Single line text                | ---            | Nombre alternativo en el    |
-|                            |                                 |                | contexto de este tipo de    |
-|                            |                                 |                | documento.                  |
-+----------------------------+---------------------------------+----------------+-----------------------------+
-| valor_por_defecto          | Single line text                | ---            | Valor por defecto (texto    |
-|                            |                                 |                | serializado).               |
-+----------------------------+---------------------------------+----------------+-----------------------------+
+**Patrón "NO REGISTRA" (RN-37, nuevo v1.6)**. Cuando un inmueble nuevo
+aún no tiene ingreso al SII, los certificados de avalúo declaran
+"NO REGISTRA" en los montos. El prompt de Claude debe reconocer el
+patrón sin fallar: el texto crudo se preserva en `avaluo_total_raw` (en
+la tabla destino que corresponda por `uso_tabla_destino`) y el flag
+`avaluo_no_registra=TRUE` se propaga a `TX_DatosTasacion`. Caso
+validado: HEV-3183 (Inmobiliaria Exequiel Fernández Torre Tres SpA).
 
-+------------------------------------+---------------------------------------------------------------------+
-| **D_Documento**                    | **Instancia concreta de un documento cargado · una fila por archivo |
-|                                    | en Dropbox**                                                        |
-+=======================+============+=================+=================+=================================+
-| **Campo**             | **Tipo Airtable**            | **Clave**       | **Detalle / lógica de negocio** |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| documento_id          | Autonumber                   | PK              | Identificador interno.          |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| tipo_documento        | Link → D_TipoDocumento       | FK              | Link interno al dominio D\_.    |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| codigo_documento      | Single line text             | UQ              | Identificador de negocio        |
-|                       |                              |                 | (folio, número, hash corto).    |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| nombre_archivo        | Single line text             | ---             | Nombre del archivo físico.      |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| ruta_archivo          | URL                          | ---             | URL al archivo en Dropbox.      |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| fecha_emision         | Date                         | ---             | Fecha de emisión del documento. |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| fecha_carga           | Created time                 | ---             | Auto-poblado al ingresar el     |
-|                       |                              |                 | registro.                       |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| estado                | Single select                | ---             | vigente · vencido · observado · |
-|                       |                              |                 | anulado.                        |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| hash_archivo          | Single line text             | ---             | Hash SHA-256 para integridad.   |
-+-----------------------+------------------------------+-----------------+---------------------------------+
-| extraccion_incompleta | Checkbox                     | ---             | Adenda v2.6.2 (Especificación   |
-|                       |                              |                 | v1.4 §4.4, decisión D-3         |
-|                       |                              |                 | registrada por el Arquitecto).  |
-|                       |                              |                 | TRUE cuando SC07 (extracción    |
-|                       |                              |                 | Claude) produjo al menos un     |
-|                       |                              |                 | atributo con valor null por     |
-|                       |                              |                 | fallo de extracción o baja      |
-|                       |                              |                 | confianza; el guardado del      |
-|                       |                              |                 | documento no se bloquea (el     |
-|                       |                              |                 | flujo sigue) pero la interfaz   |
-|                       |                              |                 | consumidora resalta visualmente |
-|                       |                              |                 | los campos con extracción       |
-|                       |                              |                 | incompleta para que la          |
-|                       |                              |                 | Ejecutiva, el Tasador o el      |
-|                       |                              |                 | Visador los completen           |
-|                       |                              |                 | manualmente. Convive con nulls  |
-|                       |                              |                 | por atributo en                 |
-|                       |                              |                 | D_DocumentoValorAtributo; no    |
-|                       |                              |                 | reemplaza la política de        |
-|                       |                              |                 | guardado por atributo, la       |
-|                       |                              |                 | resume a nivel documento para   |
-|                       |                              |                 | consulta ágil desde la UI.      |
-+-----------------------+------------------------------+-----------------+---------------------------------+
+**Fuente `foto_fuente_sii` y `estado_unidad` (RN-38, nuevo v1.8)**.
+Para propiedades usadas, la fuente catastral primaria no es el
+certificado de avalúo fiscal sino la consulta a la base interna del
+SII (comuna + rol), registrada como foto y subida con tipo de
+documento `foto_fuente_sii`. Declara 4 atributos con cardinalidad
+`una_por_unidad`: `sup_terreno_m2`, `sup_m2`, `tipo_material`,
+`anio_construccion`. Excepción: si la propiedad es nueva y aún no fue
+cargada al SII (recepcionada hace menos de ~6 meses), la fuente es la
+ficha/carta oferta de la inmobiliaria (`FICHA_INMOBILIARIA_NUEVA`, a
+definir en `D_TipoDocumento`) en vez de `foto_fuente_sii`. El campo
+`TX_Unidades.estado_unidad` ({nueva, usada}) resuelve por unidad cuál
+tipo de documento aplica.
 
-+-----------------------------------------------+-------------------------------------------------------+
-| **D_DocumentoValorAtributo**                  | **Valor concreto que toma un atributo en un documento |
-|                                               | específico · EAV polimórfico tipado**                 |
-+=============================+=================+===============+===============+=======================+
-| **Campo**                   | **Tipo Airtable**               | **Clave**     | **Detalle / lógica de |
-|                             |                                 |               | negocio**             |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| documento_valor_atributo_id | Autonumber                      | PK            | Identificador         |
-|                             |                                 |               | interno.              |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| documento                   | Link → D_Documento              | FK            | Link interno al       |
-|                             |                                 |               | dominio D\_.          |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| tipo_documento_atributo     | Link → D_TipoDocumentoAtributo  | FK            | Define QUÉ atributo   |
-|                             |                                 |               | (y su tipo). Link     |
-|                             |                                 |               | interno al dominio    |
-|                             |                                 |               | D\_.                  |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| valor_texto                 | Long text                       | ---           | Cuando tipo_dato =    |
-|                             |                                 |               | texto o rut. EAV      |
-|                             |                                 |               | polimórfico tipado.   |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| valor_numero                | Number (decimal · 4 dec)        | ---           | Cuando tipo_dato =    |
-|                             |                                 |               | numero_entero o       |
-|                             |                                 |               | numero_decimal.       |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| valor_fecha                 | Date                            | ---           | Cuando tipo_dato =    |
-|                             |                                 |               | fecha.                |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| valor_booleano              | Checkbox                        | ---           | Cuando tipo_dato =    |
-|                             |                                 |               | booleano.             |
-+-----------------------------+---------------------------------+---------------+-----------------------+
-| catalogo_valor              | Link → D_CatalogoValor          | FK            | Cuando tipo_dato =    |
-|                             |                                 |               | catalogo. Link        |
-|                             |                                 |               | interno al dominio    |
-|                             |                                 |               | D\_.                  |
-+-----------------------------+---------------------------------+---------------+-----------------------+
+Regla de integridad transversal del dominio (RN-32, vigente):
+exactamente uno de los tipos de valor esperados por `tipo_dato` debe
+corresponder al valor persistido en `TX_Adjuntos.atributos_obtenidos`
+para ese atributo. Ya no se valida vía Airtable Automation `AT-D01`
+sobre una tabla EAV intermedia — el escritor (Airtable Script
+`AT03-Ext`, invocado desde el blueprint Make SC-RF09) es responsable de
+respetar el contrato de tipos al construir el JSON.
 
-Regla de integridad transversal del dominio (RN-32 de la
-Especificación): exactamente una de las cinco columnas de valor en
-D_DocumentoValorAtributo debe estar poblada, y debe corresponder al
-tipo_dato del atributo referenciado vía D_TipoDocumentoAtributo. Esta
-validación se implementa como Airtable Automation AT-D01 disparada al
-guardar la fila.
+Independencia arquitectónica (RN-33, vigente): las dos tablas D\_ no
+exhiben link record ni lookup ni rollup hacia M\_, C\_, TX\_, A\_, H\_ o
+Z\_. Cualquier consumo desde el resto del sistema es por lectura
+idempotente vía API. Esto permite migrar, exportar o archivar el
+dominio D\_ por separado — mismo principio que en v2.6.2, ahora sobre
+un dominio de dos tablas en lugar de ocho.
 
-Independencia arquitectónica (RN-33): las 8 tablas D\_ no exhiben link
-record ni lookup ni rollup hacia M\_, C\_, TX\_, A\_, H\_ o Z\_.
-Cualquier consumo desde el resto del sistema es por lectura idempetente
-vía API. Esto permite migrar, exportar o archivar el dominio D\_ por
-separado.
+**Tablas deprecadas (v8.2 · v1.6)**: D_TipoDato, D_Catalogo,
+D_CatalogoValor, D_Atributo, D_Documento, D_DocumentoValorAtributo. Se
+documentan aquí únicamente para trazabilidad histórica de la migración;
+no se crean instancias nuevas en ninguna de ellas. Cualquier
+instalación de Airtable que aún conserve estas ocho tablas con datos
+vivos (por ejemplo, por no haber ejecutado todavía la migración de
+esquema descrita en esta sección) debe tratarse como un estado
+transitorio pendiente de cierre, no como el diseño vigente — el diseño
+vigente es el de dos tablas documentado arriba.
 
 # 7. Motor de reglas de negocio parametrizable
 

@@ -51,7 +51,9 @@
                 "id": "{{1.adjunto_id}}",
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblur71x1oItbmKZc",
-                "record": {},
+                "record": {
+                    "estado_extraccion": "extrayendo"
+                },
                 "typecast": false,
                 "useColumnId": false
             },
@@ -814,312 +816,6 @@
             }
         },
         {
-            "id": 5,
-            "module": "airtable:ActionGetRecord",
-            "version": 3,
-            "parameters": {
-                "__IMTCONN__": 8847431
-            },
-            "mapper": {
-                "id": "{{4.atributo[1]}}",
-                "base": "app9G7lLkIV3CpeLa",
-                "table": "tblOI0Su3ogySNeHm",
-                "useColumnId": false
-            },
-            "metadata": {
-                "designer": {
-                    "x": 1200,
-                    "y": -150
-                },
-                "restore": {
-                    "expect": {
-                        "base": {
-                            "mode": "chose",
-                            "label": "VProperty (app9G7lLkIV3CpeLa)"
-                        },
-                        "table": {
-                            "mode": "chose",
-                            "label": "D_Atributo (tblOI0Su3ogySNeHm)"
-                        },
-                        "useColumnId": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "airtable2"
-                            },
-                            "label": "Airtable VProperty"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:airtable3,airtable2",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
-                "expect": [
-                    {
-                        "name": "base",
-                        "type": "select",
-                        "label": "Base",
-                        "required": true
-                    },
-                    {
-                        "name": "useColumnId",
-                        "type": "boolean",
-                        "label": "Use Column ID",
-                        "required": true
-                    },
-                    {
-                        "name": "table",
-                        "type": "select",
-                        "label": "Table",
-                        "required": true
-                    },
-                    {
-                        "name": "id",
-                        "type": "text",
-                        "label": "Record ID",
-                        "required": true
-                    }
-                ],
-                "interface": [
-                    {
-                        "name": "id",
-                        "type": "text",
-                        "label": "ID"
-                    },
-                    {
-                        "name": "createdTime",
-                        "type": "date",
-                        "label": "Created Time"
-                    },
-                    {
-                        "name": "codigo",
-                        "type": "text",
-                        "label": "codigo"
-                    },
-                    {
-                        "name": "nombre",
-                        "type": "text",
-                        "label": "nombre"
-                    },
-                    {
-                        "name": "descripcion",
-                        "type": "text",
-                        "label": "descripcion",
-                        "multiline": true
-                    },
-                    {
-                        "name": "tipo_dato",
-                        "spec": {
-                            "label": "Record ID"
-                        },
-                        "type": "array",
-                        "label": "tipo_dato"
-                    },
-                    {
-                        "name": "catalogo",
-                        "spec": {
-                            "label": "Record ID"
-                        },
-                        "type": "array",
-                        "label": "catalogo"
-                    },
-                    {
-                        "name": "unidad_medida",
-                        "type": "text",
-                        "label": "unidad_medida"
-                    },
-                    {
-                        "name": "patron_validacion",
-                        "type": "text",
-                        "label": "patron_validacion"
-                    },
-                    {
-                        "name": "usado_motor_calculo",
-                        "type": "boolean",
-                        "label": "usado_motor_calculo"
-                    },
-                    {
-                        "name": "D_TipoDocumentoAtributo",
-                        "spec": {
-                            "label": "Record ID"
-                        },
-                        "type": "array",
-                        "label": "D_TipoDocumentoAtributo"
-                    },
-                    {
-                        "name": "uso_interfaz_negocio",
-                        "type": "boolean",
-                        "label": "uso_interfaz_negocio"
-                    },
-                    {
-                        "name": "ejemplo_atributo",
-                        "type": "text",
-                        "label": "ejemplo_atributo"
-                    },
-                    {
-                        "name": "uso_tabla_destino",
-                        "type": "text",
-                        "label": "uso_tabla_destino"
-                    },
-                    {
-                        "name": "uso_campo_destino",
-                        "type": "text",
-                        "label": "uso_campo_destino"
-                    },
-                    {
-                        "name": "version",
-                        "type": "number",
-                        "label": "version"
-                    },
-                    {
-                        "name": "uso_cardinalidad_destino",
-                        "type": "text",
-                        "label": "uso_cardinalidad_destino"
-                    },
-                    {
-                        "name": "uso_campo_link_solicitud",
-                        "type": "text",
-                        "label": "uso_campo_link_solicitud"
-                    }
-                ]
-            }
-        },
-        {
-            "id": 6,
-            "module": "airtable:ActionGetRecord",
-            "version": 3,
-            "parameters": {
-                "__IMTCONN__": 8847431
-            },
-            "filter": {
-                "name": "Solo atributos de uso_interfaz_negocio",
-                "conditions": [
-                    [
-                        {
-                            "a": "{{5.uso_interfaz_negocio}}",
-                            "b": "1",
-                            "o": "boolean:equal"
-                        }
-                    ]
-                ]
-            },
-            "mapper": {
-                "id": "{{5.tipo_dato[1]}}",
-                "base": "app9G7lLkIV3CpeLa",
-                "table": "tble0Na4Neon7Vz3z",
-                "useColumnId": false
-            },
-            "metadata": {
-                "designer": {
-                    "x": 1500,
-                    "y": -150
-                },
-                "restore": {
-                    "expect": {
-                        "base": {
-                            "mode": "chose",
-                            "label": "VProperty (app9G7lLkIV3CpeLa)"
-                        },
-                        "table": {
-                            "mode": "chose",
-                            "label": "D_TipoDato (tble0Na4Neon7Vz3z)"
-                        },
-                        "useColumnId": {
-                            "mode": "chose"
-                        }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "airtable2"
-                            },
-                            "label": "Airtable VProperty"
-                        }
-                    }
-                },
-                "parameters": [
-                    {
-                        "name": "__IMTCONN__",
-                        "type": "account:airtable3,airtable2",
-                        "label": "Connection",
-                        "required": true
-                    }
-                ],
-                "expect": [
-                    {
-                        "name": "base",
-                        "type": "select",
-                        "label": "Base",
-                        "required": true
-                    },
-                    {
-                        "name": "useColumnId",
-                        "type": "boolean",
-                        "label": "Use Column ID",
-                        "required": true
-                    },
-                    {
-                        "name": "table",
-                        "type": "select",
-                        "label": "Table",
-                        "required": true
-                    },
-                    {
-                        "name": "id",
-                        "type": "text",
-                        "label": "Record ID",
-                        "required": true
-                    }
-                ],
-                "interface": [
-                    {
-                        "name": "id",
-                        "type": "text",
-                        "label": "ID"
-                    },
-                    {
-                        "name": "createdTime",
-                        "type": "date",
-                        "label": "Created Time"
-                    },
-                    {
-                        "name": "codigo",
-                        "type": "text",
-                        "label": "codigo"
-                    },
-                    {
-                        "name": "nombre",
-                        "type": "text",
-                        "label": "nombre"
-                    },
-                    {
-                        "name": "descripcion",
-                        "type": "text",
-                        "label": "descripcion",
-                        "multiline": true
-                    },
-                    {
-                        "name": "D_Atributo",
-                        "spec": {
-                            "label": "Record ID"
-                        },
-                        "type": "array",
-                        "label": "D_Atributo"
-                    }
-                ]
-            }
-        },
-        {
             "id": 7,
             "module": "builtin:BasicAggregator",
             "version": 1,
@@ -1128,14 +824,17 @@
                 "rowSeparator": ","
             },
             "mapper": {
-                "nombre": "{{5.nombre}}",
-                "version": "{{5.version}}",
-                "atributo_id": "{{5.id}}",
+                "codigo_atributo": "{{4.codigo_atributo}}",
+                "nombre_atributo": "{{4.nombre_atributo}}",
+                "tipo_dato": "{{4.tipo_dato}}",
                 "obligatorio": "{{4.obligatorio}}",
                 "etiqueta_local": "{{4.etiqueta_local}}",
-                "codigo_atributo": "{{5.codigo}}",
-                "ejemplo_atributo": "{{5.ejemplo_atributo}}",
-                "tipo_dato_codigo": "{{6.codigo}}"
+                "ejemplo_atributo": "{{4.ejemplo_atributo}}",
+                "uso_tabla_destino": "{{4.uso_tabla_destino}}",
+                "uso_campo_destino": "{{4.uso_campo_destino}}",
+                "uso_cardinalidad_destino": "{{4.uso_cardinalidad_destino}}",
+                "uso_campo_link_unidad": "{{4.uso_campo_link_unidad}}",
+                "usado_motor_calculo": "{{4.usado_motor_calculo}}"
             },
             "metadata": {
                 "designer": {
@@ -1155,7 +854,9 @@
                 "id": "{{1.adjunto_id}}",
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblur71x1oItbmKZc",
-                "record": {},
+                "record": {
+                    "atributos_esperados": "{{7.array}}"
+                },
                 "typecast": false,
                 "useColumnId": false
             },
@@ -1585,13 +1286,13 @@
                 "ca": "",
                 "qs": [],
                 "url": "https://api.anthropic.com/v1/messages",
-                "data": "{\"model\": \"claude-sonnet-5\", \"max_tokens\": 4096, \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"document\", \"source\": {\"type\": \"base64\", \"media_type\": \"{{1.mime_type}}\", \"data\": \"{{base64(9.data)}}\"}}, {\"type\": \"text\", \"text\": \"Extrae los siguientes atributos de este documento. Responde EXCLUSIVAMENTE con un objeto JSON valido en texto plano, sin backticks, sin markdown, sin la palabra json antes del objeto, sin comentarios. Tu respuesta debe empezar con el caracter { y terminar con }. Formato exacto: {\\\"items\\\": [{\\\"atributo_id\\\": string, \\\"valor\\\": string|number|boolean, \\\"confianza\\\": number}], \\\"no_extraidos\\\": [string]}. REGLA CRITICA: en \\\"items\\\" incluye SOLAMENTE los atributos que lograste extraer con confianza razonable. NUNCA uses valor null dentro de items. Los atributo_id que no aparecen en el documento o que no puedes leer con confianza van en \\\"no_extraidos\\\", nunca en items. Si no lograste extraer ningun atributo, devuelve items como array vacio. Atributos esperados: 7\"}]}]}",
+                "data": "{\"model\": \"claude-sonnet-5\", \"max_tokens\": 4096, \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"document\", \"source\": {\"type\": \"base64\", \"media_type\": \"{{1.mime_type}}\", \"data\": \"{{base64(9.data)}}\"}}, {\"type\": \"text\", \"text\": \"Extrae los siguientes atributos de este documento. Si un campo numerico (por ejemplo, un avaluo o monto) aparece literalmente como 'NO REGISTRA' (con o sin tildes, mayusculas o minusculas), es un valor VALIDO, no un error de extraccion: reportalo como el texto exacto 'NO REGISTRA' en el campo valor, con confianza 1. Responde EXCLUSIVAMENTE con un objeto JSON valido en texto plano, sin backticks, sin markdown, sin la palabra json antes del objeto, sin comentarios. Tu respuesta debe empezar con el caracter { y terminar con }. Formato exacto: {\\\"items\\\": [{\\\"codigo_atributo\\\": string, \\\"valor\\\": string|number|boolean, \\\"confianza\\\": number}], \\\"no_extraidos\\\": [string]}. REGLA CRITICA: en \\\"items\\\" incluye SOLAMENTE los atributos que lograste extraer con confianza razonable (o el literal NO REGISTRA). NUNCA uses valor null dentro de items. Los codigo_atributo que no aparecen en el documento o que no puedes leer con confianza van en \\\"no_extraidos\\\", nunca en items. Si no lograste extraer ningun atributo, devuelve items como array vacio. Codigos de atributo a extraer: {{join(map(7.array; \\\"codigo_atributo\\\"); \\\", \\\")}}. Ejemplos de referencia (mismo orden): {{join(map(7.array; \\\"ejemplo_atributo\\\"); \\\" | \\\")}}. Total de atributos esperados: {{length(7.array)}}.\"}]}]}",
                 "gzip": true,
                 "method": "post",
                 "headers": [
                     {
                         "name": "x-api-key",
-                        "value": "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"
+                        "value": "{{ANTHROPIC_API_KEY}}"
                     },
                     {
                         "name": "anthropic-version",
@@ -1854,7 +1555,7 @@
             "version": 1,
             "parameters": {},
             "mapper": {
-                "json": "{{trim(replace(replace(last(11.content) + .text; \"```json\"; ); \"```\"; ))}}"
+                "json": "{{trim(replace(replace(get(last(11.content); \"text\"); \"```json\"; ); \"```\"; ))}}"
             },
             "metadata": {
                 "designer": {
@@ -1917,7 +1618,9 @@
                                 "id": "{{1.adjunto_id}}",
                                 "base": "app9G7lLkIV3CpeLa",
                                 "table": "tblur71x1oItbmKZc",
-                                "record": {},
+                                "record": {
+                                    "intentos_carga": "{{if(1.intentos_carga; 1.intentos_carga; 1)}}"
+                                },
                                 "typecast": false,
                                 "useColumnId": false
                             },
@@ -2311,7 +2014,9 @@
                                                 "id": "{{1.adjunto_id}}",
                                                 "base": "app9G7lLkIV3CpeLa",
                                                 "table": "tblur71x1oItbmKZc",
-                                                "record": {},
+                                                "record": {
+                                                    "estado_extraccion": "error"
+                                                },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
@@ -2677,7 +2382,15 @@
                                             "mapper": {
                                                 "base": "app9G7lLkIV3CpeLa",
                                                 "table": "tblR4VWpUHw1CSyIS",
-                                                "record": {},
+                                                "record": {
+                                                    "Titulo Log": "RF-09 0 atributos (intento 1) - {{1.solicitud_id}}",
+                                                    "Fecha / Hora": "{{now}}",
+                                                    "Escenario": "SC-RF09-ExtraccionClaude",
+                                                    "Estado": "⚠ Parcial",
+                                                    "Trigger": "Webhook RF-09",
+                                                    "Solicitud": "{{1.solicitud_id}}",
+                                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. Claude no extrajo ningun atributo en el intento 1. Reintento habilitado."
+                                                },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
@@ -3046,7 +2759,7 @@
                                             "version": 1,
                                             "parameters": {},
                                             "mapper": {
-                                                "body": "{\"ok\": true, \"estado\": \"no_corresponde\"}",
+                                                "body": "{\"ok\": true, \"estado\": \"error\", \"reintentable\": true}",
                                                 "status": "200",
                                                 "headers": [
                                                     {
@@ -3106,7 +2819,10 @@
                                                 "id": "{{1.adjunto_id}}",
                                                 "base": "app9G7lLkIV3CpeLa",
                                                 "table": "tblur71x1oItbmKZc",
-                                                "record": {},
+                                                "record": {
+                                                    "estado_extraccion": "delegado_visador",
+                                                    "datos_pendientes_visador": "{{7.array}}"
+                                                },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
@@ -3473,7 +3189,9 @@
                                                 "id": "{{1.solicitud_id}}",
                                                 "base": "app9G7lLkIV3CpeLa",
                                                 "table": "tblaHTyMHYfmy7Fg6",
-                                                "record": {},
+                                                "record": {
+                                                    "tiene_pendientes_visador": true
+                                                },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
@@ -4824,7 +4542,15 @@
                                             "mapper": {
                                                 "base": "app9G7lLkIV3CpeLa",
                                                 "table": "tblR4VWpUHw1CSyIS",
-                                                "record": {},
+                                                "record": {
+                                                    "Titulo Log": "RF-09 delegado a visador (2 intentos) - {{1.solicitud_id}}",
+                                                    "Fecha / Hora": "{{now}}",
+                                                    "Escenario": "SC-RF09-ExtraccionClaude",
+                                                    "Estado": "✗ Error",
+                                                    "Trigger": "Webhook RF-09",
+                                                    "Solicitud": "{{1.solicitud_id}}",
+                                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. Claude no extrajo ningun atributo tras 2 intentos. Delegado al visador (TX_Solicitudes.tiene_pendientes_visador=TRUE)."
+                                                },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
@@ -5193,7 +4919,7 @@
                                             "version": 1,
                                             "parameters": {},
                                             "mapper": {
-                                                "body": "{\"ok\": true, \"estado\": \"delegado_visador\"}",
+                                                "body": "{\"ok\": true, \"estado\": \"delegado_visador\", \"reintentable\": false}",
                                                 "status": "200",
                                                 "headers": [
                                                     {
@@ -5257,7 +4983,10 @@
                                 "id": "{{1.adjunto_id}}",
                                 "base": "app9G7lLkIV3CpeLa",
                                 "table": "tblur71x1oItbmKZc",
-                                "record": {},
+                                "record": {
+                                    "estado_extraccion": "listo",
+                                    "atributos_obtenidos": "{{25.items}}"
+                                },
                                 "typecast": false,
                                 "useColumnId": false
                             },
@@ -5623,7 +5352,15 @@
                             "mapper": {
                                 "base": "app9G7lLkIV3CpeLa",
                                 "table": "tblR4VWpUHw1CSyIS",
-                                "record": {},
+                                "record": {
+                                    "Titulo Log": "RF-09 extraccion exitosa - {{1.solicitud_id}}",
+                                    "Fecha / Hora": "{{now}}",
+                                    "Escenario": "SC-RF09-ExtraccionClaude",
+                                    "Estado": "✓ OK",
+                                    "Trigger": "Webhook RF-09",
+                                    "Solicitud": "{{1.solicitud_id}}",
+                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. {{length(25.items)}} atributo(s) extraido(s), {{length(25.no_extraidos)}} no extraido(s). Enrutamiento por cardinalidad delegado a AT03-Ext."
+                                },
                                 "typecast": false,
                                 "useColumnId": false
                             },
@@ -5992,7 +5729,7 @@
                             "version": 1,
                             "parameters": {},
                             "mapper": {
-                                "body": "{\"ok\": true, \"estado\": \"extrayendo\"}",
+                                "body": "{\"ok\": true, \"estado\": \"listo\"}",
                                 "status": "200",
                                 "headers": [
                                     {
