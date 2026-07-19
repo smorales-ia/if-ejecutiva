@@ -13,7 +13,7 @@
             "metadata": {
                 "designer": {
                     "x": 0,
-                    "y": 0
+                    "y": 300
                 },
                 "restore": {
                     "parameters": {
@@ -60,7 +60,7 @@
             "metadata": {
                 "designer": {
                     "x": 300,
-                    "y": 0
+                    "y": 300
                 },
                 "restore": {
                     "expect": {
@@ -426,7 +426,7 @@
             "metadata": {
                 "designer": {
                     "x": 600,
-                    "y": -150
+                    "y": 300
                 },
                 "restore": {
                     "expect": {
@@ -628,7 +628,7 @@
             "metadata": {
                 "designer": {
                     "x": 900,
-                    "y": -150
+                    "y": 300
                 },
                 "restore": {
                     "expect": {
@@ -817,29 +817,21 @@
         },
         {
             "id": 7,
-            "module": "builtin:BasicAggregator",
+            "module": "util:TextAggregator",
             "version": 1,
             "parameters": {
                 "feeder": 4,
-                "rowSeparator": ","
+                "rowSeparator": "other",
+                "stopProcessingAfterEmpty": true,
+                "otherRowSeparator": ","
             },
             "mapper": {
-                "codigo_atributo": "{{4.codigo_atributo}}",
-                "nombre_atributo": "{{4.nombre_atributo}}",
-                "tipo_dato": "{{4.tipo_dato}}",
-                "obligatorio": "{{4.obligatorio}}",
-                "etiqueta_local": "{{4.etiqueta_local}}",
-                "ejemplo_atributo": "{{4.ejemplo_atributo}}",
-                "uso_tabla_destino": "{{4.uso_tabla_destino}}",
-                "uso_campo_destino": "{{4.uso_campo_destino}}",
-                "uso_cardinalidad_destino": "{{4.uso_cardinalidad_destino}}",
-                "uso_campo_link_unidad": "{{4.uso_campo_link_unidad}}",
-                "usado_motor_calculo": "{{4.usado_motor_calculo}}"
+                "value": "{'codigo_atributo':'{{4.codigo_atributo}}','nombre_atributo':'{{4.nombre_atributo}}','tipo_dato':'{{4.tipo_dato}}','obligatorio':'{{4.obligatorio}}','etiqueta_local':'{{4.etiqueta_local}}','ejemplo_atributo':'{{4.ejemplo_atributo}}','uso_campo_destino':'{{4.uso_campo_destino}}','uso_tabla_destino':'{{4.uso_tabla_destino}}','usado_motor_calculo':'{{4.usado_motor_calculo}}','uso_campo_link_unidad':'{{4.uso_campo_link_unidad}}','uso_cardinalidad_destino':'{{4.uso_cardinalidad_destino}}'}"
             },
             "metadata": {
                 "designer": {
-                    "x": 1800,
-                    "y": -150
+                    "x": 1200,
+                    "y": 300
                 }
             }
         },
@@ -855,15 +847,15 @@
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblur71x1oItbmKZc",
                 "record": {
-                    "atributos_esperados": "{{7.array}}"
+                    "atributos_esperados": "[{{7.text}}]"
                 },
                 "typecast": false,
                 "useColumnId": false
             },
             "metadata": {
                 "designer": {
-                    "x": 2100,
-                    "y": -150
+                    "x": 1500,
+                    "y": 300
                 },
                 "restore": {
                     "expect": {
@@ -1225,8 +1217,8 @@
             },
             "metadata": {
                 "designer": {
-                    "x": 2400,
-                    "y": -150
+                    "x": 1800,
+                    "y": 300
                 },
                 "restore": {
                     "expect": {
@@ -1286,13 +1278,13 @@
                 "ca": "",
                 "qs": [],
                 "url": "https://api.anthropic.com/v1/messages",
-                "data": "{\"model\": \"claude-sonnet-5\", \"max_tokens\": 4096, \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"document\", \"source\": {\"type\": \"base64\", \"media_type\": \"{{1.mime_type}}\", \"data\": \"{{base64(9.data)}}\"}}, {\"type\": \"text\", \"text\": \"Extrae los siguientes atributos de este documento. Si un campo numerico (por ejemplo, un avaluo o monto) aparece literalmente como 'NO REGISTRA' (con o sin tildes, mayusculas o minusculas), es un valor VALIDO, no un error de extraccion: reportalo como el texto exacto 'NO REGISTRA' en el campo valor, con confianza 1. Responde EXCLUSIVAMENTE con un objeto JSON valido en texto plano, sin backticks, sin markdown, sin la palabra json antes del objeto, sin comentarios. Tu respuesta debe empezar con el caracter { y terminar con }. Formato exacto: {\\\"items\\\": [{\\\"codigo_atributo\\\": string, \\\"valor\\\": string|number|boolean, \\\"confianza\\\": number}], \\\"no_extraidos\\\": [string]}. REGLA CRITICA: en \\\"items\\\" incluye SOLAMENTE los atributos que lograste extraer con confianza razonable (o el literal NO REGISTRA). NUNCA uses valor null dentro de items. Los codigo_atributo que no aparecen en el documento o que no puedes leer con confianza van en \\\"no_extraidos\\\", nunca en items. Si no lograste extraer ningun atributo, devuelve items como array vacio. Codigos de atributo a extraer: {{join(map(7.array; \\\"codigo_atributo\\\"); \\\", \\\")}}. Ejemplos de referencia (mismo orden): {{join(map(7.array; \\\"ejemplo_atributo\\\"); \\\" | \\\")}}. Total de atributos esperados: {{length(7.array)}}.\"}]}]}",
+                "data": "{\"model\": \"claude-sonnet-5\", \"max_tokens\": 4096, \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"{{if(1.mime_type = 'application/pdf'; 'document'; 'image')}}\", \"source\": {\"type\": \"base64\", \"media_type\": \"{{ifempty(1.mime_type; 'application/pdf')}}\", \"data\": \"{{base64(9.data)}}\"}}, {\"type\": \"text\", \"text\": \"Extrae los siguientes atributos de este documento. Si un campo numerico (por ejemplo, un avaluo o monto) aparece literalmente como 'NO REGISTRA' (con o sin tildes, mayusculas o minusculas), es un valor VALIDO, no un error de extraccion: reportalo como el texto exacto 'NO REGISTRA' en el campo valor, con confianza 1. Responde EXCLUSIVAMENTE con un objeto JSON valido en texto plano, sin backticks, sin markdown, sin la palabra json antes del objeto, sin comentarios. Tu respuesta debe empezar con el caracter { y terminar con }. Formato exacto: {\\\"items\\\": [{\\\"codigo_atributo\\\": string, \\\"valor\\\": string|number|boolean, \\\"confianza\\\": number}], \\\"no_extraidos\\\": [string]}. REGLA CRITICA: en \\\"items\\\" incluye SOLAMENTE los atributos que lograste extraer con confianza razonable (o el literal NO REGISTRA). NUNCA uses valor null dentro de items. Los codigo_atributo que no aparecen en el documento o que no puedes leer con confianza van en \\\"no_extraidos\\\", nunca en items. Si no lograste extraer ningun atributo, devuelve items como array vacio. Lista de atributos a extraer (las comillas se representan con apostrofes): [{{7.text}}]\"}]}]}",
                 "gzip": true,
                 "method": "post",
                 "headers": [
                     {
                         "name": "x-api-key",
-                        "value": "{{ANTHROPIC_API_KEY}}"
+                        "value": "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"
                     },
                     {
                         "name": "anthropic-version",
@@ -1319,8 +1311,8 @@
             },
             "metadata": {
                 "designer": {
-                    "x": 2700,
-                    "y": -150
+                    "x": 2100,
+                    "y": 300
                 },
                 "restore": {
                     "expect": {
@@ -1544,8 +1536,8 @@
             },
             "metadata": {
                 "designer": {
-                    "x": 3000,
-                    "y": -150
+                    "x": 2400,
+                    "y": 300
                 }
             }
         },
@@ -1559,8 +1551,8 @@
             },
             "metadata": {
                 "designer": {
-                    "x": 3150,
-                    "y": -150
+                    "x": 2700,
+                    "y": 300
                 },
                 "restore": {},
                 "parameters": [
@@ -1588,8 +1580,8 @@
             "mapper": null,
             "metadata": {
                 "designer": {
-                    "x": 3600,
-                    "y": -150
+                    "x": 3000,
+                    "y": 300
                 }
             },
             "routes": [
@@ -1626,8 +1618,8 @@
                             },
                             "metadata": {
                                 "designer": {
-                                    "x": 3900,
-                                    "y": -300
+                                    "x": 3300,
+                                    "y": 150
                                 },
                                 "restore": {
                                     "expect": {
@@ -1984,8 +1976,8 @@
                             "mapper": null,
                             "metadata": {
                                 "designer": {
-                                    "x": 4200,
-                                    "y": -300
+                                    "x": 3600,
+                                    "y": 150
                                 }
                             },
                             "routes": [
@@ -2022,8 +2014,8 @@
                                             },
                                             "metadata": {
                                                 "designer": {
-                                                    "x": 4500,
-                                                    "y": -400
+                                                    "x": 3900,
+                                                    "y": 0
                                                 },
                                                 "restore": {
                                                     "expect": {
@@ -2383,21 +2375,21 @@
                                                 "base": "app9G7lLkIV3CpeLa",
                                                 "table": "tblR4VWpUHw1CSyIS",
                                                 "record": {
-                                                    "Titulo Log": "RF-09 0 atributos (intento 1) - {{1.solicitud_id}}",
-                                                    "Fecha / Hora": "{{now}}",
-                                                    "Escenario": "SC-RF09-ExtraccionClaude",
                                                     "Estado": "⚠ Parcial",
+                                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. Claude no extrajo ningun atributo en el intento 1. Reintento habilitado.",
                                                     "Trigger": "Webhook RF-09",
+                                                    "Escenario": "SC-RF09-ExtraccionClaude",
                                                     "Solicitud": "{{1.solicitud_id}}",
-                                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. Claude no extrajo ningun atributo en el intento 1. Reintento habilitado."
+                                                    "Titulo Log": "RF-09 0 atributos (intento 1) - {{1.solicitud_id}}",
+                                                    "Fecha / Hora": "{{now}}"
                                                 },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
                                             "metadata": {
                                                 "designer": {
-                                                    "x": 4800,
-                                                    "y": -400
+                                                    "x": 4200,
+                                                    "y": 0
                                                 },
                                                 "restore": {
                                                     "expect": {
@@ -2770,8 +2762,8 @@
                                             },
                                             "metadata": {
                                                 "designer": {
-                                                    "x": 5100,
-                                                    "y": -400
+                                                    "x": 4500,
+                                                    "y": 0
                                                 },
                                                 "parameters": [
                                                     {
@@ -2821,15 +2813,15 @@
                                                 "table": "tblur71x1oItbmKZc",
                                                 "record": {
                                                     "estado_extraccion": "delegado_visador",
-                                                    "datos_pendientes_visador": "{{7.array}}"
+                                                    "datos_pendientes_visador": "[{{7.text}}]"
                                                 },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
                                             "metadata": {
                                                 "designer": {
-                                                    "x": 4500,
-                                                    "y": -200
+                                                    "x": 3900,
+                                                    "y": 300
                                                 },
                                                 "restore": {
                                                     "expect": {
@@ -3197,8 +3189,8 @@
                                             },
                                             "metadata": {
                                                 "designer": {
-                                                    "x": 4800,
-                                                    "y": -200
+                                                    "x": 4200,
+                                                    "y": 300
                                                 },
                                                 "restore": {
                                                     "expect": {
@@ -4543,21 +4535,21 @@
                                                 "base": "app9G7lLkIV3CpeLa",
                                                 "table": "tblR4VWpUHw1CSyIS",
                                                 "record": {
-                                                    "Titulo Log": "RF-09 delegado a visador (2 intentos) - {{1.solicitud_id}}",
-                                                    "Fecha / Hora": "{{now}}",
-                                                    "Escenario": "SC-RF09-ExtraccionClaude",
                                                     "Estado": "✗ Error",
+                                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. Claude no extrajo ningun atributo tras 2 intentos. Delegado al visador (TX_Solicitudes.tiene_pendientes_visador=TRUE).",
                                                     "Trigger": "Webhook RF-09",
+                                                    "Escenario": "SC-RF09-ExtraccionClaude",
                                                     "Solicitud": "{{1.solicitud_id}}",
-                                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. Claude no extrajo ningun atributo tras 2 intentos. Delegado al visador (TX_Solicitudes.tiene_pendientes_visador=TRUE)."
+                                                    "Titulo Log": "RF-09 delegado a visador (2 intentos) - {{1.solicitud_id}}",
+                                                    "Fecha / Hora": "{{now}}"
                                                 },
                                                 "typecast": false,
                                                 "useColumnId": false
                                             },
                                             "metadata": {
                                                 "designer": {
-                                                    "x": 5100,
-                                                    "y": -200
+                                                    "x": 4500,
+                                                    "y": 300
                                                 },
                                                 "restore": {
                                                     "expect": {
@@ -4930,8 +4922,8 @@
                                             },
                                             "metadata": {
                                                 "designer": {
-                                                    "x": 5400,
-                                                    "y": -200
+                                                    "x": 4800,
+                                                    "y": 300
                                                 },
                                                 "parameters": [
                                                     {
@@ -4985,15 +4977,15 @@
                                 "table": "tblur71x1oItbmKZc",
                                 "record": {
                                     "estado_extraccion": "listo",
-                                    "atributos_obtenidos": "{{25.items}}"
+                                    "atributos_obtenidos": "{{trim(replace(replace(get(last(11.content); \"text\"); \"```json\"; ); \"```\"; ))}}"
                                 },
                                 "typecast": false,
                                 "useColumnId": false
                             },
                             "metadata": {
                                 "designer": {
-                                    "x": 3900,
-                                    "y": 150
+                                    "x": 3300,
+                                    "y": 600
                                 },
                                 "restore": {
                                     "expect": {
@@ -5353,21 +5345,21 @@
                                 "base": "app9G7lLkIV3CpeLa",
                                 "table": "tblR4VWpUHw1CSyIS",
                                 "record": {
-                                    "Titulo Log": "RF-09 extraccion exitosa - {{1.solicitud_id}}",
-                                    "Fecha / Hora": "{{now}}",
-                                    "Escenario": "SC-RF09-ExtraccionClaude",
                                     "Estado": "✓ OK",
+                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. {{length(25.items)}} atributo(s) extraido(s), {{length(25.no_extraidos)}} no extraido(s). Enrutamiento por cardinalidad delegado a AT03-Ext.",
                                     "Trigger": "Webhook RF-09",
+                                    "Escenario": "SC-RF09-ExtraccionClaude",
                                     "Solicitud": "{{1.solicitud_id}}",
-                                    "Detalle": "Adjunto {{1.adjunto_id}}, tipo_documento {{1.tipo_documento_codigo}}. {{length(25.items)}} atributo(s) extraido(s), {{length(25.no_extraidos)}} no extraido(s). Enrutamiento por cardinalidad delegado a AT03-Ext."
+                                    "Titulo Log": "RF-09 extraccion exitosa - {{1.solicitud_id}}",
+                                    "Fecha / Hora": "{{now}}"
                                 },
                                 "typecast": false,
                                 "useColumnId": false
                             },
                             "metadata": {
                                 "designer": {
-                                    "x": 4200,
-                                    "y": 150
+                                    "x": 3600,
+                                    "y": 600
                                 },
                                 "restore": {
                                     "expect": {
@@ -5740,8 +5732,8 @@
                             },
                             "metadata": {
                                 "designer": {
-                                    "x": 4500,
-                                    "y": 150
+                                    "x": 3900,
+                                    "y": 600
                                 },
                                 "parameters": [
                                     {
@@ -5769,7 +5761,7 @@
     ],
     "metadata": {
         "instant": true,
-        "version": 1,
+        "version": 2,
         "scenario": {
             "roundtrips": 1,
             "maxErrors": 3,
