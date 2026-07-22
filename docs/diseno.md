@@ -1,7 +1,7 @@
 # diseno.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.4 · Alineado a Blueprint v2.7 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026)
-> **Fuentes canónicas**: Blueprint Interfaces v2.7 §2.2 + §7.2 · Especificación v1.8.2 · Capa Datos v2.6.3 · Plan v1.2
+> **Versión**: 1.5 · Alineado a Blueprint v2.8 · Especificación v1.9.1 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026) · Maqueta v1.9 integrada a `main` (22-jul-2026): wizard 3 fases, formulario 4 secciones, REGLA A (asignar tasador sin reasignación), REGLA B (validación toast+Alert), REGLA C (edición solo en creada)
+> **Fuentes canónicas**: Blueprint Interfaces v2.8 §7.2 · Especificación v1.9.1 · Capa Datos v2.6.3 · Plan v1.2
 > **Propósito**: diseño funcional y visual de IF-02 para Claude Code. Leer al inicio de cada sesión junto con `schema-airtable.md` y `construccion.md`.
 > **Principio rector**: la UI muestra y captura; nunca decide. Todo estado, regla, asignación y cálculo vive en Airtable.
 
@@ -23,7 +23,7 @@ IF-02 es la **Consola de la Ejecutiva Comercial** de VProperty (Tasaciones · Bi
 **Contrato operacional**
 
 - **Entradas**: `TX_Solicitudes` (cartera del ejecutivo filtrada por SLA), `M_Tasadores` (activos con `disponible=TRUE`, zona compatible), `M_Visadores` (por `especialidades`), `M_Clientes`, `A_Eventos` (cronología del caso).
-- **Acciones**: crear alta interna, editar campos no-cálculo, asignar/reasignar tasador, fijar fecha de visita, cambiar prioridad, pausar, cancelar. **Acción primaria**: `Pasar a asignada`.
+- **Acciones**: crear alta interna, editar campos no-cálculo (sólo en estado `creada`, REGLA C), asignar tasador (única, sin reasignación formal — REGLA A), fijar fecha de visita, cambiar prioridad, pausar, cancelar. **Acción primaria**: `Asignar Tasador`.
 - **Salidas**: `TX_Solicitudes` (insert/update, `origen_canal=ingreso_manual`), `A_Eventos` (alta · asignación · cambios), `A_Cambios` (override de AT02).
 - **Estado destino**: `creada → asignada` — bloqueado hasta que existan tasador + visador + `fecha_visita_programada`. La transición la ejecuta AT02; SC05 notifica al tasador.
 
@@ -102,7 +102,7 @@ Origen v0 = deploy `if-ejecutiva-gfvE6z3qTyX`.
 | `DocumentChecklist` | `components/console/document-checklist.tsx` | v0 | — | RF crear |
 | `FileUploadZone` | `components/console/file-upload-zone.tsx` | CU-000.A · reescrito Fase Adjuntos 1 | — | RF crear · **modo Opción C: state-first (`value`/`onFilesChange`), no sube al drop — sube recién al presionar "Crear solicitud" (D-12)** |
 | `AdjuntosSubmitTracker` | `components/console/adjuntos-submit-tracker.tsx` | ❌ nuevo (Fase Adjuntos 1) | — | RF crear · progreso de la subida en batching tras crear la solicitud (D-12, D-14) |
-| `ReasignarTasadorDialog` | `components/console/reasignar-tasador-dialog.tsx` | v0 | — | RF-06 |
+| `AsignarTasadorDialog` | `components/console/asignar-tasador-dialog.tsx` | v1.9 (reemplaza `reasignar-tasador-dialog.tsx`) | — | RF-06 · REGLA A |
 | `BarraAccionesDetalle` | `components/console/acciones-detalle.tsx` | v0 | — | RF-06 |
 | `EventTimeline` | `components/vp/event-timeline.tsx` | CU-000.A | — | RF detalle |
 | `lib/airtable-client.ts` | `lib/airtable-client.ts` | ❌ nuevo | — | RF-05 |
@@ -111,6 +111,27 @@ Origen v0 = deploy `if-ejecutiva-gfvE6z3qTyX`.
 | `lib/claude-extractor.ts` | `lib/claude-extractor.ts` | ❌ nuevo | — | RF-09 |
 | `lib/schemas.ts` (zod) | `lib/schemas.ts` | v0 parcial | — | RF-05 |
 | `middleware.ts` (Clerk) | `middleware.ts` | ❌ nuevo | — | Layout |
+
+---
+
+## 3bis. Wizard de creación y formulario (v1.9 · maqueta integrada 22-jul-2026)
+
+Reemplaza el Sheet de una sola pasada por un wizard de 3 fases:
+
+1. **Fase 1 · Modo de creación** — documentos (carga inicial de respaldos) o manual.
+2. **Fase 2 · Tipo de propiedad** — Nuevo / Usado. Es el interruptor que determina qué campos y bloques se muestran en el resto del flujo (RN-45/RN-49/RN-50).
+3. **Fase 3 · Formulario** — adaptado según las dos fases anteriores.
+
+El formulario pasa de 6 secciones a 4:
+
+| Sección | Contenido |
+|---|---|
+| A · Origen | Ejec. Comercializador y Ejec. Formalizador como campos separados, tipo de cliente de origen, bloque repetible Contactos de visita |
+| B · Propiedad | Tabla de N Unidades: tipo de bien, rol SII, superficies con origen declarado (RN-45) y adjunto de respaldo obligatorio |
+| C · Personas de la operación | Comprador y Vendedor, cada uno con RUT |
+| D · Producto y observaciones | Cliente institucional, tipo de informe/producto, banco financista condicional, observaciones |
+
+**Documentos y Adjuntos salen del formulario** y pasan a vivir en el botón "Documentos y Adjuntos" del detalle (§7) — siempre visible tras crear la solicitud, en cualquier orden respecto de la asignación del tasador.
 
 ---
 
@@ -128,8 +149,8 @@ Diseño fundamental de IF-02. La cola (izquierda) lista solicitudes de la carter
 │ ▢ VP-0524 creada  🟢      │  │ contenido de la pestaña activa               │
 │ ...                       │  │ ────────────────────────────────────────────  │
 │ TabsVistas:               │  │ ACCIONES (barra inline · no sticky):         │
-│ Activas | SLA riesgo |    │  │ [Pasar a asignada] [Reasignar] [Prioridad]   │
-│ Por reasignar | Mi cartera│  │ [Pausar] [Cancelar]                          │
+│ Activas | SLA riesgo |    │  │ [Asignar Tasador*] [Documentos] [Prioridad]  │
+│ Por reasignar | Mi cartera│  │ [Pausar] [Cancelar]  *desaparece al asignar  │
 └───────────────────────────┘  └──────────────────────────────────────────────┘
 ```
 
@@ -150,66 +171,29 @@ Diseño fundamental de IF-02. La cola (izquierda) lista solicitudes de la carter
 
 ## 5. Panel Detalle — estructura de pestañas
 
-### Tab Datos
+### Tab Datos (v1.9 · 11 bloques)
 
-Campos agrupados en secciones. Editables si la solicitud no está cerrada.
+Editable según REGLA C (§5ter): todo el bloque es editable mientras el estado sea `creada` (vía "Editar solicitud"); en modo consulta cuando estado ≠ `creada` Y hay tasador asignado (RN-59).
 
-**Sección Datos de la Tasación**
-
-| Campo UI | Tipo | Obl. | Tabla · Campo | Validación |
-|---|---|---|---|---|
-| Cliente / institución | Link | Sí | `M_Clientes` → `.cliente` | Solo `activo=true` |
-| Tipo de informe | Select | Sí | `M_TiposInforme` → `.tipo_informe` | Filtrado por M_Clientes.productos |
-| Tipo de propiedad | Select | Sí | `M_TiposPropiedad` → `.tipo_propiedad` | Lista cerrada |
-| Dirección | Texto | Sí | `TX_Solicitudes.direccion` | Mín. calle + número; sugerencia Google Places |
-| Región | Select | Sí | derivado de `M_Comunas` | Cascada |
-| Comuna | Link | Sí | `M_Comunas` → `.comuna` | Debe existir; autocompletable desde dirección |
-
-**Sección Solicitante**
-
-| Campo UI | Tipo | Obl. | Tabla · Campo | Validación |
-|---|---|---|---|---|
-| Nombre propietario | Texto | Sí | `.cliente_final_nombre` | — |
-| RUT propietario | Texto | Sí | `.cliente_final_rut` | Módulo 11 (RN-15); formateo en vivo |
-| Email contacto | Email | Sí | `.email_contacto` (campo email operacional) | Formato válido |
-| Teléfono contacto | Texto | No | `.solicitante_telefono` | — |
-
-**Sección Producto / Financiero**
-
-| Campo UI | Tipo | Obl. | Tabla · Campo | Validación |
-|---|---|---|---|---|
-| N° operación cliente | Número | Sí (alta interna) | `.n_operacion_cliente` (`fldb1vmKk7y3hi4uY`) | Entero; tipo `number` en schema real (H-07) |
-| Banco financista | Link | Cond. | `M_Bancos` → `.banco` | Obligatorio si producto ∈ {Hipotecario, Refinanciamiento} |
-| Producto | Select | Sí (alta interna) | `M_Productos` → `.producto` | Filtrado por cliente |
-| Canal de origen | Select | Sí (alta interna) | `.origen_canal` | Auto `ingreso_manual` en alta interna |
-| Sucursal originadora | Texto | Sí (alta interna) | `.sucursal_originadora` (`fldd56pLZyKYoi2Vi`) | Referenciar por FIELD_ID hasta corregir espacio (D-08) |
-| Ejecutivo solicitante | Texto | Sí (alta interna) | `.ejecutivo_solicitante` (`fldRweQyq3tTQGmPR`) | — |
-
-**Sección Asignación**
-
-| Campo UI | Tipo | Obl. | Tabla · Campo | Validación |
-|---|---|---|---|---|
-| Tasador asignado | Link | Cond. | `M_Tasadores` → `.tasador` | `activo=true` · `disponible=TRUE` · zona en `zonas_cobertura`. Obligatorio para pasar a asignada |
-| Visador | Link | Cond. | `M_Visadores` → `.visador` (`fldhm86amyekWsEFY`) | `activo=true` · `especialidades ∋ tipo_propiedad`. La Ejecutiva **no** reasigna visador (D-01) — campo visible, sin acción |
-| Fecha estimada de visita | Fecha | Cond. | `.fecha_visita_programada` (`fldPUFd9YuQdkcrOI`) | `>= hoy`. Obligatoria para pasar a asignada |
-| Prioridad | Select | No | `.prioridad` (`fld9FKZ9siAeSsH54`) | Normal · Urgente · Crítico. Cambio a Urgente/Crítico exige justificación (RF-07) |
-| Ejecutiva asignada | Link | Sí | `.ejecutiva_asignada` → AUTH_Usuarios (`tblbX3hPD2uhqhl5v` · RF-52) (⚙ crear D-08) | Auto = usuario Clerk de la sesión. Alimenta "Mi cartera" |
-| Notas para el tasador | Texto largo | No | `.notas_tasador` (⚙ crear D-08) | — |
-| Notas para el visador | Texto largo | No | `.notas_visador` (⚙ crear D-08) | — |
-| Observaciones internas | Texto largo | No | `.observaciones_internas` | — |
-
-**Campos de solo lectura (auto-calculados)**
-
-| Campo UI | Tabla · Campo | Tipo |
+| Bloque | Contenido | Se llena desde |
 |---|---|---|
-| Código solicitud | `.codigo_ext` (`fldSuJx1fDNYYwDcD`) | Formula VP-AAAA-NNNN |
-| Estado | `.estado` | Single select; modifica solo AT02/AT03/etc. |
-| SLA semáforo | `.semaforo_sla` (`fldW4oUq7LvQUZq7W`) | Formula verde/ámbar/rojo |
-| Decisión del motor | `A_DecisionesMotor` → regla ganadora + candidatas | Read-only |
+| Origen y cliente | Cliente institucional, N° interno, N° de solicitud, fecha de solicitud, código VP-AAAA-NNNN, canal de origen, tipo de cliente de origen, Ejec. Comercializador y Ejec. Formalizador (campos separados) | Ejecutiva |
+| Asignación | Tasador asignado, fecha y hora de asignación, estado del correo, botón Ver email enviado y botón Reenviar | Acción manual (§7, REGLA A) |
+| Propiedad | Proyecto/condominio (sólo Nuevo), dirección con origen declarado, región, comuna, tipo de propiedad, estado de conservación | Ejecutiva |
+| Vendedor | Razón social + RUT (Nuevo, inmobiliaria) o nombre + RUT (Usado, persona natural); contacto y origen del dato | Ejecutiva |
+| Unidades (tabla) | Una fila por unidad: tipo de bien, rol SII o uso y goce, superficies (construida/terraza/terreno), año, material, m² de ampliación + regularizable, origen de la superficie (RN-45) y respaldo asociado | Ejecutiva |
+| Personas de la operación | Comprador (RUT, nombre, email, teléfono); Vendedor (RUT, nombre) | Ejecutiva |
+| Contactos de visita | Lista ordenada por prioridad: rol, nombre, teléfono, email, estado | Ejecutiva |
+| Datos SII | Destino, códigos SII (comuna/manzana/predio), urbano/rural, superficie de terreno, avalúo fiscal por unidad y total, contribución, avalúo exento, CG/OCiv/OC/G | §4 Lectura de Documentos (Claude API) |
+| Antecedentes legales | Permiso de edificación (N° y fecha), recepción final (N° y fecha), fojas/N°/año de inscripción, líneas de edificación, certificado de número | §4 Lectura de Documentos (Claude API) |
+| Producto y financiero | Tipo de informe/producto, plazo; bloque Financiero colapsado, visible sólo si tipo de propiedad es Nuevo | Ejecutiva |
+| Decisión del motor | Regla ganadora y candidatas descartadas, tasador y visador asignados | `A_DecisionesMotor` |
+
+Campos de solo lectura (auto-calculados): `codigo_ext` (formula VP-AAAA-NNNN), `estado` (single select — sólo AT01/AT03/etc. lo modifican; AT02 no aplica a IF-02 en v1.9), `semaforo_sla` (formula verde/ámbar/rojo). Ver `docs/schema-airtable.md` §20 para los FIELD_IDs de los campos nuevos v1.9 — ninguno existe todavía en la base real.
 
 ### Tab Historial
 
-Renderiza `A_Eventos` usando el componente `EventTimeline` (CU-000.A). Orden cronológico descendente (más reciente arriba). Incluye también entradas de `A_Cambios` cuando el override de AT02 es manual.
+Renderiza `A_Eventos` usando el componente `EventTimeline` (CU-000.A). Orden cronológico descendente (más reciente arriba). Incluye el correo de asignación, la confirmación de asignación manual (REGLA A — AT02 no interviene en IF-02) y las ediciones registradas mientras la solicitud estuvo en estado `creada` (REGLA C).
 
 ### Tab Adjuntos
 
@@ -250,41 +234,51 @@ Fase Adjuntos 1 (10-jul-2026) — guardado en Dropbox + registro en `TX_Adjuntos
 
 ---
 
-## 6. Botón "Pasar a asignada" — precondiciones exactas
+## 6. Botón "Asignar Tasador" — REGLA A (reemplaza "Pasar a asignada", v1.9)
 
-Fuente: Blueprint §7.2 · Spec v1.8.2 §1.3 · RN-09.
+Fuente: Blueprint v2.8 §7.2 · Especificación v1.9.1 §1.6 · RN-44.
+
+La solicitud se crea sin tasador (`estado: "creada"`, "Sin asignar"). **Sólo existe "Asignar Tasador"** — no existe flujo de "Reasignación". AT02 (asignación algorítmica) no se invoca desde IF-02 en v1.9; la asignación es siempre manual.
 
 ```
-puede_pasar_a_asignada = (
-  TX_Solicitudes.estado === "creada"
-  AND TX_Solicitudes.tasador  IS NOT NULL   // M_Tasadores.activo=true, zonas_cobertura ∋ comuna
-  AND TX_Solicitudes.visador  IS NOT NULL   // M_Visadores.activo=true, especialidades ∋ tipo_propiedad
-  AND TX_Solicitudes.fecha_visita_programada IS NOT NULL  // fecha >= hoy
+puede_asignar_tasador = (
+  !TX_Solicitudes.tasador                    // sin tasador asignado
+  AND TX_Solicitudes.estado NOT IN ["cancelada", "cerrada"]
+  AND datosMinimosFaltantes.length === 0     // dirección, ≥1 contacto con teléfono, rol SII
 )
 ```
 
 **Comportamiento UI**:
-- Botón **habilitado** solo si las tres condiciones son verdaderas.
-- Si falta alguna: botón deshabilitado (opacidad reducida) con tooltip del mensaje humano §8.
-- Al pulsar: UI invoca `POST /api/webhooks/asignar` (server-side). Route Handler actualiza el campo trigger AT02 en `TX_Solicitudes` (H-04 — nombre pendiente). AT02 valida y transiciona.
-- Spinner inline + estado optimista `asignando…` mientras espera.
-- Al confirmar: toast verde §8 + refresh del panel + EventTimeline actualizado.
+- El botón aparece **sólo** cuando la solicitud no tiene tasador y el estado lo permite. Si faltan datos mínimos, queda deshabilitado con tooltip que enumera exactamente qué falta.
+- Al confirmar: fija el tasador, transiciona `creada → asignada`, registra `fecha_asignacion`, marca el correo de asignación como enviado, y agrega dos eventos al historial (correo de asignación + asignación manual).
+- El botón **desaparece** de la barra de acciones inmediatamente después de confirmar — no reaparece como "Reasignar Tasador" ni en ninguna otra forma.
 - SC05 notifica al tasador por email en segundo plano (no bloqueante).
-- AT02 respeta la asignación manual previa si existe y registra `A_Cambios(motivo=override_manual)` (D-04).
+- Mientras el estado siga siendo `creada`, la Ejecutiva puede cambiar el tasador ya fijado desde "Editar solicitud" (§5ter, REGLA C) — esa es la única vía de corrección, no hay diálogo de reasignación separado.
 
 ---
 
 ## 7. Acciones disponibles — barra inline
 
-| Acción | Estados habilitados | Resultado | Automatización |
+| Acción | Visibilidad | Resultado | Automatización |
 |---|---|---|---|
-| **Pasar a asignada** | `creada` + precondiciones §6 | `creada → asignada` | AT02 + SC05 |
-| **Reasignar tasador** | `creada`, `asignada` | override de tasador; `A_Cambios(motivo=override_manual)` | ninguna (SC13 fuera de alcance) |
+| **Asignar Tasador** | Sólo sin tasador asignado, estado no `cancelada`/`cerrada` (§6, REGLA A) | `creada → asignada` | SC05 (AT02 no aplica a IF-02) |
+| **Documentos y Adjuntos** | Siempre visible tras crear la solicitud | abre sheet de checklist + carga | ninguna |
 | **Cambiar prioridad** | cualquier activo | actualiza `.prioridad` + `A_Eventos` | ninguna (SC13 fuera de alcance) |
 | **Pausar** | `asignada`, `visitada` | actualiza estado a `requiere_atencion` + `A_Eventos` | ninguna (SC13 fuera de alcance) |
 | **Cancelar** | cualquier activo no entregado | `(cualquiera) → cancelada` + `A_Eventos(tipo=solicitud_cancelada)` | ninguna |
 
-**Nota**: las acciones de reasignación/prioridad/pausa actualizan Airtable + `A_Eventos` pero **no envían email** en CU-002. SC13 queda como deuda técnica para un CU posterior.
+**Nota**: no existe acción "Reasignar tasador" en v1.9. Las acciones de prioridad/pausa actualizan Airtable + `A_Eventos` pero **no envían email** en CU-002. SC13 queda como deuda técnica para un CU posterior.
+
+---
+
+## 5ter. Modificación de datos — REGLA C (edición y modo consulta)
+
+Fuente: Especificación v1.9.1 RN-59.
+
+- **Editable sólo en estado `creada`.** El botón "Editar solicitud" aparece exclusivamente en ese estado. Mientras la solicitud esté en `creada`, la Ejecutiva puede modificar todo, incluyendo cambiar el tasador ya asignado, sin que eso dispare por sí solo la transición de estado (esa sólo ocurre al confirmar "Asignar Tasador", §6).
+- **Modo consulta (RN-59):** se activa cuando **ambas** condiciones se cumplen — estado ≠ `creada` Y la solicitud tiene tasador asignado. No depende de una sola de las dos: una solicitud sin tasador sigue editable aunque su estado ya no sea `creada`, y una con tasador pero todavía en `creada` sigue siendo editable.
+- **Al guardar edición:** actualiza los datos, registra un evento en el historial ("Datos de la solicitud modificados"), confirma con toast, y vuelve a modo consulta si el estado ya no es `creada` (o queda editable si sigue siéndolo).
+- No existe ningún flujo de reasignación como vía de corrección posterior — al entrar en modo consulta, el dato de tasador ya no se modifica desde IF-02.
 
 **Restricción D-01**: la Ejecutiva **nunca** reasigna el visador desde la barra de acciones. El campo `visador` es visible en TabDatos pero sin botón de acción. (Fuente: Spec v1.8.2 §1.6 Nota v0.)
 
@@ -296,13 +290,11 @@ Fuente autoritativa: Blueprint v2.7 §6 · Plan v1.2.
 
 ### Validaciones bloqueantes
 
-**Botón "Pasar a asignada" deshabilitado** (uno o más faltantes):
+**Botón "Asignar Tasador" deshabilitado** (uno o más `datosMinimosFaltantes`, REGLA A/RN-44):
 
-> **"Para pasar a asignada falta: tasador · visador · fecha de visita."**
+> **"Para asignar tasador falta: dirección · contacto con teléfono · rol SII."**
 
-Sólo se listan los faltantes reales, separados por ` · `. Si solo falta la fecha:
-
-> **"Para pasar a asignada falta: fecha de visita."**
+Sólo se listan los faltantes reales, separados por ` · `.
 
 **RUT inválido** (`RUTField`):
 
@@ -316,15 +308,22 @@ Sólo se listan los faltantes reales, separados por ` · `. Si solo falta la fec
 
 > **"Ingresa la dirección con calle y número. Ej.: Av. Apoquindo 5230."**
 
+### Validación al crear (REGLA B — doble superficie de error)
+
+Si algún dato impide crear la solicitud, ésta **no se crea** y el sistema informa en dos superficies simultáneas:
+
+1. **Toast**: encabezado con el N° de campos con problema + detalle de los primeros + contador "+N más".
+2. **Alert destructivo** al inicio del formulario: lista **todos** los campos con problema, con etiqueta legible y motivo, nombrando bloques repetibles con precisión — ej. *"Unidad 2 · Superficie construida: …"*, *"Contacto 1 · Teléfono: …"*, nunca un mensaje genérico por sección.
+
+**N° de operación duplicado** (conflicto de negocio, no error de formulario):
+
+> El campo se marca con `setError` indicando que ya existe una solicitud con ese número.
+
 ### Confirmaciones (toasts verdes — sonner `success`)
 
-**Solicitud asignada exitosamente**:
+**Solicitud asignada exitosamente** (única, sin reasignación — REGLA A):
 
 > **"Solicitud asignada a {nombre_tasador}"**
-
-**Solicitud reasignada**:
-
-> **"Solicitud reasignada a {nombre_tasador}"**
 
 **Solicitud creada** (alta interna):
 
@@ -336,7 +335,7 @@ Sólo se listan los faltantes reales, separados por ` · `. Si solo falta la fec
 
 ### Advertencias (ámbar · no bloqueantes)
 
-**Tasador fuera de cobertura** (banner en `ReasignarTasadorDialog`):
+**Tasador fuera de cobertura** (banner en el diálogo "Asignar Tasador"):
 
 > **"Este tasador no cubre la comuna de la solicitud. Puedes continuar; quedará registrado como override."**
 
@@ -450,18 +449,18 @@ Ver Plan v1.2 §1.7.3 para rationale completo.
 
 ### RF crear solicitud (paso 4)
 
-- `NewRequestSheet` completo con secciones: Origen · Propiedad · Solicitante · Producto · Documentos · Adjuntos
+- `NewRequestSheet` como wizard de 3 fases (modo creación → tipo propiedad → formulario, §3bis) con 4 secciones: Origen · Propiedad · Personas de la operación · Producto. Documentos y Adjuntos salen del wizard (van al botón del detalle).
 - Route Handler `POST /api/webhooks/crear-solicitud` → SC01 Make con firma HMAC-SHA256 (D-03)
 - Route Handler `POST /api/adjuntos/upload` → streaming → Make → Dropbox
-- Criterio de aceptación: solicitud creada en `TX_Solicitudes` con `estado=creada`; `A_Eventos` registra `solicitud_creada`; bloquea solo si doc marcado sin archivo (Spec v1.8.2 §1.5.1.1)
+- Criterio de aceptación: solicitud creada en `TX_Solicitudes` con `estado=creada`; `A_Eventos` registra `solicitud_creada`; validación al crear con toast + Alert destructivo por campo (REGLA B), nunca bloquea por documentos/adjuntos
 
-### RF-06 · Acciones (paso 5)
+### RF-06 · Asignar Tasador (paso 5, REGLA A)
 
-- `BarraAccionesDetalle`: Pasar a asignada · Reasignar tasador · Cambiar prioridad · Pausar · Cancelar
-- Route Handler `POST /api/webhooks/asignar` → actualiza campo trigger AT02 (H-04) → AT02 transiciona
-- `ReasignarTasadorDialog` con cmdk, ficha de carga (`casos_en_curso / capacidad_activa`) y alerta fuera de cobertura
-- Route Handlers de reasignación, prioridad, pausa → Airtable + `A_Eventos` (sin SC13)
-- Criterio de aceptación: "Pasar a asignada" transiciona correctamente; toast §8; SC05 envía email al tasador; `A_Cambios` registra override manual si aplica; la Ejecutiva no puede reasignar visador (D-01)
+- `BarraAccionesDetalle`: Asignar Tasador (visible solo sin tasador, desaparece al asignar) · Documentos y Adjuntos · Cambiar prioridad · Pausar · Cancelar. Sin "Pasar a asignada" ni "Reasignar tasador" separados.
+- Route Handler que fija el tasador y transiciona `creada → asignada` en un solo paso (sin AT02, sin campo trigger H-04)
+- `AsignarTasadorDialog` con cmdk, ficha de carga (`casos_en_curso / capacidad_activa`) y alerta fuera de cobertura
+- Route Handlers de prioridad, pausa → Airtable + `A_Eventos` (sin SC13)
+- Criterio de aceptación: "Asignar Tasador" transiciona correctamente y desaparece de la barra; toast §8; SC05 envía email al tasador; la Ejecutiva no puede reasignar visador (D-01); cambiar el tasador mientras el estado siga `creada` se hace desde "Editar solicitud" (REGLA C), no desde este flujo
 
 ### RF-09 · Extracción con Claude API (paso 6)
 
@@ -515,11 +514,11 @@ Ver Plan v1.2 §1.7.3 para rationale completo.
 
 ### POST /api/webhooks/asignar
 
-- Body: `{ solicitud_id, tasador_id, visador_id, fecha_visita_programada }`
-- Valida precondiciones §6 server-side (red de seguridad)
-- Actualiza campo trigger AT02 en `TX_Solicitudes` (H-04 — nombre pendiente)
-- Si la asignación es override manual: escribe `A_Cambios(motivo=override_manual)`
-- AT02 en Airtable completa la transición y dispara SC05
+- Body: `{ solicitud_id, tasador_id }`
+- Valida `datosMinimosFaltantes` server-side (RN-44, red de seguridad)
+- Actualiza `tasador` y `estado=asignada` directamente en `TX_Solicitudes` (sin AT02, sin campo trigger — REGLA A retira AT02 del alcance de IF-02)
+- Registra `fecha_asignacion` y dispara SC05 (email al tasador)
+- Escribe dos eventos en `A_Eventos`: correo de asignación + asignación manual
 
 ### POST /api/adjuntos/upload
 
@@ -552,11 +551,19 @@ Reescrito completo en Fase Adjuntos 1 (10-jul-2026, D-11 a D-14): de `formData`/
 - Actualiza `TX_Adjuntos.estado_extraccion = extrayendo` antes de llamar
 - Loggea en `LogEscenarios`
 
-### POST /api/webhooks/reasignar, /prioridad, /pausar
+### POST /api/webhooks/prioridad, /pausar
 
 - Actualizan `TX_Solicitudes` directamente vía Airtable API (sin Make)
 - Escriben `A_Eventos` con tipo y descripción correspondientes
 - No invocan SC13 (fuera de alcance CU-002)
+- No existe `/api/webhooks/reasignar` en v1.9 — cambiar el tasador mientras el estado siga `creada` se hace vía el mismo Route Handler de edición de "Editar solicitud" (REGLA C), no vía un webhook de reasignación separado
+
+### PATCH /api/solicitudes/[id] (Editar solicitud, REGLA C)
+
+- Sólo permitido si `estado === "creada"` (validado server-side, no sólo en la UI)
+- Body: subconjunto de campos editables de la solicitud, incluido `tasador_id`
+- Actualiza `TX_Solicitudes`, registra `A_Cambios` (before/after) y un evento `solicitud_modificada` en `A_Eventos`
+- No dispara ninguna automatización ni transición de estado por sí solo
 
 ---
 
@@ -590,3 +597,7 @@ Reescrito completo en Fase Adjuntos 1 (10-jul-2026, D-11 a D-14): de `formData`/
 | D-12 | Flujo de subida (Opción C) | Adjuntos en `File[]` del state hasta crear la solicitud; se suben en batching después, con `solicitud_id` real — cero adjuntos huérfanos. |
 | D-13 | Límites de tamaño | 7 MB por archivo (bloqueante) · 40–80 MB advertencia ámbar · > 80 MB bloqueo total. |
 | D-14 | Mitigación de fallos | Batching 3 · reintentos 3x con backoff 0/2/5s · progreso vía XHR · idempotencia por `hash_md5` · cancelar por archivo/global · recuperación gradual sin bloquear el cierre. |
+| REGLA A (v1.9) | Asignación de tasador | Manual, única. Botón "Asignar Tasador" visible sólo sin tasador; desaparece al confirmar. Sin flujo de reasignación formal ni AT02 automático. RN-44. |
+| REGLA B (v1.9) | Validación al crear | Doble superficie: toast con N° de campos + Alert destructivo con todos los campos (bloques repetibles nombrados con precisión). N° de operación duplicado = conflicto de negocio, no error de formulario. |
+| REGLA C (v1.9) | Modificación de datos | Editable sólo en estado `creada` vía "Editar solicitud" (incluye cambiar tasador). Modo consulta cuando estado ≠ `creada` Y hay tasador asignado. RN-59. |
+| D-15 (v1.9) | AT02 fuera de alcance de IF-02 | Permanece en el catálogo de automatizaciones para otros orígenes (IF-01); IF-02 asigna manualmente (REGLA A). D-10 de la Especificación queda SUPERSEDED. |

@@ -223,6 +223,38 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** cuando una sesión previa reporta un escenario Make como "transporte funcional", verificar explícitamente cuántos de los módulos de escritura (`Create Record`/`Update Record`) tienen el objeto `record`/`fields` poblado antes de asumir que solo falta un ajuste puntual — en este caso el gap real era casi todo el escenario, no solo las 2 tablas deprecadas que motivaron la sesión. Antes de reescribir un script existente de cero, leerlo completo — este ya tenía decisiones de diseño (política de conflicto, auditoría) que valía la pena preservar en vez de perder al reconstruir contra el nuevo schema.
 
+### E-041 — v1.9 elimina AT02 del flujo IF-02 y no existe reasignación formal (22-jul-2026)
+
+**Contexto:** alineación de toda la documentación con las reglas de negocio implementadas en la maqueta v1.9 (v0.dev integrada a `main`).
+
+**Regla:** v1.9 elimina AT02 del flujo IF-02 y no existe reasignación formal. Sólo existe "Asignar Tasador", que desaparece una vez asignado. Cambio de tasador en estado "creada" se hace desde "Editar solicitud".
+
+**Prevención futura:** antes de documentar o construir cualquier flujo de asignación de tasador en IF-02, verificar contra `docs/diseno.md` REGLA A (no contra la Especificación v1.8.2 ni el Blueprint v2.7, que describían el modelo AT02 automático y "Reasignar tasador" como acción separada — ambos superseded por v1.9.1/v2.8).
+
+### E-042 — Edición de solicitud IF-02: solo en estado "creada" (22-jul-2026)
+
+**Regla:** solo en estado "creada". El botón "Editar solicitud" aparece exclusivamente en ese estado. En cualquier otro estado con tasador asignado, la solicitud es de solo lectura (RN-59).
+
+**Prevención futura:** RN-59 depende de DOS condiciones simultáneas (estado ≠ creada Y tasador asignado), no de una sola — una solicitud sin tasador sigue editable aunque ya no esté en creada, y una con tasador pero todavía en creada sigue editable. No asumir que "tiene tasador" por sí solo activa el modo consulta.
+
+### E-043 — Validación al crear: doble superficie de error (22-jul-2026)
+
+**Regla:** doble superficie de error — toast resumido + Alert destructivo en el formulario con todos los campos fallidos nombrados con precisión incluyendo bloques repetibles. El N° de operación duplicado es un conflicto de negocio, no un error de formulario.
+
+**Prevención futura:** al mapear un campo con error en un bloque repetible (Unidades, Contactos de visita), nombrar el bloque y su índice explícitamente en el mensaje (ej. "Unidad 2 · Superficie construida: …") — un mensaje genérico agregado por sección no cumple REGLA B y obliga a la Ejecutiva a adivinar cuál de las N filas falló.
+
+### E-044 — RN-59: modo consulta depende de estado Y tasador, no solo de la asignación (22-jul-2026)
+
+**Regla:** RN-59: modo consulta se activa cuando estado ≠ "creada" Y la solicitud tiene tasador asignado. No depende solo de la asignación.
+
+**Prevención futura:** esta regla reemplaza la versión anterior de la Especificación v1.9 (bloqueo activado únicamente por la confirmación de asignación) — al leer `docs/_md/VProperty_Especificacion_Proyecto_v1_9.md` (sin el `_1`), tener presente que quedó superseded por `..._v1_9_1.md` en este punto específico.
+
+### E-045 — TX_Unidades requiere origen_superficie y adjunto de respaldo; estado_conservacion es de propiedad (22-jul-2026)
+
+**Regla:** `TX_Unidades` requiere `origen_superficie` (catálogo cerrado) y adjunto de respaldo por cada m² editado (RN-45). `estado_conservacion` es campo de propiedad (nivel solicitud), se hereda a recintos (RN-49).
+
+**Prevención futura:** ninguno de los campos de `TX_Unidades`/`TX_Solicitudes` que exige el modelo v1.9 (ver `docs/schema-airtable.md` §20) existe todavía en la base real — antes de wirear cualquier lectura/escritura contra ellos, verificar vía MCP que ya fueron creados; no asumir que "documentado" implica "existe" (mismo patrón D-08/E-030/E-032).
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.

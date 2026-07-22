@@ -1,8 +1,34 @@
 # GUÍA DE CONSTRUCCIÓN · CU-002 · IF-02 Consola de la Ejecutiva Comercial
 
-> **Versión**: 1.4 — alineada a Plan v1.2 · Blueprint v2.7 · Capa de Datos v2.6.3 · Especificación v1.8.2 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Re-alineamiento a Especificación v1.8.2 (17-jul-2026).  
+> **Versión**: 1.5 — alineada a Plan v1.2 · Blueprint v2.8 · Capa de Datos v2.6.3 · Especificación v1.9.1 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Re-alineamiento a Especificación v1.8.2 (17-jul-2026) · Maqueta v1.9 integrada a `main` + REGLAS A/B/C (22-jul-2026, ver §2bis).
 > **Propósito**: referencia operativa que Claude Code lee al inicio de cada sesión para saber qué construir, en qué orden, con qué criterios de aceptación y qué advertencias aplican por paso.  
 > **Regla dorada**: una RF por sesión de Claude Code — nunca "construye toda la consola".
+
+---
+
+## §2bis Estado actual (22-jul-2026) y pendientes de la maqueta v1.9
+
+### Estado actual confirmado
+
+- ✅ Base visual v0.dev integrada a `main` (`components/console/`, `app/page.tsx`, `app/globals.css`, `lib/console-data.ts`, `lib/validators/`).
+- ✅ API routes existentes en `/api/` conectadas (lecturas: solicitudes, tasadores, visadores, adjuntos, eventos; escrituras: crear-solicitud, adjuntos/upload).
+- ✅ Errores TypeScript corregidos (mismatch de tipos entre el `Solicitud` nuevo y `lib/solicitudes.ts`/`lib/tipos-documento.ts`).
+- ✅ REGLAS A, B y C implementadas en la maqueta (asignar tasador sin reasignación, validación toast+Alert, edición sólo en `creada`).
+- ⏳ Todo lo siguiente: pendiente de construir contra backend real — la maqueta hoy sigue usando mock data (`SOLICITUDES`, `TASADORES`, `VISADORES`, `ADJUNTOS` de `lib/console-data.ts`) para el modelo rico v1.9.
+
+### Pendiente dentro de IF-02
+
+| # | Pendiente | Detalle |
+|---|---|---|
+| P1 | Types TypeScript | Actualizar `lib/types/` con las entidades v1.9 (`Comprador`, `Vendedor`, `Unidad`, `ContactoVisita`, `Financiero`) alineadas al schema real una vez creado (`docs/schema-airtable.md` §20). |
+| P2 | API Routes nuevas | `TX_ContactosVisita`, `TX_Unidades`, `TX_Vendedor`, endpoint de asignación (sin reasignación formal — REGLA A). |
+| P3 | Wizard de creación | 3 fases (modo creación → tipo propiedad → formulario) con `FileUploadZone` en Fase 1 cuando el modo es "documentos". |
+| P4 | Formulario 4 secciones | Bloques repetibles Unidades y Contactos de visita, con validación REGLA B (toast + Alert por campo, bloques nombrados con precisión). |
+| P5 | Panel detalle | Botón "Asignar Tasador" (REGLA A, visible sólo sin tasador, desaparece al asignar), botón "Documentos y Adjuntos", pestañas Datos (11 bloques) / Historial / Adjuntos. |
+| P6 | Lógica de edición | REGLA C — botón "Editar solicitud" sólo en `creada`; modo consulta cuando estado ≠ `creada` Y hay tasador asignado (RN-59). |
+| P7 | Sheet Documentos y Adjuntos | Checklist de 15 tipos + `FileUploadZone`, editable antes de asignar, modo consulta después. |
+| P8 | Reemplazo de mock data restante | `SOLICITUDES`/`TASADORES`/`VISADORES`/`ADJUNTOS` de `lib/console-data.ts` → fetch a API routes reales, una vez creado el schema v1.9 en Airtable (`docs/schema-airtable.md` §20). |
+| P9 | Deploy y validación | Railway — validar happy path completo con datos reales antes de cerrar CU-002 v1.9. |
 
 ---
 
@@ -256,6 +282,8 @@ El Route Handler firma y envía a `MAKE_WEBHOOK_URL_SC01`:
 ---
 
 ## §7 Paso 5 — RF-06 · Acciones sobre solicitud
+
+> ⚠ **SUPERSEDED por REGLA A (v1.9, ver §2bis y `docs/diseno.md` §6-7)**: no existe "Pasar a asignada" como paso separado de "Reasignar tasador" — un único botón "Asignar Tasador" fija el tasador y transiciona `creada → asignada` en el mismo acto, sin AT02. No hay flujo de reasignación formal. La descripción original de esta sección se conserva abajo como registro histórico del diseño pre-v1.9.
 
 ### Qué construir
 
