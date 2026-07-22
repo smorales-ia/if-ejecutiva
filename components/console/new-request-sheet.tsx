@@ -7,6 +7,7 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
+  CircleAlert,
   FileText,
   Paperclip,
   Plus,
@@ -52,6 +53,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   FileUploadZone,
   type ArchivoSubido,
@@ -111,6 +113,108 @@ const EXTRACCION_DOC: Partial<Record<keyof NuevaSolicitudInternaValues, string>>
     compradorNombre: "cedula_identidad.pdf",
     compradorEmail: "correo_contacto.pdf",
   }
+
+// N° de operación ya registrados (mock de conflicto de datos en el "servidor").
+const OPERACIONES_REGISTRADAS = new Set(["12345", "99999", "00000"])
+
+// Etiquetas legibles por campo, para nombrar el dato con problema.
+const FIELD_LABELS: Record<string, string> = {
+  canal: "Canal de origen",
+  cliente: "Cliente",
+  tipoClienteOrigen: "Tipo de cliente",
+  tipoInforme: "Tipo de informe",
+  banco_id: "Banco (originador)",
+  n_operacion_cliente: "N° de operación",
+  proyecto: "Proyecto / condominio",
+  direccion: "Dirección",
+  origenDireccion: "Origen de la dirección",
+  region: "Región",
+  comuna: "Comuna",
+  tipoPropiedad: "Tipo de propiedad",
+  estadoConservacion: "Estado de conservación",
+  vendedorOrigenDato: "Origen del dato (vendedor)",
+  unidades: "Unidades",
+  compradorRut: "RUT del comprador",
+  compradorNombre: "Nombre del comprador",
+  compradorEmail: "Email del comprador",
+  contactosVisita: "Contactos de visita",
+  producto: "Producto",
+  banco: "Banco financista",
+}
+
+const UNIDAD_LABELS: Record<string, string> = {
+  ubicacion: "Ubicación (depto / torre / piso)",
+  modelo: "Modelo",
+  tipoBien: "Tipo de bien",
+  rolSii: "Rol SII",
+  supConstruida: "Superficie construida",
+  material: "Material predominante",
+  origenSuperficie: "Origen de la superficie",
+  respaldo: "Respaldo adjunto",
+  detalleItem: "Detalle del ítem",
+}
+
+const CONTACTO_LABELS: Record<string, string> = {
+  rol: "Rol",
+  nombre: "Nombre",
+  telefono: "Teléfono",
+  email: "Email",
+  estado: "Estado",
+}
+
+type ErrorItem = { label: string; message: string }
+
+/** Extrae un mensaje de error de un nodo de react-hook-form (campo o raíz). */
+function mensajeDe(node: unknown): string | undefined {
+  if (!node || typeof node !== "object") return undefined
+  const n = node as { message?: unknown; root?: { message?: unknown } }
+  if (typeof n.message === "string" && n.message) return n.message
+  if (typeof n.root?.message === "string" && n.root.message)
+    return n.root.message
+  return undefined
+}
+
+/**
+ * Aplana el objeto `errors` de react-hook-form en una lista legible de
+ * { dato, motivo }, incluyendo los bloques repetibles (unidades y contactos).
+ */
+function recolectarErrores(errors: Record<string, unknown>): ErrorItem[] {
+  const out: ErrorItem[] = []
+
+  for (const key of Object.keys(errors)) {
+    const val = errors[key] as Record<string, unknown> | undefined
+    if (!val) continue
+
+    if (key === "unidades" || key === "contactosVisita") {
+      const grupo = key === "unidades" ? "Unidad" : "Contacto"
+      const labels = key === "unidades" ? UNIDAD_LABELS : CONTACTO_LABELS
+      // Error a nivel del arreglo (p. ej. "agrega al menos una unidad").
+      const raiz = mensajeDe(val)
+      if (raiz) out.push({ label: FIELD_LABELS[key], message: raiz })
+      // Errores por índice del arreglo.
+      for (const idxKey of Object.keys(val)) {
+        const idx = Number(idxKey)
+        if (Number.isNaN(idx)) continue
+        const fila = val[idxKey] as Record<string, unknown> | undefined
+        if (!fila) continue
+        for (const campo of Object.keys(fila)) {
+          const msg = mensajeDe(fila[campo])
+          if (msg)
+            out.push({
+              label: `${grupo} ${idx + 1} · ${labels[campo] ?? campo}`,
+              message: msg,
+            })
+        }
+      }
+      continue
+    }
+
+    const msg = mensajeDe(val)
+    if (msg) out.push({ label: FIELD_LABELS[key] ?? key, message: msg })
+  }
+
+  return out
+}
 
 // ── Helpers de presentación ───────────────────────────────────────────────
 
@@ -678,6 +782,7 @@ export function NewRequestSheet() {
   const [docs, setDocs] = React.useState<ArchivoSubido[]>([])
   const [procesando, setProcesando] = React.useState(false)
   const [extraidos, setExtraidos] = React.useState<Set<string>>(new Set())
+  const [mostrarResumen, setMostrarResumen] = React.useState(false)
   const initialized = React.useRef(false)
 
   const {
@@ -686,6 +791,7 @@ export function NewRequestSheet() {
     reset,
     watch,
     setValue,
+    setError,
     getValues,
     formState: { errors, isSubmitting },
   } = useForm<NuevaSolicitudInternaValues>({
@@ -762,6 +868,7 @@ export function NewRequestSheet() {
     setDocs([])
     setProcesando(false)
     setExtraidos(new Set())
+    setMostrarResumen(false)
     initialized.current = false
   }
 
@@ -814,6 +921,22 @@ export function NewRequestSheet() {
   function onSubmit(values: NuevaSolicitudInternaValues) {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
+        // Validación de negocio: N° de operación duplicado (conflicto de dato).
+        const operacion = values.n_operacion_cliente.trim()
+        if (OPERACIONES_REGISTRADAS.has(operacion)) {
+          setError("n_operacion_cliente", {
+            type: "server",
+            message: `Ya existe una solicitud con el N° de operación ${operacion}.`,
+          })
+          setMostrarResumen(true)
+          toast.error("No se pudo crear la solicitud", {
+            description: `N° de operación: ya existe una solicitud registrada con el N° ${operacion}.`,
+            duration: 5000,
+          })
+          resolve()
+          return
+        }
+
         toast.success("Solicitud interna creada", {
           description: `${values.cliente} · ${values.comuna} · ${values.unidades.length} unidad${values.unidades.length === 1 ? "" : "es"} · Op. ${values.n_operacion_cliente}`,
           duration: 3000,
@@ -825,16 +948,29 @@ export function NewRequestSheet() {
     })
   }
 
-  function onInvalid() {
-    toast.error("Revisa el formulario", {
-      description: "Hay campos obligatorios sin completar o con errores.",
-      duration: 3000,
-    })
+  function onInvalid(formErrors: typeof errors) {
+    setMostrarResumen(true)
+    const lista = recolectarErrores(formErrors as Record<string, unknown>)
+    const detalle =
+      lista.length > 0
+        ? lista
+            .slice(0, 3)
+            .map((e) => `${e.label}: ${e.message}`)
+            .join(" · ") + (lista.length > 3 ? ` (+${lista.length - 3} más)` : "")
+        : "Revisa los campos marcados en el formulario."
+    toast.error(
+      lista.length > 0
+        ? `No se pudo crear · ${lista.length} dato${lista.length === 1 ? "" : "s"} con problemas`
+        : "No se pudo crear la solicitud",
+      { description: detalle, duration: 5000 },
+    )
   }
 
   const continuarModoHabilitado =
     (modo === "manual" || (modo === "documentos" && docs.length > 0)) &&
     !procesando
+
+  const resumenErrores = recolectarErrores(errors as Record<string, unknown>)
 
   return (
     <Sheet
@@ -970,6 +1106,29 @@ export function NewRequestSheet() {
             className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4"
             noValidate
           >
+            {/* Resumen de datos que impiden crear la solicitud */}
+            {mostrarResumen && resumenErrores.length > 0 && (
+              <Alert variant="destructive" className="border-destructive/40">
+                <CircleAlert />
+                <AlertTitle>
+                  No se pudo crear la solicitud · {resumenErrores.length} dato
+                  {resumenErrores.length === 1 ? "" : "s"} con problemas
+                </AlertTitle>
+                <AlertDescription>
+                  <ul className="mt-1 flex list-none flex-col gap-1">
+                    {resumenErrores.map((e, i) => (
+                      <li key={`${e.label}-${i}`} className="text-xs">
+                        <span className="font-medium text-destructive">
+                          {e.label}:
+                        </span>{" "}
+                        <span className="text-destructive/90">{e.message}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Sección A · Origen y cliente */}
             <Collapsible title="A · Origen y cliente">
               <Controller
