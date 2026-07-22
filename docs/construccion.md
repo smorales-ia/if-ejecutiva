@@ -20,7 +20,7 @@
 
 | # | Pendiente | Detalle |
 |---|---|---|
-| P1 | Types TypeScript | Actualizar `lib/types/` con las entidades v1.9 (`Comprador`, `Vendedor`, `Unidad`, `ContactoVisita`, `Financiero`) alineadas al schema real una vez creado (`docs/schema-airtable.md` §20). |
+| P1 ✅ 22-jul-2026 | Types TypeScript | Uniones derivadas de catálogos cerrados + campos v1.9 opcionales en `Solicitud`, agregados en `lib/console-data.ts` (no `lib/types/` — ver inventario). `pnpm tsc --noEmit` limpio. |
 | P2 | API Routes nuevas | `TX_ContactosVisita`, `TX_Unidades`, `TX_Vendedor`, endpoint de asignación (sin reasignación formal — REGLA A). |
 | P3 | Wizard de creación | 3 fases (modo creación → tipo propiedad → formulario) con `FileUploadZone` en Fase 1 cuando el modo es "documentos". |
 | P4 | Formulario 4 secciones | Bloques repetibles Unidades y Contactos de visita, con validación REGLA B (toast + Alert por campo, bloques nombrados con precisión). |

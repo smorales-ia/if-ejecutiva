@@ -140,6 +140,19 @@ export interface Solicitud {
   financiero?: Financiero
   proyecto?: string
   estadoConservacion?: string
+  // Campos v1.9 (opcionales para no romper mocks existentes) — ver P1
+  /** Ejecutivo formalizador (Sección A · nuevo v1.9). */
+  ejecFormalizador?: string
+  /** Modo con el que se creó la solicitud. */
+  modoCreacion?: ModoCreacion
+  /** Tipo de cliente de origen (catálogo TIPOS_CLIENTE_ORIGEN). */
+  tipoClienteOrigen?: string
+  /** Origen de la dirección declarada (RN-46). */
+  origenDireccion?: OrigenDireccion
+  /** Hilo único de correo por solicitud (RN-52). */
+  emailThreadId?: string
+  /** Nivel de SLA en español (verde/ámbar/rojo) — deriva de slaTone(). */
+  nivelSla?: NivelSLA
 }
 
 export const ESTADO_LABELS: Record<EstadoSolicitud, string> = {
@@ -998,6 +1011,54 @@ export const M_BANCOS = [
   { id: "falabella", nombre: "Falabella" },
   { id: "ripley", nombre: "Ripley" },
 ] as const
+
+// ──────────────────────────────────────────────────────────────────────────
+// Catálogos cerrados v1.9 sin array previo + tipos derivados (P1)
+//
+// Los tipos de unión se derivan de los `as const` existentes con
+// `(typeof ARRAY)[number]`, respetando la convención camelCase del repo y sin
+// alterar los valores (labels) que ya consumen list/detail/form. Las entidades
+// (`Unidad.tipoBien`, `ContactoVisita.rol`, etc.) siguen tipadas como `string`
+// para no romper el mapeo del formulario; estas uniones quedan disponibles para
+// que P4/P5 las adopten donde convenga.
+// ──────────────────────────────────────────────────────────────────────────
+
+/** Modo de creación del wizard (Fase 1). */
+export const MODO_CREACION = ["documentos", "manual"] as const
+export type ModoCreacion = (typeof MODO_CREACION)[number]
+
+/** Tipo de persona del vendedor (jurídica = inmobiliaria, natural = usado). */
+export const TIPO_PERSONA = ["juridica", "natural"] as const
+export type TipoPersona = (typeof TIPO_PERSONA)[number]
+
+/**
+ * Nivel de SLA en español. Se alinea con `SlaFiltro` de `lib/solicitudes.ts`.
+ * Mapea a `SlaTone` (green/amber/red) vía UI.
+ */
+export const NIVEL_SLA = ["verde", "ambar", "rojo"] as const
+export type NivelSLA = (typeof NIVEL_SLA)[number]
+
+/** Orden de la lista de solicitudes (P5). */
+export const ORDEN_SOLICITUDES = [
+  "sla_desc",
+  "sla_asc",
+  "fecha_solicitud_desc",
+  "prioridad",
+] as const
+export type OrdenSolicitudes = (typeof ORDEN_SOLICITUDES)[number]
+
+// Tipos derivados de catálogos cerrados ya existentes (labels como valores).
+export type CanalOrigen = (typeof CANALES_ORIGEN)[number]
+export type TipoClienteOrigen = (typeof TIPOS_CLIENTE_ORIGEN)[number]
+export type TipoBien = (typeof TIPOS_BIEN)[number]
+export type OrigenSuperficie = (typeof ORIGENES_SUPERFICIE)[number]
+export type EstadoConservacion = (typeof ESTADOS_CONSERVACION)[number]
+export type Material = (typeof MATERIALES)[number]
+export type OrigenDireccion = (typeof ORIGENES_DIRECCION)[number]
+export type OrigenDatoVendedor = (typeof ORIGENES_DATO_VENDEDOR)[number]
+export type RolContacto = (typeof ROLES_CONTACTO_VISITA)[number]
+export type EstadoContacto = (typeof ESTADOS_CONTACTO)[number]
+export type MotivoReasignacion = (typeof MOTIVOS_REASIGNACION)[number]
 
 export interface TipoDocumento {
   id: string
