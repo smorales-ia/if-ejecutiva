@@ -4,12 +4,7 @@ import * as React from "react"
 import { AlertTriangle, Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import {
-  MOTIVOS_REASIGNACION,
-  TASADORES,
-  type Profesional,
-  type Solicitud,
-} from "@/lib/console-data"
+import { TASADORES, type Profesional, type Solicitud } from "@/lib/console-data"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -43,18 +38,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Label } from "@/components/ui/label"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-
-export type ModoAsignacion = "asignar" | "reasignar"
 
 function cargaTono(carga: number, capacidad: number) {
   const ratio = capacidad > 0 ? carga / capacidad : 0
@@ -63,43 +48,30 @@ function cargaTono(carga: number, capacidad: number) {
   return "text-emerald-600"
 }
 
-export function ReasignarTasadorDialog({
-  mode,
+export function AsignarTasadorDialog({
   open,
   onOpenChange,
   solicitud,
-  actual,
   onConfirmado,
 }: {
-  mode: ModoAsignacion
   open: boolean
   onOpenChange: (open: boolean) => void
   solicitud: Solicitud
-  actual: string
-  /** Se invoca tras confirmar. `motivo` puede ir vacío al asignar. */
-  onConfirmado: (nuevo: string, motivo: string) => void
+  /** Se invoca tras confirmar la asignación. `nota` es opcional. */
+  onConfirmado: (nuevo: string, nota: string) => void
 }) {
-  const esReasignar = mode === "reasignar"
-
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [seleccionado, setSeleccionado] = React.useState<Profesional | null>(null)
-  const [motivo, setMotivo] = React.useState("")
-  const [motivoOtro, setMotivoOtro] = React.useState("")
-  const [notaAsignar, setNotaAsignar] = React.useState("")
+  const [nota, setNota] = React.useState("")
   const [confirmOpen, setConfirmOpen] = React.useState(false)
-  const [errores, setErrores] = React.useState<{
-    profesional?: string
-    motivo?: string
-  }>({})
+  const [error, setError] = React.useState<string | undefined>()
 
   // Resetea el formulario cada vez que se abre.
   React.useEffect(() => {
     if (open) {
       setSeleccionado(null)
-      setMotivo("")
-      setMotivoOtro("")
-      setNotaAsignar("")
-      setErrores({})
+      setNota("")
+      setError(undefined)
       setConfirmOpen(false)
     }
   }, [open])
@@ -115,72 +87,33 @@ export function ReasignarTasadorDialog({
 
   const fueraDeCobertura =
     seleccionado != null && !seleccionado.cobertura.includes(solicitud.comuna)
-  const mismaPersona = seleccionado != null && seleccionado.nombre === actual
-
-  function validar() {
-    const next: typeof errores = {}
-    if (!seleccionado) next.profesional = "Selecciona un tasador."
-    else if (mismaPersona)
-      next.profesional = "Ya es el tasador asignado. Elige otra persona."
-    if (esReasignar) {
-      if (!motivo) next.motivo = "Selecciona un motivo de reasignación."
-      else if (motivo === "Otro" && motivoOtro.trim() === "")
-        next.motivo = "Describe el motivo."
-    }
-    setErrores(next)
-    return Object.keys(next).length === 0
-  }
 
   function abrirConfirmacion() {
-    if (validar()) setConfirmOpen(true)
+    if (!seleccionado) {
+      setError("Selecciona un tasador.")
+      return
+    }
+    setConfirmOpen(true)
   }
 
   function handleConfirmarFinal() {
     if (!seleccionado) return
-    const motivoFinal = esReasignar
-      ? motivo === "Otro"
-        ? motivoOtro.trim()
-        : motivo
-      : notaAsignar.trim()
     setConfirmOpen(false)
     onOpenChange(false)
-    onConfirmado(seleccionado.nombre, motivoFinal)
+    onConfirmado(seleccionado.nombre, nota.trim())
   }
-
-  const titulo = esReasignar ? "Reasignar tasador" : "Asignar tasador"
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{titulo}</DialogTitle>
+          <DialogTitle>Asignar tasador</DialogTitle>
           <DialogDescription>
             {`Solicitud ${solicitud.codigoExt} · ${solicitud.comuna}, ${solicitud.region}`}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4 py-1">
-          {/* Tasador actual (sólo al reasignar) */}
-          {esReasignar && (
-            <div className="flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2">
-              <span className="text-xs text-muted-foreground">Tasador actual</span>
-              <span className="text-sm font-medium text-foreground">
-                {actual || "Sin asignar"}
-              </span>
-            </div>
-          )}
-
-          {/* Aviso de segunda reasignación */}
-          {esReasignar && solicitud.contadorReasignaciones >= 1 && (
-            <Alert>
-              <AlertTriangle />
-              <AlertTitle>Reasignación reiterada</AlertTitle>
-              <AlertDescription>
-                Esta será la segunda reasignación de esta solicitud.
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Selector de tasador */}
           <div className="flex flex-col gap-1.5">
             <Label>Tasador</Label>
@@ -190,7 +123,7 @@ export function ReasignarTasadorDialog({
                   <Button
                     variant="outline"
                     role="combobox"
-                    aria-invalid={!!errores.profesional}
+                    aria-invalid={!!error}
                     className="w-full justify-between font-normal"
                   >
                     <span
@@ -220,7 +153,7 @@ export function ReasignarTasadorDialog({
                             onSelect={() => {
                               setSeleccionado(p)
                               setPickerOpen(false)
-                              setErrores((e) => ({ ...e, profesional: undefined }))
+                              setError(undefined)
                             }}
                           >
                             <div className="flex min-w-0 flex-1 flex-col">
@@ -257,9 +190,7 @@ export function ReasignarTasadorDialog({
                 </Command>
               </PopoverContent>
             </Popover>
-            {errores.profesional && (
-              <p className="text-xs text-destructive">{errores.profesional}</p>
-            )}
+            {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
 
           {/* Ficha del tasador seleccionado */}
@@ -296,57 +227,17 @@ export function ReasignarTasadorDialog({
             </Alert>
           )}
 
-          {/* Motivo */}
-          {esReasignar ? (
-            <div className="flex flex-col gap-1.5">
-              <Label>Motivo de la reasignación</Label>
-              <Select
-                value={motivo}
-                onValueChange={(v) => {
-                  setMotivo(v ?? "")
-                  setErrores((e) => ({ ...e, motivo: undefined }))
-                }}
-              >
-                <SelectTrigger aria-invalid={!!errores.motivo}>
-                  <SelectValue placeholder="Selecciona un motivo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {MOTIVOS_REASIGNACION.map((m) => (
-                      <SelectItem key={m} value={m}>
-                        {m}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select>
-              {motivo === "Otro" && (
-                <Textarea
-                  value={motivoOtro}
-                  onChange={(e) => {
-                    setMotivoOtro(e.target.value)
-                    setErrores((er) => ({ ...er, motivo: undefined }))
-                  }}
-                  placeholder="Describe el motivo…"
-                  rows={2}
-                />
-              )}
-              {errores.motivo && (
-                <p className="text-xs text-destructive">{errores.motivo}</p>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="motivo-asignar">Motivo (opcional)</Label>
-              <Textarea
-                id="motivo-asignar"
-                value={notaAsignar}
-                onChange={(e) => setNotaAsignar(e.target.value)}
-                placeholder="Contexto adicional para el equipo…"
-                rows={2}
-              />
-            </div>
-          )}
+          {/* Nota opcional */}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="nota-asignar">Nota (opcional)</Label>
+            <Textarea
+              id="nota-asignar"
+              value={nota}
+              onChange={(e) => setNota(e.target.value)}
+              placeholder="Contexto adicional para el equipo…"
+              rows={2}
+            />
+          </div>
         </div>
 
         <DialogFooter>
@@ -357,7 +248,7 @@ export function ReasignarTasadorDialog({
             onClick={abrirConfirmacion}
             className="bg-brand text-brand-foreground hover:bg-brand/90"
           >
-            {esReasignar ? "Reasignar" : "Asignar"}
+            Asignar
           </Button>
         </DialogFooter>
 
@@ -365,9 +256,7 @@ export function ReasignarTasadorDialog({
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>
-                {esReasignar ? "Confirmar reasignación" : "Confirmar asignación"}
-              </AlertDialogTitle>
+              <AlertDialogTitle>Confirmar asignación</AlertDialogTitle>
               <AlertDialogDescription>
                 Al confirmar se aplicarán los siguientes cambios:
               </AlertDialogDescription>
@@ -392,7 +281,7 @@ export function ReasignarTasadorDialog({
                 onClick={handleConfirmarFinal}
                 className="bg-brand text-brand-foreground hover:bg-brand/90"
               >
-                {esReasignar ? "Confirmar reasignación" : "Confirmar asignación"}
+                Confirmar asignación
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

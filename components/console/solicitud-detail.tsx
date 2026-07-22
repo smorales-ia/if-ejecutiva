@@ -15,7 +15,6 @@ import {
   Mail,
   PlusCircle,
   RotateCcw,
-  UserCog,
   UserPlus,
 } from "lucide-react"
 
@@ -41,10 +40,7 @@ import {
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import {
-  ReasignarTasadorDialog,
-  type ModoAsignacion,
-} from "@/components/console/reasignar-tasador-dialog"
+import { AsignarTasadorDialog } from "@/components/console/asignar-tasador-dialog"
 import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
 import { cn } from "@/lib/utils"
 import {
@@ -129,15 +125,13 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   }
 
   const tieneTasador = tasador !== SIN_TASADOR && tasador.trim() !== ""
-  const mode: ModoAsignacion = tieneTasador ? "reasignar" : "asignar"
   const estadoPermite = estado !== "cancelada" && estado !== "cerrada"
   // RN-59: modo consulta cuando ya no está "creada" y hay tasador.
   const soloLectura = estado !== "creada" && tieneTasador
   const faltantes = datosMinimosFaltantes(s)
   const puedeAsignar = faltantes.length === 0
 
-  function handleConfirmado(nuevo: string, motivo: string) {
-    const anterior = tieneTasador ? tasador : ""
+  function handleConfirmado(nuevo: string, nota: string) {
     const ahora = new Date().toLocaleString("es-CL", {
       day: "2-digit",
       month: "short",
@@ -150,38 +144,26 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     setFechaAsignacion(ahora)
     setEstadoCorreo("enviado")
 
-    const esReasig = anterior !== ""
     setHistorialExtra((prev) => [
       {
         id: `email-${Date.now()}`,
-        titulo: `Correo de ${
-          esReasig ? "reasignación" : "asignación"
-        } enviado al tasador · Asunto: Nueva asignación ${s.codigoExt}`,
+        titulo: `Correo de asignación enviado al tasador · Asunto: Nueva asignación ${s.codigoExt}`,
         hace: "hace unos segundos",
         icono: "mail",
         detalle: mockEmailAsignacion(s, nuevo),
       },
       {
         id: `asig-${Date.now()}`,
-        titulo: esReasig
-          ? `Reasignación manual · ${anterior} → ${nuevo}${
-              motivo ? ` · Motivo: ${motivo}` : ""
-            } · por María Espinoza`
-          : `Asignación manual de tasador · ${nuevo}${
-              motivo ? ` · Nota: ${motivo}` : ""
-            } · por María Espinoza`,
+        titulo: `Asignación manual de tasador · ${nuevo}${
+          nota ? ` · Nota: ${nota}` : ""
+        } · por María Espinoza`,
         hace: "hace unos segundos",
         icono: "check",
       },
       ...prev,
     ])
 
-    toast.success(
-      esReasig
-        ? `Solicitud reasignada a ${nuevo}.`
-        : `Solicitud asignada a ${nuevo}.`,
-      { duration: 3500 },
-    )
+    toast.success(`Solicitud asignada a ${nuevo}.`, { duration: 3500 })
   }
 
   function reenviarCorreo() {
@@ -217,24 +199,14 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
           Modificado {s.modificado} por {s.modificadoPor}
         </p>
 
-        {/* Action bar — exactamente 2 botones */}
+        {/* Action bar */}
         <div className="flex flex-wrap items-center gap-2">
-          {mode === "asignar" ? (
+          {!tieneTasador && estadoPermite && (
             <AssignPrimaryButton
               disabled={!puedeAsignar}
               faltantes={faltantes}
               onClick={() => setDialogOpen(true)}
             />
-          ) : (
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!estadoPermite}
-              onClick={() => setDialogOpen(true)}
-            >
-              <UserCog data-icon="inline-start" />
-              Reasignar Tasador
-            </Button>
           )}
 
           <Button
@@ -280,13 +252,11 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
         </div>
       </Tabs>
 
-      {/* Diálogo de asignación / reasignación */}
-      <ReasignarTasadorDialog
-        mode={mode}
+      {/* Diálogo de asignación manual */}
+      <AsignarTasadorDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         solicitud={s}
-        actual={tieneTasador ? tasador : ""}
         onConfirmado={handleConfirmado}
       />
 
@@ -449,7 +419,7 @@ function DatosTab({
         <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
           <Info className="mt-0.5 size-4 shrink-0 text-[#d97706]" />
           <p className="text-sm text-[#92400e]">
-            Solicitud asignada. Para modificar datos, reasigna el tasador.
+            Solicitud asignada. Los datos quedaron en modo consulta.
           </p>
         </div>
       )}

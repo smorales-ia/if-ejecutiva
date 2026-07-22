@@ -23,7 +23,7 @@ import type { Solicitud } from "@/lib/console-data"
 const tabs = [
   { id: "cartera", label: "Mi cartera", badge: null },
   { id: "sla", label: "SLA en riesgo", badge: 3 },
-  { id: "reasignar", label: "Por reasignar", badge: 1 },
+  { id: "por-asignar", label: "Por asignar", badge: 1 },
   { id: "aprobadas", label: "Aprobadas", badge: null },
   { id: "todas", label: "Todas", badge: null },
 ]
