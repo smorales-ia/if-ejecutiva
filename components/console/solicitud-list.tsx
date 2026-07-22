@@ -24,7 +24,6 @@ const tabs = [
   { id: "cartera", label: "Mi cartera", badge: null },
   { id: "sla", label: "SLA en riesgo", badge: 3 },
   { id: "reasignar", label: "Por reasignar", badge: 1 },
-  { id: "pausadas", label: "Pausadas", badge: null },
   { id: "aprobadas", label: "Aprobadas", badge: null },
   { id: "todas", label: "Todas", badge: null },
 ]

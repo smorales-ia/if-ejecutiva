@@ -303,7 +303,7 @@ export function ReasignarTasadorDialog({
               <Select
                 value={motivo}
                 onValueChange={(v) => {
-                  setMotivo(v)
+                  setMotivo(v ?? "")
                   setErrores((e) => ({ ...e, motivo: undefined }))
                 }}
               >

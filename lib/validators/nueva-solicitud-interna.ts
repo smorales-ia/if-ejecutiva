@@ -6,6 +6,11 @@ import { validarRut, PRODUCTOS_CON_BANCO } from "@/lib/console-data"
  * 4 secciones: A · Origen y cliente, B · Propiedad (con N unidades),
  * C · Personas de la operación, D · Producto y observaciones.
  * Mensajes en español de Chile.
+ *
+ * IMPORTANTE: no usamos `.default()` ni `.optional()` en los campos de texto.
+ * Eso mantiene idénticos los tipos de entrada y salida del schema y evita el
+ * conflicto de genéricos entre `useForm`, `zodResolver` y `Control`. Los campos
+ * verdaderamente opcionales se modelan como `z.string()` (se permite "").
  */
 
 /** Archivo de respaldo (compartido con DocumentoArchivo de file-upload/checklist). */
@@ -22,7 +27,7 @@ export type ArchivoFormulario = z.infer<typeof archivoSchema>
 const subItemSchema = z.object({
   id: z.string(),
   tipoBien: z.string().min(1, "Selecciona el tipo de bien."),
-  detalle: z.string().optional().default(""),
+  detalle: z.string(),
 })
 
 /** Unidad tasable (bloque repetible dentro de la Sección B). */
@@ -30,23 +35,23 @@ export const unidadSchema = z
   .object({
     id: z.string(),
     ubicacion: z.string().min(1, "Indica depto / torre / piso."),
-    modelo: z.string().optional().default(""),
+    modelo: z.string(),
     tipoBien: z.string().min(1, "Selecciona el tipo de bien."),
     // "con_rol" | "uso_goce"
     rolModo: z.enum(["con_rol", "uso_goce"]),
-    rolSii: z.string().optional().default(""),
-    rolEnTramite: z.boolean().default(false),
+    rolSii: z.string(),
+    rolEnTramite: z.boolean(),
     supConstruida: z.string().min(1, "Ingresa la superficie construida."),
-    supTerraza: z.string().optional().default(""),
-    supTerreno: z.string().optional().default(""),
-    anioConstruccion: z.string().optional().default(""),
+    supTerraza: z.string(),
+    supTerreno: z.string(),
+    anioConstruccion: z.string(),
     material: z.string().min(1, "Selecciona el material predominante."),
-    m2Ampliacion: z.string().optional().default(""),
-    regularizable: z.enum(["si", "no", ""]).optional().default(""),
+    m2Ampliacion: z.string(),
+    regularizable: z.enum(["si", "no", ""]),
     origenSuperficie: z.string().min(1, "Selecciona el origen de la superficie."),
     respaldo: archivoSchema.nullable(),
-    detalleItem: z.string().optional().default(""),
-    subItems: z.array(subItemSchema).default([]),
+    detalleItem: z.string(),
+    subItems: z.array(subItemSchema),
   })
   .superRefine((u, ctx) => {
     if (u.rolModo === "con_rol" && !u.rolEnTramite && u.rolSii.trim() === "") {
@@ -79,8 +84,8 @@ export const contactoVisitaSchema = z.object({
   id: z.string(),
   rol: z.string().min(1, "Selecciona el rol."),
   nombre: z.string().min(1, "Ingresa el nombre."),
-  telefono: z.string().optional().default(""),
-  email: z.string().optional().default(""),
+  telefono: z.string(),
+  email: z.string(),
   estado: z.string().min(1, "Selecciona el estado del contacto."),
 })
 
@@ -97,17 +102,17 @@ export const nuevaSolicitudInternaSchema = z
     tipoClienteOrigen: z.string().min(1, "Selecciona el tipo de cliente."),
     tipoInforme: z.string().min(1, "Selecciona el tipo de informe."),
     banco_id: z.string().min(1, "Selecciona un banco."),
-    sucursal_originadora: z.string().optional().default(""),
-    ejecutivo_solicitante: z.string().optional().default(""),
-    ejec_comercializador: z.string().optional().default(""),
-    ejec_formalizador: z.string().optional().default(""),
+    sucursal_originadora: z.string(),
+    ejecutivo_solicitante: z.string(),
+    ejec_comercializador: z.string(),
+    ejec_formalizador: z.string(),
     n_operacion_cliente: z
       .string()
       .min(1, "Necesitamos el N° de operación del banco.")
       .max(20),
 
     // ── Sección B · Propiedad ────────────────────────────────────────────
-    proyecto: z.string().optional().default(""),
+    proyecto: z.string(),
     direccion: z.string().min(3, "Ingresa la dirección de la propiedad."),
     origenDireccion: z.string().min(1, "Selecciona el origen de la dirección."),
     region: z.string().min(1, "Selecciona una región."),
@@ -116,12 +121,12 @@ export const nuevaSolicitudInternaSchema = z
     estadoConservacion: z.string().min(1, "Selecciona el estado de conservación."),
 
     // B.2 · Vendedor (datos de la propiedad)
-    vendedorRazonSocial: z.string().optional().default(""),
-    vendedorRutInmobiliaria: z.string().optional().default(""),
-    vendedorNombre: z.string().optional().default(""),
-    vendedorRut: z.string().optional().default(""),
-    vendedorCorreo: z.string().optional().default(""),
-    vendedorTelefono: z.string().optional().default(""),
+    vendedorRazonSocial: z.string(),
+    vendedorRutInmobiliaria: z.string(),
+    vendedorNombre: z.string(),
+    vendedorRut: z.string(),
+    vendedorCorreo: z.string(),
+    vendedorTelefono: z.string(),
     vendedorOrigenDato: z.string().min(1, "Selecciona el origen del dato."),
 
     // B.3 · Unidades
@@ -137,26 +142,26 @@ export const nuevaSolicitudInternaSchema = z
       .string()
       .min(1, "Ingresa el email.")
       .email("Email inválido"),
-    compradorTelefono: z.string().optional().default(""),
-    vendedorCoincideComprador: z.boolean().default(false),
+    compradorTelefono: z.string(),
+    vendedorCoincideComprador: z.boolean(),
     contactosVisita: z
       .array(contactoVisitaSchema)
       .min(1, "Agrega al menos un contacto de visita."),
 
     // ── Sección D · Producto y observaciones ─────────────────────────────
     producto: z.string().min(1, "Selecciona un producto."),
-    banco: z.string().optional().default(""),
-    observaciones: z.string().optional().default(""),
+    banco: z.string(),
+    observaciones: z.string(),
 
     // Bloque financiero (sólo nuevo)
-    valorTotalUf: z.string().optional().default(""),
-    subsidio: z.string().optional().default(""),
-    ahorro: z.string().optional().default(""),
-    mutuo: z.string().optional().default(""),
-    pagoContado: z.string().optional().default(""),
-    bonoCaptacion: z.string().optional().default(""),
-    bonoIntegracion: z.string().optional().default(""),
-    precioVenta: z.string().optional().default(""),
+    valorTotalUf: z.string(),
+    subsidio: z.string(),
+    ahorro: z.string(),
+    mutuo: z.string(),
+    pagoContado: z.string(),
+    bonoCaptacion: z.string(),
+    bonoIntegracion: z.string(),
+    precioVenta: z.string(),
   })
   .superRefine((data, ctx) => {
     // Banco financista requerido para hipotecario / refinanciamiento.
