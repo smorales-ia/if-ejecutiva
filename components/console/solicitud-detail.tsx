@@ -13,6 +13,7 @@ import {
   ImageIcon,
   Info,
   Mail,
+  Pencil,
   PlusCircle,
   RotateCcw,
   UserPlus,
@@ -41,6 +42,7 @@ import {
   StateBadge,
 } from "@/components/console/status-badges"
 import { AsignarTasadorDialog } from "@/components/console/asignar-tasador-dialog"
+import { EditarSolicitudForm } from "@/components/console/editar-solicitud-form"
 import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
 import { cn } from "@/lib/utils"
 import {
@@ -95,6 +97,11 @@ function datosMinimosFaltantes(s: Solicitud): string[] {
 export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const s = solicitud
 
+  // Copia editable de los datos de negocio (mock en memoria).
+  const [datos, setDatos] = React.useState<Solicitud>(s)
+  const [editando, setEditando] = React.useState(false)
+  const [tab, setTab] = React.useState("datos")
+
   // Estado local que se refresca tras asignar/reasignar o consultar.
   const [tasador, setTasador] = React.useState(s.tasador)
   const [estado, setEstado] = React.useState<EstadoSolicitud>(s.estado)
@@ -115,6 +122,9 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const prevId = React.useRef(s.id)
   if (prevId.current !== s.id) {
     prevId.current = s.id
+    setDatos(s)
+    setEditando(false)
+    setTab("datos")
     setTasador(s.tasador)
     setEstado(s.estado)
     setEstadoCorreo(s.estadoCorreo ?? "pendiente")
@@ -128,8 +138,25 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const estadoPermite = estado !== "cancelada" && estado !== "cerrada"
   // RN-59: modo consulta cuando ya no está "creada" y hay tasador.
   const soloLectura = estado !== "creada" && tieneTasador
-  const faltantes = datosMinimosFaltantes(s)
+  // La solicitud "creada" es totalmente editable por la ejecutiva.
+  const puedeEditar = estado === "creada"
+  const faltantes = datosMinimosFaltantes(datos)
   const puedeAsignar = faltantes.length === 0
+
+  function handleGuardarEdicion(actualizada: Solicitud) {
+    setDatos(actualizada)
+    setEditando(false)
+    setHistorialExtra((prev) => [
+      {
+        id: `edit-${Date.now()}`,
+        titulo: "Datos de la solicitud modificados · por María Espinoza",
+        hace: "hace unos segundos",
+        icono: "check",
+      },
+      ...prev,
+    ])
+    toast.success("Cambios guardados en la solicitud.", { duration: 3000 })
+  }
 
   function handleConfirmado(nuevo: string, nota: string) {
     const ahora = new Date().toLocaleString("es-CL", {
@@ -147,10 +174,10 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     setHistorialExtra((prev) => [
       {
         id: `email-${Date.now()}`,
-        titulo: `Correo de asignación enviado al tasador · Asunto: Nueva asignación ${s.codigoExt}`,
+        titulo: `Correo de asignación enviado al tasador · Asunto: Nueva asignación ${datos.codigoExt}`,
         hace: "hace unos segundos",
         icono: "mail",
-        detalle: mockEmailAsignacion(s, nuevo),
+        detalle: mockEmailAsignacion(datos, nuevo),
       },
       {
         id: `asig-${Date.now()}`,
@@ -174,7 +201,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
         titulo: `Reenvío de correo de asignación a ${tasador}`,
         hace: "hace unos segundos",
         icono: "mail",
-        detalle: mockEmailAsignacion(s, tasador),
+        detalle: mockEmailAsignacion(datos, tasador),
       },
       ...prev,
     ])
@@ -201,6 +228,20 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
 
         {/* Action bar */}
         <div className="flex flex-wrap items-center gap-2">
+          {puedeEditar && !editando && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setTab("datos")
+                setEditando(true)
+              }}
+            >
+              <Pencil data-icon="inline-start" />
+              Editar solicitud
+            </Button>
+          )}
+
           {!tieneTasador && estadoPermite && (
             <AssignPrimaryButton
               disabled={!puedeAsignar}
@@ -221,38 +262,54 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="datos" className="min-h-0 flex-1 gap-0">
+      <Tabs
+        value={tab}
+        onValueChange={setTab}
+        className="min-h-0 flex-1 gap-0"
+      >
         <div className="border-b border-border bg-card px-6">
           <TabsList variant="line" className="h-11">
             <TabsTrigger value="datos">Datos</TabsTrigger>
-            <TabsTrigger value="historial">Historial</TabsTrigger>
-            <TabsTrigger value="adjuntos">Adjuntos</TabsTrigger>
+            <TabsTrigger value="historial" disabled={editando}>
+              Historial
+            </TabsTrigger>
+            <TabsTrigger value="adjuntos" disabled={editando}>
+              Adjuntos
+            </TabsTrigger>
           </TabsList>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <TabsContent value="datos">
-            <DatosTab
-              solicitud={s}
-              tasador={tasador}
-              estado={estado}
-              estadoCorreo={estadoCorreo}
-              fechaAsignacion={fechaAsignacion}
-              soloLectura={soloLectura}
-              onVerEmail={() => setEmailOpen(true)}
-              onReenviar={reenviarCorreo}
-            />
+            {editando ? (
+              <EditarSolicitudForm
+                solicitud={datos}
+                onGuardar={handleGuardarEdicion}
+                onCancelar={() => setEditando(false)}
+              />
+            ) : (
+              <DatosTab
+                solicitud={datos}
+                tasador={tasador}
+                estado={estado}
+                estadoCorreo={estadoCorreo}
+                fechaAsignacion={fechaAsignacion}
+                soloLectura={soloLectura}
+                onVerEmail={() => setEmailOpen(true)}
+                onReenviar={reenviarCorreo}
+              />
+            )}
           </TabsContent>
           <TabsContent value="historial">
             <HistorialTab eventos={historialCompleto} />
           </TabsContent>
           <TabsContent value="adjuntos">
-            <AdjuntosTab solicitud={s} />
+            <AdjuntosTab solicitud={datos} />
           </TabsContent>
         </div>
       </Tabs>
 
-      {/* Diálogo de asignación manual */}
+      {/* Di��logo de asignación manual */}
       <AsignarTasadorDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
@@ -264,7 +321,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       <DocumentosAdjuntosSheet
         open={docsOpen}
         onOpenChange={setDocsOpen}
-        solicitud={{ ...s, estado }}
+        solicitud={{ ...datos, estado }}
       />
 
       {/* Visor del correo de asignación (SC13) */}
@@ -277,7 +334,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
             </DialogDescription>
           </DialogHeader>
           <pre className="max-h-80 overflow-auto rounded-lg border border-border bg-muted/40 p-3 text-xs leading-relaxed whitespace-pre-wrap text-foreground">
-            {mockEmailAsignacion(s, tieneTasador ? tasador : "el tasador")}
+            {mockEmailAsignacion(datos, tieneTasador ? tasador : "el tasador")}
           </pre>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEmailOpen(false)}>
