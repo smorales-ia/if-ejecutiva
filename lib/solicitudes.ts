@@ -169,31 +169,9 @@ export const SOLICITUD_FIELDS: string[] = [
   'semaforo_sla',
   'direccion',
   'monto_estimado_uf',
-  // Paso 3 (RF-05 detalle) — espejo 1:1 de NewRequestSheet + Asignación y Gestión.
-  'canal_contacto_original',
-  'n_operacion_cliente',
-  // FIELD_ID por el espacio final del nombre real en Airtable (D-08, H-04 nota).
-  'fldd56pLZyKYoi2Vi', // sucursal_originadora
   'solicitante_telefono',
   'email_contacto',
-  'ejecutiva_asignada',
-  'regla_aplicada',
-  // 'notas_tasador' y 'notas_visador' (D-08) NO se piden aquí: aún no existen
-  // en Airtable y pedir un campo inexistente en `fields` hace fallar TODA la
-  // consulta con 422 UNKNOWN_FIELD_NAME. mapRecord los degrada a "—" solo.
 ]
-
-/**
- * Busca un campo tolerando espacios extra en el nombre real de Airtable
- * (ej. `sucursal_originadora ` con espacio final — D-08). Se pide por
- * FIELD_ID en `SOLICITUD_FIELDS`, pero la respuesta de Airtable sigue
- * viniendo con el nombre como clave (`returnFieldsByFieldId` no se usa aquí).
- */
-function getFieldLoose(f: RawFields, name: string): string | undefined {
-  if (f[name] !== undefined) return f[name]
-  const key = Object.keys(f).find((k) => k.trim() === name)
-  return key ? f[key] : undefined
-}
 
 function parseDate(str: string | undefined): Date | null {
   if (!str) return null
@@ -266,6 +244,9 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     modificadoPor: f['ejecutivo_solicitante'] ?? '—',
     tipoInforme: f['tipo_informe'] ?? '—',
     tipoPropiedad: f['tipo_propiedad'] ?? '—',
+    // ⚙ Pendiente de creación en Airtable: TX_Solicitudes no distingue nuevo/usado
+    // todavía. Degrada a "usado" (mayoría de los casos actuales).
+    tipoPropiedadNuevoUsado: 'usado',
     banco: f['banco'] ?? '—',
     producto: f['producto'] ?? '—',
     direccion: f['direccion'] ?? '—',
@@ -280,15 +261,25 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     slaAplicable: '5 días hábiles',
     observaciones: f['observaciones_internas'] ?? '',
     canal: f['origen_canal'] ?? '—',
-    canalOrigen: f['canal_contacto_original'] ?? '—',
-    nOperacionCliente: f['n_operacion_cliente'] ?? '—',
-    sucursalOriginadora: getFieldLoose(f, 'sucursal_originadora') ?? '—',
-    ejecutivoSolicitante: f['ejecutivo_solicitante'] ?? '—',
-    telefono: f['solicitante_telefono'] ?? '—',
-    ejecutivaAsignada: f['ejecutiva_asignada'] ?? '—',
-    notasTasador: f['notas_tasador'] ?? '—',
-    notasVisador: f['notas_visador'] ?? '—',
-    reglaAplicada: f['regla_aplicada'] ?? '—',
+    // ⚙ Pendiente de creación en Airtable: comprador/vendedor/unidades/
+    // contactosVisita (modelo v1.9 del diseño) no tienen respaldo en
+    // TX_Solicitudes todavía. `comprador` se arma con los mismos campos planos
+    // que ya existían (propietario/rut/email); el resto degrada vacío.
+    comprador: {
+      rut: f['cliente_final_rut'] ?? '—',
+      nombre: f['cliente_final_nombre'] ?? '—',
+      email: f['email_contacto'] ?? '—',
+      telefono: f['solicitante_telefono'] ?? '—',
+    },
+    vendedor: {
+      esInmobiliaria: false,
+      correo: '—',
+      telefono: '—',
+      origenDato: '—',
+    },
+    unidades: [],
+    contactosVisita: [],
+    contadorReasignaciones: 0,
   }
 }
 

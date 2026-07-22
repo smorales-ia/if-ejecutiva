@@ -1,27 +1,26 @@
 "use client"
 
 import * as React from "react"
+import { toast } from "sonner"
 import {
-  AlertCircle,
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
   Download,
   Eye,
   FileText,
+  FolderOpen,
   ImageIcon,
-  MoreHorizontal,
-  Pause,
+  Info,
+  Mail,
   Pencil,
-  Plus,
   PlusCircle,
   RotateCcw,
-  UserCog,
-  X,
+  UserPlus,
 } from "lucide-react"
-import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
-import { FileUploadZone } from "@/components/console/file-upload-zone"
-import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -29,116 +28,187 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   PriorityChip,
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import type { Solicitud, TipoDocumento } from "@/lib/console-data"
-import type { Evento, IconoEvento } from "@/lib/eventos"
-import type { Adjunto } from "@/lib/adjuntos"
-import { uploadConReintentos } from "@/lib/adjuntos-uploader"
+import { AsignarTasadorDialog } from "@/components/console/asignar-tasador-dialog"
+import { EditarSolicitudForm } from "@/components/console/editar-solicitud-form"
+import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
+import { cn } from "@/lib/utils"
+import {
+  ESTADO_CORREO_CLASSES,
+  ESTADO_CORREO_LABELS,
+  HISTORIAL,
+  mockAntecedentesLegales,
+  mockDatosSii,
+  mockDecisionMotor,
+  mockEmailAsignacion,
+  mockVersionesInforme,
+  type EstadoCorreo,
+  type EstadoSolicitud,
+  type EventoHistorial,
+  type Solicitud,
+} from "@/lib/console-data"
 
-/**
- * `TX_Adjuntos.url_dropbox` puede traer el path interno de Dropbox
- * (`/VProperty/Tasaciones/...`) en vez de un link público clickeable —
- * deuda técnica aceptada para Fase Adjuntos 1 (docs/aprendizajes.md E-025,
- * no hay módulo `createSharedLink` confirmado en esta instancia de Make).
- * Un `<a href>` con ese path navegaría dentro del propio dominio de la app,
- * no a Dropbox — hay que distinguirlo antes de ofrecer el link como activo.
- */
-function esUrlPublica(url: string): boolean {
-  return /^https?:\/\//i.test(url)
-}
-
-const historialIcons: Record<IconoEvento, typeof CheckCircle2> = {
+const historialIcons = {
   check: CheckCircle2,
   plus: PlusCircle,
   alert: AlertTriangle,
   eye: Eye,
+  mail: Mail,
+  upload: Download,
 }
 
-/** Item local optimista, agregado antes de que el próximo fetch lo confirme. */
-type AdjuntoLocal = Adjunto
+const SIN_TASADOR = "Sin asignar"
 
-export function SolicitudDetail({
-  solicitud,
-  tiposDocumento,
-}: {
-  solicitud: Solicitud
-  tiposDocumento: TipoDocumento[]
-}) {
+/** Evalúa RN-44: datos mínimos para poder asignar tasador. */
+function datosMinimosFaltantes(s: Solicitud): string[] {
+  const faltan: string[] = []
+  if (!s.direccion || s.direccion.trim() === "") faltan.push("Dirección de la propiedad")
+  const hayContactoConTelefono = s.contactosVisita.some(
+    (c) => c.telefono && c.telefono.trim() !== "",
+  )
+  if (!hayContactoConTelefono)
+    faltan.push("Al menos un contacto de visita con teléfono")
+
+  const esNuevo = s.tipoPropiedadNuevoUsado === "nuevo"
+  const rolPendiente = s.unidades.some(
+    (u) => u.conRol && !u.rolSii && !(u.rolEnTramite && esNuevo),
+  )
+  if (s.unidades.length === 0 || rolPendiente)
+    faltan.push(
+      esNuevo
+        ? "Rol SII de cada unidad (o marca “En trámite”)"
+        : "Rol SII de cada unidad con rol",
+    )
+  return faltan
+}
+
+export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const s = solicitud
 
-  const [historialBase, setHistorialBase] = React.useState<Evento[]>([])
-  const [historialLoading, setHistorialLoading] = React.useState(true)
-  const [historialError, setHistorialError] = React.useState(false)
+  // Copia editable de los datos de negocio (mock en memoria).
+  const [datos, setDatos] = React.useState<Solicitud>(s)
+  const [editando, setEditando] = React.useState(false)
+  const [tab, setTab] = React.useState("datos")
 
-  const [adjuntosExtra, setAdjuntosExtra] = React.useState<AdjuntoLocal[]>([])
-  const [adjuntosBase, setAdjuntosBase] = React.useState<Adjunto[]>([])
-  const [adjuntosLoading, setAdjuntosLoading] = React.useState(true)
-  const [adjuntosError, setAdjuntosError] = React.useState(false)
+  // Estado local que se refresca tras asignar/reasignar o consultar.
+  const [tasador, setTasador] = React.useState(s.tasador)
+  const [estado, setEstado] = React.useState<EstadoSolicitud>(s.estado)
+  const [estadoCorreo, setEstadoCorreo] = React.useState<EstadoCorreo>(
+    s.estadoCorreo ?? "pendiente",
+  )
+  const [fechaAsignacion, setFechaAsignacion] = React.useState(
+    s.fechaAsignacion ?? "",
+  )
+  const [historialExtra, setHistorialExtra] = React.useState<EventoHistorial[]>(
+    [],
+  )
+  const [dialogOpen, setDialogOpen] = React.useState(false)
+  const [docsOpen, setDocsOpen] = React.useState(false)
+  const [emailOpen, setEmailOpen] = React.useState(false)
 
-  // Resetea el estado local optimista cuando cambia la solicitud seleccionada.
+  // Resetea el estado local cuando cambia la solicitud seleccionada.
   const prevId = React.useRef(s.id)
   if (prevId.current !== s.id) {
     prevId.current = s.id
-    setAdjuntosExtra([])
+    setDatos(s)
+    setEditando(false)
+    setTab("datos")
+    setTasador(s.tasador)
+    setEstado(s.estado)
+    setEstadoCorreo(s.estadoCorreo ?? "pendiente")
+    setFechaAsignacion(s.fechaAsignacion ?? "")
+    setHistorialExtra([])
+    setDialogOpen(false)
+    setDocsOpen(false)
   }
 
-  React.useEffect(() => {
-    let cancelado = false
-    setHistorialLoading(true)
-    setHistorialError(false)
-    fetch(`/api/solicitudes/${s.id}/eventos`)
-      .then((res) => {
-        if (!res.ok) throw new Error("fetch eventos falló")
-        return res.json() as Promise<{ data: Evento[] }>
-      })
-      .then((json) => {
-        if (!cancelado) setHistorialBase(json.data)
-      })
-      .catch(() => {
-        if (!cancelado) setHistorialError(true)
-      })
-      .finally(() => {
-        if (!cancelado) setHistorialLoading(false)
-      })
-    return () => {
-      cancelado = true
-    }
-  }, [s.id])
+  const tieneTasador = tasador !== SIN_TASADOR && tasador.trim() !== ""
+  const estadoPermite = estado !== "cancelada" && estado !== "cerrada"
+  // RN-59: modo consulta cuando ya no está "creada" y hay tasador.
+  const soloLectura = estado !== "creada" && tieneTasador
+  // La solicitud "creada" es totalmente editable por la ejecutiva.
+  const puedeEditar = estado === "creada"
+  const faltantes = datosMinimosFaltantes(datos)
+  const puedeAsignar = faltantes.length === 0
 
-  React.useEffect(() => {
-    let cancelado = false
-    setAdjuntosLoading(true)
-    setAdjuntosError(false)
-    fetch(`/api/solicitudes/${s.id}/adjuntos`)
-      .then((res) => {
-        if (!res.ok) throw new Error("fetch adjuntos falló")
-        return res.json() as Promise<{ data: Adjunto[] }>
-      })
-      .then((json) => {
-        if (!cancelado) setAdjuntosBase(json.data)
-      })
-      .catch(() => {
-        if (!cancelado) setAdjuntosError(true)
-      })
-      .finally(() => {
-        if (!cancelado) setAdjuntosLoading(false)
-      })
-    return () => {
-      cancelado = true
-    }
-  }, [s.id])
-
-  function handleAdjuntoSubido(nuevo: AdjuntoLocal) {
-    setAdjuntosExtra((prev) => [nuevo, ...prev])
+  function handleGuardarEdicion(actualizada: Solicitud) {
+    setDatos(actualizada)
+    setEditando(false)
+    setHistorialExtra((prev) => [
+      {
+        id: `edit-${Date.now()}`,
+        titulo: "Datos de la solicitud modificados · por María Espinoza",
+        hace: "hace unos segundos",
+        icono: "check",
+      },
+      ...prev,
+    ])
+    toast.success("Cambios guardados en la solicitud.", { duration: 3000 })
   }
 
-  const historialCompleto = historialBase
-  const adjuntosCompleto = [...adjuntosExtra, ...adjuntosBase]
+  function handleConfirmado(nuevo: string, nota: string) {
+    const ahora = new Date().toLocaleString("es-CL", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+    setTasador(nuevo)
+    if (estado === "creada") setEstado("asignada")
+    setFechaAsignacion(ahora)
+    setEstadoCorreo("enviado")
+
+    setHistorialExtra((prev) => [
+      {
+        id: `email-${Date.now()}`,
+        titulo: `Correo de asignación enviado al tasador · Asunto: Nueva asignación ${datos.codigoExt}`,
+        hace: "hace unos segundos",
+        icono: "mail",
+        detalle: mockEmailAsignacion(datos, nuevo),
+      },
+      {
+        id: `asig-${Date.now()}`,
+        titulo: `Asignación manual de tasador · ${nuevo}${
+          nota ? ` · Nota: ${nota}` : ""
+        } · por María Espinoza`,
+        hace: "hace unos segundos",
+        icono: "check",
+      },
+      ...prev,
+    ])
+
+    toast.success(`Solicitud asignada a ${nuevo}.`, { duration: 3500 })
+  }
+
+  function reenviarCorreo() {
+    setEstadoCorreo("enviado")
+    setHistorialExtra((prev) => [
+      {
+        id: `reenvio-${Date.now()}`,
+        titulo: `Reenvío de correo de asignación a ${tasador}`,
+        hace: "hace unos segundos",
+        icono: "mail",
+        detalle: mockEmailAsignacion(datos, tasador),
+      },
+      ...prev,
+    ])
+    toast.success("Correo reenviado al tasador.", { duration: 3000 })
+  }
+
+  const historialCompleto = [...historialExtra, ...HISTORIAL]
 
   return (
     <div className="flex h-full w-full flex-col bg-background">
@@ -148,80 +218,166 @@ export function SolicitudDetail({
           <h1 className="text-xl font-bold tracking-tight text-foreground">
             {s.codigoExt}
           </h1>
-          <StateBadge estado={s.estado} />
+          <StateBadge estado={estado} />
           <SLABadge dias={s.slaDias} total={s.slaTotal} />
           <PriorityChip prioridad={s.prioridad} />
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <p>
-            Modificado {s.modificado} por {s.modificadoPor}
-          </p>
-          <p>
-            Decisión del motor:{" "}
-            <span className="font-medium text-foreground">
-              {s.reglaAplicada}
-            </span>
-          </p>
-        </div>
+        <p className="text-xs text-muted-foreground">
+          Modificado {s.modificado} por {s.modificadoPor}
+        </p>
 
-        {/* Action bar — mock deshabilitado, disponible recién en Paso 5 (RF-06) */}
+        {/* Action bar */}
         <div className="flex flex-wrap items-center gap-2">
-          <ActionButton icon={Pencil} label="Editar" />
-          <ActionButton icon={UserCog} label="Reasignar tasador" />
-          <ActionButton label="Cambiar prioridad" />
-          <ActionButton icon={Pause} label="Pausar" />
-          <ActionButton icon={MoreHorizontal} label="Más opciones" />
+          {puedeEditar && !editando && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setTab("datos")
+                setEditando(true)
+              }}
+            >
+              <Pencil data-icon="inline-start" />
+              Editar solicitud
+            </Button>
+          )}
+
+          {!tieneTasador && estadoPermite && (
+            <AssignPrimaryButton
+              disabled={!puedeAsignar}
+              faltantes={faltantes}
+              onClick={() => setDialogOpen(true)}
+            />
+          )}
+
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDocsOpen(true)}
+          >
+            <FolderOpen data-icon="inline-start" />
+            Documentos y Adjuntos
+          </Button>
         </div>
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="datos" className="min-h-0 flex-1 gap-0">
+      <Tabs
+        value={tab}
+        onValueChange={setTab}
+        className="min-h-0 flex-1 gap-0"
+      >
         <div className="border-b border-border bg-card px-6">
           <TabsList variant="line" className="h-11">
             <TabsTrigger value="datos">Datos</TabsTrigger>
-            <TabsTrigger value="historial">Historial</TabsTrigger>
-            <TabsTrigger value="adjuntos">Adjuntos</TabsTrigger>
+            <TabsTrigger value="historial" disabled={editando}>
+              Historial
+            </TabsTrigger>
+            <TabsTrigger value="adjuntos" disabled={editando}>
+              Adjuntos
+            </TabsTrigger>
           </TabsList>
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           <TabsContent value="datos">
-            <DatosTab
-              solicitud={s}
-              tiposDocumento={tiposDocumento}
-              adjuntos={adjuntosCompleto}
-              adjuntosLoading={adjuntosLoading}
-            />
+            {editando ? (
+              <EditarSolicitudForm
+                solicitud={datos}
+                onGuardar={handleGuardarEdicion}
+                onCancelar={() => setEditando(false)}
+              />
+            ) : (
+              <DatosTab
+                solicitud={datos}
+                tasador={tasador}
+                estado={estado}
+                estadoCorreo={estadoCorreo}
+                fechaAsignacion={fechaAsignacion}
+                soloLectura={soloLectura}
+                onVerEmail={() => setEmailOpen(true)}
+                onReenviar={reenviarCorreo}
+              />
+            )}
           </TabsContent>
           <TabsContent value="historial">
-            <HistorialTab
-              eventos={historialCompleto}
-              loading={historialLoading}
-              error={historialError}
-            />
+            <HistorialTab eventos={historialCompleto} />
           </TabsContent>
           <TabsContent value="adjuntos">
-            <AdjuntosTab
-              solicitud={s}
-              adjuntos={adjuntosCompleto}
-              loading={adjuntosLoading}
-              error={adjuntosError}
-              onSubido={handleAdjuntoSubido}
-            />
+            <AdjuntosTab solicitud={datos} />
           </TabsContent>
         </div>
       </Tabs>
+
+      {/* Di��logo de asignación manual */}
+      <AsignarTasadorDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        solicitud={s}
+        onConfirmado={handleConfirmado}
+      />
+
+      {/* Sheet lateral de documentos y adjuntos */}
+      <DocumentosAdjuntosSheet
+        open={docsOpen}
+        onOpenChange={setDocsOpen}
+        solicitud={{ ...datos, estado }}
+      />
+
+      {/* Visor del correo de asignación (SC13) */}
+      <Dialog open={emailOpen} onOpenChange={setEmailOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Correo de asignación</DialogTitle>
+            <DialogDescription>
+              Vista previa del correo enviado al tasador (SC13).
+            </DialogDescription>
+          </DialogHeader>
+          <pre className="max-h-80 overflow-auto rounded-lg border border-border bg-muted/40 p-3 text-xs leading-relaxed whitespace-pre-wrap text-foreground">
+            {mockEmailAsignacion(datos, tieneTasador ? tasador : "el tasador")}
+          </pre>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailOpen(false)}>
+              Cerrar
+            </Button>
+            <Button
+              onClick={() => {
+                reenviarCorreo()
+                setEmailOpen(false)
+              }}
+              className="bg-brand text-brand-foreground hover:bg-brand/90"
+            >
+              <RotateCcw data-icon="inline-start" />
+              Reenviar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
-function ActionButton({
-  icon: Icon,
-  label,
+function AssignPrimaryButton({
+  disabled,
+  faltantes,
+  onClick,
 }: {
-  icon?: React.ComponentType
-  label: string
+  disabled: boolean
+  faltantes: string[]
+  onClick: () => void
 }) {
+  if (!disabled) {
+    return (
+      <Button
+        size="sm"
+        onClick={onClick}
+        className="bg-brand text-brand-foreground hover:bg-brand/90"
+      >
+        <UserPlus data-icon="inline-start" />
+        Asignar Tasador
+      </Button>
+    )
+  }
   return (
     <Tooltip>
       <TooltipTrigger
@@ -229,17 +385,23 @@ function ActionButton({
           <span className="inline-flex">
             <Button
               size="sm"
-              variant="outline"
               disabled
-              className="pointer-events-none"
+              className="pointer-events-none bg-brand text-brand-foreground"
             >
-              {Icon && <Icon data-icon="inline-start" />}
-              {label}
+              <UserPlus data-icon="inline-start" />
+              Asignar Tasador
             </Button>
           </span>
         }
       />
-      <TooltipContent>Disponible en Paso 5</TooltipContent>
+      <TooltipContent className="max-w-xs">
+        <p className="mb-1 font-medium">Faltan datos mínimos (RN-44):</p>
+        <ul className="list-disc pl-4">
+          {faltantes.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      </TooltipContent>
     </Tooltip>
   )
 }
@@ -247,15 +409,20 @@ function ActionButton({
 function Section({
   title,
   children,
+  action,
 }: {
   title: string
   children: React.ReactNode
+  action?: React.ReactNode
 }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-        {title}
-      </h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          {title}
+        </h2>
+        {action}
+      </div>
       <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
         {children}
       </div>
@@ -278,501 +445,500 @@ function DataRow({
   )
 }
 
-/**
- * Espejo 1:1 de NewRequestSheet (RF-05 detalle, Paso 3): mismas 4 secciones
- * y labels literales del formulario de alta interna, más Documentos
- * requeridos/Adjuntos (resumen) y Asignación y Gestión (no está en el Sheet;
- * es del expediente).
- */
 function DatosTab({
   solicitud: s,
-  tiposDocumento,
-  adjuntos,
-  adjuntosLoading,
+  tasador,
+  estado,
+  estadoCorreo,
+  fechaAsignacion,
+  soloLectura,
+  onVerEmail,
+  onReenviar,
 }: {
   solicitud: Solicitud
-  tiposDocumento: TipoDocumento[]
-  adjuntos: Adjunto[]
-  adjuntosLoading: boolean
+  tasador: string
+  estado: EstadoSolicitud
+  estadoCorreo: EstadoCorreo
+  fechaAsignacion: string
+  soloLectura: boolean
+  onVerEmail: () => void
+  onReenviar: () => void
 }) {
-  const adjuntosRequeridos = adjuntos.filter((a) => a.requeridoPorEjecutiva)
+  const esNuevo = s.tipoPropiedadNuevoUsado === "nuevo"
+  const sii = mockDatosSii(s)
+  const legales = mockAntecedentesLegales(s)
+  const motor = mockDecisionMotor(s)
+  const tieneTasador = tasador !== SIN_TASADOR && tasador.trim() !== ""
 
   return (
     <div className="flex flex-col gap-6">
-      <Section title="Origen de la solicitud">
-        <DataRow label="Canal de origen">{s.canalOrigen}</DataRow>
-        <DataRow label="Cliente">{s.cliente}</DataRow>
-        <DataRow label="Tipo de informe">{s.tipoInforme}</DataRow>
-        <DataRow label="Banco">{s.banco}</DataRow>
-        <DataRow label="N° de operación cliente">{s.nOperacionCliente}</DataRow>
-        <DataRow label="Sucursal originadora">{s.sucursalOriginadora}</DataRow>
-        <DataRow label="Ejecutivo solicitante">{s.ejecutivoSolicitante}</DataRow>
-      </Section>
-
-      <Separator />
-
-      <Section title="Datos de la propiedad">
-        <DataRow label="Dirección">{s.direccion}</DataRow>
-        <DataRow label="Región">{s.region}</DataRow>
-        <DataRow label="Comuna">{s.comuna}</DataRow>
-        <DataRow label="Tipo de propiedad">{s.tipoPropiedad}</DataRow>
-        <DataRow label="Valor estimado (UF)">{s.montoUf}</DataRow>
-      </Section>
-
-      <Separator />
-
-      <Section title="Solicitante final">
-        <DataRow label="Nombre completo">{s.propietario}</DataRow>
-        <DataRow label="RUT">{s.rut}</DataRow>
-        <DataRow label="Teléfono">{s.telefono}</DataRow>
-        <DataRow label="Email">{s.email}</DataRow>
-      </Section>
-
-      <Separator />
-
-      <Section title="Producto y observaciones">
-        <DataRow label="Producto">{s.producto}</DataRow>
-        <div className="col-span-1 flex flex-col gap-0.5 sm:col-span-2">
-          <span className="text-xs text-muted-foreground">Observaciones</span>
-          <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
-            {s.observaciones || "—"}
+      {soloLectura && (
+        <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/60 p-3">
+          <Info className="mt-0.5 size-4 shrink-0 text-[#d97706]" />
+          <p className="text-sm text-[#92400e]">
+            Solicitud asignada. Los datos quedaron en modo consulta.
           </p>
         </div>
+      )}
+
+      <Section title="Cliente y tipo">
+        <DataRow label="Cliente">{s.cliente}</DataRow>
+        <DataRow label="Tipo de informe">{s.tipoInforme}</DataRow>
+        <DataRow label="Tipo de propiedad">
+          {s.tipoPropiedad} · {esNuevo ? "Nuevo" : "Usado"}
+        </DataRow>
+        <DataRow label="Banco">{s.banco}</DataRow>
+        <DataRow label="Producto">{s.producto}</DataRow>
+        <DataRow label="Canal de origen">{s.canal}</DataRow>
       </Section>
 
       <Separator />
 
+      <Section title="Propiedad">
+        {s.proyecto && (
+          <DataRow label="Proyecto o condominio">{s.proyecto}</DataRow>
+        )}
+        <DataRow label="Dirección">{s.direccion}</DataRow>
+        <DataRow label="Comuna">{s.comuna}</DataRow>
+        <DataRow label="Región">{s.region}</DataRow>
+        <DataRow label="Estado de conservación">
+          {s.estadoConservacion ?? "—"}
+        </DataRow>
+      </Section>
+
+      <Separator />
+
+      <Section title="Comprador (cliente final evaluado)">
+        <DataRow label="Nombre">{s.comprador.nombre}</DataRow>
+        <DataRow label="RUT">{s.comprador.rut}</DataRow>
+        <DataRow label="Email">{s.comprador.email}</DataRow>
+        <DataRow label="Teléfono">{s.comprador.telefono}</DataRow>
+      </Section>
+
+      <Separator />
+
+      <Section title="Vendedor">
+        {s.vendedor.esInmobiliaria ? (
+          <>
+            <DataRow label="Razón social">{s.vendedor.razonSocial}</DataRow>
+            <DataRow label="RUT inmobiliaria">
+              {s.vendedor.rutInmobiliaria}
+            </DataRow>
+          </>
+        ) : (
+          <>
+            <DataRow label="Nombre">{s.vendedor.nombre}</DataRow>
+            <DataRow label="RUT">{s.vendedor.rut}</DataRow>
+          </>
+        )}
+        <DataRow label="Correo">{s.vendedor.correo}</DataRow>
+        <DataRow label="Teléfono">{s.vendedor.telefono}</DataRow>
+        <DataRow label="Origen del dato">{s.vendedor.origenDato}</DataRow>
+      </Section>
+
+      <Separator />
+
+      {/* Unidades (tabla) */}
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Documentos requeridos
+          Unidades ({s.unidades.length})
         </h2>
-        <p className="text-xs text-muted-foreground">
-          Catálogo vigente al momento de crear la solicitud. Airtable aún no
-          vincula cada adjunto a un documento específico del catálogo
-          (decisión pendiente, ver <code>docs/schema-airtable.md</code> §8) —
-          se muestra el catálogo de referencia y, por separado, los adjuntos
-          que la ejecutiva marcó como parte del checklist obligatorio.
-        </p>
-        <ul className="flex flex-col gap-1.5">
-          {tiposDocumento.map((t) => (
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/50 text-xs text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 font-medium">Ubicación</th>
+                <th className="px-3 py-2 font-medium">Tipo de bien</th>
+                <th className="px-3 py-2 font-medium">Rol SII</th>
+                <th className="px-3 py-2 font-medium text-right">Constr. m²</th>
+                <th className="px-3 py-2 font-medium text-right">Terraza</th>
+                <th className="px-3 py-2 font-medium text-right">Terreno</th>
+                <th className="px-3 py-2 font-medium">Año</th>
+                <th className="px-3 py-2 font-medium">Material</th>
+                <th className="px-3 py-2 font-medium">Origen</th>
+                <th className="px-3 py-2 font-medium">Respaldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {s.unidades.map((u) => (
+                <tr key={u.id} className="border-t border-border">
+                  <td className="px-3 py-2 font-medium text-foreground">
+                    {u.ubicacion}
+                  </td>
+                  <td className="px-3 py-2 text-foreground">{u.tipoBien}</td>
+                  <td className="px-3 py-2 text-foreground">
+                    {u.conRol
+                      ? u.rolEnTramite
+                        ? "En trámite"
+                        : u.rolSii || "—"
+                      : "Uso y goce"}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {u.supConstruida}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                    {u.supTerraza ?? "—"}
+                  </td>
+                  <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                    {u.supTerreno ?? "—"}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {u.anioConstruccion}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {u.material}
+                  </td>
+                  <td className="px-3 py-2 text-muted-foreground">
+                    {u.origenSuperficie}
+                  </td>
+                  <td className="px-3 py-2">
+                    {u.respaldo ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-brand hover:underline"
+                      >
+                        <FileText className="size-3.5" />
+                        <span className="max-w-32 truncate">{u.respaldo}</span>
+                      </button>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <Separator />
+
+      {/* Contactos de visita */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Contactos de visita ({s.contactosVisita.length})
+        </h2>
+        <ul className="flex flex-col gap-2">
+          {s.contactosVisita.map((c, idx) => (
             <li
-              key={t.id}
-              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-3 py-2"
+              key={c.id}
+              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border bg-card p-3"
             >
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate text-sm font-medium text-foreground">
-                  {t.nombre}
+              <span className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground">
+                  {c.nombre}
                 </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {t.entidad_emisora}
-                </span>
-              </div>
-              {t.vigencia_dias != null && (
-                <Badge variant="secondary" className="shrink-0 text-muted-foreground">
-                  Vigencia {t.vigencia_dias} días
-                </Badge>
-              )}
+                {idx === 0 && (
+                  <Badge className="bg-brand/10 text-brand">Principal</Badge>
+                )}
+              </span>
+              <span className="text-xs text-muted-foreground">{c.rol}</span>
+              <span className="text-xs text-foreground">{c.telefono}</span>
+              <span className="text-xs text-muted-foreground">{c.email}</span>
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "ml-auto",
+                  c.estado !== "Válido" && "text-[#b45309]",
+                )}
+              >
+                {c.estado}
+              </Badge>
             </li>
           ))}
         </ul>
+      </section>
 
-        <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-muted-foreground">
-            Marcados como requeridos en este expediente ({adjuntosRequeridos.length})
-          </span>
-          {adjuntosLoading ? (
-            <p className="text-sm text-muted-foreground">Cargando…</p>
-          ) : adjuntosRequeridos.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              Ningún adjunto marcado todavía.
-            </p>
+      <Separator />
+
+      {/* Asignación */}
+      <Section
+        title="Asignación"
+        action={
+          tieneTasador ? (
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={onVerEmail}>
+                <Mail data-icon="inline-start" />
+                Ver email enviado
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onReenviar}>
+                <RotateCcw data-icon="inline-start" />
+                Reenviar
+              </Button>
+            </div>
+          ) : undefined
+        }
+      >
+        <DataRow label="Tasador asignado">
+          {tieneTasador ? (
+            <span className="inline-flex items-center gap-2">
+              {tasador}
+              <Badge className="bg-indigo-50 text-indigo-700">Asignado</Badge>
+            </span>
           ) : (
-            <ul className="flex flex-col gap-1">
-              {adjuntosRequeridos.map((a) => (
-                <li
-                  key={a.id}
-                  className="flex items-center justify-between gap-2 text-sm"
-                >
-                  <span className="truncate text-foreground">{a.nombre}</span>
-                  {a.urlDropbox && esUrlPublica(a.urlDropbox) ? (
-                    <a
-                      href={a.urlDropbox}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="shrink-0 text-xs font-medium text-brand hover:underline"
-                    >
-                      Ver enlace
-                    </a>
-                  ) : a.urlDropbox ? (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <span className="shrink-0 text-xs text-muted-foreground/70">
-                            Ver enlace
-                          </span>
-                        }
-                      />
-                      <TooltipContent>
-                        Enlace directo disponible en próxima versión
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      Sin enlace
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <span className="text-muted-foreground">Sin asignar</span>
           )}
+        </DataRow>
+        <DataRow label="Fecha y hora de asignación">
+          {fechaAsignacion || "—"}
+        </DataRow>
+        <DataRow label="Estado del correo">
+          <span
+            className={cn(
+              "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+              ESTADO_CORREO_CLASSES[estadoCorreo],
+            )}
+          >
+            {ESTADO_CORREO_LABELS[estadoCorreo]}
+          </span>
+        </DataRow>
+      </Section>
+
+      <Separator />
+
+      {/* Datos SII */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Datos SII
+        </h2>
+        <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+          <DataRow label="Destino principal">{sii.destinoPrincipal}</DataRow>
+          <DataRow label="Avalúo fiscal total">{sii.avaluoTotal}</DataRow>
+          <DataRow label="Contribución anual">{sii.contribucionAnual}</DataRow>
+        </div>
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/50 text-xs text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 font-medium">Unidad</th>
+                <th className="px-3 py-2 font-medium">Destino</th>
+                <th className="px-3 py-2 font-medium">Código SII</th>
+                <th className="px-3 py-2 font-medium text-right">Avalúo fiscal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sii.unidades.map((u) => (
+                <tr key={u.unidadId} className="border-t border-border">
+                  <td className="px-3 py-2 text-foreground">{u.ubicacion}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{u.destino}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{u.codigoSii}</td>
+                  <td className="px-3 py-2 text-right tabular-nums text-foreground">
+                    {u.avaluoFiscal}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
 
       <Separator />
 
-      <section className="flex flex-col gap-1">
+      {/* Antecedentes legales */}
+      <Section title="Antecedentes legales">
+        <DataRow label="Permiso de edificación">
+          {legales.permisoEdificacion}
+        </DataRow>
+        <DataRow label="Fecha del permiso">{legales.fechaPermiso}</DataRow>
+        <DataRow label="Recepción final">{legales.recepcionFinal}</DataRow>
+        <DataRow label="Fojas">{legales.fojas}</DataRow>
+        <DataRow label="N° inscripción">{legales.numeroInscripcion}</DataRow>
+        <DataRow label="Año inscripción">{legales.anioInscripcion}</DataRow>
+      </Section>
+
+      {/* Financiero — sólo en propiedades nuevas */}
+      {esNuevo && s.financiero && (
+        <>
+          <Separator />
+          <Section title="Financiero">
+            <DataRow label="Valor total UF">
+              {s.financiero.valorTotalUf ?? "—"}
+            </DataRow>
+            <DataRow label="Precio de venta">
+              {s.financiero.precioVenta ?? "—"}
+            </DataRow>
+            <DataRow label="Subsidio">{s.financiero.subsidio ?? "—"}</DataRow>
+            <DataRow label="Ahorro">{s.financiero.ahorro ?? "—"}</DataRow>
+            <DataRow label="Mutuo hipotecario">
+              {s.financiero.mutuo ?? "—"}
+            </DataRow>
+            <DataRow label="Pago contado">
+              {s.financiero.pagoContado ?? "—"}
+            </DataRow>
+            <DataRow label="Bono captación">
+              {s.financiero.bonoCaptacion ?? "—"}
+            </DataRow>
+            <DataRow label="Bono integración">
+              {s.financiero.bonoIntegracion ?? "—"}
+            </DataRow>
+          </Section>
+        </>
+      )}
+
+      <Separator />
+
+      {/* Decisión del motor */}
+      <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Adjuntos
+          Decisión del motor de asignación
         </h2>
-        <p className="text-sm text-foreground">
-          {adjuntosLoading
-            ? "Cargando…"
-            : `${adjuntos.length} adjunto${adjuntos.length === 1 ? "" : "s"} en el expediente`}{" "}
-          <span className="text-muted-foreground">— ver pestaña Adjuntos.</span>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="text-sm font-medium text-foreground">
+            {motor.reglaGanadora}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {motor.descripcion}
+          </p>
+          <div className="mt-3 flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-muted-foreground">
+              Reglas candidatas descartadas
+            </span>
+            {motor.candidatasDescartadas.map((c) => (
+              <div
+                key={c.regla}
+                className="flex flex-wrap items-center gap-x-2 text-xs"
+              >
+                <span className="font-medium text-foreground">{c.regla}</span>
+                <span className="text-muted-foreground">· {c.motivo}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <Separator />
+
+      <section className="flex flex-col gap-2">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Observaciones
+        </h2>
+        <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
+          {s.observaciones}
         </p>
       </section>
 
-      <Separator />
-
-      <Section title="Asignación y gestión">
-        <DataRow label="Tasador asignado">{s.tasador}</DataRow>
-        <DataRow label="Visador">{s.visador}</DataRow>
-        <DataRow label="Fecha estimada de visita">{s.fechaVisita}</DataRow>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-xs text-muted-foreground">Prioridad</span>
-          <PriorityChip prioridad={s.prioridad} className="w-fit" />
-        </div>
-        <DataRow label="Ejecutiva asignada">{s.ejecutivaAsignada}</DataRow>
-        <DataRow label="Notas para el tasador">{s.notasTasador}</DataRow>
-        <DataRow label="Notas para el visador">{s.notasVisador}</DataRow>
-        <div className="col-span-1 flex flex-col gap-0.5 sm:col-span-2">
-          <span className="text-xs text-muted-foreground">
-            Observaciones internas
-          </span>
-          <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
-            {s.observaciones || "—"}
-          </p>
-        </div>
-      </Section>
+      <span className="sr-only">{`Estado actual: ${estado}`}</span>
     </div>
   )
 }
 
-function HistorialTab({
-  eventos,
-  loading,
-  error,
-}: {
-  eventos: Evento[]
-  loading: boolean
-  error: boolean
-}) {
-  if (loading) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        Cargando historial…
-      </p>
-    )
-  }
-
-  if (error) {
-    return (
-      <p className="py-6 text-center text-sm text-destructive">
-        No pudimos completar la acción. Intenta nuevamente en unos segundos.
-      </p>
-    )
-  }
-
-  if (eventos.length === 0) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        Sin eventos registrados todavía.
-      </p>
-    )
-  }
-
+function HistorialTab({ eventos }: { eventos: EventoHistorial[] }) {
   return (
     <ol className="flex flex-col">
-      {eventos.map((ev, idx) => {
-        const Icon = historialIcons[ev.icono]
-        const last = idx === eventos.length - 1
-        return (
-          <li key={ev.id} className="flex gap-3">
-            <div className="flex flex-col items-center">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
-                <Icon className="size-4" />
-              </span>
-              {!last && <span className="w-px flex-1 bg-border" />}
-            </div>
-            <div className="flex flex-col gap-0.5 pb-6">
-              <p className="text-sm leading-snug text-foreground">
-                {ev.titulo}
-              </p>
-              <span className="text-xs text-muted-foreground">{ev.hace}</span>
-            </div>
-          </li>
-        )
-      })}
+      {eventos.map((ev, idx) => (
+        <HistorialItem
+          key={ev.id}
+          evento={ev}
+          last={idx === eventos.length - 1}
+        />
+      ))}
     </ol>
   )
 }
 
-interface SubidaDirectaItem {
-  id: string
-  file: File
-  nombre: string
-  tamanioKb: number
-  progreso: number
-  error?: string
-  controller: AbortController
+function HistorialItem({
+  evento: ev,
+  last,
+}: {
+  evento: EventoHistorial
+  last: boolean
+}) {
+  const [abierto, setAbierto] = React.useState(false)
+  const Icon = historialIcons[ev.icono]
+  return (
+    <li className="flex gap-3">
+      <div className="flex flex-col items-center">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
+          <Icon className="size-4" />
+        </span>
+        {!last && <span className="w-px flex-1 bg-border" />}
+      </div>
+      <div className="flex flex-col gap-0.5 pb-6">
+        <p className="text-sm leading-snug text-foreground">{ev.titulo}</p>
+        <span className="text-xs text-muted-foreground">{ev.hace}</span>
+        {ev.detalle && (
+          <>
+            <button
+              type="button"
+              onClick={() => setAbierto((v) => !v)}
+              className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-brand hover:underline"
+            >
+              <ChevronDown
+                className={cn(
+                  "size-3.5 transition-transform",
+                  abierto && "rotate-180",
+                )}
+              />
+              {abierto ? "Ocultar correo" : "Ver correo"}
+            </button>
+            {abierto && (
+              <pre className="mt-2 max-w-xl overflow-auto rounded-lg border border-border bg-muted/40 p-3 text-xs leading-relaxed whitespace-pre-wrap text-foreground">
+                {ev.detalle}
+              </pre>
+            )}
+          </>
+        )}
+      </div>
+    </li>
+  )
 }
 
-function AdjuntosTab({
-  solicitud,
-  adjuntos,
-  loading,
-  error,
-  onSubido,
-}: {
-  solicitud: Solicitud
-  adjuntos: Adjunto[]
-  loading: boolean
-  error: boolean
-  onSubido: (nuevo: Adjunto) => void
-}) {
-  const [subiendo, setSubiendo] = React.useState<SubidaDirectaItem[]>([])
-
-  function subirArchivo(file: File) {
-    const id = `${file.name}-${file.size}-${Date.now()}`
-    const controller = new AbortController()
-    setSubiendo((prev) => [
-      ...prev,
-      {
-        id,
-        file,
-        nombre: file.name,
-        tamanioKb: Math.round(file.size / 1024),
-        progreso: 0,
-        controller,
-      },
-    ])
-
-    void uploadConReintentos({
-      file,
-      solicitud_id: solicitud.id,
-      codigo_ext: solicitud.codigoExt,
-      signal: controller.signal,
-      onProgress: (pct) =>
-        setSubiendo((prev) =>
-          prev.map((it) => (it.id === id ? { ...it, progreso: pct } : it))
-        ),
-    }).then((resultado) => {
-      if (resultado.ok) {
-        setSubiendo((prev) => prev.filter((it) => it.id !== id))
-        onSubido({
-          id: String(resultado.adjunto_id ?? id),
-          nombre: resultado.nombre_archivo ?? file.name,
-          tipo: "—",
-          detalle: "subido hace unos segundos",
-          urlDropbox: resultado.url_dropbox ?? "",
-          requeridoPorEjecutiva: false,
-        })
-        toast.success("Documento subido correctamente.", { duration: 3000 })
-      } else if (resultado.error === "Subida cancelada.") {
-        setSubiendo((prev) => prev.filter((it) => it.id !== id))
-      } else {
-        setSubiendo((prev) =>
-          prev.map((it) =>
-            it.id === id ? { ...it, error: resultado.error ?? "No se pudo subir." } : it
-          )
-        )
-      }
-    })
-  }
-
-  function reintentar(id: string) {
-    const item = subiendo.find((it) => it.id === id)
-    if (!item) return
-    setSubiendo((prev) =>
-      prev.map((it) => (it.id === id ? { ...it, error: undefined, progreso: 0 } : it))
-    )
-    subirArchivo(item.file)
-    setSubiendo((prev) => prev.filter((it) => it.id !== id))
-  }
-
-  function cancelar(id: string) {
-    subiendo.find((it) => it.id === id)?.controller.abort()
-    setSubiendo((prev) => prev.filter((it) => it.id !== id))
-  }
-
+function AdjuntosTab({ solicitud: s }: { solicitud: Solicitud }) {
+  const versiones = mockVersionesInforme(s)
   return (
     <div className="flex flex-col gap-5">
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Plus className="size-4" />
-          <h2 className="text-xs font-semibold tracking-wide uppercase">
-            Subir nuevos adjuntos
-          </h2>
-        </div>
-        <FileUploadZone value={[]} onFilesChange={(files) => files.forEach(subirArchivo)} />
+      <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3">
+        <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">
+          Vista de sólo lectura, agrupada por versión del informe. Para cargar
+          documentos usa <strong>Documentos y Adjuntos</strong> en la barra de
+          acciones.
+        </p>
+      </div>
 
-        {subiendo.length > 0 && (
+      {versiones.map((v) => (
+        <section
+          key={v.numero}
+          className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-brand/10 text-brand">
+                Versión {v.numero}
+              </Badge>
+              <span className="text-sm font-medium text-foreground">
+                {v.valorUf}
+              </span>
+            </div>
+            <span className="text-xs text-muted-foreground">{v.fechaEnvio}</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Motivo del cambio: {v.motivoCambio}
+          </p>
           <ul className="flex flex-col gap-2">
-            {subiendo.map((item) => (
-              <li
-                key={item.id}
-                className={`flex items-center gap-3 rounded-lg border bg-card p-3 ${
-                  item.error ? "border-destructive/60" : "border-border"
-                }`}
-              >
-                <span
-                  className={`flex size-9 shrink-0 items-center justify-center rounded-md ${
-                    item.error
-                      ? "bg-destructive/10 text-destructive"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {item.error ? <AlertCircle className="size-4" /> : <FileText className="size-4" />}
-                </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="truncate text-sm font-medium text-foreground">
-                    {item.nombre}
-                  </span>
-                  {item.error ? (
-                    <span className="text-xs font-medium text-destructive">{item.error}</span>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Progress value={item.progreso} className="flex-1" />
-                      <span className="w-9 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                        {item.progreso}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  {item.error && (
-                    <Button variant="outline" size="sm" onClick={() => reintentar(item.id)}>
-                      <RotateCcw data-icon="inline-start" />
-                      Reintentar
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Cancelar"
-                    onClick={() => cancelar(item.id)}
-                  >
-                    <X />
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <Separator />
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Documentos del expediente ({adjuntos.length})
-        </h2>
-
-        {loading && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            Cargando adjuntos…
-          </p>
-        )}
-
-        {!loading && error && (
-          <p className="py-4 text-center text-sm text-destructive">
-            No pudimos completar la acción. Intenta nuevamente en unos segundos.
-          </p>
-        )}
-
-        {!loading && !error && adjuntos.length === 0 && (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            Sin documentos adjuntos todavía.
-          </p>
-        )}
-
-        {!loading && !error && adjuntos.length > 0 && (
-          <ul className="flex flex-col gap-2">
-            {adjuntos.map((a) => {
-              const isPdf = a.nombre.toLowerCase().endsWith(".pdf")
-              const Icon = isPdf ? FileText : ImageIcon
+            {v.archivos.map((a) => {
+              const Icon = a.esImagen ? ImageIcon : FileText
               return (
                 <li
                   key={a.id}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+                  className="flex items-center gap-3 rounded-lg border border-border bg-background p-3"
                 >
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
                     <Icon className="size-4" />
                   </span>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="truncate text-sm font-medium text-foreground">
-                      {a.nombre}
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {a.tipo} · {a.detalle}
-                    </span>
-                  </div>
-                  {a.urlDropbox && !esUrlPublica(a.urlDropbox) ? (
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <span className="inline-flex">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              disabled
-                              className="pointer-events-none"
-                            >
-                              <Download data-icon="inline-start" />
-                              Descargar
-                            </Button>
-                          </span>
-                        }
-                      />
-                      <TooltipContent>
-                        Enlace directo disponible en próxima versión
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!a.urlDropbox}
-                      render={
-                        a.urlDropbox ? (
-                          <a
-                            href={a.urlDropbox}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          />
-                        ) : undefined
-                      }
-                    >
-                      <Download data-icon="inline-start" />
-                      Descargar
-                    </Button>
-                  )}
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                    {a.nombre}
+                  </span>
+                  <Button variant="outline" size="sm">
+                    <Download data-icon="inline-start" />
+                    Descargar
+                  </Button>
                 </li>
               )
             })}
           </ul>
-        )}
-      </section>
+        </section>
+      ))}
     </div>
   )
 }

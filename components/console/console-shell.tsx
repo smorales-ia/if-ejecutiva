@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react"
 import { SolicitudList } from "@/components/console/solicitud-list"
 import { SolicitudDetail } from "@/components/console/solicitud-detail"
-import type { Solicitud, TipoDocumento } from "@/lib/console-data"
+import type { Solicitud } from "@/lib/console-data"
 import type { FetchResult, Vista } from "@/lib/solicitudes"
 
 export function ConsoleShell({
@@ -11,13 +11,11 @@ export function ConsoleShell({
   vistaActiva = 'activas',
   degraded,
   motivo,
-  tiposDocumento,
 }: {
   solicitudes: Solicitud[]
   vistaActiva?: Vista
   degraded?: boolean
   motivo?: FetchResult['motivo']
-  tiposDocumento: TipoDocumento[]
 }) {
   const [selectedId, setSelectedId] = useState(solicitudes[0]?.id ?? "")
   const selected = solicitudes.find((s) => s.id === selectedId) ?? solicitudes[0]
@@ -41,16 +39,12 @@ export function ConsoleShell({
             solicitudes={solicitudes}
             selectedId={selectedId}
             onSelect={setSelectedId}
-            vistaActiva={vistaActiva}
-            degraded={degraded}
-            motivo={motivo}
-            tiposDocumento={tiposDocumento}
           />
         </Suspense>
       </div>
       {selected && (
         <div className="min-w-0 flex-1">
-          <SolicitudDetail solicitud={selected} tiposDocumento={tiposDocumento} />
+          <SolicitudDetail solicitud={selected} />
         </div>
       )}
     </main>

@@ -15,23 +15,27 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.6 · Julio 2026 · Simplificación completa del
-                      dominio D\_ a solo dos tablas (D_TipoDocumento y
-                      D_TipoDocumentoAtributo). Persistencia del
-                      resultado de extracción en
-                      `TX_Adjuntos.atributos_obtenidos` (JSON) y
+  **Versión**         1.9 · Julio 2026 · Rediseño funcional de la Interfaz
+                      Ejecutiva (IF-02) a partir del levantamiento
+                      operativo con el cliente: wizard de creación en tres
+                      fases, formulario de cuatro secciones, N unidades
+                      por solicitud con origen y respaldo de superficies,
+                      asignación manual asistida con confirmación
+                      explícita y bloqueo de edición posterior, barra de
+                      acciones de dos botones, catálogo real de tipos de
+                      documento y correo único de asignación al tasador.
+                      Se retira AT02 del alcance de IF-02 y WhatsApp del
+                      canal de notificación al tasador. Incorpora RN-44 a
+                      RN-59 y regulariza el índice de reglas RN-38 a
+                      RN-43. Sucede a v1.8.2, que consolidó el dominio D\_
+                      en dos tablas (D_TipoDocumento y
+                      D_TipoDocumentoAtributo), la persistencia de la
+                      extracción en `TX_Adjuntos.atributos_obtenidos` y el
                       enrutamiento por cardinalidad a TX_Unidades /
-                      TX_DatosTasacion. Catálogos cerrados
-                      implementados como singleSelects de Airtable
-                      directamente sobre D_TipoDocumentoAtributo.
-                      Patrón "NO REGISTRA" formalizado (RN-37).
-                      Corrige v1.5 (que sólo eliminó D_Atributo y
-                      D_TipoDato pero mantenía D_Documento,
-                      D_DocumentoValorAtributo, D_Catalogo y
-                      D_CatalogoValor). Sucede a v1.4. Alineada a
-                      Arquitectura Enterprise v2.6, Capa de Datos
-                      v2.6.3, Motor de Cálculo v2.5 y Blueprint de
-                      Interfaces v2.8.
+                      TX_DatosTasacion, con el patrón "NO REGISTRA"
+                      formalizado (RN-37). Alineada a Arquitectura
+                      Enterprise v2.6, Capa de Datos v2.6.3, Motor de
+                      Cálculo v2.5 y Blueprint de Interfaces v2.8.
 
   **Equipo redactor** Analista de Requerimientos Funcionales · Arquitecto
                       de Software Enterprise · Diseñador de Datos/BD ·
@@ -213,6 +217,114 @@ D_Documento, D_DocumentoValorAtributo, D_Catalogo y D_CatalogoValor.
 v1.6 corrige esa omisión y consolida el dominio en las dos tablas que
 efectivamente existen en producción.
 
+### **Cambios v1.8.2 → v1.9**
+
+Esta versión no altera el modelo de datos documental ni el motor de
+cálculo: concentra el cambio en la Interfaz Ejecutiva (§1), con los
+efectos que de ahí se derivan sobre la Interfaz Tasador (§2), la Lectura
+de Documentos (§4), la parametrización de notificaciones (§5.3), el
+formulario público IF-01 (§9) y el índice de reglas (§13). El detalle
+del levantamiento que la origina está en el documento UI Ejecutiva
+(IF-02) — Análisis de cambios v4, insumo citado en la nota metodológica.
+
+  -------------------------------------------------------------------------
+  **Aspecto**         **v1.8.2 (anterior)**      **v1.9 (actual)**
+  ------------------- -------------------------- --------------------------
+  Creación de la      El botón Nueva solicitud   Abre un wizard de tres
+  solicitud           abre directamente el sheet fases: modo de creación
+                      de seis secciones.         (documentos o manual),
+                                                 tipo de propiedad
+                                                 (Nuevo/Usado) con
+                                                 sugerencia asistida, y
+                                                 recién entonces el
+                                                 formulario, ya adaptado.
+                                                 §1.5.0.
+
+  Formulario de       Seis secciones: Origen,    Cuatro secciones: Origen,
+  creación            Propiedad, Solicitante,    Propiedad, Personas de la
+                      Producto, Documentos,      operación, Producto y
+                      Adjuntos.                  observaciones. Documentos
+                                                 y Adjuntos salen de la
+                                                 creación y pasan al
+                                                 detalle. §1.5.1.
+
+  Unidades del        La solicitud se trata como Una solicitud contiene N
+  inmueble            una unidad única.          unidades (departamento,
+                                                 terraza, estacionamientos,
+                                                 bodegas, terreno, obras
+                                                 complementarias), con
+                                                 catálogo cerrado de ocho
+                                                 tipos de bien. §1.5.1.
+
+  Origen de las       El m² se captura sin       Toda superficie declara su
+  superficies         declarar procedencia.      origen desde catálogo
+                                                 cerrado y exige adjunto de
+                                                 respaldo (RN-45). §1.5.1.
+
+  Asignación de       AT02 asigna                AT02 sale del alcance de
+  tasador             automáticamente al crear   IF-02. La asignación es
+                      la solicitud (§1.5.5).     manual, asistida por
+                                                 comuna y carga, con tres
+                                                 datos mínimos obligatorios
+                                                 (RN-44) y confirmación
+                                                 explícita. §1.6.
+
+  Edición y bloqueo   Los campos críticos se     Edición total hasta la
+                      bloquean desde estados     asignación. Al confirmar
+                      posteriores a creada /     la asignación se registra
+                      requiere_atencion.         fecha_asignacion, el
+                                                 estado pasa a asignada y
+                                                 la solicitud queda en modo
+                                                 consulta (RN-59). §1.4.
+
+  Barra de acciones   Sólo Reasignar tasador.    Dos botones:
+  del detalle                                    Asignar/Reasignar Tasador
+                                                 y Documentos y Adjuntos.
+                                                 §1.3.1.
+
+  Checklist de        Vive dentro del formulario Vive en el botón
+  documentos          de creación con el         Documentos y Adjuntos del
+                      catálogo TIPOS_DOCUMENTO.  detalle, con el catálogo
+                                                 operativo real de 15 tipos
+                                                 (§4.2.1). Disponible en
+                                                 cualquier momento tras
+                                                 crear la solicitud.
+
+  Notificación al     SC13 con email y WhatsApp  Canal único: correo, con
+  tasador             opcional.                  la plantilla
+                                                 email_asignacion_tasador y
+                                                 regla de un hilo por
+                                                 solicitud (RN-52).
+                                                 WhatsApp queda fuera de
+                                                 alcance. §1.6.4, §5.3.
+
+  Personas de la      Sección Solicitante; el    Comprador (siempre, viene
+  operación           dato se nombra             del cliente institucional)
+                      propietario.               y Vendedor (persona
+                                                 jurídica en Nuevo, natural
+                                                 en Usado), con jerarquía
+                                                 de fuentes (RN-47).
+                                                 §1.5.1, §9 RF-01.
+
+  Reglas de negocio   Índice hasta RN-37; RN-38  Se regulariza el índice
+                      a RN-43 referenciadas sin  (RN-38 a RN-43) y se
+                      listar.                    incorporan RN-44 a RN-59.
+                                                 §13.
+
+  Identificadores     50 RF, 22 RNF, 37 RN, 11   Mismos RF/RNF/RT/RR. Se
+                      RT, 8 RR, 12 SP.           agregan RN-44 a RN-59 y
+                                                 los pendientes D-10 a D-15
+                                                 (§15). Cero renumeración.
+                                                 Cero pérdida de contenido.
+  -------------------------------------------------------------------------
+
+Alcance diferido de v1.9. La captura estructurada de la fecha de visita,
+el reporte de contacto no logrado con bloqueo de la solicitud, la
+gestión de reprocesos post-entrega, el tablero diario de las tres fechas
+y la notificación por WhatsApp quedan documentados como proceso real
+pero fuera de implementación en esta versión. Se registran en §1.9 con
+identificador propio para que no se pierdan.
+
 ### **Nivel de detalle**
 
 Cada requisito tiene métrica o criterio de aceptación verificable; no se
@@ -234,10 +346,31 @@ descripción funcional que sigue refleja los mockups del proyecto
 texto: sólo se especifica el comportamiento que reflejan.
 
 Contexto operacional: la Ejecutiva recibe solicitudes ya estructuradas
-(creadas desde IF-01 o desde ella misma), vigila SLA, reasigna tasadores
-cuando corresponde, pausa o reactiva solicitudes y mantiene la cola
-operativa al día. No accede a Airtable directamente; toda operación
-transacciona vía API Route con validación server-side.
+(creadas desde IF-01 o desde ella misma), vigila SLA, asigna y reasigna
+tasadores, pausa o reactiva solicitudes y mantiene la cola operativa al
+día. No accede a Airtable directamente; toda operación transacciona vía
+API Route con validación server-side.
+
+Alcance funcional v1.9. El levantamiento operativo con el área de
+Control y Seguimiento fija cuatro decisiones que atraviesan toda la
+sección. Primera: la solicitud no se crea desde un formulario abierto,
+sino desde un wizard de tres fases que resuelve el modo de creación y el
+tipo de propiedad Nuevo/Usado antes de mostrar campos (§1.5.0);
+Nuevo/Usado funciona como interruptor de todo el flujo. Segunda: una
+solicitud contiene N unidades físicas —departamento, terraza,
+estacionamientos, bodegas, terreno, obras complementarias— y no una
+unidad única (§1.5.1). Tercera: la asignación del tasador es siempre
+manual, asistida por comuna y carga, exige tres datos mínimos y
+confirmación explícita, y deja la solicitud en modo consulta (§1.6).
+Cuarta: la barra de acciones del detalle tiene exactamente dos botones,
+Asignar/Reasignar Tasador y Documentos y Adjuntos (§1.3.1).
+
+Fuera de alcance de v1.9 en IF-02: captura estructurada de la fecha de
+visita, reporte de contacto no logrado con bloqueo de la solicitud,
+gestión de reprocesos post-entrega, tablero diario de las tres fechas y
+notificación por WhatsApp al tasador. Cada uno queda registrado con
+identificador propio en §1.9, con el proceso real documentado, para que
+la versión siguiente no tenga que volver a levantarlo.
 
 ## **1.1 Vista de Solicitudes**
 
@@ -294,34 +427,204 @@ código VP-AAAA-NNNN, cliente y comuna, StateBadge del estado, semáforo
 SLA verde/ámbar/rojo según días restantes, prioridad
 (Normal/Urgente/Crítico), tasador asignado y fecha de vencimiento; la
 fila seleccionada se resalta. Panel derecho: cabecera con badges de
-estado, SLA y prioridad, barra de acciones y pestañas Datos / Historial
-/ Adjuntos. La pestaña Datos consolida el registro completo (cliente
-solicitante, propiedad, contactos, plazo, decisión del motor de reglas
-con regla ganadora y candidatas descartadas, tasador y visador
-asignados). La pestaña Historial expone los eventos cronológicos
-(A_Eventos) y los cambios auditados (A_Cambios). La pestaña Adjuntos
-consolida los archivos vinculados a la solicitud.
+estado, SLA y prioridad, barra de acciones (§1.3.1) y pestañas Datos
+(§1.3.2), Historial (§1.3.3) y Adjuntos (§1.3.4).
 
-Adjuntos iniciales: se muestran los archivos de TX_Adjuntos vinculados a
-la solicitud con visor embebido (PDF) o miniatura (imagen). La URL
-apunta a Dropbox (ver §8). La Ejecutiva puede descargar el original y
-añadir nuevos adjuntos vía el flujo descrito en §1.5.3.
+### **1.3.1 Barra de acciones**
+
+Exactamente dos botones, ambos disponibles desde que la solicitud se
+crea. Reutilizan la ubicación del botón Reasignar de la base v0.dev.
+
+  ---------------------------------------------------------------------------
+  **Botón**               **Comportamiento**
+  ----------------------- ---------------------------------------------------
+  Asignar Tasador ·       Un solo botón con dos estados: sin tasador asignado
+  Reasignar Tasador       muestra Asignar Tasador; con tasador asignado
+                          muestra Reasignar Tasador. Abre el diálogo descrito
+                          en §1.6. La primera asignación exige los tres datos
+                          mínimos de RN-44 y confirmación explícita; la
+                          reasignación exige además motivo obligatorio desde
+                          catálogo cerrado (§1.6.3).
+
+  Documentos y Adjuntos   Abre un sheet lateral con el checklist de
+                          documentos requeridos y la zona de carga
+                          (§1.5.1.1). Disponible en cualquier momento después
+                          de crear la solicitud y en cualquier orden respecto
+                          de la asignación del tasador. Con la solicitud ya
+                          asignada queda en modo consulta: visor y descarga,
+                          sin subir ni editar.
+  ---------------------------------------------------------------------------
+
+No se incorporan a la barra las acciones de registro de fecha de visita,
+respuesta al cliente, solicitud de datos al cliente ni apertura de
+reproceso. Los flujos que las apoyaban están documentados como proceso
+real en §1.9 y quedan fuera de implementación en v1.9.
+
+### **1.3.2 Pestaña Datos**
+
+Consolida el registro completo de la solicitud. Los bloques son:
+
+  ---------------------------------------------------------------------------
+  **Bloque**          **Contenido**                       **Se llena desde**
+  ------------------- ----------------------------------- -------------------
+  Origen y cliente    Cliente institucional, N° interno,  Ejecutiva
+                      N° de solicitud, fecha de
+                      solicitud, código VP-AAAA-NNNN,
+                      canal de origen, tipo de cliente de
+                      origen, y Ejec. Comercializador y
+                      Ejec. Formalizador como campos
+                      separados
+
+  Asignación          Tasador asignado, fecha y hora de   Acción manual
+                      asignación, estado de la            (§1.6)
+                      notificación por correo, botón Ver
+                      email enviado y botón Reenviar
+
+  Propiedad           Proyecto o condominio (sólo Nuevo), Ejecutiva · §4
+                      dirección con su origen declarado,
+                      región, comuna, tipo de propiedad y
+                      estado de conservación
+
+  Vendedor            Razón social y RUT de la            Ejecutiva · §4
+                      inmobiliaria en Nuevo; nombre
+                      completo y RUT del propietario
+                      actual en Usado; contacto y origen
+                      del dato
+
+  Unidades (tabla)    Una fila por unidad: tipo de bien,  Ejecutiva · §4
+                      rol SII o marca de uso y goce,
+                      superficies construida, terraza y
+                      terreno, año y material, m² de
+                      ampliación y su marca de
+                      regularizable, origen de la
+                      superficie y respaldo asociado
+
+  Personas de la      Comprador con RUT, nombre completo, Ejecutiva · §4
+  operación           email y teléfono; Vendedor con RUT
+                      y nombre completo
+
+  Contactos de visita Lista ordenada por prioridad de     Ejecutiva
+                      llamada, con rol, nombre, teléfono,
+                      email y estado de cada contacto
+
+  Datos SII           Destino, códigos SII (comuna,       §4 Lectura de
+                      manzana, predio), ubicación urbana  Documentos (Claude
+                      o rural, superficie de terreno,     API)
+                      avalúo fiscal por unidad y total,
+                      contribución, avalúo exento, CG,
+                      OCiv, OC y G
+
+  Antecedentes        Permiso de edificación con número y §4 Lectura de
+  legales             fecha, recepción final con número y Documentos (Claude
+                      fecha, fojas, número y año de       API)
+                      inscripción, líneas de edificación
+                      y certificado de número
+
+  Producto y          Cliente institucional, tipo de      Ejecutiva
+  financiero          informe o producto y plazo; bloque
+                      Financiero colapsado, visible sólo
+                      cuando el tipo de propiedad es
+                      Nuevo
+
+  Decisión del motor  Regla ganadora y candidatas         A_DecisionesMotor
+                      descartadas, tasador y visador
+                      asignados
+  ---------------------------------------------------------------------------
+
+Tres precisiones de negocio sobre esta pestaña. Primera: Comercializador
+y Formalizador se muestran como dos campos separados, no como uno solo.
+Segunda: el avalúo fiscal total de la solicitud es la suma de los
+avalúos de sus unidades —el caso habitual es departamento más
+estacionamiento más bodega— y no el avalúo de una sola de ellas (RN-48);
+el monto que manda es el del certificado de avalúo, mientras que los m²
+provienen de la base interna del SII. Tercera: el bloque Vendedor se
+muestra tanto en Nuevo como en Usado; lo que cambia es el tipo de
+persona, jurídica en Nuevo y natural en Usado.
+
+### **1.3.3 Pestaña Historial**
+
+Timeline único que renderiza los eventos cronológicos de A_Eventos y los
+cambios auditados de A_Cambios, e incorpora: el email de asignación
+enviado al tasador (asunto, destinatario y fecha, expandible al cuerpo
+completo), el email de reasignación cuando aplica, la confirmación de
+asignación con su timestamp y autor, y las cargas y descargas de
+documentos registradas en TX_Adjuntos.
+
+### **1.3.4 Pestaña Adjuntos**
+
+Vista de sólo lectura: listado de los archivos de TX_Adjuntos vinculados
+a la solicitud, con visor embebido (PDF) o miniatura (imagen) y descarga
+del original. La URL apunta a Dropbox (§8). Toda alta, reemplazo o baja
+de archivos se realiza desde el botón Documentos y Adjuntos (§1.3.1), no
+desde esta pestaña.
 
 Documentos legales y de origen: cuando la solicitud tiene documentos
-ingresados por IF-01 o por la ejecutiva (Escritura, CBR, Certificado
-SII, Recepción Municipal, etc.), estos se listan aquí con el estado de
-extracción realizada por Claude API (ver §4 Lectura de Documentos). Si
-un documento fue procesado, la Ejecutiva ve una tarjeta con los
-atributos extraídos y la trazabilidad al tipo D_TipoDocumento.
+ingresados por IF-01, por la Ejecutiva o por el tasador, se listan aquí
+con el estado de la extracción realizada por Claude API (§4 Lectura de
+Documentos). Si un documento fue procesado, la Ejecutiva ve una tarjeta
+con los atributos extraídos y la trazabilidad al tipo D_TipoDocumento.
+
+Agrupación por versión del informe: la operación real produce un solo
+archivo Excel de cálculo y hasta tres PDF sucesivos por tasación, y el
+negocio necesita comparar el valor informado entre versiones (RN-56). La
+pestaña agrupa los archivos por versión y muestra, para cada una,
+número, fecha de envío, valor en UF y motivo del cambio.
 
 ## **1.4 Modificación de detalles**
 
-Edición inline de campos no-cálculo (canal, prioridad, contactos,
-observaciones). La modificación queda auditada en A_Cambios con
-before/after, autor (email del ejecutivo autenticado con Clerk) y
-timestamp. Los campos críticos (cliente, propiedad, RUT) sólo son
-editables mientras el estado sea creada o requiere_atencion; estados
-posteriores los bloquean con tooltip explicativo.
+Ciclo de edición y bloqueo. Antes de asignar tasador, la Ejecutiva puede
+modificar todos los datos de la solicitud —Origen, Propiedad, Vendedor,
+Unidades, Personas de la operación, Producto, Contactos de visita y
+adjuntos—: no hay campos protegidos. Al confirmar la asignación (§1.6)
+la solicitud pasa a estado asignada y el formulario completo queda en
+modo consulta. Desde ese punto, la única vía para corregir un dato es la
+reasignación con motivo obligatorio del catálogo cerrado; v1.9 no
+contempla un flujo de edición de solicitud asignada independiente de la
+reasignación.
+
+Esta regla sustituye a la de v1.8.2, que bloqueaba sólo los campos
+críticos (cliente, propiedad, RUT) en estados posteriores a creada o
+requiere_atencion. El motivo del cambio es operativo: la solicitud llega
+incompleta y se completa por partes durante horas o días, de modo que el
+hito que separa la preparación de la producción no es el estado de
+creación sino la salida al tasador.
+
+La edición es inline sobre campos no-cálculo. Toda modificación queda
+auditada en A_Cambios con before/after, autor (email del ejecutivo
+autenticado con Clerk) y timestamp. Los campos en modo consulta muestran
+tooltip explicativo con el motivo del bloqueo y el acceso directo a
+Reasignar Tasador.
+
+  ---------------------------------------------------------------------------
+  **RN-59**           **Ciclo de edición y bloqueo de la solicitud tras la
+                      asignación**
+  ------------------- -------------------------------------------------------
+  **Precondición**    Existe una solicitud creada en IF-02, con o sin tasador
+                      asignado.
+
+  **Acción**          Mientras no exista confirmación de asignación, todos
+                      los campos de la solicitud son editables por la
+                      Ejecutiva y cada cambio se audita en A_Cambios. Al
+                      presionar Asignar Tasador el sistema exige confirmación
+                      explícita en un diálogo que enuncia las consecuencias;
+                      al confirmarla ejecuta de forma atómica cuatro pasos:
+                      registro de `fecha_asignacion` con hora de servidor,
+                      cambio de estado a asignada, disparo de SC13 con la
+                      plantilla `email_asignacion_tasador`, y transición del
+                      formulario a modo consulta.
+
+  **Postcondición**   La solicitud queda en estado asignada y en modo sólo
+                      lectura para la Ejecutiva. Las únicas acciones
+                      disponibles son Reasignar Tasador —con motivo
+                      obligatorio del catálogo cerrado, §1.6.3— y Documentos
+                      y Adjuntos en modo consulta. Si cualquiera de los
+                      cuatro pasos falla, ninguno se persiste y la solicitud
+                      permanece editable.
+
+  **Trazabilidad**    Definición del cliente en el levantamiento operativo
+                      v1.9. Sustituye a la regla de bloqueo por campos
+                      críticos vigente hasta v1.8.2. Ver §1.3.1, §1.6 y §13.
+  ---------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
   **RF-07**         **Cambio de prioridad y pausa**
@@ -340,77 +643,365 @@ posteriores los bloquean con tooltip explicativo.
 ## **1.5 Creación de Solicitud**
 
 Alta manual cuando la solicitud llega por email, teléfono, WhatsApp o
-presencial (no por el formulario público IF-01). El primer campo
-obligatorio es Canal de origen, seguido de los mismos campos que IF-01
-más la evidencia (captura, email reenviado).
+presencial (no por el formulario público IF-01). Desde v1.9 el botón
+Nueva solicitud no abre directamente el formulario: abre el wizard de
+tres fases descrito en §1.5.0, que resuelve el modo de creación y el
+tipo de propiedad antes de mostrar campos. El primer campo obligatorio
+del formulario sigue siendo el canal de origen, al que se suma el tipo
+de cliente de origen.
+
+### **1.5.0 Wizard de creación (tres fases)**
+
+Cada fase habilita la siguiente. El wizard existe porque las dos
+decisiones que condicionan todo el formulario —de dónde salen los datos
+y si la propiedad es Nueva o Usada— se toman en la operación real antes
+de escribir el primer campo; tomarlas después obliga a rehacer el
+trabajo.
+
+**Fase 1 · Modo de creación.** Dos opciones excluyentes (radio
+button):
+
+  ---------------------------------------------------------------------------
+  **Opción**              **Efecto**
+  ----------------------- ---------------------------------------------------
+  En base a documentos    Habilita la zona de carga. La Ejecutiva sube los
+  adjuntos                documentos; el flujo de extracción de §4 (SC07 →
+                          Claude API) obtiene los datos y el formulario de la
+                          Fase 3 se abre pre-llenado, para revisión y
+                          edición. El texto del correo del cliente entra por
+                          esta vía cuando aporta información: se guarda como
+                          `.txt`, `.eml` o PDF impreso y se procesa como un
+                          documento más.
+
+  Manual                  El formulario de la Fase 3 se abre en blanco.
+  ---------------------------------------------------------------------------
+
+**Fase 2 · Tipo de propiedad.** Dos opciones excluyentes (radio
+button). Es la decisión que actúa como interruptor de todo el flujo y
+es lo primero que hace el área de Control y Seguimiento al recibir una
+solicitud. Nuevo/Usado deja de ser un campo del formulario y pasa a ser
+una decisión previa, persistida en TX_Solicitudes.
+
+  ---------------------------------------------------------------------------
+  **Aspecto**             **Nuevo**                 **Usado**
+  ----------------------- ------------------------- -------------------------
+  Bloque Vendedor         Persona jurídica: razón   Persona natural: nombre
+                          social y RUT de la        completo y RUT del
+                          inmobiliaria              propietario actual. No se
+                                                    oculta
+
+  Bloque Financiero       Se muestra                Oculto
+
+  Proyecto / Condominio   Obligatorio               Oculto
+
+  Modelo (por unidad)     Aplica                    No aplica
+
+  N° de unidades          Varias: departamento,     También varias: el
+                          estacionamiento y bodega  departamento usado
+                                                    igualmente tiene
+                                                    estacionamiento y bodega
+
+  Rol SII                 Puede estar en trámite    Siempre asignado
+
+  Estado de conservación  Catálogo cerrado de seis  Mismo catálogo cerrado de
+                          valores                   seis valores
+
+  Fuente de los m²        Carta oferta o ficha de   Base interna del SII por
+                          la inmobiliaria, más      comuna y rol, validada en
+                          plano                     terreno por el tasador
+
+  Fuente de permiso y     Certificados originales   Escritura original de
+  recepción               de la DOM, del edificio   compraventa, certificados
+                          completo                  DOM y certificados
+                                                    municipales, de la
+                                                    vivienda particular
+
+  Documentos habituales   Carta de la inmobiliaria, Certificado de avalúo,
+                          plano con m², permiso de  captura de la base
+                          edificación, recepción    interna SII, permiso y
+                          final                     recepción cuando existan,
+                                                    certificado de número
+
+  Precio de referencia    Lista más descuentos y    Valor de venta directa
+                          bonos
+  ---------------------------------------------------------------------------
+
+Las filas de bloques, unidades, rol y estado se reflejan en esta
+interfaz. Las filas de fuentes y documentos condicionan además la
+Interfaz Tasador (§2) y el motor de reglas (AT01 · §5.1 y §6).
+
+Sugerencia asistida. Cuando la Fase 1 aportó documentos, el sistema
+propone Nuevo o Usado y muestra en qué se basa. Las señales son cuatro:
+presencia de nombre de proyecto, presencia de nombre de inmobiliaria,
+dominio del correo de contacto (un dominio genérico no sugiere nada; el
+de una inmobiliaria sí) y la dirección. La sugerencia nunca decide: la
+Ejecutiva confirma o corrige, y sólo el valor confirmado se persiste.
+
+Reutilización de antecedentes del mismo edificio. Si la dirección o el
+nombre de proyecto coinciden con solicitudes anteriores, el wizard
+ofrece reutilizar el permiso de edificación y la recepción final ya
+cargados, para no volver a pedirlos. Dos advertencias condicionan el
+diseño: la coincidencia es heurística, porque la base interna del SII no
+trae identificador de edificio ni de condominio, sólo dirección y rol; y
+direcciones distintas pueden corresponder al mismo edificio (dos casas
+demolidas y un edificio nuevo sobre ellas). Por eso la reutilización se
+ofrece siempre como sugerencia con confirmación explícita, nunca de
+forma automática. El criterio de identidad de edificio queda pendiente
+de confirmación (§15, D-14).
+
+**Fase 3 · Formulario de creación.** Abre el sheet de §1.5.1 ya adaptado
+a las decisiones anteriores. Si la Fase 1 fue documentos, los campos
+resueltos vienen pre-llenados con marca visual "extraído" que indica el
+documento de origen, y el resto queda vacío. Si la Fase 2 fue Nuevo, se
+muestran los bloques Financiero, Proyecto, Modelo y Vendedor persona
+jurídica. Si fue Usado, esos bloques quedan ocultos y Vendedor pasa a
+persona natural.
+
+Distinción operativa entre los dos puntos de carga de documentos. Los de
+la Fase 1 son fuente de datos para la creación. Los del botón Documentos
+y Adjuntos del detalle (§1.3.1) sirven para agregar y gestionar
+documentos después de creada la solicitud, que es como llega la mayoría:
+los antecedentes aparecen tarde, muchas veces recién en el reproceso.
 
 ### **1.5.1 Ingreso de datos**
 
-Sheet lateral \"Nueva solicitud interna\" con formulario seccionado
-(patrón P3 · Blueprint de Interfaces §5.4). Seis secciones plegables:
-(1) Origen --- Banco originador (M_BANCOS), N° de operación cliente,
-Sucursal originadora, Ejecutivo solicitante, canal (email, teléfono,
-WhatsApp, presencial); (2) Propiedad --- dirección, región y comuna
-(cascada Región→Comuna sobre M_Comunas), tipo de propiedad
-(M_TiposPropiedad con requiere_subtipo dinámico); (3) Solicitante ---
-RUT (validación módulo 11 en vivo con formateo automático · RN-02),
-nombre, email, teléfono; (4) Producto --- cliente institucional y tipo
-de informe/producto (lookup a M_Clientes.tipos_informe_permitidos); si
-el producto es Hipotecario o Refinanciamiento, banco financista pasa a
-obligatorio; (5) Documentos --- checklist con catálogo TIPOS_DOCUMENTO
-(entidad emisora y vigencia por tipo); (6) Adjuntos --- zona de carga
-reutilizable. Validaciones con react-hook-form + zod, mensajes de error
-inline en español y toast de éxito/error (sonner). Autosave cada 30
-segundos. Campos dependientes: cliente→tipos de informe/producto
-disponibles; región→comuna; producto→banco financista obligatorio o no.
+Sheet lateral "Nueva solicitud interna" con formulario seccionado
+(patrón P3 · Blueprint de Interfaces §5.4). Cuatro secciones plegables,
+no seis: Documentos y Adjuntos dejan de ser secciones de la creación y
+pasan al botón del detalle (§1.5.1.1). Validaciones con react-hook-form
++ zod, mensajes de error inline en español y toast de éxito/error
+(sonner). Autosave cada 30 segundos. Campos dependientes: cliente →
+tipos de informe/producto disponibles; región → comuna; producto → banco
+financista obligatorio o no.
+
+**Sección A · Origen.**
+
+Banco originador (M_BANCOS), N° de operación cliente, sucursal
+originadora, ejecutivo solicitante, canal (email, teléfono, WhatsApp,
+presencial) y Ejec. Comercializador. Se agregan dos campos nuevos: Ejec.
+Formalizador, manual y opcional, separado del Comercializador y no
+fundido con él; y tipo de cliente de origen, selector cerrado de tres
+valores que determina cuánta información llega y qué se puede
+pre-llenar. Se registra en TX_Solicitudes para trazabilidad y para
+calibrar expectativas de completitud.
+
+  ---------------------------------------------------------------------------
+  **Tipo**              **Qué trae**              **Consecuencia en la UI**
+  --------------------- ------------------------- ---------------------------
+  1 · Correo con texto  Nombre del comprador, con El texto del correo se
+                        suerte el RUT, un         guarda como documento
+                        contacto y un teléfono. A adjunto y se usa el modo en
+                        veces sin dirección       base a documentos. Si no
+                                                  aporta valor, se crea en
+                                                  modo manual
+
+  2 · Correo con ficha  Ficha completa: comprador Caso ideal para el modo en
+  adjunta               y RUT, vendedor y RUT,    base a documentos: se
+                        dirección, roles y a      cargan la ficha y los
+                        veces certificados        certificados
+
+  3 · Extranet          ID del cliente, nombre y  Similar al tipo 1: se
+                        RUT. Poco más             descarga la ficha o el
+                                                  volcado del portal como
+                                                  documento y se procesa
+                                                  igual
+  ---------------------------------------------------------------------------
+
+La sección incorpora además el bloque repetible Contactos de visita
+(botón "+ Agregar contacto", al menos uno). El contacto es normalmente
+un tercero que muestra la propiedad y no necesariamente el dueño. El
+orden de la lista define la prioridad de llamada del tasador: el primero
+es el contacto principal. Por cada contacto se captura rol o relación
+(selector cerrado: propietario, corredor, arrendatario, conserje, otro),
+nombre, teléfono, email y estado del contacto (válido, no contesta,
+teléfono erróneo). Los contactos son editables hasta la asignación del
+tasador, junto con el resto de los datos (§1.4).
+
+**Sección B · Propiedad.**
+
+Rediseñada para N unidades. Tres bloques.
+
+*Datos de la propiedad*, una vez por solicitud: proyecto o condominio
+(obligatorio si Nuevo), dirección, región y comuna (cascada
+Región→Comuna sobre M_Comunas), tipo de propiedad (M_TiposPropiedad con
+requiere_subtipo dinámico) y estado de conservación. Este último es un
+catálogo cerrado de seis valores mandatado por los clientes —nuevo, sin
+uso, bueno, normal, malo, deficiente— que se fija a nivel de propiedad y
+se hereda a todos los recintos; el tasador lo cambia sólo por excepción
+y el cambio queda auditado (RN-49). No debe confundirse con
+`estado_unidad`, que es otro campo con otro propósito (§4.3.3).
+
+Sobre la dirección rige una jerarquía de fuentes (RN-46): primero la que
+viene en la ficha del cliente, que es la mandatada; si no hay ficha, la
+del certificado de avalúo; y en reproceso, la del certificado de número,
+que es la que exigen los abogados en el estudio de títulos y la causa
+más repetida de devolución. La UI registra de cuál de las tres proviene
+la dirección vigente.
+
+*Vendedor*, una vez por solicitud, presente tanto en Nuevo como en
+Usado. En Nuevo: razón social y RUT de la inmobiliaria, más correo y
+teléfono de contacto. En Usado: nombre completo y RUT del propietario
+actual. En ambos casos se registra el origen del dato según la jerarquía
+correo → ficha → certificado de avalúo (RN-47). El bloque no se oculta
+en Usado: lo que cambia es el tipo de persona.
+
+*Unidades*, bloque repetible (botón "+ Agregar unidad"). La composición
+real observada es: un departamento se compone de departamento con rol,
+terraza como superficie de la propia unidad, uno o dos estacionamientos
+con rol o de uso y goce, una o dos bodegas y, excepcionalmente, terreno
+cuando es primer piso con polígono de uso y goce; una casa nueva, de
+edificación y terreno; una casa usada, de terreno, construcción de piso
+1, construcción de piso 2, construcción de ampliaciones y obras
+complementarias (piscina, cierre, pavimento). Campos por unidad:
+
+- Depto / Torre / Piso.
+- Modelo --- sólo cuando el tipo de propiedad es Nuevo.
+- Tipo de bien --- selector cerrado de ocho valores.
+- Con rol / Uso y goce --- aplica a estacionamiento, bodega y al terreno
+  de uso y goce del primer piso.
+- Rol SII --- obligatorio si la unidad es \"con rol\"; admite la marca
+  \"en trámite\" sólo cuando el tipo de propiedad es Nuevo.
+- Superficie construida m².
+- Superficie terraza m².
+- Superficie terreno m² --- casas, y departamentos de primer piso con
+  polígono de uso y goce.
+- Año de construcción y material predominante (albañilería, madera,
+  hormigón, mixto, perfiles metálicos); en Usado provienen de la base
+  interna del SII.
+- m² de ampliación y marca ¿regularizable? sí/no --- sólo Usado. Los
+  mide el tasador en terreno y sólo se valorizan si son regularizables
+  (RN-50).
+- Origen de la superficie --- selector cerrado: carta o ficha de la
+  inmobiliaria · plano · base interna SII · certificado de avalúo ·
+  medición del tasador.
+- Respaldo --- adjunto obligatorio, asociado al origen declarado
+  (RN-45).
+- Detalle del ítem --- texto libre; obligatorio cuando el tipo de bien
+  es Obras complementarias (por ejemplo cierre o pavimento).
+- Sub-ítems --- opcional; permite agregar tipos de bien adicionales a la
+  misma unidad (departamento de primer piso con terreno de uso y goce;
+  casa con construcción de piso 1, piso 2 y ampliaciones).
+
+El tipo de bien es un catálogo cerrado de ocho valores, tomado del
+banner de ítems del cuadro de valorización: Edificación · Terreno ·
+Estacionamiento cubierto · Estacionamiento descubierto · Estacionamiento
+uso y goce · Bodega · Piscina · Obras complementarias. Se materializa en
+la tabla M_TiposDeBien. La terraza no es un valor del catálogo: se
+captura como superficie propia de la unidad y se expresa como línea
+separada en el cuadro de valorización, donde se pondera al 50% (RN-09).
+
+La regla de fondo detrás de origen más respaldo es textual del cliente:
+siempre se necesita un respaldo de esos metros cuadrados. Ningún m²
+queda en el sistema sin declarar de dónde salió y sin archivo que lo
+sostenga (RN-45).
+
+**Sección C · Personas de la operación.**
+
+Sustituye a la sección Solicitante de v1.8.2. El cambio es de fondo y no
+de nombre: el cliente institucional está evaluando y financiando al
+comprador, y el dato que llega identificado como "cliente" es siempre el
+comprador, no el dueño de la propiedad.
+
+  ---------------------------------------------------------------------------
+  **Persona**           **Obligatoriedad y campos** **Jerarquía de fuentes**
+  --------------------- --------------------------- -------------------------
+  Comprador (cliente    Siempre obligatorio. RUT,   Siempre proviene del
+  final evaluado)       nombre completo, email y    cliente institucional
+                        teléfono
+
+  Vendedor (propietario Obligatorio en compraventa. Correo → ficha →
+  actual)               En refinanciamiento         certificado de avalúo
+                        coincide con el comprador.  (RN-47)
+                        RUT y nombre completo
+  ---------------------------------------------------------------------------
+
+Nombre y RUT incompletos de comprador y vendedor son la primera causa de
+reproceso, de modo que ambos validan RUT con módulo 11 en vivo y
+formateo automático (RN-02). La desambiguación alcanza también a IF-01,
+donde el mismo dato se nombraba propietario (§9, RF-01).
+
+**Sección D · Producto y observaciones.**
+
+Cliente institucional y tipo de informe o producto (lookup a
+M_Clientes.tipos_informe_permitidos); si el producto es Hipotecario o
+Refinanciamiento, banco financista pasa a obligatorio. Observaciones
+libres. Se agrega el bloque Financiero, colapsado por defecto y visible
+sólo cuando el tipo de propiedad es Nuevo: valor total UF (renombra el
+actual "valor estimado"), subsidio habitacional, ahorro, mutuo
+hipotecario, pago contado, bono captación, bono integración y precio de
+venta.
+
+**Habilitación del botón Crear solicitud.**
+
+Depende únicamente de los campos obligatorios de las cuatro secciones.
+No depende de documentos ni de archivos adjuntos. El control de
+completitud fuerte está en el botón Asignar Tasador (RN-44 · §1.6.1), no
+aquí: una solicitud puede crearse incompleta; lo que no puede es salir
+al tasador incompleta.
 
 ### **1.5.1.1 Documentos requeridos (checklist)**
 
-El sistema muestra en la sección Documentos del sheet un checklist con
-el catálogo TIPOS_DOCUMENTO. Cada fila expone el tipo de documento, la
-entidad emisora y la vigencia por defecto. La regla operativa es: la
-solicitud puede crearse sin adjuntar documentos; sólo cuando el usuario
-marca explícitamente un documento del checklist, el sistema exige el
-archivo correspondiente. El botón Crear solicitud se deshabilita
-únicamente cuando existe al menos un documento marcado sin archivo
-(tooltip explicativo con la lista de faltantes) y su habilitación ya no
-depende de la validez total del formulario. Si el usuario desmarca un
-documento que ya tenía archivo, el sistema abre un AlertDialog de
-confirmación antes de descartar el vínculo.
+El checklist deja de vivir en el formulario de creación y pasa al botón
+Documentos y Adjuntos del panel de detalle (§1.3.1). El sheet lateral
+que abre ese botón tiene dos bloques: el checklist de documentos
+requeridos, alimentado por el catálogo D_TipoDocumento (§4.2.1), y la
+zona de carga reutilizable (§1.5.1.2), que sube directo a Dropbox y
+registra en TX_Adjuntos. Está disponible en cualquier momento después de
+crear la solicitud y en cualquier orden respecto de la asignación del
+tasador.
+
+Cada fila expone el tipo de documento, la entidad emisora y la vigencia
+por defecto. La lógica de marcado se conserva sin cambios: la solicitud
+puede crearse sin adjuntar documentos; sólo cuando el usuario marca
+explícitamente un documento del checklist, el sistema exige el archivo
+correspondiente. Si el usuario desmarca un documento que ya tenía
+archivo, se abre un AlertDialog de confirmación antes de descartar el
+vínculo.
+
+Lo que cambia es la consecuencia del marcado. Hasta v1.8.2, un documento
+marcado sin archivo deshabilitaba el botón Crear solicitud. Desde v1.9
+el checklist no condiciona la creación —que depende sólo de los campos
+obligatorios de las cuatro secciones, §1.5.1— sino que expone el estado
+de completitud documental de la solicitud en el panel de detalle. La
+razón es operativa: la mayoría de los documentos no llega al inicio,
+sino semanas después, cuando el cliente está escriturando.
+
+Con la solicitud ya asignada, el sheet queda en modo consulta: visor y
+descarga, sin subir ni editar (§1.4).
+
+El catálogo operativo de tipos de documento con el que se alimenta este
+checklist —quince tipos, con su momento de llegada, lo que aporta cada
+uno y si admite extracción automática— se especifica en §4.2.1.
 
 ### **1.5.1.2 Zona de carga reutilizable (FileUploadZone)**
 
-Componente reutilizable de carga con drag-and-drop utilizado tanto
-dentro del sheet Nueva solicitud como en la pestaña Adjuntos del panel
-de detalle. Presenta cuatro estados visuales explícitos: idle, subiendo
-(barra de progreso), éxito y error (con acciones reintentar/descartar).
-Valida formato admitido (PDF, JPG, PNG) y tamaño máximo (10 MB). Cada
-archivo aceptado se sube directamente a Dropbox por el flujo definido en
-§1.5.3 y se registra en TX_Adjuntos.
-
-  -------------------------------------------------------------------------
-  **RF-06**         **Asignación manual y reasignación**
-  ----------------- -------------------------------------------------------
-  **Descripción**   La ejecutiva puede asignar o reasignar el tasador y el
-                    visador. Toda reasignación exige una justificación
-                    obligatoria (campo texto), incrementa un contador y
-                    queda registrada en A_Eventos con
-                    evento_tipo=\'reasignacion\' y autor identificado.
-
-  **Criterio de     El sistema impide guardar la reasignación si el campo
-  aceptación**      justificación está vacío. Cada reasignación aparece en
-                    A_Eventos en menos de un segundo desde su confirmación.
-  -------------------------------------------------------------------------
+Componente reutilizable de carga con drag-and-drop. Desde v1.9 se usa en
+tres puntos: la Fase 1 del wizard de creación (§1.5.0), el sheet del
+botón Documentos y Adjuntos del detalle (§1.5.1.1) y la carga del
+respaldo de superficie de cada unidad (§1.5.1, Sección B). Presenta
+cuatro estados visuales explícitos: idle, subiendo (barra de progreso),
+éxito y error (con acciones reintentar/descartar). Valida formato
+admitido (PDF, JPG, PNG) y tamaño máximo (10 MB). Cada archivo aceptado
+se sube directamente a Dropbox por el flujo definido en §1.5.3 y se
+registra en TX_Adjuntos.
 
 ### **1.5.2 Lectura de documentos**
 
-Los adjuntos cargados durante la creación (escritura, CBR, plano,
-certificado SII, recepción municipal, etc.) DISPARAN ASINCRÓNICAMENTE EL
-FLUJO DE EXTRACCIÓN SC07 → Claude API. Los atributos extraídos se
-muestran a la Ejecutiva conforme llegan (progressive UI). El detalle del
-patrón se especifica en la §4 Lectura de Documentos y se rige por la
-regla de identificación mediante coincidencia con
-D_TipoDocumentoAtributo.
+Los adjuntos cargados en la Fase 1 del wizard (§1.5.0), en el botón
+Documentos y Adjuntos del detalle (§1.5.1.1) y como respaldo de
+superficie de una unidad DISPARAN ASINCRÓNICAMENTE EL FLUJO DE
+EXTRACCIÓN SC07 → Claude API. Los atributos extraídos se muestran a la
+Ejecutiva conforme llegan (progressive UI) y, cuando el origen es la
+Fase 1, pre-llenan el formulario de la Fase 3 con marca visual
+"extraído" e indicación del documento de origen. El detalle del patrón
+se especifica en la §4 Lectura de Documentos y se rige por la regla de
+identificación mediante coincidencia con D_TipoDocumentoAtributo.
+
+Excepción documentada. El certificado de avalúo fiscal no admite
+descarga automática: el sitio del SII exige captcha. Alguien debe
+descargarlo y subirlo manualmente. En consecuencia, el modo en base a
+documentos del wizard no puede asumir su disponibilidad al momento de
+crear la solicitud (§4.2.1).
 
 ### **1.5.3 Guardado en Dropbox**
 
@@ -427,8 +1018,10 @@ Al hacer submit válido, el sistema persiste la fila en TX_Solicitudes
 con estado=creada, origen_canal=ingreso_manual, genera el código
 VP-AAAA-NNNN (autogenerado server-side) y dispara los siguientes eventos
 en cascada: (a) A_Eventos evento_tipo=\'solicitud_creada_interna\'; (b)
-SC01 (webhook Make de validación) → AT01 (resolver motor de reglas) →
-AT02 (asignar tasador). En caso de fallo de validación, el estado no
+SC01 (webhook Make de validación) → AT01 (resolver motor de reglas). La
+cascada termina en AT01. AT02 (asignar tasador) sale del alcance de
+IF-02 en v1.9, porque la asignación es manual y ocurre más tarde, desde
+el panel de detalle (§1.6). En caso de fallo de validación, el estado no
 avanza y queda registrada la excepción en Z_ColaPendientes.
 
   -------------------------------------------------------------------------
@@ -437,8 +1030,9 @@ avanza y queda registrada la excepción en Z_ColaPendientes.
   **Descripción**   El envío del formulario (público o interno) debe
                     insertar una fila en TX_Solicitudes con estado=creada,
                     generar el código identificador VP-AAAA-NNNN y disparar
-                    el webhook Make SC01 → AT01 (resolver motor de reglas)
-                    → AT02 (asignar tasador).
+                    el webhook Make SC01 → AT01 (resolver motor de reglas).
+                    La cascada no incluye AT02: en v1.9 la asignación del
+                    tasador es manual (§1.6).
 
   **Criterio de     100% de las solicitudes enviadas quedan persistidas
   aceptación**      (cero pérdida). La resolución del motor se completa en
@@ -446,36 +1040,226 @@ avanza y queda registrada la excepción en Z_ColaPendientes.
                     TX_Solicitudes.estado vs A_DecisionesMotor.timestamp.
   -------------------------------------------------------------------------
 
-### **1.5.5 Asignación automática de Tasador**
+### **1.5.5 Asignación de Tasador (fuera del flujo de creación)**
 
-AT02 (Airtable Script) selecciona al tasador con menor carga relativa
-(casos_en_curso / capacidad_activa) entre los que tienen la comuna de la
-solicitud en sus zonas_cobertura y están activos. Regla activa RN-03
-(asignación territorial). Si el ejecutivo preasignó manualmente (paso
-1.5.1 opcional), AT02 respeta el override y registra A_Eventos
-evento_tipo=\'asignacion_manual\'. Si no hay tasador disponible, la
-solicitud pasa a requiere_atencion con motivo \'sin tasador disponible
-en la comuna X\'.
+v1.9 elimina la asignación automática del flujo de creación. AT02
+(Airtable Script que selecciona al tasador con menor carga relativa
+—casos_en_curso / capacidad_activa— entre los que tienen la comuna de la
+solicitud en sus zonas_cobertura y están activos) deja de dispararse
+desde IF-02. El script y la regla RN-03 se conservan en el catálogo de
+automatizaciones (§6.2) para eventuales usos futuros, pero ninguna
+solicitud creada desde IF-02 los invoca.
 
-## **1.6 Reasignación de Tasador**
+El motivo es operativo: la asignación se decide caso a caso en función
+de la comuna y la región, y depende de disponibilidad real que el
+sistema no conoce. Lo que el sistema sí puede hacer es asistir la
+decisión sin tomarla, y eso es lo que especifica §1.6.
 
-Acción disponible desde la barra de acciones del panel de detalle
-(§1.3). Se abre un diálogo con buscador de profesionales por nombre o
-RUT (cmdk command palette), ficha del tasador candidato con su carga de
-trabajo actual (casos en curso vs capacidad activa) y su cobertura
-territorial; si la comuna de la solicitud no está en las zonas_cobertura
-del candidato, el diálogo muestra una alerta visible de \"fuera de
-cobertura\" pero no bloquea la reasignación (queda como override
-informado). El campo motivo es obligatorio; el campo nota es opcional.
+Consecuencia sobre la máquina de estados: una solicitud recién creada
+queda en estado creada, sin tasador, y ahí permanece hasta que la
+Ejecutiva confirme la asignación. No pasa a requiere_atencion por
+ausencia de tasador, porque esa ausencia es ahora la situación normal
+entre la creación y la asignación manual. El estado asignada, ya
+existente en la máquina de estados, es el que recibe la solicitud al
+confirmarse la asignación (§1.6.2).
+
+## **1.6 Asignación y Reasignación de Tasador**
+
+Un solo flujo, accesible desde el botón único de la barra de acciones
+(§1.3.1). La asignación es siempre manual y siempre de la Ejecutiva: el
+sistema ordena, informa y advierte, pero no decide.
+
+### **1.6.1 Datos mínimos para asignar**
+
+El tasador no puede empezar a trabajar sin tres datos. Son la condición
+de habilitación del botón Asignar Tasador, no la del botón Crear
+solicitud:
+
+1. Dirección de la propiedad.
+2. Al menos un contacto de visita con teléfono.
+3. Rol SII --- admite la marca "en trámite" sólo cuando el tipo de
+   propiedad es Nuevo.
+
+Mientras falte cualquiera de los tres, el botón queda deshabilitado con
+tooltip que enumera exactamente qué falta.
+
+  ---------------------------------------------------------------------------
+  **RN-44**           **Datos mínimos para asignar tasador**
+  ------------------- -------------------------------------------------------
+  **Precondición**    Una solicitud existe en IF-02 y la Ejecutiva intenta
+                      asignarle tasador.
+
+  **Acción**          El sistema verifica tres datos: dirección de la
+                      propiedad, al menos un contacto de visita con teléfono,
+                      y rol SII. El rol admite la marca "en trámite"
+                      únicamente cuando el tipo de propiedad es Nuevo. Si
+                      falta alguno, el botón Asignar Tasador permanece
+                      deshabilitado con tooltip que enumera los faltantes.
+
+  **Postcondición**   Ninguna solicitud sale al tasador sin los tres datos.
+                      La regla no condiciona la creación: una solicitud puede
+                      crearse incompleta y completarse después (§1.5.1).
+
+  **Trazabilidad**    Levantamiento operativo v1.9. Ver §1.5.1 (captura) y
+                      §1.6.2 (diálogo).
+  ---------------------------------------------------------------------------
+
+### **1.6.2 Diálogo de asignación y confirmación**
+
+El botón abre un diálogo con buscador de profesionales por nombre o RUT
+(cmdk command palette). Como la asignación se decide en función de la
+comuna y la región, el diálogo presenta, sin decidir por la Ejecutiva:
+
+- los tasadores cuya `zonas_cobertura` incluye la comuna de la
+  solicitud, ordenados primero;
+- la carga actual de cada uno (casos en curso vs capacidad activa);
+- alerta visible y no bloqueante de "fuera de cobertura" si se elige a
+  otro, que queda registrada como override informado.
+
+El campo motivo es opcional en la primera asignación. Antes de guardar,
+el sistema exige confirmación explícita en un diálogo que enuncia las
+consecuencias: la solicitud pasará a estado asignada, se registrará la
+fecha y hora de asignación y los datos quedarán en modo consulta. Dos
+botones: Confirmar asignación y Cancelar.
+
+Al confirmar se ejecutan de forma atómica los cuatro pasos de RN-59:
+registro de `fecha_asignacion` con hora de servidor, cambio de estado a
+asignada, disparo de SC13 con la plantilla `email_asignacion_tasador`
+(§1.6.4) y transición del formulario a modo consulta. A_Eventos registra
+evento_tipo=\'asignacion_manual\' con autor, tasador, motivo y
+timestamp; el panel de detalle se refresca y aparece un toast de éxito.
+
+### **1.6.3 Reasignación**
+
+Con tasador ya asignado, el botón muestra Reasignar Tasador y abre el
+mismo diálogo con dos diferencias: el motivo pasa a obligatorio y se
+elige desde catálogo cerrado, y el contador de reasignaciones
+incrementa. El catálogo de motivos es:
+
+- Indisponibilidad del tasador --- vacaciones, licencia, sobrecarga.
+- Contacto no logrado reiterado.
+- Fuera de cobertura.
+- Sin respuesta del tasador dentro de las 4 h.
+- Solicitud del cliente.
+- Otro --- exige texto libre.
+
 Al confirmar: (1) TX_Solicitudes.tasador se actualiza al nuevo tasador;
 (2) el contador de reasignaciones incrementa; (3) A_Eventos registra
 evento_tipo=\'reasignacion_manual\' con autor, tasador_anterior,
 tasador_nuevo, motivo y timestamp; (4) el panel de detalle se refresca y
-aparece un toast de éxito; (5) SC13 notifica al tasador entrante (email
-· WhatsApp opcional). Nota v0 · la Ejecutiva no reasigna Visador desde
-la barra de acciones: el dato del visador se conserva visible en la
-pestaña Datos del panel de detalle y su reasignación es responsabilidad
-del rol Visador/Administrador desde su propia consola.
+aparece un toast de éxito; (5) SC13 notifica por correo al tasador
+entrante.
+
+Caso operativo de referencia: el tasador avisa dentro de las cuatro
+horas que no puede tomarla; se reasigna a otro y la solicitud sigue
+activa, con el mismo cliente y los mismos datos. No se anula ni se crea
+una nueva. El cliente señala que por ese motivo debiera admitirse una
+sola reasignación; v1.9 lo implementa como advertencia a partir de la
+segunda y no como bloqueo, a la espera de confirmación formal (§15,
+D-10).
+
+La reasignación es además la única vía para corregir datos de una
+solicitud ya asignada (§1.4 · RN-59).
+
+Nota v0 · la Ejecutiva no reasigna Visador desde la barra de acciones:
+el dato del visador se conserva visible en la pestaña Datos del panel de
+detalle y su reasignación es responsabilidad del rol
+Visador/Administrador desde su propia consola.
+
+  -------------------------------------------------------------------------
+  **RF-06**         **Asignación manual asistida y reasignación**
+  ----------------- -------------------------------------------------------
+  **Descripción**   La ejecutiva asigna y reasigna el tasador desde un
+                    botón único con dos estados. La primera asignación
+                    exige los tres datos mínimos de RN-44 y confirmación
+                    explícita; el motivo es opcional. Toda reasignación
+                    exige motivo obligatorio elegido desde catálogo
+                    cerrado, incrementa un contador y queda registrada en
+                    A_Eventos, con autor identificado y tipo de evento
+                    reasignacion manual.
+
+  **Criterio de     El sistema impide asignar si falta cualquiera de los
+  aceptación**      tres datos mínimos, e impide guardar la reasignación si
+                    el motivo está vacío. Cada asignación o reasignación
+                    aparece en A_Eventos en menos de un segundo desde su
+                    confirmación, y la notificación por correo al tasador
+                    entrante sale en el mismo acto.
+  -------------------------------------------------------------------------
+
+### **1.6.4 Correo de asignación al tasador (SC13)**
+
+El correo se arma automáticamente al confirmar la asignación, con la
+plantilla `email_asignacion_tasador` registrada en C_Plantillas y
+referida desde C_NotificacionesConfig (§5.3). Su contenido es:
+
+  ---------------------------------------------------------------------------
+  **Bloque**          **Contenido**
+  ------------------- -------------------------------------------------------
+  Cabecera            Empresa (cliente institucional), N° Interno, N°
+                      Solicitud, Fecha de Solicitud y Código VP
+
+  Propiedad           Dirección, Proyecto (sólo si Nuevo), Comuna, Valor
+                      estimado, marca Nuevo/Usado y tabla de unidades con sus
+                      roles
+
+  Personas            Comprador y RUT, Vendedor y RUT, Ejec. Formalizador,
+                      Ejec. Comercializador, contactos de visita ordenados
+                      por prioridad —cada uno con nombre, teléfono, email y
+                      rol— y Observaciones
+
+  Reglas de trabajo   Texto fijo de la plantilla: llamar al contacto dentro
+                      de 4 h · informe 2 días después de la visita · 7
+                      respuestas de la llamada · verificar permiso de
+                      edificación · verificar recepción final · adjuntar
+                      fotos de escritura · confirmar precio de venta
+
+  Adjuntos            Los cargados en TX_Adjuntos al momento del envío, como
+                      enlace a Dropbox
+  ---------------------------------------------------------------------------
+
+El contenido exacto de las siete respuestas de la llamada está pendiente
+de definición con el cliente (§15 · D-11). Hasta cerrarlo, la plantilla
+las nombra sin enumerarlas.
+
+Triggers del envío:
+
+  ---------------------------------------------------------------------------
+  **Evento**                                   **Envío**
+  -------------------------------------------- ------------------------------
+  La Ejecutiva confirma la asignación por      Automático
+  primera vez
+
+  La Ejecutiva reasigna tasador (RF-06)        Automático
+
+  La Ejecutiva presiona Reenviar en el bloque  Manual; queda registrado en
+  Asignación (§1.3.2)                          A_Eventos
+  ---------------------------------------------------------------------------
+
+Canal único: correo. El aviso por WhatsApp al tasador queda fuera de
+alcance en v1.9, y con él la dependencia del campo
+`M_Tasadores.notificar_whatsapp` (§1.9 · FUT-EJ-10).
+
+  ---------------------------------------------------------------------------
+  **RN-52**           **Una tasación, un hilo de correo**
+  ------------------- -------------------------------------------------------
+  **Precondición**    Se genera cualquier comunicación por correo asociada a
+                      una solicitud, con el cliente o con el tasador.
+
+  **Acción**          El sistema persiste el identificador del hilo con el
+                      tasador (`email_thread_id`) y la referencia al correo
+                      original del cliente en TX_Solicitudes. Todo envío
+                      posterior sobre esa solicitud —reasignación, reenvío—
+                      se emite dentro del mismo hilo. No se admite agrupar
+                      dos o más tasaciones en un mismo correo.
+
+  **Postcondición**   Las respuestas del tasador (fecha de visita, problemas
+                      de contacto, informe) y las del cliente quedan
+                      asociadas de forma inequívoca a una sola solicitud, y
+                      son recuperables desde la pestaña Historial (§1.3.3).
+
+  **Trazabilidad**    Regla operativa firme del negocio, levantamiento v1.9.
+                      Ver §1.6.4 y §5.3.
+  ---------------------------------------------------------------------------
 
 ## **1.7 Automatizaciones**
 
@@ -484,11 +1268,12 @@ no las contiene. Las relevantes son:
 
   ---------------------------------------------------------------------------
   **ID**   **Nombre**             **Trigger desde   **Efecto observable**
-                                  IF-02**           
+                                  IF-02**
   -------- ---------------------- ----------------- -------------------------
   SC01     Webhook validación de  Submit válido de  Inserta en TX_Solicitudes
            solicitud              nueva solicitud   con estado=creada;
-                                  (§1.5.4)          encadena AT01→AT02.
+                                  (§1.5.4)          encadena AT01. Ya no
+                                                    encadena AT02.
 
   AT01     Resolver motor de      estado=creada     Determina plantilla,
            reglas                                   fórmulas, workflow.
@@ -496,22 +1281,23 @@ no las contiene. Las relevantes son:
                                                     con regla ganadora y
                                                     candidatas.
 
-  AT02     Asignar tasador        post AT01         Selecciona tasador y
-                                                    persiste en
-                                                    TX_Solicitudes.tasador.
-                                                    Notifica al tasador
-                                                    entrante.
-
   AT08     Alertas SLA            Cron 08:00 diario Genera resumen de
                                                     solicitudes en SLA
                                                     ámbar/rojo; visible en la
                                                     Vista de SLA (§1.2).
 
-  SC13     Envío de               Reasignación,     Email al destinatario
-           notificaciones         cambio de         correspondiente.
-                                  prioridad, pausa  Destinatarios en
-                                                    C_NotificacionesConfig.
+  SC13     Envío de               Confirmación      Correo al destinatario
+           notificaciones         manual de         correspondiente; al
+                                  asignación y de   tasador con la plantilla
+                                  reasignación      email_asignacion_tasador.
+                                  (§1.6), reenvío   Destinatarios en
+                                  manual, cambio de C_NotificacionesConfig.
+                                  prioridad, pausa
   ---------------------------------------------------------------------------
+
+AT02 (asignar tasador) ya no figura en esta tabla: sale del alcance de
+IF-02 en v1.9 (§1.5.5). Permanece en el catálogo general de
+automatizaciones (§6.2), sin disparador desde esta interfaz.
 
 ## **1.8 Front-end (base v0.dev)**
 
@@ -523,7 +1309,13 @@ naranja-vp #F5A213), tipografía (H1 28pt, H2 24pt, H3 22pt, cuerpo
 RUTField, EmailField, AddressField con Google Places,
 RegionComunaSelector con cascading, FileUploadZone (los cuatro estados
 idle/subiendo/éxito/error, sube directo a Dropbox), SLABadge, StateBadge
-con los 11 estados oficiales y EventTimeline renderizando A_Eventos.
+con los 11 estados oficiales y EventTimeline renderizando A_Eventos. A
+ellos se suman en v1.9, construidos con los mismos tokens y componentes
+ya existentes y sin incorporar librerías nuevas: el wizard de creación
+de tres fases (§1.5.0), los bloques repetibles de Contactos de visita y
+de Unidades con sus sub-ítems (§1.5.1), el diálogo de confirmación de
+asignación (§1.6.2) y el sheet lateral del botón Documentos y Adjuntos
+(§1.5.1.1).
 
 Stack real medido en el repositorio v0 de IF-02 (package.json): Next.js
 16.2.6 (App Router · Turbopack), React 19.2.4 y React DOM 19.2.4,
@@ -548,8 +1340,10 @@ Blueprint de Interfaces v2.8 §4.4.
 ## **1.9 Otras funcionalidades no cubiertas**
 
 Funcionalidades adicionales identificadas en los mockups o solicitadas
-por operación que quedan fuera del alcance actual v1.4 y se elevan al
-comité para decisión formal:
+por operación que quedan fuera del alcance de v1.9. Las cinco primeras
+se elevan al comité para decisión formal; las cinco siguientes son
+alcance diferido: están definidas y levantadas, pero no se implementan
+en esta versión.
 
   -------------------------------------------------------------------------
   **ID**      **Funcionalidad**         **Estado**    **Decisión
@@ -571,22 +1365,151 @@ comité para decisión formal:
                                                       facturación +
                                                       integración SII).
 
-  FUT-EJ-04   Ventana de 24 h           En análisis   Elevado como D-05
-              coordinación de visita                  (SLA contractual vs
-              como SLA contractual                    OLA interno).
+  FUT-EJ-04   Ventana de coordinación   Resuelto      Son 4 h y es política
+              de visita como SLA                      interna de VProperty,
+              contractual                             no compromiso
+                                                      contractual (RN-53).
+                                                      Resta sólo la
+                                                      confirmación formal
+                                                      de D-05 (§15).
 
   FUT-EJ-05   Reasignación automática   Backlog       Requiere tabla
               al detectar tasador                     H_ActividadTasador o
-              inactivo \>48h                          cálculo sobre
+              inactivo >48h                           cálculo sobre
                                                       A_Eventos; escalable.
+
+  FUT-EJ-06   Captura de la fecha de    Diferido      Requiere fecha_visita
+              visita y tablero de las                 y fecha_envio_informe
+              tres fechas                             en TX_Solicitudes y
+                                                      las vistas de bandeja
+                                                      asociadas. Proceso en
+                                                      §1.9.1.
+
+  FUT-EJ-07   Reporte de contacto no    Diferido      Requiere flag y
+              logrado con bloqueo de la               motivo de bloqueo,
+              solicitud                               vista dedicada en la
+                                                      bandeja y pausa del
+                                                      reloj SLA (RN-54).
+
+  FUT-EJ-08   Gestión de reprocesos     Diferido      Requiere
+              post-entrega                            TX_Reprocesos,
+                                                      catálogo cerrado de
+                                                      motivos y SLA propio
+                                                      (RN-55).
+
+  FUT-EJ-09   Checklist de visita del   Diferido      Llamada en 4 h, siete
+              tasador                                 respuestas y fotos de
+                                                      escritura. Depende
+                                                      del cierre de D-11
+                                                      (§15).
+
+  FUT-EJ-10   Aviso por WhatsApp al     Fuera de      Canal único: correo
+              tasador                   alcance       (§1.6.4). Elimina la
+                                                      dependencia del campo
+                                                      notificar_whatsapp de
+                                                      M_Tasadores.
   -------------------------------------------------------------------------
 
+### **1.9.1 Procesos documentados y no implementados en v1.9**
+
+Se registran aquí, con el detalle levantado con el cliente, para que la
+versión que los implemente no tenga que volver a elicitarlos.
+
+**Coordinación de la visita (FUT-EJ-06).** El tasador recibe la
+solicitud y tiene 4 horas para llamar; es política interna de VProperty
+y se vende como diferenciador, no es compromiso contractual (RN-53).
+Llama, se presenta, valida los datos de la propiedad y fija la fecha de
+visita, habitualmente a 2 o 3 días por saturación de ruta. Devuelve la
+fecha por el hilo de correo y la Ejecutiva responde al correo original
+del cliente informándola. En v1.9 el registro de la fecha y la respuesta
+al cliente ocurren fuera del sistema, en el cliente de correo.
+
+**Contacto no logrado (FUT-EJ-07).** Segundo desenlace posible de la
+llamada: nadie contesta o el teléfono está malo. El tasador reporta el
+problema por el hilo; la Ejecutiva pide al cliente validar o entregar un
+teléfono nuevo y, al recibirlo, edita los contactos de la solicitud y
+reenvía el correo al tasador. La edición de contactos ya está soportada
+mientras la solicitud no esté asignada (§1.4); lo que se difiere es la
+marca de bloqueo, su vista dedicada en la bandeja y la pausa automática
+del reloj SLA (RN-54).
+
+**Reproceso post-entrega (FUT-EJ-08).** Ocurre entre 6 y 7 veces cada
+mañana y es el punto de mayor fricción con el cliente. Llega por el
+mismo hilo, semanas después del envío, cuando el cliente está
+escriturando y detecta que falta un antecedente. Motivos de forma: falta
+nombre completo del comprador; falta nombre completo del vendedor; falta
+RUT del comprador; falta RUT del vendedor; la dirección no coincide con
+el certificado de número; falta permiso de edificación; falta recepción
+final. Motivo de fondo: antecedente que exige reanálisis, por ejemplo un
+certificado de expropiación. Tiene SLA propio y estricto: lo que llega
+en la mañana se entrega al mediodía; lo que llega al mediodía, en la
+tarde (RN-55). En v1.9 se gestiona fuera del sistema, en el hilo de
+correo original.
+
+**Las tres fechas y el tablero diario (FUT-EJ-06).** El seguimiento
+completo se sostiene sobre tres fechas: la de solicitud, automática al
+crear y única que v1.9 registra; la de visita, que informa el tasador; y
+la de envío del informe al cliente, automática al generarse el PDF
+final. Sobre ellas se construyen los controles que hoy se hacen a mano
+en planilla y Drive: vistas pre-construidas de bandeja (sin fecha de
+visita, visitadas D+1, D+2 y D+3, reprocesos abiertos), revisión diaria
+a las 09:00 y gatillo del cobro sobre la fecha de envío (RN-57). Todo
+ello se difiere.
+
 Dependencias y entidades (Sección 1). Tablas escritas: TX_Solicitudes
-(campos no-cálculo), TX_Adjuntos, A_Eventos, A_Cambios. Tablas leídas:
-M_Clientes, M_Comunas, M_TiposInforme, M_TiposPropiedad, M_Tasadores,
-M_Visadores, C_SLA, A_DecisionesMotor. Reglas de negocio implicadas:
-RN-01, RN-02, RN-03, RN-04, RN-24 (saneamiento cuando el ejecutivo
-captura RUT inválido de propietario con flag).
+(campos no-cálculo), TX_Unidades, TX_ContactosVisita, TX_Adjuntos,
+TX_DocumentosLegales, A_Eventos, A_Cambios. Tablas leídas: M_Clientes,
+M_Comunas, M_TiposInforme, M_TiposPropiedad, M_TiposDeBien, M_Tasadores,
+M_Visadores, C_SLA, C_Plantillas, C_NotificacionesConfig,
+D_TipoDocumento, A_DecisionesMotor. Reglas de negocio implicadas: RN-01,
+RN-02, RN-04, RN-09, RN-24 (saneamiento cuando el ejecutivo captura RUT
+inválido con flag), RN-44 a RN-52 y RN-59. RN-03 (asignación
+territorial) deja de aplicarse en IF-02 al retirarse AT02 (§1.5.5).
+
+Dependencias de schema. Los elementos siguientes no existen aún en el
+modelo y son condición para que la interfaz muestre lo especificado. La
+lista es para el equipo de datos: no forma parte del cambio de interfaz,
+pero lo condiciona.
+
+*TX_Solicitudes* --- Ejec. Formalizador; Nuevo/Usado, fijado en la Fase
+2 del wizard; modo de creación (documentos, manual); tipo de cliente de
+origen (correo con texto, correo con ficha, extranet); `email_thread_id`
+del hilo con el tasador y referencia al correo original del cliente;
+`estado_conservacion` con el catálogo de seis valores; origen de la
+dirección vigente; y `fecha_asignacion` (timestamp), que se registra al
+confirmar la asignación. El estado asignada ya existe en la máquina de
+estados y no requiere alta.
+
+*Tablas nuevas* --- TX_ContactosVisita (nombre, teléfono, email, rol
+—propietario, corredor, arrendatario, conserje, otro—, orden de
+prioridad y estado del contacto; varios por solicitud); el vendedor,
+como tabla TX_Vendedor o como campos en TX_Solicitudes (razón social o
+nombre, RUT, contacto, tipo de persona y origen del dato); y
+M_TiposDeBien con los ocho valores del cuadro de valorización.
+TX_DocumentosLegales ya está referenciada en §2 y requiere verificación
+de campos: permiso de edificación con número y fecha, recepción final
+con número y fecha, fojas, número y año de inscripción, líneas de
+edificación y certificado de número.
+
+*TX_Unidades, a ampliar* --- modelo, superficie de terraza y superficie
+de terreno; atributo con rol / uso y goce para estacionamiento, bodega y
+terreno; m² de ampliación y marca de regularizable; origen de la
+superficie y vínculo al adjunto de respaldo; detalle del ítem en texto
+libre; y soporte de sub-ítems, para que una unidad pueda tener más de un
+tipo de bien asociado.
+
+*TX_DatosTasacion, bloque SII completo* --- códigos SII, ubicación
+urbana o rural, superficie de terreno, avalúo fiscal por unidad y total,
+contribución, avalúo exento, CG, OCiv, OC y G.
+
+*Bloque Financiero, sólo Nuevo* --- valor total UF, subsidio, ahorro,
+mutuo, pago contado, bono captación, bono integración y precio de venta.
+
+*Difieren a versiones posteriores y no se solicitan en v1.9* ---
+`fecha_visita`, `fecha_envio_informe` y flag y motivo de bloqueo por
+contacto no logrado en TX_Solicitudes; la tabla TX_Reprocesos;
+`M_Tasadores.notificar_whatsapp`; y los plazos de primer contacto, envío
+post-visita y SLA de reproceso en C_SLA.
 
 # **2. Interfaz Tasador**
 
@@ -721,6 +1644,32 @@ destino es el siguiente:
                                                                valor_sugerido_override con motivo
                                                                obligatorio (RN-23).
   --------------------------------------------------------------------------------------------------
+
+Herencias desde IF-02 (v1.9). Tres definiciones tomadas en la Interfaz
+Ejecutiva llegan al tasador y condicionan esta captura:
+
+1. Estado de conservación heredado. Se fija a nivel de propiedad en
+   IF-02 con un catálogo cerrado de seis valores —nuevo, sin uso, bueno,
+   normal, malo, deficiente— y se hereda a todos los recintos. El tasador
+   lo ve pre-cargado en cada recinto y sólo lo modifica por excepción, en
+   torno al 1% de los casos; el cambio queda auditado (RN-49). No debe
+   confundirse con `estado_unidad` de TX_Unidades, cuyo dominio es {nueva,
+   usada} y cuyo propósito es otro (§4.3.3).
+2. Superficies con origen y respaldo. Toda superficie que el tasador
+   edite debe declarar su origen desde el catálogo cerrado —carta o ficha
+   de la inmobiliaria, plano, base interna SII, certificado de avalúo,
+   medición del tasador— y quedar asociada a un adjunto de respaldo
+   (RN-45). Cuando el tasador corrige un m² en terreno, el origen pasa a
+   medición del tasador y el respaldo es su propia captura.
+3. Ampliaciones con marca de regularizable. Las ampliaciones medidas en
+   terreno se registran con sus m² y con la marca ¿regularizable? sí/no.
+   Sólo las regularizables según normativa se valorizan (RN-50); las no
+   regularizables se registran, se informan y no suman valor.
+
+Fuera de alcance de v1.9 en IF-03: la devolución estructurada de la
+fecha de visita y el reporte de contacto no logrado. Ambos siguen
+ocurriendo por el hilo de correo de la solicitud (§1.9.1 · FUT-EJ-06 y
+FUT-EJ-07).
 
   -------------------------------------------------------------------------
   **RF-10**         **Captura del cuadro de valoración granular**
@@ -962,9 +1911,11 @@ TX_ItemsCuadroValoracion, TX_Adjuntos, TX_Comparables,
 TX_ObrasComplementarias, TX_Ampliaciones, TX_HabitacionesPorNivel,
 TX_TerminacionesPorRecinto, TX_Amenities, TX_DocumentosLegales,
 TX_Solicitudes (overrides), A_Cambios (en overrides). Tablas leídas:
-TX_Solicitudes, M_TiposPropiedad, M_Comunas, D_TipoDocumento,
-D_TipoDocumentoAtributo. Reglas de negocio implicadas: RN-05
-a RN-14 (motor de cálculo), RN-21, RN-23, RN-38, RN-39, RN-42, RN-43.
+TX_Solicitudes, M_TiposPropiedad, M_Comunas, M_TiposDeBien,
+D_TipoDocumento, D_TipoDocumentoAtributo. Reglas de negocio implicadas:
+RN-05 a RN-14 (motor de cálculo), RN-21, RN-23, RN-38, RN-39, RN-42,
+RN-43, y desde v1.9 RN-45 (origen y respaldo de superficies), RN-49
+(estado de conservación heredado) y RN-50 (ampliaciones regularizables).
 Ver §5 y §6 para el desarrollo de las reglas.
 
 # **3. Interfaz Visador**
@@ -1332,6 +2283,106 @@ cliente).
                       (patrón NO REGISTRA).
   ---------------------------------------------------------------------------
 
+### **4.2.1 Catálogo operativo de tipos de documento**
+
+D_TipoDocumento se puebla con el catálogo real levantado con el cliente,
+que sustituye a la lista TIPOS_DOCUMENTO usada hasta v1.8.2 en el
+checklist de creación. El dato de negocio más relevante de esta tabla no
+es la lista en sí, sino la columna cuándo: muchos documentos no llegan
+al inicio, sino en el reproceso, cuando el cliente está escriturando. De
+ahí que el checklist viva en el detalle y no en la creación (§1.5.1.1).
+
+  ---------------------------------------------------------------------------
+  **Documento**             **Cuándo**  **Qué aporta**    **Extracción
+                                                          automática**
+  ------------------------- ----------- ----------------- -------------------
+  Carta oferta / ficha de   Nuevo       Comprador,        Sí
+  la inmobiliaria                       unidades, roles y
+                                        m²
+
+  Plano con detalle de m²   Nuevo       m² por unidad     Sí
+
+  Certificado de permiso de Ambos       N° y fecha        Sí
+  edificación
+
+  Certificado de recepción  Ambos       N° y fecha;       Sí
+  final                                 siempre posterior
+                                        al permiso
+
+  Escritura de compraventa  Usado       Permiso y         Sí
+  original                              recepción, en las
+                                        cláusulas segunda
+                                        y tercera
+
+  Certificado municipal     Usado       A veces trae      Sí
+  (vivienda social, número)             permiso y
+                                        recepción juntos
+
+  Certificado de número     Reproceso   Dirección         Sí
+                                        oficial; la del
+                                        informe debe
+                                        coincidir
+
+  Certificado de avalúo     Ambos       Monto del avalúo, Sí, pero la
+  fiscal                                datos SII y el    descarga es manual:
+                                        vendedor cuando   captcha
+                                        no vino de otra
+                                        parte
+
+  Captura de la base        Usado       m² de terreno y   Sí; se sube como
+  interna SII                           de construcción,  imagen
+                                        material y año
+
+  Certificado de deuda de   Usado       Si hay o no       Sí
+  Tesorería                             deuda; se
+                                        consulta por rol,
+                                        sin captcha
+
+  Sello verde               Depto con   Fuente SEC por    Parcial
+                            gas         dirección, o foto
+                                        del tasador en la
+                                        mampara
+
+  Solicitud de tasación del Cliente     Todos los datos   Sí
+  cliente                   tipo 2      de cabecera
+
+  Plano de tasación         ---         Lo hace el        No
+                                        tasador en el 99%
+                                        de los casos
+
+  Inscripción de dominio    ---         Baja prioridad:   ---
+  CBR                                   no se adjunta ni
+                                        se revisa
+
+  Informe de inspección     ---         Fuera de alcance: ---
+                                        no se pide
+  ---------------------------------------------------------------------------
+
+Cinco consecuencias de diseño se derivan de este catálogo:
+
+1. El certificado de avalúo fiscal no admite descarga automática: el
+   sitio del SII exige captcha. Alguien debe descargarlo y subirlo. El modo
+   en base a documentos del wizard no puede asumir su disponibilidad al
+   crear la solicitud (§1.5.2).
+2. La inscripción de dominio CBR es de baja prioridad: no se adjunta ni
+   se revisa. La fuente automática en Usado no es escritura más CBR más
+   certificado SII, sino la base interna del SII más el certificado de
+   avalúo.
+3. En Nuevo, el permiso de edificación y la recepción final corresponden
+   al edificio completo; en Usado, a la vivienda particular (RN-51).
+   También cambia el documento que los contiene: certificados originales de
+   la DOM en Nuevo; escritura original de compraventa —cláusulas segunda y
+   tercera— o certificados municipales en Usado. Las escrituras posteriores
+   a la original pierden el dato.
+4. El sello verde no aplica a casas ni a departamentos full eléctricos.
+   En esos casos se registra "no aplica" y no se deja vacío, para que la
+   ausencia sea una decisión y no un olvido (RN-58).
+5. El certificado de consulta TCET / REI queda fuera del catálogo hasta
+   aclarar con el cliente de qué se trata (§15 · D-12).
+
+El alta de un tipo nuevo no requiere DDL ni deploy: se agrega la fila en
+D_TipoDocumento y sus atributos en D_TipoDocumentoAtributo (RN-31).
+
 ## **4.3 Set A · Datos para el motor de cálculo**
 
 D_TipoDocumentoAtributo filtra por usado_motor_calculo=true. Los
@@ -1374,6 +2425,13 @@ y escriben en TX_DatosTasacion una sola vez. El campo
 unidad destino cuando un mismo tipo de documento se sube dos veces
 (una por unidad: uno para el depto y otro para el estacionamiento).
 
+Consecuencia de negocio sobre el avalúo: el avalúo fiscal total de la
+solicitud es la suma de los avalúos de sus unidades (RN-48). Cuando la
+propiedad se compone de departamento, estacionamiento y bodega, el total
+es la suma de los tres y no el del departamento. El monto que manda es
+el del certificado de avalúo; los m² provienen de la base interna del
+SII.
+
 ### **4.3.2 Segundo ejemplo validado con foto_fuente_sii (propiedades usadas)**
 
 Cuando la propiedad es usada, la fuente primaria de datos catastrales
@@ -1408,6 +2466,18 @@ qué tipo de documento aplica para poblar los atributos catastrales de
 esa unidad: si `estado_unidad = usada`, el sistema espera
 `foto_fuente_sii`; si `estado_unidad = nueva`, espera
 `FICHA_INMOBILIARIA_NUEVA`. La regla se formaliza en RN-38.
+
+Distinción con `estado_conservacion` (v1.9). Son dos campos distintos
+que se venían confundiendo. `estado_unidad` vive en TX_Unidades, tiene
+dominio {nueva, usada} y su única función es decidir qué tipo de
+documento alimenta los datos catastrales de esa unidad; no describe la
+condición física de nada. `estado_conservacion` es un campo nuevo a
+nivel de propiedad, con catálogo cerrado de seis valores mandatado por
+los clientes —nuevo, sin uso, bueno, normal, malo, deficiente—, se
+hereda a todos los recintos y sí describe la condición física (RN-49).
+Los valores habitado y desocupado, que aparecían en versiones
+preliminares del levantamiento, se descartan: no figuran en ninguna
+fuente.
 
 ## **4.4 Set B · Datos para las interfaces del negocio**
 
@@ -1689,9 +2759,18 @@ el cálculo.
 ## **5.3 Notificaciones (C_NotificacionesConfig)**
 
 Fuente única de destinatarios, plantillas y canales para todas las
-notificaciones automáticas (SC13). Consumida por AT05, AT08, AT06, entre
-otras. El operador puede cambiar destinatario o canal (email, whatsapp
-futuro) sin tocar código.
+notificaciones automáticas (SC13). Consumida por AT05, AT08 y AT06,
+entre otras. El operador puede cambiar destinatario o plantilla sin
+tocar código.
+
+Canal al tasador (v1.9): correo, único. La plantilla
+`email_asignacion_tasador` se registra en C_Plantillas con las variables
+de cabecera, propiedad, personas, reglas de trabajo y adjuntos
+detalladas en §1.6.4, y se dispara desde la confirmación manual de
+asignación, desde la reasignación y desde el reenvío manual. El aviso
+por WhatsApp queda fuera de alcance, y con él el campo
+`M_Tasadores.notificar_whatsapp` que lo soportaría (§1.9 · FUT-EJ-10).
+Rige RN-52: una tasación, un hilo de correo.
 
 ## **5.4 Clientes, variables y factores (IF-11)**
 
@@ -1855,8 +2934,9 @@ TX_Calculos con snapshot inmutable de version y expresion.
   AT01     AT01_resolver_motor_reglas       estado=creada      C_ReglasNegocio,         TX_Solicitudes,
                                                                M_Clientes               A_DecisionesMotor
 
-  AT02     AT02_asignar_tasador             estado=creada      M_Tasadores, M_Comunas   TX_Solicitudes, A_Eventos
-                                            (post AT01)                                 
+  AT02     AT02_asignar_tasador             Sin disparador     M_Tasadores, M_Comunas   TX_Solicitudes, A_Eventos
+                                            desde IF-02 en
+                                            v1.9 (§1.5.5)
 
   AT03     AT03_ejecutar_dag_formulas       estado=capturada   C_Formulas,              TX_Calculos,
                                                                TX_DatosTasacion         TX_Solicitudes
@@ -2369,9 +3449,9 @@ explicita el rango en cada RF de esta sección.
                     obligatorios: tipo de informe (filtrado por
                     M_Clientes.tipos_informe_permitidos), tipo de
                     propiedad, dirección con sugerencia Google Places,
-                    comuna autocompletada, nombre del propietario, RUT del
-                    propietario validado con módulo 11 en tiempo real,
-                    email de contacto.
+                    comuna autocompletada, nombre del comprador, RUT del
+                    comprador validado con módulo 11 en tiempo real, email
+                    de contacto.
 
   **Criterio de     Completitud en menos de 90 segundos en escritorio y
   aceptación**      móvil, medido en al menos 10 sesiones piloto.
@@ -2380,6 +3460,16 @@ explicita el rango en cada RF de esta sección.
                     inmediata y email de acuse en menos de dos segundos con
                     el código VP-AAAA-NNNN.
   -------------------------------------------------------------------------
+
+Desambiguación v1.9. Hasta v1.8.2 este dato se nombraba "propietario",
+tanto aquí como en la sección Solicitante de IF-02. El nombre era
+incorrecto: el cliente institucional está evaluando y financiando al
+comprador, y el dato que llega identificado como cliente es siempre el
+comprador, no el dueño actual de la propiedad. El vendedor —el
+propietario actual— es un dato distinto, que se captura en IF-02 con su
+propia jerarquía de fuentes (RN-47 · §1.5.1, Sección C). La distinción
+no es semántica: nombre y RUT incompletos de comprador y de vendedor son
+la primera causa de reproceso.
 
   -------------------------------------------------------------------------
   **RF-02**         **Campos opcionales colapsables**
@@ -2633,12 +3723,14 @@ incorporado en v1.2).
   -------------------------------------------------------------------------
   **RNF-02**        **Latencia del motor de reglas**
   ----------------- -------------------------------------------------------
-  **Descripción**   La resolución del motor (AT01) y la asignación del
-                    tasador (AT02) se completan en menos de cinco segundos
-                    desde la recepción de la solicitud, percentil 95.
+  **Descripción**   La resolución del motor (AT01) se completa en menos de
+                    cinco segundos desde la recepción de la solicitud,
+                    percentil 95. Desde v1.9 la métrica cubre sólo AT01: la
+                    asignación del tasador dejó de ser automática y salió
+                    del alcance de IF-02 (§1.5.5).
 
-  **Criterio de     Z_EjecucionesMake.duracion_ms del par AT01+AT02: P95 ≤
-  aceptación**      5.000 ms. Medido sobre ventanas móviles de 24 h.
+  **Criterio de     Z_EjecucionesMake.duracion_ms de AT01: P95 ≤ 5.000 ms.
+  aceptación**      Medido sobre ventanas móviles de 24 h.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
@@ -3207,7 +4299,82 @@ cuando la regla afecta transversalmente varias interfaces.
            (ejemplo_atributo)                      
 
   RN-37    Patrón "NO REGISTRA" para inmueble      §4.5, §6.3 (RF-29)
-           nuevo sin registro SII (nuevo v1.6)     
+           nuevo sin registro SII (nuevo v1.6)
+
+  RN-38    Fuente catastral por estado de la       §4.3.2, §4.3.3
+           unidad (nueva / usada)
+
+  RN-39    Validación cruzada del XLSM ---         §2.5, §15 D-15
+           referenciada, enunciado pendiente
+
+  RN-40    Identificador reservado, sin uso        ---
+           asignado
+
+  RN-41    Identificador reservado, sin uso        ---
+           asignado
+
+  RN-42    Cuadre de superficies (validación       §2.5, §15 D-15
+           cruzada) --- referenciada, enunciado
+           pendiente
+
+  RN-43    Validación cruzada del XLSM ---         §2.5, §15 D-15
+           referenciada, enunciado pendiente
+
+  RN-44    Datos mínimos para asignar tasador      §1.6.1
+           (nueva v1.9)
+
+  RN-45    Origen y respaldo obligatorios de toda  §1.5.1, §2.5
+           superficie (nueva v1.9)
+
+  RN-46    Jerarquía de fuentes de la dirección    §1.5.1, §4.2.1
+           (nueva v1.9)
+
+  RN-47    Jerarquía de fuentes del vendedor; el   §1.5.1, §9 IF-01
+           comprador viene del cliente
+           institucional (nueva v1.9)
+
+  RN-48    Avalúo fiscal total como suma de las    §1.3.2, §4.3.1
+           unidades (nueva v1.9)
+
+  RN-49    Estado de conservación fijado en la     §1.5.1, §2.5
+           propiedad y heredado a los recintos
+           (nueva v1.9)
+
+  RN-50    Las ampliaciones sólo se valorizan si   §2.5, §6
+           son regularizables (nueva v1.9)
+
+  RN-51    Permiso y recepción: edificio completo  §4.2.1
+           en Nuevo, vivienda particular en Usado
+           (nueva v1.9)
+
+  RN-52    Una tasación, un hilo de correo (nueva  §1.6.4, §5.3
+           v1.9)
+
+  RN-53    Las 4 h de primer contacto son política §1.9, §1.9.1
+           interna configurable (nueva v1.9)
+
+  RN-54    El reloj del SLA se detiene con la      §1.9.1
+           solicitud bloqueada por contacto no
+           logrado (nueva v1.9, diferida)
+
+  RN-55    El reproceso tiene SLA propio: mañana → §1.9.1
+           mediodía, mediodía → tarde (nueva v1.9,
+           diferida)
+
+  RN-56    Un Excel por tasación y hasta tres PDF  §1.3.4, §7
+           versionados y coincidentes (nueva v1.9)
+
+  RN-57    Honorario y comisión se gatillan con el §1.9.1
+           envío del informe (nueva v1.9,
+           diferida)
+
+  RN-58    Sello verde: "no aplica" explícito en   §4.2.1
+           casas y departamentos full eléctricos
+           (nueva v1.9)
+
+  RN-59    Ciclo de edición y bloqueo de la        §1.4, §1.6.2
+           solicitud tras la asignación (nueva
+           v1.9)
   ------------------------------------------------------------------------
 
 Nota v1.3 sobre RN-25. La regla original de generación de texto
@@ -3254,10 +4421,70 @@ valor válido, no como error. Postcondición: el flujo continúa; el
 visador ve el flag en pantalla y decide si aprueba con avalúo cero o
 solicita reingreso posterior. Caso validado: HEV-3183.
 
+Nota v1.9 sobre RN-38 a RN-43. El índice de v1.8.2 llegaba hasta RN-37,
+pero §2.5 (RF-10 y RF-11) y §2.8 ya referenciaban RN-38, RN-39, RN-42 y
+RN-43, y §4.3.2 y §4.3.3 enunciaban RN-38. v1.9 regulariza el índice
+incorporando el rango completo. RN-38 queda enunciada en §4.3.2 y
+§4.3.3. RN-39, RN-42 y RN-43 corresponden a validaciones cruzadas del
+XLSM heredadas del cálculo legacy: están referenciadas pero no
+enunciadas en ninguna sección, y su formalización queda como pendiente
+D-15 (§15). Los identificadores RN-40 y RN-41 no aparecen referenciados
+en ninguna sección; se reservan y no se reasignan, para no romper la
+trazabilidad histórica.
+
+Nota v1.9 sobre RN-44 a RN-59 (nuevas). Provienen del levantamiento
+operativo de la Interfaz Ejecutiva con el área de Control y Seguimiento.
+Se enuncian así:
+
+- RN-44 · Enunciada con precondición, acción y postcondición en §1.6.1.
+- RN-45 · Toda superficie registrada declara su origen desde catálogo
+  cerrado y tiene un adjunto de respaldo asociado. Ningún m² queda en el
+  sistema sin declarar de dónde salió y sin archivo que lo sostenga.
+  Aplica en la captura de la Ejecutiva (§1.5.1) y en la edición del
+  tasador (§2.5).
+- RN-46 · La dirección sigue la jerarquía ficha del cliente →
+  certificado de avalúo → certificado de número, y la interfaz registra de
+  cuál proviene la vigente. Cuando existe certificado de número, la
+  dirección del informe debe coincidir con él.
+- RN-47 · El vendedor sigue la jerarquía correo → ficha → certificado de
+  avalúo; el comprador proviene siempre del cliente institucional. Ambos
+  exigen nombre completo y RUT validado.
+- RN-48 · El avalúo fiscal total de la solicitud es la suma de los
+  avalúos de sus unidades.
+- RN-49 · El estado de conservación se fija a nivel de propiedad con
+  catálogo cerrado de seis valores y se hereda a todos los recintos; el
+  cambio por recinto es excepción y queda auditado.
+- RN-50 · Las ampliaciones medidas en terreno sólo se valorizan si son
+  regularizables según normativa; las no regularizables se registran e
+  informan sin sumar valor.
+- RN-51 · En Nuevo, el permiso de edificación y la recepción final
+  corresponden al edificio completo; en Usado, a la vivienda particular.
+- RN-52 · Enunciada con precondición, acción y postcondición en §1.6.4.
+- RN-53 · El plazo de 4 h para el primer contacto del tasador es
+  política interna configurable, no compromiso contractual con el cliente.
+  Cierra FUT-EJ-04 y responde el pendiente D-05.
+- RN-54 · El reloj del SLA se detiene mientras la solicitud está
+  bloqueada por contacto no logrado.
+- RN-55 · El reproceso tiene SLA propio: lo que llega en la mañana se
+  entrega al mediodía; lo que llega al mediodía, en la tarde.
+- RN-56 · Una tasación produce un solo archivo Excel de cálculo y hasta
+  tres PDF versionados; los valores del PDF deben coincidir con los del
+  Excel que lo originó.
+- RN-57 · El honorario del tasador y la comisión al cliente se gatillan
+  con el envío del informe al cliente, no con su recepción.
+- RN-58 · El sello verde no aplica a casas ni a departamentos full
+  eléctricos; en esos casos se registra "no aplica" y no se deja vacío.
+- RN-59 · Enunciada con precondición, acción y postcondición en §1.4.
+
+Tres de estas reglas —RN-54, RN-55 y RN-57— describen comportamiento que
+v1.9 no implementa. Se declaran igualmente para que la versión que
+implemente los flujos diferidos de §1.9.1 no tenga que volver a
+definirlas.
+
 # **14. Glosario del dominio**
 
 Glosario unificado, en orden alfabético. Se preserva el glosario de v1.2
-con adiciones marcadas v1.3.
+con adiciones marcadas v1.3, v1.6 y v1.9.
 
   ---------------------------------------------------------------------------------------------------
   **Término**            **Definición operativa**
@@ -3308,6 +4535,16 @@ con adiciones marcadas v1.3.
   Comparable             Inmueble similar usado como referencia de precio. TX_Comparables guarda
                          entre 3 y 10 por solicitud, ajustados por factores de homogeneización.
 
+  Comprador (v1.9)       Persona natural que compra el inmueble y a quien el cliente institucional
+                         evalúa y financia. Es el dato que llega identificado como "cliente" en la
+                         solicitud. Hasta v1.8.2 el documento lo nombraba propietario, lo que inducía
+                         a error: el propietario actual es el vendedor. Ver RN-47, §1.5.1 y §9 RF-01.
+
+  Contacto de visita     Persona que abre la puerta al tasador. Normalmente un tercero —corredor,
+  (v1.9)                 arrendatario, conserje— y no necesariamente el dueño. Una solicitud admite
+                         varios, ordenados por prioridad de llamada; el primero es el principal. Al
+                         menos uno con teléfono es condición para asignar tasador (RN-44).
+
   Cuadre m²              Validación que verifica que la suma de superficies de los ítems edificación
                          coincide con la superficie construida total declarada (RN-21).
 
@@ -3335,6 +4572,14 @@ con adiciones marcadas v1.3.
 
   Especificidad          Métrica de cuán precisa es una regla. Suma de filtros no-wildcard que
                          matchean una solicitud.
+
+  Estado de conservación Condición física de la propiedad, con catálogo cerrado de seis valores
+  (v1.9)                 mandatado por los clientes: nuevo, sin uso, bueno, normal, malo y
+                         deficiente. Se fija a nivel de propiedad en IF-02 y se hereda a todos los
+                         recintos; el tasador lo modifica sólo por excepción y el cambio queda
+                         auditado (RN-49). No confundir con `estado_unidad` de TX_Unidades, cuyo
+                         dominio es {nueva, usada} y cuya función es resolver qué documento alimenta
+                         los datos catastrales (§4.3.3).
 
   Expediente 360°        Dossier consolidado que une 8 tablas para reconstruir una solicitud completa
                          en menos de dos minutos (IF-12).
@@ -3388,6 +4633,14 @@ con adiciones marcadas v1.3.
 
   Renta perpetua         V = ingreso anual neto / cap rate.
 
+  Reproceso (v1.9)       Devolución de un informe ya entregado, solicitada por el cliente semanas
+                         después del envío, cuando está escriturando y detecta que falta un
+                         antecedente. Motivos de forma: nombre o RUT incompletos de comprador o
+                         vendedor, dirección que no coincide con el certificado de número, permiso de
+                         edificación o recepción final faltantes. Motivo de fondo: antecedente que
+                         exige reanálisis. Tiene SLA propio (RN-55). Documentado en §1.9.1; su
+                         gestión en el sistema se difiere (FUT-EJ-08).
+
   Rol SII                Identificador catastral asignado por el SII. Formato NNNNN-N.
 
   RUT                    Rol Único Tributario. Formato N.NNN.NNN-D. Validado con módulo 11 (RN-02).
@@ -3407,6 +4660,13 @@ con adiciones marcadas v1.3.
   Tipo de adjunto (v1.3) Enum de TX_Adjuntos.tipo_adjunto: escritura, cbr, plano, certificado_sii,
                          recepcion_municipal, foto_fachada, foto_interior, foto_area_comun,
                          documento_legal_terreno, revision_visador, informe_final, otro. Ver §8.2.
+
+  Tipo de bien (v1.9)    Clasificación de cada ítem valorizable de una propiedad. Catálogo cerrado de
+                         ocho valores, tomado del banner de ítems del cuadro de valorización:
+                         Edificación, Terreno, Estacionamiento cubierto, Estacionamiento descubierto,
+                         Estacionamiento uso y goce, Bodega, Piscina y Obras complementarias. Se
+                         materializa en M_TiposDeBien. La terraza no es un tipo de bien: es
+                         superficie de la unidad y se pondera al 50% (RN-09).
 
   Tipo de documento      Definición de un tipo de documento (D_TipoDocumento) con código, emisor y
   paramétrico            vigencia. Agregar uno nuevo requiere solo INSERTs en D\_.
@@ -3448,6 +4708,12 @@ con adiciones marcadas v1.3.
   Velocidad de venta     Categoría en 9 tramos que el tasador asigna a la propiedad. Determina factor
                          de remate (RN-10).
 
+  Vendedor (v1.9)        Propietario actual del inmueble, que lo transfiere en la operación. En
+                         propiedad Nueva es persona jurídica (razón social y RUT de la inmobiliaria);
+                         en Usada, persona natural (nombre completo y RUT). El dato sigue la
+                         jerarquía de fuentes correo → ficha → certificado de avalúo (RN-47). En
+                         refinanciamiento coincide con el comprador.
+
   version del atributo   Snapshot de la versión del atributo usado en cada extracción SC07
   (v1.3, v1.6)           (blueprint SC-RF09-ExtraccionClaude). Paralelo a RN-28 del motor de
                          cálculo. Permite reproducir el mismo prompt años después. En v1.3 el
@@ -3468,8 +4734,9 @@ con adiciones marcadas v1.3.
 
 Los puntos siguientes no pueden definirse hoy con la información
 disponible. Cada uno tiene responsable nominado y fecha límite
-vinculante. Se preserva el catálogo TBD de la v1.2 y se añaden los D-X
-emergentes de la reestructuración v1.3.
+vinculante. Se preserva el catálogo TBD de la v1.2, los D-01 a D-09
+emergentes de la reestructuración v1.3 y se añaden los D-10 a D-15
+emergentes del levantamiento operativo v1.9.
 
   -------------------------------------------------------------------------------
   **ID**     **Punto pendiente**                 **Responsable**    **Fecha
@@ -3527,9 +4794,12 @@ emergentes de la reestructuración v1.3.
   (v1.3)     institucional: alcance y eventual                      
              integración SII.                                       
 
-  D-05       Ventana de 24 h de coordinación de  Héctor + Cliente   31-ago-2026
-  (v1.3)     visita: SLA contractual vs OLA      piloto             
-             interno.                                               
+  D-05       Ventana de coordinación de visita:  Héctor + Cliente   31-ago-2026
+  (v1.3)     respondida en el levantamiento v1.9 piloto
+             --- son 4 h y es política interna,
+             no SLA contractual (RN-53). Resta
+             el acta de confirmación formal para
+             cerrarla.
 
   D-06       Marca de agua en fotos del tasador  Arquitecto de      31-oct-2026
   (v1.3)     (RUT + hora): valor legal.          Software + Visador 
@@ -3543,34 +4813,91 @@ emergentes de la reestructuración v1.3.
                                                  Compliance         
 
   D-09       Consolidación Google Drive vs       IA Solution +      31-ago-2026
-  (v1.3)     Dropbox (proyecto usa Dropbox como  Héctor             
-             fuente única de archivos).                             
+  (v1.3)     Dropbox (proyecto usa Dropbox como  Héctor
+             fuente única de archivos).
+
+  D-10       Límite de reasignaciones por        Héctor + Ejecutiva 31-ago-2026
+  (v1.9)     indisponibilidad del tasador:       comercial
+             ¿bloqueo o advertencia a partir de
+             la segunda? v1.9 implementa
+             advertencia.
+
+  D-11       Contenido exacto de las siete       Héctor + Tasador   31-ago-2026
+  (v1.9)     respuestas de la llamada que nombra titular
+             la plantilla del correo al tasador
+             (§1.6.4).
+
+  D-12       Certificado de consulta TCET / REI: Héctor +           30-sep-2026
+  (v1.9)     qué es y si entra al catálogo       Parametrizador
+             D_TipoDocumento. El cliente declara
+             no conocerlo.
+
+  D-13       Carga real de C_TramosHonorarios:   Héctor +           30-sep-2026
+  (v1.9)     la tabla existe en el modelo, está  Parametrizador
+             vacía y el cliente no la reconoce.
+
+  D-14       Criterio de identidad de mismo      Arquitecto de      30-sep-2026
+  (v1.9)     edificio para reutilizar permiso y  Datos + Héctor
+             recepción: la base interna SII no
+             trae edificio ni condominio.
+             Confirmar si la coincidencia
+             heurística con confirmación manual
+             es aceptable (§1.5.0).
+
+  D-15       Enunciado formal de RN-39, RN-42 y  Especialista       31-oct-2026
+  (v1.9)     RN-43 (validaciones cruzadas del    Migración Legacy +
+             XLSM), hoy referenciadas sin        Visador titular
+             definición (§13).
   -------------------------------------------------------------------------------
 
 # **Cierre y trazabilidad documental**
 
-Esta Especificación del Proyecto v1.8 es el documento maestro de
+Esta Especificación del Proyecto v1.9 es el documento maestro de
 requisitos de VProperty en su estructura por interfaz operacional.
-Sucede a la v1.7 sin pérdida de contenido. Cambios operativos v1.8:
-(1) se incorpora el tipo de documento `foto_fuente_sii` (propiedades
-usadas) con 4 atributos de cardinalidad `una_por_unidad`
-(sup_terreno_m2, sup_m2, tipo_material, anio_construccion),
-formalizando la fuente interna del SII descrita en el testimonio
-operativo; (2) TX_Unidades incorpora `estado_unidad` con dominio
-{nueva, usada} para resolver por unidad qué tipo de documento aplica
-(RN-38); (3) TX_Unidades incorpora los campos `sup_terreno_m2` y
-`tipo_material`. El dominio D\_ paramétrico documental sigue reducido
-a dos tablas (D_TipoDocumento y D_TipoDocumentoAtributo) y el resultado
-de la extracción se persiste en `TX_Adjuntos.atributos_obtenidos` con
-enrutamiento por cardinalidad a TX_DatosTasacion y TX_Unidades. Todo
-está explicitado en §4.
+Sucede a la v1.8.2 sin pérdida de contenido.
+
+Cambios operativos v1.9, todos originados en el levantamiento con el
+área de Control y Seguimiento y concentrados en la Interfaz Ejecutiva:
+(1) la creación de solicitudes pasa por un wizard de tres fases que fija
+modo de creación y tipo de propiedad antes del formulario (§1.5.0); (2)
+el formulario se reduce de seis a cuatro secciones y admite N unidades
+por solicitud, con catálogo cerrado de ocho tipos de bien y origen más
+respaldo obligatorios por superficie (§1.5.1); (3) la asignación del
+tasador deja de ser automática: AT02 sale del alcance de IF-02 y se
+reemplaza por asignación manual asistida, con tres datos mínimos y
+confirmación explícita (§1.5.5, §1.6); (4) la solicitud es editable
+hasta la asignación y queda en modo consulta desde el estado asignada
+(§1.4, RN-59); (5) la barra de acciones del detalle queda con dos
+botones y el checklist documental se traslada al detalle (§1.3.1,
+§1.5.1.1); (6) D_TipoDocumento se puebla con el catálogo operativo real
+de quince tipos y se documenta la descarga manual del avalúo por captcha
+(§4.2.1); (7) el canal de notificación al tasador queda en correo único,
+con la plantilla `email_asignacion_tasador` y la regla de un hilo por
+solicitud (§1.6.4, §5.3, RN-52).
+
+Sin cambios respecto de v1.8.2: el dominio D\_ paramétrico documental
+sigue reducido a dos tablas (D_TipoDocumento y D_TipoDocumentoAtributo);
+el resultado de la extracción se persiste en
+`TX_Adjuntos.atributos_obtenidos` con enrutamiento por cardinalidad a
+TX_DatosTasacion y TX_Unidades; el tipo `foto_fuente_sii` y el campo
+`estado_unidad` de TX_Unidades conservan su definición (RN-38). Todo
+está explicitado en §4. El motor de cálculo (§6), la impresión del
+informe (§7) y la estructura Dropbox (§8) no se modifican.
+
+Alcance diferido declarado. Cinco funcionalidades quedan levantadas y
+documentadas pero no implementadas: captura de la fecha de visita y
+tablero de las tres fechas, reporte de contacto no logrado con bloqueo,
+gestión de reprocesos post-entrega, checklist de visita del tasador y
+aviso por WhatsApp. Se registran en §1.9 y §1.9.1 con identificador
+propio y con las reglas que las gobiernan (RN-54, RN-55, RN-57), para
+que la versión siguiente no deba volver a elicitarlas.
 
 Toda decisión de implementación posterior se traza contra los
 identificadores RF-XX, RNF-XX, RN-XX, RT-XX, RR-XX y SP-XX aquí
 definidos. Cuando un requisito se modifique, se versionará este
 documento y se preservará la versión anterior en H_Documentacion.
 
-### **Fuentes oficiales alineadas a v1.8**
+### **Fuentes oficiales alineadas a v1.9**
 
 • Especificación del Proyecto v1.4 (contenido base de esta iteración;
 v1.5 fue una versión intermedia incompleta, superada por v1.6).
@@ -3592,6 +4919,12 @@ sucede a v8.1).
 
 • VProperty_Origen_Datos_Informe v1.0 (mapeo de origen de datos).
 
+• UI Ejecutiva (IF-02) --- Análisis de cambios v4 (levantamiento
+operativo con el cliente: fuentes documentales de la ficha inmobiliaria,
+el correo al tasador y el certificado de avalúo fiscal, más las
+entrevistas de proceso end-to-end). Insumo único de los cambios v1.9 de
+§1, §2.5, §4.2.1, §5.3, §9 RF-01, §13 y §15.
+
 • Mockups Imagenes_IF_Ejecutiva.pdf · Imagenes_IF_Tasador.pdf ·
 Imagenes_IF_Visador.pdf.
 
@@ -3600,7 +4933,7 @@ Inmobiliaria Exequiel Fernández Torre Tres SpA · recepción final N°27
 del 13-01-2026) — usado para validar el modelo de TX_Unidades, el
 enrutamiento por cardinalidad, y el patrón "NO REGISTRA" (RN-37).
 
-**Equipo redactor v1.8:** *Analista de Requerimientos Funcionales ·
+**Equipo redactor v1.9:** *Analista de Requerimientos Funcionales ·
 Arquitecto de Software Enterprise · Diseñador de Datos/BD · Especialista
 UX/Front-End · Ingeniero de Integraciones (Dropbox · Carbone.io · Claude
 API). IA Solution · Julio de 2026.*

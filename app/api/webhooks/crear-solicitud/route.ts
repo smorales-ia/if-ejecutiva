@@ -54,11 +54,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'No autorizado.' }, { status: 401 })
   }
 
-  const { documentos: _documentos, banco_id, banco, telefono, ...resto } = parsed.data
+  const { banco_id, banco, ...resto } = parsed.data
 
   const payload = {
     ...resto,
-    telefono: telefono && telefono.length > 0 ? telefono : null,
     bancoOriginador: banco_id,
     bancoFinancista: banco && banco.length > 0 ? banco : null,
     origen_canal: 'ingreso_manual' as const,

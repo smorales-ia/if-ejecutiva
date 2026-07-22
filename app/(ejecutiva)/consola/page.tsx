@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { ConsoleShell } from '@/components/console/console-shell'
 import { fetchSolicitudes, type SolicitudesFiltros, type Vista } from '@/lib/solicitudes'
-import { fetchTiposDocumento } from '@/lib/tipos-documento'
 
 export default async function ConsolaPage({
   searchParams,
@@ -33,17 +32,13 @@ export default async function ConsolaPage({
     userId = clerkUserId ?? undefined
   }
 
-  const [{ data: solicitudes, degraded, motivo }, { data: tiposDocumento }] = await Promise.all([
-    fetchSolicitudes(vista, userId, filtros),
-    fetchTiposDocumento(),
-  ])
+  const { data: solicitudes, degraded, motivo } = await fetchSolicitudes(vista, userId, filtros)
   return (
     <ConsoleShell
       solicitudes={solicitudes}
       vistaActiva={vista}
       degraded={degraded}
       motivo={motivo}
-      tiposDocumento={tiposDocumento}
     />
   )
 }
