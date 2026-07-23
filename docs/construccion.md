@@ -21,7 +21,7 @@
 | # | Pendiente | Detalle |
 |---|---|---|
 | P1 ✅ 22-jul-2026 | Types TypeScript | Uniones derivadas de catálogos cerrados + campos v1.9 opcionales en `Solicitud`, agregados en `lib/console-data.ts` (no `lib/types/` — ver inventario). `pnpm tsc --noEmit` limpio. |
-| P2 | API Routes nuevas | `TX_ContactosVisita`, `TX_Unidades`, `TX_Vendedor`, endpoint de asignación (sin reasignación formal — REGLA A). |
+| P2 ✅ 22-jul-2026 | API Routes nuevas | Creadas: `POST [id]/asignar` (REGLA A, 409 idempotente), `PATCH [id]` (REGLA C), `GET contadores`, `GET tasadores/candidatos` + validador `acciones-solicitud.ts`. Escrituras vía Make (mock `pendiente_make`, sin provisionar). CRUD `TX_Unidades/Contactos/Vendedor` y filtros ampliados diferidos a P4/P5. |
 | P3 | Wizard de creación | 3 fases (modo creación → tipo propiedad → formulario) con `FileUploadZone` en Fase 1 cuando el modo es "documentos". |
 | P4 | Formulario 4 secciones | Bloques repetibles Unidades y Contactos de visita, con validación REGLA B (toast + Alert por campo, bloques nombrados con precisión). |
 | P5 | Panel detalle | Botón "Asignar Tasador" (REGLA A, visible sólo sin tasador, desaparece al asignar), botón "Documentos y Adjuntos", pestañas Datos (11 bloques) / Historial / Adjuntos. |

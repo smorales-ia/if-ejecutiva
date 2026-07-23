@@ -255,6 +255,24 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** ninguno de los campos de `TX_Unidades`/`TX_Solicitudes` que exige el modelo v1.9 (ver `docs/schema-airtable.md` §20) existe todavía en la base real — antes de wirear cualquier lectura/escritura contra ellos, verificar vía MCP que ya fueron creados; no asumir que "documentado" implica "existe" (mismo patrón D-08/E-030/E-032).
 
+### E-046 — Los tipos de dominio de IF-02 viven en `lib/console-data.ts`, no en `lib/types/` (22-jul-2026)
+
+**Regla:** el repo v0 concentra todos los tipos de dominio (`Solicitud`, `Unidad`, `ContactoVisita`, `Vendedor`, catálogos, helpers) en `lib/console-data.ts`. No existe `lib/types/`. Al ampliar o agregar tipos, extender ese archivo; no crear la carpeta `lib/types/` que proponen el plan/Especificación. La convención de nombres de campo es **camelCase** (`contactosVisita`, `tipoPropiedadNuevoUsado`, `slaDias`), no snake_case.
+
+**Prevención futura:** antes de crear cualquier archivo de tipos, consultar el inventario (`docs/_notas/inventario-if02.md`) — el plan describe rutas idealizadas (`lib/types/*.ts`, carpetas por feature) que el repo real resolvió como archivos únicos. Cambiar camelCase→snake_case rompería list/detail/form/validators a la vez.
+
+### E-047 — Patrón para tipar catálogos cerrados: `as const` + `(typeof ARRAY)[number]` (22-jul-2026)
+
+**Regla:** para derivar una unión de tipos de un catálogo cerrado en este repo, usar `export type X = (typeof ARRAY)[number]` sobre el array `as const` ya existente en `console-data.ts` (ej. `TIPOS_BIEN`, `ROLES_CONTACTO_VISITA`, `ESTADOS_CONSERVACION`). Los valores del array son **labels en español** ("Edificación", "Válido"), que son la fuente de verdad — no reescribirlos a slugs (`edificacion`, `valido`) aunque el plan §2.1 los muestre así, porque los mocks y el formulario ya consumen los labels.
+
+**Prevención futura:** derivar del array evita divergencia entre el catálogo de UI y el tipo; nunca declarar la unión a mano en paralelo al array. Si un catálogo nuevo no tiene array previo, crear primero el `as const` y derivar la unión de él (mismo patrón).
+
+### E-048 — Campos nuevos en `Solicitud` entran como opcionales hasta migrar los mocks (22-jul-2026)
+
+**Regla:** al agregar campos v1.9 a la interfaz `Solicitud` (u otras entidades con datos mock en `console-data.ts`), declararlos **opcionales** (`campo?: Tipo`). Los objetos de `SOLICITUDES`/`HISTORIAL`/etc. son literales completos; un campo obligatorio nuevo los invalida y rompe `tsc`.
+
+**Prevención futura:** los campos quedan opcionales hasta que P8/P9 reemplacen los mocks por lecturas reales de Airtable; recién ahí evaluar volverlos obligatorios. Marcar con comentario el motivo (`// opcional para no romper mocks`) para que una sesión futura no los "endurezca" por error antes de la migración.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
