@@ -27,7 +27,7 @@
 | P5 ✅ 22-jul-2026 | Panel lista + filtros | (Nota: el "P5" de esta tabla legacy era el detalle; el P5 del plan v1.9 es el panel lista.) Panel `solicitud-list.tsx` reescrito URL-driven: enum `Vista` reconciliado a 5 vistas del plan, tabs+contadores, buscador (debounce), 4 filtros, rango fechas, orden, paginación server-side. Sin deps nuevas. `pnpm build` limpio (fix Suspense en `/`). |
 | P6 ✅ 22-jul-2026 | Panel detalle | Reglas A/C, barra de acciones, tooltip RN-44, 11 bloques de Datos e Historial/Adjuntos ya estaban en `solicitud-detail.tsx` (v0). P6: verificación §7.3 + fix RN-48 (avalúo total = suma de unidades). Cablear asignar/editar a endpoints reales → P7/P9. |
 | P7 ✅ 22-jul-2026 | Diálogo de asignación | (La P7 del plan v1.9 es el diálogo de asignación, no el sheet.) Diálogo cmdk ya existía; P7 cableó `POST /api/solicitudes/[id]/asignar` (guarda de record-id, estado optimista, toast §6), completó las 4 consecuencias de la confirmación. Picker sigue mock (H-05); `router.refresh` → P9. Contrato 🔴. |
-| P8 | Reemplazo de mock data restante | `SOLICITUDES`/`TASADORES`/`VISADORES`/`ADJUNTOS` de `lib/console-data.ts` → fetch a API routes reales, una vez creado el schema v1.9 en Airtable (`docs/schema-airtable.md` §20). |
+| P8 ✅ 22-jul-2026 | Sheet Documentos y Adjuntos | (La P8 del plan v1.9 es el sheet de documentos.) Sheet ya existía (15 tipos, `FileUploadZone`, modo consulta, confirmación al desmarcar); P8: verificación §9.3 + fix RN-59 (el detalle pasa `readOnly` en vez de que el sheet lo recompute solo por estado). Subida real → P9. |
 | P9 | Deploy y validación | Railway — validar happy path completo con datos reales antes de cerrar CU-002 v1.9. |
 
 ---

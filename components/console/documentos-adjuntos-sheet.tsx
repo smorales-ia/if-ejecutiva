@@ -39,15 +39,23 @@ interface DocumentosAdjuntosSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   solicitud: Solicitud
+  /**
+   * Modo consulta (RN-59). Lo calcula el detalle (`estado !== "creada" &&
+   * tieneTasador`) y lo pasa aquí. Si no se provee, se degrada a la condición
+   * por estado (compatibilidad con llamadores que aún no lo pasan).
+   */
+  readOnly?: boolean
 }
 
 export function DocumentosAdjuntosSheet({
   open,
   onOpenChange,
   solicitud,
+  readOnly,
 }: DocumentosAdjuntosSheetProps) {
-  // RN: modo consulta cuando la solicitud dejó el estado "creada".
-  const soloLectura = solicitud.estado !== "creada"
+  // RN-59: modo consulta cuando estado ≠ "creada" Y hay tasador asignado. El
+  // detalle ya lo evalúa; aquí sólo se respeta (con fallback por estado).
+  const soloLectura = readOnly ?? solicitud.estado !== "creada"
 
   const [checklist, setChecklist] = React.useState<DocumentoChecklistItem[]>(
     checklistInicial,

@@ -347,6 +347,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
         open={docsOpen}
         onOpenChange={setDocsOpen}
         solicitud={{ ...datos, estado }}
+        readOnly={soloLectura}
       />
 
       {/* Visor del correo de asignación (SC13) */}

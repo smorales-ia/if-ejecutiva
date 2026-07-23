@@ -369,6 +369,30 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** cablear las acciones a los endpoints reales es tarea de P7 (diálogo de asignación) y P9 (deploy/datos reales); hasta entonces, no asumir que asignar/editar en el detalle persisten a Airtable. Si se decide introducir la ruta `/solicitudes/[id]`, es un cambio deliberado de arquitectura, no un requisito pendiente.
 
+### E-065 — Estado optimista solo tras POST ok (incl. `pendiente_make`); `router.refresh()` diferido hasta persistencia real (22-jul-2026)
+
+**Regla:** al cablear una acción del detalle (asignar) a un endpoint que hoy degrada (`{ok:true, pendiente_make:true}`), aplicar el update optimista de UI **solo si el POST responde ok** (un `pendiente_make` cuenta como ok); en error, mostrar el toast §6 de red y **no** tocar el estado. **No** usar `router.refresh()` mientras la persistencia esté mockeada: refrescar re-fetchearía el registro server sin cambios y **borraría** el update optimista. Se activa `router.refresh()` recién cuando Make persista de verdad (P9).
+
+**Prevención futura:** `router.refresh()` tras una mutación solo es correcto si la mutación efectivamente escribió en la fuente. Con webhooks Make sin provisionar (`pendiente_make`), el patrón correcto es optimista-local sin refresh. Al provisionar Make en P9, cambiar a refresh y quitar el estado optimista redundante.
+
+### E-066 — Guarda `/^rec[a-zA-Z0-9]{14}$/` antes de llamar endpoints que validan record ids, para no romper la demo mock (22-jul-2026)
+
+**Regla:** el repo tiene datos reales en `/consola` (ids `recXXX`) y datos mock en la landing `/` (ids como `"1"`). Los endpoints validan `isValidRecordId`. Antes de disparar un POST/PATCH desde un componente compartido por ambos flujos, chequear `/^rec[a-zA-Z0-9]{14}$/.test(id)`: si es record id real → llamada real; si no (mock) → aplicar solo estado local, evitando un 404 que rompería la demo.
+
+**Prevención futura:** cualquier acción del detalle que llegue a un endpoint con validación de record id debe llevar esta guarda mientras coexistan `/consola` (real) y `/` (mock). Cuando `/` se elimine/redirija a `/consola` (candidato P9), la guarda deja de ser necesaria pero no estorba.
+
+### E-067 — Contrato 🔴 pausa-total en toda P que cambia estado real o dispara efectos externos (22-jul-2026)
+
+**Regla:** las P que mutan el estado real de una entidad (`creada → asignada`) o disparan efectos externos (correo, webhook Make, deploy) corren bajo contrato 🔴 **pausa-total**: Claude Code pide confirmación **antes de cada edición Y de cada comando**, aunque el modo real de la terminal sea más permisivo. Aplica a P7 (asignación) y P9 (deploy). Las lecturas de archivos no requieren confirmación; sí las edits y los comandos.
+
+**Prevención futura:** identificar el contrato de la P en el plan (§0.5) antes de arrancar y honrarlo por texto aunque Sergio olvide cambiar el modo con Shift+Tab. Ante la duda sobre si una acción es "riesgosa", tratarla como tal y confirmar.
+
+### E-068 — Las 4 consecuencias del diálogo de asignación (§8.1 paso 2) son obligatorias, incluida el correo (22-jul-2026)
+
+**Regla:** la confirmación del diálogo de asignación debe enunciar las **4** consecuencias: (1) la solicitud pasa a estado **asignada**, (2) se registra fecha/hora de asignación, (3) **se enviará el correo de asignación al tasador**, (4) los datos quedan en modo consulta. La base v0 omitía la (3); es obligatoria porque la asignación dispara SC-Asignar/correo (REGLA A).
+
+**Prevención futura:** un diálogo de confirmación de una acción con efectos externos debe listar todos los efectos, no solo el cambio de estado visible. Omitir "se enviará correo" deja al usuario sin saber que la acción notifica a un tercero.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
