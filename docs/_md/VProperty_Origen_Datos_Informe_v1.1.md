@@ -634,17 +634,7 @@ los informes.
                                      factor_distancia             
 
   Comentarios relevantes             notas                        Texto libre
-
-  URL de la publicación              ⚠ url                        v2.4 · PENDIENTE
-                                                                  DE CREAR
-
-  Dormitorios, baños,                ⚠ dormitorios · banos ·      v2.4 · PENDIENTES
-  estacionamientos, bodegas          estacionamientos · bodegas   DE CREAR
   ---------------------------------------------------------------------------------
-
-⚠ Los campos marcados están declarados en el diseño (Capa de Datos
-§10 · GAP-PO07/PO08) pero **no existen en el schema real de Airtable**
-al 23-jul-2026.
 
 ## Sección 5 · Ampliaciones / Programa por nivel / Terminaciones por recinto
 

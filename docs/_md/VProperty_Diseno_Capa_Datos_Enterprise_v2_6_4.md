@@ -26,12 +26,9 @@ VProperty · Sistema de Tasaciones Configurable
   **Versión**          2.6.4 · Julio 2026 (sucede a 2.6.3 — §10
                        TX_Comparables sincronizada con el schema real de
                        Airtable leído vía MCP el 23-jul-2026: definición
-                       única de 38 campos con sus fórmulas reales,
+                       única de 38 campos con sus fórmulas reales, que
                        absorbe el bloque \"Campos nuevos v2.4\" y la tabla
-                       de factores de §18.8, y marca como pendientes de
-                       crear distancia_km, url, dormitorios, banos,
-                       estacionamientos, bodegas y uf_m2_homologado).
-                       Hereda de 2.6.3: renombre
+                       de factores de §18.8). Hereda de 2.6.3: renombre
                        uso_interfaz_negocio en D_Atributo · nuevos campos
                        version en D_Atributo y extraccion_incompleta en
                        D_Documento · alta del escenario Make
@@ -2719,33 +2716,6 @@ VProperty ve a diario son vistas filtradas de estas tablas.
 |                          |                    |            | comparable                         |
 +--------------------------+--------------------+------------+------------------------------------+
 | ultima_modificacion      | Last modified time | ---        | ---                                |
-+--------------------------+--------------------+------------+------------------------------------+
-| **⚠ PENDIENTES DE CREAR --- ausentes del schema real de Airtable al 23-jul-2026**               |
-+--------------------------+--------------------+------------+------------------------------------+
-| distancia_km ⚠           | Number decimal     | ---        | \[GAP-PO06\] Distancia al sujeto   |
-|                          |                    |            | en km. Origen XLSM: Portada        |
-|                          |                    |            | AU29-33. NO EXISTE.                |
-+--------------------------+--------------------+------------+------------------------------------+
-| url ⚠                    | URL                | ---        | \[GAP-PO07\] URL de la publicación |
-|                          |                    |            | del comparable. Origen XLSM:       |
-|                          |                    |            | Portada BV29-33. NO EXISTE.        |
-+--------------------------+--------------------+------------+------------------------------------+
-| dormitorios ⚠            | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
-|                          |                    |            | DC29-33. NO EXISTE.                |
-+--------------------------+--------------------+------------+------------------------------------+
-| banos ⚠                  | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
-|                          |                    |            | DD29-33. NO EXISTE.                |
-+--------------------------+--------------------+------------+------------------------------------+
-| estacionamientos ⚠       | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
-|                          |                    |            | DE29-33. NO EXISTE.                |
-+--------------------------+--------------------+------------+------------------------------------+
-| bodegas ⚠                | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
-|                          |                    |            | DF29-33. NO EXISTE.                |
-+--------------------------+--------------------+------------+------------------------------------+
-| uf_m2_homologado ⚠       | Formula ƒ          | ---        | uf_m2_construccion × factor_sup ×  |
-|                          |                    |            | factor_edad × factor_distancia.    |
-|                          |                    |            | Alimenta el promedio (RB-24).      |
-|                          |                    |            | NO EXISTE.                         |
 +--------------------------+--------------------+------------+------------------------------------+
 
 +------------------------------+-----------------------------------------+
@@ -8286,9 +8256,7 @@ Estado al 23-jul-2026 (verificado contra el schema real de Airtable):
 `factor_sup`, `factor_edad` y `factor_distancia` **ya existen** como
 Number (4 decimales); la tabla también incorpora `factor_homogeneizacion`
 (factor único) y la fórmula `valor_ajustado_uf` = `{valor_uf}` ×
-`{factor_homogeneizacion}`. La fórmula `uf_m2_homologado`
-(uf_m2_construccion × factor_sup × factor_edad × factor_distancia, que
-alimenta el promedio RB-24) **sigue pendiente de crear**.
+`{factor_homogeneizacion}`.
 
 La definición completa y única de estos campos vive en la ficha de
 TX_Comparables (§10). No se duplica aquí.
@@ -8434,9 +8402,6 @@ base.
                                                 (40/78/34/32/38)                        
 
   H_PreciosUF                Campo USD          tipo_cambio_usd por fecha               P2
-
-  TX_Comparables             Factores homolog.  uf_m2_homologado (los tres              P2
-                                                factor_* ya creados)                    
 
   TX_CasosRegresion          Tabla nueva        Golden master: 5 casos reales +         P1
                                                 esperados + match                       
