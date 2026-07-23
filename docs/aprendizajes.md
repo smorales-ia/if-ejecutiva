@@ -297,6 +297,24 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** antes de crear cualquier helper de infraestructura que el plan mencione, verificar contra el inventario (`docs/_notas/inventario-if02.md`) si ya existe con otro nombre — el repo v0 ya trae cliente Airtable con reintentos 429/5xx y cliente Make con HMAC; duplicarlos fragmenta la firma y el logging.
 
+### E-053 — Extender el componente existente in-place antes de crear la carpeta/estructura que propone el plan (22-jul-2026)
+
+**Regla:** cuando el plan propone una carpeta nueva por feature (`wizard-nueva-solicitud/`, `form-solicitud/`, `panel-lista/`, `detalle-solicitud/`, `dialogo-asignacion/`, `sheet-documentos/`), verificar primero el inventario: el repo v0 ya resolvió casi todo como **archivos únicos** (`new-request-sheet.tsx` trae wizard + formulario completos; `solicitud-detail.tsx` trae Reglas A/C; etc.). Se extiende el archivo real; no se crea la carpeta ni se fragmenta el componente sin una razón concreta. Ver [[E-046]] (mismo principio para tipos).
+
+**Prevención futura:** la estructura de carpetas del plan es idealizada, no un mandato — cada P debe apuntar a la ruta real del inventario. Dividir un archivo grande en subcarpetas es una decisión opcional de refactor, no un requisito de la P; sólo hacerlo si aporta y sin duplicar la lógica existente.
+
+### E-054 — Cerrar un Sheet/wizard con datos capturados confirma antes de descartar; `resetAll()` sólo tras confirmación (22-jul-2026)
+
+**Regla:** un contenedor con estado en curso (wizard, formulario en Sheet) intercepta `onOpenChange(false)` cuando hay datos capturados (`modo || tipo || archivos || phase>1`) y abre un `AlertDialog` controlado ("¿Descartar la solicitud en curso?"). El `setOpen(false)` + `resetAll()` sólo se ejecutan tras el click de confirmación; cancelar deja el Sheet abierto y el estado intacto. Los `AlertDialog` de este repo (base-ui) son controlados por `open`/`onOpenChange`, sin `AlertDialogTrigger`.
+
+**Prevención futura:** nunca resetear estado dentro de `onOpenChange` de forma incondicional — un cierre accidental (Escape, click fuera) perdería el trabajo. La guarda de "hay algo en curso" evita molestar cuando el Sheet se abre y cierra vacío.
+
+### E-055 — En un wizard, "Continuar" no se deshabilita por un dato opcional: abre confirmación (22-jul-2026)
+
+**Regla:** un botón de avance ("Continuar") sólo se deshabilita por faltantes **obligatorios** (ej. elegir tipo de propiedad en Fase 2). Un dato **opcional** ausente (ej. no adjuntar documentos en modo "documentos") no deshabilita el botón: el click abre un `AlertDialog` de confirmación ("¿Continuar sin documentos?") y, si se confirma, avanza. Separar la acción real (`procesarDocumentos()`) de la decisión de navegación (`continuarDesdeModo()`) mantiene ambas ramas claras.
+
+**Prevención futura:** deshabilitar un botón por un dato opcional deja al usuario sin saber por qué no avanza; preferir habilitarlo + confirmar. Reservar el estado deshabilitado para precondiciones duras (patrón consistente con el botón "Asignar Tasador" de REGLA A, que sí se deshabilita por faltantes RN-44 obligatorios).
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.

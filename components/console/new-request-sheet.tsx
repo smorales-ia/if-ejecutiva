@@ -787,6 +787,8 @@ export function NewRequestSheet() {
   const [confirmSinDocs, setConfirmSinDocs] = React.useState(false)
   const [confirmDescartar, setConfirmDescartar] = React.useState(false)
   const initialized = React.useRef(false)
+  // §5.1.5: scroll al resumen de errores (primer error) tras un submit inválido.
+  const alertRef = React.useRef<HTMLDivElement>(null)
 
   const {
     control,
@@ -931,10 +933,19 @@ export function NewRequestSheet() {
     }
   }
 
+  // §5.1.5: trae el resumen de errores a la vista tras un submit fallido.
+  function scrollAlResumen() {
+    setTimeout(() => {
+      alertRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 60)
+  }
+
   function onSubmit(values: NuevaSolicitudInternaValues) {
     return new Promise<void>((resolve) => {
       setTimeout(() => {
         // Validación de negocio: N° de operación duplicado (conflicto de dato).
+        // REGLA B: se reporta como conflicto en su propio campo (setError),
+        // separado de las validaciones de forma.
         const operacion = values.n_operacion_cliente.trim()
         if (OPERACIONES_REGISTRADAS.has(operacion)) {
           setError("n_operacion_cliente", {
@@ -946,6 +957,7 @@ export function NewRequestSheet() {
             description: `N° de operación: ya existe una solicitud registrada con el N° ${operacion}.`,
             duration: 5000,
           })
+          scrollAlResumen()
           resolve()
           return
         }
@@ -973,10 +985,11 @@ export function NewRequestSheet() {
         : "Revisa los campos marcados en el formulario."
     toast.error(
       lista.length > 0
-        ? `No se pudo crear · ${lista.length} dato${lista.length === 1 ? "" : "s"} con problemas`
+        ? `No se pudo crear · ${lista.length} campo${lista.length === 1 ? "" : "s"} con problema`
         : "No se pudo crear la solicitud",
       { description: detalle, duration: 5000 },
     )
+    scrollAlResumen()
   }
 
   // §4.1: habilitado con sólo elegir modo. En "documentos" sin archivos, el
@@ -1128,27 +1141,29 @@ export function NewRequestSheet() {
             className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4"
             noValidate
           >
-            {/* Resumen de datos que impiden crear la solicitud */}
+            {/* Resumen de datos que impiden crear la solicitud (REGLA B) */}
             {mostrarResumen && resumenErrores.length > 0 && (
-              <Alert variant="destructive" className="border-destructive/40">
-                <CircleAlert />
-                <AlertTitle>
-                  No se pudo crear la solicitud · {resumenErrores.length} dato
-                  {resumenErrores.length === 1 ? "" : "s"} con problemas
-                </AlertTitle>
-                <AlertDescription>
-                  <ul className="mt-1 flex list-none flex-col gap-1">
-                    {resumenErrores.map((e, i) => (
-                      <li key={`${e.label}-${i}`} className="text-xs">
-                        <span className="font-medium text-destructive">
-                          {e.label}:
-                        </span>{" "}
-                        <span className="text-destructive/90">{e.message}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </AlertDescription>
-              </Alert>
+              <div ref={alertRef}>
+                <Alert variant="destructive" className="border-destructive/40">
+                  <CircleAlert />
+                  <AlertTitle>
+                    No se pudo crear la solicitud · {resumenErrores.length} campo
+                    {resumenErrores.length === 1 ? "" : "s"} con problema
+                  </AlertTitle>
+                  <AlertDescription>
+                    <ul className="mt-1 flex list-none flex-col gap-1">
+                      {resumenErrores.map((e, i) => (
+                        <li key={`${e.label}-${i}`} className="text-xs">
+                          <span className="font-medium text-destructive">
+                            {e.label}:
+                          </span>{" "}
+                          <span className="text-destructive/90">{e.message}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              </div>
             )}
 
             {/* Sección A · Origen y cliente */}

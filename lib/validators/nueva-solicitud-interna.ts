@@ -13,6 +13,24 @@ import { validarRut, PRODUCTOS_CON_BANCO } from "@/lib/console-data"
  * verdaderamente opcionales se modelan como `z.string()` (se permite "").
  */
 
+/**
+ * Mensajes humanos §6 (literales · no admiten variación). El de RUT se adapta
+ * a "comprador" porque el campo es el RUT del comprador, no del propietario
+ * (decisión de Sergio, 22-jul-2026). Ver E-021.
+ */
+const MSG_RUT_INVALIDO =
+  "Necesitamos el RUT del comprador con su dígito verificador. Ej.: 12.345.678-9."
+const MSG_EMAIL_INVALIDO =
+  "Revisa el email de contacto: debe ser de la forma nombre@dominio.cl."
+const MSG_DIRECCION_INCOMPLETA =
+  "Ingresa la dirección con calle y número. Ej.: Av. Apoquindo 5230."
+
+/** Exige al menos un número y dos tokens (calle + número). */
+function tieneCalleYNumero(v: string): boolean {
+  const tokens = v.trim().split(/\s+/).filter(Boolean)
+  return tokens.length >= 2 && /\d/.test(v)
+}
+
 /** Archivo de respaldo (compartido con DocumentoArchivo de file-upload/checklist). */
 const archivoSchema = z.object({
   nombre: z.string(),
@@ -113,7 +131,10 @@ export const nuevaSolicitudInternaSchema = z
 
     // ── Sección B · Propiedad ────────────────────────────────────────────
     proyecto: z.string(),
-    direccion: z.string().min(3, "Ingresa la dirección de la propiedad."),
+    direccion: z
+      .string()
+      .min(1, MSG_DIRECCION_INCOMPLETA)
+      .refine(tieneCalleYNumero, MSG_DIRECCION_INCOMPLETA),
     origenDireccion: z.string().min(1, "Selecciona el origen de la dirección."),
     region: z.string().min(1, "Selecciona una región."),
     comuna: z.string().min(1, "Selecciona una comuna."),
@@ -136,12 +157,12 @@ export const nuevaSolicitudInternaSchema = z
     compradorRut: z
       .string()
       .min(1, "Ingresa el RUT del comprador.")
-      .refine((v) => validarRut(v), "RUT inválido"),
+      .refine((v) => validarRut(v), MSG_RUT_INVALIDO),
     compradorNombre: z.string().min(3, "Ingresa el nombre completo."),
     compradorEmail: z
       .string()
       .min(1, "Ingresa el email.")
-      .email("Email inválido"),
+      .email(MSG_EMAIL_INVALIDO),
     compradorTelefono: z.string(),
     vendedorCoincideComprador: z.boolean(),
     contactosVisita: z
