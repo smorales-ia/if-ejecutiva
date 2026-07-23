@@ -23,7 +23,15 @@ VProperty · Sistema de Tasaciones Configurable
   -------------------- --------------------------------------------------
   **Documento**        Diseño de Base de Datos · Capa de Datos
 
-  **Versión**          2.6.3 · Julio 2026 (sucede a 2.6.2 — renombre
+  **Versión**          2.6.4 · Julio 2026 (sucede a 2.6.3 — §10
+                       TX_Comparables sincronizada con el schema real de
+                       Airtable leído vía MCP el 23-jul-2026: definición
+                       única de 38 campos con sus fórmulas reales,
+                       absorbe el bloque \"Campos nuevos v2.4\" y la tabla
+                       de factores de §18.8, y marca como pendientes de
+                       crear distancia_km, url, dormitorios, banos,
+                       estacionamientos, bodegas y uf_m2_homologado).
+                       Hereda de 2.6.3: renombre
                        uso_interfaz_negocio en D_Atributo · nuevos campos
                        version en D_Atributo y extraccion_incompleta en
                        D_Documento · alta del escenario Make
@@ -2601,79 +2609,144 @@ VProperty ve a diario son vistas filtradas de estas tablas.
 |                    | 2E7D32                                              |
 +====================+=====================================================+
 
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **Campo**             | **Tipo Airtable**  | **Clave**          | **Detalle / lógica de negocio** |
-+=======================+====================+====================+=================================+
-| comp_id               | Autonumber         | PK                 | Identificador único             |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| solicitud             | Link →             | FK                 | Solicitud asociada              |
-|                       | TX_Solicitudes     |                    |                                 |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| fuente                | Single select      | ---                | tasador · portal_toc ·          |
-|                       |                    |                    | historico_sistema · cliente     |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| direccion             | Single line text   | ---                | Dirección del comparable        |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| comuna                | Link → M_Comunas   | FK                 | Comuna del comparable           |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| tipo_propiedad        | Link →             | FK                 | Tipo coincidente con la         |
-|                       | M_TiposPropiedad   |                    | solicitud                       |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| sup_terreno_m2        | Number             | ---                | Superficie del terreno          |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| sup_construccion_m2   | Number             | ---                | Superficie construida           |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| precio_uf             | Number             | ---                | Precio de la transacción        |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| uf_m2_terreno         | Formula            | ƒ                  | IF(sup_terreno_m2 \> 0,         |
-|                       |                    |                    | precio_uf/sup_terreno_m2, 0)    |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| uf_m2_construccion    | Formula            | ƒ                  | IF(sup_construccion_m2 \> 0,    |
-|                       |                    |                    | precio_uf/sup_construccion_m2,  |
-|                       |                    |                    | 0)                              |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| fecha_transaccion     | Date               | ---                | Cuándo se transó                |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| antiguedad_meses      | Formula            | ƒ                  | DATETIME_DIFF(TODAY(),          |
-|                       |                    |                    | fecha_transaccion, \'months\')  |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| aporta_a_historico    | Checkbox           | ---                | Si pasa al histórico tras       |
-|                       |                    |                    | aprobación del visador          |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **➕ Campos nuevos v2.4 · TX_Comparables (VProperty_Analisis_Diseno_V23_v01)**                    |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **telefono_contacto** | Single line text   | ---                | \[GAP-PO04\] Teléfono contacto  |
-|                       |                    |                    | (solo comparables tipo oferta). |
-|                       |                    |                    | Origen XLSM: Portada AA29-33.   |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **oo_cc_uf**          | Number decimal     | ---                | \[GAP-PO05\] UF/m² obras        |
-|                       |                    |                    | complementarias del comparable. |
-|                       |                    |                    | Origen XLSM: Portada AR29-33.   |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **distancia_km**      | Number decimal     | ---                | \[GAP-PO06\] Distancia al       |
-|                       |                    |                    | sujeto en km. Origen XLSM:      |
-|                       |                    |                    | Portada AU29-33.                |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **url**               | URL                | ---                | \[GAP-PO07\] URL de la          |
-|                       |                    |                    | publicación del comparable.     |
-|                       |                    |                    | Origen XLSM: Portada BV29-33.   |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **dormitorios**       | Number int         | ---                | \[GAP-PO08\] Dormitorios del    |
-|                       |                    |                    | comparable. Origen XLSM:        |
-|                       |                    |                    | Portada DC29-33.                |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **banos**             | Number int         | ---                | \[GAP-PO08\] Baños del          |
-|                       |                    |                    | comparable. Origen XLSM:        |
-|                       |                    |                    | Portada DD29-33.                |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **estacionamientos**  | Number int         | ---                | \[GAP-PO08\] Estacionamientos   |
-|                       |                    |                    | del comparable. Origen XLSM:    |
-|                       |                    |                    | Portada DE29-33.                |
-+-----------------------+--------------------+--------------------+---------------------------------+
-| **bodegas**           | Number int         | ---                | \[GAP-PO08\] Bodegas del        |
-|                       |                    |                    | comparable. Origen XLSM:        |
-|                       |                    |                    | Portada DF29-33.                |
-+-----------------------+--------------------+--------------------+---------------------------------+
++--------------------------+--------------------+------------+------------------------------------+
+| **Campo**                | **Tipo Airtable**  | **Clave**  | **Detalle / lógica de negocio**    |
++==========================+====================+============+====================================+
+| clave_natural            | Single line text   | ---        | Campo primario de Airtable         |
++--------------------------+--------------------+------------+------------------------------------+
+| comp_id                  | Autonumber         | PK         | Identificador único                |
++--------------------------+--------------------+------------+------------------------------------+
+| solicitud                | Link →             | FK         | Solicitud asociada                 |
+|                          | TX_Solicitudes     |            |                                    |
++--------------------------+--------------------+------------+------------------------------------+
+| comuna                   | Link → M_Comunas   | FK         | Comuna del comparable              |
++--------------------------+--------------------+------------+------------------------------------+
+| tipo_propiedad           | Link →             | FK         | Tipo coincidente con la solicitud  |
+|                          | M_TiposPropiedad   |            |                                    |
++--------------------------+--------------------+------------+------------------------------------+
+| fuente                   | Single select      | ---        | tasador · portal_toc ·             |
+|                          |                    |            | historico_sistema · cliente ·      |
+|                          |                    |            | Portal Inmobiliario · Yapo ·       |
+|                          |                    |            | Toctoc · Ofert. · CBR.             |
++--------------------------+--------------------+------------+------------------------------------+
+| direccion                | Single line text   | ---        | Dirección del comparable           |
++--------------------------+--------------------+------------+------------------------------------+
+| sup_terreno_m2           | Number (2)         | ---        | Superficie del terreno             |
++--------------------------+--------------------+------------+------------------------------------+
+| sup_construccion_m2      | Number (2)         | ---        | Superficie construida              |
++--------------------------+--------------------+------------+------------------------------------+
+| precio_uf                | Number (3)         | ---        | Precio de la transacción           |
++--------------------------+--------------------+------------+------------------------------------+
+| fecha_transaccion        | Date (ISO)         | ---        | Cuándo se transó                   |
++--------------------------+--------------------+------------+------------------------------------+
+| uf_m2_terreno            | Formula            | ƒ          | IF({sup_terreno_m2}>0,             |
+|                          |                    |            | {precio_uf}/{sup_terreno_m2},0)    |
++--------------------------+--------------------+------------+------------------------------------+
+| uf_m2_construccion       | Formula            | ƒ          | IF({sup_construccion_m2}>0,        |
+|                          |                    |            | {precio_uf}/{sup_construccion_m2}, |
+|                          |                    |            | 0)                                 |
++--------------------------+--------------------+------------+------------------------------------+
+| antiguedad_meses         | Formula            | ƒ          | DATETIME_DIFF(TODAY(),             |
+|                          |                    |            | {fecha_transaccion},'months')      |
++--------------------------+--------------------+------------+------------------------------------+
+| factor_sup               | Number (4)         | ---        | Ajuste por diferencia de           |
+|                          |                    |            | superficie vs la propiedad tasada  |
+|                          |                    |            | (§18.8)                            |
++--------------------------+--------------------+------------+------------------------------------+
+| factor_edad              | Number (4)         | ---        | Ajuste por diferencia de           |
+|                          |                    |            | antigüedad (§18.8)                 |
++--------------------------+--------------------+------------+------------------------------------+
+| factor_distancia         | Number (4)         | ---        | Ajuste por distancia/zona          |
+|                          |                    |            | respecto del inmueble (§18.8)      |
++--------------------------+--------------------+------------+------------------------------------+
+| aporta_a_historico       | Checkbox           | ---        | Si pasa al histórico tras          |
+|                          |                    |            | aprobación del visador             |
++--------------------------+--------------------+------------+------------------------------------+
+| clave_comparable         | Single line text   | ---        | ---                                |
++--------------------------+--------------------+------------+------------------------------------+
+| direccion_comparable     | Single line text   | ---        | ---                                |
++--------------------------+--------------------+------------+------------------------------------+
+| comuna_comparable        | Single line text   | ---        | ---                                |
++--------------------------+--------------------+------------+------------------------------------+
+| valor_uf                 | Number (2)         | ---        | ---                                |
++--------------------------+--------------------+------------+------------------------------------+
+| sup_m2                   | Number (2)         | ---        | ---                                |
++--------------------------+--------------------+------------+------------------------------------+
+| factor_homogeneizacion   | Number (4)         | ---        | Factor único aplicado a valor_uf   |
++--------------------------+--------------------+------------+------------------------------------+
+| fecha_comparable         | Date (ISO)         | ---        | ---                                |
++--------------------------+--------------------+------------+------------------------------------+
+| valor_uf_m2              | Formula            | ƒ          | IF({sup_m2}>0, {valor_uf} /        |
+|                          |                    |            | {sup_m2}, 0)                       |
++--------------------------+--------------------+------------+------------------------------------+
+| valor_ajustado_uf        | Formula            | ƒ          | {valor_uf} *                       |
+|                          |                    |            | {factor_homogeneizacion}           |
++--------------------------+--------------------+------------+------------------------------------+
+| **tipo_referencia**      | Single select      | ---        | Oferta · CBR. Determina qué        |
+|                          |                    |            | campos aplican (teléfono vs        |
+|                          |                    |            | foja/número).                      |
++--------------------------+--------------------+------------+------------------------------------+
+| **fecha_publicacion**    | Date (D/M/YYYY)    | ---        | Mes/año de publicación de la       |
+|                          |                    |            | oferta o de la inscripción CBR     |
++--------------------------+--------------------+------------+------------------------------------+
+| **anio**                 | Number (0)         | ---        | Año de construcción del inmueble   |
+|                          |                    |            | comparable                         |
++--------------------------+--------------------+------------+------------------------------------+
+| **telefono_contacto**    | Phone number       | ---        | \[GAP-PO04\] Sólo cuando           |
+|                          |                    |            | tipo_referencia = Oferta. Origen   |
+|                          |                    |            | XLSM: Portada AA29-33.             |
++--------------------------+--------------------+------------+------------------------------------+
+| **foja**                 | Single line text   | ---        | Nº de foja de la inscripción CBR.  |
+|                          |                    |            | Sólo tipo_referencia = CBR.        |
++--------------------------+--------------------+------------+------------------------------------+
+| **numero**               | Single line text   | ---        | Nº de la inscripción CBR. Sólo     |
+|                          |                    |            | tipo_referencia = CBR.             |
++--------------------------+--------------------+------------+------------------------------------+
+| **oo_cc_uf**             | Number (2)         | ---        | \[GAP-PO05\] Valor de las obras    |
+|                          |                    |            | complementarias del comparable,    |
+|                          |                    |            | en UF (no UF/m²). Origen XLSM:     |
+|                          |                    |            | Portada AR29-33.                   |
++--------------------------+--------------------+------------+------------------------------------+
+| **uf_m2_terreno_f**      | Number (2)         | ---        | UF/m² de terreno tal como          |
+|                          |                    |            | aparece en la fuente. Valor        |
+|                          |                    |            | crudo, no calculado.               |
++--------------------------+--------------------+------------+------------------------------------+
+| **uf_m2_construccion_f** | Number (2)         | ---        | UF/m² de construcción tal como     |
+|                          |                    |            | aparece en la fuente. Valor        |
+|                          |                    |            | crudo, no calculado.               |
++--------------------------+--------------------+------------+------------------------------------+
+| notas                    | Multiline text     | ---        | Comentarios relevantes del         |
+|                          |                    |            | comparable                         |
++--------------------------+--------------------+------------+------------------------------------+
+| ultima_modificacion      | Last modified time | ---        | ---                                |
++--------------------------+--------------------+------------+------------------------------------+
+| **⚠ PENDIENTES DE CREAR --- ausentes del schema real de Airtable al 23-jul-2026**               |
++--------------------------+--------------------+------------+------------------------------------+
+| distancia_km ⚠           | Number decimal     | ---        | \[GAP-PO06\] Distancia al sujeto   |
+|                          |                    |            | en km. Origen XLSM: Portada        |
+|                          |                    |            | AU29-33. NO EXISTE.                |
++--------------------------+--------------------+------------+------------------------------------+
+| url ⚠                    | URL                | ---        | \[GAP-PO07\] URL de la publicación |
+|                          |                    |            | del comparable. Origen XLSM:       |
+|                          |                    |            | Portada BV29-33. NO EXISTE.        |
++--------------------------+--------------------+------------+------------------------------------+
+| dormitorios ⚠            | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
+|                          |                    |            | DC29-33. NO EXISTE.                |
++--------------------------+--------------------+------------+------------------------------------+
+| banos ⚠                  | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
+|                          |                    |            | DD29-33. NO EXISTE.                |
++--------------------------+--------------------+------------+------------------------------------+
+| estacionamientos ⚠       | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
+|                          |                    |            | DE29-33. NO EXISTE.                |
++--------------------------+--------------------+------------+------------------------------------+
+| bodegas ⚠                | Number int         | ---        | \[GAP-PO08\] Origen XLSM: Portada  |
+|                          |                    |            | DF29-33. NO EXISTE.                |
++--------------------------+--------------------+------------+------------------------------------+
+| uf_m2_homologado ⚠       | Formula ƒ          | ---        | uf_m2_construccion × factor_sup ×  |
+|                          |                    |            | factor_edad × factor_distancia.    |
+|                          |                    |            | Alimenta el promedio (RB-24).      |
+|                          |                    |            | NO EXISTE.                         |
++--------------------------+--------------------+------------+------------------------------------+
 
 +------------------------------+-----------------------------------------+
 | **TX_ItemsCuadroValoracion** | **★ \[GAP TX-G1\] Una fila por ítem del |
@@ -3898,13 +3971,12 @@ consolidado o su función reemplazada por el JSON en TX_Adjuntos.
 
 +---------------------------+---------------------------------------------------------------------+
 | **D_TipoDocumento**       | **Catálogo de tipos de documento reconocidos · p. ej. cert. avalúo   |
-|                           | fiscal, permiso edificación, inscripción CBR (sin cambios v1.6)**    |
+|                           | fiscal, permiso edificación, inscripción CBR (v2.6.4: incorpora      |
+|                           | tipo_propiedad)**                                                    |
 +---------------------------+-----------------+-----------------+---------------------------------+
 | **Campo**                 | **Tipo Airtable** | **Clave**     | **Detalle / lógica de negocio** |
 +---------------------------+-----------------+-----------------+---------------------------------+
-| tipo_documento_id          | Autonumber       | PK              | Identificador interno.          |
-+---------------------------+-----------------+-----------------+---------------------------------+
-| codigo                     | Single line text | UQ              | Código técnico (cert_avaluo_fiscal, permiso_edificacion, etc.). |
+| codigo                     | Single line text | PK              | Campo primario. PK natural, snake_case, único (certificado_avaluo_fiscal, permiso_edificacion, etc.). |
 +---------------------------+-----------------+-----------------+---------------------------------+
 | nombre                     | Single line text | ---             | Nombre legible.                 |
 +---------------------------+-----------------+-----------------+---------------------------------+
@@ -3914,7 +3986,11 @@ consolidado o su función reemplazada por el JSON en TX_Adjuntos.
 +---------------------------+-----------------+-----------------+---------------------------------+
 | vigencia_dias               | Number (integer) | ---             | Días de vigencia. Vacío = sin vencimiento. |
 +---------------------------+-----------------+-----------------+---------------------------------+
-| activo                      | Checkbox         | ---             | Soft-delete.                    |
+| activo                      | Checkbox         | ---             | Default true. Solo activos se ofrecen al ejecutivo (soft-delete). |
++---------------------------+-----------------+-----------------+---------------------------------+
+| tipo_propiedad              | Single select    | ---             | nueva · usada · ambas. Indica si el documento aplica a propiedades nuevas, usadas o ambas. Basado en la columna "Cuándo" de la Especificación §4.2.1. |
++---------------------------+-----------------+-----------------+---------------------------------+
+| D_TipoDocumentoAtributo     | Link →           | FK              | Link → D_TipoDocumentoAtributo. Único link vivo del dominio D\_ (RN-33: sigue sin cruzar a M\_/C\_/TX\_/A\_/H\_/Z\_). |
 +---------------------------+-----------------+-----------------+---------------------------------+
 
 +------------------------------+---------------------------------------------------------------------+
@@ -8204,26 +8280,18 @@ modela como campo derivado overrideable.
 
 El UF/m² homologado es el promedio de hasta 5 referencias de mercado
 ajustadas por factores. C_FactoresHomogeneizacion existe parcialmente
-(◐), pero TX_Comparables no captura los factores por referencia. Se
-completan.
+(◐). Los factores por referencia se capturan en TX_Comparables.
 
-  -----------------------------------------------------------------------
-  **Campo (nuevo en      **Tipo        **Detalle / lógica de negocio**
-  TX_Comparables)**      Airtable**    
-  ---------------------- ------------- ----------------------------------
-  factor_sup             Number        Ajuste por diferencia de
-                         (decimal)     superficie vs la propiedad tasada.
+Estado al 23-jul-2026 (verificado contra el schema real de Airtable):
+`factor_sup`, `factor_edad` y `factor_distancia` **ya existen** como
+Number (4 decimales); la tabla también incorpora `factor_homogeneizacion`
+(factor único) y la fórmula `valor_ajustado_uf` = `{valor_uf}` ×
+`{factor_homogeneizacion}`. La fórmula `uf_m2_homologado`
+(uf_m2_construccion × factor_sup × factor_edad × factor_distancia, que
+alimenta el promedio RB-24) **sigue pendiente de crear**.
 
-  factor_edad            Number        Ajuste por diferencia de
-                         (decimal)     antigüedad.
-
-  factor_distancia       Number        Ajuste por distancia/zona respecto
-                         (decimal)     del inmueble.
-
-  uf_m2_homologado       Formula ƒ     uf_m2_construccion × factor_sup ×
-                                       factor_edad × factor_distancia.
-                                       Alimenta el promedio (RB-24).
-  -----------------------------------------------------------------------
+La definición completa y única de estos campos vive en la ficha de
+TX_Comparables (§10). No se duplica aquí.
 
 ## 18.9 Contrato de generación de texto descriptivo
 
@@ -8367,8 +8435,8 @@ base.
 
   H_PreciosUF                Campo USD          tipo_cambio_usd por fecha               P2
 
-  TX_Comparables             Factores homolog.  factor_sup, factor_edad,                P2
-                                                factor_distancia, uf_m2_homologado      
+  TX_Comparables             Factores homolog.  uf_m2_homologado (los tres              P2
+                                                factor_* ya creados)                    
 
   TX_CasosRegresion          Tabla nueva        Golden master: 5 casos reales +         P1
                                                 esperados + match                       

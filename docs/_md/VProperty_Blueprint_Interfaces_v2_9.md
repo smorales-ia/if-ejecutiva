@@ -6,7 +6,7 @@
 
 Especificación funcional de la capa de presentación
 
-**Versión 2.7 --- Junio 2026**
+**Versión 2.9 --- Julio 2026**
 
   -----------------------------------------------------------------------
   **Campo**        **Valor**
@@ -15,8 +15,12 @@ Especificación funcional de la capa de presentación
 
   Documento        Blueprint de Interfaces --- capa de presentación
 
-  Versión          2.6 (sucede a v2.5; reestructura por prompt del
-                   Arquitecto de Experiencia Operacional)
+  Versión          2.9 (sucede a v2.8 · sincroniza el formulario RF-44
+                   con el schema real de D_TipoDocumento leído vía MCP el
+                   23-jul-2026: incorpora los campos tipo_propiedad y
+                   activo. Corrige además la portada, que venía
+                   arrastrando "2.7" en el título y "2.6" en esta fila
+                   mientras el archivo ya iba en v2.8)
 
   Alineado a       Especificación v1.0 · Arquitectura Enterprise v2.5 ·
                    Diseño de Capa de Datos v2.5 · Motor de Cálculo
@@ -3370,6 +3374,14 @@ estas tablas, por diseño.
 
   Tipo de documento ·   Número     No         D_TipoDocumento.vigencia_dias         \>= 0 o vacío = sin
   vigencia (días)                                                                   vencimiento.
+
+  Tipo de documento ·   Single     No         D_TipoDocumento.tipo_propiedad        nueva · usada ·
+  aplica a              select                                                      ambas.
+
+  Tipo de documento ·   Checkbox   No         D_TipoDocumento.activo                Default true. Sólo
+  activo                                                                            los activos se
+                                                                                    ofrecen al
+                                                                                    ejecutivo.
 
   Atributo · código     Texto      Sí         D_Atributo.codigo                     Único. Reutilizable
                                                                                     entre tipos.

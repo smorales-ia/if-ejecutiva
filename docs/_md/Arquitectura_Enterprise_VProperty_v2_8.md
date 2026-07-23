@@ -10,7 +10,7 @@
 
 **ENTERPRISE**
 
-**Versión 2.7**
+**Versión 2.8**
 
 **VProperty --- Sistema Configurable de Tasaciones**
 
@@ -36,9 +36,13 @@
 
   **Fecha**             Julio 2026
 
-  **Versión**           2.7 --- Arquitectura Enterprise Configurable
-                        (alineada a Especificacion v1.9.1 · Julio 2026 ·
-                        aclara que AT02 no se invoca automáticamente desde
+  **Versión**           2.8 --- Arquitectura Enterprise Configurable
+                        (sucede a 2.7 · sincroniza la definición de
+                        TX_Comparables con el schema real de Airtable
+                        leído vía MCP el 23-jul-2026: 38 campos con sus
+                        fórmulas reales; `uf_m2` queda sustituido por
+                        `uf_m2_terreno` y `uf_m2_construccion`. Mantiene
+                        de 2.7: AT02 no se invoca automáticamente desde
                         IF-02 — asignación de tasador es manual, única,
                         vía botón "Asignar Tasador"; no existe
                         reasignación formal)
@@ -1342,32 +1346,94 @@ sistema, donde hay alta tasa de inserts y updates. Prefijo: TX\_.
 | sistema desde H_Comparables_Histórico.                                |
 +-----------------------------------------------------------------------+
 
-  -------------------------------------------------------------------------------------
-  **Campo**               **Tipo Airtable**  **Clave**   **Detalle / relación**
-  ----------------------- ------------------ ----------- ------------------------------
-  **comp_id**             autonumber         PK          
+  ---------------------------------------------------------------------------------------------------------------
+  **Campo**                   **Tipo Airtable**  **Clave**   **Detalle / relación**
+  --------------------------- ------------------ ----------- ----------------------------------------------------
+  **clave_natural**           single line text   ---         Campo primario de Airtable.
 
-  **solicitud**           link →             FK          
-                          TX_Solicitudes                 
+  **comp_id**                 autonumber         PK
 
-  **fuente**              single select      ---         tasador · portal_toc ·
-                                                         historico_sistema.
+  **solicitud**               link →             FK
+                              TX_Solicitudes
 
-  **direccion**           single line text   ---         
+  **comuna**                  link → M_Comunas   FK
 
-  **comuna**              link → M_Comunas   FK          
+  **tipo_propiedad**          link →             FK
+                              M_TiposPropiedad
 
-  **sup_m2**              number             ---         
+  **fuente**                  single select      ---         tasador · portal_toc ·
+                                                             historico_sistema · cliente ·
+                                                             Portal Inmobiliario · Yapo · Toctoc ·
+                                                             Ofert. · CBR.
 
-  **precio_uf**           number             ---         
+  **direccion**               single line text   ---
 
-  **uf_m2**               formula            ƒ           precio_uf / sup_m2.
+  **sup_terreno_m2**          number (2)         ---
 
-  **fecha_transaccion**   date               ---         
+  **sup_construccion_m2**     number (2)         ---
 
-  **tipo_propiedad**      link →             FK          
-                          M_TiposPropiedad               
-  -------------------------------------------------------------------------------------
+  **precio_uf**               number (3)         ---
+
+  **fecha_transaccion**       date (ISO)         ---
+
+  **uf_m2_terreno**           formula            ƒ           IF({sup_terreno_m2}>0,
+                                                             {precio_uf}/{sup_terreno_m2},0)
+
+  **uf_m2_construccion**      formula            ƒ           IF({sup_construccion_m2}>0,
+                                                             {precio_uf}/{sup_construccion_m2},0)
+
+  **antiguedad_meses**        formula            ƒ           DATETIME_DIFF(TODAY(),
+                                                             {fecha_transaccion},'months')
+
+  **factor_sup**              number (4)         ---         Ajuste por superficie.
+
+  **factor_edad**             number (4)         ---         Ajuste por antigüedad.
+
+  **factor_distancia**        number (4)         ---         Ajuste por distancia/zona.
+
+  **aporta_a_historico**      checkbox           ---         Pasa a H_Comparables_Historico
+                                                             tras aprobación del visador.
+
+  **clave_comparable**        single line text   ---
+
+  **direccion_comparable**    single line text   ---
+
+  **comuna_comparable**       single line text   ---
+
+  **valor_uf**                number (2)         ---
+
+  **sup_m2**                  number (2)         ---
+
+  **factor_homogeneizacion**  number (4)         ---
+
+  **fecha_comparable**        date (ISO)         ---
+
+  **valor_uf_m2**             formula            ƒ           IF({sup_m2}>0, {valor_uf} / {sup_m2}, 0)
+
+  **valor_ajustado_uf**       formula            ƒ           {valor_uf} * {factor_homogeneizacion}
+
+  **tipo_referencia**         single select      ---         Oferta · CBR.
+
+  **fecha_publicacion**       date (D/M/YYYY)    ---
+
+  **anio**                    number (0)         ---         Año de construcción del comparable.
+
+  **telefono_contacto**       phone number       ---         Sólo si tipo_referencia = Oferta.
+
+  **foja**                    single line text   ---         Sólo si tipo_referencia = CBR.
+
+  **numero**                  single line text   ---         Sólo si tipo_referencia = CBR.
+
+  **oo_cc_uf**                number (2)         ---         Obras complementarias en UF.
+
+  **uf_m2_terreno_f**         number (2)         ---         UF/m² terreno crudo de la fuente.
+
+  **uf_m2_construccion_f**    number (2)         ---         UF/m² construcción crudo de la fuente.
+
+  **notas**                   multiline text     ---
+
+  **ultima_modificacion**     last modified time ---
+  ---------------------------------------------------------------------------------------------------------------
 
 +-----------------------------------------------------------------------+
 | TRANSACCIONES                                                         |
@@ -3351,7 +3417,7 @@ tags especiales donde van los datos. Los tags tienen el formato:
 |                                                                       |
 | {d.comparables\[i\].direccion} ← cada fila de la tabla                |
 |                                                                       |
-| {d.comparables\[i\].uf_m2:formatN(2)}                                 |
+| {d.comparables\[i\].uf_m2_construccion:formatN(2)}                    |
 |                                                                       |
 | // Condicionales:                                                     |
 |                                                                       |
@@ -3454,11 +3520,13 @@ sabe qué esperar.
 |                                                                       |
 | \"comparables\": \[ ← de TX_Comparables                               |
 |                                                                       |
-| { \"direccion\": \"Apoquindo 5100\", \"sup_m2\": 92, \"precio_uf\":   |
-| 9100, \"uf_m2\": 98.91 },                                             |
+| { \"direccion\": \"Apoquindo 5100\",                                  |
+| \"sup_construccion_m2\": 92, \"precio_uf\": 9100,                     |
+| \"uf_m2_construccion\": 98.91 },                                      |
 |                                                                       |
-| { \"direccion\": \"El Bosque Norte 200\", \"sup_m2\": 88,             |
-| \"precio_uf\": 8800, \"uf_m2\": 100 }                                 |
+| { \"direccion\": \"El Bosque Norte 200\",                             |
+| \"sup_construccion_m2\": 88, \"precio_uf\": 8800,                     |
+| \"uf_m2_construccion\": 100 }                                         |
 |                                                                       |
 | \],                                                                   |
 |                                                                       |

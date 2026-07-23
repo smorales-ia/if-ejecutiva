@@ -405,8 +405,57 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** toda acción que descarte un vínculo/dato ya cargado por el usuario (desmarcar con archivo, eliminar unidad/contacto con datos) debe confirmar primero; reservar la acción directa sin confirmación para elementos vacíos.
 
+### E-071 — El health check valida dependencias externas (Airtable) con 200/503, no un 200 fijo (22-jul-2026)
+
+**Regla:** `/api/health` hace una lectura mínima a `TX_Solicitudes` y devuelve `200 {status:'ok', airtable:'ok'}` sólo si funciona; `503 {status:'degraded', airtable:'sin_configurar'|'airtable_<código>'}` si falta `AIRTABLE_TOKEN`/`AIRTABLE_BASE_ID` o la base no responde. Un health check que sólo devuelve `{status:'ok'}` fijo no sirve para que Railway detecte un token roto o la base caída.
+
+**Prevención futura:** todo health check debe ejercitar las dependencias críticas (Airtable, y a futuro Make si aplica), no sólo confirmar que el proceso arrancó. Mantenerlo barato (una lectura de 1 registro) para no gastar rate limit.
+
+### E-072 — Blueprints Make: el vocabulario de módulos se extrae de blueprints reales del repo; lo no verificado queda como TODO, nunca se fabrica (22-jul-2026)
+
+**Regla:** para generar un blueprint Make, leer primero los blueprints reales existentes del repo (`docs/make/`, `docs/make-blueprints/`) y copiar el `module` id + `version` + estructura del `mapper` verificados de esa instancia (eu1): `gateway:CustomWebHook` v1, `airtable:ActionSearchRecords`/`ActionCreateRecord`/`ActionUpdateRecords` v3, `builtin:BasicRouter` v1, `dropbox:uploadLargeFile`/`getFile` v5, `gateway:WebhookRespond` v1, conexiones como `__REEMPLAZAR_CONEXION_AIRTABLE__`. Validar el JSON con `node -e JSON.parse` antes de darlo por importable. **Si no hay referencia para un módulo, se deja como TODO explícito, no se inventa** — un módulo inexistente rompe todo el import ("Module Not Found", E-026). Caso concreto: el **correo SC13** de SC-Asignar quedó como TODO manual porque **ninguna** blueprint de la instancia usa email/gmail/smtp; se documentó el paso manual (conector, lookup email en M_Tasadores, plantilla `email_asignacion_tasador` §1.6.3, adjuntos `dropbox:getFile`) en `checklist-P9-manual.md` §2. Aplica también E-037 (nunca dejar API keys en el blueprint).
+
+**Prevención futura:** preferir un blueprint parcial válido (importa y corre lo verificado) a uno completo pero incorrecto (falla al importar). Los TODOs van en los campos `metadata.note`/`scenario.notes` (JSON no admite comentarios) y en el checklist humano.
+
+### E-073 — `.env.example` separa "mínimo para arrancar" de "activan features" (22-jul-2026)
+
+**Regla:** el encabezado de `.env.example` distingue las variables **imprescindibles para arrancar** (health check en verde: `AIRTABLE_TOKEN`, `AIRTABLE_BASE_ID`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`) de las que **activan features** y sin las cuales la app arranca igual y degrada (`MAKE_WEBHOOK_URL_*`, `MAKE_HMAC_SECRET`, `ANTHROPIC_API_KEY`). El código referencia exactamente 7 vars (verificable con `grep -rhoE "process\.env\.[A-Z0-9_]+"`); las demás las consume el SDK (Clerk) o Make.
+
+**Prevención futura:** antes de "agregar variables faltantes", grepear `process.env` para saber qué usa el código realmente y no inventar vars; marcar cuáles bloquean el arranque vs cuáles sólo activan funciones, para que el deploy sepa el mínimo viable.
+
+### E-074 — Estado de mocks IF-02 al cierre de P9: nada reemplazable sin acciones externas; AT01 diferido (22-jul-2026)
+
+**Regla:** al cierre de P9 (código), ningún mock restante (`SOLICITUDES`/`TASADORES`/`HISTORIAL`/`mock*()` de `console-data.ts`, estado optimista del detalle, `EXTRACCION_MOCK`, `OPERACIONES_REGISTRADAS`, picker mock del diálogo) es reemplazable sin las 4 acciones externas (provisionar Make, env vars Railway, push, smoke test) — todos catalogados en `checklist-P9-manual.md` §6. **AT01 (motor de reglas) está diferido a un CU posterior**: los 3 escenarios de IF-02 (SC01/SC-Asignar/SC-Edicion) son **webhook-triggered desde Next.js**, no Airtable Automations, así que no necesitan ningún AT trigger; y §0.4 excluye AT02/el motor del alcance de IF-02.
+
+**Prevención futura:** un escenario Make disparado por webhook desde la app NO requiere un script de Airtable Automation trigger — no confundir "escenario Make" con "Automation de Airtable". No reemplazar un mock hasta que exista su fuente real (Make provisionado + schema); listar la dependencia externa en vez de forzar el cambio.
+
+### 2026-07-23 — D_TipoDocumento.tipo_propiedad + sincronización de TX_Comparables en los .md
+
+**Contexto:** dos objetivos independientes: (1) poblar `D_TipoDocumento.tipo_propiedad` en Airtable desde el catálogo documental; (2) alinear todos los .md con el schema real de `TX_Comparables`.
+
+**Inconveniente:** el campo `tipo_propiedad` de `D_TipoDocumento` no está documentado en ningún .md, y su nombre colisiona con dos cosas distintas: el atributo `tipo_propiedad` que declaran 4 tipos de documento en `D_TipoDocumentoAtributo` (eje casa/depto) y el `tipo_propiedad` Link→M_TiposPropiedad de otras tablas.
+**Causa raíz:** el campo se creó en Airtable sin descripción y sin respaldo documental.
+**Solución aplicada:** se dedujo el eje real (nueva/usada) leyendo las tres opciones del singleSelect vía `get_table_schema` (`nueva`/`usada`/`ambas`), que replican literalmente la columna "Cuándo" (`Nuevo`/`Usado`/`Ambos`) de la Especificación §4.2.1. Sólo se poblaron los 6 registros con cita textual directa; los 5 sin evidencia en ese eje (sello_verde_sec, solicitud_tasacion, informe_no_expropiacion_serviu, consulta_antecedentes_bien_raiz, inscripcion_dominio_cbr) quedaron vacíos a la espera de decisión humana.
+**Prevención futura:** antes de poblar un singleSelect, leer sus `choices` con `get_table_schema` — `list_tables_for_base` devuelve el tipo pero **no** las opciones. Y si un campo no tiene descripción ni respaldo en los .md, declarar la interpretación explícitamente antes de escribir.
+
+**Inconveniente 2:** al reemplazar la tabla de `TX_Comparables` en `Arquitectura_Enterprise` con un script que buscaba "la tercera regla de guiones hacia atrás", se destruyó la definición completa de `TX_Calculos` (61 líneas borradas en vez de 26).
+**Causa raíz:** en tablas simples de pandoc sólo hay 2 reglas de guiones *antes* del ancla (borde superior y separador de cabecera); la tercera pertenece a la tabla anterior. La heurística `rules[-3]` cruzó el límite de tabla.
+**Solución aplicada:** `git show HEAD:<ruta-vieja> > <ruta-nueva>` para restaurar, y se rehízo anclando en el bloque de título (`| **TX_Comparables**`) y acotando el fin al inicio del siguiente bloque `+---`. Se verificó con asserts (`'precio_uf / sup_m2' in bloque`, conteo de líneas 26 = esperado).
+**Prevención futura:** al editar tablas pandoc por script, **acotar siempre por los marcadores de la entidad** (cabecera de la tabla y comienzo de la siguiente), nunca contando reglas hacia atrás. Y verificar el número de líneas sustituidas contra el rango auditado antes de escribir.
+
+**Inconveniente 3:** las grid-tables generadas quedaron desalineadas (celdas de 35 caracteres en columnas de 34, banner de fila completa 4 caracteres más ancho que el resto).
+**Causa raíz:** el ancho de columna se fijó a ojo y el ancho de la fila-banner se calculó con una fórmula propia en vez de derivarlo del separador.
+**Solución aplicada:** generador en Python con `assert len(celda) <= ancho` por celda y `INNER = len(sep()) - 4` para la fila completa; falla en generación en vez de producir markdown roto.
+**Prevención futura:** generar tablas pandoc con un script que valide anchos por aserción, y comprobar después que `set(len(linea))` del bloque tenga un solo valor.
+
+**Inconveniente 4:** la auditoría de `D_TipoDocumento` contra el schema real encontró dos campos fantasma en la documentación: `tipo_documento_id` (Autonumber PK) en Capa de Datos y `uso_ejecutiva` en `plan-ejecucion-if02-v1_9.md`. Ninguno existe en Airtable.
+**Causa raíz:** `tipo_documento_id` es residuo del modelo EAV anterior a v1.6 (cuando el dominio D_ tenía 8 tablas); `uso_ejecutiva` es una confusión con `uso_interfaz_ejecutiva`, que sí existe pero en `D_TipoDocumentoAtributo` — otra tabla y otro grano (atributo, no documento).
+**Solución aplicada:** se eliminó la fila `tipo_documento_id` (el campo primario real es `codigo`, PK natural snake_case) y se corrigió el filtro del checklist a `activo=true` a secas. Se verificó contra `lib/tipos-documento.ts:48`, que ya filtraba sólo por `{activo} = TRUE()` — el código estaba bien y la doc mal.
+**Prevención futura:** cuando un .md nombre un campo que suena plausible, comprobar **en qué tabla** vive antes de asumirlo; los nombres del dominio D_ se parecen entre `D_TipoDocumento` y `D_TipoDocumentoAtributo`. Y al auditar una tabla, contrastar también contra el código que la consulta: si difieren, suele ganar el código.
+
 ## Estado de tareas
 
+- **2026-07-22** — IF-02 **P0–P9 completadas (código)**: build + tsc verdes. Pendiente la **tanda externa** (provisionar Make SC01/SC-Asignar/SC-Edicion, env vars Railway, push, smoke test end-to-end incl. correo SC13) y la **deuda diferida** (eslint, `router.refresh` tras asignar, swap picker mock→candidatos, redirect `/`→`/consola`, campo `fecha_asignacion` D-08) — todo en `docs/_notas/checklist-P9-manual.md`. No hay P10.
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
 - **2026-07-09** — "Mi cartera resuelve clerk_user_id → recordId" cerrada: Sergio autorizó poblar `AUTH_Usuarios.clerk_user_id` y asignar 2 solicitudes de prueba (`VP-2026-0004`, `VP-2026-0028`) a `ejecutiva_asignada` para validar en vivo. **Pendiente:** decidir si esas 2 solicitudes de prueba deben revertirse a `ejecutiva_asignada` vacío una vez validado en el navegador, o si se dejan como está.
 

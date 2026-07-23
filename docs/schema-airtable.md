@@ -558,7 +558,7 @@ Séptimo dominio del modelo (Capa Datos v2.6.3 §6.7). **Migración de schema ya
 
 | Tabla lógica | TABLE_ID | Campos | Estado |
 |---|---|---|---|
-| `D_TipoDocumento` | `tblkPhBnpdDmUWOl3` | 7 | Vigente |
+| `D_TipoDocumento` | `tblkPhBnpdDmUWOl3` | 8 | Vigente |
 | `D_TipoDocumentoAtributo` | `tbldI86ieVKpjpL7E` | 19 | Vigente — fuente única (antes relación N:M) |
 | `TX_Unidades` | `tbl2QDLvJDyy3Rg2I` | 16 | Vigente — nueva desde v1.6, ampliada v1.8 |
 | ~~`D_TipoDato`~~ | ~~`tble0Na4Neon7Vz3z`~~ | — | **Deprecada.** Ya no existe en la base real. Contenido consolidado como `singleSelect` en `D_TipoDocumentoAtributo.tipo_dato`. |
@@ -581,6 +581,7 @@ Los TABLE_IDs deprecados se conservan tachados sólo para trazabilidad históric
 | `vigencia_dias` | `fldJRNPgz6PWejZ81` | Number |
 | `activo` | `fldiSXRPd2mqgKOci` | Checkbox |
 | `D_TipoDocumentoAtributo` | `fldNsN343wkTRiEmD` | Link → D_TipoDocumentoAtributo (multipleRecordLinks) |
+| `tipo_propiedad` | `fldIfdcjsr8KeNRCx` | Single select (`nueva` · `usada` · `ambas`) |
 
 Los `codigo` activos deben coincidir con los defaults de `nuevaSolicitudInternaDefaults` en `lib/schemas.ts` y con el checklist de `NewRequestSheet`. Verificar contra la base real antes de asumir la lista de 9 documentada en versiones previas de este archivo — sin re-auditar fila por fila el 17-jul-2026.
 

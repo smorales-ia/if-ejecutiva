@@ -26,9 +26,9 @@
                      Especialista en Extracción IA (Claude SC07) · QA
                      Lead
 
-  **Versión**        v1.0
+  **Versión**        v1.1
 
-  **Fecha**          Junio 2026
+  **Fecha**          Julio 2026
   -----------------------------------------------------------------------
 
 +-----------------------------------------------------------------------+
@@ -301,12 +301,16 @@ confianza_ia_pct.
                              Avaluó / TGR                              para caso Cortés
                                                                        Pérez
 
-  Avaluó Exento, Afecto,     TGR Consulta   TX_DatosTasacion ·         Bloque completo del
-  Sobretasa                  antecedentes   avaluo_exento,             Anexo 2
-                             bien raíz      avaluo_afecto,             
-                                            sobretasa_pct,             
-                                            cuota_aseo_municipal,      
-                                            contribucion_total         
+  Avaluó Exento, Afecto,     SII Consulta   TX_DatosTasacion ·         Bloque del Anexo 2.
+  Sobretasa                  antecedentes   avaluo_exento,             contribucion_total
+                             bien raíz      avaluo_afecto,             es dual: también lo
+                                            sobretasa_pct,             trae el certificado
+                                            contribucion_total         TGR.
+
+  Cuota aseo municipal       TGR            TX_DatosTasacion ·         Sólo TGR. No es
+                             Certificado de cuota_aseo_municipal       atributo de la
+                             deuda                                     consulta SII de
+                                                                       antecedentes.
 
   Material estructura        SII Detalle    TX_DatosTasacion ·         Mapeado contra
   (Hormigón / Albañilería)   líneas         material_predominante      C_PreciosUnitarios
@@ -595,30 +599,52 @@ valores monetarios los calcula el motor (ver §4).
 Mínimo 3, hasta 10. Cinco filas de ofertas y hasta cuatro de CBR según
 los informes.
 
-  -----------------------------------------------------------------------
-  **Campo**                          **Notas**
-  ---------------------------------- ------------------------------------
-  Dirección referencia               ---
+  ---------------------------------------------------------------------------------
+  **Campo del informe**              **Campo en TX_Comparables**  **Notas**
+  ---------------------------------- ---------------------------- -----------------
+  Dirección referencia               direccion                    ---
 
-  Año                                ---
+  Año                                anio                         Año de
+                                                                  construcción
 
-  Total UF                           Precio publicado
+  Total UF                           precio_uf                    Precio publicado
 
-  Sup. Terreno, Sup. Construida,     ---
-  OO.CC.                             
+  Sup. Terreno                       sup_terreno_m2               ---
 
-  Teléfono de contacto (solo         v2.4
-  ofertas)                           
+  Sup. Construida                    sup_construccion_m2          ---
 
-  Foja y Número (solo CBR)           ---
+  OO.CC.                             oo_cc_uf                     En UF, no UF/m²
 
-  URL de la publicación              v2.4
+  Tipo de referencia                 tipo_referencia              Oferta · CBR
 
-  Dormitorios, baños,                v2.4
-  estacionamientos, bodegas          
+  Mes/año de publicación             fecha_publicacion            ---
 
-  Comentarios relevantes             Texto libre
-  -----------------------------------------------------------------------
+  Teléfono de contacto (solo         telefono_contacto            v2.4
+  ofertas)                                                        
+
+  Foja y Número (solo CBR)           foja · numero                ---
+
+  UF/m² terreno y construcción de    uf_m2_terreno_f ·            Valores crudos,
+  la fuente                          uf_m2_construccion_f         no calculados
+
+  UF/m² terreno y construcción       uf_m2_terreno ·              Fórmulas sobre
+  calculados                         uf_m2_construccion           precio_uf
+
+  Factores de homogeneización        factor_sup · factor_edad ·   §18.8 Capa Datos
+                                     factor_distancia             
+
+  Comentarios relevantes             notas                        Texto libre
+
+  URL de la publicación              ⚠ url                        v2.4 · PENDIENTE
+                                                                  DE CREAR
+
+  Dormitorios, baños,                ⚠ dormitorios · banos ·      v2.4 · PENDIENTES
+  estacionamientos, bodegas          estacionamientos · bodegas   DE CREAR
+  ---------------------------------------------------------------------------------
+
+⚠ Los campos marcados están declarados en el diseño (Capa de Datos
+§10 · GAP-PO07/PO08) pero **no existen en el schema real de Airtable**
+al 23-jul-2026.
 
 ## Sección 5 · Ampliaciones / Programa por nivel / Terminaciones por recinto
 
@@ -1009,7 +1035,8 @@ Claude Code para IF-03:
     (125.206 UF → \~109 millones a UF=39.841,72). **Discrepancia: la
     portada usa avaluó total actualizado al periodo (TGR 112.989.288),
     no el del SII.** Confirmar la regla de qué fuente prevalece para la
-    portada.
+    portada. **PENDIENTE: confirmar con Héctor qué fuente de avalúo
+    prevalece en la portada del informe.**
 
 9.  **Todos los informes:** El campo "1US\$ = \$922,17 / \$894,25 /
     \$890,33 / \$892,83 / \$894,25 / \$890,33" cambia por fecha.

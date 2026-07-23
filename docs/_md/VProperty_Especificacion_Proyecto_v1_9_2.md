@@ -15,7 +15,12 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.1 · Julio 2026 · Alinea la Especificación con lo
+  **Versión**         1.9.2 · Julio 2026 · Sincroniza los listados de campos
+                      de TX_Comparables (§tabla de secciones E2 y RF-12) con
+                      el schema real de Airtable leído vía MCP el
+                      23-jul-2026; `uf_m2` pasa a `uf_m2_construccion` y se
+                      marca `url` como pendiente de crear. Hereda de 1.9.1:
+                      alinea la Especificación con lo
                       efectivamente implementado en la maqueta (v0.dev
                       integrada a `main`, 22-jul-2026): (1) §1.3.1 --- el
                       botón "Asignar Tasador" es visible sólo sin tasador
@@ -1669,11 +1674,15 @@ destino es el siguiente:
                                                                flag_estado, flag_regularizable,
                                                                aporta_a_garantia.
 
-  4        Comparables E2        TX_Comparables                3 a 10 comparables con dirección,
-                                                               comuna, superficies, precio_uf,
-                                                               fecha_transaccion, factores de
-                                                               homogeneización (sup, edad,
-                                                               distancia), URL publicación.
+  4        Comparables E2        TX_Comparables                3 a 10 comparables con direccion,
+                                                               comuna, sup_terreno_m2,
+                                                               sup_construccion_m2, precio_uf,
+                                                               fecha_transaccion, tipo_referencia
+                                                               (Oferta/CBR), anio, oo_cc_uf y
+                                                               factores de homogeneización
+                                                               (factor_sup, factor_edad,
+                                                               factor_distancia). El campo url
+                                                               está pendiente de crear.
 
   5        Ampliaciones /        TX_Ampliaciones,              Ítems captura terreno para completar
            Niveles /             TX_HabitacionesPorNivel,      el detalle del programa.
@@ -1750,14 +1759,18 @@ FUT-EJ-07).
   **RF-12**         **Captura de comparables**
   ----------------- -------------------------------------------------------
   **Descripción**   El tasador puede ingresar entre 3 y 10 comparables
-                    (TX_Comparables) con dirección, comuna, superficies,
-                    precio en UF, fecha de transacción, factores de
-                    homogeneización (sup, edad, distancia) y URL de la
-                    publicación.
+                    (TX_Comparables) con direccion, comuna,
+                    sup_terreno_m2, sup_construccion_m2, precio_uf,
+                    fecha_transaccion, tipo_referencia (Oferta o CBR) y
+                    los factores de homogeneización factor_sup,
+                    factor_edad y factor_distancia. Las ofertas aportan
+                    telefono_contacto; las inscripciones CBR, foja y
+                    numero. El campo url está pendiente de crear.
 
   **Criterio de     El sistema exige mínimo 3 comparables antes de permitir
   aceptación**      cerrar la captura. Los factores de homogeneización se
-                    aplican a uf_m2 vía fórmula y alimentan el promedio
+                    aplican a uf_m2_construccion vía fórmula y alimentan
+                    el promedio
                     usado en el cálculo.
   -------------------------------------------------------------------------
 

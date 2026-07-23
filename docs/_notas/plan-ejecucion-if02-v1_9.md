@@ -1080,7 +1080,7 @@ Cada bloque es un componente `<BloqueXxx solicitud={s} readOnly={modoConsulta} /
 └─────────────────────────────────────┘
 ```
 
-**Fuente del checklist:** `D_TipoDocumento` filtrando `activo=true` y `uso_ejecutiva=true` → 15 tipos operativos (§4.2.1 spec v1.9).
+**Fuente del checklist:** `D_TipoDocumento` filtrando `activo=true` → 15 tipos operativos (§4.2.1 spec v1.9).
 
 Cada fila muestra:
 - Checkbox marcado (adjunto declarado)
