@@ -2,6 +2,7 @@ import { listRecords, AirtableError } from '@/lib/airtable-client'
 import {
   CLIENTES,
   ESTADO_LABELS,
+  PRIORIDAD,
   regionDeComuna,
   type EstadoSolicitud,
   type Prioridad,
@@ -14,29 +15,48 @@ export const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
 // AUTH_Usuarios verified via MCP 2026-07-07 (RF-52)
 const AUTH_USUARIOS = 'tblbX3hPD2uhqhl5v'
 
-export type Vista = 'activas' | 'sla_riesgo' | 'reasignar' | 'pausadas' | 'aprobadas' | 'cartera'
+// Enum de vistas reconciliado a las 5 del plan v1.9 (P5). Se eliminaron
+// 'reasignar' (REGLA A quita la reasignación) y 'pausadas' (estado inexistente
+// en el enum). 'mi_cartera' reemplaza al antiguo 'cartera'; 'todas' al 'activas'.
+export type Vista = 'mi_cartera' | 'sla_riesgo' | 'por_asignar' | 'aprobadas' | 'todas'
 
 export const VISTAS_VALIDAS: Vista[] = [
-  'activas',
+  'mi_cartera',
   'sla_riesgo',
-  'reasignar',
-  'pausadas',
+  'por_asignar',
   'aprobadas',
-  'cartera',
+  'todas',
 ]
+
+export const VISTA_DEFAULT: Vista = 'todas'
 
 export type SlaFiltro = 'verde' | 'ambar' | 'rojo'
 
 export const SLA_FILTROS_VALIDOS: SlaFiltro[] = ['verde', 'ambar', 'rojo']
 
-// D-07: filtros de FiltrosBar persistidos como URL params (RF-05 Subtarea C).
+// D-07: filtros de FiltrosBar persistidos como URL params (RF-05 Subtarea C · P5).
 export interface SolicitudesFiltros {
   cliente?: string
   estado?: string
   sla?: string
   desde?: string // YYYY-MM-DD
   hasta?: string // YYYY-MM-DD
+  /** Nombre del tasador, o 'sin_asignar' para las que no tienen tasador. */
+  tasador?: string
+  prioridad?: string
+  /** Búsqueda: código VP, RUT del comprador o dirección. */
+  q?: string
 }
+
+// Orden de la lista (P5). Mapea a un sort de Airtable.
+export type OrdenParam = 'sla_desc' | 'sla_asc' | 'fecha_solicitud_desc' | 'prioridad'
+
+export const ORDENES_VALIDOS: OrdenParam[] = [
+  'sla_desc',
+  'sla_asc',
+  'fecha_solicitud_desc',
+  'prioridad',
+]
 
 function escapeFormulaString(value: string): string {
   return value.replace(/"/g, '\\"')
@@ -52,17 +72,16 @@ function escapeFormulaString(value: string): string {
  */
 function buildVistaFormula(vista: Vista, ejecutivaNombre?: string): string {
   switch (vista) {
-    case 'activas':
-      return 'NOT(OR({estado}="cancelada",{estado}="cerrada",{estado}="entregada"))'
+    case 'todas':
+      return 'TRUE()'
     case 'sla_riesgo':
       return 'OR({semaforo_sla}="rojo",{semaforo_sla}="ámbar",{semaforo_sla}="ambar")'
-    case 'reasignar':
-      return 'AND({estado}="creada",DATETIME_DIFF(NOW(),CREATED_TIME(),"hours")>48)'
-    case 'pausadas':
-      return '{estado}="pausada"'
+    case 'por_asignar':
+      // Sin tasador asignado y en un estado que aún admite asignación.
+      return 'AND(OR({estado}="creada",{estado}="requiere_atencion"),ARRAYJOIN({tasador})="")'
     case 'aprobadas':
       return '{estado}="aprobada"'
-    case 'cartera':
+    case 'mi_cartera':
       return `FIND("${escapeFormulaString(ejecutivaNombre ?? '')}", ARRAYJOIN({ejecutiva_asignada}))`
   }
 }
@@ -94,6 +113,25 @@ function buildFiltrosClauses(filtros?: SolicitudesFiltros): string[] {
   }
   if (filtros.hasta && FECHA_VALIDA.test(filtros.hasta)) {
     clauses.push(`NOT(IS_AFTER({fecha_solicitud},DATETIME_PARSE("${filtros.hasta}","YYYY-MM-DD")))`)
+  }
+  if (filtros.prioridad && (PRIORIDAD as readonly string[]).includes(filtros.prioridad)) {
+    clauses.push(`{prioridad}="${filtros.prioridad}"`)
+  }
+  if (filtros.tasador) {
+    // 'sin_asignar' = sin tasador; cualquier otro valor = por nombre. Un campo
+    // Link, dentro de una fórmula, se evalúa contra su primary field (E-018).
+    clauses.push(
+      filtros.tasador === 'sin_asignar'
+        ? 'ARRAYJOIN({tasador})=""'
+        : `FIND("${escapeFormulaString(filtros.tasador)}",ARRAYJOIN({tasador}))`
+    )
+  }
+  if (filtros.q && filtros.q.trim() !== '') {
+    // Búsqueda case-insensitive sobre código VP, RUT del comprador y dirección.
+    const q = escapeFormulaString(filtros.q.trim().toUpperCase())
+    clauses.push(
+      `OR(FIND("${q}",UPPER({codigo_ext})),FIND("${q}",UPPER({cliente_final_rut})),FIND("${q}",UPPER({direccion})))`
+    )
   }
 
   return clauses
@@ -283,16 +321,32 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
   }
 }
 
+/** Traduce el orden de la UI a un sort de Airtable (campo + direccion). */
+function ordenToSort(orden?: OrdenParam): { field: string; direction: 'asc' | 'desc' } {
+  switch (orden) {
+    case 'sla_asc':
+      return { field: 'fecha_limite_entrega', direction: 'desc' }
+    case 'fecha_solicitud_desc':
+      return { field: 'fecha_solicitud', direction: 'desc' }
+    case 'prioridad':
+      return { field: 'prioridad', direction: 'desc' }
+    case 'sla_desc':
+    default:
+      return { field: 'fecha_limite_entrega', direction: 'asc' }
+  }
+}
+
 export async function fetchSolicitudes(
-  vista: Vista = 'activas',
+  vista: Vista = VISTA_DEFAULT,
   userId?: string,
-  filtros?: SolicitudesFiltros
+  filtros?: SolicitudesFiltros,
+  orden?: OrdenParam
 ): Promise<FetchResult> {
   // "Mi cartera": resolver clerk_user_id -> AUTH_Usuarios ANTES de armar la
   // fórmula. Sin esto, {ejecutiva_asignada} nunca puede matchear un
   // clerk_user_id (E-018/E-019 en docs/aprendizajes.md).
   let ejecutivaNombre: string | undefined
-  if (vista === 'cartera') {
+  if (vista === 'mi_cartera') {
     if (!userId) return { data: [], motivo: 'ejecutiva_no_encontrada' }
     const ejecutiva = await resolveEjecutiva(userId)
     if (!ejecutiva) return { data: [], motivo: 'ejecutiva_no_encontrada' }
@@ -300,14 +354,15 @@ export async function fetchSolicitudes(
   }
 
   const formula = buildFormula(vista, ejecutivaNombre, filtros)
+  const sort = ordenToSort(orden)
   try {
     const records = await listRecords<RawFields>(TX_SOLICITUDES, {
       cellFormat: 'string',
       timeZone: 'America/Santiago',
       userLocale: 'es-CL',
       filterByFormula: formula,
-      'sort[0][field]': 'fecha_limite_entrega',
-      'sort[0][direction]': 'asc',
+      'sort[0][field]': sort.field,
+      'sort[0][direction]': sort.direction,
       fields: SOLICITUD_FIELDS,
     })
     return { data: records.map((r) => mapRecord(r.id, r.createdTime, r.fields)) }
@@ -315,7 +370,7 @@ export async function fetchSolicitudes(
     // ejecutiva_asignada not yet created in TX_Solicitudes (D-08 pending)
     if (
       err instanceof AirtableError &&
-      vista === 'cartera' &&
+      vista === 'mi_cartera' &&
       (err.message.includes('ejecutiva_asignada') || err.message.includes('Unknown field names'))
     ) {
       return { data: [], degraded: true }

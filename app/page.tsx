@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import { AppHeader } from "@/components/console/app-header"
 import { SolicitudList } from "@/components/console/solicitud-list"
 import { SolicitudDetail } from "@/components/console/solicitud-detail"
@@ -16,11 +16,17 @@ export default function Page() {
       <AppHeader />
       <main className="flex min-h-0 flex-1">
         <div className="w-2/5 max-w-[480px] min-w-[380px]">
-          <SolicitudList
-            solicitudes={SOLICITUDES}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-          />
+          <Suspense fallback={null}>
+            <SolicitudList
+              solicitudes={SOLICITUDES}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              vistaActiva="todas"
+              total={SOLICITUDES.length}
+              page={1}
+              pageSize={SOLICITUDES.length}
+            />
+          </Suspense>
         </div>
         <div className="min-w-0 flex-1">
           <SolicitudDetail solicitud={selected} />

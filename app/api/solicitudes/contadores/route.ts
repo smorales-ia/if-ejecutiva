@@ -23,7 +23,7 @@ export async function GET(_request: NextRequest) {
       try {
         const { data } = await fetchSolicitudes(
           vista,
-          vista === 'cartera' ? (userId ?? undefined) : undefined
+          vista === 'mi_cartera' ? (userId ?? undefined) : undefined
         )
         return [vista, data.length]
       } catch (err) {

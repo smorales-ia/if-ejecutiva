@@ -315,6 +315,24 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** deshabilitar un botón por un dato opcional deja al usuario sin saber por qué no avanza; preferir habilitarlo + confirmar. Reservar el estado deshabilitado para precondiciones duras (patrón consistente con el botón "Asignar Tasador" de REGLA A, que sí se deshabilita por faltantes RN-44 obligatorios).
 
+### E-056 — Tras submit inválido, scroll al resumen de errores con `alertRef` + espera del commit; no confiar en `shouldFocusError` con Controller/Select (22-jul-2026)
+
+**Regla:** en un formulario RHF cuyos campos usan `Controller`/`Select` (base-ui), `shouldFocusError` no enfoca de forma fiable el primer error porque esos componentes no siempre exponen un `ref` nativo. En su lugar: montar el Alert destructivo (resumen REGLA B) al inicio del form con un `ref` (envuelto en un `<div ref={alertRef}>`) y, tras un submit inválido, llamar `alertRef.current?.scrollIntoView(...)` dentro de un `setTimeout(…, 60)` que espera el commit de React. Se hace tanto en `onInvalid` como en la rama de conflicto de negocio (N° operación). El encabezado del toast y del Alert usa el wording canónico **"N campos con problema"** (§0.3 REGLA B).
+
+**Prevención futura:** el resumen lista los errores en el orden del formulario, así que scrollear a su top equivale a "ir al primer error" sin depender del focus de campos custom. Si el scroll no ocurre, sospechar que el `scrollIntoView` corrió antes del commit (subir el timeout) o que el contenedor scrolleable no es el ancestro del Alert.
+
+### E-057 — Mensajes humanos §6 como constantes `MSG_*` centralizadas; blindaje contra regresión de la base v0 (22-jul-2026)
+
+**Regla:** los mensajes §6 del validador (`nueva-solicitud-interna.ts`) viven como constantes `MSG_RUT_INVALIDO` / `MSG_EMAIL_INVALIDO` / `MSG_DIRECCION_INCOMPLETA` con el texto literal, no como strings inline. La dirección valida calle+número con `tieneCalleYNumero()` (≥2 tokens y al menos un dígito). El literal de RUT se **adaptó a "comprador"** (`Necesitamos el RUT del comprador con su dígito verificador…`) porque el campo es el RUT del comprador, no del propietario (decisión de Sergio 22-jul-2026). Actualiza [[E-021]].
+
+**Prevención futura:** una reintegración de la base v0.dev puede **sobrescribir el validador y revertir** los mensajes §6 a placeholders ("RUT inválido", "Email inválido"). Tras cualquier import de v0, re-verificar que `nueva-solicitud-interna.ts` siga usando las constantes `MSG_*` — es una regresión silenciosa que ya ocurrió una vez. Cuando un literal §6 no calce semánticamente con el campo (ej. "propietario" en un campo de comprador), adaptarlo al campo es preferible a copiarlo textual, pero registrarlo como decisión.
+
+### E-058 — Campos y bloques condicionales del formulario se gatean por `esNuevo` (nuevo/usado) (22-jul-2026)
+
+**Regla:** la clasificación nuevo/usado (`tipoPropiedadNuevoUsado`, derivada como `esNuevo`) es el interruptor de forma del formulario. Se gatean por `esNuevo`: el checkbox "Rol en trámite" (solo nuevo — un usado no puede marcar en trámite), el bloque "Financiero" (solo nuevo, colapsado por defecto), el campo "Modelo" de unidad, y el "Proyecto/condominio" obligatorio. La validación acompaña al gating: para usado, al no existir el checkbox "en trámite", el rol SII queda de facto obligatorio sin necesidad de que el `superRefine` de la unidad conozca el tipo de propiedad.
+
+**Prevención futura:** al agregar un campo que dependa de nuevo/usado, gatearlo en la UI por `esNuevo` y confirmar que la regla zod correspondiente sigue siendo coherente con ese gating (no exigir server-side algo que la UI oculta, ni permitir en la UI algo que la validación rechace).
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.

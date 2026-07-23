@@ -14,6 +14,9 @@ export type EstadoSolicitud =
 
 export type Prioridad = "normal" | "urgente" | "critico"
 
+/** Catálogo cerrado de prioridades (para filtros P5). */
+export const PRIORIDAD = ["normal", "urgente", "critico"] as const
+
 /** Clasificación estructural de la propiedad. Controla la forma del formulario. */
 export type NuevoUsado = "nuevo" | "usado"
 
