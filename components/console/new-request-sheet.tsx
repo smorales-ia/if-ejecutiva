@@ -783,6 +783,9 @@ export function NewRequestSheet() {
   const [procesando, setProcesando] = React.useState(false)
   const [extraidos, setExtraidos] = React.useState<Set<string>>(new Set())
   const [mostrarResumen, setMostrarResumen] = React.useState(false)
+  // Confirmaciones del wizard (§4.1): continuar sin documentos · descartar en curso.
+  const [confirmSinDocs, setConfirmSinDocs] = React.useState(false)
+  const [confirmDescartar, setConfirmDescartar] = React.useState(false)
   const initialized = React.useRef(false)
 
   const {
@@ -900,21 +903,31 @@ export function NewRequestSheet() {
     setPhase(3)
   }
 
+  // Simula el análisis de los documentos adjuntos (RF-09 real llega en P9).
+  function procesarDocumentos() {
+    setProcesando(true)
+    setTimeout(() => {
+      setProcesando(false)
+      toast.success("Documentos procesados", {
+        description: `${docs.length} archivo${docs.length === 1 ? "" : "s"} analizado${docs.length === 1 ? "" : "s"}.`,
+        duration: 3000,
+      })
+      setPhase(2)
+    }, 2000)
+  }
+
   function continuarDesdeModo() {
     if (modo === "manual") {
       setPhase(2)
       return
     }
     if (modo === "documentos") {
-      setProcesando(true)
-      setTimeout(() => {
-        setProcesando(false)
-        toast.success("Documentos procesados", {
-          description: `${docs.length} archivo${docs.length === 1 ? "" : "s"} analizado${docs.length === 1 ? "" : "s"}.`,
-          duration: 3000,
-        })
-        setPhase(2)
-      }, 2000)
+      // §4.1: Continuar siempre habilitado; sin archivos, se confirma antes.
+      if (docs.length === 0) {
+        setConfirmSinDocs(true)
+        return
+      }
+      procesarDocumentos()
     }
   }
 
@@ -966,9 +979,13 @@ export function NewRequestSheet() {
     )
   }
 
-  const continuarModoHabilitado =
-    (modo === "manual" || (modo === "documentos" && docs.length > 0)) &&
-    !procesando
+  // §4.1: habilitado con sólo elegir modo. En "documentos" sin archivos, el
+  // click abre el AlertDialog de confirmación (no se deshabilita el botón).
+  const continuarModoHabilitado = modo !== "" && !procesando
+
+  // Hay una solicitud en curso si el usuario avanzó o capturó algo (§4.1).
+  const haySolicitudEnCurso =
+    modo !== "" || tipoNU !== "" || docs.length > 0 || phase > 1
 
   const resumenErrores = recolectarErrores(errors as Record<string, unknown>)
 
@@ -976,6 +993,11 @@ export function NewRequestSheet() {
     <Sheet
       open={open}
       onOpenChange={(next) => {
+        // §4.1: al cerrar con una solicitud en curso, confirmar antes de descartar.
+        if (!next && haySolicitudEnCurso) {
+          setConfirmDescartar(true)
+          return
+        }
         setOpen(next)
         if (!next) resetAll()
       }}
@@ -2010,6 +2032,57 @@ export function NewRequestSheet() {
             </Button>
           )}
         </SheetFooter>
+
+        {/* §4.1 · Confirmar continuar sin documentos (modo "documentos") */}
+        <AlertDialog open={confirmSinDocs} onOpenChange={setConfirmSinDocs}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Continuar sin documentos?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Elegiste crear la solicitud en base a documentos, pero no adjuntaste
+                ninguno. Puedes continuar y completar el formulario manualmente, o
+                volver y subir los documentos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Volver y adjuntar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setConfirmSinDocs(false)
+                  setPhase(2)
+                }}
+              >
+                Continuar sin documentos
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* §4.1 · Confirmar descartar la solicitud en curso al cerrar el Sheet */}
+        <AlertDialog open={confirmDescartar} onOpenChange={setConfirmDescartar}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Descartar la solicitud en curso?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Se perderán los datos capturados y los documentos adjuntados en este
+                asistente. Esta acción no se puede deshacer.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Seguir editando</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                onClick={() => {
+                  setConfirmDescartar(false)
+                  setOpen(false)
+                  resetAll()
+                }}
+              >
+                Descartar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   )

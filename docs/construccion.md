@@ -22,7 +22,7 @@
 |---|---|---|
 | P1 ✅ 22-jul-2026 | Types TypeScript | Uniones derivadas de catálogos cerrados + campos v1.9 opcionales en `Solicitud`, agregados en `lib/console-data.ts` (no `lib/types/` — ver inventario). `pnpm tsc --noEmit` limpio. |
 | P2 ✅ 22-jul-2026 | API Routes nuevas | Creadas: `POST [id]/asignar` (REGLA A, 409 idempotente), `PATCH [id]` (REGLA C), `GET contadores`, `GET tasadores/candidatos` + validador `acciones-solicitud.ts`. Escrituras vía Make (mock `pendiente_make`, sin provisionar). CRUD `TX_Unidades/Contactos/Vendedor` y filtros ampliados diferidos a P4/P5. |
-| P3 | Wizard de creación | 3 fases (modo creación → tipo propiedad → formulario) con `FileUploadZone` en Fase 1 cuando el modo es "documentos". |
+| P3 ✅ 22-jul-2026 | Wizard de creación | Skeleton 3 fases ya existía en `new-request-sheet.tsx`; P3 cerró los 2 gaps §4.1: confirmación "continuar sin documentos" y confirmación "descartar en curso" al cerrar el Sheet. Extracción RF-09 y submit real siguen mock (→ P4/P9). |
 | P4 | Formulario 4 secciones | Bloques repetibles Unidades y Contactos de visita, con validación REGLA B (toast + Alert por campo, bloques nombrados con precisión). |
 | P5 | Panel detalle | Botón "Asignar Tasador" (REGLA A, visible sólo sin tasador, desaparece al asignar), botón "Documentos y Adjuntos", pestañas Datos (11 bloques) / Historial / Adjuntos. |
 | P6 | Lógica de edición | REGLA C — botón "Editar solicitud" sólo en `creada`; modo consulta cuando estado ≠ `creada` Y hay tasador asignado (RN-59). |

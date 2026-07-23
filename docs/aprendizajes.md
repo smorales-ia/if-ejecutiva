@@ -273,6 +273,30 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** los campos quedan opcionales hasta que P8/P9 reemplacen los mocks por lecturas reales de Airtable; recién ahí evaluar volverlos obligatorios. Marcar con comentario el motivo (`// opcional para no romper mocks`) para que una sesión futura no los "endurezca" por error antes de la migración.
 
+### E-049 — Contrato de error REGLA B centralizado: 422 validación · 409 conflicto de negocio (22-jul-2026)
+
+**Regla:** los Route Handlers de escritura de IF-02 responden errores con dos formas fijas: **422** `{ error: 'validacion', campos: [{ campo, motivo }] }` cuando falla el `safeParse` de zod, y **409** `{ error: 'conflicto_negocio', campo, motivo }` para choques de negocio (idempotencia, estado terminal, N° operación duplicado). El helper `issuesToCampos()` de `lib/validators/acciones-solicitud.ts` aplana el `path` de zod (ej. `['unidades',1,'supConstruida']` → `"unidades.1.supConstruida"`) para que el frontend lo mapee a etiquetas legibles.
+
+**Prevención futura:** no inventar formas de error nuevas por endpoint — reutilizar `issuesToCampos()` y las dos formas 422/409. La validación de forma (zod) y el conflicto de negocio son superficies distintas: nunca mezclarlas en la misma respuesta (un duplicado de N° operación es 409 en su campo, no un 422 genérico).
+
+### E-050 — Degradación honesta con `pendiente_make: true` cuando el escenario Make no está provisionado (22-jul-2026)
+
+**Regla:** si un Route Handler de escritura no tiene su webhook Make configurado (`MAKE_WEBHOOK_URL_*` o `MAKE_HMAC_SECRET` ausentes), responde `{ ok: true, pendiente_make: true }` con 200 y un `console.warn` — **nunca** crashea ni finge un éxito sin la bandera. Así la UI de las P siguientes se construye sin Make vivo, y P9 sabe exactamente qué endpoints faltan por conectar buscando la bandera.
+
+**Prevención futura:** al crear un endpoint cuyo escenario Make aún no existe, incluir siempre la rama de degradación con `pendiente_make: true` antes de la llamada real; es el patrón ya usado por `crear-solicitud` y `adjuntos/upload`. Un 200 "ok" sin la bandera es indistinguible de una escritura real y esconde deuda para P9.
+
+### E-051 — Idempotencia server-side releyendo el registro real antes de escribir (asignar/PATCH) (22-jul-2026)
+
+**Regla:** antes de reenviar a Make una acción que cambia estado, el handler **relee el registro real** de Airtable (`getRecord` con los campos mínimos) y verifica la precondición server-side, aunque la UI ya la controle: `asignar` responde 409 si `tasador` ya está poblado o si el estado es terminal (`cancelada`/`cerrada`); `PATCH` responde 409 si el estado ≠ `creada` (REGLA C). El server es la última línea de defensa, no confía en que el botón esté oculto.
+
+**Prevención futura:** toda acción de una sola vía (asignar, cerrar, cancelar) debe verificar idempotencia releyendo el estado real, no asumirlo desde el payload del cliente. Nota: la validación de RN-44 (datos mínimos) quedó pendiente de server porque el read-layer aún degrada `unidades`/`contactos` a `[]` — validarla contra ese vacío bloquearía toda asignación; vive client-side hasta que exista el schema (ver [[E-045]]).
+
+### E-052 — No duplicar helpers de Airtable/Make: usar `lib/airtable-client.ts` y `lib/make-client.ts` (22-jul-2026)
+
+**Regla:** las lecturas de Airtable usan `getRecord`/`listRecords`/`createRecord` de `lib/airtable-client.ts`; las escrituras de negocio usan `postToMake` de `lib/make-client.ts` (que ya firma HMAC-SHA256 y loguea en `LogEscenarios`). El plan proponía `lib/airtable/client.ts` y `lib/make/webhook.ts` — **no existen y no se crean**; son los mismos helpers con otra ruta.
+
+**Prevención futura:** antes de crear cualquier helper de infraestructura que el plan mencione, verificar contra el inventario (`docs/_notas/inventario-if02.md`) si ya existe con otro nombre — el repo v0 ya trae cliente Airtable con reintentos 429/5xx y cliente Make con HMAC; duplicarlos fragmenta la firma y el logging.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
