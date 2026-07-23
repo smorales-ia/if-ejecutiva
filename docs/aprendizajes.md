@@ -359,7 +359,7 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 ### E-063 — Cuando la base v0 ya cumple los criterios de aceptación de una P, verificar y no reescribir (22-jul-2026)
 
-**Regla:** varias P del plan (P3 wizard, P4 formulario, P6 detalle) ya venían casi completas en la base v0.dev. El trabajo correcto es leer el código, confirmar contra los criterios §X.3 uno por uno, y aplicar sólo los fixes puntuales que falten — no reescribir componentes funcionales para "hacer la P". P6 fue verificación de §7.3 (Reglas A/C, tooltip RN-44, 11 bloques, tabs) + un único fix (RN-48).
+**Regla:** varias P del plan (P3 wizard, P4 formulario, P6 detalle, P8 sheet de documentos) ya venían casi completas en la base v0.dev. El trabajo correcto es leer el código, confirmar contra los criterios §X.3 uno por uno, y aplicar sólo los fixes puntuales que falten — no reescribir componentes funcionales para "hacer la P". Ejemplos: P6 = verificación §7.3 + un fix (RN-48); P8 = verificación §9.3 (15 tipos, modo consulta, confirmación al desmarcar) + un fix (RN-59, ver [[E-069]]).
 
 **Prevención futura:** antes de construir lo que una P describe, auditar si el repo ya lo tiene (inventario + grep + lectura). Reportar honestamente "ya implementado, verificado" en vez de inventar reescrituras; reservar los cambios para gaps reales. Ver [[E-053]] (extender in-place antes de crear estructura nueva).
 
@@ -392,6 +392,18 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 **Regla:** la confirmación del diálogo de asignación debe enunciar las **4** consecuencias: (1) la solicitud pasa a estado **asignada**, (2) se registra fecha/hora de asignación, (3) **se enviará el correo de asignación al tasador**, (4) los datos quedan en modo consulta. La base v0 omitía la (3); es obligatoria porque la asignación dispara SC-Asignar/correo (REGLA A).
 
 **Prevención futura:** un diálogo de confirmación de una acción con efectos externos debe listar todos los efectos, no solo el cambio de estado visible. Omitir "se enviará correo" deja al usuario sin saber que la acción notifica a un tercero.
+
+### E-069 — RN-59 (modo consulta) se evalúa en el padre y se propaga como `readOnly`; el hijo no lo recomputa (22-jul-2026)
+
+**Regla:** el modo consulta RN-59 (`estado ≠ "creada" Y tasador asignado`) se calcula **una sola vez** en el componente padre (`solicitud-detail.tsx`, `soloLectura`) y se pasa como prop `readOnly` a los hijos (sheet de documentos, bloques de datos). Un hijo **no debe** recomputarlo con una condición más débil (solo `estado !== "creada"`, ignorando el tasador) — eso genera divergencias de bloqueo (p. ej. una solicitud `requiere_atencion` sin tasador quedaría bloqueada en el hijo pero editable en el padre). Se permite un fallback por estado (`readOnly ?? estado !== "creada"`) sólo por compatibilidad, pero el valor autoritativo viene del padre.
+
+**Prevención futura:** cualquier regla de negocio compuesta (RN-59 y similares) se evalúa en un único lugar y se propaga; nunca se re-deriva parcialmente en cada componente que la consume. Al crear un nuevo hijo que dependa de modo consulta, recibir `readOnly` por prop, no recalcularlo.
+
+### E-070 — Desmarcar un documento con archivo cargado exige confirmación antes de descartar el vínculo (22-jul-2026)
+
+**Regla:** en el checklist de documentos, desmarcar un tipo que ya tiene archivo asociado abre un `AlertDialog` de confirmación antes de quitar el vínculo (el archivo no se pierde de Dropbox, pero se desvincula del tipo). Quitar el vínculo sin confirmar haría fácil descartar por accidente un adjunto ya cargado. La redacción del diálogo no es un literal §6, así que admite variación.
+
+**Prevención futura:** toda acción que descarte un vínculo/dato ya cargado por el usuario (desmarcar con archivo, eliminar unidad/contacto con datos) debe confirmar primero; reservar la acción directa sin confirmación para elementos vacíos.
 
 ## Estado de tareas
 

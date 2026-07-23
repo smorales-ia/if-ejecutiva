@@ -28,7 +28,7 @@
 | P6 ✅ 22-jul-2026 | Panel detalle | Reglas A/C, barra de acciones, tooltip RN-44, 11 bloques de Datos e Historial/Adjuntos ya estaban en `solicitud-detail.tsx` (v0). P6: verificación §7.3 + fix RN-48 (avalúo total = suma de unidades). Cablear asignar/editar a endpoints reales → P7/P9. |
 | P7 ✅ 22-jul-2026 | Diálogo de asignación | (La P7 del plan v1.9 es el diálogo de asignación, no el sheet.) Diálogo cmdk ya existía; P7 cableó `POST /api/solicitudes/[id]/asignar` (guarda de record-id, estado optimista, toast §6), completó las 4 consecuencias de la confirmación. Picker sigue mock (H-05); `router.refresh` → P9. Contrato 🔴. |
 | P8 ✅ 22-jul-2026 | Sheet Documentos y Adjuntos | (La P8 del plan v1.9 es el sheet de documentos.) Sheet ya existía (15 tipos, `FileUploadZone`, modo consulta, confirmación al desmarcar); P8: verificación §9.3 + fix RN-59 (el detalle pasa `readOnly` en vez de que el sheet lo recompute solo por estado). Subida real → P9. |
-| P9 | Deploy y validación | Railway — validar happy path completo con datos reales antes de cerrar CU-002 v1.9. |
+| P9 ✅ 22-jul-2026 (código) | Deploy y validación | Alcance acotado: barrido de mocks, health check real (Airtable), build+tsc verdes, `.env.example` completo, artefactos Make (SC01/SC-Asignar/SC-Edicion importables) + AT01 diferido + `checklist-P9-manual.md`. Lint diferido (eslint no instalado). **Acciones externas (Make/Railway/push/smoke test) → mañana**, ver checklist. |
 
 ---
 

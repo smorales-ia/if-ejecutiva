@@ -1,0 +1,111 @@
+{
+  "name": "SC-Edicion - Edicion de solicitud",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": { "hook": null, "maxResults": 1 },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": { "parameters": { "hook": { "data": { "editable": "true" }, "label": "SC-Edicion" } } },
+        "parameters": [
+          { "name": "hook", "type": "hook:gateway-webhook", "label": "Webhook", "required": true },
+          { "name": "maxResults", "type": "number", "label": "Maximum number of results" }
+        ],
+        "note": "Payload desde PATCH /api/solicitudes/[id] (Next.js): { solicitudId (record_id), ejecutivaClerkId, cambios (objeto con los campos editados, camelCase) }. La URL de este webhook se copia a MAKE_WEBHOOK_URL_SC_EDICION. HMAC X-VP-Signature se ignora por ahora (D-11). Solo se dispara si la solicitud esta en estado 'creada' (el Route Handler ya lo valida server-side, REGLA C)."
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionUpdateRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "id": "{{1.solicitudId}}",
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblaHTyMHYfmy7Fg6",
+        "record": {
+          "direccion": "{{1.cambios.direccion}}",
+          "observaciones_internas": "{{1.cambios.observaciones}}"
+        },
+        "typecast": false,
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "TX_Solicitudes (tblaHTyMHYfmy7Fg6)" } } },
+        "note": "Actualiza TX_Solicitudes por record id. TODO-CRITICO: Make NO puede 'spread' un objeto dinamico ({{1.cambios}}) en el record — hay que mapear EXPLICITAMENTE cada campo editable que el formulario permita cambiar. Aqui se dejan 2 de ejemplo (direccion, observaciones_internas). Agregar el resto segun los campos reales editables de TX_Solicitudes (prioridad, tipo_informe, producto, cliente_final_nombre, cliente_final_rut, etc.), leyendo cada uno de {{1.cambios.<campoCamelCase>}}. Los campos Link (cliente/comuna/tipo_propiedad...) requieren su propio Search Records por nombre, igual que SC01 (modulos 2-6), si se permite editarlos. Considerar usar filtros/if() para no sobreescribir con vacio los campos que no vinieron en 'cambios'."
+      }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblMKmDg2KrO5fMn8",
+        "fields": {
+          "tipo_evento": "datos_modificados",
+          "solicitud": [{ "id": "{{1.solicitudId}}" }]
+        }
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "A_Eventos (tblMKmDg2KrO5fMn8)" } } },
+        "note": "Registra evento 'datos_modificados' (REGLA C). TODO-VERIFICAR nombre del campo Link a la solicitud en A_Eventos ('solicitud' asumido)."
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblR4VWpUHw1CSyIS",
+        "fields": {
+          "escenario": "SC-EDICION",
+          "solicitud_id": "{{1.solicitudId}}",
+          "estado": "ok",
+          "payload_enviado": "{{toString(1.cambios)}}",
+          "respuesta": "edicion ok"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "LogEscenarios (tblR4VWpUHw1CSyIS)" } } },
+        "note": "Log obligatorio. TODO-VERIFICAR nombres reales de campo de LogEscenarios (E-033) antes de activar."
+      }
+    },
+    {
+      "id": 5,
+      "module": "gateway:WebhookRespond",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "status": "200",
+        "body": "{\"ok\": true}",
+        "headers": [ { "key": "Content-Type", "value": "application/json" } ]
+      },
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 },
+        "parameters": [
+          { "name": "status", "type": "text", "label": "Status" },
+          { "name": "body", "type": "text", "label": "Body" },
+          { "name": "headers", "type": "array", "label": "Headers" }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": { "roundtrips": 1, "maxErrors": 3, "autoCommit": true, "autoCommitTriggerLast": true, "sequential": false, "confidential": false, "dataloss": false, "dlq": false, "freshVariables": false },
+    "designer": { "orphans": [] },
+    "zone": "eu1.make.com",
+    "notes": "ARTEFACTO P9 — ESQUELETO PARCIAL VALIDO. Modulos verificados (webhook, ActionUpdateRecords v3, ActionCreateRecord v3, WebhookRespond v1). Flujo: Webhook -> Update TX_Solicitudes -> Create A_Eventos (datos_modificados) -> Log -> Respond. Antes de importar: reemplazar '__REEMPLAZAR_CONEXION_AIRTABLE__' y copiar URL a MAKE_WEBHOOK_URL_SC_EDICION. \n\n### TODO-CRITICO (campos dinamicos) ###\nEl modulo 2 solo mapea 2 campos de ejemplo. Make no puede volcar el objeto {{1.cambios}} completo automaticamente: mapear explicitamente cada campo editable. Ver nota del modulo 2. Mientras eso no se complete, la edicion solo persistira direccion y observaciones. \n\n### TODO-VERIFICAR ###\n- Nombre del campo Link a solicitud en A_Eventos.\n- Nombres reales de campo de LogEscenarios (E-033).\n- 'toString(1.cambios)' en el log (modulo 4): confirmar que Make serializa el objeto; si no, loguear campos individuales."
+  }
+}

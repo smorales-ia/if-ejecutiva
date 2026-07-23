@@ -1,0 +1,172 @@
+{
+  "name": "SC01 - Crear solicitud (alta interna)",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": { "hook": null, "maxResults": 1 },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "hook": { "data": { "editable": "true" }, "label": "SC01 - Crear solicitud" }
+          }
+        },
+        "parameters": [
+          { "name": "hook", "type": "hook:gateway-webhook", "label": "Webhook", "required": true },
+          { "name": "maxResults", "type": "number", "label": "Maximum number of results" }
+        ],
+        "note": "Payload esperado desde /api/webhooks/crear-solicitud (Next.js): campos del formulario en camelCase + bancoOriginador (=banco_id), bancoFinancista (=banco), origen_canal='ingreso_manual', ejecutivaClerkId. Header X-VP-Signature se ignora por ahora (deuda D-11). La URL de este webhook se copia a MAKE_WEBHOOK_URL_SC01."
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblpK7AcYBMH93apK",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.cliente}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "M_Clientes (tblpK7AcYBMH93apK)" } } },
+        "note": "Resuelve recXXX de M_Clientes por primary field 'nombre' (UPPER, case-insensitive)."
+      }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblOcsdiwxQLfD178",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.tipoInforme}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "M_TiposInforme (tblOcsdiwxQLfD178)" } } },
+        "note": "Resuelve recXXX de M_TiposInforme por 'nombre'."
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbl8rxZA14xFIBGU6",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.tipoPropiedad}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "M_TiposPropiedad (tbl8rxZA14xFIBGU6)" } } },
+        "note": "Resuelve recXXX de M_TiposPropiedad por 'nombre'. UPPER() cubre duplicados de formato (CASA/Casa)."
+      }
+    },
+    {
+      "id": 5,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbll6D4KQ5aDdjjaj",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.producto}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "M_Productos (tbll6D4KQ5aDdjjaj)" } } },
+        "note": "Resuelve recXXX de M_Productos por 'nombre'."
+      }
+    },
+    {
+      "id": 6,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblyggAfQfq682XHK",
+        "formula": "UPPER({nombre}) = UPPER(\"{{1.comuna}}\")",
+        "maxRecords": 1
+      },
+      "metadata": {
+        "designer": { "x": 1500, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "M_Comunas (tblyggAfQfq682XHK)" } } },
+        "note": "Resuelve recXXX de M_Comunas por 'nombre'."
+      }
+    },
+    {
+      "id": 7,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblaHTyMHYfmy7Fg6",
+        "fields": {
+          "cliente": [{ "id": "{{2.id}}" }],
+          "tipo_informe": [{ "id": "{{3.id}}" }],
+          "tipo_propiedad": [{ "id": "{{4.id}}" }],
+          "producto": [{ "id": "{{5.id}}" }],
+          "comuna": [{ "id": "{{6.id}}" }],
+          "fecha_solicitud": "{{formatDate(now; \"YYYY-MM-DD\")}}",
+          "direccion": "{{1.direccion}}",
+          "cliente_final_rut": "{{1.rut}}",
+          "cliente_final_nombre": "{{1.nombre}}",
+          "solicitante_telefono": "{{1.telefono}}",
+          "fldd56pLZyKYoi2Vi": "{{1.sucursal_originadora}}",
+          "fldRweQyq3tTQGmPR": "{{1.ejecutivo_solicitante}}",
+          "fldb1vmKk7y3hi4uY": "{{parseNumber(1.n_operacion_cliente)}}",
+          "observaciones_internas": "{{if(1.canal; \"Canal: \" + 1.canal + \". \"; \"\")}}{{if(1.email; \"Email: \" + 1.email + \". \"; \"\")}}{{if(1.banco; \"Banco financista: \" + 1.banco + \". \"; \"\")}}{{1.observaciones}}",
+          "fldPphw1FWfYdZI2Z": "{{1.origen_canal}}",
+          "estado": "creada",
+          "banco": "{{1.banco_id}}"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 1800, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "TX_Solicitudes (tblaHTyMHYfmy7Fg6)" } } },
+        "note": "Crea TX_Solicitudes(estado='creada'). Links usan recXXX de los Search (mod 2-6). 'banco' texto libre = banco_id. 'fecha_solicitud'=formatDate(now) (fix VP-NaN-XXXX). TODO opcional: mapear 'ejecutiva_asignada' resolviendo ejecutivaClerkId contra AUTH_Usuarios.clerk_user_id (Search Records) si se quiere poblar la cartera desde el alta.",
+        "parameters": [ { "name": "__IMTCONN__", "type": "account:airtable2", "label": "Connection", "required": true } ]
+      }
+    },
+    {
+      "id": 8,
+      "module": "gateway:WebhookRespond",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "status": "200",
+        "body": "{\"id\": \"{{7.id}}\", \"codigo_ext\": \"{{7.codigo_ext}}\"}",
+        "headers": [ { "key": "Content-Type", "value": "application/json" } ]
+      },
+      "metadata": {
+        "designer": { "x": 2100, "y": 0 },
+        "parameters": [
+          { "name": "status", "type": "text", "label": "Status" },
+          { "name": "body", "type": "text", "label": "Body" },
+          { "name": "headers", "type": "array", "label": "Headers" }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": { "roundtrips": 1, "maxErrors": 3, "autoCommit": true, "autoCommitTriggerLast": true, "sequential": false, "confidential": false, "dataloss": false, "dlq": false, "freshVariables": false },
+    "designer": { "orphans": [] },
+    "zone": "eu1.make.com",
+    "notes": "ARTEFACTO P9 (copia fiel verificada). Fuente: docs/make/SC01_crear_solicitud.blueprint.json — este es el escenario de ALTA INTERNA (crear solicitud), no una validación separada; el nombre 'ValidacionSolicitud' del pedido se mapea a este SC01. Módulos verificados contra la instancia real eu1 (webhook + 5x Search + Create + Respond). Antes de importar: reemplazar '__REEMPLAZAR_CONEXION_AIRTABLE__' por la conexión Airtable real. Si SC01 ya está activo en Make, NO re-importar: verificar campo por campo. Copiar la URL del webhook a MAKE_WEBHOOK_URL_SC01 en Railway."
+  }
+}

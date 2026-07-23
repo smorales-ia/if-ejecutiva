@@ -1,0 +1,130 @@
+{
+  "name": "SC-Asignar - Asignacion de tasador",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": { "hook": null, "maxResults": 1 },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": { "parameters": { "hook": { "data": { "editable": "true" }, "label": "SC-Asignar" } } },
+        "parameters": [
+          { "name": "hook", "type": "hook:gateway-webhook", "label": "Webhook", "required": true },
+          { "name": "maxResults", "type": "number", "label": "Maximum number of results" }
+        ],
+        "note": "Payload desde POST /api/solicitudes/[id]/asignar (Next.js): { solicitudId (record_id TX_Solicitudes), tasadorId, motivo (opcional), ejecutivaClerkId }. La URL de este webhook se copia a MAKE_WEBHOOK_URL_SC_ASIGNAR. HMAC X-VP-Signature se ignora por ahora (deuda D-11). TODO-VERIFICAR: hoy tasadorId puede ser un id mock (ver E-064/H-05); el frontend debe enviar el recXXX real de M_Tasadores para que el link del modulo 2 resuelva (swap picker mock -> /api/tasadores/candidatos cuando M_Tasadores tenga zonas_cobertura/casos_en_curso)."
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionUpdateRecords",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "id": "{{1.solicitudId}}",
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblaHTyMHYfmy7Fg6",
+        "record": {
+          "tasador": [{ "id": "{{1.tasadorId}}" }],
+          "estado": "asignada"
+        },
+        "typecast": false,
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "TX_Solicitudes (tblaHTyMHYfmy7Fg6)" } } },
+        "note": "Actualiza TX_Solicitudes por record id ({{1.solicitudId}}): tasador (Link -> M_Tasadores) y estado='asignada' (RN: creada->asignada, REGLA A). TODO-CAMPO: agregar 'fecha_asignacion' = {{formatDate(now; \"YYYY-MM-DD HH:mm\")}} SOLO si el campo ya existe en TX_Solicitudes (pendiente de creacion D-08; ver docs/schema-airtable.md). Si no existe, crearlo primero o mapear la fecha en A_Eventos. 'tasador' requiere el recXXX real de M_Tasadores (ver nota del modulo 1)."
+      }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblMKmDg2KrO5fMn8",
+        "fields": {
+          "tipo_evento": "asignacion_manual",
+          "solicitud": [{ "id": "{{1.solicitudId}}" }]
+        }
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "A_Eventos (tblMKmDg2KrO5fMn8)" } } },
+        "note": "Evento 1/2 (REGLA A): 'asignacion_manual'. 'tipo_evento' es singleLineText. TODO-VERIFICAR nombre exacto del campo Link a la solicitud en A_Eventos (aqui asumido 'solicitud') via docs/schema-airtable.md o MCP; ajustar si difiere. TODO-OPCIONAL: agregar un campo detalle/nota con {{1.motivo}} si A_Eventos lo tiene."
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblMKmDg2KrO5fMn8",
+        "fields": {
+          "tipo_evento": "correo_asignacion_enviado",
+          "solicitud": [{ "id": "{{1.solicitudId}}" }]
+        }
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "A_Eventos (tblMKmDg2KrO5fMn8)" } } },
+        "note": "Evento 2/2 (REGLA A): 'correo_asignacion_enviado'. IMPORTANTE: este evento deberia crearse DESPUES del modulo de correo (ver TODO-EMAIL en scenario.notes). Mientras el modulo de correo no exista, este registro es optimista; al agregar el email, mover este Create despues de el."
+      }
+    },
+    {
+      "id": 5,
+      "module": "airtable:ActionCreateRecord",
+      "version": 3,
+      "parameters": { "__IMTCONN__": "__REEMPLAZAR_CONEXION_AIRTABLE__" },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblR4VWpUHw1CSyIS",
+        "fields": {
+          "escenario": "SC-ASIGNAR",
+          "solicitud_id": "{{1.solicitudId}}",
+          "estado": "ok",
+          "payload_enviado": "{\"tasadorId\":\"{{1.tasadorId}}\",\"motivo\":\"{{1.motivo}}\"}",
+          "respuesta": "asignacion ok, tasador {{1.tasadorId}}"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 },
+        "restore": { "parameters": { "__IMTCONN__": { "label": "__REEMPLAZAR_CONEXION_AIRTABLE__" } }, "expect": { "base": { "label": "VProperty (app9G7lLkIV3CpeLa)" }, "table": { "label": "LogEscenarios (tblR4VWpUHw1CSyIS)" } } },
+        "note": "Log obligatorio (construccion.md §11). TODO-VERIFICAR: los nombres de campo reales de LogEscenarios pueden diferir (ver E-033 hallazgo 4: el schema real usa 'Titulo Log'/'Escenario'/'Estado'/'Detalle'...). Ajustar el mapper a los nombres reales antes de activar, o el Create fallara en silencio."
+      }
+    },
+    {
+      "id": 6,
+      "module": "gateway:WebhookRespond",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "status": "200",
+        "body": "{\"ok\": true}",
+        "headers": [ { "key": "Content-Type", "value": "application/json" } ]
+      },
+      "metadata": {
+        "designer": { "x": 1500, "y": 0 },
+        "parameters": [
+          { "name": "status", "type": "text", "label": "Status" },
+          { "name": "body", "type": "text", "label": "Body" },
+          { "name": "headers", "type": "array", "label": "Headers" }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": { "roundtrips": 1, "maxErrors": 3, "autoCommit": true, "autoCommitTriggerLast": true, "sequential": false, "confidential": false, "dataloss": false, "dlq": false, "freshVariables": false },
+    "designer": { "orphans": [] },
+    "zone": "eu1.make.com",
+    "notes": "ARTEFACTO P9 — ESQUELETO PARCIAL VALIDO. Modulos verificados contra la instancia eu1 (gateway:CustomWebHook v1, airtable:ActionUpdateRecords v3, airtable:ActionCreateRecord v3, gateway:WebhookRespond v1). Flujo importable: Webhook -> Update TX_Solicitudes (tasador+estado) -> 2x Create A_Eventos -> Create LogEscenarios -> Respond. Antes de importar: reemplazar '__REEMPLAZAR_CONEXION_AIRTABLE__'. Copiar URL del webhook a MAKE_WEBHOOK_URL_SC_ASIGNAR. \n\n### TODO-EMAIL (SC13 · envio de correo al tasador) — NO INCLUIDO en el flujo a proposito ###\nNingun blueprint existente de esta instancia usa un modulo de email/gmail/smtp, por lo que NO se genero uno (habria fallado al importar con 'Module Not Found'). Agregarlo MANUALMENTE en Make entre el modulo 2 y el 4: (1) elegir el conector de correo disponible en la instancia (Gmail / Email SMTP / etc.); (2) destinatario = email del tasador -> agregar un airtable:ActionSearchRecords o GetRecord sobre M_Tasadores (tblEi5jp18c1j00bQ) por recXXX = {{1.tasadorId}} para leer su email; (3) asunto/cuerpo = plantilla 'email_asignacion_tasador' (Especificacion v1.9 §1.6.3); (4) adjuntos opcionales desde Dropbox via 'dropbox:getFile' v5 (modulo verificado, existe en la instancia) apuntando a /VProperty/Tasaciones/{{codigo_ext}}; (5) tras enviar, mover el Create A_Eventos 'correo_asignacion_enviado' (modulo 4) para que quede DESPUES del envio real. Ver checklist-P9-manual.md §2 sub-bloque 'Envio de correo al tasador (SC13)'. \n\n### TODO-CAMPOS ###\n- 'fecha_asignacion' en TX_Solicitudes: verificar que exista (D-08) antes de mapearlo en el modulo 2.\n- Nombre del campo Link a solicitud en A_Eventos (modulos 3-4): verificar 'solicitud' via schema/MCP.\n- Nombres reales de campo en LogEscenarios (modulo 5): ajustar a 'Titulo Log'/'Escenario'/'Estado'/... (E-033)."
+  }
+}
