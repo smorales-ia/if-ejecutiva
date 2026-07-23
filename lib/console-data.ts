@@ -1393,17 +1393,21 @@ export interface DatosSii {
 }
 
 export function mockDatosSii(s: Solicitud): DatosSii {
+  // Avalúo numérico por unidad (base para el total, RN-48).
+  const avaluos = s.unidades.map((_u, i) => 1200 + i * 350)
   const unidades = s.unidades.map((u, i) => ({
     unidadId: u.id,
     ubicacion: u.ubicacion,
     destino: u.tipoBien === "Edificación" ? "Habitacional" : "Complementario",
     codigoSii: u.rolSii || `S/R-${i + 1}`,
-    avaluoFiscal: `${(1200 + i * 350).toLocaleString("es-CL")} UF`,
+    avaluoFiscal: `${avaluos[i].toLocaleString("es-CL")} UF`,
   }))
+  // RN-48: el avalúo fiscal total es la suma de los avalúos de las unidades.
+  const avaluoTotal = avaluos.reduce((acc, v) => acc + v, 0)
   return {
     destinoPrincipal: "Habitacional",
     unidades,
-    avaluoTotal: `${(1200 * s.unidades.length + 400).toLocaleString("es-CL")} UF`,
+    avaluoTotal: `${avaluoTotal.toLocaleString("es-CL")} UF`,
     contribucionAnual: "18,4 UF",
   }
 }

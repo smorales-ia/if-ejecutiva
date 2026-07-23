@@ -333,6 +333,24 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** al agregar un campo que dependa de nuevo/usado, gatearlo en la UI por `esNuevo` y confirmar que la regla zod correspondiente sigue siendo coherente con ese gating (no exigir server-side algo que la UI oculta, ni permitir en la UI algo que la validación rechace).
 
+### E-059 — Panel de lista URL-driven: `router.push(?params)` + refetch nativo de App Router, sin SWR (22-jul-2026)
+
+**Regla:** el estado del panel (vista, filtros, búsqueda, orden, página) vive en `searchParams`, no en `useState`. Los componentes cliente escriben con `router.push(${pathname}?${params})` y el server component (`consola/page.tsx`) re-renderiza leyendo los params y re-fetcheando — es el mecanismo nativo de App Router, **no hace falta SWR ni react-query**. Un helper `updateParams(updates)` clona los params actuales, aplica cambios (valor vacío/`null` = borrar) y resetea `page` salvo que se toque `page`. El buscador usa un `useDebounce` propio (`lib/use-debounce.ts`, ~15 líneas, 300ms) con sync bidireccional `qLocal ↔ ?q`. Ventaja: la URL es compartible y el back/forward del navegador funciona.
+
+**Prevención futura:** antes de instalar SWR/react-query para "fetch con filtros", recordar que en App Router basta con URL params + server component. Reservar librerías de fetching para casos con revalidación/optimistic UI reales. Filtros server-side sobre Airtable: validar cada valor contra una lista cerrada antes de interpolar en `filterByFormula`, y filtrar campos Link por su primary field/nombre, no por recordId ([[E-018]]).
+
+### E-060 — `useSearchParams()` exige un `<Suspense>` boundary; el fallo solo lo caza `pnpm build`, no `tsc` (22-jul-2026)
+
+**Regla:** cualquier componente cliente que use `useSearchParams()` debe estar envuelto en `<Suspense>`; si no, `pnpm build` falla al prerenderizar la página con "useSearchParams() should be wrapped in a suspense boundary". `pnpm tsc --noEmit` **no detecta** esto — pasa limpio y el build igual rompe. Ocurrió en la landing mock `app/page.tsx` (`/`) mientras `/consola` sí tenía su `<Suspense>`.
+
+**Prevención futura:** al cerrar una P de **riesgo medio** (cambios de data-flow, RSC/client boundaries, `useSearchParams`, `generateStaticParams`, etc.), correr `pnpm build` además de `tsc` para cazar errores de prerender antes de P9 — no confiar solo en el typecheck. El gate por-P del plan es `tsc`, pero el build es barato de más y evita sorpresas en el deploy.
+
+### E-061 — Enum `Vista` reconciliado a las 5 vistas del plan v1.9 (22-jul-2026)
+
+**Regla:** el enum canónico de vistas es `mi_cartera · sla_riesgo · por_asignar · aprobadas · todas` (`lib/solicitudes.ts`), con `VISTA_DEFAULT = 'todas'`. Se eliminaron `reasignar` (REGLA A quita la reasignación formal) y `pausadas` (estado inexistente en el enum `EstadoSolicitud`). Fórmulas: `por_asignar` = `AND(OR(estado=creada,estado=requiere_atencion),ARRAYJOIN({tasador})="")`; `todas` = `TRUE()`; `mi_cartera` resuelve el nombre de la ejecutiva ([[E-018]]/[[E-019]]). Antes existían 3 vocabularios distintos (server, tabs del repo, plan); ahora son uno solo.
+
+**Prevención futura:** cualquier referencia a `activas`/`cartera`/`reasignar`/`pausadas` como vista es obsoleta — `activas`→`todas`, `cartera`→`mi_cartera`. Al tocar vistas, actualizar en bloque `lib/solicitudes.ts`, `page.tsx`, `api/solicitudes/route.ts`, `api/solicitudes/contadores/route.ts` y `solicitud-list.tsx`.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
