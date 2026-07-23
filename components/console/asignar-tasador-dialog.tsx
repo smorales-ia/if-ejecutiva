@@ -58,7 +58,7 @@ export function AsignarTasadorDialog({
   onOpenChange: (open: boolean) => void
   solicitud: Solicitud
   /** Se invoca tras confirmar la asignación. `nota` es opcional. */
-  onConfirmado: (nuevo: string, nota: string) => void
+  onConfirmado: (tasadorId: string, nombre: string, nota: string) => void
 }) {
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [seleccionado, setSeleccionado] = React.useState<Profesional | null>(null)
@@ -100,7 +100,7 @@ export function AsignarTasadorDialog({
     if (!seleccionado) return
     setConfirmOpen(false)
     onOpenChange(false)
-    onConfirmado(seleccionado.nombre, nota.trim())
+    onConfirmado(seleccionado.id, seleccionado.nombre, nota.trim())
   }
 
   return (
@@ -269,6 +269,10 @@ export function AsignarTasadorDialog({
               <li className="flex gap-2">
                 <Check className="mt-0.5 size-4 shrink-0 text-brand" />
                 Se registrará la fecha y hora de asignación.
+              </li>
+              <li className="flex gap-2">
+                <Check className="mt-0.5 size-4 shrink-0 text-brand" />
+                Se enviará el correo de asignación al tasador.
               </li>
               <li className="flex gap-2">
                 <Check className="mt-0.5 size-4 shrink-0 text-brand" />

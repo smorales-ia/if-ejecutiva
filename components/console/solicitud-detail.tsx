@@ -158,7 +158,32 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     toast.success("Cambios guardados en la solicitud.", { duration: 3000 })
   }
 
-  function handleConfirmado(nuevo: string, nota: string) {
+  async function handleConfirmado(tasadorId: string, nuevo: string, nota: string) {
+    // /consola: ids reales (recXXX) → dispara el POST real (hoy degrada a
+    // pendiente_make porque Make no está provisionado). Demo mock (/): el id no
+    // es record id → solo estado local, sin 404. router.refresh() se difiere a
+    // P9: hoy refrescaría el registro sin cambios y borraría el update optimista.
+    if (/^rec[a-zA-Z0-9]{14}$/.test(s.id)) {
+      try {
+        const res = await fetch(`/api/solicitudes/${s.id}/asignar`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tasadorId, motivo: nota || undefined }),
+        })
+        if (!res.ok) {
+          toast.error(
+            "No pudimos completar la acción. Intenta nuevamente en unos segundos.",
+          )
+          return
+        }
+      } catch {
+        toast.error(
+          "No pudimos completar la acción. Intenta nuevamente en unos segundos.",
+        )
+        return
+      }
+    }
+
     const ahora = new Date().toLocaleString("es-CL", {
       day: "2-digit",
       month: "short",
@@ -190,7 +215,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       ...prev,
     ])
 
-    toast.success(`Solicitud asignada a ${nuevo}.`, { duration: 3500 })
+    toast.success(`Solicitud asignada a ${nuevo}`, { duration: 3500 })
   }
 
   function reenviarCorreo() {

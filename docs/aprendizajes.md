@@ -351,6 +351,24 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** cualquier referencia a `activas`/`cartera`/`reasignar`/`pausadas` como vista es obsoleta — `activas`→`todas`, `cartera`→`mi_cartera`. Al tocar vistas, actualizar en bloque `lib/solicitudes.ts`, `page.tsx`, `api/solicitudes/route.ts`, `api/solicitudes/contadores/route.ts` y `solicitud-list.tsx`.
 
+### E-062 — RN-48: un total mostrado debe computarse sumando sus ítems, no con una fórmula paralela (22-jul-2026)
+
+**Regla:** el avalúo fiscal total (`DatosSii.avaluoTotal`) es la **suma** de los avalúos de las unidades (RN-48), no un valor calculado por separado. `mockDatosSii` calculaba el total con `1200*n + 400` mientras que los ítems usaban `1200 + i*350` — divergían (2 unidades: total 2800 vs suma 2750). Se corrigió computando el numérico por unidad, sumándolo y formateando ambos desde la misma base.
+
+**Prevención futura:** cualquier "total" que se muestre junto a una tabla de ítems (avalúos, superficies, montos financieros) debe derivarse sumando los ítems en runtime, nunca con una constante o fórmula paralela que puede desincronizarse. Aplica también cuando P9 reemplace los mocks por datos reales: el total se calcula desde las unidades, no se lee de un campo aparte.
+
+### E-063 — Cuando la base v0 ya cumple los criterios de aceptación de una P, verificar y no reescribir (22-jul-2026)
+
+**Regla:** varias P del plan (P3 wizard, P4 formulario, P6 detalle) ya venían casi completas en la base v0.dev. El trabajo correcto es leer el código, confirmar contra los criterios §X.3 uno por uno, y aplicar sólo los fixes puntuales que falten — no reescribir componentes funcionales para "hacer la P". P6 fue verificación de §7.3 (Reglas A/C, tooltip RN-44, 11 bloques, tabs) + un único fix (RN-48).
+
+**Prevención futura:** antes de construir lo que una P describe, auditar si el repo ya lo tiene (inventario + grep + lectura). Reportar honestamente "ya implementado, verificado" en vez de inventar reescrituras; reservar los cambios para gaps reales. Ver [[E-053]] (extender in-place antes de crear estructura nueva).
+
+### E-064 — Estado actual de `solicitud-detail.tsx`: master-detail sin ruta propia + acciones mock en memoria (22-jul-2026)
+
+**Regla:** el detalle vive en el patrón **master-detail** (`console-shell` con `selectedId`), **sin** ruta `app/solicitudes/[id]/page.tsx` — override consciente respecto al plan (que asumía navegación por URL). Las acciones del detalle todavía son **mock en memoria**: `handleConfirmado` (asignar) y `handleGuardarEdicion` (editar) mutan `useState` local y **no** llaman a `/api/solicitudes/[id]/asignar` ni `PATCH` (creados en P2). Los bloques SII/legales/motor son `mock*()` de `console-data.ts`.
+
+**Prevención futura:** cablear las acciones a los endpoints reales es tarea de P7 (diálogo de asignación) y P9 (deploy/datos reales); hasta entonces, no asumir que asignar/editar en el detalle persisten a Airtable. Si se decide introducir la ruta `/solicitudes/[id]`, es un cambio deliberado de arquitectura, no un requisito pendiente.
+
 ## Estado de tareas
 
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
