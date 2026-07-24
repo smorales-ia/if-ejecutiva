@@ -429,6 +429,14 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** un escenario Make disparado por webhook desde la app NO requiere un script de Airtable Automation trigger — no confundir "escenario Make" con "Automation de Airtable". No reemplazar un mock hasta que exista su fuente real (Make provisionado + schema); listar la dependencia externa en vez de forzar el cambio.
 
+### E-075 — Resolución de los 5 conflictos schema v1.9; `update_field` no migra tipos (24-jul-2026)
+
+**Contexto:** panel aprobó resolver los 5 conflictos que dejó abiertos la verificación MCP del schema v1.9 (`schema-airtable.md §21.4`).
+
+**Regla:** `mcp__airtable__update_field` **solo** modifica `name`, `description` y `options.formula` — no cambia el **tipo** de un campo ni su precisión. Para pasar `fecha_asignacion` de `date` a `dateTime` hubo que crear un campo paralelo `fecha_asignacion_ts` (`fldf8BS8nv2vtOmu0`, dateTime · America/Santiago · 24h), marcar el viejo como DEPRECATED en su descripción (única vía no destructiva vía MCP) y diferir el borrado a una tanda posterior (registrado en `construccion.md §11`). Las demás resoluciones: colisión de nombre → campo nuevo aparte (`tipo_propiedad_nuevo_usado`, no tocar el Link homónimo); divergencia de opciones de singleSelect → se adopta lo que ya está en la base como canónico (`cert_avaluo`/`cert_numero`) en vez de re-crear opciones; nombre largo vs corto de un mismo dominio → se conserva el existente (`sup_terreno_m2`) y se purgan del doc las referencias al nombre no creado (`superficie_terreno_m2`).
+
+**Prevención futura:** ante un cambio de **tipo** de campo Airtable, no intentar `update_field` con `options` de tipo (el schema del tool ni siquiera lo acepta) — planificar de entrada campo paralelo + deprecación + borrado diferido. Al "resolver un conflicto de opciones", preferir adoptar el valor real de la base como canónico y alinear la spec/docs, no mutar el singleSelect. Actualiza [[E-018]] (referenciar campos Link/select por su valor real). Ver snapshots `docs/_notas/snapshot_20260724_1639.md` y `_1649.md`.
+
 ### 2026-07-23 — D_TipoDocumento.tipo_propiedad + sincronización de TX_Comparables en los .md
 
 **Contexto:** dos objetivos independientes: (1) poblar `D_TipoDocumento.tipo_propiedad` en Airtable desde el catálogo documental; (2) alinear todos los .md con el schema real de `TX_Comparables`.
@@ -466,3 +474,10 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 - Cuando un cambio salga del alcance del prompt, avisar antes de aplicarlo.
 - Verificar puerto real del server antes de curl.
 - No hacer adendas: aplicar cambios donde corresponda y entregar la nueva versión completa del archivo modificado.
+
+### 2026-07-24 — Verificación MCP schema v1.9 y cierre de TX_DocumentosLegales
+**Contexto:** Tarea de Data Designer: dejar completo el schema IF-02 v1.9 (Espec v1.9.1 §1.5.1) — tablas TX_ContactosVisita/M_TiposDeBien, 23 campos en TX_Solicitudes, 11 en TX_Unidades, 9 en TX_DocumentosLegales.
+**Inconveniente:** El prompt pedía "crear" tablas y campos, pero casi todo ya existía en la base real (schema-airtable.md §20 los daba por "pendientes"). Crearlos de nuevo habría duplicado nombres/dominios.
+**Causa raíz:** El schema v1.9 se materializó en Airtable después de que §20 se escribiera como "pendiente" (semillas de M_TiposDeBien con createdTime del mismo día). La doc iba por detrás del estado real de la base.
+**Solución aplicada:** Auditoría previa obligatoria con `list_tables_for_base` + `get_table_schema` (este último imprescindible: `list_tables_for_base` devuelve `options:null`, oculta choices de singleSelect y linkedTableId). Solo se crearon los 9 campos faltantes de TX_DocumentosLegales. Se documentó todo en §21 de schema-airtable.md + snapshot en docs/_notas/. `list_tables_for_base` excede el límite de tokens (~112k) → se guarda a archivo y se parsea con python3 (no hay jq en el entorno).
+**Prevención futura:** Ante cualquier prompt de "crear schema", verificar existencia primero y tratar el prompt como *estado deseado*, no como *acciones ciegas*. Reportar como conflicto (sin modificar) todo singleSelect con opciones divergentes (origen_direccion/vendedor_origen_dato: `cert_avaluo` vs `certificado_avaluo`), colisiones de nombre con dominio distinto (tipo_propiedad Link vs nuevo/usado) y divergencias de tipo (fecha_asignacion date vs dateTime).

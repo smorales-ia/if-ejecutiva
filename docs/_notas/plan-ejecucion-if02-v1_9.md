@@ -1182,6 +1182,60 @@ Cada fila muestra:
 - [ ] Crear + Editar + Asignar funciona end-to-end en Railway.
 - [ ] Archivo `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P9.md` creado.
 
+### §10.4 · Artefactos para importar/pegar (pre-checklist manual)
+
+> **Regla dura:** el checklist manual no se genera si estos artefactos no están listos. Sin artefactos, el checklist es solo texto.
+
+**Objetivo.** Generar los archivos concretos que Sergio va a importar en Make y pegar en Airtable Automations el día del smoke test manual.
+
+#### §10.4.1 Blueprints Make (`.json` para importar en eu1)
+
+Ubicación: `docs/_artefactos/make/`
+
+- `SC01-ValidacionSolicitud.blueprint.json`
+- `SC-Asignar.blueprint.json`
+- `SC-Edicion.blueprint.json`
+
+Cada blueprint debe incluir:
+- Webhook trigger.
+- Módulo `Search Records` en Airtable con patrón `UPPER({field}) = UPPER("{{webhookField}}")`.
+- Módulos de escritura (`Update Records` / `Create Records`) — usar `ActionUpdateRecords` conforme aprendizajes.
+- Módulo de validación HMAC.
+- Solo `SC-Asignar`: módulo de correo con plantilla `email_asignacion_tasador` (§1.6.3).
+- Correcciones ya documentadas: `base64`, `dropbox:getFile v5` si aplica.
+
+Si algún módulo no se conoce con certeza, dejar TODO explícito en el JSON — mejor un blueprint parcial válido que uno inventado que falle al importar.
+
+#### §10.4.2 Scripts Airtable Automations (`.js` para pegar)
+
+Ubicación: `docs/_artefactos/airtable/`
+
+- `AT01-ResolverMotorReglas.js` — si aplica al alcance de CU-002; si no, marcar como *"diferido a CU siguiente"*.
+- Cualquier otro AT trigger necesario para SC01 / SC-Asignar / SC-Edicion.
+
+Cada `.js` debe llevar en el encabezado (comentario):
+- Tabla destino y dónde pegarlo.
+- Trigger type y condiciones exactas.
+- Inputs esperados desde la Automation.
+- Outputs para el siguiente paso.
+
+#### §10.4.3 Checklist manual — `docs/_notas/checklist-P9-manual.md`
+
+Estructura: 6 secciones ya propuestas **con estas dos ampliaciones**:
+
+- **Sección 2 (Make):** para cada escenario, indicar nombre del archivo `.blueprint.json` y su ubicación en el repo. Agregar sub-bloque explícito **"Envío de correo al tasador (SC13)"** con: módulo, conexión, plantilla `email_asignacion_tasador` (§1.6.3), lookup de destinatario en `M_Tasadores`, adjuntos desde Dropbox y verificación en `A_Eventos`.
+- **Sección 2 bis (Airtable Automations):** para cada `.js`, nombre del archivo, tabla destino, trigger type, condiciones exactas y variables a mapear en Input variables.
+- **Sección 5 (Smoke test):** sub-verificación explícita del correo al tasador — bandeja del tasador de prueba, asunto, cuerpo, registro en `A_Eventos`.
+
+Todo lo demás del checklist queda tal cual la propuesta original.
+
+#### §10.4.4 Criterios de aceptación de §10.4
+
+- [ ] Los 3 blueprints existen en `docs/_artefactos/make/`.
+- [ ] Los `.js` de Automations existen en `docs/_artefactos/airtable/` (o marcados como diferidos con justificación).
+- [ ] `docs/_notas/checklist-P9-manual.md` existe con las 6 secciones + ampliaciones 2, 2 bis y 5.
+- [ ] Ningún artefacto contiene datos inventados; TODOs claros donde falte información.
+
 ---
 
 ## §11 · Cierre — Post-ejecución de cada P

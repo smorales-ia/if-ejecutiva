@@ -1,6 +1,6 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.10 · Alineado a Capa de Datos v2.6.3 · Especificación v1.9.1 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026) · Re-auditoría `TX_Solicitudes` completa (13-jul-2026, ver §19) · Construcción RF-09: 5 campos nuevos + corrección `LogEscenarios` (13-jul-2026, ver §13.4/§13.5) · Re-auditoría dominio D_ (17-jul-2026, ver §18): confirmado que la migración a 2 tablas + TX_Unidades ya se ejecutó en la base real — D_TipoDato/D_Catalogo/D_CatalogoValor/D_Atributo/D_Documento/D_DocumentoValorAtributo ya no existen · **Schema de soporte a la maqueta v1.9 documentado 22-jul-2026 (ver §20): 7 campos nuevos en TX_Solicitudes, 8 en TX_Unidades, tablas nuevas TX_ContactosVisita/TX_Vendedor/M_TiposDeBien, bloque SII en TX_DatosTasacion. AT02 marcado fuera de alcance de IF-02 (asignación manual, REGLA A)**
+> **Versión**: 1.10 · Alineado a Capa de Datos v2.6.3 · Especificación v1.9.1 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026) · Re-auditoría `TX_Solicitudes` completa (13-jul-2026, ver §19) · Construcción RF-09: 5 campos nuevos + corrección `LogEscenarios` (13-jul-2026, ver §13.4/§13.5) · Re-auditoría dominio D_ (17-jul-2026, ver §18): confirmado que la migración a 2 tablas + TX_Unidades ya se ejecutó en la base real — D_TipoDato/D_Catalogo/D_CatalogoValor/D_Atributo/D_Documento/D_DocumentoValorAtributo ya no existen · **Schema de soporte a la maqueta v1.9 documentado 22-jul-2026 (ver §20): 7 campos nuevos en TX_Solicitudes, 8 en TX_Unidades, tablas nuevas TX_ContactosVisita/TX_Vendedor/M_TiposDeBien, bloque SII en TX_DatosTasacion. AT02 marcado fuera de alcance de IF-02 (asignación manual, REGLA A)** · **Verificación MCP del schema v1.9 (24-jul-2026, ver §21): confirmado que las tablas/campos de §20 ya existen en la base — creados los 9 campos legales de `TX_DocumentosLegales`; `TX_Vendedor` NO existe (vendedor vive como campos en `TX_Solicitudes`); 5 conflictos abiertos en §21.4** · **Resolución de panel (24-jul-2026, ver §21.4): creado `tipo_propiedad_nuevo_usado` (singleSelect nuevo·usado); creado `fecha_asignacion_ts` (dateTime) y `fecha_asignacion` (date) marcado deprecated — MCP no migra tipo in situ; opciones cortas `cert_avaluo`/`cert_numero` adoptadas como canónicas en `origen_direccion` y `vendedor_origen_dato`; `sup_terreno_m2` (precision 0) adoptado, `superficie_terreno_m2` descartado**
 > **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02) + hallazgo `TX_Solicitudes.codigo_solicitud` (primary field) y llave de idempotencia `hash_md5` (10-jul-2026, Fase Adjuntos 1) + auditoría completa del dominio D_ y creación de `D_Atributo.version` + `D_Documento.extraccion_incompleta` (12-jul-2026, ver §18 histórico) + re-auditoría completa de campos reales de `TX_Solicitudes` vía `list_tables_for_base`/`get_table_schema` (13-jul-2026, ver §19) + re-auditoría dominio D_ vía MCP confirmando migración a 2 tablas + TX_Unidades (17-jul-2026, ver §18)
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
@@ -61,7 +61,7 @@
 | `TX_Ampliaciones` | `tblpAtUq4p6o1vofo` | IF-03 aguas abajo |
 | `TX_HabitacionesPorNivel` | `tblBITpPb8WuqsatM` | IF-03 aguas abajo |
 | `TX_TerminacionesPorRecinto` | `tbleQ7pcLxYx9NbCi` | IF-03 aguas abajo |
-| `TX_DocumentosLegales` | `tbl7qIg5x4Y0tOiLk` | IF-03 aguas abajo |
+| `TX_DocumentosLegales` | `tbl7qIg5x4Y0tOiLk` | IF-03 aguas abajo · +9 campos legales v1.9 (24-jul-2026, ver §21.3) |
 | `TX_ObrasComplementarias` | `tblQ1fXM06bzSQ84w` | IF-03 aguas abajo |
 | `TX_CasosRegresion` | `tblTMRtXTpf7ZLeOr` | QA |
 
@@ -782,3 +782,86 @@ No corregidos individualmente en §2 por ser de dominio Motor de Cálculo (AT01�
 ### 20.7 AT02 fuera de alcance de IF-02 (v1.9)
 
 AT02 (asignación algorítmica por zona/carga, ver §13/H-05) permanece en el catálogo de automatizaciones para otros consumidores pero **no se invoca desde el flujo de IF-02**. La maqueta v1.9 implementa asignación manual única vía botón "Asignar Tasador" (REGLA A) — ver `docs/diseno.md` y `docs/aprendizajes.md` (entrada correspondiente). No hay flujo de reasignación formal.
+
+---
+
+## 21. Verificación MCP del schema v1.9 y cierre de `TX_DocumentosLegales` (24-jul-2026)
+
+> Sesión "Airtable Engineer + Data Designer": auditoría vía `list_tables_for_base` + `get_table_schema` de todo lo que §20 marcaba como *pendiente de creación*. **Resultado: el schema v1.9 ya está creado en la base real** (los registros semilla de `M_TiposDeBien` tienen `createdTime` de hoy). Esta sección es el estado **verificado**; supersede el estado "pendiente" de §20. Los nombres reales difieren de las sugerencias de §20 — usar los de aquí.
+
+### 21.1 Tablas nuevas — verificadas, **existían_ok**
+
+| Tabla | TABLE_ID | Estado |
+|---|---|---|
+| `TX_ContactosVisita` | `tblW3SSbKo6vRjwBJ` | 7 campos, dominios exactos (ver abajo). Link `solicitud` → `TX_Solicitudes` (`fldSQAKu5ooRgF5uw`) |
+| `M_TiposDeBien` | `tblQkurIaEqg6tMA4` | `nombre` (primary) · `codigo` · `activo` (checkbox) + link inverso `TX_Unidades`. **8 semillas ya cargadas** y correctas |
+
+`TX_ContactosVisita`: `nombre`(text) · `telefono`(phone) · `email`(email) · `rol`(select: propietario·corredor·arrendatario·conserje·otro) · `orden_prioridad`(number,0) · `estado_contacto`(select: valido·no_contesta·telefono_erroneo) · `solicitud`(link).
+
+`M_TiposDeBien` semillas (`codigo` → `nombre`): `edificacion`→Edificación · `terreno`→Terreno · `estacionamiento_cubierto`→Estacionamiento cubierto · `estacionamiento_descubierto`→Estacionamiento descubierto · `estacionamiento_uso_goce`→Estacionamiento uso y goce · `bodega`→Bodega · `piscina`→Piscina · `obras_complementarias`→Obras complementarias.
+
+> **Nota sobre `TX_Vendedor` (§20.4)**: NO se creó tabla. Por decisión del equipo (relación 1:1) los datos del vendedor viven como campos en `TX_Solicitudes` (`vendedor_*`, ver §21.2). §20.4 queda obsoleto.
+
+### 21.2 `TX_Solicitudes` — 23 campos v1.9, **existían_ok** salvo conflictos
+
+Todos verificados en `tblaHTyMHYfmy7Fg6`. Números financieros con `precision:2`.
+
+| Campo | FIELD_ID | Tipo/dominio real | Estado |
+|---|---|---|---|
+| `ejecutivo_formalizador` | `fldM9ELuMvgRwbmUn` | singleLineText | existía_ok |
+| `modo_creacion` | `fldBJovAv2RpsaupH` | select: documentos·manual | existía_ok |
+| `tipo_cliente_origen` | `fldbxZh45lFTB7yVJ` | select: correo_texto·correo_ficha·extranet | existía_ok |
+| `email_thread_id` | `fldhy81fNSE5CF2Tc` | singleLineText | existía_ok |
+| `correo_cliente_ref` | `fldcKVbfRBo8J7gtg` | singleLineText | existía_ok |
+| `estado_conservacion` | `flde0ExWfB1dhkp4t` | select: nuevo·sin_uso·bueno·normal·malo·deficiente | existía_ok |
+| `vendedor_tipo_persona` | `fldMRFFXv9rOVfQlf` | select: juridica·natural | existía_ok |
+| `vendedor_razon_social_o_nombre` | `fldNkFwB5p3Mljtrg` | singleLineText | existía_ok |
+| `vendedor_rut` | `fldrITDFkbk95Da00` | singleLineText | existía_ok |
+| `vendedor_email` | `flduBKof3x45EpTNW` | email | existía_ok |
+| `vendedor_telefono` | `flduslI2FNAdcPchK` | phoneNumber | existía_ok |
+| `financiero_valor_total_uf` | `fldp4XCnx8jsfAzZx` | number(2) | existía_ok |
+| `financiero_subsidio_uf` | `fldRmC7IjhRUf1UPk` | number(2) | existía_ok |
+| `financiero_ahorro_uf` | `fld5WjnkIN9DYs7vX` | number(2) | existía_ok |
+| `financiero_mutuo_uf` | `fldEbxQzz5g0Knupv` | number(2) | existía_ok |
+| `financiero_pago_contado_uf` | `fldDFfws74GaHO4oV` | number(2) | existía_ok |
+| `financiero_bono_captacion_uf` | `fldAcyXYAppvBlXIt` | number(2) | existía_ok |
+| `financiero_bono_integracion_uf` | `fld9TnWG2OJFx1hiW` | number(2) | existía_ok |
+| `financiero_precio_venta_uf` | `fld1RBNe63iotfyqE` | number(2) | existía_ok |
+| `tipo_propiedad` | `fld701TB0LXovvQmt` | **Link → M_TiposPropiedad** | sin cambio — es campo distinto (§21.4-a) |
+| `tipo_propiedad_nuevo_usado` | `fldHxx1P1ao33PWrl` | select: nuevo·usado | **creado** 24-jul (§21.4-a) |
+| `origen_direccion` | `fldiwBMHujptXHr2D` | select: ficha_cliente·cert_avaluo·cert_numero | resuelto — opciones cortas canónicas (§21.4-b) |
+| `vendedor_origen_dato` | `fldcjrl80Vv1WBmmY` | select: correo·ficha·cert_avaluo | resuelto — opción corta canónica (§21.4-c) |
+| `fecha_asignacion` | `fldiaj4mwd17g25n1` | **date** — ⚠ DEPRECATED | reemplazado por `fecha_asignacion_ts` (§21.4-d) |
+| `fecha_asignacion_ts` | `fldf8BS8nv2vtOmu0` | dateTime (America/Santiago, 24h) | **creado** 24-jul (§21.4-d) |
+
+> Existe además `vendedor_nombre` (`fldfUXb9vzxklu8ES`, legacy) en paralelo a `vendedor_razon_social_o_nombre`. No se tocó.
+
+### 21.2.1 `TX_Unidades` (`tbl2QDLvJDyy3Rg2I`) — verificado
+
+Todos los campos v1.9 existen con dominio exacto: `modelo` · `superficie_terraza_m2`(2) · `con_rol_o_uso_y_goce`(con_rol·uso_y_goce) · `rol_sii_en_tramite`(checkbox) · `ampliacion_m2`(2) · `ampliacion_regularizable`(si·no·no_aplica) · `origen_superficie`(carta_ficha_inmobiliaria·plano·base_interna_sii·certificado_avaluo·medicion_tasador) · `respaldo_adjunto`(link → `TX_Adjuntos` `tblur71x1oItbmKZc`) · `detalle_item`(multiline) · `tipo_bien`(link → `M_TiposDeBien`). **Todos existían_ok.** La superficie de terreno se cubre con el campo existente `sup_terreno_m2` (`fld6lgF0KxUh9oPCB`, number precision 0) — decisión de panel 24-jul: NO se crea `superficie_terreno_m2` (ver §21.4-e).
+
+### 21.3 `TX_DocumentosLegales` (`tbl7qIg5x4Y0tOiLk`) — **9 campos CREADOS**
+
+La tabla ya existía con link `solicitud` → `TX_Solicitudes` (`fldJ60CFZfJsHwTgA`). Faltaban los 9 campos legales v1.9; se crearon en esta sesión:
+
+| Campo | FIELD_ID | Tipo |
+|---|---|---|
+| `permiso_edificacion_numero` | `fld0MWeaFq3bPyOkn` | singleLineText |
+| `permiso_edificacion_fecha` | `fld3Vg1fQr13GUgCq` | date (local) |
+| `recepcion_final_numero` | `fldNScUyz00oZ1aq9` | singleLineText |
+| `recepcion_final_fecha` | `fldn5IBevRZI16Cyf` | date (local) |
+| `fojas` | `fldzTWo2GtXIFtxWR` | singleLineText |
+| `numero_inscripcion` | `fldCcr705pwKY1L9z` | singleLineText |
+| `ano_inscripcion` | `fld585iijZF3oA5Rd` | number(0) |
+| `lineas_edificacion` | `fldDce5e75VuGCddC` | multilineText |
+| `certificado_numero` | `fldvOcIJ0WDKFWiLF` | singleLineText |
+
+### 21.4 Resolución de los 5 conflictos (panel aprobado · 24-jul-2026)
+
+- **(a) `TX_Solicitudes.tipo_propiedad` → RESUELTO (campo nuevo)**: se creó `tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`, singleSelect `nuevo·usado`). El `tipo_propiedad` original (`fld701TB0LXovvQmt`, Link → M_TiposPropiedad) **no se tocó** — es un campo distinto (tipo de inmueble). El wizard v1.9 debe escribir nuevo/usado en `tipo_propiedad_nuevo_usado`.
+- **(b) `TX_Solicitudes.origen_direccion` → RESUELTO (se adoptan las opciones cortas)**: las opciones reales `ficha_cliente·cert_avaluo·cert_numero` quedan como **canónicas**. La spec (`certificado_avaluo`/`certificado_numero`) se alinea a estos nombres cortos. No se modificó el singleSelect. UI/Make deben usar `cert_avaluo`/`cert_numero`.
+- **(c) `TX_Solicitudes.vendedor_origen_dato` → RESUELTO (se adopta la opción corta)**: `correo·ficha·cert_avaluo` quedan canónicas. `cert_avaluo` es el valor a usar (no `certificado_avaluo`).
+- **(d) `TX_Solicitudes.fecha_asignacion` → RESUELTO (campo paralelo)**: el MCP no permite migrar `date→dateTime` in situ (`update_field` solo cambia name/description/formula). Se creó `fecha_asignacion_ts` (`fldf8BS8nv2vtOmu0`, dateTime · America/Santiago · 24h). El `fecha_asignacion` original (`fldiaj4mwd17g25n1`, date) queda **DEPRECATED** (marcado en su descripción); su borrado se **difiere a tanda posterior** (registrado en `docs/construccion.md §11`). REGLA A debe escribir el timestamp en `fecha_asignacion_ts`.
+- **(e) `TX_Unidades.superficie_terreno_m2` → RESUELTO (se descarta)**: se adopta el campo existente `sup_terreno_m2` (`fld6lgF0KxUh9oPCB`, number precision 0) tal cual. **No** se crea `superficie_terreno_m2`. Toda referencia a `superficie_terreno_m2` se elimina de la documentación.
+
+> `docs/diseno.md` no contenía referencias a los nombres largos `certificado_avaluo`/`certificado_numero`/`superficie_terreno_m2` (verificado por grep 24-jul), por lo que no requirió cambios de opción; sólo se documenta aquí la convención canónica.

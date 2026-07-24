@@ -652,6 +652,16 @@ sort: [{ field: 'capacidad_activa', direction: 'desc' }]
 
 Detectar la ausencia del campo `disponible` consultando el schema de `M_Tasadores` al arrancar, o usar try/catch en la primera llamada.
 
+### Deuda técnica — migración `fecha_asignacion` → `fecha_asignacion_ts` (24-jul-2026)
+
+REGLA A necesita el **timestamp** exacto de la asignación, pero el campo original `fecha_asignacion` (`fldiaj4mwd17g25n1`) es `date` (sin hora) y el MCP Airtable **no permite migrar `date→dateTime` in situ** (`update_field` solo cambia name/description/formula). Resolución de panel:
+
+- Campo canónico nuevo: **`fecha_asignacion_ts`** (`fldf8BS8nv2vtOmu0`, dateTime · America/Santiago · 24h). El código de asignación (botón "Asignar Tasador") debe escribir aquí.
+- `fecha_asignacion` (date) queda **DEPRECATED** (marcado en su descripción en Airtable). No escribir en él.
+- **Borrado diferido a tanda posterior**: eliminar `fecha_asignacion` una vez que ningún Route Handler / Make / vista de Airtable lo referencie. Verificar antes de borrar.
+
+Ref: `docs/schema-airtable.md §21.4-d` · snapshot `docs/_notas/snapshot_20260724_*.md`.
+
 ---
 
 ## §12 Anti-patrones (Claude Code NO debe hacer esto)
@@ -679,6 +689,8 @@ Detectar la ausencia del campo `disponible` consultando el schema de `M_Tasadore
 | Hacer `solicitud_id` opcional en `/api/adjuntos/upload` | Es OBLIGATORIO (D-12, Opción C) — E-023 queda SUPERSEDED. |
 | Usar `codigo_solicitud` como nombre de campo en el código | Es `codigo_ext` — `codigo_solicitud` es el primary field de Airtable (interno, no se referencia en TS). |
 | Crear opciones nuevas en `TX_Adjuntos.subido_por` | Usar la opción existente `"Ejecutivo"` (con E mayúscula). |
+| Escribir en `fecha_asignacion` (date, deprecated) | Usar `fecha_asignacion_ts` (dateTime, `fldf8BS8nv2vtOmu0`) — ver §11 Deuda técnica. |
+| Usar `certificado_avaluo`/`certificado_numero`/`superficie_terreno_m2` | Nombres canónicos: `cert_avaluo`, `cert_numero`, `sup_terreno_m2` (resolución panel 24-jul, schema §21.4). |
 
 ---
 
