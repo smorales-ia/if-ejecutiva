@@ -664,6 +664,41 @@ Ref: `docs/schema-airtable.md §21.4-d` · snapshot `docs/_notas/snapshot_202607
 
 ---
 
+## SC01 y SC-Edicion · IF-02 (campos v1.9 + contactos de visita)
+
+> Tanda "Make Integrator" 24-jul-2026. Blueprints originales en `docs/make/originales/`; versiones editadas en `docs/make/modificado/`. Mapa de field IDs en `docs/make/field_ids_if02.json`. **No se tocaron** el `hook` ni `__IMTCONN__` (8847431). No se editaron mapeos ni IDs existentes.
+
+### Qué se agregó
+
+**SC01 (Crear solicitud)** — `docs/make/modificado/SC01_-_Crear_solicitud_blueprint.json`
+- `id=1` webhook `metadata.interface`: +23 entradas `text` (los campos v1.9) + `fecha_asignacion` (text) + `contactosVisita` (array).
+- `id=7` Create Solicitud `mapper.record`: +23 mapeos nuevos (23 originales intactos → 46 total). Números con `parseNumber`, fecha con guard `if(...; parseDate; emptystring)`.
+- **Router nuevo `id=16`** tras `id=7`, con 2 rutas: ruta 1 (filtro `contactosVisita existe`) = `Iterator id=17` sobre `{{1.contactosVisita}}` → `Create id=18` en `TX_ContactosVisita` (`solicitud = {{7.id}}`); ruta 2 = `WebhookRespond id=8` (movido sin cambios de mapeo).
+
+**SC-Edicion (Edición)** — `docs/make/modificado/SC-Edicion_-_Edicion_de_solicitud_blueprint.json`
+- `id=2` Update Records `mapper.record`: +23 mapeos con path `{{1.cambios.<campo>}}` (19 originales intactos → 42 total).
+- **Router nuevo `id=12`** tras `id=2`, con 3 rutas: ruta 1 (filtro `contactosVisita existe`) = `Search id=13` en `TX_ContactosVisita` (`{solicitud} = '{{1.solicitudId}}'`) → `Delete id=14` (`{{13.id}}`); ruta 2 (mismo filtro) = `Iterator id=15` sobre `{{1.cambios.contactosVisita}}` → `Create id=16` (`solicitud = {{1.solicitudId}}`); ruta 3 = cadena existente `A_Eventos id=3` → `LogEscenarios id=4` → `WebhookRespond id=5` (movida sin cambios).
+
+### Decisión de arquitectura: Router en vez de cadena lineal
+
+El brief pedía insertar `iterator → create → respond` en línea. **En Make eso rompe el escenario**: un `Iterator`/`Search` emite N bundles y **multiplica todos los módulos aguas abajo** — el `WebhookRespond` correría N veces (solo se puede responder una vez) y, en SC-Edicion, un `Search`/`filter` con 0 resultados **cortaría** el flujo dejando `A_Eventos`/`Log`/`Respond` sin ejecutarse. La topología correcta aísla cada loop en su propia ruta de un `BasicRouter` y mantiene la ruta principal (respond / eventos) siempre viva. Por eso el respond de SC01 y la cadena 3→4→5 de SC-Edicion se movieron a una ruta del router (sus IDs y mapeos quedan idénticos).
+
+### Deprecación aplicada en los mapeos
+- `fecha_asignacion` (date, deprecated) **no** se escribe: el timestamp va a `fecha_asignacion_ts` (`fldf8BS8nv2vtOmu0`, dateTime). Ver §11 Deuda técnica y schema §21.4-d.
+- Nuevo/usado → `tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`); el `tipo_propiedad` Link (`fld701TB0LXovvQmt`) queda como estaba.
+
+### Caveats a verificar antes de activar
+- El payload de la app debe enviar `contactosVisita` como array de objetos `{nombre, telefono, email, rol, orden_prioridad, estado_contacto}`; en SC-Edicion bajo `cambios.contactosVisita`.
+- Reconciliar `metadata.expect`/`restore` abriendo el escenario en Make una vez (se re-sincroniza el schema); los mapeos por `fldXXX` ya son funcionales.
+
+### Fix filtro contactos por record id (24-jul-2026)
+
+El filtro original del `Search id=13` (SC-Edicion) era `{solicitud} = '{{1.solicitudId}}'`, que compara el campo Link por su *display value* (primary field), no por record id → borrado poco fiable. Resuelto creando dos campos vía MCP:
+- `TX_Solicitudes.record_id` (`fldx3ewhqGRv99uwZ`, formula `RECORD_ID()`).
+- `TX_ContactosVisita.solicitud_record_id` (`fldYNKk5cyfWLxwqD`, lookup del `record_id` de la solicitud a través del link `solicitud`).
+
+Filtro nuevo en `id=13`: `{solicitud_record_id} = "{{1.solicitudId}}"` — compara por **record id real**. El resto del blueprint (mapeos, IDs, conexiones) sin cambios.
+
 ## §12 Anti-patrones (Claude Code NO debe hacer esto)
 
 | Anti-patrón | Regla correcta |

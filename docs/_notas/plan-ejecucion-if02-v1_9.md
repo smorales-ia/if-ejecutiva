@@ -74,6 +74,7 @@ Claude Code tiene 3 modos que Sergio cicla con **Shift+Tab** en la terminal:
 | P | Nombre | Modo recomendado | Razón |
 |---|---|---|---|
 | P0 | Inventario | `auto mode on` | Solo lee y genera 1 doc. Riesgo cero. |
+| P0.5 | Schema Airtable IF-02 | `default` | Muta schema real vía MCP Airtable. Cada `create_table` / `create_field` requiere confirmación. |
 | P1 | Types | `auto mode on` | Solo tipos TS. Errores los atrapa `tsc`. |
 | P2 | API Routes | `accept edits on` | Backend + HMAC. Que edite, pero pare en comandos. |
 | P3 | Wizard | `accept edits on` | UI nueva con shadcn. Bajo riesgo. |
@@ -126,7 +127,7 @@ Cada P (incluido P0) es una **Tanda** independiente. Al terminar cada tanda:
 1. Lee todos los archivos de §0.1.
 2. Lista `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P*.md` ordenados por timestamp.
 3. Detecta la **última P completada**: la del archivo más reciente con timestamp válido y contenido no vacío.
-4. La siguiente P a ejecutar es `P{ultima + 1}`.
+4. La siguiente P a ejecutar sigue la **secuencia oficial**: `P0 → P0.5 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8 → P9`. Ejemplo: si la última completada es `P0`, la siguiente es `P0.5`; si es `P0.5`, la siguiente es `P1`. (No usar aritmética `+1`: `P0.5` es una P nominal, no fraccional.)
 5. Si no hay archivos previos: la P a ejecutar es **P0**.
 6. Si el último snapshot `docs/_notas/snapshot-P{n}.md` existe pero el archivo de aprendizajes correspondiente **no existe**, esa P quedó a medias → **retomar P{n}** desde donde quedó (leer el snapshot para saber estado).
 7. **Antes de arrancar**, Claude Code muestra un mensaje breve:
@@ -218,6 +219,160 @@ NO crea "components/console/form-solicitud/" nuevo.
 - [ ] Los componentes reutilizables (RUTField, StateBadge, etc.) están listados con su ruta real.
 - [ ] Archivo `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P0.md` creado con timestamp real.
 - [ ] **No se modificó ningún archivo de código en esta P.** Solo lectura + generación de 2 archivos doc.
+
+---
+
+## §1.5 · P0.5 — Schema Airtable IF-02
+
+> **⚙ Modo Claude Code recomendado:** `default`
+> **🔴 Contrato de comportamiento:** **pausa-total** para operaciones de escritura (`create_table`, `create_field`, `update_table`, sembrado de filas). Las operaciones de lectura MCP (`list_tables_for_base`, `get_table_schema`, `search_records`) son 🟢 libres. Antes de cada mutación, Claude Code muestra en una línea qué va a crear y pide `s/n`.
+
+> **Regla dura:** P1 (Types) NO puede ejecutarse si esta P no está completa. P1 lee `docs/schema-airtable.md` como fuente de verdad; si el schema no refleja los campos v1.9, los tipos TS quedarán desalineados con la base real.
+
+### §1.5.1 Diseño
+
+**Rol operativo:** Airtable Engineer + Data Designer.
+**MCP:** Airtable · **Base:** `app9G7lLkIV3CpeLa`.
+**Fuente:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_1.md` §1.5.1 "Dependencias de schema".
+
+**Objetivo.** Dejar el schema Airtable completo para IF-02 v1.9 — 2 tablas nuevas obligatorias, 1 tabla condicional, y campos nuevos en `TX_Solicitudes` y `TX_Unidades`. **Ningún cambio de UI ni de Make en esta tanda.**
+
+**Producto.**
+1. Schema actualizado en la base `app9G7lLkIV3CpeLa`.
+2. `docs/schema-airtable.md` actualizado con IDs reales de tablas y campos.
+3. `docs/_notas/snapshot-P0.5.md` con estado post-tanda.
+4. Tabla-resumen impresa al final: `{tabla, campo, accion: creado | existía_ok | conflicto}`.
+
+**Reglas duras (verificación previa obligatoria):**
+- Antes de crear cualquier tabla o campo, verificar con `list_tables_for_base` / `get_table_schema`. Si ya existe con el mismo tipo y dominio → **NO re-crear**, solo confirmar.
+- Si un `singleSelect` existe con opciones distintas → **NO modificar**, reportar conflicto y pedir instrucciones a Sergio antes de continuar.
+- Orden cross-system estricto: **Airtable schema (esta P) → Make blueprint (P2+) → Next.js code (P1+)**.
+- **MCP no puede crear columnas en algunas tablas existentes** (aprendizaje E-XXX). Si `create_field` falla en `TX_Solicitudes` o `TX_Unidades`, marcar el campo como `pendiente_ui_manual` en el snapshot y avisar a Sergio para creación manual en Airtable UI.
+
+**Alcance — TABLAS NUEVAS**
+
+**1) `TX_ContactosVisita`** — relación 1:N con `TX_Solicitudes`.
+
+| Campo | Tipo | Opciones / Notas |
+|---|---|---|
+| `nombre` | singleLine (primary) | — |
+| `telefono` | phone | — |
+| `email` | email | — |
+| `rol` | singleSelect | `propietario, corredor, arrendatario, conserje, otro` |
+| `orden_prioridad` | number (integer) | — |
+| `estado_contacto` | singleSelect | `valido, no_contesta, telefono_erroneo` |
+| `solicitud` | linkedRecord | → `TX_Solicitudes` |
+
+**2) `M_TiposDeBien`** — catálogo cerrado.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `nombre` | singleLine (primary) | — |
+| `codigo` | singleLine | — |
+| `activo` | checkbox | default `true` |
+
+**Sembrar 8 filas:** Edificación · Terreno · Estacionamiento cubierto · Estacionamiento descubierto · Estacionamiento uso y goce · Bodega · Piscina · Obras complementarias.
+
+**3) `TX_DocumentosLegales`** — **crear solo si no existe.** Link 1:N a `TX_Solicitudes`. Ver campos en la sección "Campos nuevos" más abajo.
+
+**Alcance — CAMPOS NUEVOS EN `TX_Solicitudes`** (23 campos)
+
+- `ejecutivo_formalizador` (singleLine)
+- `tipo_propiedad` (singleSelect: `nuevo, usado`) ← **verificar existencia**
+- `modo_creacion` (singleSelect: `documentos, manual`)
+- `tipo_cliente_origen` (singleSelect: `correo_texto, correo_ficha, extranet`)
+- `email_thread_id` (singleLine)
+- `correo_cliente_ref` (singleLine)
+- `estado_conservacion` (singleSelect: `nuevo, sin_uso, bueno, normal, malo, deficiente`)
+- `origen_direccion` (singleSelect: `ficha_cliente, certificado_avaluo, certificado_numero`)
+- `fecha_asignacion` (dateTime)
+- `vendedor_tipo_persona` (singleSelect: `juridica, natural`)
+- `vendedor_razon_social_o_nombre` (singleLine)
+- `vendedor_rut` (singleLine)
+- `vendedor_email` (email)
+- `vendedor_telefono` (phone)
+- `vendedor_origen_dato` (singleSelect: `correo, ficha, certificado_avaluo`)
+- `financiero_valor_total_uf` (number, 2 dec)
+- `financiero_subsidio_uf` (number, 2 dec)
+- `financiero_ahorro_uf` (number, 2 dec)
+- `financiero_mutuo_uf` (number, 2 dec)
+- `financiero_pago_contado_uf` (number, 2 dec)
+- `financiero_bono_captacion_uf` (number, 2 dec)
+- `financiero_bono_integracion_uf` (number, 2 dec)
+- `financiero_precio_venta_uf` (number, 2 dec)
+
+**Nota de diseño:** Vendedor va como campos planos en `TX_Solicitudes` (decisión del equipo, evita crear `TX_Vendedor` porque la relación es 1:1).
+
+**Alcance — CAMPOS NUEVOS EN `TX_Unidades`** (11 campos)
+
+- `modelo` (singleLine)
+- `superficie_terraza_m2` (number, 2 dec)
+- `superficie_terreno_m2` (number, 2 dec) ← **verificar existencia**
+- `con_rol_o_uso_y_goce` (singleSelect: `con_rol, uso_y_goce`)
+- `rol_sii_en_tramite` (checkbox)
+- `ampliacion_m2` (number, 2 dec)
+- `ampliacion_regularizable` (singleSelect: `si, no, no_aplica`)
+- `origen_superficie` (singleSelect: `carta_ficha_inmobiliaria, plano, base_interna_sii, certificado_avaluo, medicion_tasador`)
+- `respaldo_adjunto` (linkedRecord → `TX_Adjuntos`)
+- `detalle_item` (multilineText)
+- `tipo_bien` (linkedRecord → `M_TiposDeBien`) ← **verificar existencia**
+
+**Alcance — CAMPOS EN `TX_DocumentosLegales`** (9 campos; crear tabla si no existe con link 1:N a `TX_Solicitudes`)
+
+- `permiso_edificacion_numero` (singleLine)
+- `permiso_edificacion_fecha` (date)
+- `recepcion_final_numero` (singleLine)
+- `recepcion_final_fecha` (date)
+- `fojas` (singleLine)
+- `numero_inscripcion` (singleLine)
+- `ano_inscripcion` (number, integer)
+- `lineas_edificacion` (multilineText)
+- `certificado_numero` (singleLine)
+
+**FUERA DE ALCANCE — NO crear en esta P:**
+- `fecha_visita`, `fecha_envio_informe`
+- Tabla `TX_Reprocesos`
+- Flag/motivo de bloqueo por contacto no logrado
+- `M_Tasadores.notificar_whatsapp`
+- Nuevos plazos en `C_SLA`
+
+### §1.5.2 Construcción — Pasos para Claude Code
+
+1. **Autenticar MCP Airtable** si aparece banner amarillo: ejecutar la tool `mcp__airtable__authenticate` ahora.
+2. **Consultar overrides P0.5 del inventario:** leer `docs/_notas/inventario-if02.md` sección "Overrides al plan · P0.5" (si existe). Ajustar nombres/IDs según el inventario.
+3. **Inventario previo del schema:**
+   - Ejecutar `list_tables_for_base` sobre `app9G7lLkIV3CpeLa`.
+   - Para cada tabla afectada (`TX_Solicitudes`, `TX_Unidades`, `TX_Adjuntos`, y `TX_DocumentosLegales` si existe), ejecutar `get_table_schema` y volcar campos existentes.
+4. **Comparar contra §1.5.1 y clasificar cada ítem** como `EXISTE_OK` (mismo tipo y dominio), `CREAR` (no existe) o `CONFLICTO` (existe con tipo u opciones distintas).
+   - **⛔ Si aparece cualquier `CONFLICTO`: DETENER y consultar a Sergio antes de continuar.** No modificar el campo existente sin autorización.
+5. **Crear `M_TiposDeBien`** (si no existe) con sus 3 campos y sembrar las 8 filas del catálogo.
+6. **Crear `TX_ContactosVisita`** (si no existe) con sus 7 campos, incluyendo el `linkedRecord` a `TX_Solicitudes`.
+7. **Crear `TX_DocumentosLegales`** solo si no existe, con link 1:N a `TX_Solicitudes` y los 9 campos.
+8. **Agregar campos nuevos** a `TX_Solicitudes` (23) y `TX_Unidades` (11) con `create_field`, saltando los marcados `EXISTE_OK`.
+   - Si `create_field` falla por limitación MCP: marcar el campo como `pendiente_ui_manual` en snapshot y notificar a Sergio.
+9. **Actualizar `docs/schema-airtable.md`:**
+   - Agregar sección por tabla nueva con IDs reales de tabla y campo (formato `tblXXXX` / `fldXXXX`).
+   - Agregar los campos nuevos bajo las tablas existentes con su ID de campo.
+10. **Generar `docs/_notas/snapshot-P0.5.md`** con:
+    - IDs reales de las tablas nuevas.
+    - IDs de campo relevantes (base para P1 Types y P2 API Routes).
+    - Tabla-resumen final `{tabla, campo, accion}`.
+    - Lista de campos `pendiente_ui_manual` si hubo alguno.
+11. **Generar archivo de aprendizajes** `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P0.5.md` con timestamp real, siguiendo la plantilla de §11.2.
+12. **Imprimir en consola la tabla-resumen** y **PARAR**. No tocar UI, no tocar Make, no tocar Next.js.
+
+### §1.5.3 Criterios de aceptación
+
+- [ ] `TX_ContactosVisita` existe con sus 7 campos y link a `TX_Solicitudes`.
+- [ ] `M_TiposDeBien` existe con sus 3 campos y las 8 filas sembradas.
+- [ ] `TX_DocumentosLegales` existe con sus 9 campos y link 1:N a `TX_Solicitudes`.
+- [ ] Los 23 campos nuevos de `TX_Solicitudes` existen con el tipo y opciones especificados (o quedan documentados como `pendiente_ui_manual`).
+- [ ] Los 11 campos nuevos de `TX_Unidades` existen con el tipo y opciones especificados (o `pendiente_ui_manual`).
+- [ ] Cero conflictos silenciosos: cualquier `singleSelect` con opciones distintas fue reportado a Sergio en el chat maestro.
+- [ ] `docs/schema-airtable.md` refleja el nuevo estado con IDs reales.
+- [ ] `docs/_notas/snapshot-P0.5.md` existe con la tabla-resumen `{tabla, campo, accion}`.
+- [ ] Archivo `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P0.5.md` creado con timestamp real.
+- [ ] **Cero cambios en código Next.js, cero cambios en escenarios Make.**
 
 ---
 
@@ -1320,4 +1475,4 @@ Al iniciar la siguiente P, Claude Code:
 
 ---
 
-*Última actualización: 22-jul-2026 · v1.3 del plan (autoejecución + P5 panel lista con filtros/búsqueda/orden) · Base: Especificación v1.9.1*
+*Última actualización: 24-jul-2026 · v1.4 del plan (P0.5 Schema Airtable IF-02 insertada entre P0 y P1) · Base: Especificación v1.9.1*

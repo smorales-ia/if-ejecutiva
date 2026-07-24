@@ -437,6 +437,18 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Prevención futura:** ante un cambio de **tipo** de campo Airtable, no intentar `update_field` con `options` de tipo (el schema del tool ni siquiera lo acepta) — planificar de entrada campo paralelo + deprecación + borrado diferido. Al "resolver un conflicto de opciones", preferir adoptar el valor real de la base como canónico y alinear la spec/docs, no mutar el singleSelect. Actualiza [[E-018]] (referenciar campos Link/select por su valor real). Ver snapshots `docs/_notas/snapshot_20260724_1639.md` y `_1649.md`.
 
+### E-076 — Iterator/Search en Make multiplican lo de aguas abajo: usar Router, no cadena lineal (24-jul-2026)
+
+**Contexto:** modificar SC01 (crear) y SC-Edicion para persistir 23 campos v1.9 en `TX_Solicitudes` y un array `contactosVisita` (crear en SC01; borrar+recrear en SC-Edicion) en `TX_ContactosVisita`.
+
+**Inconveniente:** el brief pedía insertar en línea `id=7 → iterator → create → respond` (SC01) y `search → delete → create` gated por filtro (SC-Edicion). Esa topología rompe el escenario.
+
+**Causa raíz:** en Make, un módulo que emite N bundles (`BasicIterator`, `ActionSearchRecords`) **multiplica la ejecución de todos los módulos que le siguen en el mismo flow**. Un `WebhookRespond` tras un iterator correría N veces (solo se puede responder una vez); un `Search`/filtro con 0 resultados **corta** el flujo y deja sin ejecutar los módulos posteriores (en SC-Edicion: `A_Eventos`/`LogEscenarios`/`Respond`).
+
+**Solución aplicada:** `builtin:BasicRouter` que aísla cada loop en su propia ruta y deja la ruta principal (respond / eventos) siempre viva. SC01: router tras `id=7` con ruta[iterator→create] + ruta[respond]. SC-Edicion: router tras `id=2` con ruta[search→delete] + ruta[iterator→create] + ruta[eventos→log→respond]. Los módulos preexistentes se mueven de ruta padre **sin cambiar IDs ni mapeos** (validado por script: 23 mapeos originales de `id=7` y 19 de `id=2` idénticos; `hook`/`__IMTCONN__` 8847431 intactos). Edición de blueprints por script Python determinista (no a mano: 176 KB c/u). Deprecación respetada: fecha→`fecha_asignacion_ts`, nuevo/usado→`tipo_propiedad_nuevo_usado`. Archivos en `docs/make/modificado/`, mapa en `docs/make/field_ids_if02.json`.
+
+**Prevención futura:** nunca poner `WebhookRespond` ni módulos "una vez" después de un iterator/search en el mismo flow; usar Router (rutas independientes) o Aggregator para colapsar bundles. Un filtro inline en flow lineal también mata lo de aguas abajo si no pasa — gate condicional = ruta de router, no filtro en la línea principal. El filtro `{campoLink} = 'recId'` compara por primary field, no por record id: verificar antes de confiar en un borrado por búsqueda. Ver `construccion.md` sección "SC01 y SC-Edicion · IF-02" y snapshot `snapshot_20260724_1704.md`. Relaciona [[E-072]] (no fabricar módulos Make sin referencia real).
+
 ### 2026-07-23 — D_TipoDocumento.tipo_propiedad + sincronización de TX_Comparables en los .md
 
 **Contexto:** dos objetivos independientes: (1) poblar `D_TipoDocumento.tipo_propiedad` en Airtable desde el catálogo documental; (2) alinear todos los .md con el schema real de `TX_Comparables`.

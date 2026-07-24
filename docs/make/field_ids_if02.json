@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "base": "app9G7lLkIV3CpeLa",
+    "generado": "2026-07-24",
+    "fuente": "MCP list_tables_for_base + creaciones tanda schema",
+    "notas": [
+      "tipo_propiedad (fld701TB0LXovvQmt) es Link -> M_TiposPropiedad; NO se usa para nuevo/usado.",
+      "nuevo/usado se mapea a tipo_propiedad_nuevo_usado (fldHxx1P1ao33PWrl).",
+      "fecha_asignacion (fldiaj4mwd17g25n1) es date y quedo DEPRECATED; el timestamp de asignacion se escribe en fecha_asignacion_ts (fldf8BS8nv2vtOmu0, dateTime).",
+      "Fix filtro contactos (24-jul-2026): record_id (formula RECORD_ID()) en TX_Solicitudes y solicitud_record_id (lookup) en TX_ContactosVisita permiten filtrar por record id real en SC-Edicion (id=13)."
+    ]
+  },
+  "TX_Solicitudes": {
+    "tableId": "tblaHTyMHYfmy7Fg6",
+    "fields": {
+      "ejecutivo_formalizador": "fldM9ELuMvgRwbmUn",
+      "modo_creacion": "fldBJovAv2RpsaupH",
+      "tipo_cliente_origen": "fldbxZh45lFTB7yVJ",
+      "email_thread_id": "fldhy81fNSE5CF2Tc",
+      "correo_cliente_ref": "fldcKVbfRBo8J7gtg",
+      "estado_conservacion": "flde0ExWfB1dhkp4t",
+      "origen_direccion": "fldiwBMHujptXHr2D",
+      "vendedor_tipo_persona": "fldMRFFXv9rOVfQlf",
+      "vendedor_razon_social_o_nombre": "fldNkFwB5p3Mljtrg",
+      "vendedor_rut": "fldrITDFkbk95Da00",
+      "vendedor_email": "flduBKof3x45EpTNW",
+      "vendedor_telefono": "flduslI2FNAdcPchK",
+      "vendedor_origen_dato": "fldcjrl80Vv1WBmmY",
+      "financiero_valor_total_uf": "fldp4XCnx8jsfAzZx",
+      "financiero_subsidio_uf": "fldRmC7IjhRUf1UPk",
+      "financiero_ahorro_uf": "fld5WjnkIN9DYs7vX",
+      "financiero_mutuo_uf": "fldEbxQzz5g0Knupv",
+      "financiero_pago_contado_uf": "fldDFfws74GaHO4oV",
+      "financiero_bono_captacion_uf": "fldAcyXYAppvBlXIt",
+      "financiero_bono_integracion_uf": "fld9TnWG2OJFx1hiW",
+      "financiero_precio_venta_uf": "fld1RBNe63iotfyqE",
+      "tipo_propiedad_nuevo_usado": "fldHxx1P1ao33PWrl"
+    },
+    "extra": {
+      "tipo_propiedad_link": "fld701TB0LXovvQmt",
+      "fecha_asignacion_deprecated": "fldiaj4mwd17g25n1",
+      "fecha_asignacion_ts": "fldf8BS8nv2vtOmu0",
+      "record_id": "fldx3ewhqGRv99uwZ"
+    }
+  },
+  "TX_ContactosVisita": {
+    "tableId": "tblW3SSbKo6vRjwBJ",
+    "fields": {
+      "nombre": "fldOTpkaWOkkxzJoc",
+      "telefono": "fld8Rai7BCgfKS8F8",
+      "email": "fldHTPcQgIvAP6QlP",
+      "rol": "fldeTuIlU6uxDYwHY",
+      "orden_prioridad": "fldL93B1kOZZ1pNFs",
+      "estado_contacto": "fldMerAz4OCNhwn4X",
+      "solicitud": "fldSQAKu5ooRgF5uw",
+      "solicitud_record_id": "fldYNKk5cyfWLxwqD"
+    }
+  }
+}
