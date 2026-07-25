@@ -1,11 +1,8 @@
-> **[SUPERSEDED]** Este documento fue reemplazado por `VProperty_Blueprint_Interfaces_v2_10.md` el 25-jul-2026.
+> **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **Motivo:** sincronización con §2 Interfaz Tasador del spec v1.9.3
-> (RF-TAS-01..10, `TX_CoordinacionVisita`, máquina de estados oficial).
-> Documenta las 7 pantallas de IF-03 con sus rutas y renombra la acción primaria a "Calcular Tasación".
->
-> Se conserva por trazabilidad histórica (H_Documentacion). **No editar.**
-> Bitácora del cambio: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
+> **Blueprint de Interfaces v2.10** — sucede a `VProperty_Blueprint_Interfaces_v2_9.md`, que queda marcado SUPERSEDED.
+> Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
+> Identificadores históricos (RF · RNF · RN · RT · RR · SP · D · SC · AT · IF) **no se renumeran**.
 
 ---
 

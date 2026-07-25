@@ -1,11 +1,8 @@
-> **[SUPERSEDED]** Este documento fue reemplazado por `VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md` el 25-jul-2026.
+> **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **Motivo:** sincronización con §2 Interfaz Tasador del spec v1.9.3
-> (RF-TAS-01..10, `TX_CoordinacionVisita`, máquina de estados oficial).
-> Incorpora el delta de schema de §2.12 (TX_CoordinacionVisita, campos nuevos en TX_Solicitudes, tipo_propiedad en D_TipoDocumento, plantillas de coordinación).
->
-> Se conserva por trazabilidad histórica (H_Documentacion). **No editar.**
-> Bitácora del cambio: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
+> **Capa de Datos v2.6.5** — sucede a `VProperty_Diseno_Capa_Datos_Enterprise_v2_6_4.md`, que queda marcado SUPERSEDED.
+> Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
+> Identificadores históricos (RF · RNF · RN · RT · RR · SP · D · SC · AT · IF) **no se renumeran**.
 
 ---
 
