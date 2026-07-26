@@ -306,3 +306,15 @@ contra `Z_EscenariosMake` existente antes del próximo prompt v0.dev"*. **Esa va
 ha hecho** y es precisamente la que resolvería este nudo.
 
 **El lote 1 queda detenido.** No se modificó ningún archivo.
+
+### Colisión 5 · `SC03` también notifica al tasador (detectada en el lote 5)
+
+Motor v2.6 usa `SC03` con rol "notificar al tasador" en L342, L578, L944, L1116. Impacta la
+renumeración propuesta `SC05(A)×34 → SC13`: el resolutor de A-10 debe decidir explícitamente
+si `SC03` se preserva, colapsa o renumera junto con `SC05(A)` y `SC13`. Detectado durante el
+lote 5, no bloqueaba el alcance del lote.
+
+Consecuencia sobre el mapeo canónico: la tabla de arriba asume **un** identificador por rol.
+Con `SC03` en escena, el rol "notificar al tasador" tiene **tres** códigos vivos en el repo
+(`SC05`, `SC13` y `SC03`), repartidos en documentos distintos. La superficie de A-10 es mayor
+que las 38 ocurrencias contabilizadas: el Motor de Cálculo no entró en aquel recuento.
