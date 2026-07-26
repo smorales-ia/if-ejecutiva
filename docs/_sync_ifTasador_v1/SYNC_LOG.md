@@ -34,7 +34,7 @@ de la bitácora.
 | **1** | SC05 → SC08 (transversal) | 🔴 **BLOQUEADO por A-10** — no ejecutar hasta decisión humana. Ver `RESUME.md` | — |
 | **2** | Spec v1.9.4 · 5 correcciones internas de §2.14 | ✅ **COMPLETADO** · 25-jul-2026 — adelantado sobre el lote 1 con A-10 abierto (autorización del usuario) | `ae5202e` |
 | **3** | (i) Delta §2.12 · (ii) §22 alias A-05 · (iii) `CODE_INCONSISTENCIES.md` | 🟡 **PARCIAL** · 25-jul-2026 — **(ii) y (iii) completos**; **(i) BLOQUEADO por A-09**: `TX_CoordinacionVisita` no existe en Airtable y sin TABLE_ID ni FIELD_IDs no se puede escribir `schema-airtable.md`. Ver `gap/_ambiguedades.md` | `ae5202e` |
-| **4** | Blueprint v2.10 + Arquitectura v2.9 · puntos 4.1–4.6 | 🟡 **PARCIAL** · 25-jul-2026 — 4.1, 4.2, 4.4, 4.5, 4.6 completos; **4.3 sólo en su mitad**: la máquina de estados sí, la narrativa de ejemplo **no requiere cambio** (su vocabulario de estados ya es el oficial; sus únicos defectos son de numeración `SC`, fuera de alcance) | `<sha lote 4>` |
+| **4** | Blueprint v2.10 + Arquitectura v2.9 · puntos 4.1–4.6 | 🟡 **PARCIAL** · 25-jul-2026 — 4.1, 4.2, 4.4, 4.5, 4.6 completos; **4.3 sólo en su mitad**: la máquina de estados sí, la narrativa de ejemplo **no requiere cambio** (su vocabulario de estados ya es el oficial; sus únicos defectos son de numeración `SC`, fuera de alcance) | `a08bd20` |
 | **5** | Operativos + Motor + Origen de Datos | ⏸ PENDIENTE | — |
 
 ### Nota sobre el orden de lotes 1 y 2
@@ -66,8 +66,8 @@ ejecutarse después sin conflicto con este commit.
 | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md` | A | 2 | 25-jul-2026 | `ae5202e` | RN-59 (excepción acotada) · RF-TAS-04 · RF-TAS-05 · RF-TAS-06 · AT03 · P-4 · P-5 | EA + PM + DE + UX + FE | ✓ |
 | `docs/schema-airtable.md` (§22 nueva) | H | 3 (ii) | 25-jul-2026 | `ae5202e` | A-05 · RF-TAS-06 · P-5 | DE | ✓ |
 | `docs/CODE_INCONSISTENCIES.md` (nuevo) | H | 3 (iii) | 25-jul-2026 | `ae5202e` | CI-001 · A-05 | DE | ✓ |
-| `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` | E | 4 | 25-jul-2026 | `<sha lote 4>` | RF-TAS-01..10 · RF-TAS-02 · RF-TAS-07 · D-B · P-3 · **DEP-EXT:A-09 ×2** (L2524 `horas_restantes` · L2560 `TX_CoordinacionVisita`) | EA + UX + FE | ✓ |
-| `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md` | C | 4 | 25-jul-2026 | `<sha lote 4>` | máquina de estados §2.11 · 7 pantallas IF-03 · D-B · P-3 · **DEP-EXT:A-09 ×1** (L1280 `TX_CoordinacionVisita`) | EA | ✓ |
+| `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` | E | 4 | 25-jul-2026 | `a08bd20` | RF-TAS-01..10 · RF-TAS-02 · RF-TAS-07 · D-B · P-3 · **DEP-EXT:A-09 ×2** (L2524 `horas_restantes` · L2560 `TX_CoordinacionVisita`) | EA + UX + FE | ✓ |
+| `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md` | C | 4 | 25-jul-2026 | `a08bd20` | máquina de estados §2.11 · 7 pantallas IF-03 · D-B · P-3 · **DEP-EXT:A-09 ×1** (L1280 `TX_CoordinacionVisita`) | EA | ✓ |
 
 **Nombres §22 actualizados vs. aprobación previa:** `tipoPropiedad` y `tipoPropiedadNuevoUsado`
 adoptados de código existente vía §22.4 paso 2 (reemplazan `tipoInmueble` y

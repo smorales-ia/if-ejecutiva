@@ -481,11 +481,14 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 ## Reglas operativas aprendidas
 - Antes de escribir código nuevo: leer archivos que se van a tocar y reportar qué existe reutilizable.
-- Nunca commitear ni pushear: el usuario lo hace vía GitHub Desktop.
+- Nunca commitear ni pushear: el usuario lo hace vía GitHub Desktop, **salvo instrucción explícita en contrario para una tanda concreta**.
 - Nunca proponer `sudo` autónomamente.
 - Cuando un cambio salga del alcance del prompt, avisar antes de aplicarlo.
 - Verificar puerto real del server antes de curl.
 - No hacer adendas: aplicar cambios donde corresponda y entregar la nueva versión completa del archivo modificado.
+- Leer este archivo **antes del primer comando de terminal de la sesión**, no al cerrarla. Es insumo de trabajo, no sólo destino de escritura. Una regla de esta sección gana a cualquier convención heredada de un plan o de un prompt.
+- **RO-01 · validador antes de "listo".** Cualquier tabla propia pasa por el validador pandoc antes de reportarla como completa, no después de que el revisor lo pida. El diff final no debe ser la primera vez que el validador la ve.
+- **RO-02 · grep como fuente de verdad de cobertura.** Cuando una convención existe para ser encontrada por `grep`, la verificación de cobertura es el propio `grep` contra la lista de puntos aprobados — no el recuento del ejecutor. Un reporte "N marcas aplicadas" sin la salida literal del `grep` contra la lista aprobada no cuenta como cierre.
 
 ### 2026-07-24 — Verificación MCP schema v1.9 y cierre de TX_DocumentosLegales
 **Contexto:** Tarea de Data Designer: dejar completo el schema IF-02 v1.9 (Espec v1.9.1 §1.5.1) — tablas TX_ContactosVisita/M_TiposDeBien, 23 campos en TX_Solicitudes, 11 en TX_Unidades, 9 en TX_DocumentosLegales.
