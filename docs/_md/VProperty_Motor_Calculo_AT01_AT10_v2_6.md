@@ -1,3 +1,12 @@
+> **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026
+>
+> **Editado en sitio, sin bump de versión** (§3 del plan de Fase 3: cambios no
+> estructurales). El detalle del cambio vive en el changelog al pie y en
+> `docs/_sync_ifTasador_v1/SYNC_LOG.md`.
+> Identificadores históricos (RF · RNF · RN · RT · RR · SP · D · SC · AT · IF) **no se renumeran**.
+
+---
+
 **VProperty**
 
 Motor de Cálculo Parametrizado
@@ -300,7 +309,8 @@ avanza a entregada y luego cerrada.
 >
 > │
 >
-> ├──▶ Si devuelve: TX_Solicitudes.estado = devuelta
+> ├──▶ Si devuelve: TX_Solicitudes.estado = asignada (transición directa ·
+> `devuelta` DEPRECATED, ver changelog al pie)
 >
 > │
 >
@@ -575,7 +585,7 @@ comuna=Vitacura, monto=12.000 UF.
 
   Prerequisito        AT01 debe completar regla_aplicada
 
-  Siguiente paso      Make SC03 notifica al tasador (email/WhatsApp)
+  Siguiente paso      Make SC03 notifica al tasador (email)
   -----------------------------------------------------------------------
 
 **Tabla crítica: M_Tasadores**
@@ -1167,3 +1177,26 @@ Se ejecutan por cron y actúan transversalmente sobre todo el sistema.
 *Documento generado por VProperty Data Engineering · Junio 2026\
 Fusión de: Grafos_AT01_AT04.md + Esquemas_AT01_AT04.md + flujos de
 Guia_Implementacion_General.docx*
+
+
+---
+
+## Changelog de sincronización — lote 5 · 25-jul-2026
+
+Editado **en sitio**, sin bump de versión: los cambios no son estructurales (§3 del plan
+de Fase 3, recomendación EA). El documento sigue siendo **v2.6**.
+
+| # | Cambio | Justificación |
+|---|---|---|
+| 1 | `AT06 · Si devuelve: TX_Solicitudes.estado` pasa de `devuelta` a **`asignada`** (transición directa) | §2.11 spec v1.9.3 — `devuelta` queda DEPRECATED |
+| 2 | `AT02 · Siguiente paso`: el canal de notificación al tasador pasa a **correo únicamente** (se retira `/WhatsApp`) | §1.7 spec v1.9.3 — WhatsApp fuera del canal de notificación al tasador |
+
+**Sobre `devuelta`.** Se conserva en el enum de `TX_Solicitudes` por compatibilidad con
+solicitudes históricas, pero **no admite transiciones nuevas**: el visador devuelve con
+transición directa `pdf_listo → asignada`. La leyenda de estados de la sección *State
+machine de TX_Solicitudes* conserva el literal `devuelta` por trazabilidad histórica; léase
+con esta nota delante.
+
+**Fuera de alcance de este lote**, registrado para el siguiente que toque este documento:
+esa misma leyenda incluye el estado `revision`, que no pertenece a la máquina oficial de
+§2.11, y omite `pendiente_final` y `cancelada`. Corregirla excede el alcance del lote 5.

@@ -40,7 +40,7 @@ Once estados oficiales (Capa Datos v2.6.2). IF-02 opera principalmente sobre `cr
                                        │
                                     asignada ──[IF-02 Cancelar]──→ cancelada
                                        │
-                             [IF-03 Enviar visita]
+                           [IF-03 Calcular Tasación]
                                        │
                                     visitada
                                        │
@@ -54,7 +54,7 @@ Once estados oficiales (Capa Datos v2.6.2). IF-02 opera principalmente sobre `cr
                                     /      \
                       [IF-04 Aprobar]      [IF-04 Devolver]
                            /                    \
-                        aprobada             devuelta → asignada
+                        aprobada            asignada
                         │    \
                [AT07: ¿req F5?]  [envío directo]
                       │
@@ -73,6 +73,11 @@ cancelada          (estado terminal · cualquier etapa)
 ```
 
 **Regla IF-02**: la consola solo puede transicionar `creada → asignada` (acción primaria) y `(cualquiera) → cancelada`. El resto de transiciones las ejecutan automatizaciones.
+
+**Vocabulario del diagrama (sincronizado con §2.11 del spec v1.9.3).** Dos cambios respecto de la versión anterior:
+
+- La acción de IF-03 se llama **"Calcular Tasación"**, no "Enviar visita". Es el botón único que dispara `asignada → visitada`.
+- El estado **`devuelta` queda DEPRECATED**. Se conserva en el enum de `TX_Solicitudes` por compatibilidad con solicitudes históricas, pero no admite transiciones nuevas: "IF-04 Devolver" lleva **directamente `pdf_listo → asignada`**, sin estado intermedio. Por eso la rama derecha del diagrama apunta ahora a `asignada`. El estado `capturada` no existe en esta máquina; su rol lo cumple `visitada`.
 
 ---
 
@@ -279,6 +284,7 @@ Fuente: Especificación v1.9.1 RN-59.
 - **Modo consulta (RN-59):** se activa cuando **ambas** condiciones se cumplen — estado ≠ `creada` Y la solicitud tiene tasador asignado. No depende de una sola de las dos: una solicitud sin tasador sigue editable aunque su estado ya no sea `creada`, y una con tasador pero todavía en `creada` sigue siendo editable.
 - **Al guardar edición:** actualiza los datos, registra un evento en el historial ("Datos de la solicitud modificados"), confirma con toast, y vuelve a modo consulta si el estado ya no es `creada` (o queda editable si sigue siéndolo).
 - No existe ningún flujo de reasignación como vía de corrección posterior — al entrar en modo consulta, el dato de tasador ya no se modifica desde IF-02.
+- **Excepción acotada a RN-59 (spec v1.9.4 §1.4).** En estado `asignada`, y **sólo** mientras `coordinacion_vigente = rechazada`, `TX_ContactosVisita` vuelve a ser editable desde IF-02. Existe para un único propósito: cuando el tasador devuelve la coordinación porque no logró contactar a nadie, la Ejecutiva corrige el teléfono o agrega un contacto y eso reabre la pantalla de coordinación del tasador (RF-TAS-04). El alcance es estrictamente el bloque *Contactos de visita*; cliente, propiedad, vendedor, unidades, RUT y datos financieros siguen bloqueados, y el bloqueo se aplica server-side. La edición queda auditada en `A_Cambios` como cualquier otra. Editar bajo la excepción **no cambia el estado backend**: la solicitud sigue `asignada`.
 
 **Restricción D-01**: la Ejecutiva **nunca** reasigna el visador desde la barra de acciones. El campo `visador` es visible en TabDatos pero sin botón de acción. (Fuente: Spec v1.8.2 §1.6 Nota v0.)
 
@@ -599,5 +605,20 @@ Reescrito completo en Fase Adjuntos 1 (10-jul-2026, D-11 a D-14): de `formData`/
 | D-14 | Mitigación de fallos | Batching 3 · reintentos 3x con backoff 0/2/5s · progreso vía XHR · idempotencia por `hash_md5` · cancelar por archivo/global · recuperación gradual sin bloquear el cierre. |
 | REGLA A (v1.9) | Asignación de tasador | Manual, única. Botón "Asignar Tasador" visible sólo sin tasador; desaparece al confirmar. Sin flujo de reasignación formal ni AT02 automático. RN-44. |
 | REGLA B (v1.9) | Validación al crear | Doble superficie: toast con N° de campos + Alert destructivo con todos los campos (bloques repetibles nombrados con precisión). N° de operación duplicado = conflicto de negocio, no error de formulario. |
-| REGLA C (v1.9) | Modificación de datos | Editable sólo en estado `creada` vía "Editar solicitud" (incluye cambiar tasador). Modo consulta cuando estado ≠ `creada` Y hay tasador asignado. RN-59. |
+| REGLA C (v1.9) | Modificación de datos | Editable sólo en estado `creada` vía "Editar solicitud" (incluye cambiar tasador). Modo consulta cuando estado ≠ `creada` Y hay tasador asignado. RN-59, **con la excepción acotada de v1.9.4**: `TX_ContactosVisita` editable en `asignada` cuando `coordinacion_vigente = rechazada` (§7). |
 | D-15 (v1.9) | AT02 fuera de alcance de IF-02 | Permanece en el catálogo de automatizaciones para otros orígenes (IF-01); IF-02 asigna manualmente (REGLA A). D-10 de la Especificación queda SUPERSEDED. |
+
+---
+
+## Changelog de sincronización — lote 5 · 25-jul-2026
+
+Sincronizado con `VProperty_Especificacion_Proyecto_v1_9_3.md` §2. Editado **en sitio**: este documento no lleva versión en el nombre (§3 del plan de Fase 3).
+
+| # | Cambio | Justificación |
+|---|---|---|
+| 1 | Diagrama de estados: `[IF-03 Enviar visita]` → **`[IF-03 Calcular Tasación]`** | §2.11 spec v1.9.3 — botón único de disparo |
+| 2 | Diagrama de estados: la rama "IF-04 Devolver" apunta ahora a **`asignada`** (transición directa), no a `devuelta` | §2.11 — `devuelta` DEPRECATED |
+| 3 | §7 · excepción acotada a RN-59: `TX_ContactosVisita` editable en `asignada` cuando `coordinacion_vigente = rechazada` | spec v1.9.4 §1.4 · RF-TAS-04 |
+| 4 | Tabla de reglas: REGLA C remite a la excepción de RN-59 | consistencia con el punto 3 |
+
+Trazabilidad por rol firmante en `docs/_sync_ifTasador_v1/SYNC_LOG.md`.
