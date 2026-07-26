@@ -309,3 +309,121 @@ Lectura de apoyo, en este orden: `02_plan_fase3.md` (lotes y decisiones D-A a D-
 - **Trazabilidad hacia atrás:** cada modificación cita la sección del spec que la justifica.
 - **Esta tarea es sólo de documentación.** Ningún cambio en `.ts/.tsx/.jsx`; las
   inconsistencias con código van a `CODE_INCONSISTENCIES.md`.
+
+---
+
+# Punto de reanudación Fase 4 · 26-jul-2026
+
+> Escrito al cerrar el día. **Nada autorizado esta noche.** Se retoma por la decisión 3.1.
+> El detalle completo vive en `03_prealcance_fase4.md`; aquí sólo el estado y las decisiones.
+
+## 1. Estado a hoy
+
+Pre-alcance de Fase 4 entregado en **`2ddaf50`** ·
+ruta `docs/_sync_ifTasador_v1/03_prealcance_fase4.md`.
+
+Granularidad fijada: **RF-TAS × documento**, 10 filas × 3 columnas = **30 celdas**
+(autoridad §6.2 del prompt con desviación C-4). No es RF-TAS × SC — esa habría dado un
+diagnóstico distinto.
+
+| Métrica | Hoy |
+|---|:--:|
+| Cobertura A · identificador `RF-TAS-XX` presente | **47 %** (14/30) |
+| Cobertura B · comportamiento descrito | **67 %** (20/30) |
+| `VALIDATION.md` redactable | **50 %** (4/8 grupos) |
+
+**Marginales sobre cobertura A de `TRAZABILIDAD.md`:**
+
+| Desbloqueo | Δ cobertura A | Efecto en `VALIDATION.md` |
+|---|:--:|---|
+| A-09 | **+10 pp** (47 → 57 %) | desbloquea 1 de los 4 grupos pendientes |
+| A-10 | **0 pp** | desbloquea 1 grupo |
+| P-5 | **0 pp** | desbloquea 1 grupo |
+
+**Sin sinergias entre bloqueos:** resolver los tres juntos no añade nada sobre A-09 sola,
+porque A-10 vive en el eje `SC` y P-5 en el dominio de un campo, y ninguno es el eje de esta
+matriz.
+
+**Conclusión que invierte la premisa del ejercicio:** `TRAZABILIDAD.md` **no está bloqueada
+por decisiones externas**. Con A-09, A-10 y P-5 resueltas queda en 57 %; el 43 % restante es
+trabajo propio —20 pp de citación y 23 pp de contenido sin escribir—. `VALIDATION.md` sí lo
+está, en la mitad exacta de sus grupos, uno por cada bloqueo.
+
+## 2. Recomendación en la mesa (no autorizada)
+
+**Lote 6 de citación de identificadores `RF-TAS-XX` inline**, en documentos ya escritos,
+**antes de Fase 4**.
+
+Fundamento: **+20 pp por medio día de trabajo, sin dependencias externas** — el movimiento más
+barato del backlog y el que más mueve la aguja, contra los +10 pp de A-09 que exigen sign-off
+DE y trabajo en Airtable. Estimación preliminar: **6–8 citas** (5 en Blueprint v2.10, 1 en
+`diseno.md`, 0–2 en `construccion.md` según resuelva H-2).
+
+Escenarios descartados y por qué:
+
+- **(b) coexistencia paralela** con Fase 4 — paga coordinación por un ahorro de horas; la
+  matriz se escribiría dos veces y durante la ventana intermedia mentiría sobre sí misma.
+- **(c) redefinir la matriz por contenido** (extender C-4 a Fase 4) — sube la cifra de 47 % a
+  67 % sin tocar un archivo, pero **la matriz deja de ser verificable por búsqueda**: cada
+  celda pasa a depender del juicio de quien la evaluó. Es el problema que la matriz existe
+  para eliminar.
+
+## 3. Decisiones pendientes, en orden estricto
+
+### 3.1 · H-2 — **GATE. Sin esto no se toma ninguna otra.**
+
+Definir si `diseno.md` y `construccion.md` cuentan como "documento operativo" para las RF-TAS
+**puramente de IF-03**, o si esas celdas van `n/a` por ser operativos de **IF-02**.
+
+No hay documento operativo de IF-03 en el repo. **Cambia el denominador de la matriz**: si
+tres filas llevan `n/a`, el 47 % de hoy se recalcula sobre 27 celdas, no 30, y todos los
+porcentajes de §1 se mueven. Alternativa intermedia: aceptar `schema-airtable.md` como
+operativo genérico.
+
+### 3.2 · Autorizar lote 6 o no
+
+Alcance a definir **tras** H-2. Estimación preliminar: 6–8 citas inline, medio día.
+Regla de citación recomendada: **inline al primer uso** —`…los chips "Hoy" y "Por coordinar"
+(RF-TAS-01)…`—, que es el patrón que el Blueprint ya usa para RF-TAS-02 y RF-TAS-07 y hace
+converger las coberturas A y B para siempre.
+
+### 3.3 · H-1 — `RF-TAS-08` y `RF-TAS-09`
+
+Existen **sólo en el spec**. Es contenido faltante, **no citación**. ¿Entran en el lote 6
+—que lo encarece y le cambia la naturaleza, de anclaje a redacción—, en un lote 7, o se
+difieren? Decisión con precedente para futuros huecos de contenido.
+
+### 3.4 · Secuencia de Fase 4
+
+Respecto a: lote 6, A-09 (que sólo aporta a `VALIDATION.md` en términos de grupos, más los
++10 pp de cobertura A), A-10 y P-5. La recomendación del pre-alcance es **no esperar a ningún
+bloqueo externo**: no existe un umbral mínimo de N bloqueos que justifique diferir.
+
+## 4. Hallazgos §9 — registrados, sin propagar
+
+Los tres viven en `03_prealcance_fase4.md` §9 y **no se actuó sobre ninguno** (RO-03):
+
+- **H-1** — `RF-TAS-08` y `RF-TAS-09` sólo en el spec; contenido que ningún lote escribió.
+- **H-2** — la columna "documento operativo" puede ser inaplicable para RF-TAS de IF-03.
+- **H-3** — medir cobertura B por grep de literales es frágil; hubo un falso positivo de
+  `RF-TAS-08` en `schema-airtable.md`. Argumento adicional a favor del lote 6: la cobertura A
+  sí es automatizable sin ambigüedad.
+
+## 5. Estado del sync a hoy
+
+| Lote | Estado | Commit |
+|---|---|---|
+| 0 · bump de versión | ✅ | `196c1e1` |
+| 1 · SC05 transversal | 🔴 bloqueado **A-10** | — |
+| 2 · spec v1.9.4 | ✅ | `ae5202e` |
+| 3 · §22 + CI-001 | 🟡 parcial · (i) bloqueado **A-09** | `ae5202e` |
+| 4 · Blueprint + Arquitectura | 🟡 parcial · narrativa fuera por **A-10** | `a08bd20` |
+| 5 · operativos + Motor | 🟡 parcial · 4 ítems diferidos **A-09/A-10** | `38f275d` |
+| **6 · citación de identificadores** | **propuesto, NO autorizado** | — |
+| **Fase 4** | **no iniciada** | — |
+
+Bloqueos externos vigentes: **A-09** (crear `TX_CoordinacionVisita`), **A-10** (numeración
+`SC`, con la ampliación `SC03` del Motor detectada en el lote 5), **P-5** (género del dominio
+`tipo_propiedad`). **A-11** abierta, no bloqueante. **CI-001** abierta, fecha condicional.
+
+**Mañana se retoma por 3.1 (H-2).**
