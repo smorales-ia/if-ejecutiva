@@ -17,16 +17,12 @@
 | Fase 4 · Validación | ⏸ no iniciada | `TRAZABILIDAD.md` · `VALIDATION.md` |
 
 **Punto de retoma documentado en `RESUME.md`.** Última actualización: 25-jul-2026, al cierre
-del lote 2.
+de la bitácora.
 
-> ⚠ **`<sha lote 2>` y `<sha lote 3>` son marcadores, no sha.** Los commits de este repo los
-> hace el usuario por GitHub Desktop (ver `docs/aprendizajes.md` · Reglas operativas). Al
-> commitear, reemplazar cada marcador por el sha real:
-> `sed -i 's/`<sha lote 2>`/`<sha-real>`/g' docs/_sync_ifTasador_v1/SYNC_LOG.md docs/_sync_ifTasador_v1/RESUME.md`
->
-> ⏳ **`docs/CODE_INCONSISTENCIES.md` no está listo para commitear tal cual.** CI-001 tiene
-> **Dueño** y **Fecha objetivo** en blanco, y la regla 1 del propio archivo prohíbe entradas
-> sin ellos. Rellenarlos en el índice de Git antes del commit.
+> **Los lotes 2 y 3 comparten commit.** Se fusionaron junto con la bitácora en `ae5202e`,
+> de modo que ese sha aparece en las filas de ambos lotes. La granularidad de un commit por
+> lote no se cumplió en esta tanda; la trazabilidad se sostiene por este registro, no por el
+> historial de git.
 
 ---
 
@@ -36,8 +32,8 @@ del lote 2.
 |---|---|---|---|
 | **0** | Bump de versión: 4 archivos nuevos + 4 predecesores SUPERSEDED | ✅ **COMPLETADO** · 25-jul-2026 | `196c1e1` |
 | **1** | SC05 → SC08 (transversal) | 🔴 **BLOQUEADO por A-10** — no ejecutar hasta decisión humana. Ver `RESUME.md` | — |
-| **2** | Spec v1.9.4 · 5 correcciones internas de §2.14 | ✅ **COMPLETADO** · 25-jul-2026 — adelantado sobre el lote 1 con A-10 abierto (autorización del usuario) | `<sha lote 2>` |
-| **3** | (i) Delta §2.12 · (ii) §22 alias A-05 · (iii) `CODE_INCONSISTENCIES.md` | 🟡 **PARCIAL** · 25-jul-2026 — **(ii) y (iii) completos**; **(i) BLOQUEADO por A-09**: `TX_CoordinacionVisita` no existe en Airtable y sin TABLE_ID ni FIELD_IDs no se puede escribir `schema-airtable.md`. Ver `gap/_ambiguedades.md` | `<sha lote 3>` |
+| **2** | Spec v1.9.4 · 5 correcciones internas de §2.14 | ✅ **COMPLETADO** · 25-jul-2026 — adelantado sobre el lote 1 con A-10 abierto (autorización del usuario) | `ae5202e` |
+| **3** | (i) Delta §2.12 · (ii) §22 alias A-05 · (iii) `CODE_INCONSISTENCIES.md` | 🟡 **PARCIAL** · 25-jul-2026 — **(ii) y (iii) completos**; **(i) BLOQUEADO por A-09**: `TX_CoordinacionVisita` no existe en Airtable y sin TABLE_ID ni FIELD_IDs no se puede escribir `schema-airtable.md`. Ver `gap/_ambiguedades.md` | `ae5202e` |
 | **4** | Blueprint v2.10 + Arquitectura v2.9 | ⏸ PENDIENTE | — |
 | **5** | Operativos + Motor + Origen de Datos | ⏸ PENDIENTE | — |
 
@@ -49,7 +45,7 @@ y §13 del spec y ninguna toca la numeración de escenarios Make. Puede adelanta
 comprometer la resolución de A-10.
 
 **Resuelto el 25-jul-2026:** el usuario autorizó adelantar el lote 2 dejando A-10 abierto.
-Ejecutado en `<sha lote 2>`. Verificado que el diff no contiene ninguna ocurrencia de `SC05`,
+Ejecutado en `ae5202e`. Verificado que el diff no contiene ninguna ocurrencia de `SC05`,
 `SC08` ni `SC13`, de modo que la decisión de A-10 sigue sin condicionar y el lote 1 puede
 ejecutarse después sin conflicto con este commit.
 
@@ -67,14 +63,13 @@ ejecutarse después sin conflicto con este commit.
 | `docs/_md/VProperty_Blueprint_Interfaces_v2_9.md` | E | 0 | 25-jul-2026 | `196c1e1` | bloque `[SUPERSEDED]` | EA (D-A) | ✓ |
 | `docs/_md/VProperty_Diseno_Capa_Datos_Enterprise_v2_6_4.md` | D | 0 | 25-jul-2026 | `196c1e1` | bloque `[SUPERSEDED]` | EA (D-A) | ✓ |
 | `docs/_md/Arquitectura_Enterprise_VProperty_v2_8.md` | C | 0 | 25-jul-2026 | `196c1e1` | bloque `[SUPERSEDED]` | EA (D-A) | ✓ |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md` | A | 2 | 25-jul-2026 | `<sha lote 2>` | RN-59 (excepción acotada) · RF-TAS-04 · RF-TAS-05 · RF-TAS-06 · AT03 · P-4 · P-5 | EA + PM + DE + UX + FE | ✓ |
-| `docs/schema-airtable.md` (§22 nueva) | H | 3 (ii) | 25-jul-2026 | `<sha lote 3>` | A-05 · RF-TAS-06 · P-5 | DE | ✓ |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md` | A | 2 | 25-jul-2026 | `ae5202e` | RN-59 (excepción acotada) · RF-TAS-04 · RF-TAS-05 · RF-TAS-06 · AT03 · P-4 · P-5 | EA + PM + DE + UX + FE | ✓ |
+| `docs/schema-airtable.md` (§22 nueva) | H | 3 (ii) | 25-jul-2026 | `ae5202e` | A-05 · RF-TAS-06 · P-5 | DE | ✓ |
+| `docs/CODE_INCONSISTENCIES.md` (nuevo) | H | 3 (iii) | 25-jul-2026 | `ae5202e` | CI-001 · A-05 | DE | ✓ |
 
 **Nombres §22 actualizados vs. aprobación previa:** `tipoPropiedad` y `tipoPropiedadNuevoUsado`
 adoptados de código existente vía §22.4 paso 2 (reemplazan `tipoInmueble` y
 `condicionPropiedad`); sólo `condicionPropiedadAplicable` es acuñación nueva.
-
-| `docs/CODE_INCONSISTENCIES.md` (nuevo) | H | 3 (iii) | 25-jul-2026 | `<sha lote 3>` | CI-001 · A-05 | DE | ⏳ falta Dueño + Fecha objetivo |
 
 **Integridad del lote 0 verificada:** `cmp` byte a byte entre original y copia, más `diff`
 de cuerpos contra `HEAD`. Cero cambios de contenido; sólo cabeceras.
@@ -96,7 +91,7 @@ Estado al cierre de Fase 2. Ninguna ejecutada aún; la columna *Destino* indica 
 
 | Edición | Destino | Estado |
 |---|---|---|
-| `capturada` → `visitada` | spec §6.2 línea 2974 (**única ocurrencia viva del repo**) | ✅ **lote 2** · `<sha lote 2>` |
+| `capturada` → `visitada` | spec §6.2 línea 2974 (**única ocurrencia viva del repo**) | ✅ **lote 2** · `ae5202e` |
 | `devuelta` DEPRECATED con nota canónica | Capa Datos (2018, 5893) · Blueprint (413, 417, 602, 633, 925, 936, 948, 2465, 2576, 2603, 2660, 3717, 3755) · Arquitectura (3761, 3764, 3771) · Motor (303, 361) · schema-airtable (153) · diseno (57) | ⏸ lotes 3–5 |
 | Botón → **"Calcular Tasación"** | Blueprint (554, 906, 1130, 2425) · diseno (43) — término real hallado: **"Enviar visita"** (C-7) | ⏸ lotes 4–5 |
 | Eliminar "AlertDialog dual" → autosave + botón | **cero ocurrencias fuera del spec**, que ya lo enuncia correctamente (1714) | ✅ nada que hacer |
@@ -115,7 +110,7 @@ Estado al cierre de Fase 2. Ninguna ejecutada aún; la columna *Destino* indica 
 
 | Edición | Destino | Estado |
 |---|---|---|
-| Ficha RN-59 + §1.4 + índice §13 | spec v1.9.4 (635, 601–632, 4409, 4511) | ✅ **lote 2** · `<sha lote 2>` — se amplió a §1.9.1 (FUT-EJ-06 y FUT-EJ-07), que §2.14 fila 10 también nombra y afirmaban lo contrario |
+| Ficha RN-59 + §1.4 + índice §13 | spec v1.9.4 (635, 601–632, 4409, 4511) | ✅ **lote 2** · `ae5202e` — se amplió a §1.9.1 (FUT-EJ-06 y FUT-EJ-07), que §2.14 fila 10 también nombra y afirmaban lo contrario |
 | Verificar que ningún otro doc afirme la regla vieja sin excepción | diseno.md (256) · construccion.md | ⏸ lote 5 |
 
 ### Fotos vs Documentos (§2.6)
@@ -123,15 +118,15 @@ Estado al cierre de Fase 2. Ninguna ejecutada aún; la columna *Destino* indica 
 | Edición | Destino | Estado |
 |---|---|---|
 | Eliminar categoría "Documentos" del organizador | **cero ocurrencias en el repo.** Origen de Datos v1.1 §3.3 Sección 2 ya lista 22 categorías sin "Documentos" (verificado C-9) | ✅ nada que hacer |
-| Sheet documental filtrado por `tipo_propiedad` | spec §4.2.1 + Capa de Datos + Blueprint | 🟡 **spec ✅ lote 2** (`<sha lote 2>`) · pendientes Capa de Datos y Blueprint (lotes 3–4) |
-| `tipo_propiedad` en `D_TipoDocumento` | Capa de Datos + schema-airtable + spec §4.2.1 | 🟡 **spec ✅ lote 2** (`<sha lote 2>`) · pendientes Capa de Datos y schema-airtable (lote 3) |
-| Corregir que `cuándo` **no** es proxy de tipo de propiedad | spec §4.2.1 línea 2322 | ✅ **lote 2** · `<sha lote 2>` |
+| Sheet documental filtrado por `tipo_propiedad` | spec §4.2.1 + Capa de Datos + Blueprint | 🟡 **spec ✅ lote 2** (`ae5202e`) · pendientes Capa de Datos y Blueprint (lotes 3–4) |
+| `tipo_propiedad` en `D_TipoDocumento` | Capa de Datos + schema-airtable + spec §4.2.1 | 🟡 **spec ✅ lote 2** (`ae5202e`) · pendientes Capa de Datos y schema-airtable (lote 3) |
+| Corregir que `cuándo` **no** es proxy de tipo de propiedad | spec §4.2.1 línea 2322 | ✅ **lote 2** · `ae5202e` |
 
 ### Automatizaciones
 
 | Edición | Destino | Estado |
 |---|---|---|
-| AT03 trigger `estado = visitada` | spec §6.2 (2974). **Motor v2.6 ya correcto** en 36, 157, 678, 688 | ✅ **lote 2** · `<sha lote 2>` |
+| AT03 trigger `estado = visitada` | spec §6.2 (2974). **Motor v2.6 ya correcto** en 36, 157, 678, 688 | ✅ **lote 2** · `ae5202e` |
 | SC08 y SC09 con sus triggers | Capa de Datos + Blueprint + Arquitectura | ⏸ lotes 3–4 |
 | SC02 fusionado en SC01 → retirado | Capa de Datos (3619, 4820) | ⏸ lote 3 |
 | SC04 retirado (asignación manual) | Capa de Datos (1998, 5707, 5944, 7006) · Arquitectura (3158, 3749, 3807) | ⏸ lotes 3–4 |

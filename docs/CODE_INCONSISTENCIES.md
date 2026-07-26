@@ -18,6 +18,10 @@ verificable, con un archivo y una línea que se pueden abrir.
 1. **Sin Dueño y sin Fecha objetivo no entra ninguna entrada.** Una divergencia sin
    responsable ni plazo es una nota, no un compromiso, y el archivo se vuelve un cementerio.
    Si no hay quién la tome, no se registra: se discute primero.
+   La Fecha objetivo admite dos formas, nunca el vacío: una fecha `AAAA-MM-DD`, o una
+   **condición explícita y verificable** —un punto abierto, una RF o una decisión de la que
+   depende—. "Cuando se pueda" no es una condición; "condicional a RF-TAS-06, dependiente de
+   P-5" sí lo es, porque ambos tienen ficha propia y estado consultable.
 2. **Identificador correlativo `CI-NNN`, nunca se renumera.** Rige la misma regla de oro que
    para RF · RN · SC · AT: un identificador retirado se marca cerrado, no se reasigna.
 3. **Una entrada, una divergencia.** Si un mismo síntoma tiene dos causas, son dos entradas.
@@ -39,7 +43,7 @@ verificable, con un archivo y una línea que se pueden abrir.
 | **Causa** | por qué ocurre |
 | **Resolución** | qué hay que hacer, concreto y accionable |
 | **Dueño** | rol o persona · **obligatorio** |
-| **Fecha objetivo** | AAAA-MM-DD · **obligatorio** |
+| **Fecha objetivo** | AAAA-MM-DD, o condición explícita · **obligatorio** |
 | **Estado** | abierta · en curso · cerrada (AAAA-MM-DD) |
 | **Origen** | qué lote, ambigüedad o revisión la detectó |
 
@@ -57,8 +61,8 @@ verificable, con un archivo y una línea que se pueden abrir.
 | **Síntoma** | El cliente Airtable pide y mapea el campo por su nombre literal `'tipo_propiedad'`. Hoy funciona porque sólo lee `TX_Solicitudes`. Cuando RF-TAS-06 cruce `D_TipoDocumento` —que tiene un campo con **el mismo nombre y otro significado** (`fldIfdcjsr8KeNRCx`, condición de la propiedad, no clase de inmueble)— la referencia por nombre deja de identificar unívocamente el campo y el error será silencioso: no falla, devuelve el dato equivocado. |
 | **Causa** | Airtable admite el mismo nombre de campo en tablas distintas. `§17` de `docs/schema-airtable.md` ya recomendaba preferir FIELD_ID ante riesgo de colisión, pero como recomendación, no como obligación; y el riesgo no estaba documentado cuando se escribió este código. |
 | **Resolución** | Sustituir los dos literales por una constante FIELD_ID nombrada según el alias del registro §22: `tipoPropiedad` → `fld701TB0LXovvQmt`. Ubicar las constantes en un módulo único de mapeo de campos y hacer que `lib/solicitudes.ts` las importe. Al hacerlo, revisar si `tipoPropiedadNuevoUsado` (`fldHxx1P1ao33PWrl`) necesita el mismo tratamiento en los archivos que hoy lo consumen. |
-| **Dueño** | _(pendiente — rellenar antes del commit)_ |
-| **Fecha objetivo** | _(pendiente — rellenar antes del commit)_ |
+| **Dueño** | Mantenedor de `lib/solicitudes.ts` |
+| **Fecha objetivo** | **Condicional a RF-TAS-06**, dependiente de **P-5**. No hay fecha de calendario: la corrección se agenda cuando P-5 quede resuelto y RF-TAS-06 entre a implementación. Si RF-TAS-06 se adelanta, esta entrada pasa a bloqueante de esa RF. |
 | **Estado** | abierta |
 | **Origen** | Lote 3 del sync IF-Tasador v1.9.3 · ambigüedad **A-05** (colisión de nombre en `tipo_propiedad`) |
 

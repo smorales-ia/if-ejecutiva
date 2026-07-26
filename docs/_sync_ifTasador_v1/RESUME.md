@@ -10,7 +10,8 @@
 ## Estado actual
 
 - **Rama activa:** `docs/sync-ifTasador-v193`
-- **Último commit de contenido:** `<sha lote 2>` (lote 2). El lote 0 es `196c1e1`.
+- **Último commit de contenido:** `ae5202e` — **contiene los lotes 2 y 3 y la bitácora,
+  fusionados en un solo commit**. El lote 0 es `196c1e1`.
 - **Lotes completados:** **0** (bump de versión) y **2** (spec v1.9.4 · 5 correcciones internas)
 - **Lote 1:** 🔴 **BLOQUEADO por A-10. No ejecutar hasta decisión humana.**
 - **Lote 3:** 🟡 **PARCIAL** (25-jul-2026). Se ejecutaron **(ii)** §22 de `schema-airtable.md`
@@ -18,14 +19,15 @@
   CI-001. **(i) el delta §2.12 sigue BLOQUEADO por A-09**: `TX_CoordinacionVisita` no existe
   en Airtable, no hay TABLE_ID ni FIELD_IDs que documentar. Mismo criterio que A-10: trabajo
   fuera del repo, ningún archivo se toca hasta la decisión.
-  ⏳ CI-001 quedó **sin Dueño ni Fecha objetivo** a propósito — los rellena el usuario.
+  ✅ CI-001 completa: dueño = mantenedor de `lib/solicitudes.ts`; fecha objetivo condicional
+  a RF-TAS-06 y dependiente de P-5.
 - **Próximo lote posible:** **4** (Blueprint v2.10 + Arquitectura v2.9) o **5** (operativos).
   ⚠ Verificar antes: el lote 4 incluye `TX_CoordinacionVisita` en entradas/salidas del
   Blueprint y las 8 rutas de IF-03 — la parte de rutas y vocabulario ("Enviar visita" →
   "Calcular Tasación", `devuelta` DEPRECATED) **no** depende de A-09; la parte de schema sí.
   **Requiere confirmación humana al retomar.**
 
-### Qué dejó hecho el lote 2 (25-jul-2026 · `<sha lote 2>`)
+### Qué dejó hecho el lote 2 (25-jul-2026 · `ae5202e`)
 
 Adelantado sobre el lote 1 por autorización explícita del usuario, dejando A-10 abierto.
 Toca **un solo archivo**, `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md`, y **ninguna
@@ -259,7 +261,7 @@ Verificado en Fase 1 — **cero ocurrencias vivas** de las cuatro:
 
 **AT03 con trigger `estado = visitada`** ya está correcto en el Motor de Cálculo v2.6
 (líneas 36, 157, 678, 688). La única violación viva estaba en **§6.2 del spec, línea 2974**,
-y **quedó corregida en el lote 2** (`<sha lote 2>`). Ya no hay ocurrencias vivas de `capturada`
+y **quedó corregida en el lote 2** (`ae5202e`). Ya no hay ocurrencias vivas de `capturada`
 en el spec: las que restan son enunciados de su deprecación, la fila §2.14 que la ordena, la
 nota histórica bajo la tabla de §6.2 y el falso positivo "fotos capturadas".
 
