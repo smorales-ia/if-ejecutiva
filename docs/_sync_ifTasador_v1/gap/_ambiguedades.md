@@ -88,9 +88,25 @@ recuperación. Es el mínimo que preserva la resolubilidad de las citas sin rest
 
 ---
 
-## A-05 · Colisión de nombre en `tipo_propiedad`
+## A-05 · Colisión de nombre en `tipo_propiedad` — **CERRADA**
 
-**Estado** — abierta · impacto sobre la ficha de `D_TipoDocumento` y `TX_Solicitudes`.
+**Estado** — ✅ **cerrada el 25-jul-2026** en el lote 3 (ii), con el registro §22 de
+`docs/schema-airtable.md`: tres capas de nombre (nombre de datos · FIELD_ID · alias de código
+único), **sin renombrar nada en Airtable**. Alias: `tipoPropiedad` y `tipoPropiedadNuevoUsado`
+adoptados del código, que ya los usaba y ya eran inequívocos; `condicionPropiedadAplicable`
+acuñado para `D_TipoDocumento.tipo_propiedad` (`fldIfdcjsr8KeNRCx`). El seguimiento del código
+que aún referencia por nombre está en `docs/CODE_INCONSISTENCIES.md` · CI-001.
+
+> ⚠ **Dos hechos del enunciado original resultaron falsos**, verificados vía MCP el
+> 25-jul-2026 contra `app9G7lLkIV3CpeLa`:
+> 1. La colisión en `TX_Solicitudes` **ya estaba resuelta** desde el 24-jul-2026: existe
+>    `tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`), ver `schema-airtable.md` §21.4-a.
+> 2. `D_TipoDocumento.tipo_propiedad` **ya existía** (`fldIfdcjsr8KeNRCx`). §2.12 del spec lo
+>    declara como alta nueva y no lo es; además su dominio real está en femenino
+>    (`nueva · usada · ambas`) contra el masculino que declara el spec. Eso **no** lo cierra
+>    §22: es el punto abierto **P-5**, trabajo en Airtable, fuera del repositorio.
+
+Enunciado original, conservado:
 
 La Capa de Datos v2.6.4 §19.1 (línea 8484) ya advierte:
 
@@ -155,6 +171,60 @@ concordante con la recomendación de §2.13.
 
 Acción permitida: **agregar la nota de punto abierto** en los docs que fijan Next.js 14.
 Acción prohibida: **cambiar RT-01**. Requiere sign-off de PM + Enterprise Architect + Frontend Lead.
+
+---
+
+## A-09 · **BLOQUEANTE** · `TX_CoordinacionVisita` no existe en Airtable
+
+**Estado** — **abierta · bloquea el lote 3.** Elevada a bloqueante el 25-jul-2026, con el
+mismo criterio aplicado a A-10 sobre el lote 1: *la resolución es trabajo fuera del repo y
+ningún archivo se modifica hasta que exista la decisión.*
+
+> Nota de forma: hasta el 25-jul-2026 esta ficha existía **sin encabezado**, arrastrada al
+> final de A-10, de modo que su contenido se leía como parte de ella. Se le restituyó el
+> encabezado y se la reubicó entre A-08 y A-10.
+
+### Por qué bloquea el lote 3
+
+El lote 3 escribe las altas de §2.12 en `docs/schema-airtable.md` y en la Capa de Datos.
+`CLAUDE.md` obliga a **derivar los tipos TS desde `schema-airtable.md`** y a **preferir
+FIELD_ID sobre nombre de campo**; y la regla innegociable del propio lote 3 es **jamás
+inventar un TABLE_ID ni un FIELD_ID**.
+
+La tabla `TX_CoordinacionVisita` **no existe en la base `app9G7lLkIV3CpeLa`**. Por lo tanto
+no hay TABLE_ID ni un solo FIELD_ID que documentar para sus 11 campos, ni para los 3 campos
+nuevos de `TX_Solicitudes` (`coordinacion_vigente`, `observacion_rechazo_tasador`,
+`horas_restantes`), ni para las 2 plantillas de `C_Plantillas`. Escribir el lote 3 hoy
+produciría una ficha de schema **sin identificadores**, que es justamente el insumo del que
+se derivan los tipos de producción.
+
+Es el mismo patrón que A-10: el nudo no se desata dentro del repositorio.
+
+### Lo que hay que hacer fuera del repo
+
+Crear `TX_CoordinacionVisita` en Airtable con los 11 campos de §2.12, más los 3 campos de
+`TX_Solicitudes` y las 2 plantillas, y volver con los IDs reales. Requiere sign-off DE.
+Es la misma clase de trabajo que poblar `Z_EscenariosMake` para A-10.
+
+### Realizaciones que además hay que decidir al crearla
+
+§2.12 especifica dos campos cuya realización en Airtable no es directa:
+
+- `id` — "PK auto". Airtable no expone PK numérica editable; el equivalente es el `recordId`
+  o un campo `autoNumber`.
+- `intento_numero` — declarado `Number (formula)` con expresión
+  `1 + COUNT(intentos previos del mismo solicitud_id)`. Airtable no permite en una fórmula
+  contar registros hermanos de la misma tabla filtrados por un link sin un rollup intermedio
+  en `TX_Solicitudes`.
+
+Igualmente, la **constraint blanda de unicidad** `(solicitud_id, fecha_respuesta_truncada_al_minuto)`
+no existe como primitiva en Airtable; se implementa por validación en el API Route o por
+campo fórmula + vista de control.
+
+**No se resuelve aquí** — es decisión de implementación (DE). Se documenta el contrato de
+§2.12 tal cual y se anota la nota de realización pendiente.
+
+**El lote 3 queda detenido.** No se modificó ningún archivo por su causa.
 
 ---
 
@@ -236,21 +306,3 @@ contra `Z_EscenariosMake` existente antes del próximo prompt v0.dev"*. **Esa va
 ha hecho** y es precisamente la que resolvería este nudo.
 
 **El lote 1 queda detenido.** No se modificó ningún archivo.
-
-**Estado** — abierta · técnica · impacto medio sobre la ficha de Capa de Datos.
-
-§2.12 especifica dos campos cuya realización en Airtable no es directa:
-
-- `id` — "PK auto". Airtable no expone PK numérica editable; el equivalente es el `recordId`
-  o un campo `autoNumber`.
-- `intento_numero` — declarado `Number (formula)` con expresión
-  `1 + COUNT(intentos previos del mismo solicitud_id)`. Airtable no permite en una fórmula
-  contar registros hermanos de la misma tabla filtrados por un link sin un rollup intermedio
-  en `TX_Solicitudes`.
-
-Igualmente, la **constraint blanda de unicidad** `(solicitud_id, fecha_respuesta_truncada_al_minuto)`
-no existe como primitiva en Airtable; se implementa por validación en el API Route o por
-campo fórmula + vista de control.
-
-**No se resuelve aquí** — es decisión de implementación (DE). Se documenta el contrato de
-§2.12 tal cual y se anota la nota de realización pendiente.

@@ -1,19 +1,53 @@
 # Punto de retoma · sync IF-Tasador v1.9.3
 
 > Documento de handoff. Escrito el 25-jul-2026 al pausar la sesión.
+> **Actualizado el 25-jul-2026 al cierre del lote 2.**
 > Está dirigido a una sesión futura de Claude Code **sin memoria de la conversación original**.
 > Léelo completo antes de ejecutar cualquier cosa.
 
 ---
 
-## Estado al pausar
+## Estado actual
 
 - **Rama activa:** `docs/sync-ifTasador-v193`
-- **Último commit:** ver `SYNC_LOG.md` — el lote 0 es `196c1e1`; sobre él hay un commit `wip` de checkpoint
-- **Lotes completados:** **0** (bump de versión)
+- **Último commit de contenido:** `<sha lote 2>` (lote 2). El lote 0 es `196c1e1`.
+- **Lotes completados:** **0** (bump de versión) y **2** (spec v1.9.4 · 5 correcciones internas)
 - **Lote 1:** 🔴 **BLOQUEADO por A-10. No ejecutar hasta decisión humana.**
-- **Próximo lote posible:** **2** (spec v1.9.4 · 5 correcciones internas), independiente de A-10.
+- **Lote 3:** 🟡 **PARCIAL** (25-jul-2026). Se ejecutaron **(ii)** §22 de `schema-airtable.md`
+  —registro expandible de alias, cierra A-05— y **(iii)** `docs/CODE_INCONSISTENCIES.md` con
+  CI-001. **(i) el delta §2.12 sigue BLOQUEADO por A-09**: `TX_CoordinacionVisita` no existe
+  en Airtable, no hay TABLE_ID ni FIELD_IDs que documentar. Mismo criterio que A-10: trabajo
+  fuera del repo, ningún archivo se toca hasta la decisión.
+  ⏳ CI-001 quedó **sin Dueño ni Fecha objetivo** a propósito — los rellena el usuario.
+- **Próximo lote posible:** **4** (Blueprint v2.10 + Arquitectura v2.9) o **5** (operativos).
+  ⚠ Verificar antes: el lote 4 incluye `TX_CoordinacionVisita` en entradas/salidas del
+  Blueprint y las 8 rutas de IF-03 — la parte de rutas y vocabulario ("Enviar visita" →
+  "Calcular Tasación", `devuelta` DEPRECATED) **no** depende de A-09; la parte de schema sí.
   **Requiere confirmación humana al retomar.**
+
+### Qué dejó hecho el lote 2 (25-jul-2026 · `<sha lote 2>`)
+
+Adelantado sobre el lote 1 por autorización explícita del usuario, dejando A-10 abierto.
+Toca **un solo archivo**, `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md`, y **ninguna
+ocurrencia de `SC05`/`SC08`/`SC13`** — la decisión de A-10 no queda condicionada y el lote 1
+puede ejecutarse después sin conflicto con este commit.
+
+Las cinco correcciones internas, todas justificadas por la tabla §2.14 del propio spec:
+
+| # | Sección | Qué se corrigió |
+|---|---|---|
+| 1 | §1.4 · ficha RN-59 · §1.9.1 · §13 | Excepción acotada a RN-59: `TX_ContactosVisita` editable en `asignada` sólo cuando `coordinacion_vigente = rechazada`. Se amplió a §1.9.1 (FUT-EJ-06 y FUT-EJ-07), que afirmaban lo contrario y que §2.14 fila 10 también nombra |
+| 2 | §4.2.1 | Campo `tipo_propiedad` `{nuevo, usado, ambos}` en `D_TipoDocumento`; corregida la lectura de la columna `cuándo` (no es proxy de tipo de propiedad); poblado inicial registrado como **asunción P-4**, no como decisión |
+| 3 | §6.2 | `AT03_ejecutar_dag_formulas`: `estado=capturada` → `estado=visitada`. Era la única violación literal de vocabulario del archivo |
+| 4 | §1.3.2 · §1.3.3 | Lectura de `TX_CoordinacionVisita` en IF-02: bloque *Coordinación* de sólo lectura en Datos, eventos de coordinación en el timeline de Historial |
+| 5 | §2.8 | Cita `Origen de Datos del Informe v1.0 §3.3` → `v1.1 §3.3` (C-9) |
+
+Más la nota al pie de §2.14 con el comando de recuperación de v1.9.2 (mitigación A-04) y la
+celda de versión de portada, que seguía diciendo **1.9.2** dentro de un archivo v1.9.4.
+
+⚠ **Pendientes que este lote dejó abiertos a propósito** (son de lotes 3–4, no olvidos):
+`tipo_propiedad` falta en `docs/schema-airtable.md` y en la Capa de Datos; el sheet documental
+filtrado falta en el Blueprint. El spec ya los declara.
 
 ### Qué dejó hecho el lote 0
 
@@ -113,11 +147,30 @@ TABLE_ID de la tabla: `tblYfmDoaq7Z3Vh6P` (base `app9G7lLkIV3CpeLa`).
 
 - **A-01, A-02** — fuentes externas ausentes (`VProperty_ADR_IF_Tasador_v3_v2.md`,
   `Imagenes_IF_Tasador_v3.docx`). **Sin acción.** Registradas por completitud.
-- **A-05** — `tipo_propiedad` homónimo (tres campos con el mismo nombre en dos tablas).
-  **Reaparece en el lote 3.**
-- **A-09** — `TX_CoordinacionVisita` no existe aún en Airtable; `intento_numero` y la
+- **A-05** — ✅ **RESUELTA en el lote 3 (ii)**, 25-jul-2026. Se cerró con el registro §22 de
+  `docs/schema-airtable.md`: tres capas de nombre (nombre de datos Airtable · FIELD_ID ·
+  alias de código único), sin renombrar nada en Airtable. Alias finales: `tipoPropiedad` y
+  `tipoPropiedadNuevoUsado` —**adoptados** del código, que ya los usaba— y
+  `condicionPropiedadAplicable`, **acuñado** para `D_TipoDocumento.tipo_propiedad`
+  (`fldIfdcjsr8KeNRCx`), el único homónimo que quedaba vivo. §22.4 fija el procedimiento
+  para agregar entradas nuevas: el registro es expandible, no una tabla cerrada.
+  ⚠ Dos hechos que la ficha original de A-05 tenía mal: la colisión en `TX_Solicitudes` ya
+  estaba resuelta desde el 24-jul (`tipo_propiedad_nuevo_usado`, §21.4-a), y el campo de
+  `D_TipoDocumento` **ya existía** — §2.12 lo declara como alta nueva y no lo es.
+  **Queda abierto P-5**, que es otro problema: el género del dominio.
+- **A-09** — 🔴 **ELEVADA A BLOQUEANTE del lote 3** el 25-jul-2026. Ficha completa en
+  `gap/_ambiguedades.md` (hasta esa fecha existía sin encabezado, arrastrada al final de
+  A-10). Texto original conservado abajo:
+- **A-09 (enunciado original)** — `TX_CoordinacionVisita` no existe aún en Airtable; `intento_numero` y la
   constraint blanda no son primitivas de Airtable. **Reaparece en el lote 3.**
 - **A-07 (P-4)** y **A-08 (P-3)** — fuera de alcance por §7 del prompt. **No decidir.**
+- **P-5 · género del dominio de `tipo_propiedad`** *(nuevo · 25-jul-2026)*. `D_TipoDocumento`
+  lo tiene en femenino (`nueva/usada/ambas`, `fldIfdcjsr8KeNRCx`) y `TX_Solicitudes` en
+  masculino (`nuevo/usado`, `fldHxx1P1ao33PWrl`). RF-TAS-06 los compara: **hoy nunca
+  coinciden y el sheet documental sale vacío.** Detrás hay una decisión de vocabulario de
+  negocio sin tomar ("propiedad nueva/usada" vs "inmueble nuevo/usado"). Mismo criterio que
+  A-09 y A-10: **trabajo fuera del repo**, decisión del usuario. Registrado en §2.15 y
+  §4.2.1 del spec v1.9.4. Impacto alto — bloquea la implementación de RF-TAS-06.
 
 ### Ya cerradas (no reabrir)
 
@@ -205,8 +258,10 @@ Verificado en Fase 1 — **cero ocurrencias vivas** de las cuatro:
   `Origen_Datos_v1.1` §3.3 Sección 2 ya lista 22 categorías sin ella.
 
 **AT03 con trigger `estado = visitada`** ya está correcto en el Motor de Cálculo v2.6
-(líneas 36, 157, 678, 688). La única violación viva está en **§6.2 del spec, línea 2974**,
-y se corrige en el lote 2.
+(líneas 36, 157, 678, 688). La única violación viva estaba en **§6.2 del spec, línea 2974**,
+y **quedó corregida en el lote 2** (`<sha lote 2>`). Ya no hay ocurrencias vivas de `capturada`
+en el spec: las que restan son enunciados de su deprecación, la fila §2.14 que la ordena, la
+nota histórica bajo la tabla de §6.2 y el falso positivo "fotos capturadas".
 
 ---
 
@@ -216,8 +271,15 @@ y se corrige en el lote 2.
 2. Leer `SYNC_LOG.md` para confirmar el sha del último commit.
 3. Verificar que `git status` esté limpio y en la rama `docs/sync-ifTasador-v193`.
 4. Consultar al humano cuál de las 3 opciones de A-10 se aplica, o si se avanza con el
-   lote 2 mientras A-10 queda abierto.
+   lote 3 mientras A-10 queda abierto.
 5. **NO ejecutar el lote 1 hasta que A-10 esté resuelto.**
+
+**Sobre el lote 3, si es el siguiente.** Es el de mayor riesgo del sync: toca la Capa de
+Datos y `docs/schema-airtable.md`, del que `CLAUDE.md` obliga a derivar los tipos TS. Regla
+innegociable: **jamás inventar un TABLE_ID ni un FIELD_ID**. `TX_CoordinacionVisita` no existe
+en Airtable (A-09), así que todas sus altas van marcadas *"pendiente de creación · declarado
+en spec v1.9.3 §2.12 · no verificado en Airtable al 25-jul-2026"*. Reabre además A-05 y
+obliga al cuidado del `SC15` homónimo (UF vs. backups nocturnos — sólo se retira el del UF).
 
 Lectura de apoyo, en este orden: `02_plan_fase3.md` (lotes y decisiones D-A a D-D) ·
 `gap/_ambiguedades.md` (A-01 a A-10) · la ficha de brecha del documento que toque el lote.

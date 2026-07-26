@@ -865,3 +865,81 @@ La tabla ya existía con link `solicitud` → `TX_Solicitudes` (`fldJ60CFZfJsHwT
 - **(e) `TX_Unidades.superficie_terreno_m2` → RESUELTO (se descarta)**: se adopta el campo existente `sup_terreno_m2` (`fld6lgF0KxUh9oPCB`, number precision 0) tal cual. **No** se crea `superficie_terreno_m2`. Toda referencia a `superficie_terreno_m2` se elimina de la documentación.
 
 > `docs/diseno.md` no contenía referencias a los nombres largos `certificado_avaluo`/`certificado_numero`/`superficie_terreno_m2` (verificado por grep 24-jul), por lo que no requirió cambios de opción; sólo se documenta aquí la convención canónica.
+
+---
+
+## 22. Homónimos y alias de código (registro expandible · 25-jul-2026)
+
+**Este registro está abierto.** No es una tabla cerrada de tres filas: es el procedimiento por
+el que cualquier campo con homónimo —o con riesgo demostrado de confusión— entra a tener un
+alias único. Ver §22.4 para agregar uno.
+
+### 22.1 El problema y las tres capas de nombre
+
+Airtable permite que dos tablas distintas tengan un campo con el mismo nombre y significado
+distinto. `tipo_propiedad` existe en `TX_Solicitudes` (Link → `M_TiposPropiedad`: qué clase de
+inmueble es) y en `D_TipoDocumento` (singleSelect: a qué condición de propiedad aplica el
+documento). Son cosas diferentes con el mismo literal, y RF-TAS-06 tiene que cruzarlas.
+
+La regla no renombra nada en Airtable. Separa **tres identidades** con roles distintos:
+
+| Capa | Qué es | Quién manda | Puede repetirse |
+|---|---|---|---|
+| **Nombre de datos** | el literal del campo en Airtable (`tipo_propiedad`) | Airtable · inmutable desde el repo | **sí**, entre tablas |
+| **FIELD_ID** | `fld701TB0LXovvQmt` · la identidad real y estable | lo que el código debe usar siempre | no |
+| **Alias de código** | nombre único en todo el repo | tipos TS, prosa de docs, nombres de constantes | **no, nunca** |
+
+El alias es una construcción de la capa de código: **no existe en Airtable** y no viaja en el
+body de la API. El nombre de datos es lo que viaja; el alias es cómo lo llamamos nosotros.
+
+### 22.2 Registro
+
+| Alias de código | Nombre de datos | FIELD_ID | Tabla | Dominio real | Origen del alias |
+|---|---|---|---|---|---|
+| `tipoPropiedad` | `tipo_propiedad` | `fld701TB0LXovvQmt` | `TX_Solicitudes` | Link → `M_TiposPropiedad` | ya en uso en el código (18 líneas, 6 archivos · verificado 25-jul-2026) |
+| `tipoPropiedadNuevoUsado` | `tipo_propiedad_nuevo_usado` | `fldHxx1P1ao33PWrl` | `TX_Solicitudes` | singleSelect `nuevo · usado` | ya en uso en el código |
+| `condicionPropiedadAplicable` | `tipo_propiedad` | `fldIfdcjsr8KeNRCx` | `D_TipoDocumento` | singleSelect `nueva · usada · ambas` | **acuñado aquí** (A-05 · 25-jul-2026) |
+
+Dos de los tres alias **no se inventaron**: el código ya los usaba y ya eran inequívocos
+(`components/console/solicitud-detail.tsx:514` los renderiza juntos en la misma línea). Se
+adoptan tal cual, con coste de migración cero. Sólo el tercero necesitó nombre nuevo, porque es el único homónimo
+que quedaba vivo: comparte nombre de datos con el primero y significado con el segundo.
+
+⚠ **`condicionPropiedadAplicable` y `tipoPropiedadNuevoUsado` tienen dominios incompatibles**
+—femenino contra masculino— y RF-TAS-06 los compara. Hoy la comparación literal nunca coincide.
+Es el punto abierto **P-5** del spec v1.9.4 §2.15; se resuelve en Airtable, no aquí.
+
+### 22.3 Regla de uso en código
+
+Para todo campo listado en §22.2:
+
+1. **Referenciarlo por nombre de datos queda prohibido.** Se usa la constante FIELD_ID.
+2. La constante **se nombra por su alias**, no por su nombre de datos.
+3. El alias es el nombre del campo en los tipos TS y en la prosa de la documentación.
+4. Un alias **nunca se reutiliza** para otro campo, ni siquiera en otra tabla.
+
+Esto extiende §17 (*"preferir FIELD_ID sobre nombre de campo cuando exista riesgo de
+colisión"*) convirtiéndolo en obligación sobre una lista corta, explícita y verificable.
+
+### 22.4 Procedimiento para agregar una entrada
+
+Un campo entra al registro cuando se cumple **cualquiera** de las dos condiciones:
+
+- **Homónimo:** su nombre de datos ya existe en otra tabla de la base, con cualquier significado.
+- **Riesgo demostrado:** existe evidencia concreta de confusión —un bug, una revisión que lo
+  detectó, o dos documentos que lo usan con sentidos distintos—. No basta la sospecha.
+
+Pasos:
+
+1. **Verificar el nombre de datos y el FIELD_ID contra la base real vía MCP.** Nunca inventar
+   un FIELD_ID ni copiarlo de un documento sin comprobarlo.
+2. **Elegir el alias.** Primero buscar si el código ya lo nombra de alguna forma
+   (`grep -rn --exclude-dir={node_modules,.next,.git,docs}`): si existe y es inequívoco, se
+   adopta ese, no se inventa uno nuevo. Sólo se acuña cuando no hay nada que adoptar.
+3. **Comprobar que el alias no colisione** con ningún identificador del repo, con el mismo grep.
+4. **Agregar la fila a §22.2**, con la columna *Origen del alias* diciendo si se adoptó o se acuñó.
+5. **Si hay código que ya referencia el campo por nombre**, abrir una entrada en
+   `docs/CODE_INCONSISTENCIES.md` con dueño y fecha objetivo. Sin esos dos campos no entra.
+
+Renombrar el campo en Airtable **no** es parte del procedimiento: el registro existe
+precisamente para no tener que hacerlo.

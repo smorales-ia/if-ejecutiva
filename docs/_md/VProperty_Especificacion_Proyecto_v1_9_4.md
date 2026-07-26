@@ -23,7 +23,24 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.2 · Julio 2026 · Sincroniza los listados de campos
+  **Versión**         1.9.4 · Julio 2026 · Aplica las cinco correcciones
+                      internas que v1.9.3 dejó pendientes sobre sí mismo
+                      (§2.14): excepción acotada a RN-59 en §1.4, §1.9.1 y
+                      §13; documentación del campo tipo_propiedad de
+                      D_TipoDocumento —que ya existía, contra lo que
+                      dice §2.12— y corrección de la lectura de la
+                      columna cuándo en §4.2.1, con la divergencia de
+                      dominio registrada como P-5; trigger de AT03
+                      estado=capturada →
+                      estado=visitada en §6.2; lectura de
+                      TX_CoordinacionVisita en §1.3.2 y §1.3.3; y la cita
+                      de Origen de Datos del Informe v1.0 → v1.1 en §2.8.
+                      §2 no se modifica salvo la nota al pie de §2.14.
+                      Sucede a 1.9.3, que queda SUPERSEDED y que había
+                      incorporado §2 (Interfaz Tasador · RF-TAS-01 a
+                      RF-TAS-10 · TX_CoordinacionVisita · máquina de
+                      estados oficial). Hereda de 1.9.2: sincroniza los
+                      listados de campos
                       de TX_Comparables (§tabla de secciones E2 y RF-12) con
                       el schema real de Airtable leído vía MCP el
                       23-jul-2026; `uf_m2` pasa a `uf_m2_construccion`.
@@ -541,6 +558,13 @@ Consolida el registro completo de la solicitud. Los bloques son:
                       llamada, con rol, nombre, teléfono,
                       email y estado de cada contacto
 
+  Coordinación        Resultado del último intento        IF-03 (§2.3) ·
+                      registrado en                       sólo lectura
+                      TX_CoordinacionVisita: estado
+                      (confirmada o rechazada), fecha de
+                      visita propuesta, motivo del
+                      rechazo y número de intento
+
   Datos SII           Destino, códigos SII (comuna,       §4 Lectura de
                       manzana, predio), ubicación urbana  Documentos (Claude
                       o rural, superficie de terreno,     API)
@@ -575,6 +599,14 @@ provienen de la base interna del SII. Tercera: el bloque Vendedor se
 muestra tanto en Nuevo como en Usado; lo que cambia es el tipo de
 persona, jurídica en Nuevo y natural en Usado.
 
+Sobre el bloque Coordinación (nuevo en v1.9.4). Muestra el resultado del
+último intento, no el historial completo —la sucesión de intentos vive
+en la pestaña Historial—. Es de sólo lectura: la Ejecutiva no confirma
+ni rechaza coordinaciones desde IF-02; esa acción es exclusiva del
+tasador en IF-03 (§2.3 · RF-TAS-05). No se construye vista dedicada
+nueva. Cuando el bloque muestra estado rechazada, se habilita la
+excepción acotada a RN-59 sobre Contactos de visita descrita en §1.4.
+
 ### **1.3.3 Pestaña Historial**
 
 Timeline único que renderiza los eventos cronológicos de A_Eventos y los
@@ -582,9 +614,21 @@ cambios auditados de A_Cambios, e incorpora: el email de asignación
 enviado al tasador (asunto, destinatario y fecha, expandible al cuerpo
 completo), la confirmación de asignación con su timestamp y autor, las
 ediciones registradas mientras la solicitud estuvo en estado creada
-(RN-59), y las cargas y descargas de documentos registradas en
-TX_Adjuntos. No existe email de reasignación --- v1.9 no tiene flujo de
-reasignación formal (§1.6).
+(RN-59), los eventos de coordinación de la visita, y las cargas y
+descargas de documentos registradas en TX_Adjuntos. No existe email de
+reasignación --- v1.9 no tiene flujo de reasignación formal (§1.6).
+
+Eventos de coordinación (nuevos en v1.9.4). Cada fila de
+TX_CoordinacionVisita se lista como un evento del timeline, en orden
+cronológico junto al resto: coordinación confirmada —con la fecha de
+visita propuesta— o coordinación rechazada —con el motivo obligatorio
+que dio el tasador—, en ambos casos con el autor (tasador identificado
+por autor_clerk_id), el timestamp de servidor (fecha_respuesta) y el
+número de intento. Un segundo intento no reemplaza al primero: ambos
+quedan visibles, que es lo que permite reconstruir por qué una solicitud
+estuvo detenida. Se listan también las ediciones de contactos de visita
+hechas bajo la excepción acotada a RN-59, que llegan al timeline por la
+vía habitual de A_Cambios (§1.4).
 
 ### **1.3.4 Pestaña Adjuntos**
 
@@ -617,8 +661,26 @@ por sí solo la transición de estado: la transición sólo ocurre al
 confirmar explícitamente "Asignar Tasador" (§1.6). Cuando el estado deja
 de ser creada y la solicitud tiene tasador asignado, todos los datos
 quedan en modo consulta (RN-59) — no existe ningún flujo de
-reasignación ni edición posterior; ambas condiciones (estado ≠ creada Y
+reasignación ni edición posterior, salvo la excepción acotada que
+describe el párrafo siguiente; ambas condiciones (estado ≠ creada Y
 tasador asignado) deben cumplirse para bloquear, no una sola.
+
+**Excepción acotada a RN-59 (nueva en v1.9.4).** En estado asignada, y
+sólo mientras coordinacion_vigente = rechazada, TX_ContactosVisita
+vuelve a ser editable desde IF-02. La excepción existe para un único
+propósito operativo: cuando el tasador devuelve la coordinación porque
+no logró contactar a nadie, la Ejecutiva necesita corregir el teléfono o
+agregar un contacto para habilitar el segundo intento; sin esa edición
+la solicitud queda detenida. El alcance es estrictamente el bloque
+Contactos de visita —rol, nombre, teléfono, email, estado y prioridad de
+llamada—. Cliente, propiedad, vendedor, unidades, RUT y datos
+financieros siguen bloqueados sin excepción, y el bloqueo se aplica
+server-side, no sólo en la UI. La edición queda auditada en A_Cambios
+con before/after, autor y timestamp, igual que cualquier otra, y su
+efecto es reabrir la pantalla de coordinación para el tasador
+(RF-TAS-04). En cuanto se registra un intento nuevo, coordinacion_vigente
+deja de valer rechazada y el bloque vuelve a modo consulta. Ver §2.3 y
+§2.5 para el flujo completo desde IF-03.
 
 Esta regla sustituye a la de v1.8.2, que bloqueaba sólo los campos
 críticos (cliente, propiedad, RUT) en estados posteriores a creada o
@@ -653,7 +715,12 @@ hay acceso directo a "Reasignar Tasador" porque ese botón no existe.
                       campos son editables desde "Editar solicitud" —
                       incluido el tasador ya fijado— y cada cambio se audita
                       en A_Cambios y en el historial ("Datos de la solicitud
-                      modificados").
+                      modificados"). **Excepción acotada (v1.9.4):** cuando
+                      el estado es asignada y coordinacion_vigente =
+                      rechazada, el sistema rehabilita la edición del bloque
+                      Contactos de visita (TX_ContactosVisita) y sólo de ese
+                      bloque; el resto del formulario permanece en modo
+                      consulta. La excepción se evalúa server-side.
 
   **Postcondición**   El modo consulta (solo lectura) se activa únicamente
                       cuando **ambas** condiciones se cumplen a la vez:
@@ -662,13 +729,26 @@ hay acceso directo a "Reasignar Tasador" porque ese botón no existe.
                       editable aunque su estado ya no sea creada, y una
                       solicitud con tasador pero todavía en creada sigue
                       siendo editable. No existe ninguna vía de reasignación
-                      ni edición posterior al modo consulta.
+                      ni edición posterior al modo consulta, con la única
+                      excepción de TX_ContactosVisita bajo la condición
+                      anterior. Editar un contacto bajo la excepción no
+                      cambia el estado backend —la solicitud sigue
+                      asignada—, queda auditado en A_Cambios y reabre la
+                      pantalla de coordinación del tasador (RF-TAS-04). Al
+                      registrarse un intento nuevo, coordinacion_vigente
+                      deja de valer rechazada y el bloque vuelve a modo
+                      consulta. La excepción nunca alcanza a cliente,
+                      propiedad, vendedor, unidades, RUT ni datos
+                      financieros.
 
   **Trazabilidad**    Definición del cliente en el levantamiento operativo
                       v1.9. Sustituye a la regla de bloqueo por campos
                       críticos vigente hasta v1.8.2 y a la versión previa de
                       v1.9 que ataba el bloqueo solo a la confirmación de
-                      asignación. Ver §1.3.1, §1.4 y §1.6.
+                      asignación. La excepción acotada se incorpora en
+                      v1.9.4 por §2.5 y §2.3 (Decisión S-6 del ADR de
+                      IF-Tasador); RN-59 no se renumera ni se sustituye por
+                      una regla nueva. Ver §1.3.1, §1.4, §1.6, §2.3 y §2.5.
   ---------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
@@ -1482,6 +1562,13 @@ fecha por el hilo de correo y la Ejecutiva responde al correo original
 del cliente informándola. En v1.9 el registro de la fecha y la respuesta
 al cliente ocurren fuera del sistema, en el cliente de correo.
 
+*Actualización v1.9.4.* FUT-EJ-06 deja de estar diferido en su parte
+estructurada: §2.3 especifica la pantalla de coordinación de IF-03, el
+tasador registra la fecha propuesta en TX_CoordinacionVisita (§2.12) y
+la Ejecutiva la lee en las pestañas Datos e Historial de IF-02 (§1.3.2,
+§1.3.3 · RF-TAS-05). Sigue diferida la respuesta automática al correo
+original del cliente, que continúa siendo manual.
+
 **Contacto no logrado (FUT-EJ-07).** Segundo desenlace posible de la
 llamada: nadie contesta o el teléfono está malo. El tasador reporta el
 problema por el hilo; la Ejecutiva pide al cliente validar o entregar un
@@ -1490,6 +1577,18 @@ reenvía el correo al tasador. La edición de contactos ya está soportada
 mientras la solicitud no esté asignada (§1.4); lo que se difiere es la
 marca de bloqueo, su vista dedicada en la bandeja y la pausa automática
 del reloj SLA (RN-54).
+
+*Actualización v1.9.4.* El desenlace pasa a estar soportado de forma
+estructurada: el tasador devuelve la coordinación con motivo obligatorio
+desde §2.3 y la solicitud queda con coordinacion_vigente = rechazada. En
+consecuencia, la frase anterior sobre la edición de contactos queda
+matizada: además del estado creada, TX_ContactosVisita es editable en
+estado asignada mientras la coordinación esté rechazada (excepción
+acotada a RN-59 · §1.4). Editar un contacto reabre la pantalla del
+tasador (RF-TAS-04), de modo que el reenvío manual del correo deja de
+ser necesario. Siguen diferidas la marca de bloqueo por contacto no
+logrado, su vista dedicada en la bandeja y la pausa automática del reloj
+SLA (RN-54).
 
 **Reproceso post-entrega (FUT-EJ-08).** Ocurre entre 6 y 7 veces cada
 mañana y es el punto de mayor fricción con el cliente. Llega por el
@@ -1712,7 +1811,7 @@ Muestra el progreso asincrónico de la extracción SC07 (Claude API) sobre los d
 
 ## 2.8 Ingreso de datos (Pantalla 5)
 
-Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formulario en acordeón, Blueprint §5.4). Siete secciones colapsables alineadas con Origen de Datos del Informe v1.0 §3.3. Los datos ya persistidos en `TX_DatosTasacion` y tablas hijas se **precargan** al abrir la pantalla.
+Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formulario en acordeón, Blueprint §5.4). Siete secciones colapsables alineadas con Origen de Datos del Informe v1.1 §3.3 *(la cita decía v1.0 hasta v1.9.3; el repositorio tiene v1.1 y el contrato de §3.3 se verificó intacto — mismas siete secciones, sin categoría "Documentos" en fotos, campos de comparables coincidentes)*. Los datos ya persistidos en `TX_DatosTasacion` y tablas hijas se **precargan** al abrir la pantalla.
 
 **Reglas de captura:**
 
@@ -1924,6 +2023,16 @@ Cambios a aplicar sobre `VProperty_Especificacion_Proyecto_v1_9_2.md` en su pró
 | §1.9.1 / §1.4 / RN-59 | Documentar excepción acotada: `TX_ContactosVisita` editable en `asignada` cuando `coordinacion_vigente = rechazada` |
 | §4.2.1 | Agregar campo `tipo_propiedad` a `D_TipoDocumento`; corregir la implicación de que `cuándo` sirve de proxy de tipo de propiedad |
 
+**Estado de aplicación al 25-jul-2026 (v1.9.4).** Las ocho primeras filas ya estaban aplicadas dentro de §2 al redactarse v1.9.3. Las tres últimas —§1.3.2/§1.3.3, §1.9.1/§1.4/RN-59 y §4.2.1— apuntaban a secciones fuera de §2 y quedaron sin aplicar en v1.9.3, que por tanto se contradecía consigo mismo. Se aplican en esta versión, junto con dos correcciones que la tabla no anticipaba: el trigger de AT03 en §6.2, que seguía diciendo `estado=capturada` pese a la fila 7 (la fila cita "§2.6 tabla automatizaciones", numeración del §2 anterior; en v1.9.3 esa tabla vive en **§6.2**), y la cita de Origen de Datos del Informe en §2.8, que decía v1.0 cuando el repositorio tiene v1.1. Trazabilidad por rol firmante en `docs/_sync_ifTasador_v1/SYNC_LOG.md`.
+
+**Nota sobre el documento base de esta tabla (A-04).** El encabezado dice que los cambios se aplican sobre `VProperty_Especificacion_Proyecto_v1_9_2.md`. Ese archivo **no está presente en el árbol de trabajo**: v1.9.3 lo sucedió sin conservarlo como copia versionada, y la decisión del sync fue no restaurarlo (desviación C-8, registrada). Se recupera cuando se lo necesite con:
+
+```
+git show 03e8053:docs/_md/VProperty_Especificacion_Proyecto_v1_9_2.md
+```
+
+La cadena vigente es v1.9.2 → v1.9.3 `[SUPERSEDED]` → **v1.9.4**.
+
 ---
 
 ## 2.15 Puntos abiertos y riesgos
@@ -1932,6 +2041,7 @@ Los riesgos R-1, R-2 y R-3 del ADR se cerraron como requisitos firmes (RF-TAS-07
 
 - **P-3 · Versión de Next.js.** Requiere sign-off de PM + Enterprise Architect + Frontend Lead. Ver §2.13.
 - **P-4 · Poblado de `tipo_propiedad` para valores de fase.** El mapeo de `Reproceso`, `Cliente tipo 2`, `Depto con gas` y `---` a `tipo_propiedad = ambos` es asunción del equipo. Validar con la ejecutiva si algún documento de reproceso o condicional aplica sólo a Nuevo o sólo a Usado. Impacto bajo.
+- **P-5 · Género del dominio de `tipo_propiedad` y vocabulario de negocio** *(nuevo en v1.9.4)*. §2.12 declara el dominio en masculino (`{nuevo, usado, ambos}`); la base real tiene `D_TipoDocumento.tipo_propiedad` (`fldIfdcjsr8KeNRCx`) en femenino (`{nueva, usada, ambas}`), mientras que `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`) está en masculino (`{nuevo, usado}`). RF-TAS-06 compara ambos: **con los dominios actuales la comparación literal nunca coincide y el sheet documental sale vacío.** No es sólo un typo a corregir en Airtable: falta decidir la convención de vocabulario de negocio —"propiedad nueva/usada" frente a "inmueble nuevo/usado"—, que fija cuál de los dos dominios se alinea con cuál. Requiere confirmación del negocio + sign-off DE. **Impacto alto:** bloquea la implementación de RF-TAS-06. Alinear el dominio es trabajo en Airtable, fuera del repositorio; la documentación se limita a registrar la divergencia.
 
 ---
 
@@ -2333,6 +2443,17 @@ es la lista en sí, sino la columna cuándo: muchos documentos no llegan
 al inicio, sino en el reproceso, cuando el cliente está escriturando. De
 ahí que el checklist viva en el detalle y no en la creación (§1.5.1.1).
 
+Precisión v1.9.4 sobre la columna cuándo. El párrafo anterior se
+mantiene en lo que afirma sobre temporalidad, pero hasta v1.9.3 se
+prestaba a leer cuándo como proxy del tipo de propiedad. No lo es: esa
+columna mezcla cuatro dimensiones distintas en un solo valor —fase del
+proceso (Reproceso), segmento de cliente (Cliente tipo 2), condición de
+la propiedad (Depto con gas) y tipo de propiedad propiamente tal
+(Nuevo / Usado / Ambos)—, además del marcador --- para los documentos
+que no se piden. Filtrar el sheet documental por esta columna produciría
+resultados incorrectos. El tipo de propiedad se modela en un campo
+propio, descrito a continuación.
+
   ---------------------------------------------------------------------------
   **Documento**             **Cuándo**  **Qué aporta**    **Extracción
                                                           automática**
@@ -2423,6 +2544,44 @@ Cinco consecuencias de diseño se derivan de este catálogo:
 
 El alta de un tipo nuevo no requiere DDL ni deploy: se agrega la fila en
 D_TipoDocumento y sus atributos en D_TipoDocumentoAtributo (RN-31).
+
+**Campo tipo_propiedad.** §2.12 lo declara como alta nueva. **No lo es:
+ya existe en la base** (`fldIfdcjsr8KeNRCx`), verificado vía MCP el
+25-jul-2026. Lo que aporta v1.9.4 no es su creación sino la
+documentación de su uso. Es el único criterio válido para filtrar el
+catálogo por condición de la propiedad, y alimenta el sheet documental
+que el tasador abre desde el organizador de fotos (§2.6 · RF-TAS-06):
+ese sheet deja de listar el catálogo completo y pasa a mostrar sólo los
+documentos aplicables a la propiedad en curso.
+
+  ---------------------------------------------------------------------------
+  **Campo**           **Tipo**            **Valores reales en la base**
+  ------------------- ------------------- -----------------------------------
+  tipo_propiedad      singleSelect        nueva · usada · ambas
+  ---------------------------------------------------------------------------
+
+**Divergencia de dominio --- punto abierto P-5.** §2.12 escribe este
+dominio en masculino (nuevo / usado / ambos); la base lo tiene en
+femenino (nueva / usada / ambas), y el campo de la solicitud que debe
+compararse contra él —tipo_propiedad_nuevo_usado, `fldHxx1P1ao33PWrl`—
+está en masculino (nuevo / usado). **Tal como está hoy, la comparación
+literal de RF-TAS-06 no encuentra coincidencias y el sheet documental
+saldría vacío.** Detrás de la discrepancia hay una decisión de
+vocabulario de negocio que no está tomada: si la convención es
+"propiedad nueva / usada" o "inmueble nuevo / usado". Se registra como
+P-5 en §2.15. **No se resuelve en la documentación**: alinear el dominio
+es trabajo en Airtable, fuera del repositorio.
+
+**Poblado inicial --- asunción P-4, no decisión.** El mapeo desde la
+columna cuándo es directo para los tres valores que sí expresan
+condición de la propiedad: Nuevo→nueva, Usado→usada, Ambos→ambas. Para
+los valores que expresan otra dimensión —Reproceso, Cliente tipo 2,
+Depto con gas y el marcador ---— se asigna ambas de forma provisoria.
+Esto es una asunción del equipo y está registrada como punto abierto P-4
+en §2.15: falta validar con la ejecutiva si algún documento de reproceso
+o condicional aplica sólo a Nuevo o sólo a Usado. Impacto bajo; el campo
+es editable sin deploy si la validación cambia el mapeo. La forma
+definitiva de los valores queda supeditada a P-5.
 
 ## **4.3 Set A · Datos para el motor de cálculo**
 
@@ -2979,7 +3138,7 @@ TX_Calculos con snapshot inmutable de version y expresion.
                                             desde IF-02 en
                                             v1.9 (§1.5.5)
 
-  AT03     AT03_ejecutar_dag_formulas       estado=capturada   C_Formulas,              TX_Calculos,
+  AT03     AT03_ejecutar_dag_formulas       estado=visitada    C_Formulas,              TX_Calculos,
                                                                TX_DatosTasacion         TX_Solicitudes
 
   AT04     AT04_validar_rangos_valor        TX_Calculos insert TX_Calculos, M_Comunas   TX_Solicitudes (flag)
@@ -2998,6 +3157,14 @@ TX_Calculos con snapshot inmutable de version y expresion.
   AT10     AT10_archivado_nocturno          cron nocturno      TX_Solicitudes           H_Solicitudes_Cerradas,
                                                                                         A_Eventos
   ---------------------------------------------------------------------------------------------------------------
+
+Nota v1.9.4 sobre AT03. El trigger de AT03_ejecutar_dag_formulas era
+`estado=capturada` hasta v1.9.3. Se corrige a `estado=visitada` conforme
+a la máquina de estados oficial de §2.11: el estado `capturada` queda
+retirado del vocabulario y su rol lo asume `visitada`, que es el estado
+al que transiciona la solicitud al presionarse "Calcular Tasación"
+(§2.7). El Motor de Cálculo AT01--AT10 v2.6 ya declaraba el trigger
+correcto; la divergencia era interna de esta Especificación.
 
 ## **6.3 Requisitos funcionales del motor de cálculo**
 
@@ -4414,9 +4581,10 @@ cuando la regla afecta transversalmente varias interfaces.
            casas y departamentos full eléctricos
            (nueva v1.9)
 
-  RN-59    Modo consulta activado por estado y     §1.4, §1.6.2
-           tasador asignado (nueva v1.9, reescrita
-           v1.9.1)
+  RN-59    Modo consulta activado por estado y     §1.4, §1.6.2,
+           tasador asignado (nueva v1.9, reescrita §2.3, §2.5
+           v1.9.1; excepción acotada a
+           TX_ContactosVisita en v1.9.4)
   ------------------------------------------------------------------------
 
 Nota v1.3 sobre RN-25. La regla original de generación de texto
@@ -4516,7 +4684,12 @@ Se enuncian así:
   con el envío del informe al cliente, no con su recepción.
 - RN-58 · El sello verde no aplica a casas ni a departamentos full
   eléctricos; en esos casos se registra "no aplica" y no se deja vacío.
-- RN-59 · Enunciada con precondición, acción y postcondición en §1.4.
+- RN-59 · Enunciada con precondición, acción y postcondición en §1.4,
+  con la excepción acotada de v1.9.4: TX_ContactosVisita es editable en
+  estado asignada exclusivamente cuando coordinacion_vigente = rechazada,
+  para habilitar el segundo intento de coordinación (§2.3, §2.5). La
+  excepción cubre sólo contactos de visita; cliente, propiedad, RUT y
+  datos financieros siguen bloqueados.
 
 Tres de estas reglas —RN-54, RN-55 y RN-57— describen comportamiento que
 v1.9 no implementa. Se declaran igualmente para que la versión que
