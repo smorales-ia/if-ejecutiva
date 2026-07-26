@@ -34,7 +34,7 @@ de la bitácora.
 | **1** | SC05 → SC08 (transversal) | 🔴 **BLOQUEADO por A-10** — no ejecutar hasta decisión humana. Ver `RESUME.md` | — |
 | **2** | Spec v1.9.4 · 5 correcciones internas de §2.14 | ✅ **COMPLETADO** · 25-jul-2026 — adelantado sobre el lote 1 con A-10 abierto (autorización del usuario) | `ae5202e` |
 | **3** | (i) Delta §2.12 · (ii) §22 alias A-05 · (iii) `CODE_INCONSISTENCIES.md` | 🟡 **PARCIAL** · 25-jul-2026 — **(ii) y (iii) completos**; **(i) BLOQUEADO por A-09**: `TX_CoordinacionVisita` no existe en Airtable y sin TABLE_ID ni FIELD_IDs no se puede escribir `schema-airtable.md`. Ver `gap/_ambiguedades.md` | `ae5202e` |
-| **4** | Blueprint v2.10 + Arquitectura v2.9 | ⏸ PENDIENTE | — |
+| **4** | Blueprint v2.10 + Arquitectura v2.9 · puntos 4.1–4.6 | 🟡 **PARCIAL** · 25-jul-2026 — 4.1, 4.2, 4.4, 4.5, 4.6 completos; **4.3 sólo en su mitad**: la máquina de estados sí, la narrativa de ejemplo **no requiere cambio** (su vocabulario de estados ya es el oficial; sus únicos defectos son de numeración `SC`, fuera de alcance) | `<sha lote 4>` |
 | **5** | Operativos + Motor + Origen de Datos | ⏸ PENDIENTE | — |
 
 ### Nota sobre el orden de lotes 1 y 2
@@ -66,6 +66,8 @@ ejecutarse después sin conflicto con este commit.
 | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md` | A | 2 | 25-jul-2026 | `ae5202e` | RN-59 (excepción acotada) · RF-TAS-04 · RF-TAS-05 · RF-TAS-06 · AT03 · P-4 · P-5 | EA + PM + DE + UX + FE | ✓ |
 | `docs/schema-airtable.md` (§22 nueva) | H | 3 (ii) | 25-jul-2026 | `ae5202e` | A-05 · RF-TAS-06 · P-5 | DE | ✓ |
 | `docs/CODE_INCONSISTENCIES.md` (nuevo) | H | 3 (iii) | 25-jul-2026 | `ae5202e` | CI-001 · A-05 | DE | ✓ |
+| `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` | E | 4 | 25-jul-2026 | `<sha lote 4>` | RF-TAS-01..10 · RF-TAS-02 · RF-TAS-07 · D-B · P-3 · **DEP-EXT:A-09 ×2** (L2524 `horas_restantes` · L2560 `TX_CoordinacionVisita`) | EA + UX + FE | ✓ |
+| `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md` | C | 4 | 25-jul-2026 | `<sha lote 4>` | máquina de estados §2.11 · 7 pantallas IF-03 · D-B · P-3 · **DEP-EXT:A-09 ×1** (L1280 `TX_CoordinacionVisita`) | EA | ✓ |
 
 **Nombres §22 actualizados vs. aprobación previa:** `tipoPropiedad` y `tipoPropiedadNuevoUsado`
 adoptados de código existente vía §22.4 paso 2 (reemplazan `tipoInmueble` y
@@ -73,6 +75,30 @@ adoptados de código existente vía §22.4 paso 2 (reemplazan `tipoInmueble` y
 
 **Integridad del lote 0 verificada:** `cmp` byte a byte entre original y copia, más `diff`
 de cuerpos contra `HEAD`. Cero cambios de contenido; sólo cabeceras.
+
+**Integridad del lote 4 verificada:** 229 líneas nuevas en 2 archivos. Validador de columnas
+sobre todas las líneas del diff: **cero** violaciones en tablas pandoc y **cero** desalineaciones
+en cajas grid (ancho 73). Greps de regresión: `"Enviar visita"` en cero; `capturada` en una sola
+ocurrencia, que es la nota que declara su inexistencia; `"Calcular Tasación"` en 6. Ningún `SC`
+modificado —`SC06` aparece en el diff sólo arrastrado en una línea editada, balance 1:1—.
+Predecesores congelados (`Blueprint_v2_9`, `Arquitectura_v2_8`, `spec_v1_9_3`, `Capa_Datos_v2_6_4`)
+sin cambios. **Marca `DEP-EXT:A-09` en 3 puntos**, sin menciones huérfanas.
+
+> **Convención de la marca DEP-EXT.** Comentario HTML de una línea, **fuera de toda tabla** para
+> no romper la alineación pandoc. Formato fijo:
+> `<!-- DEP-EXT:<ambigüedad> · <entidad o campo> · pendiente creación Airtable · no verificada <fecha> · declarada en spec <versión> §<sección> -->`
+> Cuando A-09 se resuelva, localizar todas las referencias con `grep -rn "DEP-EXT:A-09" docs/`.
+>
+> **Las 3 marcas del lote 4, agrupadas por dependencia externa (A-09):**
+>
+> | # | Archivo:línea | Objeto bloqueado | Punto del lote |
+> |---|---|---|---|
+> | 1 | `Arquitectura_Enterprise_VProperty_v2_9.md:1280` | `TX_CoordinacionVisita` (entidad) | 4.4 · inventario de entidades |
+> | 2 | `VProperty_Blueprint_Interfaces_v2_10.md:2560` | `TX_CoordinacionVisita` (entradas/salidas) | 4.4 · IF-03 §7.3 |
+> | 3 | `VProperty_Blueprint_Interfaces_v2_10.md:2524` | `horas_restantes` (campo fórmula) | 4.5 · semáforo SLA |
+>
+> Las tres bloquean por la misma causa —schema declarado en §2.12 del spec v1.9.3 y no creado en
+> Airtable—, no por tres causas distintas. Se resuelven todas juntas cuando A-09 cierre.
 
 **Integridad del lote 2 verificada:** 171 inserciones · 14 supresiones en un solo archivo.
 Las cuatro tablas pandoc tocadas (§1.3.2 bloques · ficha RN-59 · §6.2 AT01–AT10 · índice §13)

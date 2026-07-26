@@ -117,7 +117,8 @@ configurado vía \@theme (sin tailwind.config.js), shadcn/ui v4 sobre
 \@base-ui/react 1.5 (base-ui, nunca Radix), lucide-react,
 react-hook-form + zod, sonner, cmdk y pnpm como gestor; RT-01 de la
 Especificación conserva la referencia a Next.js 14 como piso mínimo
-compatible; (b) se renombra el flag D_Atributo.uso_interfaz_tasador a
+compatible **--- ver el punto abierto P-3 más abajo**; (b) se renombra el
+flag D_Atributo.uso_interfaz_tasador a
 uso_interfaz_negocio (RN-34 revisada) para reflejar vocación transversal
 de todas las interfaces que reciben documentos; (c) se incorporan los
 campos D_Atributo.version (snapshot de parametría para reproducibilidad
@@ -144,6 +145,18 @@ Airtable Interfaces, **(iii)** se elimina el \"equipo de monitoreo\" ---
 el sistema se auto-monitorea desde Airtable, **(iv)** toda la lógica de
 negocio se externaliza a tablas de configuración en Airtable, de manera
 que Make queda como ejecutor puro, sin condicionales propias.
+
+**Punto abierto P-3 --- versión de Next.js.** Este documento y RT-01 de
+la Especificación fijan **Next.js 14** como piso; las mediciones sobre
+los repositorios reales dan **Next.js 16** (§2.13 y §3.7 del spec
+v1.9.3), y el repositorio de IF-02 corre 16.2.6. Son tres mediciones
+concordantes contra la cifra documentada. La recomendación del equipo es
+adoptar la realidad medida y actualizar el blueprint y RT-01.
+
+**RT-01 no se modifica en v2.9.** Cambiarlo requiere sign-off de PM +
+Enterprise Architect + Frontend Lead, que no está dado. Toda mención de
+"Next.js 14" en este documento debe leerse con esta nota delante: es la
+cifra vigente por contrato, no necesariamente la desplegada.
 
 # 1. El equipo de 9 especialistas
 
@@ -1262,6 +1275,33 @@ sistema, donde hay alta tasa de inserts y updates. Prefijo: TX\_.
 | Separado de TX_Solicitudes porque son muchos campos y por temas de    |
 | auditoría: queda claro qué viene del cliente, qué del tasador y qué   |
 | extrajo la IA.                                                        |
++-----------------------------------------------------------------------+
+
+<!-- DEP-EXT:A-09 · TX_CoordinacionVisita · pendiente creación Airtable · no verificada 2026-07-25 · declarada en spec v1.9.3 §2.12 -->
+
++-----------------------------------------------------------------------+
+| TRANSACCIONES                                                         |
+|                                                                       |
+| **TX_CoordinacionVisita** --- nueva en v2.9 · **no creada aún**       |
+|                                                                       |
+| *Un registro por intento de coordinación de la visita. El tasador     |
+| confirma con fecha propuesta, o devuelve a la ejecutiva con motivo    |
+| obligatorio (IF-03 · §2.3 del spec v1.9.3).*                          |
++-----------------------------------------------------------------------+
+| Separada de TX_Solicitudes porque la coordinación admite varios       |
+| intentos y cada uno debe quedar registrado: un segundo intento no     |
+| reemplaza al primero. Es lo que permite reconstruir por qué una       |
+| solicitud estuvo detenida. La coordinación **no cambia el estado      |
+| backend**: la solicitud permanece asignada durante todo el ciclo.     |
+|                                                                       |
+| **Dependencia externa A-09.** Esta tabla no existe todavía en la      |
+| base app9G7lLkIV3CpeLa. Está declarada en §2.12 del spec v1.9.3 con   |
+| once campos, más tres campos nuevos en TX_Solicitudes                 |
+| (coordinacion_vigente, observacion_rechazo_tasador, horas_restantes)  |
+| y dos plantillas en C_Plantillas. Su creación es trabajo fuera de     |
+| este repositorio. Este documento describe la entidad y su razón de    |
+| ser; **no declara TABLE_ID ni FIELD_ID**, que se documentarán en      |
+| docs/schema-airtable.md cuando la tabla exista.                       |
 +-----------------------------------------------------------------------+
 
   --------------------------------------------------------------------------------------
@@ -3750,6 +3790,62 @@ Solo se permiten ciertas transiciones, y cada cambio se registra en
 A_Eventos. Esto evita que una solicitud quede en un estado
 inconsistente.
 
+**Máquina de estados oficial (v2.9 · §2.11 del spec v1.9.3).** La
+secuencia canónica es:
+
+creada → asignada → visitada → calculada → pdf_listo → aprobada →
+(pendiente_final?) → entregada → cerrada
+
+Con dos excepciones fuera de secuencia: **cancelada** y
+**requiere_atencion**, alcanzables desde cualquier estado previo.
+
+**`devuelta` queda DEPRECATED.** Se conserva en el enum de
+TX_Solicitudes para no romper las solicitudes históricas que ya lo
+tienen, pero **no admite transiciones nuevas**: cuando el visador
+devuelve un informe al tasador, la solicitud pasa **directamente de
+pdf_listo a asignada**, sin escalar por un estado intermedio. Las filas
+de la tabla siguiente que describen `devuelta` como estado vivo
+corresponden al comportamiento anterior a v2.9 y se conservan por
+trazabilidad histórica; léanse con esta nota delante. Un script one-off
+de migración transiciona las `devuelta` existentes a `asignada` dejando
+evento en A_Eventos (mitigación R-3 del spec §2.12).
+
+El estado `capturada` **no existe** en esta máquina: su rol lo cumple
+`visitada`, que es el estado al que transiciona la solicitud cuando el
+tasador presiona **"Calcular Tasación"** en IF-03.
+
+**Las siete pantallas de IF-03 y su relación con los estados (v2.9).**
+Sólo una de las siete produce transición de estado; las demás son
+navegación o progreso:
+
+  ------------------------------------------------------------------------
+  **Pantalla**                        **Efecto sobre el estado**
+  ----------------------------------- ------------------------------------
+  P1 · Cola personal                  Ninguno. Lista y filtra.
+
+  P2 · Coordinación de visita         **Ninguno.** La solicitud permanece
+  (nueva)                             asignada, confirme o rechace el
+                                      tasador.
+
+  P3 · Organizador de fotos           Ninguno.
+
+  P4 · Progreso de extracción         Ninguno. Muestra avance
+                                      asincrónico.
+
+  P5 · Formulario en acordeón         Ninguno. Autosave, sin transición.
+
+  P6 · Progreso del cálculo           Refleja visitada → calculada, que
+                                      ejecuta AT03; la pantalla no la
+                                      dispara.
+
+  P7 · Preview del informe            Ninguno para el tasador.
+  ------------------------------------------------------------------------
+
+La única transición que el tasador dispara es **asignada → visitada**, y
+la produce el botón "Calcular Tasación" desde P5. El resto de la cadena
+es automático. El acceso a P3–P7 queda gateado por el resultado de la
+coordinación: si P2 no está confirmada, la captura no se inicia.
+
   ------------------------------------------------------------------------------------
   **Estado**              **Próximos          **Significado y disparador**
                           posibles**          
@@ -4426,6 +4522,16 @@ planillas ni reportes manuales.
   **Disponibilidad del      \> 99.5%        Z_EjecucionesMake.resultado=ok /
   sistema**                                 total mensual.
   --------------------------------------------------------------------------
+
+⚠ **Métrica pendiente de redefinición --- "Tasa de devolución del
+visador" (decisión D-B).** La fórmula `COUNT(estado=devuelta) /
+COUNT(total)` **no se modifica aquí**, pero deja de ser calculable tal
+como está: `devuelta` queda DEPRECATED por §2.11 del spec v1.9.3 y no se
+poblará en solicitudes nuevas, porque el visador devuelve con transición
+directa `pdf_listo → asignada`. Medida sobre datos nuevos, la métrica
+tenderá a cero sin que mejore nada. Redefinir un KPI de negocio excede el
+mandato documental de esta versión: **requiere firma PM**. Mientras
+tanto, léase la cifra como válida sólo para el histórico anterior a v2.9.
 
 ## Riesgos identificados y mitigación
 

@@ -143,6 +143,16 @@ se construyen sobre Airtable Interfaces (Tipo B · plataforma low-code).
                                                                código)
   ----------------------------------------------------------------------------
 
+**Punto abierto P-3 --- versión de Next.js.** La tabla anterior y RT-01
+de la Especificación fijan **Next.js 14**; §2.13 y §3.7 del spec v1.9.3
+miden **Next.js 16** en los repositorios reales, y el de IF-02 corre
+16.2.6. La recomendación del equipo es adoptar la realidad medida y
+actualizar el blueprint y RT-01. **RT-01 no se modifica en v2.10**:
+requiere sign-off de PM + Enterprise Architect + Frontend Lead, que no
+está dado. Toda mención de "Next.js 14" en este documento debe leerse
+con esta nota delante --- es la cifra vigente por contrato, no
+necesariamente la desplegada.
+
 **0.2 Seis dominios funcionales**
 
   ------------------------------------------------------------------------
@@ -559,7 +569,7 @@ contrato visible al usuario.
                   subformularios E3 ampliaciones / E4 programa por nivel
                   / E5 terminaciones por recinto / E6 documentos legales.
                   Guardado automático cada 30 s. Acción primaria:
-                  \"Enviar visita\".
+                  \"Calcular Tasación\".
 
   Salidas         TX_DatosTasacion (upsert) · TX_Adjuntos (insert fotos y
                   PDFs en Dropbox) · TX_ItemsCuadroValoracion (insert
@@ -911,8 +921,8 @@ aparecen porque no transicionan solicitudes.
   IF-02          Cancelar         (cualquier) → cancelada A_Eventos (cancelación
                  solicitud                                con motivo)
 
-  IF-03          Enviar visita    asignada → visitada     SC06 (Make · Dropbox)
-                                                          → AT03 (DAG
+  IF-03          Calcular         asignada → visitada     SC06 (Make · Dropbox)
+                 Tasación                                 → AT03 (DAG
                                                           fórmulas) + SC07
                                                           (Claude API)
 
@@ -954,7 +964,19 @@ aparecen porque no transicionan solicitudes.
 | La máquina de estados tiene 11 estados oficiales (Diseño de Capa de   |
 | Datos v2.5): creada · asignada · visitada · calculada · pdf_listo ·   |
 | aprobada · devuelta · pendiente_final · entregada · cerrada ·         |
-| cancelada · requiere_atencion. Las transiciones no listadas en la     |
+| cancelada · requiere_atencion.                                        |
+|                                                                       |
+| **v2.10 · `devuelta` DEPRECATED (§2.11 spec v1.9.3).** Se conserva en |
+| el enum por compatibilidad con solicitudes históricas, pero no admite |
+| transiciones nuevas: el visador devuelve con transición **directa     |
+| pdf_listo → asignada**. La secuencia oficial es creada → asignada →   |
+| visitada → calculada → pdf_listo → aprobada → (pendiente_final?) →    |
+| entregada → cerrada, con cancelada y requiere_atencion como           |
+| excepciones. Las menciones de `devuelta` como estado vivo en este     |
+| documento describen el comportamiento anterior y se conservan por     |
+| trazabilidad; no son destino válido para transiciones nuevas.         |
+|                                                                       |
+| Las transiciones no listadas en la                                    |
 | tabla anterior son automáticas (gobernadas por AT03 al cerrar el DAG, |
 | por SC09 al generar el PDF, por AT05 al notificar al visador, por     |
 | AT07 al chequear si requiere F5). Toda transición ---humana o         |
@@ -1135,8 +1157,8 @@ si no se cumplen, el botón aparece deshabilitado con tooltip explicativo
                                  desaparece al asignar. No hay
                                  "Pasar a asignada" separado.
 
-  Enviar visita   IF-03          ≥8 fotos · superficies \> 0  Mensaje exacto del
-                                 · año entre 1900 y actual ·  faltante (\"Faltan 2
+  Calcular        IF-03          ≥8 fotos · superficies \> 0  Mensaje exacto del
+  Tasación                       · año entre 1900 y actual ·  faltante (\"Faltan 2
                                  tamaño total ≤100 MB · ítems fotos\", \"Σ m²
                                  E1 cuadran m² · subforms     edif. no cuadra con
                                  v2.3 mínimos completos.      superficie
@@ -2430,7 +2452,7 @@ Programa por nivel, E5 Terminaciones por recinto, E6 Documentos legales.
   -------------------------------------------------------------------------
   **Acción de UI**     **Transición**      **Automatización**
   -------------------- ------------------- --------------------------------
-  Enviar visita        asignada → visitada API Route sube archivos a
+  Calcular Tasación    asignada → visitada API Route sube archivos a
                                            Dropbox y dispara SC06. En
                                            Airtable, el cambio de estado
                                            lanza AT03 (DAG) y SC07 (Claude)
@@ -2454,6 +2476,97 @@ Programa por nivel, E5 Terminaciones por recinto, E6 Documentos legales.
 | fuera de su submission y no puede saltarse el flujo. Esto reduce      |
 | drásticamente la superficie de error.                                 |
 +-----------------------------------------------------------------------+
+
+**Rutas del repositorio (nuevas en v2.10 · §2.13 spec v1.9.3)**
+
+Hasta v2.9 este documento no declaraba ninguna ruta de IF-03. Son ocho,
+sobre la base v0.dev:
+
+  -----------------------------------------------------------------------
+  **Ruta**                           **Pantalla**
+  ---------------------------------- ------------------------------------
+  app/tasaciones/                    P1 · Cola personal del tasador
+
+  app/tasaciones/\[id\]/coordinar/   P2 · Coordinación de visita
+                                     (**nueva** · §2.3 del spec)
+
+  app/tasaciones/\[id\]/             Detalle de solicitud (§2.4)
+
+  app/tasaciones/\[id\]/fotos/       P3 · Organizador de fotos (§2.6)
+
+  app/tasaciones/\[id\]/lectura/     P4 · Progreso de extracción (§2.7)
+
+  app/tasaciones/\[id\]/captura/     P5 · Formulario en acordeón (§2.8)
+
+  app/tasaciones/\[id\]/calculo/     P6 · Progreso del cálculo AT03
+                                     (§2.9)
+
+  app/tasaciones/\[id\]/informe/     P7 · Preview del informe (§2.10)
+  -----------------------------------------------------------------------
+
+Las siete pantallas numeradas son las de §2 del spec; la ruta de detalle
+es pre-existente y no numera pantalla nueva. La coordinación **no cambia
+el estado backend**: la solicitud permanece `asignada` antes, durante y
+después; sólo cambia al presionarse "Calcular Tasación".
+
+**Componentes reutilizados sin regeneración:** TasacionCard, EstadoBadge,
+SLABadge, FileUploadZone (sheet documental) y el visor de adjuntos de
+IF-02/IF-04, que sirve el modal **"Ver expediente"**. Sin librerías
+nuevas.
+
+**Hook `use-estado-tasador`:** se elimina la coletilla "y el control de 3
+intentos". El polling sobre el estado backend gobierna el bloqueo de
+"Calcular Tasación" (RF-TAS-07). No existe límite de re-visitas ni
+concepto de "último intento".
+
+**Vocabulario y comportamiento de UI (v2.10)**
+
+<!-- DEP-EXT:A-09 · horas_restantes · pendiente creación Airtable · no verificada 2026-07-25 · declarada en spec v1.9.3 §2.12 · semáforo en §2.1 (RF-TAS-02) -->
+
+La fila **Semáforo SLA** de la tabla siguiente depende del campo fórmula
+`TX_Solicitudes.horas_restantes`, que **no existe todavía en Airtable**
+(ver marca DEP-EXT arriba). El semáforo verde/ámbar/rojo sí es
+pre-existente y no depende de A-09: lo que está bloqueado es únicamente
+la etiqueta numérica de horas restantes.
+
+  ---------------------------------------------------------------
+  **Elemento**         **Comportamiento**
+  -------------------- ------------------------------------------
+  Chips de la cola     \"Hoy\" y \"Por coordinar\" filtran la cola
+                       personal (P1). El filtro de estados es
+                       {asignada, visitada, calculada}.
+
+  Badge \"Esperando    Se muestra en la card cuando el tasador
+  contacto de          devolvió la coordinación y la solicitud
+  ejecutiva\"          queda a la espera de que la ejecutiva
+                       corrija los contactos de visita.
+
+  Semáforo SLA         Mismo verde/ámbar/rojo de la Ejecutiva
+                       (RN-04, C_SLA con feriados H_Feriados),
+                       más las horas restantes en numérico
+                       (RF-TAS-02).
+
+  Botón \"Rechazar\"   Semántica nueva: devuelve la coordinación
+                       a la ejecutiva con motivo obligatorio.
+                       **No** es rechazo de la solicitud ni
+                       descuenta intentos. Sin franja roja ni
+                       contador de re-visitas.
+
+  \"Ver expediente\"   Abre el visor de adjuntos de IF-02/IF-04
+                       como modal reutilizado, no como pantalla
+                       propia.
+  ---------------------------------------------------------------
+
+<!-- DEP-EXT:A-09 · TX_CoordinacionVisita · pendiente creación Airtable · no verificada 2026-07-25 · declarada en spec v1.9.3 §2.12 -->
+
+**Entradas y salidas de coordinación.** La pantalla P2 lee y escribe
+`TX_CoordinacionVisita`, y el semáforo con horas restantes se alimenta de
+`TX_Solicitudes.horas_restantes`. **Ninguno de los dos existe todavía en
+Airtable** (ver marca DEP-EXT arriba): están declarados en §2.12 del spec
+v1.9.3 y su creación es trabajo fuera de este repositorio, bloqueado por
+la ambigüedad **A-09**. Este documento describe el contrato funcional; no
+declara TABLE_ID ni FIELD_ID, que se documentarán en
+`docs/schema-airtable.md` cuando la tabla exista.
 
 **7.4 IF-04 · Mesa de revisión del visador (Tipo A · Next.js + Clerk)**
 
@@ -3961,6 +4074,16 @@ no requieren datos nuevos.
   Disponibilidad del    \> 99.5%           ejecuciones ok /   Z_EjecucionesMake
   sistema                                  total mensual      
   -------------------------------------------------------------------------------
+
+⚠ **Métrica pendiente de redefinición --- "Tasa de devolución del
+visador" (decisión D-B).** La fórmula `COUNT(devuelta) / COUNT(total)`
+**no se modifica aquí**, pero deja de ser calculable tal como está:
+`devuelta` queda DEPRECATED por §2.11 del spec v1.9.3 y no se poblará en
+solicitudes nuevas, porque el visador devuelve con transición directa
+`pdf_listo → asignada`. Medida sobre datos nuevos, la métrica tenderá a
+cero sin que mejore nada. Redefinir un KPI de negocio excede el mandato
+documental de esta versión: **requiere firma PM**. Mientras tanto, léase
+la cifra como válida sólo para el histórico anterior a v2.10.
 
 **10.2 Dashboards y vistas que los alimentan**
 
