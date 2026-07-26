@@ -35,7 +35,7 @@ de la bitácora.
 | **2** | Spec v1.9.4 · 5 correcciones internas de §2.14 | ✅ **COMPLETADO** · 25-jul-2026 — adelantado sobre el lote 1 con A-10 abierto (autorización del usuario) | `ae5202e` |
 | **3** | (i) Delta §2.12 · (ii) §22 alias A-05 · (iii) `CODE_INCONSISTENCIES.md` | 🟡 **PARCIAL** · 25-jul-2026 — **(ii) y (iii) completos**; **(i) BLOQUEADO por A-09**: `TX_CoordinacionVisita` no existe en Airtable y sin TABLE_ID ni FIELD_IDs no se puede escribir `schema-airtable.md`. Ver `gap/_ambiguedades.md` | `ae5202e` |
 | **4** | Blueprint v2.10 + Arquitectura v2.9 · puntos 4.1–4.6 | 🟡 **PARCIAL** · 25-jul-2026 — 4.1, 4.2, 4.4, 4.5, 4.6 completos; **4.3 sólo en su mitad**: la máquina de estados sí, la narrativa de ejemplo **no requiere cambio** (su vocabulario de estados ya es el oficial; sus únicos defectos son de numeración `SC`, fuera de alcance) | `a08bd20` |
-| **5** | Operativos + Motor · puntos 5.1–5.5 | 🟡 **PARCIAL** · 25-jul-2026 — 5.1–5.5 completos; **4 ítems diferidos**: SC13 acotado a IF-02 y `SC15` en Origen de Datos (`DEP-EXT:A-10`), 3 campos de `TX_Solicitudes` en `CLAUDE.md` y lectura de `TX_CoordinacionVisita` en operativos (`DEP-EXT:A-09`). `CLAUDE.md` y Origen de Datos **no se abrieron** | `<sha lote 5>` |
+| **5** | Operativos + Motor · puntos 5.1–5.5 | 🟡 **PARCIAL** · 25-jul-2026 — 5.1–5.5 completos; **4 ítems diferidos**: SC13 acotado a IF-02 y `SC15` en Origen de Datos (`DEP-EXT:A-10`), 3 campos de `TX_Solicitudes` en `CLAUDE.md` y lectura de `TX_CoordinacionVisita` en operativos (`DEP-EXT:A-09`). `CLAUDE.md` y Origen de Datos **no se abrieron** | `38f275d` |
 
 ### Nota sobre el orden de lotes 1 y 2
 
@@ -68,8 +68,8 @@ ejecutarse después sin conflicto con este commit.
 | `docs/CODE_INCONSISTENCIES.md` (nuevo) | H | 3 (iii) | 25-jul-2026 | `ae5202e` | CI-001 · A-05 | DE | ✓ |
 | `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` | E | 4 | 25-jul-2026 | `a08bd20` | RF-TAS-01..10 · RF-TAS-02 · RF-TAS-07 · D-B · P-3 · **DEP-EXT:A-09 ×2** (L2524 `horas_restantes` · L2560 `TX_CoordinacionVisita`) | EA + UX + FE | ✓ |
 | `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md` | C | 4 | 25-jul-2026 | `a08bd20` | máquina de estados §2.11 · 7 pantallas IF-03 · D-B · P-3 · **DEP-EXT:A-09 ×1** (L1280 `TX_CoordinacionVisita`) | EA | ✓ |
-| `docs/diseno.md` | F | 5 | 25-jul-2026 | `<sha lote 5>` | vocabulario §2.11 · `devuelta` DEPRECATED · RN-59 excepción acotada · RF-TAS-04 (citada) | UX + PM | ✓ |
-| `docs/_md/VProperty_Motor_Calculo_AT01_AT10_v2_6.md` | F | 5 | 25-jul-2026 | `<sha lote 5>` | `devuelta` DEPRECATED · canal único correo (§1.7) · **en sitio sin bump + changelog al pie (§3 del plan)** | EA + DE | ✓ |
+| `docs/diseno.md` | F | 5 | 25-jul-2026 | `38f275d` | vocabulario §2.11 · `devuelta` DEPRECATED · RN-59 excepción acotada · RF-TAS-04 (citada) | UX + PM | ✓ |
+| `docs/_md/VProperty_Motor_Calculo_AT01_AT10_v2_6.md` | F | 5 | 25-jul-2026 | `38f275d` | `devuelta` DEPRECATED · canal único correo (§1.7) · **en sitio sin bump + changelog al pie (§3 del plan)** | EA + DE | ✓ |
 
 **Corrección de punteros del checklist en el lote 5.** 5.5 aplicado en `docs/diseno.md:287`
 (enunciado normativo de la excepción) y `docs/diseno.md:608` (REGLA C remite a ella); el
