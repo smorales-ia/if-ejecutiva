@@ -13,6 +13,23 @@ hallazgo no se pierde.
 Este archivo **no es una lista de deseos**: cada entrada describe una divergencia concreta y
 verificable, con un archivo y una línea que se pueden abrir.
 
+### Alcance: código, no documentos — decisión pospuesta (lote 5 · 25-jul-2026)
+
+Este registro cubre divergencias **documento ↔ código de producción**. Las divergencias
+**documento ↔ documento** no entran aquí.
+
+La opción de ampliar `CODE_INCONSISTENCIES.md` a doc-vs-doc, o de crear un registro paralelo
+tipo `DOC_INCONSISTENCIES.md`, **se descartó en el lote 5 para una única entrada**: la
+desalineación entre la leyenda de estados del Motor v2.6 y §2.11 del spec, que se registró
+como **A-11** en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md`. Pesaron dos razones: crear un
+registro para un solo caso es sobre-ingeniería, y A-11 no tiene dueño asignable, lo que
+incumpliría la regla 1 de este archivo.
+
+**Si aparece una segunda inconsistencia doc-vs-doc no bloqueada por decisión externa, esta
+decisión se revisita antes de asimilarla a `_ambiguedades.md`.** Dos entradas dejan de ser un
+caso aislado y `_ambiguedades.md` está pensado para preguntas abiertas, no para tareas
+agrupadas.
+
 ## Reglas del registro
 
 1. **Sin Dueño y sin Fecha objetivo no entra ninguna entrada.** Una divergencia sin

@@ -318,3 +318,42 @@ Consecuencia sobre el mapeo canónico: la tabla de arriba asume **un** identific
 Con `SC03` en escena, el rol "notificar al tasador" tiene **tres** códigos vivos en el repo
 (`SC05`, `SC13` y `SC03`), repartidos en documentos distintos. La superficie de A-10 es mayor
 que las 38 ocurrencias contabilizadas: el Motor de Cálculo no entró en aquel recuento.
+
+---
+
+## A-11 · Leyenda de estados del Motor v2.6 desalineada con §2.11
+
+**Estado** — abierta · **no bloqueante** · impacto bajo · detectada en el lote 5.
+
+La sección *State machine de TX_Solicitudes* del Motor de Cálculo v2.6 (L371) lista como
+estados: `requiere_atencion`, `revision` y `devuelta`. Dos problemas frente a la máquina
+oficial de §2.11 del spec v1.9.3:
+
+- **`revision` no existe** en la máquina oficial. No aparece en el enum de `TX_Solicitudes`
+  ni en ningún otro documento canónico.
+- **Faltan `pendiente_final` y `cancelada`**, que sí son estados oficiales.
+
+`devuelta` sí figura legítimamente, ya marcado DEPRECATED en el changelog del propio Motor
+durante el lote 5.
+
+**Impacto bajo:** es texto descriptivo, no ejecutable. Ninguna automatización lee esta
+leyenda; AT01–AT10 operan sobre el enum real de Airtable. El riesgo es de lectura humana —
+alguien que tome la leyenda como fuente y busque un estado `revision` que no existe.
+
+### Nota de género — por qué esto no es una ambigüedad estricta
+
+A-09, A-10 y P-5 son **decisiones pendientes de resolutor externo** (EA, negocio, Data
+Engineer). **A-11 no lo es**: la solución es clara —alinear la leyenda L371 del Motor v2.6
+con la máquina de estados oficial de §2.11 del spec—. Se registra aquí por **coordinación
+operativa**: su ejecución se hará en el mismo bump del Motor que incorpore la renumeración
+de escenarios (A-10), para no abrir el documento dos veces. **No es una pregunta abierta; es
+una tarea agrupada.**
+
+Quien retome A-11 no debe buscar una decisión de negocio que no existe: debe ejecutar la
+corrección cuando A-10 abra el Motor.
+
+### Por qué no entró a `CODE_INCONSISTENCIES.md`
+
+Ese registro está declarado para divergencias entre documentos canónicos y **código de
+producción**, y exige Dueño y Fecha objetivo por su regla 1. A-11 es doc-contra-doc y no
+tiene dueño asignable. Ver la nota de decisión pospuesta al pie de `CODE_INCONSISTENCIES.md`.
