@@ -266,7 +266,7 @@ El Route Handler firma y envía a `MAKE_WEBHOOK_URL_SC01`:
 
 - Submit válido del Sheet → crea fila en `TX_Solicitudes` con `estado=creada` y `origen_canal=ingreso_manual` en < 5 s.
 - AT01 se dispara automáticamente y popula `regla_aplicada` en < 10 s.
-- Toast de confirmación: **"Solicitud creada con {n} documento(s) adjunto(s)."**
+- Toast de confirmación: **"Solicitud creada · {codigo_ext}"** (si `codigo_ext` viene nulo: **"Solicitud creada"**). Reemplaza al literal *"Solicitud creada con {n} documento(s) adjunto(s)."* desde el 27-jul-2026 — `documentos[]` no viaja en el alta, así que `n` sería siempre 0. Ver `docs/diseno.md` §6.
 - Submit inválido (RUT malformado, email inválido, dirección incompleta, doc marcado sin archivo) muestra el mensaje bloqueante exacto de §6 del Blueprint (ver `docs/diseno.md` §8).
 - El Sheet bloquea "Crear" sólo si `docsFaltantes > 0` — no si hay campos de adjuntos vacíos (Spec v1.8.2 §1.5.1.1).
 - `pnpm build` limpio.

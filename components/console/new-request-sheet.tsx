@@ -9,6 +9,7 @@ import {
   ChevronDown,
   CircleAlert,
   FileText,
+  Loader2,
   Paperclip,
   Plus,
   Sparkles,
@@ -114,8 +115,41 @@ const EXTRACCION_DOC: Partial<Record<keyof NuevaSolicitudInternaValues, string>>
     compradorEmail: "correo_contacto.pdf",
   }
 
-// N° de operación ya registrados (mock de conflicto de datos en el "servidor").
-const OPERACIONES_REGISTRADAS = new Set(["12345", "99999", "00000"])
+const ENDPOINT_CREAR_SOLICITUD = "/api/webhooks/crear-solicitud"
+
+/** Mensaje §6 para fallos de red / Make. No se expone el error técnico. */
+const MENSAJE_ERROR_RED =
+  "No pudimos completar la acción. Intenta nuevamente en unos segundos."
+
+/**
+ * Respuesta de `POST /api/webhooks/crear-solicitud`.
+ * `campo` y `codigo_ext` sólo vienen en el 409; `solicitud_id`/`codigo_ext`
+ * en el 2xx (pueden ser nulos si SC01 no los devolvió).
+ */
+type RespuestaCrearSolicitud = {
+  ok?: boolean
+  error?: string
+  campo?: string
+  solicitud_id?: string | null
+  codigo_ext?: string | null
+}
+
+/**
+ * Campos del formulario que el backend puede señalar en un conflicto de dato.
+ * La lista es explícita —y no `keyof NuevaSolicitudInternaValues`— porque
+ * `setError` sólo debe aceptar rutas que existan de verdad en el formulario:
+ * un `campo` inesperado del servidor no puede terminar creando un error
+ * huérfano que el resumen del inicio no sabría nombrar.
+ */
+const CAMPOS_CONFLICTO = ["n_operacion_cliente"] as const
+type CampoConflicto = (typeof CAMPOS_CONFLICTO)[number]
+
+function esCampoConflicto(valor: unknown): valor is CampoConflicto {
+  return (
+    typeof valor === "string" &&
+    (CAMPOS_CONFLICTO as readonly string[]).includes(valor)
+  )
+}
 
 // Etiquetas legibles por campo, para nombrar el dato con problema.
 const FIELD_LABELS: Record<string, string> = {
@@ -940,37 +974,90 @@ export function NewRequestSheet() {
     }, 60)
   }
 
-  function onSubmit(values: NuevaSolicitudInternaValues) {
-    return new Promise<void>((resolve) => {
-      setTimeout(() => {
-        // Validación de negocio: N° de operación duplicado (conflicto de dato).
-        // REGLA B: se reporta como conflicto en su propio campo (setError),
-        // separado de las validaciones de forma.
-        const operacion = values.n_operacion_cliente.trim()
-        if (OPERACIONES_REGISTRADAS.has(operacion)) {
-          setError("n_operacion_cliente", {
-            type: "server",
-            message: `Ya existe una solicitud con el N° de operación ${operacion}.`,
-          })
-          setMostrarResumen(true)
-          toast.error("No se pudo crear la solicitud", {
-            description: `N° de operación: ya existe una solicitud registrada con el N° ${operacion}.`,
-            duration: 5000,
-          })
-          scrollAlResumen()
-          resolve()
-          return
-        }
+  /**
+   * Alta real de la solicitud (RF-04 · Tanda C, 27-jul-2026).
+   *
+   * Hasta esta tanda esto era un `setTimeout(800)` que mostraba el toast verde
+   * sin llamar a nadie: `/api/webhooks/crear-solicitud` tenía cero consumidores
+   * y **ninguna solicitud creada desde IF-02 llegaba a Airtable**. El mock
+   * incluso simulaba el duplicado contra un `Set` en memoria, lo que hacía que
+   * la pantalla se sintiera funcional de punta a punta.
+   *
+   * `handleSubmit` mantiene `isSubmitting` en `true` mientras esta promesa esté
+   * pendiente: de ahí sale el estado de carga del botón, sin estado propio.
+   *
+   * Tres desenlaces:
+   *  - **2xx** → toast verde con el `codigo_ext` que devuelve SC01, se limpia
+   *    el formulario y se cierra el sheet.
+   *  - **409** → conflicto de dato, no de forma. Doble superficie (§1.5.1): se
+   *    marca el campo con `setError` y el resumen destructivo del inicio del
+   *    formulario lo lista, porque se alimenta del mismo objeto `errors`.
+   *  - **resto** → toast rojo con el mensaje del backend; el sheet queda
+   *    abierto con todo lo escrito intacto.
+   */
+  async function onSubmit(values: NuevaSolicitudInternaValues) {
+    let res: Response
+    try {
+      res = await fetch(ENDPOINT_CREAR_SOLICITUD, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values),
+      })
+    } catch {
+      // Sin respuesta: red caída, DNS, timeout del navegador.
+      toast.error("No se pudo crear la solicitud", {
+        description: MENSAJE_ERROR_RED,
+        duration: 5000,
+      })
+      return
+    }
 
-        toast.success("Solicitud interna creada", {
-          description: `${values.cliente} · ${values.comuna} · ${values.unidades.length} unidad${values.unidades.length === 1 ? "" : "es"} · Op. ${values.n_operacion_cliente}`,
-          duration: 3000,
-        })
-        resetAll()
-        setOpen(false)
-        resolve()
-      }, 800)
-    })
+    const body = (await res
+      .json()
+      .catch(() => ({}))) as RespuestaCrearSolicitud
+
+    // Conflicto de dato: el N° de operación ya existe en TX_Solicitudes. La
+    // verdad la da el backend leyendo Airtable, no el navegador.
+    if (res.status === 409) {
+      const operacion = values.n_operacion_cliente.trim()
+      const mensaje =
+        body.error ??
+        `Ya existe una solicitud con el N° de operación ${operacion}.`
+
+      if (esCampoConflicto(body.campo)) {
+        setError(body.campo, { type: "server", message: mensaje })
+        setMostrarResumen(true)
+        scrollAlResumen()
+      }
+
+      toast.error("No se pudo crear la solicitud", {
+        description: body.codigo_ext
+          ? `${mensaje} Corresponde a ${body.codigo_ext}.`
+          : mensaje,
+        duration: 5000,
+      })
+      return
+    }
+
+    if (!res.ok) {
+      toast.error("No se pudo crear la solicitud", {
+        description: body.error ?? MENSAJE_ERROR_RED,
+        duration: 5000,
+      })
+      return
+    }
+
+    // `codigo_ext` puede venir nulo si SC01 se degradó o quedó desactualizado:
+    // la solicitud ya se creó igual, así que se confirma sin el código.
+    toast.success(
+      body.codigo_ext ? `Solicitud creada · ${body.codigo_ext}` : "Solicitud creada",
+      {
+        description: `${values.cliente} · ${values.comuna} · ${values.unidades.length} unidad${values.unidades.length === 1 ? "" : "es"} · Op. ${values.n_operacion_cliente}`,
+        duration: 4000,
+      },
+    )
+    resetAll()
+    setOpen(false)
   }
 
   function onInvalid(formErrors: typeof errors) {
@@ -1006,6 +1093,10 @@ export function NewRequestSheet() {
     <Sheet
       open={open}
       onOpenChange={(next) => {
+        // Con el alta en vuelo no se cierra ni se pregunta: el POST ya salió y
+        // descartar el formulario aquí dejaría a la Ejecutiva sin saber si la
+        // solicitud se creó.
+        if (!next && isSubmitting) return
         // §4.1: al cerrar con una solicitud en curso, confirmar antes de descartar.
         if (!next && haySolicitudEnCurso) {
           setConfirmDescartar(true)
@@ -2043,6 +2134,9 @@ export function NewRequestSheet() {
               disabled={isSubmitting}
               className="bg-brand text-brand-foreground hover:bg-brand/90"
             >
+              {isSubmitting && (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              )}
               {isSubmitting ? "Creando…" : "Crear solicitud"}
             </Button>
           )}

@@ -60,7 +60,7 @@
                         "type": "text"
                     },
                     {
-                        "name": "tipoPropiedad",
+                        "name": "tipo_propiedad",
                         "type": "text"
                     },
                     {
@@ -112,7 +112,7 @@
                         "type": "text"
                     },
                     {
-                        "name": "tipoInforme",
+                        "name": "tipo_informe",
                         "type": "text"
                     },
                     {
@@ -120,7 +120,7 @@
                         "type": "text"
                     },
                     {
-                        "name": "valorUf",
+                        "name": "valor_uf",
                         "type": "text"
                     },
                     {
@@ -216,7 +216,15 @@
                         "type": "text"
                     },
                     {
-                        "name": "contactosVisita",
+                        "name": "proyecto",
+                        "type": "text"
+                    },
+                    {
+                        "name": "ejecutiva_clerk_id",
+                        "type": "text"
+                    },
+                    {
+                        "name": "contactos_visita",
                         "spec": [
                             {
                                 "name": "nombre",
@@ -782,7 +790,7 @@
             "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblOcsdiwxQLfD178",
-                "formula": "UPPER({nombre}) = UPPER(\"{{1.tipoInforme}}\")",
+                "formula": "UPPER({nombre}) = UPPER(\"{{1.tipo_informe}}\")",
                 "maxRecords": "1",
                 "useColumnId": false
             },
@@ -1066,7 +1074,7 @@
             "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tbl8rxZA14xFIBGU6",
-                "formula": "UPPER({nombre}) = UPPER(\"{{1.tipoPropiedad}}\")",
+                "formula": "UPPER({nombre}) = UPPER(\"{{1.tipo_propiedad}}\")",
                 "maxRecords": "1",
                 "useColumnId": false
             },
@@ -2066,7 +2074,7 @@
             "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblbX3hPD2uhqhl5v",
-                "formula": "UPPER({clerk_user_id}) = UPPER(\"{{1.ejecutivaClerkId}}\")",
+                "formula": "UPPER({clerk_user_id}) = UPPER(\"{{1.ejecutiva_clerk_id}}\")",
                 "maxRecords": "1",
                 "useColumnId": false
             },
@@ -2282,7 +2290,7 @@
                     "fldJO4JtsDEeMmjdi": "{{3.id}}",
                     "fldJTjjzCPBHMOWZv": "{{6.id}}",
                     "fldKP0yxwQkSdrFuZ": "{{1.direccion}}",
-                    "fldKZW799xIqMFN1I": "{{parseNumber(1.valorUf)}}",
+                    "fldKZW799xIqMFN1I": "{{parseNumber(1.valor_uf)}}",
                     "fldM9ELuMvgRwbmUn": "{{1.ejecutivo_formalizador}}",
                     "fldMRFFXv9rOVfQlf": "{{1.vendedor_tipo_persona}}",
                     "fldNkFwB5p3Mljtrg": "{{1.vendedor_razon_social_o_nombre}}",
@@ -2290,6 +2298,7 @@
                     "fldRmC7IjhRUf1UPk": "{{parseNumber(1.financiero_subsidio_uf)}}",
                     "fldRweQyq3tTQGmPR": "{{1.ejecutivo_solicitante}}",
                     "fldb1vmKk7y3hi4uY": "{{if(1.n_operacion_cliente; parseNumber(1.n_operacion_cliente); emptystring)}}",
+                    "fldbmGmyMHOtfX2Az": "{{1.proyecto}}",
                     "fldbxZh45lFTB7yVJ": "{{1.tipo_cliente_origen}}",
                     "fldcKVbfRBo8J7gtg": "{{1.correo_cliente_ref}}",
                     "fldca1Uza4eicBXL4": "{{1.canal}}",
@@ -4334,18 +4343,18 @@
                             "module": "builtin:BasicFeeder",
                             "version": 1,
                             "filter": {
-                                "name": "contactosVisita existe",
+                                "name": "contactos_visita existe",
                                 "conditions": [
                                     [
                                         {
-                                            "a": "{{1.contactosVisita}}",
+                                            "a": "{{1.contactos_visita}}",
                                             "o": "exist"
                                         }
                                     ]
                                 ]
                             },
                             "mapper": {
-                                "array": "{{1.contactosVisita}}"
+                                "array": "{{1.contactos_visita}}"
                             },
                             "metadata": {
                                 "designer": {

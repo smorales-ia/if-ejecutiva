@@ -559,20 +559,94 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 - `docs/_artefactos/make/SC-Edicion.blueprint.json` está **desactualizado** respecto de lo desplegado: es la topología lineal previa al fix del 24-jul (espera `contactosVisitaJson` como string y filtra contactos con `FIND(ARRAYJOIN({solicitud}))` en vez de `solicitud_record_id`). El mapper envía los dos formatos —array y string JSON— para ser compatible con ambas topologías; conviene versionar el blueprint realmente desplegado.
 - `editarSolicitudSchema` sigue siendo un `z.record` permisivo: acepta cualquier forma, así que un desajuste de nombres no falla con 422 sino que produce un 200 con cero campos escritos. Endurecerlo es el ítem 3 del informe, pendiente de aprobación.
 
-### 2026-07-27 — 422 de Airtable en la lectura defensiva del PATCH de edición
-**Contexto:** continuación de E-078. Con el cable UI→PATCH ya tendido, `PATCH /api/solicitudes/[id]` fallaba en producción al releer la solicitud para verificar `estado === 'creada'` (REGLA C).
-**Inconveniente:** Airtable respondía `422 timeZone and userLocale must be specified when using the string cellFormat`. El usuario no veía el 422: el `catch` lo convierte en `502` + `MSG_RED`, así que el código real sólo aparecía en el log del servidor.
-**Causa raíz:** la lectura defensiva pasaba `cellFormat: 'string'` sin `timeZone` ni `userLocale`. `getRecord` (`lib/airtable-client.ts`) es un wrapper REST propio que reenvía `params` como query string sin validarlos ni aplicar defaults, así que el error sólo se manifiesta en runtime contra la API. El resto del repo (`lib/solicitudes.ts`, `lib/eventos.ts`, `lib/tasadores.ts`, `lib/visadores.ts`, `lib/tipos-documento.ts`, y el `GET` del mismo archivo) sí acompaña siempre `cellFormat: 'string'` con ambos parámetros — estas dos lecturas defensivas se escribieron después, copiando sólo la primera línea.
-**Solución aplicada:** se eliminó `cellFormat: 'string'` de la lectura del PATCH (`app/api/solicitudes/[id]/route.ts`) y se dejó el formato `json` por defecto. `estado` es singleSelect: en json ya llega como string, la comparación `!== 'creada'` no cambia, y desaparece la dependencia de `timeZone`/`userLocale`. `pnpm typecheck` y `pnpm build` limpios.
-**Prevención futura:** `cellFormat: 'string'` sólo se justifica cuando se necesita el *render* de Airtable (fechas es-CL, o campos link como texto legible); para comparar un singleSelect es innecesario y añade dos parámetros obligatorios. Regla: si se usa `cellFormat: 'string'`, van siempre los tres juntos. Candidato natural a endurecer `getRecord`/`listRecords` para que inyecten `timeZone: 'America/Santiago'` + `userLocale: 'es-CL'` cuando el llamador pida `string`.
-**Hallazgo abierto:** `app/api/solicitudes/[id]/asignar/route.ts:60` tiene el mismo defecto y fallará igual al asignar. **Ahí no sirve la misma solución**: esa lectura incluye `tasador` (multipleRecordLinks), que en json devuelve `["rec…"]` y rompería el `.trim()` de la línea 66. Corresponde agregarle `timeZone`/`userLocale` y mantener `cellFormat: 'string'`. No se tocó por estar fuera del alcance pedido.
+### E-079 — `fields` no es parámetro válido en *Get record* de Airtable (27-jul-2026)
 
-### 2026-07-27 — El 422 real: `fields` no existe en el endpoint *Get record* de Airtable
-**Contexto:** el PATCH de edición seguía en 422 después del fix anterior (quitar `cellFormat: 'string'`), ahora con el mensaje genérico `INVALID_REQUEST_UNKNOWN: parameter validation failed. Check your request data.`
-**Inconveniente:** el mensaje genérico no dice qué parámetro sobra, y la entrada anterior de este archivo daba por cerrado un problema que en realidad seguía abierto en dos rutas más.
-**Causa raíz:** el endpoint **Get record** (`GET /v0/{base}/{table}/{recordId}`) sólo acepta `cellFormat`, `timeZone`, `userLocale` y `returnFieldsByFieldId`. **No acepta `fields`** — a diferencia de *List records*, que sí. Basta su presencia (con o sin corchetes) para el 422. Los dos errores eran independientes y estaban encadenados: mientras `cellFormat: 'string'` iba sin `timeZone`/`userLocale`, Airtable validaba ese primero y devolvía el mensaje específico; al corregirlo quedó al descubierto el `fields` inválido, que estaba ahí desde el principio. El fix anterior fue correcto pero insuficiente, no la causa del nuevo error.
-**Diagnóstico sin adivinar:** se reprodujo con curl de sólo lectura sobre `rec19zYDt8muMQ9G4`, comparando el mismo parámetro en los dos endpoints — `…/tblaHTy…?fields[]=estado` → **200**, `…/tblaHTy…/rec19…?fields[]=estado` → **422**. Se descartó de paso que fuera el nombre del campo: vía meta API, `TX_Solicitudes.estado` = `fld2H2r0GMeVfNO26`, singleSelect, sin espacios (el field ID faltaba en `docs/schema-airtable.md:153`, marcado `—`).
-**Alcance real:** los **tres** call sites de `getRecord` pasaban `fields` y estaban rotos, no sólo el reportado: `route.ts:23` (GET del detalle, roto desde antes y enmascarado por su `catch` como 502), `route.ts:85` (PATCH) y `asignar/route.ts:60`.
-**Solución aplicada:** el arreglo se puso en el helper, no en los llamadores. `getRecord` (`lib/airtable-client.ts`) filtra la querystring contra una allowlist `GET_RECORD_ALLOWED_PARAMS`; `fields` sigue siendo válido en la firma pública (documenta la intención de proyección y no rompe llamadas existentes) pero no se propaga. `listRecords` queda intacto: ahí `fields` sí es legítimo. Verificado ejecutando el helper compilado contra la base real: los tres juegos de parámetros devuelven `estado="creada"`.
-**Prevención futura:** un wrapper REST que reenvía `params` en crudo hereda la validación del endpoint y convierte cualquier error de contrato en un fallo de runtime en producción. Cuando dos endpoints de la misma API aceptan parámetros distintos, el helper debe conocer esa diferencia — no el llamador. Y ante un 422 genérico de Airtable, bisecar por parámetro con curl antes de tocar código: el mensaje nunca nombra al culpable.
-**Nota lateral confirmada:** en el mismo probe se ve por qué `asignar` no puede usar formato json — con `cellFormat: 'string'` el campo link `tasador` llega como `"Marcela Gómez"`, y en json como `["recAmBbFFDGyb6CLE"]`, que rompería el `.trim()` de la línea 66.
+**Contexto:** `PATCH /api/solicitudes/[id]` fallaba en la lectura defensiva que verifica `estado === 'creada'` (REGLA C) antes de reenviar a SC-Edicion.
+
+**Inconveniente:** Airtable respondía `422 INVALID_REQUEST_UNKNOWN: parameter validation failed. Check your request data.` — un mensaje que no nombra al parámetro culpable. En producción nadie veía el 422: el `catch` del handler lo convierte en `502` + `MSG_RED`, así que el usuario recibía "No pudimos completar la acción" y el código real sólo quedaba en el log del servidor.
+
+**Causa raíz:** el endpoint **Get record** (`GET /v0/{base}/{table}/{recordId}`) sólo acepta `cellFormat`, `timeZone`, `userLocale` y `returnFieldsByFieldId`. **No acepta `fields`** — a diferencia de *List records*, que sí lo soporta. Basta su presencia, con o sin corchetes, para el 422. Por eso el patrón `fields: ['nombre']` funciona en todo el repo (`lib/solicitudes.ts`, `eventos.ts`, `tasadores.ts`, `visadores.ts`, `tipos-documento.ts`): ahí va siempre sobre `listRecords`. `getRecord` sólo se usaba en tres sitios, los tres bajo `app/api/solicitudes/[id]/**`, y los tres pasaban `fields` — los tres estaban rotos, no sólo el reportado: `route.ts:23` (GET del detalle, roto desde antes y enmascarado por su propio `catch`), `route.ts:85` (PATCH) y `asignar/route.ts:60`.
+
+**Solución aplicada:** ver [[E-081]] — el arreglo se puso en el helper, no en los llamadores. Diagnóstico sin adivinar: se reprodujo con curl de sólo lectura sobre `rec19zYDt8muMQ9G4` comparando el mismo parámetro en los dos endpoints — `…/tblaHTyMHYfmy7Fg6?fields[]=estado` → **200**, `…/tblaHTyMHYfmy7Fg6/rec19…?fields[]=estado` → **422**. Se descartó de paso que fuera el nombre del campo: vía meta API, `TX_Solicitudes.estado` = `fld2H2r0GMeVfNO26`, singleSelect, sin espacios (el FIELD_ID faltaba en `schema-airtable.md:153`, marcado `—`; se completó en esta tanda).
+
+**Prevención futura:** ante un 422 genérico de Airtable, bisecar por parámetro con curl antes de tocar código — el mensaje nunca nombra al culpable. Y no asumir que dos endpoints de la misma API aceptan el mismo juego de parámetros: `fields` es de *List records*, no de *Get record*. Un `catch` que traduce todo a `MSG_RED` es correcto de cara al usuario (§6) pero exige que el `console.error` conserve el status y el cuerpo original, o el bug se vuelve invisible. Relaciona [[E-080]] (el otro 422, encadenado con éste) y [[E-077]] (rutas huérfanas: el GET del detalle llevaba roto tiempo sin que nadie lo notara porque nadie lo consume).
+
+### E-080 — `cellFormat: 'string'` exige `timeZone` + `userLocale` o Airtable devuelve 422 (27-jul-2026)
+
+**Contexto:** primer síntoma del mismo bug de [[E-079]], antes de que apareciera el mensaje genérico.
+
+**Inconveniente:** `AirtableError: timeZone and userLocale must be specified when using the string cellFormat`.
+
+**Causa raíz:** las dos lecturas defensivas (`route.ts:85` y `asignar/route.ts:60`) pasaban `cellFormat: 'string'` a secas. El resto del repo sí acompaña siempre los tres parámetros juntos; estas dos se escribieron después copiando sólo la primera línea. `getRecord`/`listRecords` (`lib/airtable-client.ts`) son un wrapper REST propio que reenvía `params` como querystring sin validarlos ni aplicar defaults, así que el error sólo se manifiesta en runtime contra la API.
+
+**Solución aplicada:** dos criterios distintos según el tipo de campo leído, y ahí está la lección. En `route.ts:85` se **quitó** `cellFormat: 'string'`: sólo lee `estado` (singleSelect), que en el formato json por defecto ya llega como string, de modo que la comparación no cambia y desaparece la dependencia de los otros dos parámetros. En `asignar/route.ts:60` se **conservó** `cellFormat: 'string'` y se le agregaron `timeZone: 'America/Santiago'` + `userLocale: 'es-CL'`, porque ahí se lee `tasador`, que es multipleRecordLinks: en formato string llega como `"Marcela Gómez"` y en json como `["recAmBbFFDGyb6CLE"]`, lo que rompería el `.trim()` de la línea 66. Ambos comportamientos quedaron verificados ejecutando el helper compilado contra la base real.
+
+**Prevención futura:** `cellFormat: 'string'` sólo se justifica cuando se necesita el *render* de Airtable — fechas en es-CL, o campos Link como texto legible. Para comparar un singleSelect es innecesario y arrastra dos parámetros obligatorios. Regla: si se usa `cellFormat: 'string'`, van siempre los tres juntos; y antes de cambiar de formato, revisar qué **tipo** tiene cada campo del `fields` pedido, porque json y string devuelven formas distintas para Link, attachment y fecha. Este 422 y el de [[E-079]] eran independientes y estaban encadenados: mientras faltaban `timeZone`/`userLocale`, Airtable validaba ese error primero y devolvía el mensaje específico; al corregirlo quedó al descubierto el `fields` inválido, que estaba ahí desde el principio. Corregir el error de arriba de la pila no valida lo de abajo.
+
+### E-081 — Helper con allowlist de parámetros, no descarte por nombre (27-jul-2026)
+
+**Contexto:** cierre de [[E-079]]. Había que impedir que `fields` llegara a la querystring de *Get record* sin romper los tres call sites ni la firma pública del helper.
+
+**Inconveniente:** la opción evidente —borrar `fields` de los tres llamadores— deja el mismo pie puesto para la próxima llamada que alguien escriba, y perder la proyección en la firma habría borrado la intención documentada del llamador.
+
+**Solución aplicada:** en `lib/airtable-client.ts`, `getRecord` filtra la querystring contra una **allowlist** `GET_RECORD_ALLOWED_PARAMS` = `cellFormat · timeZone · userLocale · returnFieldsByFieldId`, con comentario y link a la doc del endpoint. `fields` sigue siendo válido en la firma —no rompe llamadas existentes y expresa la proyección buscada— pero no se propaga; si Airtable llegara a soportarlo, basta añadirlo al Set. `listRecords` queda intacto: ahí `fields` es legítimo y necesario. Los tres call sites siguen compilando y funcionando sin tocarse, verificado ejecutando el helper compilado contra la base real (`estado="creada"` en los tres juegos de parámetros).
+
+**Prevención futura:** allowlist, no blocklist. Descartar `fields` por nombre habría cerrado este caso y ninguno de los siguientes; la allowlist cierra la puerta a cualquier parámetro no soportado que se agregue mañana. Principio general: un wrapper REST que reenvía `params` en crudo hereda la validación del endpoint remoto y convierte cada error de contrato en un fallo de runtime en producción. Cuando dos endpoints de la misma API aceptan parámetros distintos, esa diferencia la debe conocer el helper, no el llamador.
+
+**Deuda abierta (no aplicada):** segundo endurecimiento natural del mismo helper — que `getRecord`/`listRecords` **inyecten** `timeZone: 'America/Santiago'` + `userLocale: 'es-CL'` automáticamente cuando el llamador pida `cellFormat: 'string'`, en vez de exigir que cada call site recuerde los tres juntos. Cerraría [[E-080]] por construcción, del mismo modo que la allowlist cerró [[E-079]].
+
+### E-082 — Ningún toast de éxito antes de verificar el `res.ok` del write real (27-jul-2026)
+
+**Contexto:** regla generalizada a partir del incidente [[E-078]], que en esta tanda volvió a aparecer por debajo: aun con el cable UI→PATCH ya tendido, el write seguía fallando con 422 ([[E-079]]).
+
+**Inconveniente:** `handleGuardarEdicion` mostraba el toast verde de forma optimista, sin `await` a ningún backend. La persistencia estuvo rota **semanas** sin que nadie lo notara, y el agravante fue que el mock además insertaba en el historial el evento *"Datos de la solicitud modificados"*: la UI fabricaba la evidencia del cambio que no ocurría. El bug sólo salió cuando alguien contrastó contra Airtable.
+
+**Causa raíz:** un toast emitido en la misma función que muta estado local no verifica nada — informa de una intención, no de un resultado. Y un Route Handler que responde `200 {ok:true}` sin haber persistido es indistinguible del éxito para el cliente, así que reproduce el mismo bug incluso con el cable puesto.
+
+**Prevención futura:** tres reglas que se aplican juntas. (1) El toast de éxito se emite **sólo después** de verificar el `res.ok` de la escritura real, nunca en la función que actualiza el estado local. (2) Ningún handler devuelve `200` cuando no persistió: sin webhook configurado, `503` en producción y `202` explícito en desarrollo, que la UI distingue con un toast ámbar. (3) Al cerrar una fase, `grep` de cada endpoint escrito buscando su consumidor — un handler sin llamador es código muerto, no una funcionalidad; fue así como se descubrió que `route.ts:23` llevaba roto sin que nadie lo notara ([[E-079]], [[E-077]]). Corolario de esta tanda: mientras el toast fue optimista, el 422 del backend era invisible para el usuario **y** para el equipo.
+
+### E-083 — Renombrar una clave del payload obliga a barrer *todas* sus referencias en el blueprint, no sólo el mapper (27-jul-2026)
+
+**Contexto:** RF-04, normalización del contrato UI→Make a snake_case. El plan identificaba 4 mappings camelCase que renombrar en SC01.
+
+**Inconveniente:** eran 5, y el quinto —`contactosVisita`— tenía **tres** referencias, no una: el `array` del Iterator (mód. 17), el bloque `interface` del webhook, y —la peligrosa— la condición `exist` del filtro del Router 16.
+
+**Causa raíz:** buscar sólo dentro de los `mapper` de los módulos deja fuera los `filter`, que en Make son código ejecutable con la misma sintaxis `{{1.x}}`. Un `grep` del nombre del campo sobre el JSON completo los encuentra; un recorrido del árbol de mappers no.
+
+**Solución aplicada:** `grep -n` de cada token camelCase sobre el JSON crudo **antes** de editar, y verificación posterior con un script que extrae todas las referencias `{{…1.x…}}` del archivo y comprueba que no quede ninguna en camelCase. Resultado: 46 referencias, 0 camelCase. Documentado en `docs/_notas/DELTA-SC01_20260727.md`.
+
+**Prevención futura:** si se hubiera renombrado sólo el Iterator, el filtro habría evaluado `exist` sobre una clave inexistente → falso → la rama de contactos **no se ejecuta y no se crea ninguna fila, sin ningún error en Make**. Es la peor clase de fallo: el escenario reporta Success. Regla: al renombrar una clave de payload, la unidad de barrido es el archivo completo, no los mappers; y la verificación es programática (contar referencias restantes), no visual.
+
+### E-084 — El `interface` de un webhook de Make es un fósil, no un contrato (27-jul-2026)
+
+**Contexto:** misma tanda. Había que decidir si actualizar el bloque `metadata.interface` del módulo webhook al renombrar las claves.
+
+**Inconveniente:** no estaba claro si ese bloque valida el payload entrante — es decir, si una clave no declarada sería rechazada en runtime.
+
+**Causa raíz:** `metadata.restore.parameters.hook.data.editable = "true"` significa *"Determine data structure automatically"*: no hay data structure adjunta. El bloque `interface` es la forma **derivada del último payload recibido**, y sólo alimenta el autocompletado del designer. En runtime Make acepta cualquier clave JSON del body, esté o no declarada.
+
+**Solución aplicada:** se actualizó igual (renames + alta de `ejecutiva_clerk_id` y `proyecto`), por higiene del designer, no por necesidad funcional. Lo valioso fue leerlo como evidencia: el fósil contenía `documentos[]` —que el Route Handler ya no envía— y **no** contenía `ejecutiva_clerk_id`, prueba de que el último payload que SC01 recibió de verdad era anterior a la integración con Clerk. Confirmó por vía independiente que el formulario nunca había llamado al backend ([[E-082]]).
+
+**Prevención futura:** antes de tratar un `interface` de Make como contrato, revisar `restore.parameters.hook.data.editable`. Si es `"true"`, es descriptivo y puede estar desactualizado; leerlo como arqueología —qué payload llegó por última vez y cuándo— suele decir más que leerlo como especificación.
+
+### E-085 — No borrar una validación mock sin que el backend la provea antes (27-jul-2026)
+
+**Contexto:** el plan pedía conectar el submit real y eliminar el `Set` en memoria que simulaba el duplicado de N° de operación, "porque la verdad la da el backend".
+
+**Inconveniente:** el backend no tenía esa verdad. Ni el Route Handler ni SC01 detectaban duplicados — los 7 `Search` del escenario buscan Cliente, TipoInforme, TipoPropiedad, Producto, Comuna, bancoFinancista y AUTH_Usuarios; ninguno consulta `n_operacion_cliente`. Ejecutado al pie de la letra, el paso habría **eliminado del producto** una validación que el usuario percibía como funcionando, dejando además el `setError` del 409 como código muerto.
+
+**Solución aplicada:** pre-chequeo read-only en el Route Handler contra `TX_Solicitudes` con `filterByFormula`, antes del POST a Make, devolviendo `409` con el campo señalado. Tres detalles que importaron: (1) el resultado tiene **tres** estados —`duplicado` · `libre` · `indeterminado`—, porque "Airtable no respondió" no es "no hay duplicado"; el caso indeterminado **no bloquea** el alta pero deja `console.warn` para auditar después qué duplicados entraron durante una caída. (2) `n_operacion_cliente` es `number` en Airtable y texto en el formulario, así que la fórmula usa `({n_operacion_cliente} & '') = '…'` para forzar la coerción. (3) El valor se escapa (`\` y `'`) antes de interpolarse: sin eso, un N° con apóstrofo convierte el filtro en una fórmula arbitraria.
+
+**Prevención futura:** cuando un plan diga "quitar el mock porque el backend ya lo hace", verificar que el backend efectivamente lo hace **antes** de quitarlo — en este caso bastó revisar la lista de módulos `Search` del escenario. Quitar un mock es una pérdida de funcionalidad si nadie ocupó su lugar. Y al reemplazar una validación de cliente por una de servidor, el modo degradado ("no pude verificar") necesita ser un estado explícito y auditable, no colapsarse silenciosamente contra "todo bien".
+
+### E-086 — `pnpm lint` no ejecutable: eslint ausente de node_modules (27-jul-2026)
+
+**Contexto:** verificación de cierre de RF-04, tras Tanda C.
+
+**Inconveniente:** `pnpm lint` falla con `sh: 1: eslint: not found`. El binario no está en `node_modules/.bin/`.
+
+**Causa raíz:** preexistente, ajeno a RF-04 — no lo introdujo ninguna tanda de esta sesión. Instalación incompleta o dependencia podada.
+
+**Solución aplicada:** ninguna. Fuera de alcance por decisión explícita. La verificación se apoyó en `pnpm typecheck` y `pnpm build`, ambos limpios.
+
+**Prevención futura:** deuda abierta, a resolver post-commit con `pnpm install`. Mientras tanto, `typecheck` + `build` cubren errores de tipos y de compilación pero **no** las reglas de lint del proyecto (§4.4: prohibición de Radix, `asChild`, `sticky`), que hoy quedan sin red automática y dependen de revisión manual.

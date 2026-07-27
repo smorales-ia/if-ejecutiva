@@ -333,7 +333,18 @@ Si algún dato impide crear la solicitud, ésta **no se crea** y el sistema info
 
 **Solicitud creada** (alta interna):
 
-> **"Solicitud creada con {n} documento(s) adjunto(s)."** *(pluraliza según n; si n=0: "Solicitud creada.")*
+> **"Solicitud creada · {codigo_ext}"** *(si `codigo_ext` viene nulo: "Solicitud creada")*
+
+> **Divergencia respecto del literal original de §6** (27-jul-2026 · RF-04 Tanda C).
+> El literal anterior era *"Solicitud creada con {n} documento(s) adjunto(s)."*
+> Se reemplaza porque **`documentos[]` no viaja en el alta**: el upload de
+> adjuntos es una fase posterior contra `/api/adjuntos/upload`, así que `n`
+> sería siempre 0 y el mensaje diría invariablemente "con 0 documento(s)" —
+> ruido, no información. El `codigo_ext` que devuelve SC01 sí es accionable:
+> identifica la solicitud recién creada y es lo que la Ejecutiva necesita para
+> buscarla. El fallback sin código cubre la degradación de SC01 (la solicitud
+> ya existe en Airtable; ocultarlo sería peor). Decisión de Sergio.
+> Ver `docs/_notas/SNAPSHOT-RF04-fix-payload-y-submit_20260727.md`.
 
 **Documento subido correctamente** (Tab Adjuntos, subida directa):
 

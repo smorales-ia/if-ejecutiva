@@ -309,7 +309,8 @@ docs/
 - Reasignación exitosa:  
   **"Solicitud reasignada a {nombre_tasador}"**
 - Creación de solicitud interna:  
-  **"Solicitud creada con {n} documento(s) adjunto(s)."** *(pluraliza según n)*
+  **"Solicitud creada · {codigo_ext}"** *(si `codigo_ext` viene nulo: **"Solicitud creada"**)*  
+  ⚠ Reemplaza desde el 27-jul-2026 al literal *"Solicitud creada con {n} documento(s) adjunto(s)."*: `documentos[]` no viaja en el alta (el upload es fase posterior), así que `n` sería siempre 0. Ver `docs/diseno.md` §6.
 
 ### Advertencias (ámbar, no bloqueantes)
 
