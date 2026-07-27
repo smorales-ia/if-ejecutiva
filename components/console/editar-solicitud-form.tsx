@@ -276,7 +276,7 @@ export function EditarSolicitudForm({
             onChange={(e) => set("producto", e.target.value)}
           />
         </EditField>
-        <EditField label="Canal de origen">
+        <EditField label="Canal de contacto">
           <Select value={d.canal} onValueChange={(v) => set("canal", v ?? "")}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecciona un canal" />
@@ -284,8 +284,8 @@ export function EditarSolicitudForm({
             <SelectContent>
               <SelectGroup>
                 {CANALES_ORIGEN.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
+                  <SelectItem key={c.value} value={c.value}>
+                    {c.label}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -353,8 +353,8 @@ export function EditarSolicitudForm({
             <SelectContent>
               <SelectGroup>
                 {ESTADOS_CONSERVACION.map((e) => (
-                  <SelectItem key={e} value={e}>
-                    {e}
+                  <SelectItem key={e.value} value={e.value}>
+                    {e.label}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -468,8 +468,8 @@ export function EditarSolicitudForm({
               <SelectContent>
                 <SelectGroup>
                   {ORIGENES_DATO_VENDEDOR.map((o) => (
-                    <SelectItem key={o} value={o}>
-                      {o}
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
                     </SelectItem>
                   ))}
                 </SelectGroup>

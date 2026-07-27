@@ -200,6 +200,12 @@ export const SOLICITUD_FIELDS: string[] = [
   'fecha_limite_entrega',
   'fecha_visita_programada',
   'observaciones_internas',
+  // Dos campos distintos que la consola confundía en uno solo (E-089):
+  // `canal_contacto_original` es por dónde contactó el cliente (whatsapp ·
+  // email · telefono · …) y es lo que la Ejecutiva edita; `origen_canal` es por
+  // dónde entró la fila al sistema (ingreso_manual · tally_externo · …) y es de
+  // sólo lectura.
+  'canal_contacto_original',
   'origen_canal',
   'ejecutivo_solicitante',
   'cliente_final_nombre',
@@ -298,7 +304,11 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
       : 'Por agendar',
     slaAplicable: '5 días hábiles',
     observaciones: f['observaciones_internas'] ?? '',
-    canal: f['origen_canal'] ?? '—',
+    // `canal` es el canal de contacto editable; `origenCanal` es el canal de
+    // ingreso, que la pantalla no edita pero SC-Edicion reescribe en cada
+    // ejecución y por eso hay que devolverle intacto (E-089).
+    canal: f['canal_contacto_original'] ?? '—',
+    origenCanal: f['origen_canal'] ?? '—',
     // ⚙ Pendiente de creación en Airtable: comprador/vendedor/unidades/
     // contactosVisita (modelo v1.9 del diseño) no tienen respaldo en
     // TX_Solicitudes todavía. `comprador` se arma con los mismos campos planos

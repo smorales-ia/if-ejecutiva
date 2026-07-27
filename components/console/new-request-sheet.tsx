@@ -153,7 +153,7 @@ function esCampoConflicto(valor: unknown): valor is CampoConflicto {
 
 // Etiquetas legibles por campo, para nombrar el dato con problema.
 const FIELD_LABELS: Record<string, string> = {
-  canal: "Canal de origen",
+  canal: "Canal de contacto",
   cliente: "Cliente",
   tipoClienteOrigen: "Tipo de cliente",
   tipoInforme: "Tipo de informe",
@@ -1263,7 +1263,7 @@ export function NewRequestSheet() {
                 control={control}
                 name="canal"
                 render={({ field }) => (
-                  <Field label="Canal de origen" required error={errors.canal?.message}>
+                  <Field label="Canal de contacto" required error={errors.canal?.message}>
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecciona un canal" />
@@ -1271,8 +1271,8 @@ export function NewRequestSheet() {
                       <SelectContent>
                         <SelectGroup>
                           {CANALES_ORIGEN.map((c) => (
-                            <SelectItem key={c} value={c}>
-                              {c}
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -1322,8 +1322,8 @@ export function NewRequestSheet() {
                       <SelectContent>
                         <SelectGroup>
                           {TIPOS_CLIENTE_ORIGEN.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {t}
+                            <SelectItem key={t.value} value={t.value}>
+                              {t.label}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -1489,8 +1489,8 @@ export function NewRequestSheet() {
                       value={field.value}
                       onChange={field.onChange}
                       options={ORIGENES_DIRECCION.map((o) => ({
-                        value: o,
-                        label: o,
+                        value: o.value,
+                        label: o.label,
                       }))}
                     />
                   </Field>
@@ -1603,8 +1603,8 @@ export function NewRequestSheet() {
                         <SelectContent>
                           <SelectGroup>
                             {ESTADOS_CONSERVACION.map((e) => (
-                              <SelectItem key={e} value={e}>
-                                {e}
+                              <SelectItem key={e.value} value={e.value}>
+                                {e.label}
                               </SelectItem>
                             ))}
                           </SelectGroup>
@@ -1706,8 +1706,8 @@ export function NewRequestSheet() {
                       <SelectContent>
                         <SelectGroup>
                           {ORIGENES_DATO_VENDEDOR.map((o) => (
-                            <SelectItem key={o} value={o}>
-                              {o}
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
                             </SelectItem>
                           ))}
                         </SelectGroup>

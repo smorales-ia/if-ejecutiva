@@ -138,7 +138,18 @@ export interface Solicitud {
   fechaVisita: string
   slaAplicable: string
   observaciones: string
+  /**
+   * Canal por el que el cliente hizo el contacto original
+   * (`canal_contacto_original`, catálogo `CANALES_ORIGEN`). Editable.
+   */
   canal: string
+  /**
+   * Canal por el que la fila entró al sistema (`origen_canal`:
+   * `ingreso_manual` · `tally_externo` · `api` · `migracion_inicial`). No es
+   * editable, pero SC-Edicion lo reescribe en cada ejecución, así que hay que
+   * devolvérselo intacto. Opcional porque los mocks no lo definen.
+   */
+  origenCanal?: string
   // Datos de la operación (v1.9)
   comprador: Comprador
   vendedor: Vendedor
@@ -361,7 +372,7 @@ export const SOLICITUDES: Solicitud[] = [
     slaAplicable: "5 días hábiles",
     observaciones:
       "Propiedad con acceso restringido, coordinar con conserje al menos 24 hrs antes.",
-    canal: "WhatsApp",
+    canal: "whatsapp",
     comprador: compradorDe(
       "Roberto Fuentes Díaz",
       "12.456.789-3",
@@ -374,7 +385,7 @@ export const SOLICITUDES: Solicitud[] = [
       rut: "8.765.432-1",
       correo: "mgalvez@gmail.com",
       telefono: "+56 9 7654 3210",
-      origenDato: "Correo",
+      origenDato: "correo",
     },
     unidades: unidadesDepto("s1"),
     contactosVisita: [
@@ -384,7 +395,7 @@ export const SOLICITUDES: Solicitud[] = [
     contadorReasignaciones: 0,
     fechaAsignacion: "24 jun 2026 · 10:12",
     estadoCorreo: "enviado",
-    estadoConservacion: "Bueno",
+    estadoConservacion: "bueno",
   },
   {
     id: "2",
@@ -415,7 +426,7 @@ export const SOLICITUDES: Solicitud[] = [
     fechaVisita: "19 jun 2026",
     slaAplicable: "5 días hábiles",
     observaciones: "Cliente reclama demora. Escalar con jefatura.",
-    canal: "Email",
+    canal: "email",
     comprador: compradorDe(
       "Patricia Soto Vera",
       "9.876.543-2",
@@ -428,7 +439,7 @@ export const SOLICITUDES: Solicitud[] = [
       rut: "7.654.321-0",
       correo: "hrios@gmail.com",
       telefono: "+56 9 5432 1098",
-      origenDato: "Ficha",
+      origenDato: "ficha",
     },
     unidades: unidadUnica("s2", "Edificación", 145),
     contactosVisita: [
@@ -437,7 +448,7 @@ export const SOLICITUDES: Solicitud[] = [
     contadorReasignaciones: 1,
     fechaAsignacion: "17 jun 2026 · 09:30",
     estadoCorreo: "enviado",
-    estadoConservacion: "Normal",
+    estadoConservacion: "normal",
   },
   {
     id: "3",
@@ -468,7 +479,7 @@ export const SOLICITUDES: Solicitud[] = [
     fechaVisita: "Por agendar",
     slaAplicable: "5 días hábiles",
     observaciones: "Requiere coordinación con administración del edificio.",
-    canal: "Portal web",
+    canal: "web",
     proyecto: "Edificio Andes Center",
     comprador: compradorDe(
       "Comercial Ñuñoa Ltda.",
@@ -482,7 +493,7 @@ export const SOLICITUDES: Solicitud[] = [
       rutInmobiliaria: "76.123.456-7",
       correo: "ventas@andes.cl",
       telefono: "+56 2 2456 7890",
-      origenDato: "Correo",
+      origenDato: "correo",
     },
     unidades: [
       {
@@ -504,7 +515,7 @@ export const SOLICITUDES: Solicitud[] = [
       contacto("s3-c1", "Corredor", "Sofía Martínez", "+56 9 4321 0987", "smartinez@andes.cl"),
     ],
     contadorReasignaciones: 0,
-    estadoConservacion: "Nuevo",
+    estadoConservacion: "nuevo",
     financiero: {
       valorTotalUf: "12.500",
       subsidio: "0",
@@ -543,7 +554,7 @@ export const SOLICITUDES: Solicitud[] = [
     fechaVisita: "23 jun 2026",
     slaAplicable: "6 días hábiles",
     observaciones: "Visita realizada sin observaciones.",
-    canal: "WhatsApp",
+    canal: "whatsapp",
     comprador: compradorDe(
       "Luis Tapia Rojas",
       "15.234.567-8",
@@ -556,7 +567,7 @@ export const SOLICITUDES: Solicitud[] = [
       rut: "10.345.678-9",
       correo: "cvega@gmail.com",
       telefono: "+56 9 2109 8765",
-      origenDato: "Correo",
+      origenDato: "correo",
     },
     unidades: unidadesDepto("s4"),
     contactosVisita: [
@@ -566,7 +577,7 @@ export const SOLICITUDES: Solicitud[] = [
     contadorReasignaciones: 0,
     fechaAsignacion: "22 jun 2026 · 15:40",
     estadoCorreo: "enviado",
-    estadoConservacion: "Bueno",
+    estadoConservacion: "bueno",
   },
   {
     id: "5",
@@ -597,7 +608,7 @@ export const SOLICITUDES: Solicitud[] = [
     fechaVisita: "24 jun 2026",
     slaAplicable: "5 días hábiles",
     observaciones: "Informe aprobado por visador. Pendiente entrega final.",
-    canal: "Email",
+    canal: "email",
     comprador: compradorDe(
       "Fernanda Vidal Pérez",
       "13.789.012-4",
@@ -610,7 +621,7 @@ export const SOLICITUDES: Solicitud[] = [
       rut: "6.543.210-9",
       correo: "ilarrain@gmail.com",
       telefono: "+56 9 8765 4321",
-      origenDato: "Certificado de avalúo",
+      origenDato: "cert_avaluo",
     },
     unidades: unidadUnica("s5", "Edificación", 320),
     contactosVisita: [
@@ -619,7 +630,7 @@ export const SOLICITUDES: Solicitud[] = [
     contadorReasignaciones: 0,
     fechaAsignacion: "21 jun 2026 · 11:05",
     estadoCorreo: "enviado",
-    estadoConservacion: "Bueno",
+    estadoConservacion: "bueno",
   },
   {
     id: "6",
@@ -650,7 +661,7 @@ export const SOLICITUDES: Solicitud[] = [
     fechaVisita: "26 jun 2026",
     slaAplicable: "5 días hábiles",
     observaciones: "Sin observaciones.",
-    canal: "Portal web",
+    canal: "web",
     proyecto: "Condominio Mirador La Florida",
     comprador: compradorDe(
       "Camila Núñez Lagos",
@@ -664,7 +675,7 @@ export const SOLICITUDES: Solicitud[] = [
       rutInmobiliaria: "76.999.111-2",
       correo: "ventas@mirador.cl",
       telefono: "+56 2 2111 2222",
-      origenDato: "Correo",
+      origenDato: "correo",
     },
     unidades: unidadesDepto("s6"),
     contactosVisita: [
@@ -674,7 +685,7 @@ export const SOLICITUDES: Solicitud[] = [
     contadorReasignaciones: 0,
     fechaAsignacion: "20 jun 2026 · 16:20",
     estadoCorreo: "pendiente",
-    estadoConservacion: "Nuevo",
+    estadoConservacion: "nuevo",
     financiero: {
       valorTotalUf: "2.800",
       subsidio: "500",
@@ -714,7 +725,7 @@ export const SOLICITUDES: Solicitud[] = [
     fechaVisita: "Cancelada",
     slaAplicable: "5 días hábiles",
     observaciones: "Cliente desistió de la operación de crédito.",
-    canal: "WhatsApp",
+    canal: "whatsapp",
     comprador: compradorDe(
       "Andrés Lillo Bravo",
       "16.321.654-9",
@@ -727,14 +738,14 @@ export const SOLICITUDES: Solicitud[] = [
       rut: "9.111.222-3",
       correo: "rdiaz@gmail.com",
       telefono: "+56 9 4444 5555",
-      origenDato: "Ficha",
+      origenDato: "ficha",
     },
     unidades: unidadUnica("s7", "Edificación", 55),
     contactosVisita: [
       contacto("s7-c1", "Propietario", "Andrés Lillo Bravo", "+56 9 5555 6666", "alillo@gmail.com"),
     ],
     contadorReasignaciones: 0,
-    estadoConservacion: "Normal",
+    estadoConservacion: "normal",
   },
   {
     id: "8",
@@ -765,7 +776,7 @@ export const SOLICITUDES: Solicitud[] = [
     fechaVisita: "23 jun 2026",
     slaAplicable: "5 días hábiles",
     observaciones: "Pendiente cálculo y generación de informe.",
-    canal: "Email",
+    canal: "email",
     comprador: compradorDe(
       "Rosa Mella Cárdenas",
       "11.234.567-1",
@@ -778,7 +789,7 @@ export const SOLICITUDES: Solicitud[] = [
       rut: "8.222.333-4",
       correo: "jpena@gmail.com",
       telefono: "+56 9 2222 3333",
-      origenDato: "Correo",
+      origenDato: "correo",
     },
     unidades: unidadUnica("s8", "Edificación", 98),
     contactosVisita: [
@@ -787,7 +798,7 @@ export const SOLICITUDES: Solicitud[] = [
     contadorReasignaciones: 0,
     fechaAsignacion: "22 jun 2026 · 08:50",
     estadoCorreo: "enviado",
-    estadoConservacion: "Bueno",
+    estadoConservacion: "bueno",
   },
 ]
 
@@ -841,12 +852,39 @@ export const HISTORIAL: EventoHistorial[] = [
 // Catálogos maestros (mock) para formularios de la consola
 // ──────────────────────────────────────────────────────────────────────────
 
+/**
+ * Catálogos que espejan un `singleSelect` de Airtable (27-jul-2026).
+ *
+ * ## Por qué `{ value, label }` y no un array de strings
+ *
+ * Hasta la Tanda D estos catálogos eran arrays de etiquetas y los `<SelectItem>`
+ * usaban `value={etiqueta}`. Esa etiqueta viajaba intacta por el mapper hasta
+ * el módulo 7 de SC01, que la escribía en un `singleSelect` de `TX_Solicitudes`
+ * cuyas opciones son slugs. Airtable respondía
+ * `[422] Insufficient permissions to create new select option ""Banco""`
+ * y el alta completa se perdía. El primer campo ofensor abortaba el create, así
+ * que los otros tres mismatches ni siquiera llegaban a manifestarse.
+ *
+ * **Regla desde el 27-jul-2026**: si un catálogo tiene contraparte
+ * `singleSelect` en Airtable, `value` es el nombre EXACTO de la opción y
+ * `label` es lo único que ve la Ejecutiva. El mapper no traduce vocabulario:
+ * traduce forma (camelCase → snake_case). Ver `lib/mappers/crear-solicitud.ts`.
+ *
+ * Los `value` de abajo están verificados uno a uno contra el schema vía MCP.
+ * Al agregar una opción, créala primero en Airtable — un `value` inventado
+ * reproduce exactamente el 422 de arriba.
+ */
+
+/** Espeja `TX_Solicitudes.canal_contacto_original` (`fldca1Uza4eicBXL4`). */
 export const CANALES_ORIGEN = [
-  "WhatsApp",
-  "Email",
-  "Teléfono",
-  "Presencial",
-  "Otro",
+  { value: "whatsapp", label: "WhatsApp" },
+  { value: "email", label: "Email" },
+  { value: "telefono", label: "Teléfono" },
+  { value: "presencial", label: "Presencial" },
+  // `web` existe en Airtable y los mocks ya lo usaban como "Portal web", pero
+  // no era seleccionable en el formulario. Se expone para cerrar esa brecha.
+  { value: "web", label: "Portal web" },
+  { value: "otro", label: "Otro" },
 ] as const
 
 export const CLIENTES = [
@@ -858,13 +896,28 @@ export const CLIENTES = [
   "Itaú",
 ] as const
 
-/** Tipos de cliente de origen (Sección A). */
+/**
+ * Tipos de cliente de origen (Sección A). Espeja
+ * `TX_Solicitudes.tipo_cliente_origen` (`fldbxZh45lFTB7yVJ`).
+ *
+ * Los 5 slugs los creó Sergio a mano en Airtable el 27-jul-2026, después de que
+ * la Tanda D muriera con `Insufficient permissions to create new select option
+ * ""Banco""`: el catálogo describía el **tipo de entidad** del cliente y el
+ * select sólo admitía `correo_texto` · `correo_ficha` · `extranet`, que
+ * describen **por dónde llegó el caso**. Se decidió conservar la semántica del
+ * negocio y ampliar el schema.
+ *
+ * ⚠ Las 3 opciones viejas siguen existiendo en Airtable —hay filas históricas
+ * que las usan— pero **no se exponen en el formulario a propósito**. Si
+ * aparecen en un registro antiguo, `etiquetaCatalogo()` las muestra tal cual en
+ * vez de dejar el campo en blanco.
+ */
 export const TIPOS_CLIENTE_ORIGEN = [
-  "Banco",
-  "Inmobiliaria",
-  "Persona natural",
-  "Corredora de propiedades",
-  "Otro",
+  { value: "banco", label: "Banco" },
+  { value: "inmobiliaria", label: "Inmobiliaria" },
+  { value: "persona_natural", label: "Persona natural" },
+  { value: "corredora", label: "Corredora" },
+  { value: "otro", label: "Otro" },
 ] as const
 
 /** Tipos de informe disponibles por cliente. */
@@ -926,14 +979,17 @@ export const TIPOS_PROPIEDAD = [
   "Estacionamiento",
 ] as const
 
-/** Estado de conservación (catálogo cerrado de 6). */
+/**
+ * Estado de conservación (catálogo cerrado de 6). Espeja
+ * `TX_Solicitudes.estado_conservacion` (`flde0ExWfB1dhkp4t`).
+ */
 export const ESTADOS_CONSERVACION = [
-  "Nuevo",
-  "Sin uso",
-  "Bueno",
-  "Normal",
-  "Malo",
-  "Deficiente",
+  { value: "nuevo", label: "Nuevo" },
+  { value: "sin_uso", label: "Sin uso" },
+  { value: "bueno", label: "Bueno" },
+  { value: "normal", label: "Normal" },
+  { value: "malo", label: "Malo" },
+  { value: "deficiente", label: "Deficiente" },
 ] as const
 
 /** Tipo de bien de una unidad (catálogo cerrado de 8). */
@@ -966,18 +1022,24 @@ export const MATERIALES = [
   "Perfiles metálicos",
 ] as const
 
-/** Origen de la dirección declarada. */
+/**
+ * Origen de la dirección declarada (RN-46). Espeja
+ * `TX_Solicitudes.origen_direccion` (`fldiwBMHujptXHr2D`).
+ */
 export const ORIGENES_DIRECCION = [
-  "Ficha del cliente",
-  "Certificado de avalúo",
-  "Certificado de número",
+  { value: "ficha_cliente", label: "Ficha del cliente" },
+  { value: "cert_avaluo", label: "Certificado de avalúo" },
+  { value: "cert_numero", label: "Certificado de número" },
 ] as const
 
-/** Origen del dato del vendedor. */
+/**
+ * Origen del dato del vendedor. Espeja
+ * `TX_Solicitudes.vendedor_origen_dato` (`fldcjrl80Vv1WBmmY`).
+ */
 export const ORIGENES_DATO_VENDEDOR = [
-  "Correo",
-  "Ficha",
-  "Certificado de avalúo",
+  { value: "correo", label: "Correo" },
+  { value: "ficha", label: "Ficha" },
+  { value: "cert_avaluo", label: "Certificado de avalúo" },
 ] as const
 
 /** Roles de contacto de visita (catálogo cerrado de 5). */
@@ -1058,15 +1120,36 @@ export const ORDEN_SOLICITUDES = [
 ] as const
 export type OrdenSolicitudes = (typeof ORDEN_SOLICITUDES)[number]
 
-// Tipos derivados de catálogos cerrados ya existentes (labels como valores).
-export type CanalOrigen = (typeof CANALES_ORIGEN)[number]
-export type TipoClienteOrigen = (typeof TIPOS_CLIENTE_ORIGEN)[number]
+// Tipos derivados de catálogos cerrados ya existentes.
+//
+// Los que espejan un `singleSelect` de Airtable derivan del `value` (el slug),
+// nunca del `label`: el tipo describe lo que se persiste, no lo que se ve. Los
+// que siguen siendo arrays de strings todavía no tienen campo destino.
+export type OpcionCatalogo = { readonly value: string; readonly label: string }
+
+export type CanalOrigen = (typeof CANALES_ORIGEN)[number]["value"]
+export type TipoClienteOrigen = (typeof TIPOS_CLIENTE_ORIGEN)[number]["value"]
 export type TipoBien = (typeof TIPOS_BIEN)[number]
 export type OrigenSuperficie = (typeof ORIGENES_SUPERFICIE)[number]
-export type EstadoConservacion = (typeof ESTADOS_CONSERVACION)[number]
+export type EstadoConservacion = (typeof ESTADOS_CONSERVACION)[number]["value"]
 export type Material = (typeof MATERIALES)[number]
-export type OrigenDireccion = (typeof ORIGENES_DIRECCION)[number]
-export type OrigenDatoVendedor = (typeof ORIGENES_DATO_VENDEDOR)[number]
+export type OrigenDireccion = (typeof ORIGENES_DIRECCION)[number]["value"]
+export type OrigenDatoVendedor = (typeof ORIGENES_DATO_VENDEDOR)[number]["value"]
+
+/**
+ * Traduce un slug persistido a su etiqueta legible. Lo usan las vistas de sólo
+ * lectura, que reciben el valor crudo de Airtable y no pasan por un `<Select>`.
+ *
+ * Devuelve el propio valor si no está en el catálogo: un slug viejo o escrito
+ * desde otra interfaz se muestra tal cual en vez de desaparecer.
+ */
+export function etiquetaCatalogo(
+  catalogo: readonly OpcionCatalogo[],
+  valor: string | undefined | null,
+): string {
+  if (!valor) return "—"
+  return catalogo.find((o) => o.value === valor)?.label ?? valor
+}
 export type RolContacto = (typeof ROLES_CONTACTO_VISITA)[number]
 export type EstadoContacto = (typeof ESTADOS_CONTACTO)[number]
 export type MotivoReasignacion = (typeof MOTIVOS_REASIGNACION)[number]

@@ -143,8 +143,14 @@ export function mapearEdicionSolicitud(
     // `canal` alimenta `canal_contacto_original` (el select de la pantalla);
     // `origen_canal` conserva su semántica de canal de ingreso al sistema y no
     // es editable aquí, así que se preserva tal como vino.
+    //
+    // ⚠ Hasta el 27-jul-2026 `origenCanal` se leía de `original.canal`, que en
+    // ese momento venía poblado con `origen_canal`: el select de la pantalla
+    // mostraba vacío y, al guardar, escribía `ingreso_manual` dentro de
+    // `canal_contacto_original`. Ahora son dos campos distintos en el modelo de
+    // lectura y cada uno viaja por su clave (E-089).
     canal: limpiar(d.canal),
-    origenCanal: limpiar(original.canal),
+    origenCanal: limpiar(original.origenCanal),
 
     // — Campos que SC-Edicion escribe pero esta pantalla no edita —
     prioridad: limpiar(original.prioridad),

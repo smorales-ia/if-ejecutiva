@@ -52,6 +52,9 @@ import {
   ESTADO_CORREO_LABELS,
   HISTORIAL,
   mockAntecedentesLegales,
+  CANALES_ORIGEN,
+  ESTADOS_CONSERVACION,
+  etiquetaCatalogo,
   mockDatosSii,
   mockDecisionMotor,
   mockEmailAsignacion,
@@ -561,7 +564,9 @@ function DatosTab({
         </DataRow>
         <DataRow label="Banco">{s.banco}</DataRow>
         <DataRow label="Producto">{s.producto}</DataRow>
-        <DataRow label="Canal de origen">{s.canal}</DataRow>
+        <DataRow label="Canal de contacto">
+          {etiquetaCatalogo(CANALES_ORIGEN, s.canal)}
+        </DataRow>
       </Section>
 
       <Separator />
@@ -574,7 +579,7 @@ function DatosTab({
         <DataRow label="Comuna">{s.comuna}</DataRow>
         <DataRow label="Región">{s.region}</DataRow>
         <DataRow label="Estado de conservación">
-          {s.estadoConservacion ?? "—"}
+          {etiquetaCatalogo(ESTADOS_CONSERVACION, s.estadoConservacion)}
         </DataRow>
       </Section>
 

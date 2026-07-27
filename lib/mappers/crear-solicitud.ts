@@ -38,6 +38,16 @@ import type {
  * 4. **`orden_prioridad` se genera desde el índice, base 1.** El zod no lo
  *    captura; el orden de la lista en la UI *es* la prioridad. El primer
  *    contacto del array es el principal.
+ * 5. **Este mapper traduce forma, no vocabulario.** Los valores de los campos
+ *    que caen en un `singleSelect` de Airtable (`tipo_cliente_origen`,
+ *    `estado_conservacion`, `origen_direccion`, `vendedor_origen_dato`,
+ *    `canal`) llegan aquí ya como el slug exacto de la opción, porque los
+ *    catálogos de `lib/console-data.ts` los definen como `{ value, label }` y
+ *    los `<SelectItem>` usan el `value`. **No agregar tablas de traducción
+ *    aquí**: duplicarían la fuente de verdad y volverían a divergir. Si un
+ *    valor no existe en Airtable, el create entero muere con
+ *    `Insufficient permissions to create new select option` (Tanda D,
+ *    27-jul-2026) — el arreglo es el catálogo o el schema, nunca el mapper.
  *
  * ## Campos del zod que este mapper descarta deliberadamente
  *
