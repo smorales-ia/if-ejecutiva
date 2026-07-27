@@ -336,7 +336,9 @@ function contacto(
   nombre: string,
   telefono: string,
   email: string,
-  estado = "Válido",
+  // `rol` y `estado` son los slugs de `TX_ContactosVisita`, igual que en los
+  // datos reales — las etiquetas se resuelven al pintar con `etiquetaCatalogo`.
+  estado = "valido",
 ): ContactoVisita {
   return { id, rol, nombre, telefono, email, estado }
 }
@@ -389,8 +391,8 @@ export const SOLICITUDES: Solicitud[] = [
     },
     unidades: unidadesDepto("s1"),
     contactosVisita: [
-      contacto("s1-c1", "Propietario", "Roberto Fuentes Díaz", "+56 9 8123 4567", "rfuentes@gmail.com"),
-      contacto("s1-c2", "Conserje", "Turno edificio", "+56 2 2345 6789", "conserjeria@edificio.cl", "No contesta"),
+      contacto("s1-c1", "propietario","Roberto Fuentes Díaz", "+56 9 8123 4567", "rfuentes@gmail.com"),
+      contacto("s1-c2", "conserje","Turno edificio", "+56 2 2345 6789", "conserjeria@edificio.cl", "no_contesta"),
     ],
     contadorReasignaciones: 0,
     fechaAsignacion: "24 jun 2026 · 10:12",
@@ -443,7 +445,7 @@ export const SOLICITUDES: Solicitud[] = [
     },
     unidades: unidadUnica("s2", "Edificación", 145),
     contactosVisita: [
-      contacto("s2-c1", "Propietario", "Patricia Soto Vera", "+56 9 6543 2100", "psoto@outlook.com"),
+      contacto("s2-c1", "propietario","Patricia Soto Vera", "+56 9 6543 2100", "psoto@outlook.com"),
     ],
     contadorReasignaciones: 1,
     fechaAsignacion: "17 jun 2026 · 09:30",
@@ -512,7 +514,7 @@ export const SOLICITUDES: Solicitud[] = [
       },
     ],
     contactosVisita: [
-      contacto("s3-c1", "Corredor", "Sofía Martínez", "+56 9 4321 0987", "smartinez@andes.cl"),
+      contacto("s3-c1", "corredor","Sofía Martínez", "+56 9 4321 0987", "smartinez@andes.cl"),
     ],
     contadorReasignaciones: 0,
     estadoConservacion: "nuevo",
@@ -571,7 +573,7 @@ export const SOLICITUDES: Solicitud[] = [
     },
     unidades: unidadesDepto("s4"),
     contactosVisita: [
-      contacto("s4-c1", "Propietario", "Luis Tapia Rojas", "+56 9 3210 9876", "ltapia@gmail.com"),
+      contacto("s4-c1", "propietario","Luis Tapia Rojas", "+56 9 3210 9876", "ltapia@gmail.com"),
       contacto("s4-c2", "Arrendatario", "Pedro Núñez", "+56 9 1098 7654", "pnunez@gmail.com"),
     ],
     contadorReasignaciones: 0,
@@ -625,7 +627,7 @@ export const SOLICITUDES: Solicitud[] = [
     },
     unidades: unidadUnica("s5", "Edificación", 320),
     contactosVisita: [
-      contacto("s5-c1", "Propietario", "Fernanda Vidal Pérez", "+56 9 9876 5432", "fvidal@empresa.cl"),
+      contacto("s5-c1", "propietario","Fernanda Vidal Pérez", "+56 9 9876 5432", "fvidal@empresa.cl"),
     ],
     contadorReasignaciones: 0,
     fechaAsignacion: "21 jun 2026 · 11:05",
@@ -679,8 +681,8 @@ export const SOLICITUDES: Solicitud[] = [
     },
     unidades: unidadesDepto("s6"),
     contactosVisita: [
-      contacto("s6-c1", "Corredor", "Andrea Pinto", "+56 9 6666 7777", "apinto@mirador.cl"),
-      contacto("s6-c2", "Conserje", "Recepción torre", "+56 2 2333 4444", "recepcion@mirador.cl"),
+      contacto("s6-c1", "corredor","Andrea Pinto", "+56 9 6666 7777", "apinto@mirador.cl"),
+      contacto("s6-c2", "conserje","Recepción torre", "+56 2 2333 4444", "recepcion@mirador.cl"),
     ],
     contadorReasignaciones: 0,
     fechaAsignacion: "20 jun 2026 · 16:20",
@@ -742,7 +744,7 @@ export const SOLICITUDES: Solicitud[] = [
     },
     unidades: unidadUnica("s7", "Edificación", 55),
     contactosVisita: [
-      contacto("s7-c1", "Propietario", "Andrés Lillo Bravo", "+56 9 5555 6666", "alillo@gmail.com"),
+      contacto("s7-c1", "propietario","Andrés Lillo Bravo", "+56 9 5555 6666", "alillo@gmail.com"),
     ],
     contadorReasignaciones: 0,
     estadoConservacion: "normal",
@@ -793,7 +795,7 @@ export const SOLICITUDES: Solicitud[] = [
     },
     unidades: unidadUnica("s8", "Edificación", 98),
     contactosVisita: [
-      contacto("s8-c1", "Propietario", "Rosa Mella Cárdenas", "+56 9 3333 4444", "rmella@hotmail.com"),
+      contacto("s8-c1", "propietario","Rosa Mella Cárdenas", "+56 9 3333 4444", "rmella@hotmail.com"),
     ],
     contadorReasignaciones: 0,
     fechaAsignacion: "22 jun 2026 · 08:50",
@@ -887,15 +889,6 @@ export const CANALES_ORIGEN = [
   { value: "otro", label: "Otro" },
 ] as const
 
-export const CLIENTES = [
-  "Banco Santander",
-  "Banco de Chile",
-  "BCI",
-  "Banco Estado",
-  "Scotiabank",
-  "Itaú",
-] as const
-
 /**
  * Tipos de cliente de origen (Sección A). Espeja
  * `TX_Solicitudes.tipo_cliente_origen` (`fldbxZh45lFTB7yVJ`).
@@ -920,64 +913,63 @@ export const TIPOS_CLIENTE_ORIGEN = [
   { value: "otro", label: "Otro" },
 ] as const
 
-/** Tipos de informe disponibles por cliente. */
-export const TIPOS_INFORME_POR_CLIENTE: Record<string, string[]> = {
-  "Banco Santander": [
-    "Tasación hipotecaria",
-    "Revisión de tasación",
-    "Tasación comercial",
-  ],
-  "Banco de Chile": ["Tasación hipotecaria", "Tasación comercial"],
-  BCI: ["Tasación comercial", "Tasación judicial", "Tasación hipotecaria"],
-  "Banco Estado": ["Tasación hipotecaria"],
-  Scotiabank: ["Tasación hipotecaria", "Revisión de tasación"],
-  Itaú: ["Tasación hipotecaria", "Tasación comercial"],
-}
+// ──────────────────────────────────────────────────────────────────────────
+// Catálogos migrados a Airtable (Tanda E, 27-jul-2026)
+//
+// `CLIENTES`, `TIPOS_INFORME_POR_CLIENTE`, `PRODUCTOS_POR_CLIENTE`,
+// `PRODUCTO_LABELS`, `BANCOS` y `TIPOS_PROPIEDAD` vivían aquí como listas
+// hardcodeadas heredadas del mock v0. Los 5 campos que alimentan divergieron de
+// las tablas maestras (`M_Clientes` no tiene "Banco Santander";
+// `M_TiposInforme` no tiene "Tasación hipotecaria"; `M_Productos` no tiene
+// "hipotecario"), y el `Search Records` de SC01 fallaba en silencio dejando los
+// links vacíos en `TX_Solicitudes`.
+//
+// Ahora se leen en runtime: `lib/catalogos.ts` (server) → `/api/catalogos` →
+// `useCatalogos()` (cliente). El desglose por cliente desapareció a propósito:
+// ni `M_TiposInforme` ni `M_Productos` tienen relación con `M_Clientes` en el
+// schema real (el link `M_Clientes.productos` está poblado en 1 de 90 filas),
+// así que el filtrado por cliente era una regla inventada por la UI. RN-XX no
+// lo exige y el principio rector es que la UI no decide.
+// ──────────────────────────────────────────────────────────────────────────
 
-/** Productos disponibles por cliente. */
-export const PRODUCTOS_POR_CLIENTE: Record<string, string[]> = {
-  "Banco Santander": ["hipotecario", "refinanciamiento", "comercial"],
-  "Banco de Chile": ["hipotecario", "comercial"],
-  BCI: ["comercial", "hipotecario", "leasing"],
-  "Banco Estado": ["hipotecario", "refinanciamiento"],
-  Scotiabank: ["hipotecario", "refinanciamiento"],
-  Itaú: ["hipotecario", "comercial"],
-}
-
-export const PRODUCTO_LABELS: Record<string, string> = {
-  hipotecario: "Crédito hipotecario",
-  refinanciamiento: "Refinanciamiento",
-  comercial: "Crédito comercial",
-  leasing: "Leasing inmobiliario",
-}
-
-/** Productos que requieren banco financista. */
-export const PRODUCTOS_CON_BANCO = ["hipotecario", "refinanciamiento"]
+/**
+ * Productos que requieren banco financista.
+ *
+ * Nombres EXACTOS de `M_Productos.nombre` (verificados vía MCP el 27-jul-2026).
+ * Antes eran los slugs inventados `hipotecario` / `refinanciamiento`, que no
+ * correspondían a ninguna fila: la condición nunca se cumplía con datos reales
+ * y el campo "Banco financista" no llegaba a mostrarse.
+ *
+ * Sigue siendo lógica de presentación (mostrar u ocultar un campo), no una
+ * transición de estado: la validación de negocio vive en `C_ReglasNegocio`.
+ */
+export const PRODUCTOS_CON_BANCO = [
+  "Credito Hipotecario",
+  "Refinanciamiento",
+  "Refinanciamiento Hipotecario",
+]
 
 /** Productos donde el vendedor coincide con el comprador (Sección C). */
-export const PRODUCTOS_VENDEDOR_COINCIDE = ["refinanciamiento"]
+export const PRODUCTOS_VENDEDOR_COINCIDE = [
+  "Refinanciamiento",
+  "Refinanciamiento Hipotecario",
+]
 
-export const BANCOS = [
-  "Banco Santander",
-  "Banco de Chile",
-  "BCI",
-  "Banco Estado",
-  "Scotiabank",
-  "Itaú",
-  "Banco BICE",
-  "Banco Falabella",
-  "Banco Security",
-] as const
-
-export const TIPOS_PROPIEDAD = [
-  "Casa",
-  "Departamento",
-  "Oficina",
-  "Local comercial",
-  "Terreno",
-  "Bodega",
-  "Estacionamiento",
-] as const
+/**
+ * Compara un nombre de producto contra uno de los dos catálogos de arriba.
+ *
+ * Case-insensitive y sin espacios de borde a propósito: el nombre viene de una
+ * fila de Airtable que se edita a mano, y un `"Refinanciamiento "` con espacio
+ * final no debería apagar el campo de banco financista.
+ */
+export function productoEnLista(
+  producto: string | undefined | null,
+  lista: readonly string[],
+): boolean {
+  if (!producto) return false
+  const p = producto.trim().toLocaleUpperCase("es")
+  return lista.some((x) => x.trim().toLocaleUpperCase("es") === p)
+}
 
 /**
  * Estado de conservación (catálogo cerrado de 6). Espeja
@@ -1042,20 +1034,39 @@ export const ORIGENES_DATO_VENDEDOR = [
   { value: "cert_avaluo", label: "Certificado de avalúo" },
 ] as const
 
-/** Roles de contacto de visita (catálogo cerrado de 5). */
+/**
+ * Roles de contacto de visita. Espeja `TX_ContactosVisita.rol`
+ * (`fldeTuIlU6uxDYwHY`, singleSelect).
+ *
+ * Los `value` son los slugs reales del campo, en minúscula y sin tilde. Antes
+ * eran las etiquetas capitalizadas y viajaban así hasta el módulo 18 de SC01,
+ * que crea el contacto con `typecast: true`. Con typecast Airtable **no falla**:
+ * inventa la opción que falta. Por eso la limpieza del schema es parte de este
+ * arreglo — ver la nota de `ESTADOS_CONTACTO`.
+ */
 export const ROLES_CONTACTO_VISITA = [
-  "Propietario",
-  "Corredor",
-  "Arrendatario",
-  "Conserje",
-  "Otro",
+  { value: "propietario", label: "Propietario" },
+  { value: "corredor", label: "Corredor" },
+  { value: "arrendatario", label: "Arrendatario" },
+  { value: "conserje", label: "Conserje" },
+  { value: "otro", label: "Otro" },
 ] as const
 
-/** Estado del contacto de visita. */
+/**
+ * Estado del contacto de visita. Espeja `TX_ContactosVisita.estado_contacto`
+ * (`fldMerAz4OCNhwn4X`, singleSelect).
+ *
+ * ⚠ **Deuda de schema abierta (27-jul-2026)**: `rol` y `estado_contacto` tienen
+ * hoy dos opciones basura cada uno, con el JSON completo de un contacto como
+ * nombre de la opción (`{"nombre":"Carolina Andrea Chandía Muñoz",…}`). Las
+ * creó una corrida vieja de SC01 que mapeaba el bundle entero del Iterator en
+ * vez de `{{17.rol}}`, aprovechando el `typecast: true` del módulo 18. Borrarlas
+ * requiere aprobación explícita (regla de CU-002 sobre cambios de schema).
+ */
 export const ESTADOS_CONTACTO = [
-  "Válido",
-  "No contesta",
-  "Teléfono erróneo",
+  { value: "valido", label: "Válido" },
+  { value: "no_contesta", label: "No contesta" },
+  { value: "telefono_erroneo", label: "Teléfono erróneo" },
 ] as const
 
 /** Motivos de reasignación (catálogo cerrado). */
@@ -1150,8 +1161,8 @@ export function etiquetaCatalogo(
   if (!valor) return "—"
   return catalogo.find((o) => o.value === valor)?.label ?? valor
 }
-export type RolContacto = (typeof ROLES_CONTACTO_VISITA)[number]
-export type EstadoContacto = (typeof ESTADOS_CONTACTO)[number]
+export type RolContacto = (typeof ROLES_CONTACTO_VISITA)[number]["value"]
+export type EstadoContacto = (typeof ESTADOS_CONTACTO)[number]["value"]
 export type MotivoReasignacion = (typeof MOTIVOS_REASIGNACION)[number]
 
 export interface TipoDocumento {

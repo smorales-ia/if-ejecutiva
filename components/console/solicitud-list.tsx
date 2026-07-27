@@ -28,7 +28,6 @@ import {
 } from "@/components/console/status-badges"
 import { useDebounce } from "@/lib/use-debounce"
 import {
-  CLIENTES,
   ESTADO_LABELS,
   PRIORIDAD,
   PRIORIDAD_LABELS,
@@ -36,6 +35,7 @@ import {
   type Prioridad,
   type Solicitud,
 } from "@/lib/console-data"
+import { useCatalogos } from "@/lib/use-catalogos"
 import type { Vista } from "@/lib/solicitudes"
 
 const TABS: { id: Vista; label: string; tono?: "rojo" | "ambar" }[] = [
@@ -83,6 +83,10 @@ export function SolicitudList({
   const [showFilters, setShowFilters] = React.useState(false)
   const [contadores, setContadores] = React.useState<Record<string, number>>({})
   const [tasadores, setTasadores] = React.useState<{ id: string; nombre: string }[]>([])
+
+  // El filtro "Cliente" se arma con los nombres reales de `M_Clientes`: filtrar
+  // por un nombre que no existe en la tabla devolvía siempre cero resultados.
+  const { catalogos } = useCatalogos()
 
   // Lee un filtro actual desde la URL.
   const get = (k: string) => searchParams.get(k) ?? ""
@@ -280,7 +284,10 @@ export function SolicitudList({
               label="Cliente"
               value={get("cliente")}
               placeholder="Todos"
-              options={CLIENTES.map((c) => ({ value: c, label: c }))}
+              options={catalogos.clientes.map((c) => ({
+                value: c.nombre,
+                label: c.nombre,
+              }))}
               onChange={(v) => updateParams({ cliente: v })}
             />
             <FilterSelect

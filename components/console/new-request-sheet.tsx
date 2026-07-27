@@ -67,9 +67,7 @@ import {
   type NuevaSolicitudInternaValues,
 } from "@/lib/validators/nueva-solicitud-interna"
 import {
-  BANCOS,
   CANALES_ORIGEN,
-  CLIENTES,
   COMUNAS_POR_REGION,
   ESTADOS_CONSERVACION,
   ESTADOS_CONTACTO,
@@ -78,18 +76,16 @@ import {
   ORIGENES_DATO_VENDEDOR,
   ORIGENES_DIRECCION,
   ORIGENES_SUPERFICIE,
-  PRODUCTO_LABELS,
   PRODUCTOS_CON_BANCO,
-  PRODUCTOS_POR_CLIENTE,
   PRODUCTOS_VENDEDOR_COINCIDE,
   REGIONES,
   ROLES_CONTACTO_VISITA,
   TIPOS_BIEN,
   TIPOS_CLIENTE_ORIGEN,
-  TIPOS_INFORME_POR_CLIENTE,
-  TIPOS_PROPIEDAD,
   formatearRut,
+  productoEnLista,
 } from "@/lib/console-data"
+import { useCatalogos } from "@/lib/use-catalogos"
 
 type Modo = "documentos" | "manual" | ""
 type TipoNU = "nuevo" | "usado" | ""
@@ -860,24 +856,34 @@ export function NewRequestSheet() {
   const unidadesWatch = watch("unidades")
 
   const esNuevo = tipoNuevoUsado === "nuevo"
-  const tiposInforme = cliente ? TIPOS_INFORME_POR_CLIENTE[cliente] ?? [] : []
-  const productos = cliente ? PRODUCTOS_POR_CLIENTE[cliente] ?? [] : []
   const comunas = region ? COMUNAS_POR_REGION[region] ?? [] : []
-  const requiereBanco = PRODUCTOS_CON_BANCO.includes(producto)
-  const vendedorCoincidePermitido =
-    PRODUCTOS_VENDEDOR_COINCIDE.includes(producto)
+  const requiereBanco = productoEnLista(producto, PRODUCTOS_CON_BANCO)
+  const vendedorCoincidePermitido = productoEnLista(
+    producto,
+    PRODUCTOS_VENDEDOR_COINCIDE,
+  )
+
+  // Catálogos maestros de Airtable (cliente · tipo de informe · tipo de
+  // propiedad · producto · banco financista). Son los 5 selects cuyo valor
+  // resuelve un `Search Records` de SC01: si la opción no existe en la tabla
+  // maestra, el Search no encuentra nada y el link queda vacío sin error
+  // visible. Ver `lib/catalogos.ts`.
+  const { catalogos, cargando: catalogosCargando, error: catalogosError } =
+    useCatalogos()
+
+  // Un select vacío sin explicación se lee como un bug del formulario. El hint
+  // §6 distingue "todavía no llegan" de "no pudimos leerlos", en segunda
+  // persona y sin exponer el error técnico.
+  const hintCatalogo = catalogosError
+    ? "No pudimos cargar las opciones. Intenta nuevamente en unos segundos."
+    : catalogosCargando
+      ? "Cargando opciones…"
+      : undefined
 
   const extraidoDe = (key: keyof NuevaSolicitudInternaValues) =>
     modo === "documentos" && extraidos.has(key)
       ? EXTRACCION_DOC[key]
       : undefined
-
-  function handleClienteChange(value: string, onChange: (v: string) => void) {
-    onChange(value)
-    setValue("tipoInforme", "", { shouldValidate: false })
-    setValue("producto", "", { shouldValidate: false })
-    setValue("banco", "", { shouldValidate: false })
-  }
 
   function handleRegionChange(value: string, onChange: (v: string) => void) {
     onChange(value)
@@ -1285,19 +1291,25 @@ export function NewRequestSheet() {
                 control={control}
                 name="cliente"
                 render={({ field }) => (
-                  <Field label="Cliente" required error={errors.cliente?.message}>
+                  <Field
+                    label="Cliente"
+                    required
+                    error={errors.cliente?.message}
+                    hint={hintCatalogo}
+                  >
                     <Select
                       value={field.value}
-                      onValueChange={(v) => handleClienteChange(v ?? "", field.onChange)}
+                      onValueChange={(v) => field.onChange(v ?? "")}
+                      disabled={catalogosCargando}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecciona un cliente" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {CLIENTES.map((c) => (
-                            <SelectItem key={c} value={c}>
-                              {c}
+                          {catalogos.clientes.map((c) => (
+                            <SelectItem key={c.id} value={c.nombre}>
+                              {c.nombre}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -1340,21 +1352,21 @@ export function NewRequestSheet() {
                     label="Tipo de informe"
                     required
                     error={errors.tipoInforme?.message}
-                    hint={!cliente ? "Selecciona primero un cliente." : undefined}
+                    hint={hintCatalogo}
                   >
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
-                      disabled={!cliente}
+                      disabled={catalogosCargando}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecciona el tipo" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {tiposInforme.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              {t}
+                          {catalogos.tiposInforme.map((t) => (
+                            <SelectItem key={t.id} value={t.nombre}>
+                              {t.nombre}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -1569,16 +1581,21 @@ export function NewRequestSheet() {
                       label="Tipo de propiedad"
                       required
                       error={errors.tipoPropiedad?.message}
+                      hint={hintCatalogo}
                     >
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={catalogosCargando}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Tipo" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {TIPOS_PROPIEDAD.map((t) => (
-                              <SelectItem key={t} value={t}>
-                                {t}
+                            {catalogos.tiposPropiedad.map((t) => (
+                              <SelectItem key={t.id} value={t.nombre}>
+                                {t.nombre}
                               </SelectItem>
                             ))}
                           </SelectGroup>
@@ -1908,8 +1925,8 @@ export function NewRequestSheet() {
                                 <SelectContent>
                                   <SelectGroup>
                                     {ROLES_CONTACTO_VISITA.map((r) => (
-                                      <SelectItem key={r} value={r}>
-                                        {r}
+                                      <SelectItem key={r.value} value={r.value}>
+                                        {r.label}
                                       </SelectItem>
                                     ))}
                                   </SelectGroup>
@@ -1958,8 +1975,8 @@ export function NewRequestSheet() {
                               <SelectContent>
                                 <SelectGroup>
                                   {ESTADOS_CONTACTO.map((e) => (
-                                    <SelectItem key={e} value={e}>
-                                      {e}
+                                    <SelectItem key={e.value} value={e.value}>
+                                      {e.label}
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -1984,25 +2001,25 @@ export function NewRequestSheet() {
                     label="Producto"
                     required
                     error={errors.producto?.message}
-                    hint={!cliente ? "Selecciona primero un cliente." : undefined}
+                    hint={hintCatalogo}
                   >
                     <Select
                       value={field.value}
                       onValueChange={(v) => {
                         field.onChange(v ?? "")
-                        if (!PRODUCTOS_CON_BANCO.includes(v ?? ""))
+                        if (!productoEnLista(v, PRODUCTOS_CON_BANCO))
                           setValue("banco", "", { shouldValidate: false })
                       }}
-                      disabled={!cliente}
+                      disabled={catalogosCargando}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Selecciona un producto" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
-                          {productos.map((p) => (
-                            <SelectItem key={p} value={p}>
-                              {PRODUCTO_LABELS[p] ?? p}
+                          {catalogos.productos.map((p) => (
+                            <SelectItem key={p.id} value={p.nombre}>
+                              {p.nombre}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -2020,17 +2037,24 @@ export function NewRequestSheet() {
                       label="Banco financista"
                       required
                       error={errors.banco?.message}
-                      hint="Requerido para productos hipotecarios y de refinanciamiento."
+                      hint={
+                        hintCatalogo ??
+                        "Requerido para productos hipotecarios y de refinanciamiento."
+                      }
                     >
-                      <Select value={field.value} onValueChange={field.onChange}>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={catalogosCargando}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Selecciona el banco" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            {BANCOS.map((b) => (
-                              <SelectItem key={b} value={b}>
-                                {b}
+                            {catalogos.bancos.map((b) => (
+                              <SelectItem key={b.id} value={b.nombre}>
+                                {b.nombre}
                               </SelectItem>
                             ))}
                           </SelectGroup>

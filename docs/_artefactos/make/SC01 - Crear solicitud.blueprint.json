@@ -108,7 +108,7 @@
                         "type": "text"
                     },
                     {
-                        "name": "banco",
+                        "name": "banco_financista_nombre",
                         "type": "text"
                     },
                     {
@@ -1940,7 +1940,7 @@
             "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblGlYuJo5AeMehhs",
-                "formula": "UPPER({nombre}) = UPPER(\"{{1.banco}}\")",
+                "formula": "UPPER({nombre}) = UPPER(\"{{1.banco_financista_nombre}}\")",
                 "maxRecords": "1",
                 "useColumnId": false
             },

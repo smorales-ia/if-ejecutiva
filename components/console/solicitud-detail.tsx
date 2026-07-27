@@ -54,6 +54,8 @@ import {
   mockAntecedentesLegales,
   CANALES_ORIGEN,
   ESTADOS_CONSERVACION,
+  ESTADOS_CONTACTO,
+  ROLES_CONTACTO_VISITA,
   etiquetaCatalogo,
   mockDatosSii,
   mockDecisionMotor,
@@ -714,17 +716,22 @@ function DatosTab({
                     <Badge className="bg-brand/10 text-brand">Principal</Badge>
                   )}
                 </span>
-                <span className="text-xs text-muted-foreground">{c.rol}</span>
+                <span className="text-xs text-muted-foreground">
+                  {etiquetaCatalogo(ROLES_CONTACTO_VISITA, c.rol)}
+                </span>
                 <span className="text-xs text-foreground">{c.telefono}</span>
                 <span className="text-xs text-muted-foreground">{c.email}</span>
                 <Badge
                   variant="secondary"
                   className={cn(
                     "ml-auto",
-                    c.estado !== "Válido" && "text-[#b45309]",
+                    // El slug de Airtable es `valido`; la etiqueta con tilde es
+                    // sólo de presentación. Comparar contra la etiqueta pintaba
+                    // en ámbar a todos los contactos sanos.
+                    c.estado !== "valido" && "text-[#b45309]",
                   )}
                 >
-                  {c.estado}
+                  {etiquetaCatalogo(ESTADOS_CONTACTO, c.estado)}
                 </Badge>
               </li>
             ))}

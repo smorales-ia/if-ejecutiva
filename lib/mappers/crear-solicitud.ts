@@ -41,13 +41,19 @@ import type {
  * 5. **Este mapper traduce forma, no vocabulario.** Los valores de los campos
  *    que caen en un `singleSelect` de Airtable (`tipo_cliente_origen`,
  *    `estado_conservacion`, `origen_direccion`, `vendedor_origen_dato`,
- *    `canal`) llegan aquí ya como el slug exacto de la opción, porque los
- *    catálogos de `lib/console-data.ts` los definen como `{ value, label }` y
- *    los `<SelectItem>` usan el `value`. **No agregar tablas de traducción
- *    aquí**: duplicarían la fuente de verdad y volverían a divergir. Si un
- *    valor no existe en Airtable, el create entero muere con
+ *    `canal`, y `rol`/`estado_contacto` de cada contacto) llegan aquí ya como
+ *    el slug exacto de la opción, porque los catálogos de
+ *    `lib/console-data.ts` los definen como `{ value, label }` y los
+ *    `<SelectItem>` usan el `value`. Lo mismo vale para los campos que Make
+ *    resuelve con un `Search Records` (`cliente`, `tipo_informe`,
+ *    `tipo_propiedad`, `producto`, `banco_financista_nombre`): esos nombres
+ *    salen de `/api/catalogos`, o sea de la propia tabla maestra. **No agregar
+ *    tablas de traducción aquí**: duplicarían la fuente de verdad y volverían a
+ *    divergir. Si un valor no existe en Airtable, el create muere con
  *    `Insufficient permissions to create new select option` (Tanda D,
- *    27-jul-2026) — el arreglo es el catálogo o el schema, nunca el mapper.
+ *    27-jul-2026) o —peor, porque es silencioso— el Search devuelve cero
+ *    bundles y el link queda vacío (Tanda E). El arreglo es el catálogo o el
+ *    schema, nunca el mapper.
  *
  * ## Campos del zod que este mapper descarta deliberadamente
  *
@@ -226,9 +232,16 @@ export function toMakeSnakePayload(
 
     // ── Sección D · Producto y observaciones ───────────────────────────────
     producto: texto(datos.producto),
-    // Banco FINANCISTA: nombre visible que el Search del módulo 9 resuelve
-    // contra `M_Bancos.nombre` → link `banco_financista`.
-    banco: texto(datos.banco),
+    // Banco FINANCISTA: nombre de `M_Bancos.nombre` que el Search del módulo 9
+    // resuelve al link `banco_financista` (`fldxcfdKRctHCgwmB`).
+    //
+    // La clave se llamaba `banco` a secas y convivía con `banco_id`, que es el
+    // banco ORIGINADOR y se escribe en el campo de texto `banco`
+    // (`fldAgTlFXeXWfGTdI`). Dos claves con el mismo nombre semántico y destinos
+    // distintos: leer `{{1.banco}}` en el blueprint no dejaba ver cuál de los
+    // dos bancos era. El nombre explícito hace el contrato autodescriptivo.
+    // Requiere el módulo 9 apuntando a `{{1.banco_financista_nombre}}`.
+    banco_financista_nombre: texto(datos.banco),
     observaciones: texto(datos.observaciones),
   }
 

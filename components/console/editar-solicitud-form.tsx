@@ -20,7 +20,6 @@ import {
 import { cn } from "@/lib/utils"
 import {
   CANALES_ORIGEN,
-  CLIENTES,
   COMUNAS_POR_REGION,
   ESTADOS_CONSERVACION,
   ESTADOS_CONTACTO,
@@ -30,12 +29,11 @@ import {
   REGIONES,
   ROLES_CONTACTO_VISITA,
   TIPOS_BIEN,
-  TIPOS_INFORME_POR_CLIENTE,
-  TIPOS_PROPIEDAD,
   type ContactoVisita,
   type Solicitud,
   type Unidad,
 } from "@/lib/console-data"
+import { useCatalogos } from "@/lib/use-catalogos"
 
 let uid = 0
 const nextId = (p: string) => `${p}-${Date.now()}-${uid++}`
@@ -67,8 +65,29 @@ export function EditarSolicitudForm({
   const [d, setD] = React.useState<Solicitud>(() => clonar(solicitud))
   const esNuevo = d.tipoPropiedadNuevoUsado === "nuevo"
 
-  const informesCliente = TIPOS_INFORME_POR_CLIENTE[d.cliente] ?? []
   const comunasRegion = COMUNAS_POR_REGION[d.region] ?? []
+
+  // Mismos catálogos maestros que el alta interna: la edición escribe en los
+  // mismos links de `TX_Solicitudes` vía SC-Edicion, así que un nombre que no
+  // exista en la tabla maestra deja el link vacío igual que en SC01.
+  const { catalogos, cargando: catalogosCargando } = useCatalogos()
+
+  /**
+   * Une el valor ya persistido con el catálogo vivo.
+   *
+   * Una solicitud vieja puede tener un `cliente` que hoy está inactivo o que
+   * quedó escrito con otro nombre. Si el select no lo incluye, Base UI lo
+   * renderiza como vacío y "Guardar cambios" lo borraría sin que la Ejecutiva
+   * lo haya tocado. Mantenerlo como opción hace que editar otro campo no
+   * destruya éste.
+   */
+  function conValorActual(
+    opciones: { id: string; nombre: string }[],
+    actual: string,
+  ): { id: string; nombre: string }[] {
+    if (!actual || opciones.some((o) => o.nombre === actual)) return opciones
+    return [{ id: `__actual__${actual}`, nombre: actual }, ...opciones]
+  }
 
   function set<K extends keyof Solicitud>(key: K, value: Solicitud[K]) {
     setD((prev) => ({ ...prev, [key]: value }))
@@ -143,11 +162,13 @@ export function EditarSolicitudForm({
         ...prev.contactosVisita,
         {
           id: nextId("c"),
-          rol: "Propietario",
+          // Slugs de `TX_ContactosVisita`, no etiquetas: viajan intactos a
+          // SC-Edicion. Ver `ESTADOS_CONTACTO` en lib/console-data.ts.
+          rol: "propietario",
           nombre: "",
           telefono: "",
           email: "",
-          estado: "Válido",
+          estado: "valido",
         },
       ],
     }))
@@ -157,17 +178,6 @@ export function EditarSolicitudForm({
     setD((prev) => ({
       ...prev,
       contactosVisita: prev.contactosVisita.filter((_, i) => i !== index),
-    }))
-  }
-
-  function handleCliente(v: string) {
-    const informes = TIPOS_INFORME_POR_CLIENTE[v] ?? []
-    setD((prev) => ({
-      ...prev,
-      cliente: v,
-      tipoInforme: informes.includes(prev.tipoInforme)
-        ? prev.tipoInforme
-        : (informes[0] ?? ""),
     }))
   }
 
@@ -211,15 +221,19 @@ export function EditarSolicitudForm({
       {/* Cliente y tipo */}
       <FormSection title="Cliente y tipo">
         <EditField label="Cliente">
-          <Select value={d.cliente} onValueChange={(v) => handleCliente(v ?? "")}>
+          <Select
+            value={d.cliente}
+            onValueChange={(v) => set("cliente", v ?? "")}
+            disabled={catalogosCargando}
+          >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecciona un cliente" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {CLIENTES.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
+                {conValorActual(catalogos.clientes, d.cliente).map((c) => (
+                  <SelectItem key={c.id} value={c.nombre}>
+                    {c.nombre}
                   </SelectItem>
                 ))}
               </SelectGroup>
@@ -230,17 +244,20 @@ export function EditarSolicitudForm({
           <Select
             value={d.tipoInforme}
             onValueChange={(v) => set("tipoInforme", v ?? "")}
+            disabled={catalogosCargando}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecciona el tipo de informe" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {informesCliente.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
+                {conValorActual(catalogos.tiposInforme, d.tipoInforme).map(
+                  (t) => (
+                    <SelectItem key={t.id} value={t.nombre}>
+                      {t.nombre}
+                    </SelectItem>
+                  ),
+                )}
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -249,17 +266,20 @@ export function EditarSolicitudForm({
           <Select
             value={d.tipoPropiedad}
             onValueChange={(v) => set("tipoPropiedad", v ?? "")}
+            disabled={catalogosCargando}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecciona el tipo" />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                {TIPOS_PROPIEDAD.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
-                  </SelectItem>
-                ))}
+                {conValorActual(catalogos.tiposPropiedad, d.tipoPropiedad).map(
+                  (t) => (
+                    <SelectItem key={t.id} value={t.nombre}>
+                      {t.nombre}
+                    </SelectItem>
+                  ),
+                )}
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -665,8 +685,8 @@ export function EditarSolicitudForm({
                     <SelectContent>
                       <SelectGroup>
                         {ROLES_CONTACTO_VISITA.map((r) => (
-                          <SelectItem key={r} value={r}>
-                            {r}
+                          <SelectItem key={r.value} value={r.value}>
+                            {r.label}
                           </SelectItem>
                         ))}
                       </SelectGroup>
@@ -705,8 +725,8 @@ export function EditarSolicitudForm({
                     <SelectContent>
                       <SelectGroup>
                         {ESTADOS_CONTACTO.map((e) => (
-                          <SelectItem key={e} value={e}>
-                            {e}
+                          <SelectItem key={e.value} value={e.value}>
+                            {e.label}
                           </SelectItem>
                         ))}
                       </SelectGroup>

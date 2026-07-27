@@ -1,5 +1,9 @@
 import { z } from "zod"
-import { validarRut, PRODUCTOS_CON_BANCO } from "@/lib/console-data"
+import {
+  validarRut,
+  PRODUCTOS_CON_BANCO,
+  productoEnLista,
+} from "@/lib/console-data"
 
 /**
  * Schema de validación del formulario "Nueva solicitud interna" (IF-02, v1.9).
@@ -187,7 +191,7 @@ export const nuevaSolicitudInternaSchema = z
   .superRefine((data, ctx) => {
     // Banco financista requerido para hipotecario / refinanciamiento.
     if (
-      PRODUCTOS_CON_BANCO.includes(data.producto) &&
+      productoEnLista(data.producto, PRODUCTOS_CON_BANCO) &&
       (!data.banco || data.banco.length === 0)
     ) {
       ctx.addIssue({
@@ -263,7 +267,9 @@ export function nuevoContacto(): ContactoVisitaFormulario {
     nombre: "",
     telefono: "",
     email: "",
-    estado: "Válido",
+    // Slug de `TX_ContactosVisita.estado_contacto`, no la etiqueta: lo que se
+    // captura aquí viaja intacto hasta el módulo 18 de SC01.
+    estado: "valido",
   }
 }
 

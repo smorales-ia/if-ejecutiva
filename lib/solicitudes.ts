@@ -1,6 +1,5 @@
 import { listRecords, AirtableError } from '@/lib/airtable-client'
 import {
-  CLIENTES,
   ESTADO_LABELS,
   PRIORIDAD,
   regionDeComuna,
@@ -94,8 +93,12 @@ function buildFiltrosClauses(filtros?: SolicitudesFiltros): string[] {
   if (!filtros) return []
   const clauses: string[] = []
 
-  if (filtros.cliente && (CLIENTES as readonly string[]).includes(filtros.cliente)) {
-    clauses.push(`{cliente}="${filtros.cliente}"`)
+  // El cliente ya no se valida contra una lista cerrada en código: la lista
+  // vive en `M_Clientes` y tiene ~90 filas que cambian sin tocar el repo. La
+  // protección contra inyección es el escape, no el allowlist — mismo criterio
+  // que `mi_cartera` con el nombre de la ejecutiva.
+  if (filtros.cliente) {
+    clauses.push(`{cliente}="${escapeFormulaString(filtros.cliente)}"`)
   }
   if (filtros.estado && filtros.estado in ESTADO_LABELS) {
     clauses.push(`{estado}="${filtros.estado}"`)
