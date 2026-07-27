@@ -112,8 +112,15 @@ export async function PATCH(
 
   const webhookUrl = process.env.MAKE_WEBHOOK_URL_SC_EDICION
   if (!webhookUrl || !process.env.MAKE_HMAC_SECRET) {
-    console.warn('[PATCH /api/solicitudes/[id]] MAKE_WEBHOOK_URL_SC_EDICION sin configurar — respuesta mock')
-    return NextResponse.json({ ok: true, pendiente_make: true }, { status: 200 })
+    // Sin webhook no hay persistencia. Un 200 aquí es indistinguible del éxito
+    // para el cliente y produce el "toast verde sin cambios en Airtable"
+    // (E-078): en producción es un fallo de configuración (503) y en desarrollo
+    // un 202 explícito que la UI no puede confundir con un guardado real.
+    console.warn('[PATCH /api/solicitudes/[id]] MAKE_WEBHOOK_URL_SC_EDICION sin configurar — no se persiste')
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: MSG_RED }, { status: 503 })
+    }
+    return NextResponse.json({ ok: false, pendiente_make: true }, { status: 202 })
   }
 
   let makeRes: Response

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import {
   AlertTriangle,
@@ -44,6 +45,7 @@ import {
 import { AsignarTasadorDialog } from "@/components/console/asignar-tasador-dialog"
 import { EditarSolicitudForm } from "@/components/console/editar-solicitud-form"
 import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
+import { mapearEdicionSolicitud } from "@/lib/mappers/editar-solicitud"
 import { cn } from "@/lib/utils"
 import {
   ESTADO_CORREO_CLASSES,
@@ -70,6 +72,13 @@ const historialIcons = {
 }
 
 const SIN_TASADOR = "Sin asignar"
+
+/** Un id de /consola es un record id real de Airtable; el de la demo no. */
+const ES_RECORD_ID = /^rec[a-zA-Z0-9]{14}$/
+
+const MSG_RED =
+  "No pudimos completar la acción. Intenta nuevamente en unos segundos."
+const MSG_GUARDADO = "Cambios guardados en la solicitud."
 
 /** Evalúa RN-44: datos mínimos para poder asignar tasador. */
 function datosMinimosFaltantes(s: Solicitud): string[] {
@@ -98,8 +107,10 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const s = solicitud
 
   // Copia editable de los datos de negocio (mock en memoria).
+  const router = useRouter()
   const [datos, setDatos] = React.useState<Solicitud>(s)
   const [editando, setEditando] = React.useState(false)
+  const [guardando, setGuardando] = React.useState(false)
   const [tab, setTab] = React.useState("datos")
 
   // Estado local que se refresca tras asignar/reasignar o consultar.
@@ -124,6 +135,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     prevId.current = s.id
     setDatos(s)
     setEditando(false)
+    setGuardando(false)
     setTab("datos")
     setTasador(s.tasador)
     setEstado(s.estado)
@@ -143,19 +155,53 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const faltantes = datosMinimosFaltantes(datos)
   const puedeAsignar = faltantes.length === 0
 
-  function handleGuardarEdicion(actualizada: Solicitud) {
+  async function handleGuardarEdicion(actualizada: Solicitud) {
+    if (guardando) return
+
+    // Demo mock (/): el id no es un record id de Airtable → sólo estado local,
+    // sin llamada de red. En /consola son ids reales y la edición se persiste
+    // vía PATCH → SC-Edicion (E-078).
+    if (!ES_RECORD_ID.test(s.id)) {
+      setDatos(actualizada)
+      setEditando(false)
+      toast.success(MSG_GUARDADO, { duration: 3000 })
+      return
+    }
+
+    setGuardando(true)
+    try {
+      const res = await fetch(`/api/solicitudes/${s.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mapearEdicionSolicitud(actualizada, s)),
+      })
+
+      // 202 = el Route Handler aceptó el payload pero no hay webhook
+      // configurado: nada se persistió. No puede anunciarse como éxito.
+      if (res.status === 202) {
+        toast.warning(
+          "Los cambios no se guardaron: falta configurar la conexión. Avisa al equipo.",
+        )
+        return
+      }
+
+      if (!res.ok) {
+        toast.error(MSG_RED)
+        return
+      }
+    } catch {
+      toast.error(MSG_RED)
+      return
+    } finally {
+      setGuardando(false)
+    }
+
     setDatos(actualizada)
     setEditando(false)
-    setHistorialExtra((prev) => [
-      {
-        id: `edit-${Date.now()}`,
-        titulo: "Datos de la solicitud modificados · por María Espinoza",
-        hace: "hace unos segundos",
-        icono: "check",
-      },
-      ...prev,
-    ])
-    toast.success("Cambios guardados en la solicitud.", { duration: 3000 })
+    // El evento `datos_modificados` lo escribe SC-Edicion en A_Eventos; el
+    // historial se refresca desde el servidor, no se fabrica en el cliente.
+    router.refresh()
+    toast.success(MSG_GUARDADO, { duration: 3000 })
   }
 
   async function handleConfirmado(tasadorId: string, nuevo: string, nota: string) {
@@ -163,7 +209,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     // pendiente_make porque Make no está provisionado). Demo mock (/): el id no
     // es record id → solo estado local, sin 404. router.refresh() se difiere a
     // P9: hoy refrescaría el registro sin cambios y borraría el update optimista.
-    if (/^rec[a-zA-Z0-9]{14}$/.test(s.id)) {
+    if (ES_RECORD_ID.test(s.id)) {
       try {
         const res = await fetch(`/api/solicitudes/${s.id}/asignar`, {
           method: "POST",
