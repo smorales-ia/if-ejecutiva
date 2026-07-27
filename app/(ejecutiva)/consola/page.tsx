@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { ConsoleShell } from '@/components/console/console-shell'
+import { hydrateContactos } from '@/lib/contactos-visita'
 import {
   fetchSolicitudes,
   ORDENES_VALIDOS,
@@ -61,7 +62,14 @@ export default async function ConsolaPage({
 
   const { data, degraded, motivo } = await fetchSolicitudes(vista, userId, filtros, orden)
   const total = data.length
-  const solicitudes = data.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE)
+  const pagina = data.slice((page - 1) * PAGE_SIZE, (page - 1) * PAGE_SIZE + PAGE_SIZE)
+
+  // Contactos de visita hidratados server-side sobre la página ya recortada:
+  // el detalle recibe `contactosVisita` por prop, sin fetch propio. Necesario
+  // porque RN-44 (solicitud-detail.tsx) evalúa los contactos de forma síncrona
+  // para habilitar "Asignar tasador"; resolverlos en cliente haría parpadear
+  // el botón. Degrada silenciosamente a `[]` si Airtable falla.
+  const solicitudes = await hydrateContactos(pagina)
 
   return (
     <ConsoleShell

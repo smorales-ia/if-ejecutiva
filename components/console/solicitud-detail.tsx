@@ -644,35 +644,41 @@ function DatosTab({
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Contactos de visita ({s.contactosVisita.length})
         </h2>
-        <ul className="flex flex-col gap-2">
-          {s.contactosVisita.map((c, idx) => (
-            <li
-              key={c.id}
-              className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border bg-card p-3"
-            >
-              <span className="flex items-center gap-2">
-                <span className="text-sm font-medium text-foreground">
-                  {c.nombre}
-                </span>
-                {idx === 0 && (
-                  <Badge className="bg-brand/10 text-brand">Principal</Badge>
-                )}
-              </span>
-              <span className="text-xs text-muted-foreground">{c.rol}</span>
-              <span className="text-xs text-foreground">{c.telefono}</span>
-              <span className="text-xs text-muted-foreground">{c.email}</span>
-              <Badge
-                variant="secondary"
-                className={cn(
-                  "ml-auto",
-                  c.estado !== "Válido" && "text-[#b45309]",
-                )}
+        {s.contactosVisita.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+            Sin contactos de visita registrados
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {s.contactosVisita.map((c, idx) => (
+              <li
+                key={c.id}
+                className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-border bg-card p-3"
               >
-                {c.estado}
-              </Badge>
-            </li>
-          ))}
-        </ul>
+                <span className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-foreground">
+                    {c.nombre}
+                  </span>
+                  {idx === 0 && (
+                    <Badge className="bg-brand/10 text-brand">Principal</Badge>
+                  )}
+                </span>
+                <span className="text-xs text-muted-foreground">{c.rol}</span>
+                <span className="text-xs text-foreground">{c.telefono}</span>
+                <span className="text-xs text-muted-foreground">{c.email}</span>
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "ml-auto",
+                    c.estado !== "Válido" && "text-[#b45309]",
+                  )}
+                >
+                  {c.estado}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <Separator />

@@ -46,7 +46,13 @@ export interface Vendedor {
   origenDato: string
 }
 
-/** Contacto de coordinación de visita. El primero es el contacto principal. */
+/**
+ * Contacto de coordinación de visita. El primero es el contacto principal.
+ *
+ * Respaldo real: `TX_ContactosVisita` (`tblW3SSbKo6vRjwBJ`). El orden lo
+ * resuelve Airtable por `orden_prioridad` asc — la UI nunca reordena.
+ * `estado` mapea el campo `estado_contacto` del schema real.
+ */
 export interface ContactoVisita {
   id: string
   rol: string
@@ -54,6 +60,8 @@ export interface ContactoVisita {
   telefono: string
   email: string
   estado: string
+  /** `orden_prioridad` asc. Opcional: los mocks y el formulario no lo definen. */
+  ordenPrioridad?: number
 }
 
 /** Unidad tasable dentro de una solicitud (depto, estacionamiento, bodega, etc.). */
