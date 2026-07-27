@@ -82,6 +82,31 @@ export async function listRecords<T>(
   return all
 }
 
+/**
+ * Parámetros que el endpoint *Get record* de Airtable acepta en la querystring.
+ * Cualquier otro — `fields` incluido — hace fallar la petición con
+ * `422 INVALID_REQUEST_UNKNOWN: parameter validation failed`.
+ * @see https://airtable.com/developers/web/api/get-record
+ */
+const GET_RECORD_ALLOWED_PARAMS = new Set([
+  'cellFormat',
+  'timeZone',
+  'userLocale',
+  'returnFieldsByFieldId',
+])
+
+/**
+ * Lee un registro por id.
+ *
+ * `fields` se acepta en la firma —por compatibilidad con los llamadores y
+ * porque expresa la intención de proyección— pero **no se propaga a Airtable**:
+ * a diferencia de *List records*, el endpoint *Get record* no soporta ese
+ * parámetro y responde 422 ante su sola presencia (con o sin corchetes).
+ * Consecuencia: el registro llega completo y la proyección queda como
+ * documentación del llamador. Si Airtable llegara a soportarlo, basta con
+ * añadir `fields` a `GET_RECORD_ALLOWED_PARAMS`.
+ * @see https://airtable.com/developers/web/api/get-record
+ */
 export async function getRecord<T>(
   tableId: string,
   recordId: string,
@@ -92,6 +117,7 @@ export async function getRecord<T>(
 
   const url = new URL(`${API_BASE}/${baseId}/${tableId}/${recordId}`)
   for (const [key, val] of Object.entries(params)) {
+    if (!GET_RECORD_ALLOWED_PARAMS.has(key)) continue
     if (Array.isArray(val)) {
       for (const v of val) url.searchParams.append(`${key}[]`, v)
     } else {

@@ -150,7 +150,7 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `tasador` | — | Link → M_Tasadores | FK. Asigna AT02; override manual posible |
 | `visador` | `fldhm86amyekWsEFY` ✅ | Link → M_Visadores | FK. La Ejecutiva **no** reasigna visador (D-01) |
 | `regla_aplicada` | — | Link → C_ReglasNegocio | FK. Escrito por AT01 |
-| `estado` | — | Single select | creada · asignada · visitada · calculada · pdf_listo · devuelta · aprobada · pendiente_final · entregada · cerrada · cancelada · requiere_atencion |
+| `estado` | `fld2H2r0GMeVfNO26` ✅ | Single select | creada · asignada · visitada · calculada · pdf_listo · devuelta · aprobada · pendiente_final · entregada · cerrada · cancelada · requiere_atencion. FIELD_ID verificado vía meta API el 27-jul-2026 (nombre exacto `estado`, sin espacios). No confundir con `estado_conservacion` (`flde0ExWfB1dhkp4t`), también singleSelect en esta tabla. |
 | `fecha_asignacion` | — | Date | Cuándo se asignó |
 | `fecha_visita_programada` | `fldPUFd9YuQdkcrOI` ✅ | Date | Obligatoria para "Pasar a asignada" |
 | `fecha_visita` | — | Date | Fecha real de la visita |
