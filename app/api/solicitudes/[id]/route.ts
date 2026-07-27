@@ -82,8 +82,10 @@ export async function PATCH(
   // REGLA C: sólo se puede editar en estado `creada`. Verificar contra el
   // registro real antes de reenviar (defensivo — la UI ya oculta el botón).
   try {
+    // `estado` es singleSelect: el formato json por defecto ya lo devuelve como
+    // string. Evitamos `cellFormat: 'string'`, que exige timeZone + userLocale
+    // y devuelve 422 si faltan.
     const record = await getRecord<Record<string, string | undefined>>(TX_SOLICITUDES, id, {
-      cellFormat: 'string',
       fields: ['estado'],
     })
     if (!record) {

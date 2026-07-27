@@ -56,8 +56,13 @@ export async function POST(
 
   // Idempotencia + estado terminal: releer el registro real antes de asignar.
   try {
+    // `tasador` es multipleRecordLinks: se mantiene `cellFormat: 'string'` para
+    // leerlo como texto legible (en json llegaría como array de record ids).
+    // Airtable exige timeZone + userLocale junto a ese formato o responde 422.
     const record = await getRecord<Record<string, string | undefined>>(TX_SOLICITUDES, id, {
       cellFormat: 'string',
+      timeZone: 'America/Santiago',
+      userLocale: 'es-CL',
       fields: ['tasador', 'estado'],
     })
     if (!record) {
