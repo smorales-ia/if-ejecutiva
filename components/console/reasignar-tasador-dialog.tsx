@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, UserCog } from "lucide-react"
+import { Check, ChevronsUpDown, Loader2, UserCog } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -146,7 +146,12 @@ export function ReasignarTasadorDialog({
   function handleConfirmar() {
     if (!validar() || !seleccionado) return
     setEnviando(true)
-    // Simula la llamada al backend.
+    // Simula la llamada al backend: SC13 está fuera de alcance de CU-002, así
+    // que todavía no hay POST que hacer.
+    //
+    // ⚠ Deuda al cablear SC13: `setEnviando(false)` vive dentro del callback de
+    // éxito. Con un fetch real hay que moverlo a un `finally`, o un error deja
+    // el botón muerto hasta refrescar la página (Regla D · CLAUDE.md).
     setTimeout(() => {
       setEnviando(false)
       setOpen(false)
@@ -161,7 +166,13 @@ export function ReasignarTasadorDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && enviando) return
+        setOpen(next)
+      }}
+    >
       <DialogTrigger
         render={
           <Button variant="outline" size="sm">
@@ -347,6 +358,9 @@ export function ReasignarTasadorDialog({
             disabled={enviando}
             className="bg-brand text-brand-foreground hover:bg-brand/90"
           >
+            {enviando && (
+              <Loader2 data-icon="inline-start" className="animate-spin" />
+            )}
             {enviando ? "Confirmando…" : "Confirmar reasignación"}
           </Button>
         </DialogFooter>

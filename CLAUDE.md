@@ -143,6 +143,89 @@ Principio rector: **la UI muestra y captura; nunca decide**. Toda regla de negoc
   campos), documentar el cambio en `docs/schema-airtable.md` y actualizar la
   tabla de campos del Plan §1.3.
 
+## Regla D — Feedback de progreso en mutaciones
+
+**Aplica a:** todo botón, en cualquier parte de la app, que
+dispare una operación de escritura (POST / PATCH / PUT / DELETE)
+contra `/api/*` o cualquier acción asíncrona que modifique
+estado del servidor.
+
+**No aplica a:** botones de navegación (link, router.push),
+toggles de UI local (abrir/cerrar sheet, expandir sección),
+acciones puramente cliente (copiar al portapapeles, imprimir,
+descargar un archivo ya en memoria).
+
+**Comportamiento obligatorio mientras la operación está en vuelo:**
+
+1. Botón `disabled` — sin posibilidad de re-click ni doble submit.
+2. Spinner visible dentro del botón: patrón shadcn estándar
+   `<Loader2 className="mr-2 h-4 w-4 animate-spin" />` importado
+   desde lucide-react.
+3. Texto del botón cambia al gerundio de la acción:
+   - "Guardar cambios" → "Guardando..."
+   - "Subir adjunto"   → "Subiendo..."
+   - "Asignar tasador" → "Asignando..."
+   - "Crear solicitud" → "Creando..."
+   - "Eliminar"        → "Eliminando..."
+4. Inputs del formulario contenedor `disabled` durante la
+   operación.
+5. Al terminar (éxito o error), volver al estado normal.
+   Regla B (toast sonner + Alert destructive) sigue siendo el
+   canal de feedback de resultado — esta regla es sólo el
+   feedback de PROGRESO.
+
+**Implementación — con react-hook-form:**
+
+```tsx
+const { formState: { isSubmitting } } = form;
+
+<Button
+  type="submit"
+  disabled={isSubmitting || !esEditable(s)}
+>
+  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+  {isSubmitting ? "Guardando..." : "Guardar cambios"}
+</Button>
+```
+
+El `disabled` combina AMBAS condiciones (submit en vuelo Y
+permisos del helper `esEditable`). No las separes en botones
+distintos ni en hijos.
+
+**Implementación — sin react-hook-form (uploads sueltos,
+acciones one-shot):**
+
+```tsx
+const [isPending, setIsPending] = useState(false);
+
+const handleAction = async () => {
+  setIsPending(true);
+  try {
+    await mutacion(...);
+  } finally {
+    setIsPending(false);  // OBLIGATORIO en finally, no en catch
+  }
+};
+```
+
+El `finally` no es opcional. Si el reset queda en `catch` y
+aparece un error que no cae ahí (throw síncrono, parseo, timeout,
+error de red no capturado), el botón queda muerto para el resto
+de la sesión y el usuario tiene que refrescar. Este es el bug
+clásico del patrón — el `finally` lo hace imposible.
+
+### Notas de convención local (Regla D)
+
+Dos ajustes al aplicar la regla en este repo, para no contradecir código ya escrito:
+
+- **Puntos suspensivos**: usar el carácter `…` (U+2026), no `...`. Todo el repo ya
+  lo hace (`"Creando…"` en `new-request-sheet.tsx`, `"Confirmando…"` en
+  `reasignar-tasador-dialog.tsx`, `"Subiendo…"` en `document-checklist.tsx`) y §6.1
+  del Blueprint fija el estilo de los literales.
+- **Icono dentro del `Button`**: usar `<Loader2 data-icon="inline-start" className="animate-spin" />`.
+  El `Button` de este repo resuelve el espaciado por `data-icon`, así que `mr-2 h-4 w-4`
+  es redundante y desalinea respecto de los demás botones.
+
 ## Endpoints y contratos
 
 ### Airtable (BASE `app9G7lLkIV3CpeLa`) — TABLE_IDs verificados vía MCP el 04-jul-2026

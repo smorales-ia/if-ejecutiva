@@ -1238,6 +1238,15 @@ export function NewRequestSheet() {
             className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4"
             noValidate
           >
+            {/* Regla D · punto 4: los campos quedan inertes mientras el POST
+                viaja. Un `fieldset` los apaga todos de una vez; el botón
+                "Crear solicitud" vive en el footer del Sheet, fuera de este
+                form, y gestiona su propio `disabled`. `min-w-0` neutraliza el
+                `min-width: min-content` que los navegadores dan a `fieldset`. */}
+            <fieldset
+              disabled={isSubmitting}
+              className="flex min-w-0 flex-col gap-4"
+            >
             {/* Resumen de datos que impiden crear la solicitud (REGLA B) */}
             {mostrarResumen && resumenErrores.length > 0 && (
               <div ref={alertRef}>
@@ -2108,6 +2117,7 @@ export function NewRequestSheet() {
                 </Collapsible>
               )}
             </Collapsible>
+            </fieldset>
           </form>
         )}
 

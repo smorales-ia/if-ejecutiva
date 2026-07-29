@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Plus, Save, Trash2, X } from "lucide-react"
+import { Loader2, Plus, Save, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -57,10 +57,19 @@ export function EditarSolicitudForm({
   solicitud,
   onGuardar,
   onCancelar,
+  guardando = false,
 }: {
   solicitud: Solicitud
   onGuardar: (actualizada: Solicitud) => void
   onCancelar: () => void
+  /**
+   * PATCH en vuelo (Regla D · CLAUDE.md). Lo posee el contenedor, que es quien
+   * hace el fetch: este formulario sólo refleja el progreso. Deshabilita los
+   * dos botones "Guardar cambios" —el de la barra pegajosa y el del pie— más
+   * todos los campos, para que no haya doble submit ni edición sobre datos que
+   * ya están viajando.
+   */
+  guardando?: boolean
 }) {
   const [d, setD] = React.useState<Solicitud>(() => clonar(solicitud))
   const esNuevo = d.tipoPropiedadNuevoUsado === "nuevo"
@@ -203,20 +212,42 @@ export function EditarSolicitudForm({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={onCancelar}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onCancelar}
+            disabled={guardando}
+          >
             <X data-icon="inline-start" />
             Cancelar
           </Button>
           <Button
             size="sm"
             onClick={() => onGuardar(d)}
+            disabled={guardando}
             className="bg-brand text-brand-foreground hover:bg-brand/90"
           >
-            <Save data-icon="inline-start" />
-            Guardar cambios
+            {guardando ? (
+              <Loader2 data-icon="inline-start" className="animate-spin" />
+            ) : (
+              <Save data-icon="inline-start" />
+            )}
+            {guardando ? "Guardando…" : "Guardar cambios"}
           </Button>
         </div>
       </div>
+
+      {/* Regla D · punto 4: un `fieldset` deshabilitado apaga de una vez todos
+          los campos de abajo, sin tener que repetir `disabled` en cada uno de
+          los ~60 controles del formulario. Queda fuera la barra pegajosa de
+          arriba y las acciones del pie, que gestionan su propio `disabled`.
+          `min-w-0` neutraliza el `min-width: min-content` que los navegadores
+          aplican a `fieldset` y que, sin él, rompe el truncado de los hijos
+          flex. */}
+      <fieldset
+        disabled={guardando}
+        className="flex min-w-0 flex-col gap-6"
+      >
 
       {/* Operación (D-02 · Regla C).
           Sólo los tres campos que el escenario SC-Edicion desplegado sabe
@@ -848,19 +879,31 @@ export function EditarSolicitudForm({
         />
       </section>
 
+      </fieldset>
+
       {/* Acciones al pie */}
       <div className="flex items-center justify-end gap-2 pb-2">
-        <Button variant="outline" size="sm" onClick={onCancelar}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onCancelar}
+          disabled={guardando}
+        >
           <X data-icon="inline-start" />
           Cancelar
         </Button>
         <Button
           size="sm"
           onClick={() => onGuardar(d)}
+          disabled={guardando}
           className="bg-brand text-brand-foreground hover:bg-brand/90"
         >
-          <Save data-icon="inline-start" />
-          Guardar cambios
+          {guardando ? (
+            <Loader2 data-icon="inline-start" className="animate-spin" />
+          ) : (
+            <Save data-icon="inline-start" />
+          )}
+          {guardando ? "Guardando…" : "Guardar cambios"}
         </Button>
       </div>
     </div>

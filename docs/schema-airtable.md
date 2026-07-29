@@ -943,3 +943,53 @@ Pasos:
 
 Renombrar el campo en Airtable **no** es parte del procedimiento: el registro existe
 precisamente para no tener que hacerlo.
+
+---
+
+## 23. Tanda D-03 · `TX_Unidades.solicitud_record_id` (29-jul-2026)
+
+### 23.1 Campo creado
+
+| Campo | FIELD_ID | Tipo | Config |
+|---|---|---|---|
+| `solicitud_record_id` | `fldjzPX6rd4sEYHSD` | multipleLookupValues | `recordLinkFieldId` = `fldmBd2bzOWjPX0eW` (`solicitud`) · `fieldIdInLinkedTable` = `fldx3ewhqGRv99uwZ` (`TX_Solicitudes.record_id`, `RECORD_ID()`) |
+
+Gemelo exacto de `TX_ContactosVisita.solicitud_record_id` (`fldYNKk5cyfWLxwqD`), que ya
+existía con la misma configuración. Se creó vía MCP el 29-jul-2026; al ser un lookup, se
+pobló **retroactivamente** en los 12 registros existentes de la tabla (verificado).
+
+### 23.2 Por qué existe
+
+SC-Edicion borra y recrea los hijos de una solicitud en cada edición. Para localizarlos
+filtraba por el primary field:
+
+```
+FIND(",{{1.codigoSolicitud}},", "," & ARRAYJOIN({solicitud}, ",") & ",") > 0
+```
+
+Ese filtro depende de dos cosas frágiles:
+
+1. Que `codigoSolicitud` esté presente en la data structure memorizada del webhook de Make
+   (es una clave joven — se agregó en `9547d1b`).
+2. Que la fórmula `codigo_solicitud` (`fldDXEE1ejMNVDlpB`) resuelva. Es
+   `"VP-" & YEAR({fecha_solicitud}) & "-" & RIGHT("0000" & {solicitud_id}, 4)`, así que una
+   `fecha_solicitud` vacía la deja en blanco.
+
+Si cualquiera de las dos falla, la fórmula degrada a `FIND(",,", …)`, que **no matchea nada,
+no lanza error** y convierte el borrado en un no-op silencioso: Make reporta *Success* y los
+hijos se acumulan en cada edición. Es el mecanismo de la duplicación de la Tanda D-03/F1.
+
+Filtrando por el lookup del record ID el problema desaparece de raíz:
+
+```
+ARRAYJOIN({solicitud_record_id}) = "{{1.solicitudId}}"
+```
+
+`solicitudId` viaja en el payload desde el día uno (el módulo 2 lo usa como `id` del update),
+así que el filtro es correcto **sin** necesidad de re-determinar la data structure del webhook.
+
+### 23.3 Consumidores
+
+- `SC-Edicion-v3.0.blueprint.json` — módulos 12 (`TX_ContactosVisita`) y 19 (`TX_Unidades`).
+- **SC01 no requiere cambio**: ya escribe el link `solicitud` (`fldmBd2bzOWjPX0eW = {{7.id}}`)
+  y Airtable calcula el lookup solo.

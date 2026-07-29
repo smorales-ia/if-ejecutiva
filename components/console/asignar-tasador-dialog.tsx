@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { AlertTriangle, Check, ChevronsUpDown } from "lucide-react"
+import { AlertTriangle, Check, ChevronsUpDown, Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { type Solicitud } from "@/lib/console-data"
@@ -74,8 +74,20 @@ export function AsignarTasadorDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
   solicitud: Solicitud
-  /** Se invoca tras confirmar la asignación. `nota` es opcional. */
-  onConfirmado: (tasadorId: string, nombre: string, nota: string) => void
+  /**
+   * Se invoca tras confirmar la asignación. `nota` es opcional.
+   *
+   * Puede devolver una promesa: si lo hace, el diálogo la espera con el botón
+   * en "Asignando…" antes de cerrarse (Regla D · CLAUDE.md). Hasta la tanda
+   * D-03 el diálogo cerraba antes de que el POST terminara, así que la
+   * asignación —que tarda ~2,4 s contra Make— no tenía ningún feedback de
+   * progreso y admitía doble click.
+   */
+  onConfirmado: (
+    tasadorId: string,
+    nombre: string,
+    nota: string,
+  ) => void | Promise<void>
 }) {
   const [pickerOpen, setPickerOpen] = React.useState(false)
   const [seleccionado, setSeleccionado] = React.useState<Candidato | null>(null)
@@ -83,6 +95,8 @@ export function AsignarTasadorDialog({
   const [cargando, setCargando] = React.useState(false)
   const [nota, setNota] = React.useState("")
   const [confirmOpen, setConfirmOpen] = React.useState(false)
+  /** POST /asignar en vuelo (Regla D). */
+  const [asignando, setAsignando] = React.useState(false)
   const [error, setError] = React.useState<string | undefined>()
 
   // Resetea el formulario cada vez que se abre.
@@ -141,15 +155,31 @@ export function AsignarTasadorDialog({
     setConfirmOpen(true)
   }
 
-  function handleConfirmarFinal() {
-    if (!seleccionado) return
+  async function handleConfirmarFinal() {
+    if (!seleccionado || asignando) return
+    setAsignando(true)
+    try {
+      await onConfirmado(seleccionado.id, seleccionado.nombre, nota.trim())
+    } finally {
+      // `finally`, no `catch`: si `onConfirmado` lanza (throw síncrono, red que
+      // no se captura arriba), sin esto el botón queda muerto y hay que
+      // refrescar la página. Ver Regla D en CLAUDE.md.
+      setAsignando(false)
+    }
+    // Cerrar después de resolver, no antes: es lo que permite mostrar el
+    // progreso. El resultado lo comunica el contenedor por toast (Regla B).
     setConfirmOpen(false)
     onOpenChange(false)
-    onConfirmado(seleccionado.id, seleccionado.nombre, nota.trim())
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && asignando) return
+        onOpenChange(next)
+      }}
+    >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Asignar tasador</DialogTitle>
@@ -312,7 +342,16 @@ export function AsignarTasadorDialog({
         </DialogFooter>
 
         {/* Confirmación anidada con consecuencias */}
-        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialog
+          open={confirmOpen}
+          onOpenChange={(next) => {
+            // Regla D: mientras el POST viaja no se puede descartar el diálogo
+            // por Escape ni por backdrop; se cerraría el único lugar donde se
+            // ve el progreso.
+            if (!next && asignando) return
+            setConfirmOpen(next)
+          }}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar asignación</AlertDialogTitle>
@@ -339,12 +378,18 @@ export function AsignarTasadorDialog({
               </li>
             </ul>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogCancel disabled={asignando}>
+                Cancelar
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleConfirmarFinal}
+                disabled={asignando}
                 className="bg-brand text-brand-foreground hover:bg-brand/90"
               >
-                Confirmar asignación
+                {asignando && (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                )}
+                {asignando ? "Asignando…" : "Confirmar asignación"}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

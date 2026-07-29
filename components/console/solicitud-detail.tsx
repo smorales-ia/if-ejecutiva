@@ -373,6 +373,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
                 solicitud={datos}
                 onGuardar={handleGuardarEdicion}
                 onCancelar={() => setEditando(false)}
+                guardando={guardando}
               />
             ) : (
               <DatosTab
