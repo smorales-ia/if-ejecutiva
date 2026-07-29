@@ -46,10 +46,15 @@ const TABS: { id: Vista; label: string; tono?: "rojo" | "ambar" }[] = [
   { id: "todas", label: "Todas" },
 ]
 
+// `fecha_solicitud_desc` es el orden por defecto desde D-01 (29-jul-2026): el
+// anterior (`sla_desc`) ordena por `fecha_limite_entrega`, que vale #ERROR en
+// toda alta nueva. Ver la nota de `ordenToSort` en lib/solicitudes.ts.
+const ORDEN_DEFAULT = "fecha_solicitud_desc"
+
 const ORDENES: { value: string; label: string }[] = [
+  { value: "fecha_solicitud_desc", label: "Fecha solicitud" },
   { value: "sla_desc", label: "SLA descendente" },
   { value: "sla_asc", label: "SLA ascendente" },
-  { value: "fecha_solicitud_desc", label: "Fecha solicitud" },
   { value: "prioridad", label: "Prioridad" },
 ]
 
@@ -101,6 +106,10 @@ export function SolicitudList({
         else params.set(k, v)
       }
       if (!("page" in updates)) params.delete("page")
+      // El deep link `?solicitud=` apunta a una fila del resultado anterior.
+      // Al cambiar de vista, filtro u orden esa fila puede no estar en el nuevo
+      // conjunto, así que se descarta en vez de arrastrar una URL que miente.
+      if (!("solicitud" in updates)) params.delete("solicitud")
       const qs = params.toString()
       router.push(qs ? `${pathname}?${qs}` : pathname)
     },
@@ -259,8 +268,8 @@ export function SolicitudList({
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span>Orden:</span>
             <Select
-              value={get("orden") || "sla_desc"}
-              onValueChange={(v) => updateParams({ orden: v === "sla_desc" ? null : v })}
+              value={get("orden") || ORDEN_DEFAULT}
+              onValueChange={(v) => updateParams({ orden: v === ORDEN_DEFAULT ? null : v })}
             >
               <SelectTrigger size="sm" className="h-7">
                 <SelectValue />

@@ -33,6 +33,19 @@ export type SlaFiltro = 'verde' | 'ambar' | 'rojo'
 
 export const SLA_FILTROS_VALIDOS: SlaFiltro[] = ['verde', 'ambar', 'rojo']
 
+/**
+ * Traduce el vocabulario de la UI al que emite realmente la fórmula
+ * `semaforo_sla` de Airtable. Ver la nota extensa en `buildVistaFormula`.
+ * Una solicitud ya entregada emite "… Entregado" y no cae en ninguno de los
+ * tres: filtrar por `verde` no la devuelve, que es el comportamiento deseado
+ * (verde = en plazo y viva, no = cerrada sin incidencias).
+ */
+const SEMAFORO_POR_SLA: Record<SlaFiltro, string> = {
+  verde: 'OK',
+  ambar: 'EN RIESGO',
+  rojo: 'VENCIDO',
+}
+
 // D-07: filtros de FiltrosBar persistidos como URL params (RF-05 Subtarea C · P5).
 export interface SolicitudesFiltros {
   cliente?: string
@@ -74,7 +87,16 @@ function buildVistaFormula(vista: Vista, ejecutivaNombre?: string): string {
     case 'todas':
       return 'TRUE()'
     case 'sla_riesgo':
-      return 'OR({semaforo_sla}="rojo",{semaforo_sla}="ámbar",{semaforo_sla}="ambar")'
+      // `semaforo_sla` NO emite "rojo"/"ámbar"/"verde": eso es lo que documenta
+      // `schema-airtable.md:160`, no lo que calcula la fórmula real. Verificada
+      // vía `get_table_schema` el 29-jul-2026, emite cuatro literales con emoji
+      // de prefijo — "… Entregado", "… VENCIDO", "… EN RIESGO", "… OK" — y el
+      // emoji llega mangleado a "?" según el cliente que lea el campo. Por eso
+      // se busca la subcadena y no se compara por igualdad: el prefijo no es
+      // confiable, la palabra sí. Ninguno de los cuatro literales contiene a
+      // otro como subcadena, así que no hay solapamiento.
+      // ⚠ Deuda: la fórmula de Airtable no se tocó en esta tanda (D-01).
+      return 'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0)'
     case 'por_asignar':
       // Sin tasador asignado y en un estado que aún admite asignación.
       return 'AND(OR({estado}="creada",{estado}="requiere_atencion"),ARRAYJOIN({tasador})="")'
@@ -104,18 +126,24 @@ function buildFiltrosClauses(filtros?: SolicitudesFiltros): string[] {
     clauses.push(`{estado}="${filtros.estado}"`)
   }
   if (filtros.sla && SLA_FILTROS_VALIDOS.includes(filtros.sla as SlaFiltro)) {
-    // semaforo_sla real usa "ámbar" (con tilde); se acepta también sin tilde.
-    clauses.push(
-      filtros.sla === 'ambar'
-        ? 'OR({semaforo_sla}="ámbar",{semaforo_sla}="ambar")'
-        : `{semaforo_sla}="${filtros.sla}"`
-    )
+    // Mismo desajuste de vocabulario que `sla_riesgo`, arriba: la UI habla
+    // verde/ámbar/rojo y la fórmula emite OK/EN RIESGO/VENCIDO. La traducción
+    // vive aquí y no en la UI para que el contrato de la URL (`?sla=rojo`) no
+    // dependa de cómo esté redactada la fórmula de Airtable hoy.
+    clauses.push(`FIND("${SEMAFORO_POR_SLA[filtros.sla as SlaFiltro]}",{semaforo_sla})>0`)
   }
   if (filtros.desde && FECHA_VALIDA.test(filtros.desde)) {
     clauses.push(`NOT(IS_BEFORE({fecha_solicitud},DATETIME_PARSE("${filtros.desde}","YYYY-MM-DD")))`)
   }
   if (filtros.hasta && FECHA_VALIDA.test(filtros.hasta)) {
-    clauses.push(`NOT(IS_AFTER({fecha_solicitud},DATETIME_PARSE("${filtros.hasta}","YYYY-MM-DD")))`)
+    // `fecha_solicitud` es **dateTime**, no date (divergencia §19.2 del schema).
+    // Comparar contra `DATETIME_PARSE(hasta)` mide contra la medianoche de ese
+    // día, así que cualquier solicitud creada durante el propio día `hasta`
+    // quedaba excluida — el caso más común es "hasta hoy", que escondía justo
+    // las altas recientes. Se compara contra la medianoche del día siguiente.
+    clauses.push(
+      `IS_BEFORE({fecha_solicitud},DATEADD(DATETIME_PARSE("${filtros.hasta}","YYYY-MM-DD"),1,"days"))`
+    )
   }
   if (filtros.prioridad && (PRIORIDAD as readonly string[]).includes(filtros.prioridad)) {
     clauses.push(`{prioridad}="${filtros.prioridad}"`)
@@ -334,18 +362,33 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
   }
 }
 
-/** Traduce el orden de la UI a un sort de Airtable (campo + direccion). */
+/**
+ * Traduce el orden de la UI a un sort de Airtable (campo + direccion).
+ *
+ * El default es `fecha_solicitud desc` desde la tanda D-01 (29-jul-2026). Antes
+ * era `fecha_limite_entrega asc`, que es un estado inválido y no una
+ * preferencia: `fecha_limite_entrega` es `DATEADD({fldpTBzjfbAw5FSYI},2,'days')`
+ * sobre un campo date que SC01 no puebla, así que vale `#ERROR` en **toda alta
+ * nueva** y la posición que Airtable les da en el sort es indefinida. Ordenar
+ * por `fecha_solicitud desc` deja además lo recién creado arriba, que es lo
+ * esperable de una bandeja operativa.
+ *
+ * ⚠ `sla_desc` y `sla_asc` siguen ordenando por `fecha_limite_entrega` cuando
+ * el usuario los elige explícitamente, así que arrastran el mismo `#ERROR`.
+ * Quedan como deuda: no se tocan aquí porque son una elección deliberada del
+ * usuario, no el camino por defecto.
+ */
 function ordenToSort(orden?: OrdenParam): { field: string; direction: 'asc' | 'desc' } {
   switch (orden) {
     case 'sla_asc':
       return { field: 'fecha_limite_entrega', direction: 'desc' }
-    case 'fecha_solicitud_desc':
-      return { field: 'fecha_solicitud', direction: 'desc' }
+    case 'sla_desc':
+      return { field: 'fecha_limite_entrega', direction: 'asc' }
     case 'prioridad':
       return { field: 'prioridad', direction: 'desc' }
-    case 'sla_desc':
+    case 'fecha_solicitud_desc':
     default:
-      return { field: 'fecha_limite_entrega', direction: 'asc' }
+      return { field: 'fecha_solicitud', direction: 'desc' }
   }
 }
 

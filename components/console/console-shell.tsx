@@ -14,6 +14,7 @@ export function ConsoleShell({
   pageSize = 20,
   degraded,
   motivo,
+  solicitudSeleccionada,
 }: {
   solicitudes: Solicitud[]
   vistaActiva?: Vista
@@ -22,9 +23,32 @@ export function ConsoleShell({
   pageSize?: number
   degraded?: boolean
   motivo?: FetchResult['motivo']
+  /** Record ID de `?solicitud=` — deep link al detalle (D-01). */
+  solicitudSeleccionada?: string
 }) {
-  const [selectedId, setSelectedId] = useState(solicitudes[0]?.id ?? "")
+  // El deep link sólo decide el estado inicial. Se valida contra la página
+  // servida: un ID de otra vista, de otra página o inexistente cae al primer
+  // resultado en vez de dejar el panel vacío.
+  const [selectedId, setSelectedId] = useState(
+    () =>
+      solicitudes.find((s) => s.id === solicitudSeleccionada)?.id ??
+      solicitudes[0]?.id ??
+      ""
+  )
   const selected = solicitudes.find((s) => s.id === selectedId) ?? solicitudes[0]
+
+  // Refleja la selección en la URL sin navegar. `router.replace` volvería a
+  // ejecutar el Server Component y con él la consulta a Airtable en cada clic
+  // de la lista; `history.replaceState` sólo reescribe la barra de direcciones,
+  // que es todo lo que hace falta para que el enlace sea compartible. Ningún
+  // componente lee `?solicitud=` con `useSearchParams`, así que no hay desync.
+  const handleSelect = (id: string) => {
+    setSelectedId(id)
+    if (typeof window === "undefined") return
+    const url = new URL(window.location.href)
+    url.searchParams.set("solicitud", id)
+    window.history.replaceState(null, "", url)
+  }
 
   const isDegraded = degraded === true && vistaActiva === 'mi_cartera'
   const isEjecutivaNoEncontrada =
@@ -38,7 +62,7 @@ export function ConsoleShell({
           <SolicitudList
             solicitudes={solicitudes}
             selectedId={selectedId}
-            onSelect={setSelectedId}
+            onSelect={handleSelect}
             vistaActiva={vistaActiva}
             total={total}
             page={page}

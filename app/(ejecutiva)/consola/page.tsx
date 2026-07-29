@@ -28,6 +28,8 @@ export default async function ConsolaPage({
     q?: string
     orden?: string
     page?: string
+    /** Deep link al detalle (D-01): record ID de la solicitud a preseleccionar. */
+    solicitud?: string
   }>
 }) {
   const sp = await searchParams
@@ -80,6 +82,11 @@ export default async function ConsolaPage({
       pageSize={PAGE_SIZE}
       degraded={degraded}
       motivo={motivo}
+      // D-01 · patrón P2 Lista + Detalle (spec §1.3): el detalle es un panel de
+      // /consola, no una ruta propia. `?solicitud=<recordId>` lo hace
+      // enlazable. Si el ID no está en la página servida, ConsoleShell cae al
+      // primer resultado — el enlace nunca deja la pantalla vacía.
+      solicitudSeleccionada={sp.solicitud}
     />
   )
 }
