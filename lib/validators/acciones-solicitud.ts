@@ -35,6 +35,45 @@ const contactoVisitaSchema = z
 const numeroOpcional = z.union([z.number(), z.string()]).optional()
 
 /**
+ * Unidad tal como viaja a SC-Edicion (snake_case, vocabulario ya traducido a
+ * los slugs de `TX_Unidades` por `mapearUnidadEdicion`).
+ *
+ * Los cuatro selects se validan contra la lista cerrada de opciones **reales**
+ * del schema de Airtable, no contra las etiquetas de la UI. Es la barrera que
+ * impide que una etiqueta sin traducir (`"Albañilería"`, `"uso_goce"`) llegue a
+ * Make y `typecast` la convierta en una opción nueva del catálogo maestro
+ * (E-088/E-091). `''` se admite porque significa "no declarado".
+ */
+const unidadSchema = z
+  .object({
+    numero_unidad: z.string(),
+    modelo: z.string(),
+    subtipo: z.enum([
+      "Departamento", "Casa", "Bodega", "Estacionamiento", "Terreno",
+      "Local", "Terraza", "Piscina", "OO.CC.", "Servidumbre", "Edificacion", "",
+    ]),
+    con_rol_o_uso_y_goce: z.enum(["con_rol", "uso_y_goce", ""]),
+    rol_sii: z.string(),
+    rol_sii_en_tramite: z.boolean(),
+    sup_m2: z.number().nonnegative().nullable(),
+    superficie_terraza_m2: z.number().nonnegative().nullable(),
+    sup_terreno_m2: z.number().nonnegative().nullable(),
+    anio_construccion: z.number().int().nullable(),
+    tipo_material: z.enum([
+      "madera", "albanileria", "hormigon", "mixto", "perfiles_metalicos", "",
+    ]),
+    ampliacion_m2: z.number().nonnegative().nullable(),
+    ampliacion_regularizable: z.enum(["si", "no", "no_aplica"]),
+    origen_superficie: z.enum([
+      "carta_ficha_inmobiliaria", "plano", "base_interna_sii",
+      "certificado_avaluo", "medicion_tasador", "",
+    ]),
+    detalle_item: z.string(),
+    orden: z.number().int().positive(),
+  })
+  .strict()
+
+/**
  * REGLA C (edición parcial): en estado `creada` la ejecutiva puede modificar
  * todo. El detalle de validación de negocio de cada campo vive en el formulario
  * (REGLA B); aquí se valida la **forma** del payload. El Route Handler verifica
@@ -118,6 +157,13 @@ export const editarSolicitudSchema = z
     // Route Handler), pero entran por aquí y por eso se validan aquí.
     contactosVisita: z.array(contactoVisitaSchema).optional(),
     contactosVisitaJson: z.string().optional(),
+
+    // Unidades. Mismo trato que los contactos: viajan **fuera** de `cambios`
+    // hacia Make, pero entran por aquí. `unidadesJson` es lo que consume el
+    // módulo Parse JSON de SC-Edicion; el array queda admitido por tolerancia
+    // pero el Route Handler lo descarta antes de enviar.
+    unidades: z.array(unidadSchema).optional(),
+    unidadesJson: z.string().optional(),
   })
   .strict()
   .refine((o) => Object.keys(o).length > 0, "No hay cambios para guardar.")

@@ -128,7 +128,18 @@ export function SolicitudList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qDebounced])
 
-  // ── Contadores por vista (independientes de los filtros) ──
+  // ── Contadores por vista ──
+  // Los contadores son globales por vista y no aplican los filtros activos —
+  // esa parte no cambia. Lo que sí cambió (deuda D-01 · ítem 7) es *cuándo* se
+  // recalculan: con deps `[]` se pedían una sola vez al montar, así que tras
+  // crear o editar una solicitud las pestañas seguían mostrando el conteo
+  // viejo hasta recargar la página entera.
+  //
+  // `searchParams.toString()` como dep cubre vista, filtros, orden y página: es
+  // el mismo disparo que ya provoca el refetch server-side de la lista, así que
+  // ambos números quedan sincronizados. Es un string, no un objeto, por lo que
+  // la comparación por identidad de React funciona.
+  const paramsKey = searchParams.toString()
   React.useEffect(() => {
     let vivo = true
     fetch("/api/solicitudes/contadores")
@@ -140,7 +151,7 @@ export function SolicitudList({
     return () => {
       vivo = false
     }
-  }, [])
+  }, [paramsKey])
 
   // ── Tasadores para el filtro (endpoint existente, sin deps) ──
   React.useEffect(() => {

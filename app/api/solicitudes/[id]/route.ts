@@ -81,16 +81,25 @@ export async function PATCH(
 
   // REGLA C: sólo se puede editar en estado `creada`. Verificar contra el
   // registro real antes de reenviar (defensivo — la UI ya oculta el botón).
+  //
+  // De la misma lectura sale `codigoSolicitud`, que SC-Edicion necesita para
+  // localizar los contactos y unidades a reemplazar: dentro de un
+  // `filterByFormula` un campo Link se evalúa contra el *primary field* de la
+  // tabla destino, nunca contra el record ID (E-076/E-077). El escenario
+  // filtraba por `{{1.solicitudId}}` —un `rec…`— así que no encontraba nada y
+  // los contactos viejos no se borraban: cada edición los duplicaba.
+  let codigoSolicitud = ''
   try {
     // `estado` es singleSelect: el formato json por defecto ya lo devuelve como
     // string. Evitamos `cellFormat: 'string'`, que exige timeZone + userLocale
     // y devuelve 422 si faltan.
     const record = await getRecord<Record<string, string | undefined>>(TX_SOLICITUDES, id, {
-      fields: ['estado'],
+      fields: ['estado', 'codigo_solicitud'],
     })
     if (!record) {
       return NextResponse.json({ error: 'Solicitud no encontrada.' }, { status: 404 })
     }
+    codigoSolicitud = (record.fields['codigo_solicitud'] ?? '').trim()
     const estado = (record.fields['estado'] ?? '').trim()
     if (estado !== 'creada') {
       return NextResponse.json(
@@ -124,14 +133,28 @@ export async function PATCH(
   // Se descarta la forma array (`contactosVisita`): SC-Edicion no la lee, y
   // dejarla viajar hace que el webhook memorice una estructura anidada que no
   // usa nadie — la misma trampa que costó el bug E-089/[[E-092]] en SC01.
-  const { contactosVisitaJson, contactosVisita: _descartado, ...cambios } = parsed.data
-  void _descartado
+  //
+  // `unidadesJson` sigue exactamente la misma regla y por el mismo motivo.
+  const {
+    contactosVisitaJson,
+    unidadesJson,
+    contactosVisita: _contactosDescartados,
+    unidades: _unidadesDescartadas,
+    ...cambios
+  } = parsed.data
+  void _contactosDescartados
+  void _unidadesDescartadas
 
   const payload = {
     solicitudId: id,
+    // Primary field de TX_Solicitudes. SC-Edicion lo usa para buscar los hijos
+    // a reemplazar; `solicitudId` sigue viajando porque los `Create` sí ligan
+    // por record ID, que ahí es lo correcto.
+    codigoSolicitud,
     ejecutivaClerkId: userId,
     cambios,
     ...(contactosVisitaJson ? { contactosVisitaJson } : {}),
+    ...(unidadesJson ? { unidadesJson } : {}),
   }
 
   const webhookUrl = process.env.MAKE_WEBHOOK_URL_SC_EDICION

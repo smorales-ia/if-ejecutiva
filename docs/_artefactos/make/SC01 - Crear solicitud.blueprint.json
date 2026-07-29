@@ -4412,6 +4412,120 @@
                 {
                     "flow": [
                         {
+                            "id": 20,
+                            "module": "json:ParseJSON",
+                            "version": 1,
+                            "parameters": {
+                                "type": ""
+                            },
+                            "mapper": {
+                                "json": "{{1.unidades_json}}"
+                            },
+                            "filter": {
+                                "name": "unidades_json existe",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{1.unidades_json}}",
+                                            "o": "exist"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 3000,
+                                    "y": 300,
+                                    "name": "Parse unidades"
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "type": {
+                                            "label": "Empty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "type",
+                                        "type": "udt",
+                                        "label": "Data structure"
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "json",
+                                        "type": "text",
+                                        "label": "JSON string",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 21,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tbl2QDLvJDyy3Rg2I",
+                                "record": {
+                                    "fldmBd2bzOWjPX0eW": "{{7.id}}",
+                                    "fldJGXS8jGDKZDdWM": "{{20.numero_unidad}}",
+                                    "fldO0F8PoKiHAigyC": "{{20.modelo}}",
+                                    "fldNU8ee30AvvRWHZ": "{{20.subtipo}}",
+                                    "fldcVpzYmK3FWscmD": "{{20.con_rol_o_uso_y_goce}}",
+                                    "fldC5yUYC2wTTLJBV": "{{20.rol_sii}}",
+                                    "fldYhcLG96yoU10ID": "{{20.rol_sii_en_tramite}}",
+                                    "fldZLvJKuXuWhRV8P": "{{20.sup_m2}}",
+                                    "flduwWj51oYcLDVTo": "{{20.superficie_terraza_m2}}",
+                                    "fld6lgF0KxUh9oPCB": "{{20.sup_terreno_m2}}",
+                                    "fldM46x4ECE9B0pfM": "{{20.anio_construccion}}",
+                                    "fldnG1nEod0V1IkKZ": "{{20.tipo_material}}",
+                                    "fldTvKrBiaZmkQ2In": "{{20.ampliacion_m2}}",
+                                    "flddSP96ivTrAdcXW": "{{20.ampliacion_regularizable}}",
+                                    "fldbDPpHhkuWjOTvQ": "{{20.origen_superficie}}",
+                                    "fldPjiXCPgNTdG3vP": "{{20.detalle_item}}",
+                                    "fld9iRM3hhCNNj4DJ": "{{20.orden}}"
+                                },
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 3300,
+                                    "y": 300,
+                                    "name": "Crear Unidad"
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
                             "id": 8,
                             "module": "gateway:WebhookRespond",
                             "version": 1,

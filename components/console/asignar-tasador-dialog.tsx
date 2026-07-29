@@ -4,7 +4,27 @@ import * as React from "react"
 import { AlertTriangle, Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { TASADORES, type Profesional, type Solicitud } from "@/lib/console-data"
+import { type Solicitud } from "@/lib/console-data"
+
+/**
+ * Candidato tal como lo devuelve `GET /api/tasadores/candidatos` — datos reales
+ * de `M_Tasadores`, no el mock `TASADORES` de `lib/console-data` que este
+ * diálogo usó hasta la tanda de cierre (29-jul-2026, retiro de H-05).
+ *
+ * Diferencias con el mock que obligan a adaptar la ficha: no hay `rut` ni
+ * `carga` (M_Tasadores no tiene `casos_en_curso`), y la cobertura llega como
+ * nombres de comuna resueltos desde el link `zonas_cobertura`.
+ */
+interface Candidato {
+  id: string
+  nombre: string
+  email: string
+  capacidadActiva: number
+  zonas: string[]
+  zonaPrincipal: string
+  /** `true` sólo si declara zonas y una coincide con la comuna de la solicitud. */
+  cubreComuna: boolean
+}
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -41,12 +61,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-function cargaTono(carga: number, capacidad: number) {
-  const ratio = capacidad > 0 ? carga / capacidad : 0
-  if (ratio >= 0.8) return "text-red-600"
-  if (ratio >= 0.5) return "text-amber-600"
-  return "text-emerald-600"
-}
+// `cargaTono` se retiró con el mock: coloreaba la razón carga/capacidad, y
+// `M_Tasadores` no tiene `casos_en_curso`, así que no hay carga real que
+// colorear. Volverá cuando exista ese campo (resto vivo de H-05).
 
 export function AsignarTasadorDialog({
   open,
@@ -61,7 +78,9 @@ export function AsignarTasadorDialog({
   onConfirmado: (tasadorId: string, nombre: string, nota: string) => void
 }) {
   const [pickerOpen, setPickerOpen] = React.useState(false)
-  const [seleccionado, setSeleccionado] = React.useState<Profesional | null>(null)
+  const [seleccionado, setSeleccionado] = React.useState<Candidato | null>(null)
+  const [candidatos, setCandidatos] = React.useState<Candidato[]>([])
+  const [cargando, setCargando] = React.useState(false)
   const [nota, setNota] = React.useState("")
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [error, setError] = React.useState<string | undefined>()
@@ -76,17 +95,43 @@ export function AsignarTasadorDialog({
     }
   }, [open])
 
-  // Tasadores con cobertura de la comuna primero.
-  const ordenados = React.useMemo(() => {
-    return [...TASADORES].sort((a, b) => {
-      const ac = a.cobertura.includes(solicitud.comuna) ? 0 : 1
-      const bc = b.cobertura.includes(solicitud.comuna) ? 0 : 1
-      return ac - bc
-    })
-  }, [solicitud.comuna])
+  // Carga los candidatos reales al abrir. Se pide en cada apertura y no una
+  // sola vez: entre dos aperturas puede haberse dado de baja un tasador o
+  // haber cambiado su capacidad, y la lista es corta.
+  React.useEffect(() => {
+    if (!open) return
+    let vivo = true
+    setCargando(true)
+    fetch(`/api/tasadores/candidatos?comuna=${encodeURIComponent(solicitud.comuna)}`)
+      .then((r) => (r.ok ? r.json() : { candidatos: [] }))
+      .then((j) => {
+        if (vivo) setCandidatos(j.candidatos ?? [])
+      })
+      .catch(() => {
+        if (vivo) setCandidatos([])
+      })
+      .finally(() => {
+        if (vivo) setCargando(false)
+      })
+    return () => {
+      vivo = false
+    }
+  }, [open, solicitud.comuna])
 
-  const fueraDeCobertura =
-    seleccionado != null && !seleccionado.cobertura.includes(solicitud.comuna)
+  // Los que cubren la comuna primero; dentro de cada grupo, mayor capacidad
+  // primero. No se filtra por cobertura: ~la mitad del padrón no declara zonas
+  // y filtrar los ocultaría por un dato faltante, dejando la lista vacía sin
+  // explicación (decisión de Sergio, 29-jul-2026).
+  const ordenados = React.useMemo(() => {
+    return [...candidatos].sort(
+      (a, b) =>
+        Number(b.cubreComuna) - Number(a.cubreComuna) ||
+        b.capacidadActiva - a.capacidadActiva ||
+        a.nombre.localeCompare(b.nombre),
+    )
+  }, [candidatos])
+
+  const fueraDeCobertura = seleccionado != null && !seleccionado.cubreComuna
 
   function abrirConfirmacion() {
     if (!seleccionado) {
@@ -142,14 +187,20 @@ export function AsignarTasadorDialog({
                 <Command>
                   <CommandInput placeholder="Buscar por nombre o RUT…" />
                   <CommandList>
-                    <CommandEmpty>Sin resultados.</CommandEmpty>
+                    <CommandEmpty>
+                      {cargando ? "Cargando tasadores…" : "Sin resultados."}
+                    </CommandEmpty>
                     <CommandGroup>
                       {ordenados.map((p) => {
-                        const enCobertura = p.cobertura.includes(solicitud.comuna)
+                        // Tres estados, no dos: cubre / no cubre / no declaró
+                        // zonas. El tercero no puede presentarse como "fuera de
+                        // cobertura" porque no lo sabemos — sólo sabemos que el
+                        // dato falta.
+                        const sinZonas = p.zonas.length === 0
                         return (
                           <CommandItem
                             key={p.id}
-                            value={`${p.nombre} ${p.rut}`}
+                            value={`${p.nombre} ${p.email}`}
                             onSelect={() => {
                               setSeleccionado(p)
                               setPickerOpen(false)
@@ -161,18 +212,25 @@ export function AsignarTasadorDialog({
                                 {p.nombre}
                               </span>
                               <span className="truncate text-xs text-muted-foreground">
-                                {p.rut} · carga {p.carga}/{p.capacidad}
+                                {p.zonaPrincipal || p.email} · capacidad{" "}
+                                {p.capacidadActiva}
                               </span>
                             </div>
                             <span
                               className={cn(
                                 "ml-2 shrink-0 text-[11px] font-medium",
-                                enCobertura
+                                p.cubreComuna
                                   ? "text-emerald-600"
-                                  : "text-amber-600",
+                                  : sinZonas
+                                    ? "text-muted-foreground"
+                                    : "text-amber-600",
                               )}
                             >
-                              {enCobertura ? "En cobertura" : "Fuera"}
+                              {p.cubreComuna
+                                ? "En cobertura"
+                                : sinZonas
+                                  ? "Sin zonas"
+                                  : "Fuera"}
                             </span>
                             <Check
                               className={cn(
@@ -197,20 +255,21 @@ export function AsignarTasadorDialog({
           {seleccionado && (
             <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-card p-3">
               <div className="flex flex-col gap-0.5">
-                <span className="text-xs text-muted-foreground">Carga actual</span>
-                <span
-                  className={cn(
-                    "text-sm font-semibold",
-                    cargaTono(seleccionado.carga, seleccionado.capacidad),
-                  )}
-                >
-                  {seleccionado.carga} / {seleccionado.capacidad} activas
+                {/* `M_Tasadores` no tiene `casos_en_curso`, así que no hay carga
+                    real que mostrar (lo que queda vivo de H-05). Se muestra la
+                    capacidad declarada, que sí existe, sin inventar un
+                    denominador de casos activos que nadie está contando. */}
+                <span className="text-xs text-muted-foreground">Capacidad</span>
+                <span className="text-sm font-semibold text-foreground">
+                  {seleccionado.capacidadActiva}
                 </span>
               </div>
               <div className="flex flex-col gap-0.5">
                 <span className="text-xs text-muted-foreground">Cobertura</span>
                 <span className="text-sm font-medium text-foreground">
-                  {seleccionado.cobertura.length} comunas
+                  {seleccionado.zonas.length > 0
+                    ? `${seleccionado.zonas.length} comuna${seleccionado.zonas.length === 1 ? "" : "s"}`
+                    : "Sin zonas declaradas"}
                 </span>
               </div>
             </div>

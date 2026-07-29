@@ -529,23 +529,45 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
  * por `fecha_solicitud desc` deja además lo recién creado arriba, que es lo
  * esperable de una bandeja operativa.
  *
- * ⚠ `sla_desc` y `sla_asc` siguen ordenando por `fecha_limite_entrega` cuando
- * el usuario los elige explícitamente, así que arrastran el mismo `#ERROR`.
- * Quedan como deuda: no se tocan aquí porque son una elección deliberada del
- * usuario, no el camino por defecto.
+ * `sla_desc` y `sla_asc` **ya no ordenan en Airtable**: se resuelven en memoria
+ * sobre `slaDias` (ver `ordenarPorSla`). Airtable recibe un orden neutro y
+ * estable, `fecha_solicitud desc`, para que el resultado sea determinista antes
+ * del reordenamiento.
  */
 function ordenToSort(orden?: OrdenParam): { field: string; direction: 'asc' | 'desc' } {
   switch (orden) {
-    case 'sla_asc':
-      return { field: 'fecha_limite_entrega', direction: 'desc' }
-    case 'sla_desc':
-      return { field: 'fecha_limite_entrega', direction: 'asc' }
     case 'prioridad':
       return { field: 'prioridad', direction: 'desc' }
+    case 'sla_asc':
+    case 'sla_desc':
     case 'fecha_solicitud_desc':
     default:
       return { field: 'fecha_solicitud', direction: 'desc' }
   }
+}
+
+/**
+ * Reordena por urgencia de SLA en memoria.
+ *
+ * Antes esto era un `sort` de Airtable sobre `fecha_limite_entrega`, que es
+ * `DATEADD({fecha_visita},2,'days')` sobre un campo vacío en toda alta nueva:
+ * valía `#ERROR` y la posición que Airtable le da a un valor errado es
+ * indefinida (deuda D-01 · ítem 6).
+ *
+ * `slaDias` ya codifica la urgencia y siempre tiene valor: sale de la fecha
+ * límite cuando es parseable y, si no, del semáforo (`VENCIDO` → -1,
+ * `EN RIESGO` → 2, resto → 3). Ordenar por él no requiere ningún campo nuevo
+ * en Airtable ni depende de la fórmula.
+ *
+ * `sla_desc` = "SLA descendente" en la UI = **lo más urgente primero**, o sea
+ * `slaDias` ascendente. El empate se rompe por código para que el orden sea
+ * estable entre recargas.
+ */
+function ordenarPorSla(data: Solicitud[], orden: OrdenParam): Solicitud[] {
+  const signo = orden === 'sla_desc' ? 1 : -1
+  return [...data].sort(
+    (a, b) => signo * (a.slaDias - b.slaDias) || a.codigoExt.localeCompare(b.codigoExt)
+  )
 }
 
 export async function fetchSolicitudes(
@@ -577,7 +599,14 @@ export async function fetchSolicitudes(
       'sort[0][direction]': sort.direction,
       fields: SOLICITUD_FIELDS,
     })
-    return { data: records.map((r) => mapRecord(r.id, r.createdTime, r.fields)) }
+    const data = records.map((r) => mapRecord(r.id, r.createdTime, r.fields))
+    // El orden por SLA se resuelve aquí y no en Airtable (ver `ordenarPorSla`).
+    // Es seguro hacerlo en memoria porque esta función ya devuelve el conjunto
+    // completo y la paginación se aplica después, sobre el array ordenado.
+    return {
+      data:
+        orden === 'sla_desc' || orden === 'sla_asc' ? ordenarPorSla(data, orden) : data,
+    }
   } catch (err) {
     // ejecutiva_asignada not yet created in TX_Solicitudes (D-08 pending)
     if (

@@ -1,4 +1,10 @@
-import type { ContactoVisita, Solicitud } from "@/lib/console-data"
+import type { ContactoVisita, Solicitud, Unidad } from "@/lib/console-data"
+import {
+  MATERIAL_POR_ETIQUETA,
+  ORIGEN_SUPERFICIE_POR_ETIQUETA,
+  SUBTIPO_POR_TIPO_BIEN,
+  type UnidadPayload,
+} from "@/lib/mappers/crear-solicitud"
 
 /**
  * Mapper UI → contrato `cambios` de SC-Edicion (E-078).
@@ -81,6 +87,44 @@ function mapearContacto(
     // El primer contacto del array es el principal (misma convención que la UI).
     orden_prioridad: index + 1,
     estado_contacto: limpiar(c.estado) ?? "",
+  }
+}
+
+/**
+ * Traduce una unidad del **modelo de lectura** (`Unidad` de console-data) al
+ * shape que SC-Edicion escribe en `TX_Unidades`.
+ *
+ * Gemelo de `mapearUnidad` (crear-solicitud.ts), pero parte de un tipo distinto:
+ * el del alta viene del formulario (todo string, `rolModo` como enum), y este
+ * viene de lo que `hydrateUnidades` leyó de Airtable (números ya tipados,
+ * `conRol` booleano). Las tablas de traducción de vocabulario **sí** se
+ * comparten —se importan de crear-solicitud— porque duplicarlas garantizaría
+ * que diverjan.
+ */
+function mapearUnidadEdicion(u: Unidad, index: number): UnidadPayload {
+  const anio = Number(u.anioConstruccion)
+  return {
+    numero_unidad: limpiar(u.ubicacion) ?? "",
+    modelo: limpiar(u.modelo) ?? "",
+    subtipo: SUBTIPO_POR_TIPO_BIEN[u.tipoBien] ?? "",
+    // Aquí el eje con-rol/uso-y-goce ya viene resuelto como booleano por
+    // `hydrateUnidades`, así que no hace falta la tabla del enum del formulario.
+    con_rol_o_uso_y_goce: u.conRol ? "con_rol" : "uso_y_goce",
+    rol_sii: limpiar(u.rolSii) ?? "",
+    rol_sii_en_tramite: u.rolEnTramite,
+    sup_m2: Number.isFinite(u.supConstruida) ? u.supConstruida : null,
+    superficie_terraza_m2: u.supTerraza ?? null,
+    sup_terreno_m2: u.supTerreno ?? null,
+    anio_construccion: Number.isFinite(anio) && anio > 0 ? anio : null,
+    tipo_material: MATERIAL_POR_ETIQUETA[u.material] ?? "",
+    ampliacion_m2: u.m2Ampliacion ?? null,
+    // `regularizable` es booleano opcional: `undefined` no es "no", es "no
+    // declarado", y Airtable lo modela como `no_aplica`.
+    ampliacion_regularizable:
+      u.regularizable === true ? "si" : u.regularizable === false ? "no" : "no_aplica",
+    origen_superficie: ORIGEN_SUPERFICIE_POR_ETIQUETA[u.origenSuperficie] ?? "",
+    detalle_item: limpiar(u.detalleItem) ?? "",
+    orden: index + 1,
   }
 }
 
@@ -203,6 +247,8 @@ export function mapearEdicionSolicitud(
     if (v !== undefined) payload[k] = v
   }
 
+  // — Unidades: helper local, ver `mapearUnidadEdicion` al pie del archivo —
+
   // — Contactos de visita (borrar + recrear en TX_ContactosVisita) —
   // Sólo el string JSON. La forma array se retiró en D-02: SC-Edicion no la
   // lee —sus únicas referencias son `{{1.contactosVisitaJson}}`— y dejarla
@@ -217,6 +263,23 @@ export function mapearEdicionSolicitud(
   // array vacío indica que la hidratación falló: en ese caso no se tocan.
   if (d.contactosVisita.length > 0) {
     payload.contactosVisitaJson = JSON.stringify(d.contactosVisita.map(mapearContacto))
+  }
+
+  // — Unidades (borrar + recrear en TX_Unidades) —
+  // Misma topología que los contactos y, sobre todo, **la misma guarda**: sólo
+  // se envían si hay al menos una.
+  //
+  // La guarda no es cosmética. SC-Edicion borra y recrea, así que un array
+  // vacío se traduciría en "borra todas las unidades y no crees ninguna". Y el
+  // array puede venir vacío por una razón que no es "el usuario las borró":
+  // `hydrateUnidades` degrada silenciosamente a `[]` si Airtable falla
+  // (lib/unidades.ts). Sin esta guarda, una caída de Airtable durante la
+  // hidratación seguida de un Guardar destruiría las unidades de la solicitud
+  // sin ningún error visible. Decisión explícita de Sergio, 29-jul-2026:
+  // nunca borrar con vacío, aunque eso impida borrar la última unidad desde
+  // la pantalla — el borrado total se hace en Airtable, a mano y a conciencia.
+  if (d.unidades.length > 0) {
+    payload.unidadesJson = JSON.stringify(d.unidades.map(mapearUnidadEdicion))
   }
 
   return payload

@@ -1,6 +1,7 @@
 import type {
   ContactoVisitaFormulario,
   NuevaSolicitudInternaValues,
+  UnidadFormulario,
 } from "@/lib/validators/nueva-solicitud-interna"
 
 /**
@@ -55,11 +56,23 @@ import type {
  *    bundles y el link queda vacío (Tanda E). El arreglo es el catálogo o el
  *    schema, nunca el mapper.
  *
+ *    **Excepción acotada: los cuatro selects de `TX_Unidades`** (`subtipo`,
+ *    `tipo_material`, `origen_superficie`, `con_rol_o_uso_y_goce`). Ahí la
+ *    premisa de la regla no se cumple: `TIPOS_BIEN`, `MATERIALES` y
+ *    `ORIGENES_SUPERFICIE` son arrays de **etiquetas humanas** (`"Albañilería"`,
+ *    `"Obras complementarias"`) declarados en `lib/console-data.ts`, no pares
+ *    `{value,label}` ni catálogos servidos desde Airtable — así que no hay
+ *    fuente de verdad compartida que duplicar, y ninguna de las dos puntas
+ *    puede adoptar la otra sin romperse (Airtable usa slugs; la UI, texto con
+ *    tildes). Las tablas viven abajo, junto a `mapearUnidad`, y son el único
+ *    sitio donde se traduce vocabulario en este archivo. Si algún día esos
+ *    catálogos pasan a servirse desde Airtable, hay que borrarlas.
+ *
  * ## Campos del zod que este mapper descarta deliberadamente
  *
  * | Campo zod | Motivo |
  * |---|---|
- * | `unidades[]` (16 subcampos c/u) | SC01 no tiene ningún módulo que cree unidades. RF-04 fase 2 |
+ * | ~~`unidades[]`~~ | **Ya no se descarta**: viaja como `unidades_json` desde la tanda de cierre (29-jul-2026) |
  * | `ejec_comercializador` | No existe el campo en `TX_Solicitudes` (deuda de schema) |
  * | `vendedorCoincideComprador` | Sin campo destino |
  * | `id` de contactos y unidades | Identificadores de cliente para React, no de negocio |
@@ -76,6 +89,82 @@ export interface ContactoVisitaPayload {
   rol: string
   orden_prioridad: number
   estado_contacto: string
+}
+
+/** Unidad tal como la consume el módulo Parse JSON de unidades de SC01. */
+export interface UnidadPayload {
+  numero_unidad: string
+  modelo: string
+  subtipo: string
+  con_rol_o_uso_y_goce: string
+  rol_sii: string
+  rol_sii_en_tramite: boolean
+  sup_m2: number | null
+  superficie_terraza_m2: number | null
+  sup_terreno_m2: number | null
+  anio_construccion: number | null
+  tipo_material: string
+  ampliacion_m2: number | null
+  ampliacion_regularizable: string
+  origen_superficie: string
+  detalle_item: string
+  orden: number
+}
+
+/**
+ * Traducciones UI → Airtable de los cuatro `singleSelect` de `TX_Unidades`.
+ *
+ * Los catálogos de la pantalla y las opciones reales del schema **no coinciden
+ * en ningún caso** (verificado vía `get_table_schema` el 29-jul-2026): la UI
+ * usa etiquetas con tilde y espacios, Airtable usa slugs. Enviar la etiqueta
+ * cruda con `typecast: true` no falla — **crea la opción**, que es peor: ensucia
+ * el catálogo maestro en silencio y nadie se entera hasta que alguien filtra
+ * (misma familia que E-088/E-091).
+ *
+ * Un valor no mapeado devuelve `''`, y una clave vacía deja el campo sin tocar
+ * en vez de inventar una opción.
+ */
+export const SUBTIPO_POR_TIPO_BIEN: Record<string, string> = {
+  "Edificación": "Edificacion",
+  "Terreno": "Terreno",
+  // Airtable no distingue las tres variantes de estacionamiento; la distinción
+  // de la UI (cubierto/descubierto/uso y goce) se pierde a propósito, porque el
+  // eje uso-y-goce ya viaja por `con_rol_o_uso_y_goce`.
+  "Estacionamiento cubierto": "Estacionamiento",
+  "Estacionamiento descubierto": "Estacionamiento",
+  "Estacionamiento uso y goce": "Estacionamiento",
+  "Bodega": "Bodega",
+  "Piscina": "Piscina",
+  "Obras complementarias": "OO.CC.",
+}
+
+export const MATERIAL_POR_ETIQUETA: Record<string, string> = {
+  "Albañilería": "albanileria",
+  "Madera": "madera",
+  "Hormigón": "hormigon",
+  "Mixto": "mixto",
+  "Perfiles metálicos": "perfiles_metalicos",
+}
+
+export const ORIGEN_SUPERFICIE_POR_ETIQUETA: Record<string, string> = {
+  "Carta o ficha inmobiliaria": "carta_ficha_inmobiliaria",
+  "Plano": "plano",
+  "Base interna SII": "base_interna_sii",
+  "Certificado de avalúo": "certificado_avaluo",
+  "Medición del tasador": "medicion_tasador",
+}
+
+/** El enum del formulario es `uso_goce`; la opción real es `uso_y_goce`. */
+export const ROL_MODO_POR_ENUM: Record<string, string> = {
+  con_rol: "con_rol",
+  uso_goce: "uso_y_goce",
+}
+
+/** El formulario admite "" (no declarado); Airtable lo modela como `no_aplica`. */
+export const REGULARIZABLE_POR_ENUM: Record<string, string> = {
+  si: "si",
+  no: "no",
+  "": "no_aplica",
 }
 
 /** Payload plano snake_case listo para `postToMake`. */
@@ -153,6 +242,47 @@ function mapearContacto(
     rol: contacto.rol.trim(),
     orden_prioridad: index + 1,
     estado_contacto: contacto.estado.trim(),
+  }
+}
+
+/**
+ * Igual que `numeroPlano` pero devuelve un `number` de verdad y no su
+ * representación en texto. Los campos de `TX_Unidades` son `number`, y mandar
+ * un número real evita depender del `typecast` del módulo de Airtable para
+ * algo tan básico como una superficie.
+ */
+function numeroReal(valor: string | undefined | null): number | null {
+  const plano = numeroPlano(valor)
+  if (plano === undefined) return null
+  const n = Number(plano)
+  return Number.isFinite(n) ? n : null
+}
+
+/**
+ * Traduce una unidad del formulario al shape que escribe SC01 en `TX_Unidades`.
+ *
+ * Las superficies llegan como string del `<input>` y van a campos `number`:
+ * `null` cuando no hay dato, nunca 0 — un 0 se leería como una superficie real
+ * de cero metros.
+ */
+function mapearUnidad(unidad: UnidadFormulario, index: number): UnidadPayload {
+  return {
+    numero_unidad: unidad.ubicacion.trim(),
+    modelo: unidad.modelo.trim(),
+    subtipo: SUBTIPO_POR_TIPO_BIEN[unidad.tipoBien] ?? "",
+    con_rol_o_uso_y_goce: ROL_MODO_POR_ENUM[unidad.rolModo] ?? "",
+    rol_sii: unidad.rolSii.trim(),
+    rol_sii_en_tramite: unidad.rolEnTramite,
+    sup_m2: numeroReal(unidad.supConstruida),
+    superficie_terraza_m2: numeroReal(unidad.supTerraza),
+    sup_terreno_m2: numeroReal(unidad.supTerreno),
+    anio_construccion: numeroReal(unidad.anioConstruccion),
+    tipo_material: MATERIAL_POR_ETIQUETA[unidad.material] ?? "",
+    ampliacion_m2: numeroReal(unidad.m2Ampliacion),
+    ampliacion_regularizable: REGULARIZABLE_POR_ENUM[unidad.regularizable] ?? "no_aplica",
+    origen_superficie: ORIGEN_SUPERFICIE_POR_ETIQUETA[unidad.origenSuperficie] ?? "",
+    detalle_item: unidad.detalleItem.trim(),
+    orden: index + 1,
   }
 }
 
@@ -298,6 +428,17 @@ export function toMakeSnakePayload(
   payload.contactos_visita_json = JSON.stringify(
     datos.contactosVisita.map(mapearContacto),
   )
+
+  // ── Unidades ────────────────────────────────────────────────────────────
+  // Misma topología y por las mismas razones que los contactos: clave nueva,
+  // tipo texto, consumida por un módulo `json:ParseJSON` dedicado en su propia
+  // ruta del Router 16. Hasta la tanda de cierre (29-jul-2026) SC01 no tenía
+  // ningún módulo que creara unidades y el zod las descartaba aquí, así que
+  // `TX_Unidades` estaba vacía — y con ella RN-44 nunca se cumplía y el botón
+  // "Asignar Tasador" quedaba permanentemente deshabilitado (Regla A).
+  //
+  // El zod exige al menos una unidad, así que el array nunca va vacío.
+  payload.unidades_json = JSON.stringify(datos.unidades.map(mapearUnidad))
 
   return payload
 }

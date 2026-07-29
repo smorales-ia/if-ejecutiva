@@ -1,0 +1,92 @@
+# Modelo de SLA — pendiente de decisión de negocio
+
+> Deuda D-01 · ítem 8 · 29-jul-2026
+> **Para decidir con Héctor y Óscar.** No es un bug: es una regla de negocio que
+> nunca se definió por escrito.
+
+## El hallazgo
+
+El brief de la tanda daba por hecho que `fecha_limite_entrega` era *"un date base
+que SC01 debería calcular (fecha_solicitud + sla_aplicable de C_SLA, con WORKDAY
+y H_Feriados)"*. **No es así.**
+
+```
+fecha_limite_entrega   fldoT1LOSgVRo32TC   formula:  DATEADD({fecha_visita}, 2, 'days')
+fecha_visita           fldpTBzjfbAw5FSYI   date      (la visita REALIZADA)
+semaforo_sla           fldW4oUq7LvQUZq7W   formula:  cuenta días desde {fecha_visita}
+```
+
+El SLA vigente **arranca en la visita realizada**, no en el ingreso de la
+solicitud, y dura 2 días. SC01 no puede poblar `fecha_visita` al crear: la visita
+todavía no ocurrió. El `#ERROR` en altas nuevas no es un fallo — es el modelo
+diciendo "esta solicitud aún no entró en SLA".
+
+## Por qué importa
+
+Una solicitud puede estar **semanas** entre creada y visitada, y en toda esa
+ventana no tiene SLA, no aparece en "SLA en riesgo" y no se puede priorizar por
+urgencia. Si la operación asume que el reloj corre desde que entra la solicitud,
+hoy hay un punto ciego que nadie está midiendo.
+
+## El catálogo tampoco está listo
+
+`C_SLA` (`tblsPZokEK5aoinTn`) existe pero está prácticamente vacío:
+
+- **1 sola fila**: `SLA_METLIFE_Refinanciamiento`, `dias_totales = 4`, `activo`.
+- Los links `cliente`, `tipo_informe`, `tipo_propiedad` **sin poblar**, así que
+  no hay forma de resolver "qué SLA aplica a esta solicitud".
+- Dos familias de campos duplicadas: `dias_totales` / `dias_alerta_amarilla` /
+  `dias_alerta_roja` (la poblada) y `sla_dias` / `sla_dias_alerta` /
+  `sla_dias_vencido` (vacía). Habría que elegir una y borrar la otra.
+
+`C_Feriados` (`tblJVh2kPd4uMgxpb`) sí está bien estructurado (`fecha`,
+`es_irrenunciable`, `activo`, `anno`).
+
+## Tres opciones
+
+### (a) Dejar el modelo como está — **aplicada en esta tanda**
+
+El SLA mide la **entrega del informe tras la visita**. Se corrige sólo la
+robustez: `"Sin visita"` en vez de `#ERROR`.
+
+- ✅ Cero riesgo, cero cambio de significado, cero trabajo pendiente.
+- ❌ La ventana ingreso → visita sigue sin medirse.
+
+### (b) Re-basar a `fecha_solicitud`
+
+`fecha_limite_entrega = WORKDAY({fecha_solicitud}, <n>, feriados)`.
+
+- ✅ Toda solicitud tiene SLA desde el minuto uno; "SLA en riesgo" pasa a ser
+  una bandeja de verdad accionable desde el ingreso.
+- ❌ **Cambia el significado del SLA para las ~54 filas históricas**: los
+  informes ya entregados se recalculan contra otra base y muchos pasarían a
+  "VENCIDO" retroactivamente. Los reportes que se hayan sacado antes dejan de
+  ser comparables.
+- ❌ Exige poblar `C_SLA` y añadir un lookup en `TX_Solicitudes` para resolver
+  el SLA por cliente/tipo, o aceptar un número fijo hardcodeado en la fórmula.
+
+### (c) Dos relojes
+
+Mantener `semaforo_sla` como está (post-visita) y **añadir** un
+`semaforo_ingreso` que mida ingreso → visita.
+
+- ✅ No rompe nada histórico y cubre el punto ciego.
+- ❌ Dos semáforos en la UI: hay que decidir cuál manda en la pestaña "SLA en
+  riesgo" y cuál se muestra en la lista, o la pantalla se vuelve ambigua.
+
+## Recomendación
+
+**(a) ahora** — ya está aplicada — y llevar **(c)** a la conversación con Héctor
+y Óscar, porque resuelve el punto ciego sin reescribir la historia. (b) es la
+más limpia conceptualmente pero es la única que altera datos ya entregados, y esa
+decisión no es técnica.
+
+## Qué preguntar exactamente
+
+1. Cuando la Ejecutiva dice "esta solicitud está atrasada", ¿atrasada respecto de
+   qué: de la visita o del ingreso?
+2. ¿Existe un compromiso con el cliente sobre el plazo **ingreso → entrega**, o
+   sólo sobre **visita → entrega**?
+3. ¿Los 2 días actuales son correctos, o vienen de una prueba que quedó fija?
+4. ¿El SLA varía por cliente / tipo de informe? Si sí, hay que poblar `C_SLA`
+   antes de cualquier cambio de fórmula.

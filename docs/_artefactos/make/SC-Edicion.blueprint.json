@@ -4337,7 +4337,7 @@
             "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblW3SSbKo6vRjwBJ",
-                "formula": "FIND(\"{{1.solicitudId}}\", ARRAYJOIN({solicitud}, \",\"))",
+                "formula": "FIND(\",{{1.codigoSolicitud}},\", \",\" & ARRAYJOIN({solicitud}, \",\") & \",\") > 0",
                 "maxRecords": 100,
                 "useColumnId": false
             },
@@ -4682,6 +4682,317 @@
                         "name": "useColumnId",
                         "type": "boolean",
                         "label": "Use column ID"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 19,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "filter": {
+                "name": "Solo si viene unidadesJson",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{1.unidadesJson}}",
+                            "o": "exist"
+                        }
+                    ]
+                ]
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tbl2QDLvJDyy3Rg2I",
+                "formula": "FIND(\",{{1.codigoSolicitud}},\", \",\" & ARRAYJOIN({solicitud}, \",\") & \",\") > 0",
+                "maxRecords": 100,
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 3300,
+                    "y": 300,
+                    "name": "Buscar unidades actuales"
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "mode": "chose",
+                            "label": "VProperty"
+                        },
+                        "table": {
+                            "mode": "chose",
+                            "label": "TX_Unidades"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable2",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "base",
+                        "type": "select",
+                        "label": "Base",
+                        "required": true
+                    },
+                    {
+                        "name": "table",
+                        "type": "select",
+                        "label": "Table",
+                        "required": true
+                    },
+                    {
+                        "name": "formula",
+                        "type": "text",
+                        "label": "Formula"
+                    },
+                    {
+                        "name": "maxRecords",
+                        "type": "uinteger",
+                        "label": "Max records"
+                    },
+                    {
+                        "name": "useColumnId",
+                        "type": "boolean",
+                        "label": "Use column ID"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 20,
+            "module": "airtable:ActionDeleteRecord",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "filter": {
+                "name": "Solo si hay id de unidad",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{19.id}}",
+                            "o": "exist"
+                        },
+                        {
+                            "a": "{{19.id}}",
+                            "b": "",
+                            "o": "notequal"
+                        }
+                    ]
+                ]
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tbl2QDLvJDyy3Rg2I",
+                "record": "{{19.id}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 3900,
+                    "y": 300,
+                    "name": "Borrar unidad vieja"
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "mode": "chose",
+                            "label": "VProperty"
+                        },
+                        "table": {
+                            "mode": "chose",
+                            "label": "TX_Unidades"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable2",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "base",
+                        "type": "select",
+                        "label": "Base",
+                        "required": true
+                    },
+                    {
+                        "name": "table",
+                        "type": "select",
+                        "label": "Table",
+                        "required": true
+                    },
+                    {
+                        "name": "record",
+                        "type": "text",
+                        "label": "Record ID",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 21,
+            "module": "builtin:BasicAggregator",
+            "version": 1,
+            "parameters": {
+                "feeder": 19
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 4200,
+                    "y": 300,
+                    "name": "Esperar deletes de unidades"
+                },
+                "restore": {
+                    "extra": {
+                        "feeder": {
+                            "label": "Buscar unidades actuales - Search Records"
+                        },
+                        "target": {
+                            "label": "Custom"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "id": 22,
+            "module": "json:ParseJSON",
+            "version": 1,
+            "parameters": {
+                "type": ""
+            },
+            "mapper": {
+                "json": "{{1.unidadesJson}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 4500,
+                    "y": 300,
+                    "name": "Parse unidades"
+                },
+                "restore": {
+                    "parameters": {
+                        "type": {
+                            "label": "Empty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "type",
+                        "type": "udt",
+                        "label": "Data structure"
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "json",
+                        "type": "text",
+                        "label": "JSON string",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 23,
+            "module": "airtable:ActionCreateRecord",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tbl2QDLvJDyy3Rg2I",
+                "record": {
+                    "fldmBd2bzOWjPX0eW": "{{1.solicitudId}}",
+                    "fldJGXS8jGDKZDdWM": "{{22.numero_unidad}}",
+                    "fldO0F8PoKiHAigyC": "{{22.modelo}}",
+                    "fldNU8ee30AvvRWHZ": "{{22.subtipo}}",
+                    "fldcVpzYmK3FWscmD": "{{22.con_rol_o_uso_y_goce}}",
+                    "fldC5yUYC2wTTLJBV": "{{22.rol_sii}}",
+                    "fldYhcLG96yoU10ID": "{{22.rol_sii_en_tramite}}",
+                    "fldZLvJKuXuWhRV8P": "{{22.sup_m2}}",
+                    "flduwWj51oYcLDVTo": "{{22.superficie_terraza_m2}}",
+                    "fld6lgF0KxUh9oPCB": "{{22.sup_terreno_m2}}",
+                    "fldM46x4ECE9B0pfM": "{{22.anio_construccion}}",
+                    "fldnG1nEod0V1IkKZ": "{{22.tipo_material}}",
+                    "fldTvKrBiaZmkQ2In": "{{22.ampliacion_m2}}",
+                    "flddSP96ivTrAdcXW": "{{22.ampliacion_regularizable}}",
+                    "fldbDPpHhkuWjOTvQ": "{{22.origen_superficie}}",
+                    "fldPjiXCPgNTdG3vP": "{{22.detalle_item}}",
+                    "fld9iRM3hhCNNj4DJ": "{{22.orden}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 4800,
+                    "y": 300,
+                    "name": "Crear unidad nueva"
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "mode": "chose",
+                            "label": "VProperty"
+                        },
+                        "table": {
+                            "mode": "chose",
+                            "label": "TX_Unidades"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable3,airtable2",
+                        "label": "Connection",
+                        "required": true
                     }
                 ]
             }

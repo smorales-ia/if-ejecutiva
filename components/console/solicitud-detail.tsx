@@ -221,6 +221,17 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tasadorId, motivo: nota || undefined }),
         })
+        // 202 = el handler aceptó el payload pero no hay webhook configurado:
+        // nada se persistió. `res.ok` es true para cualquier 2xx, así que sin
+        // este caso la UI marcaría la solicitud como asignada y haría
+        // desaparecer el botón sobre una asignación que no ocurrió. Mismo
+        // tratamiento que en `handleGuardarEdicion` (E-078).
+        if (res.status === 202) {
+          toast.warning(
+            "La asignación no se guardó: falta configurar la conexión. Avisa al equipo.",
+          )
+          return
+        }
         if (!res.ok) {
           toast.error(
             "No pudimos completar la acción. Intenta nuevamente en unos segundos.",

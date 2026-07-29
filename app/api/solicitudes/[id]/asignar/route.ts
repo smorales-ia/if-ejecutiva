@@ -105,13 +105,23 @@ export async function POST(
     ejecutivaClerkId: userId,
   }
 
-  // Escenario Make aún no provisionado (BQ pendiente). Mock temporal §3.2.10:
-  // se degrada con `pendiente_make` para que P6/P7 construyan la UI sin Make
-  // vivo; la conexión real se cierra en P9. No se fabrica un éxito silencioso.
+  // Sin webhook no hay persistencia. Hasta la tanda de cierre (29-jul-2026)
+  // esta rama devolvía `200 {ok:true}`, que para el cliente es indistinguible
+  // de una asignación real: la UI mostraba el toast verde, hacía desaparecer el
+  // botón "Asignar Tasador" y en Airtable no había pasado nada. Es exactamente
+  // el silent-200 de [[E-078]], que ya se había corregido en el PATCH de
+  // `[id]/route.ts` pero no aquí.
+  //
+  // Ahora se distingue el entorno: en producción es un fallo de configuración
+  // (503) y en desarrollo un 202 explícito que la UI no puede confundir con un
+  // guardado real.
   const webhookUrl = process.env.MAKE_WEBHOOK_URL_SC_ASIGNAR
   if (!webhookUrl || !process.env.MAKE_HMAC_SECRET) {
-    console.warn('[POST /api/solicitudes/[id]/asignar] MAKE_WEBHOOK_URL_SC_ASIGNAR sin configurar — respuesta mock')
-    return NextResponse.json({ ok: true, pendiente_make: true }, { status: 200 })
+    console.warn('[POST /api/solicitudes/[id]/asignar] MAKE_WEBHOOK_URL_SC_ASIGNAR sin configurar — no se persiste')
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({ error: MSG_RED }, { status: 503 })
+    }
+    return NextResponse.json({ ok: false, pendiente_make: true }, { status: 202 })
   }
 
   let makeRes: Response
