@@ -1,0 +1,1852 @@
+{
+    "name": "SC-Adjuntos-Upload",
+    "flow": [
+        {
+            "id": 1,
+            "module": "gateway:CustomWebHook",
+            "version": 1,
+            "parameters": {
+                "hook": 3377943,
+                "maxResults": 1
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
+                "restore": {
+                    "parameters": {
+                        "hook": {
+                            "data": {
+                                "editable": "true"
+                            },
+                            "label": "SC-Adjuntos-Upload"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "hook",
+                        "type": "hook:gateway-webhook",
+                        "label": "Webhook",
+                        "required": true
+                    },
+                    {
+                        "name": "maxResults",
+                        "type": "number",
+                        "label": "Maximum number of results"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "codigo_ext",
+                        "type": "text"
+                    },
+                    {
+                        "name": "tipo_documento",
+                        "type": "text"
+                    },
+                    {
+                        "name": "mime_type",
+                        "type": "text"
+                    },
+                    {
+                        "name": "solicitud_id",
+                        "type": "text"
+                    },
+                    {
+                        "name": "subido_por",
+                        "type": "text"
+                    },
+                    {
+                        "name": "hash_md5",
+                        "type": "text"
+                    },
+                    {
+                        "name": "nombre_archivo",
+                        "type": "text"
+                    },
+                    {
+                        "name": "tamanio_kb",
+                        "type": "number"
+                    },
+                    {
+                        "name": "contenido_base64",
+                        "type": "text"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 2,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblur71x1oItbmKZc",
+                "formula": "{hash_md5} = \"{{1.hash_md5}}\"",
+                "maxRecords": "1",
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "mode": "chose",
+                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                        },
+                        "sort": {
+                            "mode": "chose"
+                        },
+                        "view": {
+                            "mode": "chose"
+                        },
+                        "table": {
+                            "mode": "chose",
+                            "label": "TX_Adjuntos (tblur71x1oItbmKZc)"
+                        },
+                        "fields": {
+                            "mode": "chose"
+                        },
+                        "useColumnId": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable3,airtable2",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "base",
+                        "type": "select",
+                        "label": "Base",
+                        "required": true
+                    },
+                    {
+                        "name": "useColumnId",
+                        "type": "boolean",
+                        "label": "Use Column ID",
+                        "required": true
+                    },
+                    {
+                        "name": "table",
+                        "type": "select",
+                        "label": "Table",
+                        "required": true
+                    },
+                    {
+                        "name": "formula",
+                        "type": "text",
+                        "label": "Formula"
+                    },
+                    {
+                        "name": "maxRecords",
+                        "type": "integer",
+                        "label": "Limit"
+                    },
+                    {
+                        "name": "sort",
+                        "spec": [
+                            {
+                                "name": "field",
+                                "type": "select",
+                                "label": "Field",
+                                "dynamic": true,
+                                "options": []
+                            },
+                            {
+                                "name": "direction",
+                                "type": "select",
+                                "label": "Direction",
+                                "options": [
+                                    {
+                                        "label": "Descending",
+                                        "value": "desc"
+                                    },
+                                    {
+                                        "label": "Ascending",
+                                        "value": "asc"
+                                    }
+                                ]
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Sort"
+                    },
+                    {
+                        "name": "view",
+                        "type": "select",
+                        "label": "View"
+                    },
+                    {
+                        "name": "fields",
+                        "type": "select",
+                        "label": "Output Fields",
+                        "multiple": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "type": "uinteger",
+                        "label": "Total number of bundles"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "type": "uinteger",
+                        "label": "Bundle order position"
+                    },
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "ID"
+                    },
+                    {
+                        "name": "createdTime",
+                        "type": "date",
+                        "label": "Created Time"
+                    },
+                    {
+                        "name": "nombre_archivo",
+                        "type": "text",
+                        "label": "nombre_archivo"
+                    },
+                    {
+                        "name": "tipo",
+                        "type": "text",
+                        "label": "tipo"
+                    },
+                    {
+                        "name": "url_dropbox",
+                        "type": "text",
+                        "label": "url_dropbox"
+                    },
+                    {
+                        "name": "thumbnail_url",
+                        "type": "text",
+                        "label": "thumbnail_url"
+                    },
+                    {
+                        "name": "tamanio_kb",
+                        "type": "number",
+                        "label": "tamanio_kb"
+                    },
+                    {
+                        "name": "mime_type",
+                        "type": "text",
+                        "label": "mime_type"
+                    },
+                    {
+                        "name": "subido_por",
+                        "type": "text",
+                        "label": "subido_por"
+                    },
+                    {
+                        "name": "subido_en",
+                        "time": true,
+                        "type": "date",
+                        "label": "subido_en"
+                    },
+                    {
+                        "name": "procesado_por_ia",
+                        "type": "boolean",
+                        "label": "procesado_por_ia"
+                    },
+                    {
+                        "name": "hash_md5",
+                        "type": "text",
+                        "label": "hash_md5"
+                    },
+                    {
+                        "name": "solicitud",
+                        "spec": {
+                            "label": "Record ID"
+                        },
+                        "type": "array",
+                        "label": "solicitud"
+                    },
+                    {
+                        "name": "adjunto_id",
+                        "type": "number",
+                        "label": "adjunto_id"
+                    },
+                    {
+                        "name": "clave_adjunto",
+                        "type": "text",
+                        "label": "clave_adjunto"
+                    },
+                    {
+                        "name": "tipo_adjunto",
+                        "type": "text",
+                        "label": "tipo_adjunto"
+                    },
+                    {
+                        "name": "orden",
+                        "type": "number",
+                        "label": "orden"
+                    },
+                    {
+                        "name": "descripcion",
+                        "type": "text",
+                        "label": "descripcion"
+                    },
+                    {
+                        "name": "fecha_subida",
+                        "type": "date",
+                        "label": "fecha_subida"
+                    },
+                    {
+                        "name": "requerido_por_ejecutiva",
+                        "type": "boolean",
+                        "label": "requerido_por_ejecutiva"
+                    },
+                    {
+                        "name": "estado_extraccion",
+                        "type": "text",
+                        "label": "estado_extraccion"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 3,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "parameters": {},
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 4,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "filter": {
+                                "name": "Ya existe (mismo hash + misma solicitud)",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{2.id}}",
+                                            "o": "exist"
+                                        },
+                                        {
+                                            "a": "{{contains(2.solicitud; 1.solicitud_id)}}",
+                                            "b": "true",
+                                            "o": "text:equal"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblR4VWpUHw1CSyIS",
+                                "record": {},
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 900,
+                                    "y": -150
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "LogEscenarios (tblR4VWpUHw1CSyIS)",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "fldOLYPMstZl1cct6",
+                                                            "type": "text",
+                                                            "label": "Titulo Log"
+                                                        },
+                                                        {
+                                                            "name": "fldGRchH2Cc82fO4b",
+                                                            "time": true,
+                                                            "type": "date",
+                                                            "label": "Fecha / Hora"
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldPktGeTzNCRQ319",
+                                                            "type": "select",
+                                                            "label": "Escenario",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "Email tasador",
+                                                                    "value": "Email tasador"
+                                                                },
+                                                                {
+                                                                    "label": "Email cliente visita",
+                                                                    "value": "Email cliente visita"
+                                                                },
+                                                                {
+                                                                    "label": "Alerta SLA 2d",
+                                                                    "value": "Alerta SLA 2d"
+                                                                },
+                                                                {
+                                                                    "label": "Alerta SLA 3d",
+                                                                    "value": "Alerta SLA 3d"
+                                                                },
+                                                                {
+                                                                    "label": "Email informe PDF",
+                                                                    "value": "Email informe PDF"
+                                                                },
+                                                                {
+                                                                    "label": "UF diaria",
+                                                                    "value": "UF diaria"
+                                                                },
+                                                                {
+                                                                    "label": "Solicitud repetida",
+                                                                    "value": "Solicitud repetida"
+                                                                },
+                                                                {
+                                                                    "label": "Informe visado",
+                                                                    "value": "Informe visado"
+                                                                },
+                                                                {
+                                                                    "label": "E1_Airtable_Make",
+                                                                    "value": "E1_Airtable_Make"
+                                                                },
+                                                                {
+                                                                    "label": "E2_Carbone_Render",
+                                                                    "value": "E2_Carbone_Render"
+                                                                },
+                                                                {
+                                                                    "label": "E3_Carbone_Download_Dropbox",
+                                                                    "value": "E3_Carbone_Download_Dropbox"
+                                                                },
+                                                                {
+                                                                    "label": "E4_Notificacion_Email",
+                                                                    "value": "E4_Notificacion_Email"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldTzSpyzbj1EOa7F",
+                                                            "type": "select",
+                                                            "label": "Estado",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "✓ OK",
+                                                                    "value": "✓ OK"
+                                                                },
+                                                                {
+                                                                    "label": "✗ Error",
+                                                                    "value": "✗ Error"
+                                                                },
+                                                                {
+                                                                    "label": "⚠ Parcial",
+                                                                    "value": "⚠ Parcial"
+                                                                },
+                                                                {
+                                                                    "label": "⏭ Omitido",
+                                                                    "value": "⏭ Omitido"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "name": "fldvgIczpgBQJe2Lx",
+                                                            "type": "text",
+                                                            "label": "Trigger"
+                                                        },
+                                                        {
+                                                            "name": "fld8wqOuOfUuN1RCo",
+                                                            "type": "text",
+                                                            "label": "Destinatario"
+                                                        },
+                                                        {
+                                                            "name": "fldv9dn00kM8kNjDL",
+                                                            "type": "text",
+                                                            "label": "Detalle",
+                                                            "multiline": true
+                                                        },
+                                                        {
+                                                            "name": "fldFQYOwb1eHkLtbl",
+                                                            "type": "number",
+                                                            "label": "Duracion ms"
+                                                        },
+                                                        {
+                                                            "name": "flddQtQpV0jveyjEC",
+                                                            "type": "number",
+                                                            "label": "Reintentos"
+                                                        },
+                                                        {
+                                                            "name": "fldsBdTiOOKnDsE9K",
+                                                            "type": "text",
+                                                            "label": "ID Make"
+                                                        },
+                                                        {
+                                                            "name": "fldLHWGlkTZNTESOF",
+                                                            "type": "text",
+                                                            "label": "Solicitud"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "fldPktGeTzNCRQ319": {
+                                                    "mode": "edit"
+                                                },
+                                                "fldTzSpyzbj1EOa7F": {
+                                                    "mode": "edit"
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "fldOLYPMstZl1cct6",
+                                                "type": "text",
+                                                "label": "Titulo Log"
+                                            },
+                                            {
+                                                "name": "fldGRchH2Cc82fO4b",
+                                                "time": true,
+                                                "type": "date",
+                                                "label": "Fecha / Hora"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldPktGeTzNCRQ319",
+                                                "type": "select",
+                                                "label": "Escenario"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldTzSpyzbj1EOa7F",
+                                                "type": "select",
+                                                "label": "Estado"
+                                            },
+                                            {
+                                                "name": "fldvgIczpgBQJe2Lx",
+                                                "type": "text",
+                                                "label": "Trigger"
+                                            },
+                                            {
+                                                "name": "fld8wqOuOfUuN1RCo",
+                                                "type": "text",
+                                                "label": "Destinatario"
+                                            },
+                                            {
+                                                "name": "fldv9dn00kM8kNjDL",
+                                                "type": "text",
+                                                "label": "Detalle"
+                                            },
+                                            {
+                                                "name": "fldFQYOwb1eHkLtbl",
+                                                "type": "number",
+                                                "label": "Duracion ms"
+                                            },
+                                            {
+                                                "name": "flddQtQpV0jveyjEC",
+                                                "type": "number",
+                                                "label": "Reintentos"
+                                            },
+                                            {
+                                                "name": "fldsBdTiOOKnDsE9K",
+                                                "type": "text",
+                                                "label": "ID Make"
+                                            },
+                                            {
+                                                "name": "fldLHWGlkTZNTESOF",
+                                                "type": "text",
+                                                "label": "Solicitud"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Titulo Log",
+                                        "type": "text",
+                                        "label": "Titulo Log"
+                                    },
+                                    {
+                                        "name": "Fecha / Hora",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Fecha / Hora"
+                                    },
+                                    {
+                                        "name": "Escenario",
+                                        "type": "text",
+                                        "label": "Escenario"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Trigger",
+                                        "type": "text",
+                                        "label": "Trigger"
+                                    },
+                                    {
+                                        "name": "Destinatario",
+                                        "type": "text",
+                                        "label": "Destinatario"
+                                    },
+                                    {
+                                        "name": "Detalle",
+                                        "type": "text",
+                                        "label": "Detalle",
+                                        "multiline": true
+                                    },
+                                    {
+                                        "name": "Duracion ms",
+                                        "type": "number",
+                                        "label": "Duracion ms"
+                                    },
+                                    {
+                                        "name": "Reintentos",
+                                        "type": "number",
+                                        "label": "Reintentos"
+                                    },
+                                    {
+                                        "name": "ID Make",
+                                        "type": "text",
+                                        "label": "ID Make"
+                                    },
+                                    {
+                                        "name": "Solicitud",
+                                        "type": "text",
+                                        "label": "Solicitud"
+                                    },
+                                    {
+                                        "name": "ultima_modificacion",
+                                        "type": "date",
+                                        "label": "ultima_modificacion"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 5,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "body": "{\"ok\": true, \"adjunto_id\": \"{{2.adjunto_id}}\", \"url_dropbox\": \"{{2.url_dropbox}}\", \"nombre_archivo\": \"{{2.nombre_archivo}}\", \"tamanio_kb\": {{2.tamanio_kb}}, \"reused\": true}",
+                                "status": "200",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": -150
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "text",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "type": "array",
+                                        "label": "Headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 6,
+                            "module": "dropbox:uploadLargeFile",
+                            "version": 5,
+                            "parameters": {
+                                "__IMTCONN__": 7553318
+                            },
+                            "mapper": {
+                                "data": "{{toBinary(1.contenido_base64; \"base64\")}}",
+                                "path": "/VProperty/Tasaciones/{{1.codigo_ext}}",
+                                "filename": "{{1.nombre_archivo}}",
+                                "overwrite": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 900,
+                                    "y": 150
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "path": {
+                                            "mode": "chose"
+                                        },
+                                        "overwrite": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "dropbox"
+                                            },
+                                            "label": "My Dropbox connection (nutricionsaludketo@gmail.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:dropbox",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "path",
+                                        "type": "folder",
+                                        "label": "Folder",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "filename",
+                                        "type": "filename",
+                                        "label": "File Name",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "data",
+                                        "type": "buffer",
+                                        "label": "Data",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "overwrite",
+                                        "type": "boolean",
+                                        "label": "Overwrite an existing file",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 8,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblur71x1oItbmKZc",
+                                "record": {
+                                    "fld54epvDJ7YdJIYD": "idle",
+                                    "fld9shmoBhZyNTK8x": "{{1.hash_md5}}",
+                                    "fldEccoUrOjV7oKZ5": "{{6.path_display}}",
+                                    "fldLgyE0fdGOvuFAy": "{{1.tamanio_kb}}",
+                                    "fldZTVpXDRtXXPjyv": [
+                                        "{{1.solicitud_id}}"
+                                    ],
+                                    "fldaLLtzAaEn1O8IW": "{{1.tipo_documento}}",
+                                    "fldhnCIY8yPHW8XEj": "{{1.nombre_archivo}}",
+                                    "fldqAZk4Jf0C5Z4uH": "{{1.subido_por}}",
+                                    "fldyhpVhzD5eVfbRZ": "{{1.mime_type}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 150
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "TX_Adjuntos (tblur71x1oItbmKZc)",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "fldhnCIY8yPHW8XEj",
+                                                            "type": "text",
+                                                            "label": "nombre_archivo"
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldUYBO3LeOHxiIGW",
+                                                            "type": "select",
+                                                            "label": "tipo",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "Foto fachada",
+                                                                    "value": "Foto fachada"
+                                                                },
+                                                                {
+                                                                    "label": "Foto interior",
+                                                                    "value": "Foto interior"
+                                                                },
+                                                                {
+                                                                    "label": "Plano",
+                                                                    "value": "Plano"
+                                                                },
+                                                                {
+                                                                    "label": "Certificado dominio",
+                                                                    "value": "Certificado dominio"
+                                                                },
+                                                                {
+                                                                    "label": "Escritura",
+                                                                    "value": "Escritura"
+                                                                },
+                                                                {
+                                                                    "label": "Permiso edificacion",
+                                                                    "value": "Permiso edificacion"
+                                                                },
+                                                                {
+                                                                    "label": "Recepcion final",
+                                                                    "value": "Recepcion final"
+                                                                },
+                                                                {
+                                                                    "label": "Certificado avaluo",
+                                                                    "value": "Certificado avaluo"
+                                                                },
+                                                                {
+                                                                    "label": "Informe borrador",
+                                                                    "value": "Informe borrador"
+                                                                },
+                                                                {
+                                                                    "label": "Otro",
+                                                                    "value": "Otro"
+                                                                },
+                                                                {
+                                                                    "label": "sii",
+                                                                    "value": "sii"
+                                                                },
+                                                                {
+                                                                    "label": "cbr",
+                                                                    "value": "cbr"
+                                                                },
+                                                                {
+                                                                    "label": "plano",
+                                                                    "value": "plano"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "name": "fldEccoUrOjV7oKZ5",
+                                                            "type": "text",
+                                                            "label": "url_dropbox"
+                                                        },
+                                                        {
+                                                            "name": "fld3AAAV0P496yZP0",
+                                                            "type": "text",
+                                                            "label": "thumbnail_url"
+                                                        },
+                                                        {
+                                                            "name": "fldLgyE0fdGOvuFAy",
+                                                            "type": "number",
+                                                            "label": "tamanio_kb"
+                                                        },
+                                                        {
+                                                            "name": "fldyhpVhzD5eVfbRZ",
+                                                            "type": "text",
+                                                            "label": "mime_type"
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldqAZk4Jf0C5Z4uH",
+                                                            "type": "select",
+                                                            "label": "subido_por",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "Tasador",
+                                                                    "value": "Tasador"
+                                                                },
+                                                                {
+                                                                    "label": "Ejecutivo",
+                                                                    "value": "Ejecutivo"
+                                                                },
+                                                                {
+                                                                    "label": "Sistema",
+                                                                    "value": "Sistema"
+                                                                },
+                                                                {
+                                                                    "label": "Cliente",
+                                                                    "value": "Cliente"
+                                                                },
+                                                                {
+                                                                    "label": "tasador",
+                                                                    "value": "tasador"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "name": "fldLdCyamAmiNAb6f",
+                                                            "time": true,
+                                                            "type": "date",
+                                                            "label": "subido_en"
+                                                        },
+                                                        {
+                                                            "name": "fldNlxI8UVQTebdFQ",
+                                                            "type": "boolean",
+                                                            "label": "procesado_por_ia"
+                                                        },
+                                                        {
+                                                            "name": "fld9shmoBhZyNTK8x",
+                                                            "type": "text",
+                                                            "label": "hash_md5"
+                                                        },
+                                                        {
+                                                            "name": "fldZTVpXDRtXXPjyv",
+                                                            "spec": {
+                                                                "label": "Record ID"
+                                                            },
+                                                            "type": "array",
+                                                            "label": "solicitud"
+                                                        },
+                                                        {
+                                                            "name": "fldaLLtzAaEn1O8IW",
+                                                            "type": "text",
+                                                            "label": "clave_adjunto"
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fld1ocY8ug1vzBQsj",
+                                                            "type": "select",
+                                                            "label": "tipo_adjunto",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "foto_exterior",
+                                                                    "value": "foto_exterior"
+                                                                },
+                                                                {
+                                                                    "label": "foto_interior",
+                                                                    "value": "foto_interior"
+                                                                },
+                                                                {
+                                                                    "label": "plano",
+                                                                    "value": "plano"
+                                                                },
+                                                                {
+                                                                    "label": "cbr",
+                                                                    "value": "cbr"
+                                                                },
+                                                                {
+                                                                    "label": "escritura",
+                                                                    "value": "escritura"
+                                                                },
+                                                                {
+                                                                    "label": "cert_no_expropiacion",
+                                                                    "value": "cert_no_expropiacion"
+                                                                },
+                                                                {
+                                                                    "label": "otro",
+                                                                    "value": "otro"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "name": "fld0t0ytqAkd3bzvd",
+                                                            "type": "number",
+                                                            "label": "orden"
+                                                        },
+                                                        {
+                                                            "name": "fldsG18353kHMw0yQ",
+                                                            "type": "text",
+                                                            "label": "descripcion"
+                                                        },
+                                                        {
+                                                            "name": "fldhKxTGC76faGGv3",
+                                                            "type": "boolean",
+                                                            "label": "requerido_por_ejecutiva"
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fld54epvDJ7YdJIYD",
+                                                            "type": "select",
+                                                            "label": "estado_extraccion",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "idle",
+                                                                    "value": "idle"
+                                                                },
+                                                                {
+                                                                    "label": "extrayendo",
+                                                                    "value": "extrayendo"
+                                                                },
+                                                                {
+                                                                    "label": "listo",
+                                                                    "value": "listo"
+                                                                },
+                                                                {
+                                                                    "label": "error",
+                                                                    "value": "error"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "fld1ocY8ug1vzBQsj": {
+                                                    "mode": "chose",
+                                                    "label": "Empty"
+                                                },
+                                                "fld54epvDJ7YdJIYD": {
+                                                    "mode": "edit"
+                                                },
+                                                "fldNlxI8UVQTebdFQ": {
+                                                    "mode": "chose"
+                                                },
+                                                "fldUYBO3LeOHxiIGW": {
+                                                    "mode": "chose",
+                                                    "label": "Empty"
+                                                },
+                                                "fldZTVpXDRtXXPjyv": {
+                                                    "mode": "chose",
+                                                    "items": [
+                                                        null
+                                                    ]
+                                                },
+                                                "fldhKxTGC76faGGv3": {
+                                                    "mode": "chose"
+                                                },
+                                                "fldqAZk4Jf0C5Z4uH": {
+                                                    "mode": "edit"
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "fldhnCIY8yPHW8XEj",
+                                                "type": "text",
+                                                "label": "nombre_archivo"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldUYBO3LeOHxiIGW",
+                                                "type": "select",
+                                                "label": "tipo"
+                                            },
+                                            {
+                                                "name": "fldEccoUrOjV7oKZ5",
+                                                "type": "text",
+                                                "label": "url_dropbox"
+                                            },
+                                            {
+                                                "name": "fld3AAAV0P496yZP0",
+                                                "type": "text",
+                                                "label": "thumbnail_url"
+                                            },
+                                            {
+                                                "name": "fldLgyE0fdGOvuFAy",
+                                                "type": "number",
+                                                "label": "tamanio_kb"
+                                            },
+                                            {
+                                                "name": "fldyhpVhzD5eVfbRZ",
+                                                "type": "text",
+                                                "label": "mime_type"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldqAZk4Jf0C5Z4uH",
+                                                "type": "select",
+                                                "label": "subido_por"
+                                            },
+                                            {
+                                                "name": "fldLdCyamAmiNAb6f",
+                                                "time": true,
+                                                "type": "date",
+                                                "label": "subido_en"
+                                            },
+                                            {
+                                                "name": "fldNlxI8UVQTebdFQ",
+                                                "type": "boolean",
+                                                "label": "procesado_por_ia"
+                                            },
+                                            {
+                                                "name": "fld9shmoBhZyNTK8x",
+                                                "type": "text",
+                                                "label": "hash_md5"
+                                            },
+                                            {
+                                                "name": "fldZTVpXDRtXXPjyv",
+                                                "spec": {
+                                                    "name": "value",
+                                                    "label": "Record ID"
+                                                },
+                                                "type": "array",
+                                                "label": "solicitud"
+                                            },
+                                            {
+                                                "name": "fldaLLtzAaEn1O8IW",
+                                                "type": "text",
+                                                "label": "clave_adjunto"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fld1ocY8ug1vzBQsj",
+                                                "type": "select",
+                                                "label": "tipo_adjunto"
+                                            },
+                                            {
+                                                "name": "fld0t0ytqAkd3bzvd",
+                                                "type": "number",
+                                                "label": "orden"
+                                            },
+                                            {
+                                                "name": "fldsG18353kHMw0yQ",
+                                                "type": "text",
+                                                "label": "descripcion"
+                                            },
+                                            {
+                                                "name": "fldhKxTGC76faGGv3",
+                                                "type": "boolean",
+                                                "label": "requerido_por_ejecutiva"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fld54epvDJ7YdJIYD",
+                                                "type": "select",
+                                                "label": "estado_extraccion"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "nombre_archivo",
+                                        "type": "text",
+                                        "label": "nombre_archivo"
+                                    },
+                                    {
+                                        "name": "tipo",
+                                        "type": "text",
+                                        "label": "tipo"
+                                    },
+                                    {
+                                        "name": "url_dropbox",
+                                        "type": "text",
+                                        "label": "url_dropbox"
+                                    },
+                                    {
+                                        "name": "thumbnail_url",
+                                        "type": "text",
+                                        "label": "thumbnail_url"
+                                    },
+                                    {
+                                        "name": "tamanio_kb",
+                                        "type": "number",
+                                        "label": "tamanio_kb"
+                                    },
+                                    {
+                                        "name": "mime_type",
+                                        "type": "text",
+                                        "label": "mime_type"
+                                    },
+                                    {
+                                        "name": "subido_por",
+                                        "type": "text",
+                                        "label": "subido_por"
+                                    },
+                                    {
+                                        "name": "subido_en",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "subido_en"
+                                    },
+                                    {
+                                        "name": "procesado_por_ia",
+                                        "type": "boolean",
+                                        "label": "procesado_por_ia"
+                                    },
+                                    {
+                                        "name": "hash_md5",
+                                        "type": "text",
+                                        "label": "hash_md5"
+                                    },
+                                    {
+                                        "name": "solicitud",
+                                        "spec": {
+                                            "label": "Record ID"
+                                        },
+                                        "type": "array",
+                                        "label": "solicitud"
+                                    },
+                                    {
+                                        "name": "adjunto_id",
+                                        "type": "number",
+                                        "label": "adjunto_id"
+                                    },
+                                    {
+                                        "name": "clave_adjunto",
+                                        "type": "text",
+                                        "label": "clave_adjunto"
+                                    },
+                                    {
+                                        "name": "tipo_adjunto",
+                                        "type": "text",
+                                        "label": "tipo_adjunto"
+                                    },
+                                    {
+                                        "name": "orden",
+                                        "type": "number",
+                                        "label": "orden"
+                                    },
+                                    {
+                                        "name": "descripcion",
+                                        "type": "text",
+                                        "label": "descripcion"
+                                    },
+                                    {
+                                        "name": "fecha_subida",
+                                        "type": "date",
+                                        "label": "fecha_subida"
+                                    },
+                                    {
+                                        "name": "requerido_por_ejecutiva",
+                                        "type": "boolean",
+                                        "label": "requerido_por_ejecutiva"
+                                    },
+                                    {
+                                        "name": "estado_extraccion",
+                                        "type": "text",
+                                        "label": "estado_extraccion"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 9,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblR4VWpUHw1CSyIS",
+                                "record": {},
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 150
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "LogEscenarios (tblR4VWpUHw1CSyIS)",
+                                            "nested": [
+                                                {
+                                                    "name": "record",
+                                                    "spec": [
+                                                        {
+                                                            "name": "fldOLYPMstZl1cct6",
+                                                            "type": "text",
+                                                            "label": "Titulo Log"
+                                                        },
+                                                        {
+                                                            "name": "fldGRchH2Cc82fO4b",
+                                                            "time": true,
+                                                            "type": "date",
+                                                            "label": "Fecha / Hora"
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldPktGeTzNCRQ319",
+                                                            "type": "select",
+                                                            "label": "Escenario",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "Email tasador",
+                                                                    "value": "Email tasador"
+                                                                },
+                                                                {
+                                                                    "label": "Email cliente visita",
+                                                                    "value": "Email cliente visita"
+                                                                },
+                                                                {
+                                                                    "label": "Alerta SLA 2d",
+                                                                    "value": "Alerta SLA 2d"
+                                                                },
+                                                                {
+                                                                    "label": "Alerta SLA 3d",
+                                                                    "value": "Alerta SLA 3d"
+                                                                },
+                                                                {
+                                                                    "label": "Email informe PDF",
+                                                                    "value": "Email informe PDF"
+                                                                },
+                                                                {
+                                                                    "label": "UF diaria",
+                                                                    "value": "UF diaria"
+                                                                },
+                                                                {
+                                                                    "label": "Solicitud repetida",
+                                                                    "value": "Solicitud repetida"
+                                                                },
+                                                                {
+                                                                    "label": "Informe visado",
+                                                                    "value": "Informe visado"
+                                                                },
+                                                                {
+                                                                    "label": "E1_Airtable_Make",
+                                                                    "value": "E1_Airtable_Make"
+                                                                },
+                                                                {
+                                                                    "label": "E2_Carbone_Render",
+                                                                    "value": "E2_Carbone_Render"
+                                                                },
+                                                                {
+                                                                    "label": "E3_Carbone_Download_Dropbox",
+                                                                    "value": "E3_Carbone_Download_Dropbox"
+                                                                },
+                                                                {
+                                                                    "label": "E4_Notificacion_Email",
+                                                                    "value": "E4_Notificacion_Email"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "mode": "edit",
+                                                            "name": "fldTzSpyzbj1EOa7F",
+                                                            "type": "select",
+                                                            "label": "Estado",
+                                                            "dynamic": true,
+                                                            "options": [
+                                                                {
+                                                                    "label": "✓ OK",
+                                                                    "value": "✓ OK"
+                                                                },
+                                                                {
+                                                                    "label": "✗ Error",
+                                                                    "value": "✗ Error"
+                                                                },
+                                                                {
+                                                                    "label": "⚠ Parcial",
+                                                                    "value": "⚠ Parcial"
+                                                                },
+                                                                {
+                                                                    "label": "⏭ Omitido",
+                                                                    "value": "⏭ Omitido"
+                                                                }
+                                                            ],
+                                                            "validate": false
+                                                        },
+                                                        {
+                                                            "name": "fldvgIczpgBQJe2Lx",
+                                                            "type": "text",
+                                                            "label": "Trigger"
+                                                        },
+                                                        {
+                                                            "name": "fld8wqOuOfUuN1RCo",
+                                                            "type": "text",
+                                                            "label": "Destinatario"
+                                                        },
+                                                        {
+                                                            "name": "fldv9dn00kM8kNjDL",
+                                                            "type": "text",
+                                                            "label": "Detalle",
+                                                            "multiline": true
+                                                        },
+                                                        {
+                                                            "name": "fldFQYOwb1eHkLtbl",
+                                                            "type": "number",
+                                                            "label": "Duracion ms"
+                                                        },
+                                                        {
+                                                            "name": "flddQtQpV0jveyjEC",
+                                                            "type": "number",
+                                                            "label": "Reintentos"
+                                                        },
+                                                        {
+                                                            "name": "fldsBdTiOOKnDsE9K",
+                                                            "type": "text",
+                                                            "label": "ID Make"
+                                                        },
+                                                        {
+                                                            "name": "fldLHWGlkTZNTESOF",
+                                                            "type": "text",
+                                                            "label": "Solicitud"
+                                                        }
+                                                    ],
+                                                    "type": "collection",
+                                                    "label": "Record"
+                                                }
+                                            ]
+                                        },
+                                        "record": {
+                                            "nested": {
+                                                "fldPktGeTzNCRQ319": {
+                                                    "mode": "edit"
+                                                },
+                                                "fldTzSpyzbj1EOa7F": {
+                                                    "mode": "edit"
+                                                }
+                                            }
+                                        },
+                                        "typecast": {
+                                            "mode": "chose"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "typecast",
+                                        "type": "boolean",
+                                        "label": "Smart links",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "record",
+                                        "spec": [
+                                            {
+                                                "name": "fldOLYPMstZl1cct6",
+                                                "type": "text",
+                                                "label": "Titulo Log"
+                                            },
+                                            {
+                                                "name": "fldGRchH2Cc82fO4b",
+                                                "time": true,
+                                                "type": "date",
+                                                "label": "Fecha / Hora"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldPktGeTzNCRQ319",
+                                                "type": "select",
+                                                "label": "Escenario"
+                                            },
+                                            {
+                                                "mode": "edit",
+                                                "name": "fldTzSpyzbj1EOa7F",
+                                                "type": "select",
+                                                "label": "Estado"
+                                            },
+                                            {
+                                                "name": "fldvgIczpgBQJe2Lx",
+                                                "type": "text",
+                                                "label": "Trigger"
+                                            },
+                                            {
+                                                "name": "fld8wqOuOfUuN1RCo",
+                                                "type": "text",
+                                                "label": "Destinatario"
+                                            },
+                                            {
+                                                "name": "fldv9dn00kM8kNjDL",
+                                                "type": "text",
+                                                "label": "Detalle"
+                                            },
+                                            {
+                                                "name": "fldFQYOwb1eHkLtbl",
+                                                "type": "number",
+                                                "label": "Duracion ms"
+                                            },
+                                            {
+                                                "name": "flddQtQpV0jveyjEC",
+                                                "type": "number",
+                                                "label": "Reintentos"
+                                            },
+                                            {
+                                                "name": "fldsBdTiOOKnDsE9K",
+                                                "type": "text",
+                                                "label": "ID Make"
+                                            },
+                                            {
+                                                "name": "fldLHWGlkTZNTESOF",
+                                                "type": "text",
+                                                "label": "Solicitud"
+                                            }
+                                        ],
+                                        "type": "collection",
+                                        "label": "Record"
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "createdTime",
+                                        "type": "date",
+                                        "label": "Created Time"
+                                    },
+                                    {
+                                        "name": "Titulo Log",
+                                        "type": "text",
+                                        "label": "Titulo Log"
+                                    },
+                                    {
+                                        "name": "Fecha / Hora",
+                                        "time": true,
+                                        "type": "date",
+                                        "label": "Fecha / Hora"
+                                    },
+                                    {
+                                        "name": "Escenario",
+                                        "type": "text",
+                                        "label": "Escenario"
+                                    },
+                                    {
+                                        "name": "Estado",
+                                        "type": "text",
+                                        "label": "Estado"
+                                    },
+                                    {
+                                        "name": "Trigger",
+                                        "type": "text",
+                                        "label": "Trigger"
+                                    },
+                                    {
+                                        "name": "Destinatario",
+                                        "type": "text",
+                                        "label": "Destinatario"
+                                    },
+                                    {
+                                        "name": "Detalle",
+                                        "type": "text",
+                                        "label": "Detalle",
+                                        "multiline": true
+                                    },
+                                    {
+                                        "name": "Duracion ms",
+                                        "type": "number",
+                                        "label": "Duracion ms"
+                                    },
+                                    {
+                                        "name": "Reintentos",
+                                        "type": "number",
+                                        "label": "Reintentos"
+                                    },
+                                    {
+                                        "name": "ID Make",
+                                        "type": "text",
+                                        "label": "ID Make"
+                                    },
+                                    {
+                                        "name": "Solicitud",
+                                        "type": "text",
+                                        "label": "Solicitud"
+                                    },
+                                    {
+                                        "name": "ultima_modificacion",
+                                        "type": "date",
+                                        "label": "ultima_modificacion"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 10,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "body": "{\"ok\": true, \"adjunto_id\": \"{{8.adjunto_id}}\", \"url_dropbox\": \"{{6.path_display}}\", \"nombre_archivo\": \"{{1.nombre_archivo}}\", \"tamanio_kb\": {{1.tamanio_kb}}, \"reused\": false}",
+                                "status": "200",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 150
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "text",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "type": "array",
+                                        "label": "Headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": true,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "eu1.make.com",
+        "notes": []
+    }
+}

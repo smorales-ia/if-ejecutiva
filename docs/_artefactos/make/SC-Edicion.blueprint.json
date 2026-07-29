@@ -1953,51 +1953,51 @@
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblaHTyMHYfmy7Fg6",
                 "record": {
+                    "fld1RBNe63iotfyqE": "{{parseNumber(1.cambios.financieroPrecioVentaUf)}}",
                     "fld2rd2p4Qpz6NFQ2": "{{1.cambios.solicitanteNombre}}",
+                    "fld5WjnkIN9DYs7vX": "{{parseNumber(1.cambios.financieroAhorroUf)}}",
                     "fld701TB0LXovvQmt": "{{8.id}}",
                     "fld7jxcbmMYz6kmbj": "{{1.cambios.clienteFinalNombre}}",
                     "fld9FKZ9siAeSsH54": "{{1.cambios.prioridad}}",
+                    "fld9TnWG2OJFx1hiW": "{{parseNumber(1.cambios.financieroBonoIntegracionUf)}}",
+                    "fldAcyXYAppvBlXIt": "{{parseNumber(1.cambios.financieroBonoCaptacionUf)}}",
+                    "fldAgTlFXeXWfGTdI": "{{1.cambios.bancoId}}",
+                    "fldBJovAv2RpsaupH": "{{1.cambios.modoCreacion}}",
+                    "fldDFfws74GaHO4oV": "{{parseNumber(1.cambios.financieroPagoContadoUf)}}",
+                    "fldEbxQzz5g0Knupv": "{{parseNumber(1.cambios.financieroMutuoUf)}}",
+                    "fldHxx1P1ao33PWrl": "{{1.cambios.tipoPropiedadNuevoUsado}}",
                     "fldJO4JtsDEeMmjdi": "{{7.id}}",
                     "fldJTjjzCPBHMOWZv": "{{10.id}}",
                     "fldKP0yxwQkSdrFuZ": "{{1.cambios.direccion}}",
                     "fldKZW799xIqMFN1I": "{{parseNumber(1.cambios.montoEstimadoUf)}}",
+                    "fldM9ELuMvgRwbmUn": "{{1.cambios.ejecutivoFormalizador}}",
+                    "fldMRFFXv9rOVfQlf": "{{1.cambios.vendedorTipoPersona}}",
+                    "fldNkFwB5p3Mljtrg": "{{1.cambios.vendedorRazonSocialONombre}}",
+                    "fldPphw1FWfYdZI2Z": "{{1.cambios.origenCanal}}",
+                    "fldRmC7IjhRUf1UPk": "{{parseNumber(1.cambios.financieroSubsidioUf)}}",
                     "fldRweQyq3tTQGmPR": "{{1.cambios.ejecutivoSolicitante}}",
                     "fldb1vmKk7y3hi4uY": "{{parseNumber(1.cambios.nOperacionCliente)}}",
+                    "fldbxZh45lFTB7yVJ": "{{1.cambios.tipoClienteOrigen}}",
+                    "fldcKVbfRBo8J7gtg": "{{1.cambios.correoClienteRef}}",
+                    "fldca1Uza4eicBXL4": "{{1.cambios.canal}}",
+                    "fldcjrl80Vv1WBmmY": "{{1.cambios.vendedorOrigenDato}}",
                     "fldd56pLZyKYoi2Vi": "{{1.cambios.sucursalOriginadora}}",
+                    "flde0ExWfB1dhkp4t": "{{1.cambios.estadoConservacion}}",
+                    "fldf8BS8nv2vtOmu0": "{{if(1.cambios.fechaAsignacion; parseDate(1.cambios.fechaAsignacion))}}",
+                    "fldhy81fNSE5CF2Tc": "{{1.cambios.emailThreadId}}",
+                    "fldiwBMHujptXHr2D": "{{1.cambios.origenDireccion}}",
                     "fldjmx9pLOyJKx1Mw": "{{1.cambios.observaciones}}",
                     "fldjzUZsACA0vDlUq": "{{1.cambios.emailContacto}}",
+                    "fldp4XCnx8jsfAzZx": "{{parseNumber(1.cambios.financieroValorTotalUf)}}",
                     "fldp64U99lsLf7HlV": "{{9.id}}",
+                    "fldrITDFkbk95Da00": "{{1.cambios.vendedorRut}}",
                     "fldttL5myzLohDwHv": "{{6.id}}",
+                    "flduBKof3x45EpTNW": "{{1.cambios.vendedorEmail}}",
+                    "flduslI2FNAdcPchK": "{{1.cambios.vendedorTelefono}}",
                     "fldwNEPL8fXkWwUBd": "{{1.cambios.clienteFinalRut}}",
                     "fldxcfdKRctHCgwmB": "{{11.id}}",
                     "fldy8081DUFzVXe01": "{{1.cambios.region}}",
-                    "fldzHrLeO3Fe0xtvn": "{{1.cambios.solicitanteTelefono}}",
-                    "fldca1Uza4eicBXL4": "{{1.cambios.canal}}",
-                    "fldPphw1FWfYdZI2Z": "{{1.cambios.origenCanal}}",
-                    "fldAgTlFXeXWfGTdI": "{{1.cambios.bancoId}}",
-                    "fldhy81fNSE5CF2Tc": "{{1.cambios.emailThreadId}}",
-                    "fldcKVbfRBo8J7gtg": "{{1.cambios.correoClienteRef}}",
-                    "fldiwBMHujptXHr2D": "{{1.cambios.origenDireccion}}",
-                    "fldbxZh45lFTB7yVJ": "{{1.cambios.tipoClienteOrigen}}",
-                    "fldBJovAv2RpsaupH": "{{1.cambios.modoCreacion}}",
-                    "fldM9ELuMvgRwbmUn": "{{1.cambios.ejecutivoFormalizador}}",
-                    "flde0ExWfB1dhkp4t": "{{1.cambios.estadoConservacion}}",
-                    "fldMRFFXv9rOVfQlf": "{{1.cambios.vendedorTipoPersona}}",
-                    "fldNkFwB5p3Mljtrg": "{{1.cambios.vendedorRazonSocialONombre}}",
-                    "fldrITDFkbk95Da00": "{{1.cambios.vendedorRut}}",
-                    "flduBKof3x45EpTNW": "{{1.cambios.vendedorEmail}}",
-                    "flduslI2FNAdcPchK": "{{1.cambios.vendedorTelefono}}",
-                    "fldcjrl80Vv1WBmmY": "{{1.cambios.vendedorOrigenDato}}",
-                    "fldp4XCnx8jsfAzZx": "{{parseNumber(1.cambios.financieroValorTotalUf)}}",
-                    "fldRmC7IjhRUf1UPk": "{{parseNumber(1.cambios.financieroSubsidioUf)}}",
-                    "fld5WjnkIN9DYs7vX": "{{parseNumber(1.cambios.financieroAhorroUf)}}",
-                    "fldEbxQzz5g0Knupv": "{{parseNumber(1.cambios.financieroMutuoUf)}}",
-                    "fldDFfws74GaHO4oV": "{{parseNumber(1.cambios.financieroPagoContadoUf)}}",
-                    "fldAcyXYAppvBlXIt": "{{parseNumber(1.cambios.financieroBonoCaptacionUf)}}",
-                    "fld9TnWG2OJFx1hiW": "{{parseNumber(1.cambios.financieroBonoIntegracionUf)}}",
-                    "fld1RBNe63iotfyqE": "{{parseNumber(1.cambios.financieroPrecioVentaUf)}}",
-                    "fldHxx1P1ao33PWrl": "{{1.cambios.tipoPropiedadNuevoUsado}}",
-                    "fldf8BS8nv2vtOmu0": "{{if(1.cambios.fechaAsignacion; parseDate(1.cambios.fechaAsignacion))}}"
+                    "fldzHrLeO3Fe0xtvn": "{{1.cambios.solicitanteTelefono}}"
                 },
                 "typecast": true,
                 "useColumnId": false
@@ -4348,15 +4348,6 @@
                     "name": "Buscar contactos actuales"
                 },
                 "restore": {
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "airtable2"
-                            },
-                            "label": "Airtable VProperty"
-                        }
-                    },
                     "expect": {
                         "base": {
                             "mode": "chose",
@@ -4365,6 +4356,15 @@
                         "table": {
                             "mode": "chose",
                             "label": "TX_ContactosVisita"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
                         }
                     }
                 },
@@ -4414,6 +4414,22 @@
             "parameters": {
                 "__IMTCONN__": 8847431
             },
+            "filter": {
+                "name": "Solo si hay id de contacto",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{12.id}}",
+                            "o": "exist"
+                        },
+                        {
+                            "a": "{{12.id}}",
+                            "b": "",
+                            "o": "notequal"
+                        }
+                    ]
+                ]
+            },
             "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblW3SSbKo6vRjwBJ",
@@ -4426,15 +4442,6 @@
                     "name": "Borrar contacto viejo"
                 },
                 "restore": {
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "airtable2"
-                            },
-                            "label": "Airtable VProperty"
-                        }
-                    },
                     "expect": {
                         "base": {
                             "mode": "chose",
@@ -4443,6 +4450,15 @@
                         "table": {
                             "mode": "chose",
                             "label": "TX_ContactosVisita"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
                         }
                     }
                 },
@@ -4473,22 +4489,6 @@
                         "label": "Record ID",
                         "required": true
                     }
-                ]
-            },
-            "filter": {
-                "name": "Solo si hay id de contacto",
-                "conditions": [
-                    [
-                        {
-                            "a": "{{12.id}}",
-                            "o": "exist"
-                        },
-                        {
-                            "a": "{{12.id}}",
-                            "o": "notequal",
-                            "b": ""
-                        }
-                    ]
                 ]
             }
         },
@@ -4569,13 +4569,13 @@
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblW3SSbKo6vRjwBJ",
                 "record": {
-                    "fldOTpkaWOkkxzJoc": "{{18.nombre}}",
                     "fld8Rai7BCgfKS8F8": "{{18.telefono}}",
                     "fldHTPcQgIvAP6QlP": "{{18.email}}",
-                    "fldeTuIlU6uxDYwHY": "{{18.rol}}",
                     "fldL93B1kOZZ1pNFs": "{{18.orden_prioridad}}",
                     "fldMerAz4OCNhwn4X": "{{18.estado_contacto}}",
-                    "fldSQAKu5ooRgF5uw": "{{1.solicitudId}}"
+                    "fldOTpkaWOkkxzJoc": "{{18.nombre}}",
+                    "fldSQAKu5ooRgF5uw": "{{1.solicitudId}}",
+                    "fldeTuIlU6uxDYwHY": "{{18.rol}}"
                 },
                 "typecast": true,
                 "useColumnId": false
@@ -4587,15 +4587,6 @@
                     "name": "Crear contacto nuevo"
                 },
                 "restore": {
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": {
-                                "scoped": "true",
-                                "connection": "airtable2"
-                            },
-                            "label": "Airtable VProperty"
-                        }
-                    },
                     "expect": {
                         "base": {
                             "mode": "chose",
@@ -4604,6 +4595,15 @@
                         "table": {
                             "mode": "chose",
                             "label": "TX_ContactosVisita"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
                         }
                     }
                 },

@@ -822,8 +822,8 @@
             "parameters": {
                 "feeder": 4,
                 "rowSeparator": "other",
-                "stopProcessingAfterEmpty": true,
-                "otherRowSeparator": ","
+                "otherRowSeparator": ",",
+                "stopProcessingAfterEmpty": true
             },
             "mapper": {
                 "value": "{'codigo_atributo':'{{4.codigo_atributo}}','nombre_atributo':'{{4.nombre_atributo}}','tipo_dato':'{{4.tipo_dato}}','obligatorio':'{{4.obligatorio}}','etiqueta_local':'{{4.etiqueta_local}}','ejemplo_atributo':'{{4.ejemplo_atributo}}','uso_campo_destino':'{{4.uso_campo_destino}}','uso_tabla_destino':'{{4.uso_tabla_destino}}','usado_motor_calculo':'{{4.usado_motor_calculo}}','uso_campo_link_unidad':'{{4.uso_campo_link_unidad}}','uso_cardinalidad_destino':'{{4.uso_cardinalidad_destino}}'}"
@@ -5761,7 +5761,7 @@
     ],
     "metadata": {
         "instant": true,
-        "version": 2,
+        "version": 1,
         "scenario": {
             "roundtrips": 1,
             "maxErrors": 3,

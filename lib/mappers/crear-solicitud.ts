@@ -274,12 +274,30 @@ export function toMakeSnakePayload(
   }
 
   // ── Contactos de visita ─────────────────────────────────────────────────
-  // El Router 16 filtra por `exist` sobre esta clave y el Iterator 17 la
-  // recorre; ambos apuntan a `contactos_visita` desde el delta del 27-jul. El
-  // zod garantiza al menos un contacto, así que el array nunca va vacío — si
-  // lo estuviera, el filtro descartaría la rama y no se crearía ninguna fila
-  // en TX_ContactosVisita sin error visible en Make.
-  payload.contactos_visita = datos.contactosVisita.map(mapearContacto)
+  // Se envía **serializado y bajo una clave nueva**, no como array bajo
+  // `contactos_visita`. Dos razones, en este orden:
+  //
+  // 1. El webhook de Make deriva su estructura del último payload recibido
+  //    ("Determine data structure automatically"). Mientras `contactos_visita`
+  //    siga viajando como array de objetos, el hook conserva la estructura
+  //    memorizada que producía filas corruptas en TX_ContactosVisita. Una clave
+  //    nueva de tipo `text` no tiene estructura que memorizar, así que no puede
+  //    heredar la corrupción.
+  // 2. El blueprint la consume con un módulo `json:ParseJSON` dedicado, que con
+  //    raíz array emite un bundle por contacto — sin Iterator. Es la misma
+  //    topología que SC-Edicion usa contra esta misma tabla (`contactosVisitaJson`,
+  //    editar-solicitud.ts:199), ya verificada en producción.
+  //
+  // El Router 16 filtra por `exist` sobre esta clave. El zod garantiza al menos
+  // un contacto, así que el array nunca va vacío — si lo estuviera, el filtro
+  // descartaría la rama y no se crearía ninguna fila sin error visible en Make.
+  //
+  // ⚠ El escenario desplegado debe importar el blueprint nuevo antes de que
+  // esta versión llegue a producción: el SC01 viejo lee `contactos_visita` y
+  // dejaría de crear contactos, reportando Success igualmente.
+  payload.contactos_visita_json = JSON.stringify(
+    datos.contactosVisita.map(mapearContacto),
+  )
 
   return payload
 }

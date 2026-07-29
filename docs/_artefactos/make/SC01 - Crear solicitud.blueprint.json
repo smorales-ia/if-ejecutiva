@@ -40,119 +40,7 @@
                 ],
                 "interface": [
                     {
-                        "name": "banco_id",
-                        "type": "text"
-                    },
-                    {
-                        "name": "documentos",
-                        "type": "array"
-                    },
-                    {
-                        "name": "nombre",
-                        "type": "text"
-                    },
-                    {
-                        "name": "producto",
-                        "type": "text"
-                    },
-                    {
-                        "name": "canal",
-                        "type": "text"
-                    },
-                    {
-                        "name": "tipo_propiedad",
-                        "type": "text"
-                    },
-                    {
-                        "name": "email",
-                        "type": "text"
-                    },
-                    {
-                        "name": "sucursal_originadora",
-                        "type": "text"
-                    },
-                    {
-                        "name": "cliente",
-                        "type": "text"
-                    },
-                    {
-                        "name": "region",
-                        "type": "text"
-                    },
-                    {
-                        "name": "n_operacion_cliente",
-                        "type": "text"
-                    },
-                    {
-                        "name": "comuna",
-                        "type": "text"
-                    },
-                    {
-                        "name": "rut",
-                        "type": "text"
-                    },
-                    {
-                        "name": "origen_canal",
-                        "type": "text"
-                    },
-                    {
-                        "name": "direccion",
-                        "type": "text"
-                    },
-                    {
                         "name": "telefono",
-                        "type": "text"
-                    },
-                    {
-                        "name": "ejecutivo_solicitante",
-                        "type": "text"
-                    },
-                    {
-                        "name": "banco_financista_nombre",
-                        "type": "text"
-                    },
-                    {
-                        "name": "tipo_informe",
-                        "type": "text"
-                    },
-                    {
-                        "name": "observaciones",
-                        "type": "text"
-                    },
-                    {
-                        "name": "valor_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "ejecutivo_formalizador",
-                        "type": "text"
-                    },
-                    {
-                        "name": "modo_creacion",
-                        "type": "text"
-                    },
-                    {
-                        "name": "tipo_cliente_origen",
-                        "type": "text"
-                    },
-                    {
-                        "name": "email_thread_id",
-                        "type": "text"
-                    },
-                    {
-                        "name": "correo_cliente_ref",
-                        "type": "text"
-                    },
-                    {
-                        "name": "estado_conservacion",
-                        "type": "text"
-                    },
-                    {
-                        "name": "origen_direccion",
-                        "type": "text"
-                    },
-                    {
-                        "name": "vendedor_tipo_persona",
                         "type": "text"
                     },
                     {
@@ -160,51 +48,11 @@
                         "type": "text"
                     },
                     {
-                        "name": "vendedor_rut",
+                        "name": "email_thread_id",
                         "type": "text"
                     },
                     {
-                        "name": "vendedor_email",
-                        "type": "text"
-                    },
-                    {
-                        "name": "vendedor_telefono",
-                        "type": "text"
-                    },
-                    {
-                        "name": "vendedor_origen_dato",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_valor_total_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_subsidio_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_ahorro_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_mutuo_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_pago_contado_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_bono_captacion_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_bono_integracion_uf",
-                        "type": "text"
-                    },
-                    {
-                        "name": "financiero_precio_venta_uf",
+                        "name": "direccion",
                         "type": "text"
                     },
                     {
@@ -212,11 +60,155 @@
                         "type": "text"
                     },
                     {
+                        "name": "nombre",
+                        "type": "text"
+                    },
+                    {
+                        "name": "correo_cliente_ref",
+                        "type": "text"
+                    },
+                    {
+                        "name": "banco_id",
+                        "type": "text"
+                    },
+                    {
+                        "name": "email",
+                        "type": "text"
+                    },
+                    {
+                        "name": "valor_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "vendedor_tipo_persona",
+                        "type": "text"
+                    },
+                    {
+                        "name": "financiero_pago_contado_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "vendedor_telefono",
+                        "type": "text"
+                    },
+                    {
+                        "name": "vendedor_rut",
+                        "type": "text"
+                    },
+                    {
+                        "name": "ejecutivo_formalizador",
+                        "type": "text"
+                    },
+                    {
+                        "name": "financiero_ahorro_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "tipo_cliente_origen",
+                        "type": "text"
+                    },
+                    {
+                        "name": "origen_canal",
+                        "type": "text"
+                    },
+                    {
+                        "name": "financiero_subsidio_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "vendedor_email",
+                        "type": "text"
+                    },
+                    {
+                        "name": "sucursal_originadora",
+                        "type": "text"
+                    },
+                    {
+                        "name": "financiero_bono_captacion_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "comuna",
+                        "type": "text"
+                    },
+                    {
+                        "name": "tipo_informe",
+                        "type": "text"
+                    },
+                    {
+                        "name": "estado_conservacion",
+                        "type": "text"
+                    },
+                    {
+                        "name": "contactos_visita_json",
+                        "type": "text"
+                    },
+                    {
+                        "name": "banco_financista_nombre",
+                        "type": "text"
+                    },
+                    {
+                        "name": "observaciones",
+                        "type": "text"
+                    },
+                    {
+                        "name": "financiero_valor_total_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "documentos",
+                        "type": "array"
+                    },
+                    {
+                        "name": "proyecto",
+                        "type": "text"
+                    },
+                    {
+                        "name": "rut",
+                        "type": "text"
+                    },
+                    {
+                        "name": "financiero_mutuo_uf",
+                        "type": "text"
+                    },
+                    {
                         "name": "fecha_asignacion",
                         "type": "text"
                     },
                     {
-                        "name": "proyecto",
+                        "name": "financiero_bono_integracion_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "tipo_propiedad",
+                        "type": "text"
+                    },
+                    {
+                        "name": "n_operacion_cliente",
+                        "type": "text"
+                    },
+                    {
+                        "name": "canal",
+                        "type": "text"
+                    },
+                    {
+                        "name": "origen_direccion",
+                        "type": "text"
+                    },
+                    {
+                        "name": "cliente",
+                        "type": "text"
+                    },
+                    {
+                        "name": "modo_creacion",
+                        "type": "text"
+                    },
+                    {
+                        "name": "ejecutivo_solicitante",
+                        "type": "text"
+                    },
+                    {
+                        "name": "vendedor_origen_dato",
                         "type": "text"
                     },
                     {
@@ -224,40 +216,16 @@
                         "type": "text"
                     },
                     {
-                        "name": "contactos_visita",
-                        "spec": [
-                            {
-                                "name": "nombre",
-                                "type": "text",
-                                "label": "nombre"
-                            },
-                            {
-                                "name": "telefono",
-                                "type": "text",
-                                "label": "telefono"
-                            },
-                            {
-                                "name": "email",
-                                "type": "text",
-                                "label": "email"
-                            },
-                            {
-                                "name": "rol",
-                                "type": "text",
-                                "label": "rol"
-                            },
-                            {
-                                "name": "orden_prioridad",
-                                "type": "number",
-                                "label": "orden_prioridad"
-                            },
-                            {
-                                "name": "estado_contacto",
-                                "type": "text",
-                                "label": "estado_contacto"
-                            }
-                        ],
-                        "type": "array"
+                        "name": "producto",
+                        "type": "text"
+                    },
+                    {
+                        "name": "financiero_precio_venta_uf",
+                        "type": "text"
+                    },
+                    {
+                        "name": "region",
+                        "type": "text"
                     }
                 ]
             }
@@ -4339,35 +4307,51 @@
                 {
                     "flow": [
                         {
-                            "id": 17,
-                            "module": "builtin:BasicFeeder",
+                            "id": 19,
+                            "module": "json:ParseJSON",
                             "version": 1,
+                            "parameters": {
+                                "type": ""
+                            },
+                            "mapper": {
+                                "json": "{{1.contactos_visita_json}}"
+                            },
                             "filter": {
-                                "name": "contactos_visita existe",
+                                "name": "contactos_visita_json existe",
                                 "conditions": [
                                     [
                                         {
-                                            "a": "{{1.contactos_visita}}",
+                                            "a": "{{1.contactos_visita_json}}",
                                             "o": "exist"
                                         }
                                     ]
                                 ]
                             },
-                            "mapper": {
-                                "array": "{{1.contactos_visita}}"
-                            },
                             "metadata": {
                                 "designer": {
                                     "x": 3000,
                                     "y": -150,
-                                    "name": "Iterator ContactosVisita"
+                                    "name": "Parse contactos"
                                 },
-                                "restore": {},
+                                "restore": {
+                                    "parameters": {
+                                        "type": {
+                                            "label": "Empty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "type",
+                                        "type": "udt",
+                                        "label": "Data structure"
+                                    }
+                                ],
                                 "expect": [
                                     {
-                                        "name": "array",
-                                        "type": "array",
-                                        "label": "Array",
+                                        "name": "json",
+                                        "type": "text",
+                                        "label": "JSON string",
                                         "required": true
                                     }
                                 ]
@@ -4384,13 +4368,13 @@
                                 "base": "app9G7lLkIV3CpeLa",
                                 "table": "tblW3SSbKo6vRjwBJ",
                                 "record": {
-                                    "fld8Rai7BCgfKS8F8": "{{17.telefono}}",
-                                    "fldHTPcQgIvAP6QlP": "{{17.email}}",
-                                    "fldL93B1kOZZ1pNFs": "{{17.orden_prioridad}}",
-                                    "fldMerAz4OCNhwn4X": "{{17.estado_contacto}}",
-                                    "fldOTpkaWOkkxzJoc": "{{17.nombre}}",
-                                    "fldSQAKu5ooRgF5uw": "{{7.id}}",
-                                    "fldeTuIlU6uxDYwHY": "{{17.rol}}"
+                                    "fldOTpkaWOkkxzJoc": "{{19.nombre}}",
+                                    "fld8Rai7BCgfKS8F8": "{{19.telefono}}",
+                                    "fldHTPcQgIvAP6QlP": "{{19.email}}",
+                                    "fldeTuIlU6uxDYwHY": "{{19.rol}}",
+                                    "fldL93B1kOZZ1pNFs": "{{19.orden_prioridad}}",
+                                    "fldMerAz4OCNhwn4X": "{{19.estado_contacto}}",
+                                    "fldSQAKu5ooRgF5uw": "{{7.id}}"
                                 },
                                 "typecast": true,
                                 "useColumnId": false
@@ -4420,7 +4404,8 @@
                                         "required": true
                                     }
                                 ]
-                            }
+                            },
+                            "filter": null
                         }
                     ]
                 },
