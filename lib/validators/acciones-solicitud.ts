@@ -19,15 +19,107 @@ export const asignarSolicitudSchema = z.object({
 })
 export type AsignarSolicitudPayload = z.infer<typeof asignarSolicitudSchema>
 
+/** Contacto de visita tal como viaja a SC-Edicion (snake_case ya mapeado). */
+const contactoVisitaSchema = z
+  .object({
+    nombre: z.string().min(1, "El contacto necesita un nombre."),
+    telefono: z.string(),
+    email: z.string(),
+    rol: z.string(),
+    orden_prioridad: z.number().int().positive(),
+    estado_contacto: z.string(),
+  })
+  .strict()
+
+/** Número que puede llegar como texto desde un `<input>`; "" ⇒ ausente. */
+const numeroOpcional = z.union([z.number(), z.string()]).optional()
+
 /**
  * REGLA C (edición parcial): en estado `creada` la ejecutiva puede modificar
  * todo. El detalle de validación de negocio de cada campo vive en el formulario
- * (REGLA B); aquí sólo exigimos un objeto con al menos un campo a modificar.
- * El Route Handler valida además, de forma defensiva, que el estado siga siendo
- * `creada` antes de reenviar a Make.
+ * (REGLA B); aquí se valida la **forma** del payload. El Route Handler verifica
+ * además, de forma defensiva, que el estado siga siendo `creada`.
+ *
+ * ⚠ Hasta la Tanda D-02 esto era `z.record(z.string(), z.unknown())`, que
+ * aceptaba **cualquier** clave con **cualquier** valor y sólo rechazaba el
+ * objeto vacío. Consecuencia: una clave mal escrita —o puesta en el nivel de
+ * anidamiento equivocado— pasaba la validación, viajaba a Make, el mapper la
+ * ignoraba por desconocida, Airtable no cambiaba, y la ruta devolvía 200 con
+ * toast verde. El *silent 200*. `.strict()` es la pieza que lo convierte en un
+ * 422 con `{campo, motivo}`, que es el contrato que la UI ya sabe mostrar.
+ *
+ * Las claves son exactamente las que el escenario SC-Edicion desplegado lee
+ * como `{{1.cambios.X}}` (45, verificadas contra el blueprint el 29-jul-2026).
+ * Añadir una clave aquí sin añadirla en Make la hace viajar y ser ignorada en
+ * silencio; el orden correcto es Make primero.
  */
 export const editarSolicitudSchema = z
-  .record(z.string(), z.unknown())
+  .object({
+    // Identificación y operación
+    nOperacionCliente: numeroOpcional,
+    sucursalOriginadora: z.string().optional(),
+    correoClienteRef: z.string().optional(),
+    ejecutivoSolicitante: z.string().optional(),
+    ejecutivoFormalizador: z.string().optional(),
+    emailThreadId: z.string().optional(),
+    modoCreacion: z.string().optional(),
+    tipoClienteOrigen: z.string().optional(),
+    origenCanal: z.string().optional(),
+    canal: z.string().optional(),
+    prioridad: z.string().optional(),
+    fechaAsignacion: z.string().optional(),
+
+    // Cliente final / comprador
+    cliente: z.string().optional(),
+    clienteFinalNombre: z.string().optional(),
+    clienteFinalRut: z.string().optional(),
+    emailContacto: z.string().optional(),
+    solicitanteNombre: z.string().optional(),
+    solicitanteTelefono: z.string().optional(),
+
+    // Propiedad
+    direccion: z.string().optional(),
+    comuna: z.string().optional(),
+    region: z.string().optional(),
+    origenDireccion: z.string().optional(),
+    tipoPropiedad: z.string().optional(),
+    tipoPropiedadNuevoUsado: z.string().optional(),
+    estadoConservacion: z.string().optional(),
+
+    // Producto / banco
+    tipoInforme: z.string().optional(),
+    producto: z.string().optional(),
+    bancoId: z.string().optional(),
+    bancoFinancista: z.string().optional(),
+    montoEstimadoUf: numeroOpcional,
+
+    // Vendedor
+    vendedorTipoPersona: z.string().optional(),
+    vendedorRazonSocialONombre: z.string().optional(),
+    vendedorRut: z.string().optional(),
+    vendedorEmail: z.string().optional(),
+    vendedorTelefono: z.string().optional(),
+    vendedorOrigenDato: z.string().optional(),
+
+    // Financiero
+    financieroValorTotalUf: numeroOpcional,
+    financieroSubsidioUf: numeroOpcional,
+    financieroAhorroUf: numeroOpcional,
+    financieroMutuoUf: numeroOpcional,
+    financieroPagoContadoUf: numeroOpcional,
+    financieroBonoCaptacionUf: numeroOpcional,
+    financieroBonoIntegracionUf: numeroOpcional,
+    financieroPrecioVentaUf: numeroOpcional,
+
+    // Libre
+    observaciones: z.string().optional(),
+
+    // Contactos de visita. Viajan **fuera** de `cambios` hacia Make (ver el
+    // Route Handler), pero entran por aquí y por eso se validan aquí.
+    contactosVisita: z.array(contactoVisitaSchema).optional(),
+    contactosVisitaJson: z.string().optional(),
+  })
+  .strict()
   .refine((o) => Object.keys(o).length > 0, "No hay cambios para guardar.")
 export type EditarSolicitudPayload = z.infer<typeof editarSolicitudSchema>
 

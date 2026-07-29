@@ -175,6 +175,54 @@ export interface Solicitud {
   emailThreadId?: string
   /** Nivel de SLA en español (verde/ámbar/rojo) — deriva de slaTone(). */
   nivelSla?: NivelSLA
+
+  // ── Campos operacionales de TX_Solicitudes (Tanda D-02, 29-jul-2026) ──────
+  // Todos opcionales: el tipo lo construyen también los 8 mocks de este archivo
+  // y el formulario de alta, que no los conocen. Se excluyen deliberadamente
+  // los ~17 `*_override` (motor AT01–AT10, fuera de CU-002) y los 8 `fin_*_uf`
+  // (duplicado histórico de `financiero_*_uf`, deuda ya registrada).
+
+  /** `n_operacion_cliente` — número de operación del cliente. Es `number` en
+   *  Airtable y texto en el formulario; aquí se conserva como number. */
+  nOperacionCliente?: number
+  /** `sucursal_originadora` — ⚠ el campo real tiene un espacio final en
+   *  Airtable (D-08), por eso se lee por FIELD_ID y no por nombre. */
+  sucursalOriginadora?: string
+  correoClienteRef?: string
+  /** `nro_interno` — folio interno del cliente. */
+  nroInterno?: string
+  /** `numero_solicitud` — distinto de `codigo_solicitud`; texto libre. */
+  numeroSolicitud?: string
+  /** `rol_sii` a nivel de solicitud (las unidades tienen el suyo propio). */
+  rolSii?: string
+  /** `notas` — nota genérica; no confundir con `observaciones_internas`. */
+  notas?: string
+  solicitanteNombre?: string
+  solicitanteTelefono?: string
+  profesionSolicitante?: string
+  /** `banco_financista` (link) — distinto del `banco` de texto plano. */
+  bancoFinancista?: string
+  origenDato?: string
+  velocidadVenta?: string
+  supTerrenoM2?: number
+  supConstruccionM2?: number
+  anioConstruccion?: number
+  valorComercialUf?: number
+  avaluoFiscalClp?: number
+  comisionOv?: number
+  ufDiaVisita?: number
+  /** `fecha_visita` — la real, distinta de `fecha_visita_programada`. */
+  fechaVisitaReal?: string
+  fechaEntrega?: string
+  fechaCierre?: string
+  pdfFinalUrl?: string
+  tienePendientesVisador?: boolean
+  /** `dias_desde_solicitud` — formula, read-only. */
+  diasDesdeSolicitud?: number
+  /** `fecha_creacion` (createdTime) — read-only, distinta de `fecha_solicitud`. */
+  fechaCreacion?: string
+  /** `ultima_modificacion` (lastModifiedTime) — read-only. */
+  ultimaModificacion?: string
 }
 
 export const ESTADO_LABELS: Record<EstadoSolicitud, string> = {

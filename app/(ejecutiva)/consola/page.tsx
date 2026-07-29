@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { ConsoleShell } from '@/components/console/console-shell'
 import { hydrateContactos } from '@/lib/contactos-visita'
+import { hydrateUnidades } from '@/lib/unidades'
 import {
   fetchSolicitudes,
   ORDENES_VALIDOS,
@@ -71,7 +72,21 @@ export default async function ConsolaPage({
   // porque RN-44 (solicitud-detail.tsx) evalúa los contactos de forma síncrona
   // para habilitar "Asignar tasador"; resolverlos en cliente haría parpadear
   // el botón. Degrada silenciosamente a `[]` si Airtable falla.
-  const solicitudes = await hydrateContactos(pagina)
+  // `hydrateUnidades` (D-02) va en el mismo punto y por la misma razón: RN-44
+  // evalúa `unidades` de forma síncrona para habilitar "Asignar Tasador"
+  // (Regla A). Mientras no se hidrataban, ese botón estaba permanentemente
+  // deshabilitado. Ambas lecturas son independientes entre sí, así que corren
+  // en paralelo sobre la misma página ya recortada (≤20 filas, 1 request c/u).
+  const [conContactos, conUnidades] = await Promise.all([
+    hydrateContactos(pagina),
+    hydrateUnidades(pagina),
+  ])
+  // Cada hidratador devuelve la lista completa tocando sólo su propio campo;
+  // se fusionan por índice, que es estable porque ambos parten de `pagina`.
+  const solicitudes = conContactos.map((s, i) => ({
+    ...s,
+    unidades: conUnidades[i]?.unidades ?? s.unidades,
+  }))
 
   return (
     <ConsoleShell

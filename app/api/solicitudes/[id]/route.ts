@@ -110,7 +110,29 @@ export async function PATCH(
     return NextResponse.json({ error: MSG_RED }, { status: 502 })
   }
 
-  const payload = { solicitudId: id, ejecutivaClerkId: userId, cambios: parsed.data }
+  // Los contactos viajan **a nivel raíz**, no dentro de `cambios`.
+  //
+  // No es un capricho: el escenario SC-Edicion desplegado lee los 45 campos
+  // escalares como `{{1.cambios.X}}` pero los contactos como
+  // `{{1.contactosVisitaJson}}` — verificado contra el blueprint el
+  // 29-jul-2026. Mientras el mapper los dejaba dentro de `cambios`, el módulo
+  // Parse JSON recibía vacío y el filtro `{{1.contactosVisitaJson}} exist` daba
+  // falso, así que **ni se borraban ni se recreaban** los contactos: Make
+  // reportaba Success, la ruta devolvía 200 y la UI mostraba el toast verde.
+  // Era el síntoma "Guardar no persiste los contactos" (Tanda D-02).
+  //
+  // Se descarta la forma array (`contactosVisita`): SC-Edicion no la lee, y
+  // dejarla viajar hace que el webhook memorice una estructura anidada que no
+  // usa nadie — la misma trampa que costó el bug E-089/[[E-092]] en SC01.
+  const { contactosVisitaJson, contactosVisita: _descartado, ...cambios } = parsed.data
+  void _descartado
+
+  const payload = {
+    solicitudId: id,
+    ejecutivaClerkId: userId,
+    cambios,
+    ...(contactosVisitaJson ? { contactosVisitaJson } : {}),
+  }
 
   const webhookUrl = process.env.MAKE_WEBHOOK_URL_SC_EDICION
   if (!webhookUrl || !process.env.MAKE_HMAC_SECRET) {

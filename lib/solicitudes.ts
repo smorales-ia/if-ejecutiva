@@ -246,6 +246,70 @@ export const SOLICITUD_FIELDS: string[] = [
   'monto_estimado_uf',
   'solicitante_telefono',
   'email_contacto',
+
+  // ── Ampliación Tanda D-02 (29-jul-2026) ─────────────────────────────────
+  // El detalle mostraba 25 campos de los ~55 operacionales de TX_Solicitudes;
+  // el resto lo rellenaba `mapRecord` con '—', [] o constantes, así que era
+  // invisible en pantalla **y** inaccesible para la edición. Se excluyen a
+  // propósito los ~17 `*_override` (motor AT01–AT10, fuera de CU-002) y los 8
+  // `fin_*_uf` (duplicado histórico de `financiero_*_uf`).
+  'n_operacion_cliente',
+  // ⚠ El nombre real termina en espacio (D-08, verificado vía MCP 29-jul-2026).
+  // Sin el espacio Airtable responde 422 "Unknown field names".
+  'sucursal_originadora ',
+  'correo_cliente_ref',
+  'nro_interno',
+  'numero_solicitud',
+  'rol_sii',
+  'notas',
+  'solicitante_nombre',
+  'profesion_solicitante',
+  'banco_financista',
+  'origen_dato',
+  'origen_direccion',
+  'tipo_cliente_origen',
+  'modo_creacion',
+  'tipo_propiedad_nuevo_usado',
+  'estado_conservacion',
+  'proyecto_condominio',
+  'ejecutivo_formalizador',
+  'email_thread_id',
+  'region',
+  'velocidad_venta',
+  'sup_terreno_m2',
+  'sup_construccion_m2',
+  'anio_construccion',
+  'valor_comercial_uf',
+  'avaluo_fiscal_clp',
+  'comision_ov',
+  'uf_dia_visita',
+  'fecha_asignacion_ts',
+  'fecha_visita',
+  'fecha_entrega',
+  'fecha_cierre',
+  'fecha_creacion',
+  'ultima_modificacion',
+  'dias_desde_solicitud',
+  'pdf_final_url',
+  'tiene_pendientes_visador',
+  // Bloque financiero (`financiero_*_uf`), que el tipo `Solicitud` declaraba
+  // como `financiero?` y `mapRecord` nunca poblaba.
+  'financiero_valor_total_uf',
+  'financiero_subsidio_uf',
+  'financiero_ahorro_uf',
+  'financiero_mutuo_uf',
+  'financiero_pago_contado_uf',
+  'financiero_bono_captacion_uf',
+  'financiero_bono_integracion_uf',
+  'financiero_precio_venta_uf',
+  // Bloque vendedor, que `mapRecord` devolvía hardcodeado a '—'.
+  'vendedor_razon_social_o_nombre',
+  'vendedor_rut',
+  'vendedor_nombre',
+  'vendedor_email',
+  'vendedor_telefono',
+  'vendedor_tipo_persona',
+  'vendedor_origen_dato',
 ]
 
 function parseDate(str: string | undefined): Date | null {
@@ -278,9 +342,14 @@ function computeSlaDias(fechaLimite: string | undefined, semaforo: string | unde
     today.setHours(0, 0, 0, 0)
     return Math.round((limit.getTime() - today.getTime()) / 86_400_000)
   }
-  // Fallback: derive from semaforo_sla formula value
-  if (semaforo === 'rojo') return -1
-  if (semaforo === 'ámbar' || semaforo === 'ambar') return 2
+  // Fallback cuando `fecha_limite_entrega` no es parseable — que es el caso de
+  // toda alta nueva, porque vale #ERROR (ver la nota de `ordenToSort`). Se
+  // deriva del semáforo, con los literales que la fórmula emite de verdad
+  // ("… VENCIDO" / "… EN RIESGO" / "… OK"), no con "rojo"/"ámbar", que no
+  // existen y hacían caer siempre en el `return 3` (Tanda D-01/D-02).
+  const s = semaforo ?? ''
+  if (s.includes('VENCIDO')) return -1
+  if (s.includes('EN RIESGO')) return 2
   return 3
 }
 
@@ -288,6 +357,30 @@ function formatMontoUf(str: string | undefined): string {
   if (!str) return '—'
   const n = Number(str)
   return Number.isNaN(n) ? `${str} UF` : `${n.toLocaleString('es-CL')} UF`
+}
+
+/**
+ * Con `cellFormat: 'string'` **todo** llega como texto, incluidos los campos
+ * `number`. Devuelve `undefined` —y no 0— cuando el campo está vacío o no es
+ * numérico: un 0 fabricado se mostraría como un valor real en el detalle.
+ * Tolera el separador de miles de es-CL ("1.234,5").
+ */
+function num(str: string | undefined): number | undefined {
+  if (!str || str.trim() === '') return undefined
+  const limpio = str.trim().replace(/\./g, '').replace(',', '.')
+  const n = Number(limpio)
+  return Number.isFinite(n) ? n : undefined
+}
+
+/** Checkbox en `cellFormat: 'string'` llega como "true"/"checked"/"1" o vacío. */
+function bool(str: string | undefined): boolean {
+  return /^(true|checked|1|s[ií])$/i.test((str ?? '').trim())
+}
+
+/** Texto que degrada a `undefined` en vez de a '—', para campos opcionales. */
+function txt(str: string | undefined): string | undefined {
+  const v = (str ?? '').trim()
+  return v === '' ? undefined : v
 }
 
 export function relativeTime(iso: string): string {
@@ -319,9 +412,10 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     modificadoPor: f['ejecutivo_solicitante'] ?? '—',
     tipoInforme: f['tipo_informe'] ?? '—',
     tipoPropiedad: f['tipo_propiedad'] ?? '—',
-    // ⚙ Pendiente de creación en Airtable: TX_Solicitudes no distingue nuevo/usado
-    // todavía. Degrada a "usado" (mayoría de los casos actuales).
-    tipoPropiedadNuevoUsado: 'usado',
+    // `tipo_propiedad_nuevo_usado` (fldHxx1P1ao33PWrl) sí existe desde el
+    // 24-jul-2026 (§21.4 del schema). El hardcode a 'usado' venía de cuando no
+    // existía y falseaba la forma del formulario en las propiedades nuevas.
+    tipoPropiedadNuevoUsado: f['tipo_propiedad_nuevo_usado'] === 'nuevo' ? 'nuevo' : 'usado',
     banco: f['banco'] ?? '—',
     producto: f['producto'] ?? '—',
     direccion: f['direccion'] ?? '—',
@@ -340,25 +434,87 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     // ejecución y por eso hay que devolverle intacto (E-089).
     canal: f['canal_contacto_original'] ?? '—',
     origenCanal: f['origen_canal'] ?? '—',
-    // ⚙ Pendiente de creación en Airtable: comprador/vendedor/unidades/
-    // contactosVisita (modelo v1.9 del diseño) no tienen respaldo en
-    // TX_Solicitudes todavía. `comprador` se arma con los mismos campos planos
-    // que ya existían (propietario/rut/email); el resto degrada vacío.
     comprador: {
       rut: f['cliente_final_rut'] ?? '—',
       nombre: f['cliente_final_nombre'] ?? '—',
       email: f['email_contacto'] ?? '—',
       telefono: f['solicitante_telefono'] ?? '—',
     },
+    // El vendedor vive como campos planos en TX_Solicitudes — `TX_Vendedor` no
+    // existe (§21 del schema). Hasta D-02 esto devolvía '—' fijo.
+    // `esInmobiliaria` se deriva de `vendedor_tipo_persona`: "juridica" (con o
+    // sin tilde) = inmobiliaria; cualquier otro valor, natural.
     vendedor: {
-      esInmobiliaria: false,
-      correo: '—',
-      telefono: '—',
-      origenDato: '—',
+      esInmobiliaria: /jur[ií]dica/i.test(f['vendedor_tipo_persona'] ?? ''),
+      razonSocial: txt(f['vendedor_razon_social_o_nombre']),
+      rutInmobiliaria: /jur[ií]dica/i.test(f['vendedor_tipo_persona'] ?? '')
+        ? txt(f['vendedor_rut'])
+        : undefined,
+      nombre: txt(f['vendedor_nombre']),
+      rut: txt(f['vendedor_rut']),
+      correo: f['vendedor_email'] || '—',
+      telefono: f['vendedor_telefono'] || '—',
+      origenDato: f['vendedor_origen_dato'] || '—',
     },
+    // `unidades` las hidrata `hydrateUnidades` (lib/unidades.ts) desde
+    // TX_Unidades, y `contactosVisita` las hidrata `hydrateContactos`, ambas
+    // en app/(ejecutiva)/consola/page.tsx. Aquí sólo se declara el valor
+    // neutro. ⚠ Mientras `unidades` quedó en [] de forma permanente, RN-44
+    // evaluaba siempre "faltan unidades" y el botón "Asignar Tasador" nunca se
+    // habilitaba (Regla A, Tanda D-02).
     unidades: [],
     contactosVisita: [],
     contadorReasignaciones: 0,
+
+    // ── Campos operacionales (Tanda D-02) ──────────────────────────────────
+    nOperacionCliente: num(f['n_operacion_cliente']),
+    sucursalOriginadora: txt(f['sucursal_originadora ']),
+    correoClienteRef: txt(f['correo_cliente_ref']),
+    nroInterno: txt(f['nro_interno']),
+    numeroSolicitud: txt(f['numero_solicitud']),
+    rolSii: txt(f['rol_sii']),
+    notas: txt(f['notas']),
+    solicitanteNombre: txt(f['solicitante_nombre']),
+    solicitanteTelefono: txt(f['solicitante_telefono']),
+    profesionSolicitante: txt(f['profesion_solicitante']),
+    bancoFinancista: txt(f['banco_financista']),
+    origenDato: txt(f['origen_dato']),
+    velocidadVenta: txt(f['velocidad_venta']),
+    supTerrenoM2: num(f['sup_terreno_m2']),
+    supConstruccionM2: num(f['sup_construccion_m2']),
+    anioConstruccion: num(f['anio_construccion']),
+    valorComercialUf: num(f['valor_comercial_uf']),
+    avaluoFiscalClp: num(f['avaluo_fiscal_clp']),
+    comisionOv: num(f['comision_ov']),
+    ufDiaVisita: num(f['uf_dia_visita']),
+    fechaVisitaReal: txt(f['fecha_visita']),
+    fechaEntrega: txt(f['fecha_entrega']),
+    fechaCierre: txt(f['fecha_cierre']),
+    fechaCreacion: txt(f['fecha_creacion']),
+    ultimaModificacion: txt(f['ultima_modificacion']),
+    diasDesdeSolicitud: num(f['dias_desde_solicitud']),
+    pdfFinalUrl: txt(f['pdf_final_url']),
+    tienePendientesVisador: bool(f['tiene_pendientes_visador']),
+    fechaAsignacion: txt(f['fecha_asignacion_ts']),
+    proyecto: txt(f['proyecto_condominio']),
+    estadoConservacion: txt(f['estado_conservacion']),
+    ejecFormalizador: txt(f['ejecutivo_formalizador']),
+    emailThreadId: txt(f['email_thread_id']),
+    origenDireccion: f['origen_direccion'] as Solicitud['origenDireccion'],
+    tipoClienteOrigen: txt(f['tipo_cliente_origen']),
+    modoCreacion: f['modo_creacion'] as Solicitud['modoCreacion'],
+    // Bloque financiero: el tipo lo declaraba como `financiero?` y nadie lo
+    // poblaba. Se mantiene el shape de strings del modelo de UI.
+    financiero: {
+      valorTotalUf: txt(f['financiero_valor_total_uf']),
+      subsidio: txt(f['financiero_subsidio_uf']),
+      ahorro: txt(f['financiero_ahorro_uf']),
+      mutuo: txt(f['financiero_mutuo_uf']),
+      pagoContado: txt(f['financiero_pago_contado_uf']),
+      bonoCaptacion: txt(f['financiero_bono_captacion_uf']),
+      bonoIntegracion: txt(f['financiero_bono_integracion_uf']),
+      precioVenta: txt(f['financiero_precio_venta_uf']),
+    },
   }
 }
 

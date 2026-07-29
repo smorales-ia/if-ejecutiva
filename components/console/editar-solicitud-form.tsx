@@ -218,6 +218,42 @@ export function EditarSolicitudForm({
         </div>
       </div>
 
+      {/* Operación (D-02 · Regla C).
+          Sólo los tres campos que el escenario SC-Edicion desplegado sabe
+          escribir (`cambios.nOperacionCliente`, `cambios.sucursalOriginadora`,
+          `cambios.correoClienteRef`). El resto de los campos que D-02 sumó al
+          detalle —rol SII, superficies, avalúo, año, velocidad de venta, notas,
+          n° interno— se muestran en modo lectura y NO se editan aquí: Make no
+          los mapea todavía, y ofrecerlos editables sería prometer un guardado
+          que no ocurre. Ver el bloqueo anotado en el reporte de D-02. */}
+      <FormSection title="Operación">
+        <EditField label="N° de operación del cliente">
+          <Input
+            inputMode="numeric"
+            value={d.nOperacionCliente ?? ""}
+            onChange={(e) =>
+              set(
+                "nOperacionCliente",
+                e.target.value === "" ? undefined : Number(e.target.value),
+              )
+            }
+          />
+        </EditField>
+        <EditField label="Sucursal originadora">
+          <Input
+            value={d.sucursalOriginadora ?? ""}
+            onChange={(e) => set("sucursalOriginadora", e.target.value)}
+          />
+        </EditField>
+        <EditField label="Correo de referencia del cliente">
+          <Input
+            type="email"
+            value={d.correoClienteRef ?? ""}
+            onChange={(e) => set("correoClienteRef", e.target.value)}
+          />
+        </EditField>
+      </FormSection>
+
       {/* Cliente y tipo */}
       <FormSection title="Cliente y tipo">
         <EditField label="Cliente">

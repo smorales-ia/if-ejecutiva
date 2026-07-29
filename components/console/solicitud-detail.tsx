@@ -558,6 +558,37 @@ function DatosTab({
         </div>
       )}
 
+      {/* Identificación de la operación (D-02). Antes no se mostraba ninguno de
+          estos campos: `mapRecord` no los leía, así que el detalle no podía
+          conocerlos. El caso que lo destapó fue `n_operacion_cliente` — que el
+          brief llamaba `numero_operacion`, nombre que no existe en el schema. */}
+      <Section title="Operación">
+        <DataRow label="N° de operación del cliente">
+          {s.nOperacionCliente ?? "—"}
+        </DataRow>
+        <DataRow label="N° interno">{s.nroInterno ?? "—"}</DataRow>
+        <DataRow label="N° de solicitud">{s.numeroSolicitud ?? "—"}</DataRow>
+        <DataRow label="Sucursal originadora">
+          {s.sucursalOriginadora ?? "—"}
+        </DataRow>
+        <DataRow label="Correo de referencia del cliente">
+          {s.correoClienteRef ?? "—"}
+        </DataRow>
+        <DataRow label="Ejecutivo solicitante">{s.modificadoPor}</DataRow>
+        <DataRow label="Ejecutivo formalizador">
+          {s.ejecFormalizador ?? "—"}
+        </DataRow>
+        <DataRow label="Modo de creación">{s.modoCreacion ?? "—"}</DataRow>
+        <DataRow label="Tipo de cliente de origen">
+          {s.tipoClienteOrigen ?? "—"}
+        </DataRow>
+        {/* `origen_canal` es de sólo lectura por definición: es por dónde entró
+            la fila al sistema, no por dónde contactó el cliente (E-089). */}
+        <DataRow label="Canal de ingreso">{s.origenCanal ?? "—"}</DataRow>
+      </Section>
+
+      <Separator />
+
       <Section title="Cliente y tipo">
         <DataRow label="Cliente">{s.cliente}</DataRow>
         <DataRow label="Tipo de informe">{s.tipoInforme}</DataRow>
@@ -583,6 +614,32 @@ function DatosTab({
         <DataRow label="Estado de conservación">
           {etiquetaCatalogo(ESTADOS_CONSERVACION, s.estadoConservacion)}
         </DataRow>
+        {/* Datos de propiedad a nivel de solicitud (D-02). No sustituyen a los
+            de cada unidad en TX_Unidades: aquí viven los agregados que la
+            Ejecutiva declara al dar de alta. */}
+        <DataRow label="Rol SII">{s.rolSii ?? "—"}</DataRow>
+        <DataRow label="Superficie de terreno">
+          {s.supTerrenoM2 != null ? `${s.supTerrenoM2.toLocaleString("es-CL")} m²` : "—"}
+        </DataRow>
+        <DataRow label="Superficie construida">
+          {s.supConstruccionM2 != null
+            ? `${s.supConstruccionM2.toLocaleString("es-CL")} m²`
+            : "—"}
+        </DataRow>
+        <DataRow label="Año de construcción">{s.anioConstruccion ?? "—"}</DataRow>
+        <DataRow label="Valor comercial">
+          {s.valorComercialUf != null
+            ? `${s.valorComercialUf.toLocaleString("es-CL")} UF`
+            : "—"}
+        </DataRow>
+        <DataRow label="Avalúo fiscal">
+          {s.avaluoFiscalClp != null
+            ? `$${s.avaluoFiscalClp.toLocaleString("es-CL")}`
+            : "—"}
+        </DataRow>
+        <DataRow label="Origen del dato">{s.origenDato ?? "—"}</DataRow>
+        <DataRow label="Origen de la dirección">{s.origenDireccion ?? "—"}</DataRow>
+        <DataRow label="Velocidad de venta">{s.velocidadVenta ?? "—"}</DataRow>
       </Section>
 
       <Separator />
@@ -905,7 +962,57 @@ function DatosTab({
         <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
           {s.observaciones}
         </p>
+        {s.notas && (
+          <>
+            {/* `notas` es un campo distinto de `observaciones_internas`: genérico,
+                heredado del pipeline PDF. Sólo se muestra si trae algo, para no
+                sumar una caja vacía al bloque. */}
+            <span className="text-xs font-medium text-muted-foreground">
+              Notas
+            </span>
+            <p className="rounded-lg border border-border bg-card p-3 text-sm leading-relaxed text-foreground">
+              {s.notas}
+            </p>
+          </>
+        )}
       </section>
+
+      <Separator />
+
+      {/* Trazabilidad (D-02). Todo read-only por naturaleza: son campos que
+          escriben Airtable (createdTime / lastModifiedTime / formulas) o los
+          escenarios Make aguas abajo, nunca la Ejecutiva. */}
+      <Section title="Trazabilidad">
+        <DataRow label="Creada">{s.fechaCreacion ?? "—"}</DataRow>
+        <DataRow label="Última modificación">
+          {s.ultimaModificacion ?? "—"}
+        </DataRow>
+        <DataRow label="Días desde la solicitud">
+          {s.diasDesdeSolicitud ?? "—"}
+        </DataRow>
+        <DataRow label="Fecha de visita realizada">
+          {s.fechaVisitaReal ?? "—"}
+        </DataRow>
+        <DataRow label="Fecha de entrega">{s.fechaEntrega ?? "—"}</DataRow>
+        <DataRow label="Fecha de cierre">{s.fechaCierre ?? "—"}</DataRow>
+        <DataRow label="Pendientes de visador">
+          {s.tienePendientesVisador ? "Sí" : "No"}
+        </DataRow>
+        <DataRow label="Informe PDF">
+          {s.pdfFinalUrl ? (
+            <a
+              href={s.pdfFinalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#075899] underline underline-offset-2"
+            >
+              Abrir PDF
+            </a>
+          ) : (
+            "—"
+          )}
+        </DataRow>
+      </Section>
 
       <span className="sr-only">{`Estado actual: ${estado}`}</span>
     </div>

@@ -162,6 +162,23 @@ export function mapearEdicionSolicitud(
     tipoClienteOrigen: limpiar(original.tipoClienteOrigen),
     origenDireccion: limpiar(original.origenDireccion),
     emailThreadId: limpiar(original.emailThreadId),
+
+    // — Claves que SC-Edicion ya mapeaba y este mapper no enviaba (D-02) —
+    // No se enviaban porque `mapRecord` no leía sus campos, así que el modelo
+    // `Solicitud` no los tenía y no había de dónde reconstruirlos. Al ampliar
+    // `SOLICITUD_FIELDS` en la misma tanda pasaron a estar disponibles. El
+    // contrato con Make ya existía: no hubo que tocar el blueprint.
+    //
+    // ⚠ Importa que viajen aunque la pantalla no los edite: SC-Edicion
+    // reescribe la fila completa, así que una clave ausente puede interpretarse
+    // como borrado. Se devuelven intactos, igual que `origenCanal`.
+    // Los tres primeros sí los edita la pantalla (Regla C), así que se leen de
+    // la copia editada `d`. `fechaAsignacion` la escribe SC-Asignar, no la
+    // Ejecutiva: se devuelve intacta desde `original`.
+    nOperacionCliente: d.nOperacionCliente,
+    sucursalOriginadora: limpiar(d.sucursalOriginadora),
+    correoClienteRef: limpiar(d.correoClienteRef),
+    fechaAsignacion: limpiar(original.fechaAsignacion),
   }
 
   // — Financiero (sólo propiedades nuevas) —
@@ -187,16 +204,19 @@ export function mapearEdicionSolicitud(
   }
 
   // — Contactos de visita (borrar + recrear en TX_ContactosVisita) —
-  // Se envían en los dos formatos que han existido del escenario: el array
-  // (topología con Router e Iterator, 24-jul-2026) y el string JSON (topología
-  // lineal con ParseJSON del blueprint versionado). Make ignora el que no mapea.
+  // Sólo el string JSON. La forma array se retiró en D-02: SC-Edicion no la
+  // lee —sus únicas referencias son `{{1.contactosVisitaJson}}`— y dejarla
+  // viajar hace que el webhook memorice una estructura anidada que nadie
+  // consume, que es exactamente lo que corrompió SC01 en [[E-092]].
+  //
+  // El Route Handler la iza fuera de `cambios` antes de enviarla a Make; ver
+  // la nota en app/api/solicitudes/[id]/route.ts.
+  //
   // Un array vacío haría que SC-Edicion borre los contactos existentes sin
   // recrear ninguno. La pantalla siempre mantiene al menos uno, así que un
   // array vacío indica que la hidratación falló: en ese caso no se tocan.
   if (d.contactosVisita.length > 0) {
-    const contactos = d.contactosVisita.map(mapearContacto)
-    payload.contactosVisita = contactos
-    payload.contactosVisitaJson = JSON.stringify(contactos)
+    payload.contactosVisitaJson = JSON.stringify(d.contactosVisita.map(mapearContacto))
   }
 
   return payload
