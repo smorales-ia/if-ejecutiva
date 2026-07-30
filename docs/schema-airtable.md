@@ -1,6 +1,14 @@
 # schema-airtable.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.10 · Alineado a Capa de Datos v2.6.3 · Especificación v1.9.1 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026) · Re-auditoría `TX_Solicitudes` completa (13-jul-2026, ver §19) · Construcción RF-09: 5 campos nuevos + corrección `LogEscenarios` (13-jul-2026, ver §13.4/§13.5) · Re-auditoría dominio D_ (17-jul-2026, ver §18): confirmado que la migración a 2 tablas + TX_Unidades ya se ejecutó en la base real — D_TipoDato/D_Catalogo/D_CatalogoValor/D_Atributo/D_Documento/D_DocumentoValorAtributo ya no existen · **Schema de soporte a la maqueta v1.9 documentado 22-jul-2026 (ver §20): 7 campos nuevos en TX_Solicitudes, 8 en TX_Unidades, tablas nuevas TX_ContactosVisita/TX_Vendedor/M_TiposDeBien, bloque SII en TX_DatosTasacion. AT02 marcado fuera de alcance de IF-02 (asignación manual, REGLA A)** · **Verificación MCP del schema v1.9 (24-jul-2026, ver §21): confirmado que las tablas/campos de §20 ya existen en la base — creados los 9 campos legales de `TX_DocumentosLegales`; `TX_Vendedor` NO existe (vendedor vive como campos en `TX_Solicitudes`); 5 conflictos abiertos en §21.4** · **Resolución de panel (24-jul-2026, ver §21.4): creado `tipo_propiedad_nuevo_usado` (singleSelect nuevo·usado); creado `fecha_asignacion_ts` (dateTime) y `fecha_asignacion` (date) marcado deprecated — MCP no migra tipo in situ; opciones cortas `cert_avaluo`/`cert_numero` adoptadas como canónicas en `origen_direccion` y `vendedor_origen_dato`; `sup_terreno_m2` (precision 0) adoptado, `superficie_terreno_m2` descartado**
+> **Versión**: 1.11 · Alineado a Capa de Datos v2.6.5 · Especificación v1.9.4 · Auditoría v1.2 · RF-52 AUTH_ domain (07-jul-2026) · Fase 2 Tanda A gap de persistencia (08-jul-2026) · Fase 1 cierre de pendientes IF-02 (08-jul-2026) · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Dominio D_ auditado para RF-09 (12-jul-2026) · Re-auditoría `TX_Solicitudes` completa (13-jul-2026, ver §19) · Construcción RF-09: 5 campos nuevos + corrección `LogEscenarios` (13-jul-2026, ver §13.4/§13.5) · Re-auditoría dominio D_ (17-jul-2026, ver §18): confirmado que la migración a 2 tablas + TX_Unidades ya se ejecutó en la base real — D_TipoDato/D_Catalogo/D_CatalogoValor/D_Atributo/D_Documento/D_DocumentoValorAtributo ya no existen · **Schema de soporte a la maqueta v1.9 documentado 22-jul-2026 (ver §20): 7 campos nuevos en TX_Solicitudes, 8 en TX_Unidades, tablas nuevas TX_ContactosVisita/TX_Vendedor/M_TiposDeBien, bloque SII en TX_DatosTasacion. AT02 marcado fuera de alcance de IF-02 (asignación manual, REGLA A)** · **Verificación MCP del schema v1.9 (24-jul-2026, ver §21): confirmado que las tablas/campos de §20 ya existen en la base — creados los 9 campos legales de `TX_DocumentosLegales`; `TX_Vendedor` NO existe (vendedor vive como campos en `TX_Solicitudes`); 5 conflictos abiertos en §21.4** · **Resolución de panel (24-jul-2026, ver §21.4): creado `tipo_propiedad_nuevo_usado` (singleSelect nuevo·usado); creado `fecha_asignacion_ts` (dateTime) y `fecha_asignacion` (date) marcado deprecated — MCP no migra tipo in situ; opciones cortas `cert_avaluo`/`cert_numero` adoptadas como canónicas en `origen_direccion` y `vendedor_origen_dato`; `sup_terreno_m2` (precision 0) adoptado, `superficie_terreno_m2` descartado**
+>
+> ⚠ **Higiene documental 30-jul-2026**: los punteros de versión de esta cabecera se
+> actualizaron a los archivos que realmente existen en `docs/_md/` (Especificación
+> **v1.9.4**, Blueprint **v2.10**, Capa de Datos **v2.6.5**). Las citas a secciones
+> concretas de versiones anteriores que aparecen en el cuerpo **no se re-verificaron**
+> contra v1.9.4 en esta tanda: se conservan tal cual y quedan marcadas como deuda de
+> revisión, porque cambiarles el número sin diffear el spec convertiría un puntero
+> viejo en una afirmación falsa.
 > **Origen**: snapshot MCP Airtable (04-jul-2026) + correcciones de auditoría v1.2 + verificación/creación de campos MCP (08-jul-2026, ver `docs/_notas/gap_solicitud_persistencia.md`) + re-verificación MCP y creación de `TX_Adjuntos.estado_extraccion` (08-jul-2026, Fase 1 cierre de pendientes IF-02) + hallazgo `TX_Solicitudes.codigo_solicitud` (primary field) y llave de idempotencia `hash_md5` (10-jul-2026, Fase Adjuntos 1) + auditoría completa del dominio D_ y creación de `D_Atributo.version` + `D_Documento.extraccion_incompleta` (12-jul-2026, ver §18 histórico) + re-auditoría completa de campos reales de `TX_Solicitudes` vía `list_tables_for_base`/`get_table_schema` (13-jul-2026, ver §19) + re-auditoría dominio D_ vía MCP confirmando migración a 2 tablas + TX_Unidades (17-jul-2026, ver §18)
 > **Base**: `app9G7lLkIV3CpeLa`
 > **Propósito**: fuente de verdad permanente de TABLE_IDs y FIELD_IDs para Claude Code. Leer al inicio de cada sesión antes de escribir Route Handlers o tipos TS.
@@ -997,17 +1005,18 @@ así que el filtro es correcto **sin** necesidad de re-determinar la data struct
 
 ---
 
-## 24. Cobertura de escritura de SC-Edicion sobre `TX_Solicitudes` (29-jul-2026)
+## 24. Cobertura de escritura de SC-Edicion sobre `TX_Solicitudes` (29-jul-2026 · ampliado 30-jul-2026)
 
 ### 24.1 Qué escribe el módulo 2 (`Update Records`)
 
-**47 campos.** Ninguno es formula, rollup, lookup ni autonumber: `TX_Solicitudes` tiene 134
-campos, de los cuales 121 son escribibles, así que estos 47 son el subconjunto de negocio de
-IF-02, **no** el universo escribible de la tabla.
+**48 campos** (47 hasta el 29-jul-2026; +1 el 30-jul-2026, ver §24.5). Ninguno es formula,
+rollup, lookup ni autonumber: `TX_Solicitudes` tiene 135 campos, de los cuales 122 son
+escribibles, así que estos 48 son el subconjunto de negocio de IF-02, **no** el universo
+escribible de la tabla.
 
 Se leen así:
 
-- **40** directos desde el payload, como `{{1.cambios.<clave camelCase>}}`.
+- **41** directos desde el payload, como `{{1.cambios.<clave camelCase>}}`.
 - **7** Link fields que el escenario resuelve con un `Search` propio y consume como `{{N.id}}`:
   los módulos 6-11 buscan por `nombre` (`cliente`, `tipo_informe`, `tipo_propiedad`,
   `producto`, `comuna`, `banco_financista`) y el módulo 24 busca por `clerk_user_id`
@@ -1126,3 +1135,84 @@ clave de más devuelve 422 y una de menos no llega nunca a Airtable. El armado l
 
 `contactosVisitaJson` y `unidadesJson` **no** cuentan entre esas 46: viajan fuera de `cambios`,
 en la raíz, y los consumen las ramas 0 y 1 del Router (ver §23).
+
+---
+
+## 25. `ejecutivo_comercializador` y reconstrucción del blueprint SC-Edicion (30-jul-2026)
+
+### 25.1 Campo nuevo en `TX_Solicitudes`
+
+| Campo | FIELD_ID | Tipo | Motivo |
+|---|---|---|---|
+| `ejecutivo_comercializador` | `fldDP232hBLsZ0PWJ` | `singleLineText` | §1.4 de la Especificación v1.9.4 lista "Comercializador" entre los datos editables del bloque Origen, pero no existía campo destino. El control no se podía construir: se registró como bloqueo **V-4** y se creó el campo el 30-jul-2026. |
+
+Cadena completa, por si hay que replicarla para otro campo del bloque Origen:
+
+| Capa | Archivo | Clave |
+|---|---|---|
+| Lectura Airtable | `lib/solicitudes.ts` · `SOLICITUD_FIELDS` | `ejecutivo_comercializador` |
+| Modelo | `lib/console-data.ts` · `Solicitud` | `ejecutivoComercializador?: string` |
+| Formulario | `components/console/editar-solicitud-form.tsx` · Sección A | etiqueta "Comercializador" |
+| Validación | `lib/validators/acciones-solicitud.ts` | `ejecutivoComercializador: z.string().optional()` |
+| Mapper | `lib/mappers/editar-solicitud.ts` | `ejecutivoComercializador: limpiar(d.ejecutivoComercializador)` |
+| Make · módulo 2 | `SC-Edicion.blueprint.json` | `fldDP232hBLsZ0PWJ = {{1.cambios.ejecutivoComercializador}}` |
+
+`app/api/solicitudes/[id]/route.ts` **no** requirió cambios: `cambios` se arma con el resto
+del destructuring de `parsed.data`, así que toda clave nueva del zod viaja sola. El orden de
+las capas sí importa: si la clave llega a Make antes de estar en el blueprint, viaja y se
+ignora en silencio.
+
+### 25.2 Por qué se reconstruyó el blueprint
+
+El síntoma era que la rama de contactos de SC-Edicion **creaba y no borraba**: cada guardado
+duplicaba `TX_ContactosVisita` (17 filas en VP-2026-0053 tras 6 ediciones). La hipótesis de
+trabajo era desincronía entre el escenario desplegado y el archivo canónico. **Quedó
+refutada** — tres verificaciones independientes:
+
+1. El export que Sergio bajó de Make es **semánticamente idéntico** al canónico (mismo
+   SHA-256 tras normalizar el JSON; sólo difiere la indentación, 4 vs 2 espacios).
+2. El blueprint **vivo**, traído con `GET /api/v2/scenarios/6682031/blueprint`, tiene el
+   `flow` idéntico al canónico. Sólo difieren `metadata.notes` y `metadata.zone`, que la API
+   omite.
+3. El hook `3441135` (`SC-Edicion-Webhook`) apunta al scenario `6682031`, activo, y su URL
+   coincide con `MAKE_WEBHOOK_URL_SC_EDICION`. No hay un segundo SC-Edicion recibiendo tráfico.
+
+La causa real la dieron los logs de ejecución (`GET /api/v2/scenarios/6682031/logs`):
+
+| ejecución | contactos a borrar | unidades a borrar | creados | `operations` |
+|---|---|---|---|---|
+| 2026-07-30T02:46:33Z | 14 | 1 | 2 + 1 | **21** |
+| 2026-07-30T02:52:26Z | 16 | 2 | 1 + 2 | **21** |
+
+Si los `Delete` hubieran corrido, la segunda ejecución habría gastado ~3 operaciones más que
+la primera (18 borrados contra 15). Son idénticas en 21: los módulos 14 y 20 aportaron **cero
+operaciones**. Y con `status = 1` (éxito) en ambas, tampoco fallaron — **fueron omitidos por su
+filtro de entrada**.
+
+Ese filtro era `{{12.id}} exist AND {{12.id}} ≠ ""` (y su gemelo `{{19.id}}` en unidades), y
+**no protegía nada**: si el `Search` no devuelve bundles, el módulo siguiente no se ejecuta de
+todos modos. Su único efecto posible era omitir el borrado en silencio. Se eliminó de los
+módulos 14 y 20.
+
+Descartado explícitamente antes de llegar ahí, para que nadie lo vuelva a investigar:
+
+- La fórmula del `Search` funciona. `ARRAYJOIN({solicitud_record_id}) = "recIEvKCbe7J8TDaB"`
+  ejecutada contra la API de Airtable devuelve exactamente los 2 contactos de la solicitud.
+- El lookup `solicitud_record_id` está poblado y válido en las dos tablas hijas (ver §23).
+- `{{N.id}}` es la referencia correcta para el resultado de un `Search`: el módulo 24 la usa
+  y `ejecutiva_asignada` queda ligada correctamente en cada ejecución.
+
+⚠ Efecto colateral asumido: si `{{12.id}}` llegara a no resolver, el `Delete` ahora falla de
+forma **visible** en vez de omitirse. La ejecución marca error, el `Webhook Respond` de la
+rama 2 no corre, y la app devuelve 502 con el mensaje humano de red — con `TX_Solicitudes` ya
+actualizada por el módulo 2, que corre antes del Router. Es escritura parcial, y es preferible
+a duplicar datos reportando éxito. La solución de fondo es la deuda **V-5** (migrar
+`delete + recreate` a `upsert` por `orden`).
+
+### 25.3 Divergencia de configuración detectada
+
+`MAKE_ORGANIZATION_ID` en `.env.local` vale **1594725**, que es el `teamId`, no el
+`organizationId`. La organización real del token es **7487039**. Los endpoints de la API de
+Make que piden `organizationId` fallan con `IM002 Insufficient rights` usando ese valor.
+Hoy no rompe nada —ningún Route Handler llama a la API de administración de Make, sólo a los
+webhooks— pero cualquier código futuro que la consulte va a fallar por esto.

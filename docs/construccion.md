@@ -1,6 +1,14 @@
 # GUÍA DE CONSTRUCCIÓN · CU-002 · IF-02 Consola de la Ejecutiva Comercial
 
-> **Versión**: 1.5 — alineada a Plan v1.2 · Blueprint v2.8 · Capa de Datos v2.6.3 · Especificación v1.9.1 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Re-alineamiento a Especificación v1.8.2 (17-jul-2026) · Maqueta v1.9 integrada a `main` + REGLAS A/B/C (22-jul-2026, ver §2bis).
+> **Versión**: 1.6 — alineada a Blueprint v2.10 · Capa de Datos v2.6.5 · Especificación v1.9.4 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Re-alineamiento a Especificación v1.8.2 (17-jul-2026) · Maqueta v1.9 integrada a `main` + REGLAS A/B/C (22-jul-2026, ver §2bis).
+>
+> ⚠ **Higiene documental 30-jul-2026**: los punteros de versión de esta cabecera se
+> actualizaron a los archivos que realmente existen en `docs/_md/` (Especificación
+> **v1.9.4**, Blueprint **v2.10**, Capa de Datos **v2.6.5**). Las citas a secciones
+> concretas de versiones anteriores que aparecen en el cuerpo **no se re-verificaron**
+> contra v1.9.4 en esta tanda: se conservan tal cual y quedan marcadas como deuda de
+> revisión, porque cambiarles el número sin diffear el spec convertiría un puntero
+> viejo en una afirmación falsa.
 > **Propósito**: referencia operativa que Claude Code lee al inicio de cada sesión para saber qué construir, en qué orden, con qué criterios de aceptación y qué advertencias aplican por paso.  
 > **Regla dorada**: una RF por sesión de Claude Code — nunca "construye toda la consola".
 

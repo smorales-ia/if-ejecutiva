@@ -38,36 +38,53 @@ const numeroOpcional = z.union([z.number(), z.string()]).optional()
  * Unidad tal como viaja a SC-Edicion (snake_case, vocabulario ya traducido a
  * los slugs de `TX_Unidades` por `mapearUnidadEdicion`).
  *
- * Los cuatro selects se validan contra la lista cerrada de opciones **reales**
+ * Los cinco selects se validan contra la lista cerrada de opciones **reales**
  * del schema de Airtable, no contra las etiquetas de la UI. Es la barrera que
  * impide que una etiqueta sin traducir (`"Albañilería"`, `"uso_goce"`) llegue a
  * Make y `typecast` la convierta en una opción nueva del catálogo maestro
- * (E-088/E-091). `''` se admite porque significa "no declarado".
+ * (E-088/E-091).
+ *
+ * ⚠ Hasta esta tanda cada enum incluía `""` "porque significa no declarado"
+ * (C-4, 30-jul-2026). Era exactamente al revés: en un `singleSelect` con
+ * `typecast: true`, `""` **no** deja el campo sin tocar — Airtable crea una
+ * opción cuyo nombre es la cadena vacía. Así aparecieron `sel1x8NSUcxOqjNoO`
+ * (subtipo), `selyRaxCoNWNBiLez` (tipo_material) y `selefmL8IHsFCMIdi`
+ * (origen_superficie) en el catálogo maestro.
+ *
+ * La forma correcta de decir "no declarado" a Make es **omitir la clave**, no
+ * mandarla vacía. Por eso los cinco son `.optional()` sin `""` en el enum: el
+ * mapper omite lo que no puede traducir (`soloDefinidos`) y cualquier `""` que
+ * se cuele por otra vía se convierte en un 422 con `{campo, motivo}` en vez de
+ * en contaminación silenciosa del schema.
  */
 const unidadSchema = z
   .object({
     numero_unidad: z.string(),
     modelo: z.string(),
-    subtipo: z.enum([
-      "Departamento", "Casa", "Bodega", "Estacionamiento", "Terreno",
-      "Local", "Terraza", "Piscina", "OO.CC.", "Servidumbre", "Edificacion", "",
-    ]),
-    con_rol_o_uso_y_goce: z.enum(["con_rol", "uso_y_goce", ""]),
+    subtipo: z
+      .enum([
+        "Departamento", "Casa", "Bodega", "Estacionamiento", "Terreno",
+        "Local", "Terraza", "Piscina", "OO.CC.", "Servidumbre", "Edificacion",
+      ])
+      .optional(),
+    con_rol_o_uso_y_goce: z.enum(["con_rol", "uso_y_goce"]).optional(),
     rol_sii: z.string(),
     rol_sii_en_tramite: z.boolean(),
     sup_m2: z.number().nonnegative().nullable(),
     superficie_terraza_m2: z.number().nonnegative().nullable(),
     sup_terreno_m2: z.number().nonnegative().nullable(),
     anio_construccion: z.number().int().nullable(),
-    tipo_material: z.enum([
-      "madera", "albanileria", "hormigon", "mixto", "perfiles_metalicos", "",
-    ]),
+    tipo_material: z
+      .enum(["madera", "albanileria", "hormigon", "mixto", "perfiles_metalicos"])
+      .optional(),
     ampliacion_m2: z.number().nonnegative().nullable(),
-    ampliacion_regularizable: z.enum(["si", "no", "no_aplica"]),
-    origen_superficie: z.enum([
-      "carta_ficha_inmobiliaria", "plano", "base_interna_sii",
-      "certificado_avaluo", "medicion_tasador", "",
-    ]),
+    ampliacion_regularizable: z.enum(["si", "no", "no_aplica"]).optional(),
+    origen_superficie: z
+      .enum([
+        "carta_ficha_inmobiliaria", "plano", "base_interna_sii",
+        "certificado_avaluo", "medicion_tasador",
+      ])
+      .optional(),
     detalle_item: z.string(),
     orden: z.number().int().positive(),
   })
@@ -100,6 +117,11 @@ export const editarSolicitudSchema = z
     correoClienteRef: z.string().optional(),
     ejecutivoSolicitante: z.string().optional(),
     ejecutivoFormalizador: z.string().optional(),
+    // `ejecutivo_comercializador` (fldDP232hBLsZ0PWJ, singleLineText) — creado el
+    // 30-jul-2026 para cerrar V-4. La clave sigue la convención camelCase del
+    // resto del contrato y el módulo 2 de SC-Edicion la lee como
+    // `{{1.cambios.ejecutivoComercializador}}`.
+    ejecutivoComercializador: z.string().optional(),
     emailThreadId: z.string().optional(),
     modoCreacion: z.string().optional(),
     tipoClienteOrigen: z.string().optional(),

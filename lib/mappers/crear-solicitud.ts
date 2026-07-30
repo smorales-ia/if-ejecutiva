@@ -3,6 +3,14 @@ import type {
   NuevaSolicitudInternaValues,
   UnidadFormulario,
 } from "@/lib/validators/nueva-solicitud-interna"
+import {
+  aSlug,
+  MATERIAL,
+  ORIGEN_SUPERFICIE,
+  REGULARIZABLE,
+  ROL_MODO,
+  SUBTIPO,
+} from "@/lib/mappers/vocabulario-unidades"
 
 /**
  * Mapper UI → contrato del webhook de SC01 (RF-04 · Tanda B, 27-jul-2026).
@@ -91,81 +99,42 @@ export interface ContactoVisitaPayload {
   estado_contacto: string
 }
 
-/** Unidad tal como la consume el módulo Parse JSON de unidades de SC01. */
+/**
+ * Unidad tal como la consume el módulo Parse JSON de unidades de SC01.
+ *
+ * Los cuatro `singleSelect` son **opcionales a propósito** (C-1, 30-jul-2026):
+ * cuando el vocabulario no puede traducir un valor, la clave se omite en vez de
+ * viajar como `""`. Un `""` con `typecast: true` no falla — crea una opción de
+ * nombre vacío en el catálogo maestro de Airtable. Ver
+ * `lib/mappers/vocabulario-unidades.ts`.
+ */
 export interface UnidadPayload {
   numero_unidad: string
   modelo: string
-  subtipo: string
-  con_rol_o_uso_y_goce: string
+  subtipo?: string
+  con_rol_o_uso_y_goce?: string
   rol_sii: string
   rol_sii_en_tramite: boolean
   sup_m2: number | null
   superficie_terraza_m2: number | null
   sup_terreno_m2: number | null
   anio_construccion: number | null
-  tipo_material: string
+  tipo_material?: string
   ampliacion_m2: number | null
-  ampliacion_regularizable: string
-  origen_superficie: string
+  ampliacion_regularizable?: string
+  origen_superficie?: string
   detalle_item: string
   orden: number
 }
 
 /**
- * Traducciones UI → Airtable de los cuatro `singleSelect` de `TX_Unidades`.
- *
- * Los catálogos de la pantalla y las opciones reales del schema **no coinciden
- * en ningún caso** (verificado vía `get_table_schema` el 29-jul-2026): la UI
- * usa etiquetas con tilde y espacios, Airtable usa slugs. Enviar la etiqueta
- * cruda con `typecast: true` no falla — **crea la opción**, que es peor: ensucia
- * el catálogo maestro en silencio y nadie se entera hasta que alguien filtra
- * (misma familia que E-088/E-091).
- *
- * Un valor no mapeado devuelve `''`, y una clave vacía deja el campo sin tocar
- * en vez de inventar una opción.
+ * Las traducciones de vocabulario de `TX_Unidades` vivían acá como cinco tablas
+ * de una sola dirección (etiqueta → slug). Se mudaron a
+ * `lib/mappers/vocabulario-unidades.ts`, que declara los pares una vez y deriva
+ * los dos sentidos, porque la pantalla de edición necesita la vuelta y aplicarle
+ * la tabla de ida vaciaba los cuatro selects en cada guardado (C-1, 30-jul-2026).
+ * El archivo nuevo explica el bug completo.
  */
-export const SUBTIPO_POR_TIPO_BIEN: Record<string, string> = {
-  "Edificación": "Edificacion",
-  "Terreno": "Terreno",
-  // Airtable no distingue las tres variantes de estacionamiento; la distinción
-  // de la UI (cubierto/descubierto/uso y goce) se pierde a propósito, porque el
-  // eje uso-y-goce ya viaja por `con_rol_o_uso_y_goce`.
-  "Estacionamiento cubierto": "Estacionamiento",
-  "Estacionamiento descubierto": "Estacionamiento",
-  "Estacionamiento uso y goce": "Estacionamiento",
-  "Bodega": "Bodega",
-  "Piscina": "Piscina",
-  "Obras complementarias": "OO.CC.",
-}
-
-export const MATERIAL_POR_ETIQUETA: Record<string, string> = {
-  "Albañilería": "albanileria",
-  "Madera": "madera",
-  "Hormigón": "hormigon",
-  "Mixto": "mixto",
-  "Perfiles metálicos": "perfiles_metalicos",
-}
-
-export const ORIGEN_SUPERFICIE_POR_ETIQUETA: Record<string, string> = {
-  "Carta o ficha inmobiliaria": "carta_ficha_inmobiliaria",
-  "Plano": "plano",
-  "Base interna SII": "base_interna_sii",
-  "Certificado de avalúo": "certificado_avaluo",
-  "Medición del tasador": "medicion_tasador",
-}
-
-/** El enum del formulario es `uso_goce`; la opción real es `uso_y_goce`. */
-export const ROL_MODO_POR_ENUM: Record<string, string> = {
-  con_rol: "con_rol",
-  uso_goce: "uso_y_goce",
-}
-
-/** El formulario admite "" (no declarado); Airtable lo modela como `no_aplica`. */
-export const REGULARIZABLE_POR_ENUM: Record<string, string> = {
-  si: "si",
-  no: "no",
-  "": "no_aplica",
-}
 
 /** Payload plano snake_case listo para `postToMake`. */
 export type PayloadSC01 = Record<string, unknown>
@@ -269,21 +238,38 @@ function mapearUnidad(unidad: UnidadFormulario, index: number): UnidadPayload {
   return {
     numero_unidad: unidad.ubicacion.trim(),
     modelo: unidad.modelo.trim(),
-    subtipo: SUBTIPO_POR_TIPO_BIEN[unidad.tipoBien] ?? "",
-    con_rol_o_uso_y_goce: ROL_MODO_POR_ENUM[unidad.rolModo] ?? "",
     rol_sii: unidad.rolSii.trim(),
     rol_sii_en_tramite: unidad.rolEnTramite,
     sup_m2: numeroReal(unidad.supConstruida),
     superficie_terraza_m2: numeroReal(unidad.supTerraza),
     sup_terreno_m2: numeroReal(unidad.supTerreno),
     anio_construccion: numeroReal(unidad.anioConstruccion),
-    tipo_material: MATERIAL_POR_ETIQUETA[unidad.material] ?? "",
     ampliacion_m2: numeroReal(unidad.m2Ampliacion),
-    ampliacion_regularizable: REGULARIZABLE_POR_ENUM[unidad.regularizable] ?? "no_aplica",
-    origen_superficie: ORIGEN_SUPERFICIE_POR_ETIQUETA[unidad.origenSuperficie] ?? "",
     detalle_item: unidad.detalleItem.trim(),
     orden: index + 1,
+    // Los cinco selects se agregan sólo si el vocabulario los traduce, para no
+    // mandar `""` a un singleSelect con typecast (C-1). `soloDefinidos` es lo
+    // que hace que la clave desaparezca del JSON en vez de quedar en
+    // `undefined`, que `JSON.stringify` sí omite pero deja el tipo sucio.
+    ...soloDefinidos({
+      subtipo: aSlug(SUBTIPO, unidad.tipoBien),
+      con_rol_o_uso_y_goce: aSlug(ROL_MODO, unidad.rolModo),
+      tipo_material: aSlug(MATERIAL, unidad.material),
+      ampliacion_regularizable: aSlug(REGULARIZABLE, unidad.regularizable),
+      origen_superficie: aSlug(ORIGEN_SUPERFICIE, unidad.origenSuperficie),
+    }),
   }
+}
+
+/** Descarta las claves cuyo valor es `undefined`, conservando el resto. */
+function soloDefinidos(
+  campos: Record<string, string | undefined>,
+): Record<string, string> {
+  const salida: Record<string, string> = {}
+  for (const [clave, valor] of Object.entries(campos)) {
+    if (valor !== undefined) salida[clave] = valor
+  }
+  return salida
 }
 
 /**

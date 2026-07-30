@@ -1,7 +1,16 @@
 # diseno.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.5 · Alineado a Blueprint v2.8 · Especificación v1.9.1 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026) · Maqueta v1.9 integrada a `main` (22-jul-2026): wizard 3 fases, formulario 4 secciones, REGLA A (asignar tasador sin reasignación), REGLA B (validación toast+Alert), REGLA C (edición solo en creada)
-> **Fuentes canónicas**: Blueprint Interfaces v2.8 §7.2 · Especificación v1.9.1 · Capa Datos v2.6.3 · Plan v1.2
+> **Versión**: 1.6 · Alineado a Blueprint v2.10 · Especificación v1.9.4 · Capa de Datos v2.6.5 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026) · Maqueta v1.9 integrada a `main` (22-jul-2026): wizard 3 fases, formulario 4 secciones, REGLA A (asignar tasador sin reasignación), REGLA B (validación toast+Alert), REGLA C (edición solo en creada)
+>
+> ⚠ **Higiene documental 30-jul-2026**: los punteros de versión de esta cabecera se
+> actualizaron a los archivos que realmente existen en `docs/_md/` (Especificación
+> **v1.9.4**, Blueprint **v2.10**, Capa de Datos **v2.6.5**). Las citas a secciones
+> concretas de versiones anteriores que aparecen en el cuerpo **no se re-verificaron**
+> contra v1.9.4 en esta tanda: se conservan tal cual y quedan marcadas como deuda de
+> revisión, porque cambiarles el número sin diffear el spec convertiría un puntero
+> viejo en una afirmación falsa.
+> **Fuentes canónicas**: Blueprint Interfaces v2.10 §7.2 · Especificación v1.9.4 · Capa Datos v2.6.5
+> (versiones reales en `docs/_md/` · verificado 30-jul-2026)
 > **Propósito**: diseño funcional y visual de IF-02 para Claude Code. Leer al inicio de cada sesión junto con `schema-airtable.md` y `construccion.md`.
 > **Principio rector**: la UI muestra y captura; nunca decide. Todo estado, regla, asignación y cálculo vive en Airtable.
 
@@ -241,7 +250,7 @@ Fase Adjuntos 1 (10-jul-2026) — guardado en Dropbox + registro en `TX_Adjuntos
 
 ## 6. Botón "Asignar Tasador" — REGLA A (reemplaza "Pasar a asignada", v1.9)
 
-Fuente: Blueprint v2.8 §7.2 · Especificación v1.9.1 §1.6 · RN-44.
+Fuente: Blueprint v2.10 §7.2 · Especificación v1.9.4 §1.6 · RN-44.
 
 La solicitud se crea sin tasador (`estado: "creada"`, "Sin asignar"). **Sólo existe "Asignar Tasador"** — no existe flujo de "Reasignación". AT02 (asignación algorítmica) no se invoca desde IF-02 en v1.9; la asignación es siempre manual.
 
@@ -278,7 +287,7 @@ puede_asignar_tasador = (
 
 ## 5ter. Modificación de datos — REGLA C (edición y modo consulta)
 
-Fuente: Especificación v1.9.1 RN-59.
+Fuente: Especificación v1.9.4 §1.4 · RN-59.
 
 - **Editable sólo en estado `creada`.** El botón "Editar solicitud" aparece exclusivamente en ese estado. Mientras la solicitud esté en `creada`, la Ejecutiva puede modificar todo, incluyendo cambiar el tasador ya asignado, sin que eso dispare por sí solo la transición de estado (esa sólo ocurre al confirmar "Asignar Tasador", §6).
 - **Modo consulta (RN-59):** se activa cuando **ambas** condiciones se cumplen — estado ≠ `creada` Y la solicitud tiene tasador asignado. No depende de una sola de las dos: una solicitud sin tasador sigue editable aunque su estado ya no sea `creada`, y una con tasador pero todavía en `creada` sigue siendo editable.
@@ -286,7 +295,7 @@ Fuente: Especificación v1.9.1 RN-59.
 - No existe ningún flujo de reasignación como vía de corrección posterior — al entrar en modo consulta, el dato de tasador ya no se modifica desde IF-02.
 - **Excepción acotada a RN-59 (spec v1.9.4 §1.4).** En estado `asignada`, y **sólo** mientras `coordinacion_vigente = rechazada`, `TX_ContactosVisita` vuelve a ser editable desde IF-02. Existe para un único propósito: cuando el tasador devuelve la coordinación porque no logró contactar a nadie, la Ejecutiva corrige el teléfono o agrega un contacto y eso reabre la pantalla de coordinación del tasador (RF-TAS-04). El alcance es estrictamente el bloque *Contactos de visita*; cliente, propiedad, vendedor, unidades, RUT y datos financieros siguen bloqueados, y el bloqueo se aplica server-side. La edición queda auditada en `A_Cambios` como cualquier otra. Editar bajo la excepción **no cambia el estado backend**: la solicitud sigue `asignada`.
 
-**Restricción D-01**: la Ejecutiva **nunca** reasigna el visador desde la barra de acciones. El campo `visador` es visible en TabDatos pero sin botón de acción. (Fuente: Spec v1.8.2 §1.6 Nota v0.)
+**Restricción D-01**: la Ejecutiva **nunca** reasigna el visador desde la barra de acciones. El campo `visador` es visible en TabDatos pero sin botón de acción. (Fuente: Spec v1.9.4 §1.6 Nota v0.)
 
 ---
 
@@ -623,7 +632,7 @@ Reescrito completo en Fase Adjuntos 1 (10-jul-2026, D-11 a D-14): de `formData`/
 
 ## Changelog de sincronización — lote 5 · 25-jul-2026
 
-Sincronizado con `VProperty_Especificacion_Proyecto_v1_9_3.md` §2. Editado **en sitio**: este documento no lleva versión en el nombre (§3 del plan de Fase 3).
+Sincronizado con `VProperty_Especificacion_Proyecto_v1_9_4.md` §2 (v1_9_3 retirado del árbol el 29-jul-2026). Editado **en sitio**: este documento no lleva versión en el nombre (§3 del plan de Fase 3).
 
 | # | Cambio | Justificación |
 |---|---|---|

@@ -26,6 +26,7 @@ Este repo implementa **IF-02**: la consola diaria de la Ejecutiva Comercial de V
 > **Antes de proponer cualquier comando de terminal, lee `docs/aprendizajes.md`.**
 
 1. Lee `docs/diseno.md`, `docs/construccion.md` y `docs/schema-airtable.md` al inicio de la sesión.
+   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md`.
 2. Implementa **una RF por sesión**. Nunca "construir toda la consola" de golpe.
 3. Después de cada RF: `pnpm build` debe salir limpio antes del commit.
 4. Haz push; Railway redespliega automáticamente.
@@ -348,28 +349,38 @@ Ejemplos:
 
 ## Ubicación de la documentación
 
+Verificado contra el árbol real el 30-jul-2026. La versión anterior de esta
+sección listaba 8 archivos en `docs/` que ya no existen (se movieron a
+`_archivo/`) y 6 fuentes canónicas en versiones superadas.
+
 ```
 docs/
-├─ PLAN_IMPLEMENTACION_IF02_v1_2.md   (plan maestro v1.2)
 ├─ diseno.md                           (diseño funcional · fuente permanente)
 ├─ construccion.md                     (guía de construcción por RF)
 ├─ schema-airtable.md                  (snapshot schema con TABLE_IDs y FIELD_IDs)
-├─ CHECKLIST_PRE_EJECUCION.md         (v1.2)
-├─ ROADMAP_PRE_EJECUCION.md           (v1.2)
-├─ CLAUDE_MD_ADENDA.md                (v1.2 — este archivo)
-├─ DIAGNOSTICO_ESTADO_ACTUAL.md       (v1.2)
-├─ AUDITORIA_ALINEAMIENTO_v1_2.md     (panel · 06-jul-2026)
-├─ NOTAS_DIVERGENCIA_v1_2.md          (H-02, H-03, H-06, H-07)
-├─ schema-2026-07-04.json             (snapshot JSON crudo del schema MCP)
+├─ aprendizajes.md                     (bitácora de sesión · sólo append)
+├─ CODE_INCONSISTENCIES.md             (deuda detectada en código)
 ├─ _md/                               (fuentes canónicas en MD — no editar)
-│  ├─ VProperty_Blueprint_Interfaces_v2_7.md
-│  ├─ VProperty_Especificacion_Proyecto_v1_8_2.md
-│  ├─ Arquitectura_Enterprise_VProperty_v2_6.md
-│  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_2.md
-│  ├─ VProperty_Motor_Calculo_AT01_AT10_v2_5.md
-│  └─ VProperty_Origen_Datos_Informe_v1.0.md
+│  ├─ VProperty_Especificacion_Proyecto_v1_9_4.md   ← FUENTE NORMATIVA
+│  ├─ VProperty_Blueprint_Interfaces_v2_10.md
+│  ├─ Arquitectura_Enterprise_VProperty_v2_9.md
+│  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md
+│  ├─ VProperty_Motor_Calculo_AT01_AT10_v2_6.md
+│  └─ VProperty_Origen_Datos_Informe_v1.1.md
+├─ _artefactos/make/                   (blueprints Make · fuente de verdad)
+│  ├─ SC01 - Crear solicitud.blueprint.json
+│  ├─ SC-Edicion.blueprint.json
+│  ├─ SC-Asignar.blueprint.json
+│  ├─ SC-Adjuntos-Upload.blueprint.json
+│  └─ SC-RF09-ExtraccionClaude.blueprint.json
+├─ _notas/                             (notas de trabajo)
 └─ _archivo/                          (archivos históricos/obsoletos)
 ```
+
+**Fuente normativa de requisitos**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md`.
+No existe ni existió un `v1_9_1.md` en este árbol; las menciones a "Spec v1.9.1"
+en `docs/aprendizajes.md` son históricas y se dejan intactas por la regla de
+sólo-append de ese archivo.
 
 ## Mensajes humanos canónicos (§6 Blueprint · literales — no admiten variación)
 
@@ -449,7 +460,7 @@ app/
 - Poner el token Airtable/Make/Dropbox en el cliente (`NEXT_PUBLIC_*`).
 - Invocar el MCP Airtable desde código productivo compilado.
 - Escribir a Airtable durante la ejecución de tests contra la base productiva.
-- Reasignar visador desde la UI de la Ejecutiva (Spec v1.8.2 §1.6 Nota v0 · D-01).
+- Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.4 §1.6 Nota v0 · D-01).
 - Emitir mensajes de error técnicos al usuario — siempre humano.
 - Modificar los escenarios E1/E2/E3 activos (son del pipeline PDF, no de IF-02).
 - Introducir sesiones de negocio en el cliente (state machine vive en Airtable).
@@ -472,15 +483,17 @@ app/
 
 ## Referencias rápidas
 
-- Plan maestro: `docs/PLAN_IMPLEMENTACION_IF02_v1_2.md` (v1.2)
+- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md`
 - Diseño funcional: `docs/diseno.md`
 - Guía de construcción: `docs/construccion.md`
 - Schema Airtable: `docs/schema-airtable.md`
-- Checklist: `docs/CHECKLIST_PRE_EJECUCION.md` (v1.2)
-- Roadmap: `docs/ROADMAP_PRE_EJECUCION.md` (v1.2)
-- Divergencias canónicas: `docs/NOTAS_DIVERGENCIA_v1_2.md`
-- Snapshot JSON crudo: `docs/schema-2026-07-04.json`
+- Bitácora de incidentes: `docs/aprendizajes.md`
+- Blueprints Make: `docs/_artefactos/make/`
 - Deploy v0 base: <https://v0.app/nutricionsaludketo-8075s-projects/chat/if-ejecutiva-gfvE6z3qTyX>
+
+Las referencias a `PLAN_IMPLEMENTACION_IF02_v1_2.md`, `CHECKLIST_PRE_EJECUCION.md`,
+`ROADMAP_PRE_EJECUCION.md`, `NOTAS_DIVERGENCIA_v1_2.md` y `schema-2026-07-04.json`
+se retiraron el 30-jul-2026: ninguno de esos archivos sigue en `docs/`.
 
 <!-- === Fin adenda CU-002 · IF-02 v1.2 === -->
 

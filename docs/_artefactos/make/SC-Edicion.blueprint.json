@@ -2198,7 +2198,8 @@
           "fldwNEPL8fXkWwUBd": "{{1.cambios.clienteFinalRut}}",
           "fldxcfdKRctHCgwmB": "{{11.id}}",
           "fldy8081DUFzVXe01": "{{1.cambios.region}}",
-          "fldzHrLeO3Fe0xtvn": "{{1.cambios.solicitanteTelefono}}"
+          "fldzHrLeO3Fe0xtvn": "{{1.cambios.solicitanteTelefono}}",
+          "fldDP232hBLsZ0PWJ": "{{1.cambios.ejecutivoComercializador}}"
         },
         "typecast": true,
         "useColumnId": false
@@ -2951,6 +2952,11 @@
                 },
                 "type": "array",
                 "label": "TX_Unidades"
+              },
+              {
+                "name": "fldDP232hBLsZ0PWJ",
+                "type": "text",
+                "label": "ejecutivo_comercializador"
               }
             ],
             "type": "collection",
@@ -4590,22 +4596,6 @@
               "parameters": {
                 "__IMTCONN__": 8847431
               },
-              "filter": {
-                "name": "Solo si hay id de contacto",
-                "conditions": [
-                  [
-                    {
-                      "a": "{{12.id}}",
-                      "o": "exist"
-                    },
-                    {
-                      "a": "{{12.id}}",
-                      "b": "",
-                      "o": "notequal"
-                    }
-                  ]
-                ]
-              },
               "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblW3SSbKo6vRjwBJ",
@@ -4963,22 +4953,6 @@
               "version": 3,
               "parameters": {
                 "__IMTCONN__": 8847431
-              },
-              "filter": {
-                "name": "Solo si hay id de unidad",
-                "conditions": [
-                  [
-                    {
-                      "a": "{{19.id}}",
-                      "o": "exist"
-                    },
-                    {
-                      "a": "{{19.id}}",
-                      "b": "",
-                      "o": "notequal"
-                    }
-                  ]
-                ]
               },
               "mapper": {
                 "base": "app9G7lLkIV3CpeLa",

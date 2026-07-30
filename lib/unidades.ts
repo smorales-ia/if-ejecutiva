@@ -1,5 +1,11 @@
 import { listRecords } from '@/lib/airtable-client'
 import type { Solicitud, Unidad } from '@/lib/console-data'
+import {
+  aEtiqueta,
+  MATERIAL,
+  ORIGEN_SUPERFICIE,
+  SUBTIPO,
+} from '@/lib/mappers/vocabulario-unidades'
 
 // TX_Unidades verificado vía MCP 29-jul-2026 (Tanda D-02)
 export const TX_UNIDADES = 'tbl2QDLvJDyy3Rg2I'
@@ -59,28 +65,58 @@ function tieneRol(f: RawFields): boolean {
   return Boolean(f.rol_sii || f.rol_sii_en_tramite)
 }
 
+/**
+ * `ampliacion_regularizable` es un tri-estado (`si` · `no` · `no_aplica`), no un
+ * booleano. `undefined` = no declarado, que es lo que `Unidad.regularizable`
+ * modela y lo que el serializador de vuelta traduce a `no_aplica`.
+ */
+function regularizableDesdeSlug(slug: string | undefined): boolean | undefined {
+  if (slug === 'si') return true
+  if (slug === 'no') return false
+  return undefined
+}
+
+/**
+ * Traduce una fila de `TX_Unidades` al modelo de lectura de la consola.
+ *
+ * Los tres `singleSelect` se **normalizan a etiqueta de UI** acá y no más
+ * adelante (C-1, 30-jul-2026). Antes viajaban como slug crudo y eso rompía dos
+ * cosas a la vez: el `<Select>` del formulario no encontraba un `SelectItem` con
+ * ese `value` y renderizaba vacío, y el mapper de edición le aplicaba la tabla
+ * etiqueta→slug, que no tiene entrada para un slug, y terminaba escribiendo `""`
+ * en Airtable. Normalizar en el borde de lectura deja un solo espacio de valores
+ * —el de la UI— en todo lo que está aguas arriba.
+ *
+ * Un slug desconocido (una opción basura que `typecast` creó antes del fix)
+ * queda como `''` y el vocabulario lo loguea. `''` es "no declarado", que es lo
+ * que la pantalla ya sabe mostrar.
+ */
 function mapUnidad(id: string, f: RawFields): Unidad {
   return {
     id,
     ubicacion: f.numero_unidad ?? '',
     modelo: f.modelo || undefined,
-    tipoBien: f.subtipo ?? '',
+    tipoBien: aEtiqueta(SUBTIPO, f.subtipo) ?? '',
     conRol: tieneRol(f),
     rolSii: f.rol_sii ?? '',
     rolEnTramite: f.rol_sii_en_tramite === true,
-    supConstruida: f.sup_m2 ?? 0,
+    // `null` y no 0: un `sup_m2` vacío en Airtable es "sin declarar", y el 0
+    // literal que se leía antes se reescribía como una superficie real de cero
+    // metros en el siguiente guardado (C-3).
+    supConstruida: f.sup_m2 ?? null,
     supTerraza: f.superficie_terraza_m2,
     supTerreno: f.sup_terreno_m2,
     // `anioConstruccion` es string en el modelo de UI (el formulario lo edita
     // como texto); Airtable lo guarda como number. Cadena vacía y no "0"
     // cuando falta: un "0" se leería como un año real en pantalla.
     anioConstruccion: f.anio_construccion != null ? String(f.anio_construccion) : '',
-    material: f.tipo_material ?? '',
+    material: aEtiqueta(MATERIAL, f.tipo_material) ?? '',
     m2Ampliacion: f.ampliacion_m2,
-    regularizable: f.ampliacion_regularizable
-      ? /s[ií]|true/i.test(f.ampliacion_regularizable)
-      : undefined,
-    origenSuperficie: f.origen_superficie ?? '',
+    // Tri-estado: `no_aplica` (y el campo vacío) es "no declarado" y debe quedar
+    // `undefined`, no `false`. El test previo devolvía `false` para `no_aplica`,
+    // lo que convertía un no-declarado en un "no" explícito al reescribir.
+    regularizable: regularizableDesdeSlug(f.ampliacion_regularizable),
+    origenSuperficie: aEtiqueta(ORIGEN_SUPERFICIE, f.origen_superficie) ?? '',
     // El respaldo vive en TX_Adjuntos vía `respaldo_adjunto`; resolverlo exige
     // una segunda lectura que este bloque no hace. `null` = "sin respaldo
     // conocido", que es lo que el detalle ya sabe representar.

@@ -76,7 +76,12 @@ export interface Unidad {
   conRol: boolean
   rolSii: string
   rolEnTramite: boolean
-  supConstruida: number
+  /**
+   * `null` = superficie no declarada. No es lo mismo que 0 (C-3, 30-jul-2026):
+   * `hydrateUnidades` leía un `sup_m2` vacío como 0 y el guardado siguiente lo
+   * escribía en Airtable como una superficie real de cero metros.
+   */
+  supConstruida: number | null
   supTerraza?: number
   supTerreno?: number
   anioConstruccion: string
@@ -165,6 +170,13 @@ export interface Solicitud {
   // Campos v1.9 (opcionales para no romper mocks existentes) — ver P1
   /** Ejecutivo formalizador (Sección A · nuevo v1.9). */
   ejecFormalizador?: string
+  /**
+   * Ejecutivo comercializador (Sección A · §1.4 "Origen").
+   * Espeja `TX_Solicitudes.ejecutivo_comercializador` (`fldDP232hBLsZ0PWJ`,
+   * singleLineText), creado el 30-jul-2026 para cerrar el bloqueo V-4: §1.4
+   * pedía el control pero no existía campo destino en el schema.
+   */
+  ejecutivoComercializador?: string
   /** Modo con el que se creó la solicitud. */
   modoCreacion?: ModoCreacion
   /** Tipo de cliente de origen (catálogo TIPOS_CLIENTE_ORIGEN). */
@@ -953,11 +965,23 @@ export const CANALES_ORIGEN = [
  * aparecen en un registro antiguo, `etiquetaCatalogo()` las muestra tal cual en
  * vez de dejar el campo en blanco.
  */
+/**
+ * Espeja las 8 opciones reales de `TX_Solicitudes.tipo_cliente_origen`
+ * (`fldbxZh45lFTB7yVJ`), verificadas vía `get_table_schema` el 30-jul-2026.
+ *
+ * Faltaban `correo_texto`, `correo_ficha` y `extranet` (V-2). Mismo patrón que
+ * `TIPOS_BIEN` en C-2: un valor presente en Airtable pero ausente del catálogo
+ * de UI hace que el `<Select>` renderice vacío, y al ser este campo editable
+ * desde esta tanda, ese vacío se guardaría.
+ */
 export const TIPOS_CLIENTE_ORIGEN = [
   { value: "banco", label: "Banco" },
   { value: "inmobiliaria", label: "Inmobiliaria" },
   { value: "persona_natural", label: "Persona natural" },
   { value: "corredora", label: "Corredora" },
+  { value: "correo_texto", label: "Correo (texto)" },
+  { value: "correo_ficha", label: "Correo (ficha)" },
+  { value: "extranet", label: "Extranet" },
   { value: "otro", label: "Otro" },
 ] as const
 
@@ -1032,15 +1056,35 @@ export const ESTADOS_CONSERVACION = [
   { value: "deficiente", label: "Deficiente" },
 ] as const
 
-/** Tipo de bien de una unidad (catálogo cerrado de 8). */
+/**
+ * Tipo de bien de una unidad — etiquetas de UI de las 11 opciones reales de
+ * `TX_Unidades.subtipo` (`fldNU8ee30AvvRWHZ`), verificadas vía
+ * `get_table_schema` el 30-jul-2026.
+ *
+ * Hasta esta tanda la lista tenía 8 entradas y le faltaban 5 opciones que sí
+ * existen en Airtable: `Departamento`, `Casa`, `Local`, `Terraza` y
+ * `Servidumbre` (C-2). El efecto era silencioso y grave: una unidad con
+ * `subtipo = "Departamento"` hidrataba a un `<Select>` que no tenía ese
+ * `SelectItem`, así que **la pantalla mostraba el campo vacío** y el guardado
+ * materializaba ese vacío. VP-2026-0053 se vació así.
+ *
+ * El orden importa: `vocabulario-unidades.ts` colapsa las tres variantes de
+ * estacionamiento al slug `Estacionamiento` y la vuelta usa la primera
+ * declarada. Mantener `cubierto` antes que las otras dos.
+ */
 export const TIPOS_BIEN = [
+  "Departamento",
+  "Casa",
   "Edificación",
   "Terreno",
+  "Local",
+  "Terraza",
   "Estacionamiento cubierto",
   "Estacionamiento descubierto",
   "Estacionamiento uso y goce",
   "Bodega",
   "Piscina",
+  "Servidumbre",
   "Obras complementarias",
 ] as const
 

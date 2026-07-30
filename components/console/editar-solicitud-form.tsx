@@ -25,10 +25,12 @@ import {
   ESTADOS_CONTACTO,
   MATERIALES,
   ORIGENES_DATO_VENDEDOR,
+  ORIGENES_DIRECCION,
   ORIGENES_SUPERFICIE,
   REGIONES,
   ROLES_CONTACTO_VISITA,
   TIPOS_BIEN,
+  TIPOS_CLIENTE_ORIGEN,
   type ContactoVisita,
   type Solicitud,
   type Unidad,
@@ -37,6 +39,44 @@ import { useCatalogos } from "@/lib/use-catalogos"
 
 let uid = 0
 const nextId = (p: string) => `${p}-${Date.now()}-${uid++}`
+
+/**
+ * Valor de un `<Input type="number">` a partir de un número opcional.
+ * `String(null)` daría el literal `"null"` dentro del campo; vacío es lo que
+ * corresponde a "sin declarar" (C-3).
+ */
+function numeroInput(valor: number | null | undefined): string {
+  return valor == null ? "" : String(valor)
+}
+
+/**
+ * Vuelta del input al modelo. Campo vacío → `null` ("sin declarar"), **no 0**:
+ * un 0 se escribe en Airtable como una superficie real de cero metros, que es
+ * el bug que C-3 corrige. Un texto no numérico también es `null`.
+ */
+function numeroDesdeInput(texto: string): number | null {
+  const t = texto.trim()
+  if (t === "") return null
+  const n = Number(t)
+  return Number.isFinite(n) ? n : null
+}
+
+/**
+ * `Unidad.regularizable` es un tri-estado (`true` · `false` · `undefined`) y el
+ * `<Select>` de Base UI trabaja con strings. Estas dos tablas hacen el ida y
+ * vuelta sin colapsar "no declarado" con "no" — Airtable los distingue
+ * (`no_aplica` vs `no`) y perder la diferencia es perder información.
+ */
+const REGULARIZABLE_VALOR: Record<string, string> = {
+  true: "si",
+  false: "no",
+  undefined: "no_declarado",
+}
+const REGULARIZABLE_ESTADO: Record<string, boolean | undefined> = {
+  si: true,
+  no: false,
+  no_declarado: undefined,
+}
 
 /** Copia editable de la solicitud (independiente del original hasta Guardar). */
 function clonar(s: Solicitud): Solicitud {
@@ -134,11 +174,13 @@ export function EditarSolicitudForm({
         {
           id: nextId("u"),
           ubicacion: "",
-          tipoBien: "Edificación",
+          tipoBien: "Departamento",
           conRol: true,
           rolSii: "",
           rolEnTramite: false,
-          supConstruida: 0,
+          // `null` = sin declarar. Un 0 acá se escribiría en Airtable como una
+          // superficie real de cero metros (C-3).
+          supConstruida: null,
           anioConstruccion: "",
           material: "Hormigón",
           origenSuperficie: "Carta o ficha inmobiliaria",
@@ -283,6 +325,76 @@ export function EditarSolicitudForm({
             onChange={(e) => set("correoClienteRef", e.target.value)}
           />
         </EditField>
+        {/* V-2 · §1.4 "Origen". Los cuatro viajaban preservados desde
+            `original.*` en el mapper: se guardaban intactos pero la ejecutiva no
+            podía cambiarlos, y §1.4 los pide editables en estado `creada`.
+            Ahora salen de la copia editada `d`.
+
+            "Comercializador" se sumó el 30-jul-2026 al crearse el campo destino
+            `ejecutivo_comercializador` (`fldDP232hBLsZ0PWJ`, singleLineText),
+            que cierra el bloqueo V-4: §1.4 pedía el control pero el schema no
+            tenía dónde escribirlo. Con eso la Sección A queda completa. */}
+        <EditField label="Tipo de cliente de origen">
+          <Select
+            value={d.tipoClienteOrigen ?? ""}
+            onValueChange={(v) => set("tipoClienteOrigen", v ?? "")}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Tipo de cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {TIPOS_CLIENTE_ORIGEN.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </EditField>
+        <EditField label="Origen de la dirección">
+          <Select
+            value={d.origenDireccion ?? ""}
+            onValueChange={(v) =>
+              set("origenDireccion", (v ?? "") as Solicitud["origenDireccion"])
+            }
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Origen de la dirección" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {ORIGENES_DIRECCION.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </EditField>
+        <EditField label="Ejecutivo solicitante">
+          <Input
+            // El modelo lo llama `modificadoPor` por historia, pero `mapRecord`
+            // lo lee de `ejecutivo_solicitante` (`lib/solicitudes.ts`) y el
+            // mapper lo devuelve por la clave `ejecutivoSolicitante`.
+            value={d.modificadoPor === "—" ? "" : d.modificadoPor}
+            onChange={(e) => set("modificadoPor", e.target.value)}
+          />
+        </EditField>
+        <EditField label="Ejecutivo formalizador">
+          <Input
+            value={d.ejecFormalizador ?? ""}
+            onChange={(e) => set("ejecFormalizador", e.target.value)}
+          />
+        </EditField>
+        <EditField label="Comercializador">
+          <Input
+            value={d.ejecutivoComercializador ?? ""}
+            onChange={(e) => set("ejecutivoComercializador", e.target.value)}
+          />
+        </EditField>
       </FormSection>
 
       {/* Cliente y tipo */}
@@ -361,6 +473,27 @@ export function EditarSolicitudForm({
           <Input
             value={d.producto}
             onChange={(e) => set("producto", e.target.value)}
+          />
+        </EditField>
+        {/* V-3 · `monto_estimado_uf` (fldKZW799xIqMFN1I) es `number` plano en
+            Airtable, no fórmula: es un dato que declara la ejecutiva, no un
+            cálculo del motor AT01, así que la regla dura de §1.4 lo alcanza.
+            Ya viajaba en cada guardado preservado desde `original`; lo único
+            que faltaba era poder corregirlo.
+
+            `prioridad` NO entra acá a propósito: tiene acción dedicada
+            (`/api/webhooks/prioridad`) con su propio evento en `A_Eventos`.
+            Dos caminos de escritura para un mismo campo harían que la traza de
+            auditoría dependa de cuál usó el usuario.
+
+            El valor viaja como texto de presentación ("4.200 UF"); `numeroPlano`
+            lo normaliza en el mapper, que es lo que ya hacía. */}
+        <EditField label="Monto estimado (UF)">
+          <Input
+            inputMode="decimal"
+            placeholder="Ej.: 4.200"
+            value={d.montoUf === "—" ? "" : d.montoUf}
+            onChange={(e) => set("montoUf", e.target.value)}
           />
         </EditField>
         <EditField label="Canal de contacto">
@@ -640,11 +773,57 @@ export function EditarSolicitudForm({
                   <Input
                     type="number"
                     inputMode="decimal"
-                    value={String(u.supConstruida)}
+                    placeholder="Sin declarar"
+                    // `String(null)` daría el literal "null" dentro del input.
+                    value={numeroInput(u.supConstruida)}
+                    onChange={(e) =>
+                      setUnidad(i, { supConstruida: numeroDesdeInput(e.target.value) })
+                    }
+                  />
+                </EditField>
+                <EditField label="Superficie terraza (m²)">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="Sin declarar"
+                    value={numeroInput(u.supTerraza)}
                     onChange={(e) =>
                       setUnidad(i, {
-                        supConstruida: Number(e.target.value) || 0,
+                        supTerraza: numeroDesdeInput(e.target.value) ?? undefined,
                       })
+                    }
+                  />
+                </EditField>
+                <EditField label="Superficie terreno (m²)">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="Sin declarar"
+                    value={numeroInput(u.supTerreno)}
+                    onChange={(e) =>
+                      setUnidad(i, {
+                        supTerreno: numeroDesdeInput(e.target.value) ?? undefined,
+                      })
+                    }
+                  />
+                </EditField>
+                <EditField label="Año de construcción">
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="Ej.: 2018"
+                    value={u.anioConstruccion}
+                    onChange={(e) =>
+                      setUnidad(i, { anioConstruccion: e.target.value })
+                    }
+                  />
+                </EditField>
+                <EditField label="Modelo">
+                  <Input
+                    value={u.modelo ?? ""}
+                    placeholder="Sólo propiedades nuevas"
+                    onChange={(e) =>
+                      setUnidad(i, { modelo: e.target.value || undefined })
                     }
                   />
                 </EditField>
@@ -688,14 +867,70 @@ export function EditarSolicitudForm({
                     </SelectContent>
                   </Select>
                 </EditField>
+                <EditField label="Ampliación (m²)">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="Sin ampliación"
+                    value={numeroInput(u.m2Ampliacion)}
+                    onChange={(e) =>
+                      setUnidad(i, {
+                        m2Ampliacion: numeroDesdeInput(e.target.value) ?? undefined,
+                      })
+                    }
+                  />
+                </EditField>
+                <EditField label="Ampliación regularizable">
+                  <Select
+                    // Tri-estado: "" es "no declarado" y Airtable lo modela como
+                    // `no_aplica`. No colapsar a "no" — son cosas distintas.
+                    value={REGULARIZABLE_VALOR[String(u.regularizable)]}
+                    onValueChange={(v) =>
+                      setUnidad(i, { regularizable: REGULARIZABLE_ESTADO[v ?? ""] })
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="No declarado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value="no_declarado">No declarado</SelectItem>
+                        <SelectItem value="si">Sí</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </EditField>
               </div>
-              <label className="flex w-fit items-center gap-2 text-xs text-muted-foreground">
-                <Checkbox
-                  checked={u.conRol}
-                  onCheckedChange={(v) => setUnidad(i, { conRol: v === true })}
+              <EditField label="Detalle del ítem">
+                <Textarea
+                  rows={2}
+                  value={u.detalleItem ?? ""}
+                  placeholder="Requerido en obras complementarias"
+                  onChange={(e) =>
+                    setUnidad(i, { detalleItem: e.target.value || undefined })
+                  }
                 />
-                Unidad con rol SII (desmarca para “uso y goce”)
-              </label>
+              </EditField>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <label className="flex w-fit items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={u.conRol}
+                    onCheckedChange={(v) => setUnidad(i, { conRol: v === true })}
+                  />
+                  Unidad con rol SII (desmarca para “uso y goce”)
+                </label>
+                <label className="flex w-fit items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={u.rolEnTramite}
+                    disabled={!u.conRol}
+                    onCheckedChange={(v) =>
+                      setUnidad(i, { rolEnTramite: v === true })
+                    }
+                  />
+                  Rol SII en trámite
+                </label>
+              </div>
             </div>
           ))}
         </div>

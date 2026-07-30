@@ -1,10 +1,13 @@
 import type { ContactoVisita, Solicitud, Unidad } from "@/lib/console-data"
+import type { UnidadPayload } from "@/lib/mappers/crear-solicitud"
 import {
-  MATERIAL_POR_ETIQUETA,
-  ORIGEN_SUPERFICIE_POR_ETIQUETA,
-  SUBTIPO_POR_TIPO_BIEN,
-  type UnidadPayload,
-} from "@/lib/mappers/crear-solicitud"
+  aSlug,
+  MATERIAL,
+  ORIGEN_SUPERFICIE,
+  slugRegularizable,
+  slugRolModo,
+  SUBTIPO,
+} from "@/lib/mappers/vocabulario-unidades"
 
 /**
  * Mapper UI → contrato `cambios` de SC-Edicion (E-078).
@@ -97,35 +100,62 @@ function mapearContacto(
  * Gemelo de `mapearUnidad` (crear-solicitud.ts), pero parte de un tipo distinto:
  * el del alta viene del formulario (todo string, `rolModo` como enum), y este
  * viene de lo que `hydrateUnidades` leyó de Airtable (números ya tipados,
- * `conRol` booleano). Las tablas de traducción de vocabulario **sí** se
- * comparten —se importan de crear-solicitud— porque duplicarlas garantizaría
- * que diverjan.
+ * `conRol` booleano).
+ *
+ * ⚠ Acá vivía el bug de vaciado masivo (C-1, 30-jul-2026). Esta función aplicaba
+ * `SUBTIPO_POR_TIPO_BIEN[u.tipoBien]`, una tabla indexada por **etiqueta de
+ * UI**, a un `u.tipoBien` que `hydrateUnidades` había leído de Airtable y por lo
+ * tanto era un **slug**. Los dominios son disjuntos: `["Departamento"]` daba
+ * `undefined`, el `?? ""` lo convertía en cadena vacía, y Make la escribía con
+ * `typecast: true` creando una opción de nombre vacío. Cada guardado vaciaba
+ * `subtipo`, `tipo_material` y `origen_superficie` de todas las unidades.
+ *
+ * Ahora `u.tipoBien` sigue siendo una etiqueta —`mapUnidad` la normaliza al
+ * hidratar (`lib/unidades.ts`)— y la ida usa el mismo vocabulario que la vuelta,
+ * derivado de una sola declaración de pares.
  */
 function mapearUnidadEdicion(u: Unidad, index: number): UnidadPayload {
   const anio = Number(u.anioConstruccion)
   return {
     numero_unidad: limpiar(u.ubicacion) ?? "",
     modelo: limpiar(u.modelo) ?? "",
-    subtipo: SUBTIPO_POR_TIPO_BIEN[u.tipoBien] ?? "",
-    // Aquí el eje con-rol/uso-y-goce ya viene resuelto como booleano por
-    // `hydrateUnidades`, así que no hace falta la tabla del enum del formulario.
-    con_rol_o_uso_y_goce: u.conRol ? "con_rol" : "uso_y_goce",
     rol_sii: limpiar(u.rolSii) ?? "",
     rol_sii_en_tramite: u.rolEnTramite,
-    sup_m2: Number.isFinite(u.supConstruida) ? u.supConstruida : null,
+    // `supConstruida` es `number | null` desde C-3: un campo vacío en Airtable
+    // ya no se lee como 0, así que tampoco se reescribe como 0.
+    sup_m2: u.supConstruida ?? null,
     superficie_terraza_m2: u.supTerraza ?? null,
     sup_terreno_m2: u.supTerreno ?? null,
     anio_construccion: Number.isFinite(anio) && anio > 0 ? anio : null,
-    tipo_material: MATERIAL_POR_ETIQUETA[u.material] ?? "",
     ampliacion_m2: u.m2Ampliacion ?? null,
-    // `regularizable` es booleano opcional: `undefined` no es "no", es "no
-    // declarado", y Airtable lo modela como `no_aplica`.
-    ampliacion_regularizable:
-      u.regularizable === true ? "si" : u.regularizable === false ? "no" : "no_aplica",
-    origen_superficie: ORIGEN_SUPERFICIE_POR_ETIQUETA[u.origenSuperficie] ?? "",
     detalle_item: limpiar(u.detalleItem) ?? "",
     orden: index + 1,
+    // Mismos cuatro selects con la misma guarda que en el alta: la clave se
+    // omite si no hay traducción, nunca viaja `""`.
+    //
+    // `con_rol_o_uso_y_goce` y `ampliacion_regularizable` no pasan por el
+    // diccionario porque el modelo de lectura ya los tiene resueltos como
+    // booleano y tri-estado; sus serializadores viven en el mismo módulo para
+    // que el vocabulario siga teniendo un solo dueño.
+    ...soloDefinidos({
+      subtipo: aSlug(SUBTIPO, u.tipoBien),
+      tipo_material: aSlug(MATERIAL, u.material),
+      origen_superficie: aSlug(ORIGEN_SUPERFICIE, u.origenSuperficie),
+      con_rol_o_uso_y_goce: slugRolModo(u.conRol),
+      ampliacion_regularizable: slugRegularizable(u.regularizable),
+    }),
   }
+}
+
+/** Descarta las claves cuyo valor es `undefined`, conservando el resto. */
+function soloDefinidos(
+  campos: Record<string, string | undefined>,
+): Record<string, string> {
+  const salida: Record<string, string> = {}
+  for (const [clave, valor] of Object.entries(campos)) {
+    if (valor !== undefined) salida[clave] = valor
+  }
+  return salida
 }
 
 /** Payload plano que viaja como `cambios` en el PATCH. */
@@ -202,15 +232,27 @@ export function mapearEdicionSolicitud(
     origenCanal: limpiar(original.origenCanal),
 
     // — Campos que SC-Edicion escribe pero esta pantalla no edita —
+    // `prioridad` se queda acá a propósito (V-3): tiene acción dedicada
+    // (`/api/webhooks/prioridad`) con su propio evento en `A_Eventos`. Viaja
+    // preservada para que el Update no la borre, pero no se edita desde el form.
     prioridad: limpiar(original.prioridad),
-    montoEstimadoUf: numeroPlano(original.montoUf),
     solicitanteNombre: limpiar(original.propietario),
-    ejecutivoSolicitante: limpiar(original.modificadoPor),
-    ejecutivoFormalizador: limpiar(original.ejecFormalizador),
+
+    // `montoEstimadoUf` pasó a editable (V-3): es `number` plano en Airtable, no
+    // fórmula del motor. `numeroPlano` normaliza el "4.200 UF" de presentación.
+    montoEstimadoUf: numeroPlano(d.montoUf),
     modoCreacion: limpiar(original.modoCreacion),
-    tipoClienteOrigen: limpiar(original.tipoClienteOrigen),
-    origenDireccion: limpiar(original.origenDireccion),
     emailThreadId: limpiar(original.emailThreadId),
+
+    // — Bloque "Origen" de §1.4, ahora editable (V-2, 30-jul-2026) —
+    // Los cuatro se leían de `original` y viajaban intactos: se preservaban,
+    // pero la ejecutiva no podía corregirlos pese a que §1.4 los declara
+    // editables mientras la solicitud está en `creada`. Ahora salen de `d`.
+    ejecutivoSolicitante: limpiar(d.modificadoPor),
+    ejecutivoFormalizador: limpiar(d.ejecFormalizador),
+    ejecutivoComercializador: limpiar(d.ejecutivoComercializador),
+    tipoClienteOrigen: limpiar(d.tipoClienteOrigen),
+    origenDireccion: limpiar(d.origenDireccion),
 
     // — Claves que SC-Edicion ya mapeaba y este mapper no enviaba (D-02) —
     // No se enviaban porque `mapRecord` no leía sus campos, así que el modelo
