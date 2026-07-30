@@ -157,6 +157,11 @@ export function mapearEdicionSolicitud(
     bancoFinancista: limpiar(d.banco),
 
     // — Propiedad —
+    // La spec lo describe como "sólo Nuevo" (§1.3.2, bloque Propiedad), pero
+    // viaja siempre: SC-Edicion reescribe la fila completa, así que omitirlo en
+    // una solicitud Usado que ya lo tenga poblado lo borraría. Misma doctrina
+    // que `origenCanal` y los campos preservados más abajo.
+    proyecto: limpiar(d.proyecto),
     direccion: limpiar(d.direccion),
     region: limpiar(d.region),
     comuna: limpiar(d.comuna),
@@ -286,17 +291,23 @@ export function mapearEdicionSolicitud(
 }
 
 /**
- * ⚠ Campos de `TX_Solicitudes` que SC-Edicion mapea y que **no** son
- * reconstruibles desde el modelo `Solicitud`, porque `mapRecord` no los lee:
- * `n_operacion_cliente`, `sucursal_originadora`, `correo_cliente_ref` y
- * `fecha_asignacion`. Aquí se omiten para no enviarlos vacíos. Si el conector
- * de Airtable de Make interpreta una clave ausente como borrado, esos cuatro
- * campos se perderían al editar — verificarlo en el smoke test sobre un
- * registro de prueba antes de usar la edición en producción. El cierre
- * definitivo es ampliar `SOLICITUD_FIELDS`/`mapRecord` o proteger el módulo 2
- * con `ifempty()`.
+ * Cobertura de este mapper contra el módulo 2 (Update Records) de SC-Edicion,
+ * al 29-jul-2026: **47 campos**, 40 directos bajo `cambios.*` + 7 Link fields
+ * que el escenario resuelve por búsqueda (módulos 6-11 por nombre, y el 24 —
+ * `ejecutiva_asignada` — por `clerk_user_id`).
  *
- * ⚠ El bloque "Unidades" del formulario no tiene destino en SC-Edicion (el
- * escenario no mapea ninguna tabla de unidades). Hoy sus ediciones no
- * persisten; requiere una tanda de escenario aparte.
+ * `ejecutiva_asignada` es el único que **no** sale de aquí: viaja como
+ * `ejecutivaClerkId` en la raíz del PATCH, puesto server-side desde la sesión
+ * Clerk (`app/api/solicitudes/[id]/route.ts`). No se expone en el formulario —
+ * la Ejecutiva no se auto-reasigna a mano.
+ *
+ * Las dos advertencias que vivían aquí quedaron obsoletas y se retiran para que
+ * no induzcan a error:
+ *  - `n_operacion_cliente`, `sucursal_originadora`, `correo_cliente_ref` y
+ *    `fechaAsignacion` ya no se omiten: se envían desde `d`/`original` (D-02,
+ *    al ampliarse `SOLICITUD_FIELDS`). El módulo 2 además protege
+ *    `n_operacion_cliente` con `if(…; parseNumber(…); emptystring)`, igual que
+ *    SC01, para que un valor ausente no llegue como `parseNumber("")`.
+ *  - El bloque "Unidades" sí tiene destino: la rama 1 del Router las borra y
+ *    recrea en `TX_Unidades` a partir de `unidadesJson`.
  */

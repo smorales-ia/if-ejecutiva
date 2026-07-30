@@ -117,6 +117,11 @@ export const editarSolicitudSchema = z
     solicitanteTelefono: z.string().optional(),
 
     // Propiedad
+    // `proyecto` alimenta `proyecto_condominio` (fldbmGmyMHOtfX2Az). La clave
+    // conserva el nombre corto que ya usa SC01 (`{{1.proyecto}}`) y el resto del
+    // repo (`Solicitud.proyecto`, `mapRecord`), en vez del nombre del campo
+    // Airtable: un solo nombre en los dos escenarios.
+    proyecto: z.string().optional(),
     direccion: z.string().optional(),
     comuna: z.string().optional(),
     region: z.string().optional(),

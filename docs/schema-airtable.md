@@ -990,6 +990,139 @@ así que el filtro es correcto **sin** necesidad de re-determinar la data struct
 
 ### 23.3 Consumidores
 
-- `SC-Edicion-v3.0.blueprint.json` — módulos 12 (`TX_ContactosVisita`) y 19 (`TX_Unidades`).
+- `SC-Edicion.blueprint.json` — módulos 12 (`TX_ContactosVisita`) y 19 (`TX_Unidades`).
 - **SC01 no requiere cambio**: ya escribe el link `solicitud` (`fldmBd2bzOWjPX0eW = {{7.id}}`)
   y Airtable calcula el lookup solo.
+
+
+---
+
+## 24. Cobertura de escritura de SC-Edicion sobre `TX_Solicitudes` (29-jul-2026)
+
+### 24.1 Qué escribe el módulo 2 (`Update Records`)
+
+**47 campos.** Ninguno es formula, rollup, lookup ni autonumber: `TX_Solicitudes` tiene 134
+campos, de los cuales 121 son escribibles, así que estos 47 son el subconjunto de negocio de
+IF-02, **no** el universo escribible de la tabla.
+
+Se leen así:
+
+- **40** directos desde el payload, como `{{1.cambios.<clave camelCase>}}`.
+- **7** Link fields que el escenario resuelve con un `Search` propio y consume como `{{N.id}}`:
+  los módulos 6-11 buscan por `nombre` (`cliente`, `tipo_informe`, `tipo_propiedad`,
+  `producto`, `comuna`, `banco_financista`) y el módulo 24 busca por `clerk_user_id`
+  (`ejecutiva_asignada`).
+
+| Campo Airtable | FIELD_ID | Tipo | Mapper en el módulo 2 |
+|---|---|---|---|
+| `banco` | `fldAgTlFXeXWfGTdI` | singleLineText | `{{1.cambios.bancoId}}` |
+| `banco_financista` | `fldxcfdKRctHCgwmB` | multipleRecordLinks | `{{11.id}}` |
+| `canal_contacto_original` | `fldca1Uza4eicBXL4` | singleSelect | `{{1.cambios.canal}}` |
+| `cliente` | `fldttL5myzLohDwHv` | multipleRecordLinks | `{{6.id}}` |
+| `cliente_final_nombre` | `fld7jxcbmMYz6kmbj` | singleLineText | `{{1.cambios.clienteFinalNombre}}` |
+| `cliente_final_rut` | `fldwNEPL8fXkWwUBd` | singleLineText | `{{1.cambios.clienteFinalRut}}` |
+| `comuna` | `fldJTjjzCPBHMOWZv` | multipleRecordLinks | `{{10.id}}` |
+| `correo_cliente_ref` | `fldcKVbfRBo8J7gtg` | singleLineText | `{{1.cambios.correoClienteRef}}` |
+| `direccion` | `fldKP0yxwQkSdrFuZ` | singleLineText | `{{1.cambios.direccion}}` |
+| `ejecutiva_asignada` | `fldv1XDfP7EgYC3km` | multipleRecordLinks | `{{24.id}}` |
+| `ejecutivo_formalizador` | `fldM9ELuMvgRwbmUn` | singleLineText | `{{1.cambios.ejecutivoFormalizador}}` |
+| `ejecutivo_solicitante` | `fldRweQyq3tTQGmPR` | singleLineText | `{{1.cambios.ejecutivoSolicitante}}` |
+| `email_contacto` | `fldjzUZsACA0vDlUq` | email | `{{1.cambios.emailContacto}}` |
+| `email_thread_id` | `fldhy81fNSE5CF2Tc` | singleLineText | `{{1.cambios.emailThreadId}}` |
+| `estado_conservacion` | `flde0ExWfB1dhkp4t` | singleSelect | `{{1.cambios.estadoConservacion}}` |
+| `fecha_asignacion_ts` | `fldf8BS8nv2vtOmu0` | dateTime | `{{if(1.cambios.fechaAsignacion; parseDate(1.cambios.fechaAsignacion))}}` |
+| `financiero_ahorro_uf` | `fld5WjnkIN9DYs7vX` | number | `{{parseNumber(1.cambios.financieroAhorroUf)}}` |
+| `financiero_bono_captacion_uf` | `fldAcyXYAppvBlXIt` | number | `{{parseNumber(1.cambios.financieroBonoCaptacionUf)}}` |
+| `financiero_bono_integracion_uf` | `fld9TnWG2OJFx1hiW` | number | `{{parseNumber(1.cambios.financieroBonoIntegracionUf)}}` |
+| `financiero_mutuo_uf` | `fldEbxQzz5g0Knupv` | number | `{{parseNumber(1.cambios.financieroMutuoUf)}}` |
+| `financiero_pago_contado_uf` | `fldDFfws74GaHO4oV` | number | `{{parseNumber(1.cambios.financieroPagoContadoUf)}}` |
+| `financiero_precio_venta_uf` | `fld1RBNe63iotfyqE` | number | `{{parseNumber(1.cambios.financieroPrecioVentaUf)}}` |
+| `financiero_subsidio_uf` | `fldRmC7IjhRUf1UPk` | number | `{{parseNumber(1.cambios.financieroSubsidioUf)}}` |
+| `financiero_valor_total_uf` | `fldp4XCnx8jsfAzZx` | number | `{{parseNumber(1.cambios.financieroValorTotalUf)}}` |
+| `modo_creacion` | `fldBJovAv2RpsaupH` | singleSelect | `{{1.cambios.modoCreacion}}` |
+| `monto_estimado_uf` | `fldKZW799xIqMFN1I` | number | `{{parseNumber(1.cambios.montoEstimadoUf)}}` |
+| `n_operacion_cliente` | `fldb1vmKk7y3hi4uY` | number | `{{if(1.cambios.nOperacionCliente; parseNumber(1.cambios.nOperacionCliente); emptystring)}}` |
+| `observaciones_internas` | `fldjmx9pLOyJKx1Mw` | multilineText | `{{1.cambios.observaciones}}` |
+| `origen_canal` | `fldPphw1FWfYdZI2Z` | singleSelect | `{{1.cambios.origenCanal}}` |
+| `origen_direccion` | `fldiwBMHujptXHr2D` | singleSelect | `{{1.cambios.origenDireccion}}` |
+| `prioridad` | `fld9FKZ9siAeSsH54` | singleSelect | `{{1.cambios.prioridad}}` |
+| `producto` | `fldp64U99lsLf7HlV` | multipleRecordLinks | `{{9.id}}` |
+| `proyecto_condominio` | `fldbmGmyMHOtfX2Az` | singleLineText | `{{1.cambios.proyecto}}` |
+| `region` | `fldy8081DUFzVXe01` | singleLineText | `{{1.cambios.region}}` |
+| `solicitante_nombre` | `fld2rd2p4Qpz6NFQ2` | singleLineText | `{{1.cambios.solicitanteNombre}}` |
+| `solicitante_telefono` | `fldzHrLeO3Fe0xtvn` | phoneNumber | `{{1.cambios.solicitanteTelefono}}` |
+| `sucursal_originadora ` | `fldd56pLZyKYoi2Vi` | singleLineText | `{{1.cambios.sucursalOriginadora}}` |
+| `tipo_cliente_origen` | `fldbxZh45lFTB7yVJ` | singleSelect | `{{1.cambios.tipoClienteOrigen}}` |
+| `tipo_informe` | `fldJO4JtsDEeMmjdi` | multipleRecordLinks | `{{7.id}}` |
+| `tipo_propiedad` | `fld701TB0LXovvQmt` | multipleRecordLinks | `{{8.id}}` |
+| `tipo_propiedad_nuevo_usado` | `fldHxx1P1ao33PWrl` | singleSelect | `{{1.cambios.tipoPropiedadNuevoUsado}}` |
+| `vendedor_email` | `flduBKof3x45EpTNW` | email | `{{1.cambios.vendedorEmail}}` |
+| `vendedor_origen_dato` | `fldcjrl80Vv1WBmmY` | singleSelect | `{{1.cambios.vendedorOrigenDato}}` |
+| `vendedor_razon_social_o_nombre` | `fldNkFwB5p3Mljtrg` | singleLineText | `{{1.cambios.vendedorRazonSocialONombre}}` |
+| `vendedor_rut` | `fldrITDFkbk95Da00` | singleLineText | `{{1.cambios.vendedorRut}}` |
+| `vendedor_telefono` | `flduslI2FNAdcPchK` | phoneNumber | `{{1.cambios.vendedorTelefono}}` |
+| `vendedor_tipo_persona` | `fldMRFFXv9rOVfQlf` | singleSelect | `{{1.cambios.vendedorTipoPersona}}` |
+
+> `sucursal_originadora ` conserva el espacio final del schema real (D-08). El mapper la
+> referencia por FIELD_ID, así que el espacio no afecta la escritura.
+
+### 24.2 Los dos campos que SC01 escribe y SC-Edicion no
+
+Tras esta tanda, la diferencia entre el `Create` de SC01 (47 campos) y el `Update` de
+SC-Edicion (47 campos) se reduce a dos, y en ambos la omisión es deliberada:
+
+| Campo | FIELD_ID | Por qué no está |
+|---|---|---|
+| `estado` | `fld2H2r0GMeVfNO26` | Lo dueña AT02. La UI no decide transiciones ("la UI muestra y captura; nunca decide"). |
+| `fecha_solicitud` | `fldvkn9CsORy4eU0Z` | Timestamp de alta. Reescribirlo al editar falsearía la antigüedad y, con ella, el semáforo SLA y `codigo_solicitud`. |
+
+Al revés, SC-Edicion escribe dos que SC01 no toca: `solicitante_nombre` (`fld2rd2p4Qpz6NFQ2`)
+y `prioridad` (`fld9FKZ9siAeSsH54`).
+
+### 24.3 `ejecutiva_asignada` — módulo 24
+
+`ejecutiva_asignada` (`fldv1XDfP7EgYC3km`) es un Link a `AUTH_Usuarios`
+(`tblbX3hPD2uhqhl5v`). No puede viajar como texto: necesita un record ID. El módulo 24
+lo resuelve con el mismo patrón que el módulo 15 de SC01:
+
+```
+UPPER({clerk_user_id}) = UPPER("{{1.ejecutivaClerkId}}")
+```
+
+`ejecutivaClerkId` viaja en la **raíz** del payload, no dentro de `cambios`: lo pone
+server-side `app/api/solicitudes/[id]/route.ts` desde la sesión Clerk. Por eso **no** está en
+el formulario de edición — la Ejecutiva no se auto-reasigna a mano (D-01, misma doctrina que
+el visador).
+
+### 24.4 `n_operacion_cliente` — por qué la guarda `if()`
+
+`n_operacion_cliente` (`fldb1vmKk7y3hi4uY`) es `number`. Hasta el 29-jul-2026 el módulo 2 lo
+mapeaba pelado:
+
+```
+{{parseNumber(1.cambios.nOperacionCliente)}}
+```
+
+`parseNumber` sobre una clave ausente no devuelve "nada": devuelve un valor vacío que el
+conector de Airtable intenta escribir igual en un campo numérico. SC01 ya llevaba la guarda
+desde su primera versión; SC-Edicion no la heredó. Ahora replica el mismo literal:
+
+```
+{{if(1.cambios.nOperacionCliente; parseNumber(1.cambios.nOperacionCliente); emptystring)}}
+```
+
+Es el **único** `parseNumber` protegido así en los dos escenarios: los ocho `financiero_*` y
+`monto_estimado_uf` siguen pelados en SC01 y en SC-Edicion por igual. Si aparece el mismo
+síntoma en alguno de ellos, la corrección es extender la guarda a los dos escenarios a la vez,
+nunca a uno solo.
+
+### 24.5 Contrato con el cliente
+
+La correspondencia es 1:1 y está verificada: las **46 claves escalares** del blueprint
+(40 directas + 6 de búsqueda por nombre) son exactamente las 46 claves de
+`editarSolicitudSchema` (`lib/validators/acciones-solicitud.ts`), que es `.strict()` — una
+clave de más devuelve 422 y una de menos no llega nunca a Airtable. El armado lo hace
+`mapearEdicionSolicitud` (`lib/mappers/editar-solicitud.ts`).
+
+`contactosVisitaJson` y `unidadesJson` **no** cuentan entre esas 46: viajan fuera de `cambios`,
+en la raíz, y los consumen las ramas 0 y 1 del Router (ver §23).

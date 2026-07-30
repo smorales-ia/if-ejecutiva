@@ -121,7 +121,7 @@ export async function PATCH(
 
   // Los contactos viajan **a nivel raíz**, no dentro de `cambios`.
   //
-  // No es un capricho: el escenario SC-Edicion desplegado lee los 45 campos
+  // No es un capricho: el escenario SC-Edicion desplegado lee los 46 campos
   // escalares como `{{1.cambios.X}}` pero los contactos como
   // `{{1.contactosVisitaJson}}` — verificado contra el blueprint el
   // 29-jul-2026. Mientras el mapper los dejaba dentro de `cambios`, el módulo
@@ -151,6 +151,10 @@ export async function PATCH(
     // a reemplazar; `solicitudId` sigue viajando porque los `Create` sí ligan
     // por record ID, que ahí es lo correcto.
     codigoSolicitud,
+    // Lo consume el módulo 24 de SC-Edicion (Search AUTH_Usuarios por
+    // `clerk_user_id`) para resolver el Link `ejecutiva_asignada`. Va en la raíz
+    // y no dentro de `cambios` porque no es un dato del formulario: sale de la
+    // sesión Clerk server-side, igual que en el alta (SC01, módulo 15).
     ejecutivaClerkId: userId,
     cambios,
     ...(contactosVisitaJson ? { contactosVisitaJson } : {}),
