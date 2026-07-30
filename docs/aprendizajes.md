@@ -842,3 +842,67 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 
 **Hallazgo lateral:** `MAKE_ORGANIZATION_ID` en `.env.local` vale `1594725`, que es el `teamId`; la organización real del token es `7487039`. Hoy no rompe nada porque ningún Route Handler usa la API de administración, pero cualquier código futuro que la consulte va a fallar con `IM002`.
 
+
+### 2026-07-30 — El filtro no era el bug, era el detector: refutación de C-5 y simetría form/persist/read
+
+**Contexto:** auditoría integral del ciclo modificación + lectura post-edit en solicitudes `creada`, disparada por un smoke test en `VP-2026-0053` (`recIEvKCbe7J8TDaB`) donde editar sólo `ejecutivo_comercializador` y `proyecto_condominio` dejó el Update commiteado pero la ejecución de Make en error.
+
+**Inconveniente 1 — la lectura de C-5 sobre el filtro del `Delete` era incorrecta.** C-5 midió bien y concluyó mal. Midió que los módulos 14 y 20 aportaban **cero operaciones** y que los omitía su propio filtro de entrada (`{{12.id}} exist AND ≠ ""`) — correcto. De ahí saltó a *"ese filtro no protegía nada"* y lo eliminó. El resultado hoy: `[422] "records" must be a non-empty array of record IDs` en `ActionDeleteRecord`, en dos ejecuciones consecutivas (18:24:56 y 18:28:11 UTC).
+
+**Causa raíz de la equivocación:** el filtro **sí** protegía algo, y no era el caso que C-5 analizó. C-5 razonó sobre "si el `Search` no devuelve bundles, el `Delete` no corre igual" — cierto e irrelevante. El filtro cubría un caso distinto: *bundle existente con `id` vacío*. Que el filtro bloqueara era, en sí mismo, **la medición de que `{{12.id}}` estaba vacío**. Se trató al mensajero como el problema. Verificado hoy, ya sin filtro: la fórmula del `Search` es correcta (`ARRAYJOIN({solicitud_record_id}) = "{{1.solicitudId}}"` ejecutada contra Airtable devuelve los 2 contactos y 1 unidad con `id` válido), el blueprint del repo es idéntico al desplegado (`GET /scenarios/6682031/blueprint`, diff módulo a módulo), y C-5 tocó **únicamente** esos dos filtros. Con filtro ⇒ duplicación silenciosa; sin filtro ⇒ 422 ruidoso. Misma causa raíz debajo.
+
+**Principio derivado:** **un filtro que oculta datos malos es el detector, no el bug.** Antes de eliminar un guard porque "no protege nada", explicar por qué se escribió y qué observó quien lo escribió. Si un guard se activa en producción, la primera hipótesis es que la condición que detecta **es verdadera**, no que el guard sobra. El corolario de C-5 seguía siendo válido —un filtro que convierte un fallo en silencio es un antipatrón— pero el remedio no era quitarlo: era arreglar la causa y dejar que el fallo se viera.
+
+**Cómo se cerró.** La API de Make no expone el IO por módulo en `/logs/{executionId}`, así que se habilitó el almacenamiento de ejecuciones incompletas (`metadata.scenario.dlq = true`) y se reprodujo el fallo en `VP-2026-0055` (`recYcijo7kb1NDjqM`, ejecución `70dc2f9d…`). El bundle llegó por `GET /api/v2/dlqs/{dlqId}/bundle`, que **sí** devuelve el estado por módulo indexado por id. Dos entradas DLQ, una por rama, con la misma firma: el output del `Search` referenciado —módulo 12 en la rama de contactos, 19 en la de unidades— venía **`null`**, así que `{{12.id}}` y `{{19.id}}` resolvían a vacío y el `Delete` llamaba a Airtable con un array sin elementos.
+
+**El control que resolvió la pregunta de fondo.** En la misma ejecución, el módulo 11 (`BancoFinancista`) buscó `UPPER({nombre}) = UPPER("santander")` contra un catálogo cuyo registro se llama *"Banco Santander"*: no encontró nada, y su output fue `{"__IMTLENGTH__": 0}`. Es decir: **un `Search` de Airtable sin resultados SÍ emite un bundle, y los módulos aguas abajo corren igual.** Eso refuta empíricamente la premisa de C-5 (*"sin bundles del Search, el módulo siguiente no corre igual"*) y es exactamente el caso contra el que existía el filtro. Corroborado por conteo de operaciones: `13` en la DLQ de contactos (11 de base + módulo 12 + módulo 14) y `15` en la de unidades (13 + módulo 19 + módulo 20) — cada `Search` corrió una vez y devolvió nada.
+
+**Corolario sobre el guard.** El principio de C-5 —un filtro que convierte un fallo en silencio es un antipatrón— sigue siendo válido en general, pero **no aplicaba acá**: el filtro sobre `{{12.id}}` es la precondición legítima de una llamada de borrado masivo. Una solicitud sin contactos es un estado válido, y sin guard vuelve a dar 422 para siempre. Lo que hacía que el guard *pareciera* estar tapando algo es que el `Search` estaba roto al mismo tiempo. Con la fórmula corregida, el guard sólo se activa en el caso legítimamente vacío. Restaurado en los módulos 14 y 20.
+
+**Inconveniente 2 — asimetría form/persist/read en §1.4.** `ejecutivo_comercializador` se editaba (`editar-solicitud-form.tsx:392`), se persistía (`lib/mappers/editar-solicitud.ts:253` → `fldDP232hBLsZ0PWJ`) y se leía desde Airtable (`lib/solicitudes.ts:276,503`), pero `solicitud-detail.tsx` no tenía la fila: el dato entraba y no salía. La auditoría cruzada de las 19 claves editables contra los 56 campos que renderiza el detalle encontró el mismo patrón en `montoUf` (leído en `lib/solicitudes.ts:246,424`, editable desde V-3, nunca mostrado) y una variante en `proyecto`, cuyo render condicional hacía indistinguible "borrado" de "nunca existió".
+
+**Solución aplicada:** tres `DataRow` en `components/console/solicitud-detail.tsx` — Ejecutivo comercializador en Operación, Monto estimado en Cliente y tipo (espejando el orden del form), y `proyecto` a render incondicional con `?? "—"`. No se agregó `montoUf` al card de `solicitud-list.tsx`: ese card es superficie de triage (código · SLA · cliente · comuna · estado · prioridad · tasador · límite) y no tiene datos monetarios.
+
+**Prevención futura:** **la simetría form/persist/read es un invariante de §1.4, no una consecuencia.** Un campo editable tiene tres eslabones y crear el campo cierra sólo dos; el tercero no falla, no rompe el build y no aparece en ningún test — se manifiesta como "lo guardé y no se ve". Al agregar un campo editable, verificar los tres explícitamente. El cruce mecánico es barato: claves de `set(...)` del form contra `s.*` del detalle contra `{{1.cambios.*}}` del blueprint.
+
+**Hallazgo lateral — mapeo muerto `bancoId`.** El módulo 2 de SC-Edicion lee `{{1.cambios.bancoId}}` hacia `banco` (`fldAgTlFXeXWfGTdI`, texto legacy) pero la app nunca envía esa clave. No destruye datos —Make omite las claves ausentes, verificado: `banco = "banco_estado"` sigue intacto en `recIEvKCbe7J8TDaB`— pero al cambiar de banco se actualiza el link `banco_financista` (`fldxcfdKRctHCgwmB`) y el texto queda con el valor viejo. `banco` y `banco_financista` **coexisten a propósito**: los consume código distinto y no se fusionan en esta tanda. Queda como F-5, a ejecutar después de cerrar F-1.
+
+**Flag de diagnóstico en Make — YA APAGADO, procedimiento documentado.** Para capturar el IO por módulo se habilitó el almacenamiento de ejecuciones incompletas en el escenario **6682031** (`SC-Edicion v3.0`), vía `PATCH /api/v2/scenarios/6682031` enviando el blueprint vivo con `metadata.scenario.dlq = true`. Verificado por diff pre/post que ése fue el único bit que cambió. Sólo afectó a 6682031. **Apagado al cerrar F-1** (`dlq = false`, verificado por diff) y purgadas las dos ejecuciones incompletas acumuladas (`DELETE /api/v2/dlqs/{dlqId}`; `dlqCount = 0`).
+
+El procedimiento queda acá porque es el instrumento que resolvió F-1 y va a hacer falta de nuevo. Para encenderlo, el mismo bloque con `dlq = True`; para apagarlo:
+
+```bash
+set -a && . ./.env.local; set +a
+curl -s -H "Authorization: Token $MAKE_API_TOKEN" \
+  "https://eu1.make.com/api/v2/scenarios/6682031/blueprint" -o /tmp/bp.json
+python3 -c "
+import json
+d=json.load(open('/tmp/bp.json'))
+bp=d.get('response',{}).get('blueprint') or d.get('blueprint') or d
+bp['metadata']['scenario']['dlq']=False
+json.dump({'blueprint': json.dumps(bp, ensure_ascii=False)}, open('/tmp/patch.json','w'))
+"
+curl -s -X PATCH -H "Authorization: Token $MAKE_API_TOKEN" \
+  -H "Content-Type: application/json" --data-binary @/tmp/patch.json \
+  "https://eu1.make.com/api/v2/scenarios/6682031"
+```
+
+Dejar el flag encendido acumula ejecuciones incompletas en la cola del escenario, que consumen almacenamiento y hay que purgar a mano. Apagarlo apenas cierre el diagnóstico que lo justificó.
+
+**Causa raíz final — una regresión de fórmula silenciosa.** El `Search` devolvía 0 porque la fórmula de los módulos 12 y 19 había sido reemplazada. Historia completa:
+
+| Commit | Fórmula módulos 12/19 | Efecto |
+|---|---|---|
+| `aa281c1` · `1ff31fe` | `FIND("{{1.solicitudId}}", ARRAYJOIN({solicitud}, ","))` | bug original de [[E-076]] |
+| `9547d1b` | `FIND(",{{1.codigoSolicitud}},", "," & ARRAYJOIN({solicitud}, ",") & ",") > 0` | **fix verificado en producción** |
+| `206e53b` | `ARRAYJOIN({solicitud_record_id}) = "{{1.solicitudId}}"` | **regresión** |
+
+`206e53b` se llama *"SC-Edicion: agrega proyecto_condominio + ejecutiva_asignada y fix parseNumber"* y **no menciona** haber tocado la fórmula. Esa sustitución no registrada explica los tres estados observados en secuencia: con `9547d1b` el `Delete` borraba; con `206e53b` el `Search` devolvía 0, el filtro bloqueaba el `Delete` y el `Create` recreaba encima ⇒ duplicación silenciosa (los 17 contactos); con C-5 se quitó el filtro y el `Delete` pasó a llamar a Airtable con vacío ⇒ 422. Un solo origen.
+
+**Solución aplicada (Fase D):** fórmula de 12 y 19 revertida a la de `9547d1b` —`codigoSolicitud` ya viaja en el payload, verificado en el bundle: `"codigoSolicitud": "VP-2026-0055"`— y guard restaurado en 14 y 20. Blueprint editado por script Python determinista y empujado por `PATCH /api/v2/scenarios/6682031`, con diff pre/post confirmando que cambiaron exactamente esas cuatro cosas. Preservados hook `3441135`, conexión `8847431`, los 48 campos del Update y el mapeo de `ejecutivo_comercializador`.
+
+**Salvedad honesta:** las tres variantes de fórmula devuelven registros al ejecutarlas por REST contra Airtable, incluida la regresada. **No quedó demostrado por qué la variante con lookup devuelve 0 dentro de Make.** Lo que sí está probado es que reemplazó a una fórmula verificada en producción y que la actual devolvía 0 en runtime; de ahí la decisión de revertir a la conocida-buena en vez de depurar la nueva. Si vuelve a aparecer, el instrumento está documentado arriba.
+
+**Prevención futura — mensajes de commit sobre blueprints.** Un blueprint de Make es un artefacto de 147 KB donde un cambio de una línea es invisible en el diff a menos que se lo busque. **El mensaje de commit debe enumerar TODAS las modificaciones del blueprint, no sólo la que motivó el commit.** Una fórmula alterada sin mención costó tres ciclos de diagnóstico: uno que la introdujo creyendo tocar otra cosa, uno que atribuyó el síntoma al filtro y lo eliminó, y uno que tuvo que instrumentar la API de Make para llegar al bundle. Corolario operativo: al tocar un blueprint, diffear los mapeos y filtros de *todos* los módulos contra la versión anterior antes de commitear, y dejar constancia del resultado.
+
+**Precondición conocida de F-5 — el módulo 11 no matchea nunca.** Descubierto de rebote al usarlo como control. El módulo 11 (`BancoFinancista`) busca con `UPPER({nombre}) = UPPER("{{1.cambios.bancoFinancista}}")`, igualdad **exacta**, y la app envía el slug del formulario (`"santander"`) mientras el catálogo `M_Bancos` (`tblGlYuJo5AeMehhs`) guarda el nombre canónico (`"Banco Santander"`, `"Banco Estado"`, `"Banco de Chile"`, `"Scotiabank Chile"`…). Nunca hay match ⇒ `{{11.id}}` vacío ⇒ **el link `banco_financista` (`fldxcfdKRctHCgwmB`) no se actualiza jamás al editar**. Es la misma familia que el `bancoId` muerto: los dos caminos de escritura del banco están rotos, uno por clave ausente y otro por vocabulario divergente. Fuera de alcance de esta tanda; F-5 arranca con el gap ya identificado y debe resolver ambos junto con la decisión de topología entre `banco` (texto legacy) y `banco_financista` (link). No confundir con [[E-088]]/[[E-091]]: acá **no** hay `typecast` en el `Search`, así que la divergencia no ensucia el catálogo — sólo deja el campo sin escribir.

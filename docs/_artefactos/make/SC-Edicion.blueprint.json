@@ -4519,7 +4519,7 @@
               "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblW3SSbKo6vRjwBJ",
-                "formula": "ARRAYJOIN({solicitud_record_id}) = \"{{1.solicitudId}}\"",
+                "formula": "FIND(\",{{1.codigoSolicitud}},\", \",\" & ARRAYJOIN({solicitud}, \",\") & \",\") > 0",
                 "maxRecords": 100,
                 "useColumnId": false
               },
@@ -4655,6 +4655,22 @@
                     "label": "Record ID",
                     "required": true
                   }
+                ]
+              },
+              "filter": {
+                "name": "Solo si hay id de contacto",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{12.id}}",
+                      "o": "exist"
+                    },
+                    {
+                      "a": "{{12.id}}",
+                      "b": "",
+                      "o": "notequal"
+                    }
+                  ]
                 ]
               }
             },
@@ -4877,7 +4893,7 @@
               "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tbl2QDLvJDyy3Rg2I",
-                "formula": "ARRAYJOIN({solicitud_record_id}) = \"{{1.solicitudId}}\"",
+                "formula": "FIND(\",{{1.codigoSolicitud}},\", \",\" & ARRAYJOIN({solicitud}, \",\") & \",\") > 0",
                 "maxRecords": 100,
                 "useColumnId": false
               },
@@ -5013,6 +5029,22 @@
                     "label": "Record ID",
                     "required": true
                   }
+                ]
+              },
+              "filter": {
+                "name": "Solo si hay id de unidad",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{19.id}}",
+                      "o": "exist"
+                    },
+                    {
+                      "a": "{{19.id}}",
+                      "b": "",
+                      "o": "notequal"
+                    }
+                  ]
                 ]
               }
             },

@@ -590,6 +590,14 @@ function DatosTab({
         <DataRow label="Ejecutivo formalizador">
           {s.ejecFormalizador ?? "—"}
         </DataRow>
+        {/* El campo se creó el 30-jul-2026 (`ejecutivo_comercializador`,
+            `fldDP232hBLsZ0PWJ`) y quedó editable y persistiéndose en la misma
+            tanda, pero esta fila nunca se agregó: el dato se escribía en
+            Airtable y la pantalla de lectura no lo mostraba. Simetría
+            form/persist/read de §1.4. */}
+        <DataRow label="Ejecutivo comercializador">
+          {s.ejecutivoComercializador ?? "—"}
+        </DataRow>
         <DataRow label="Modo de creación">{s.modoCreacion ?? "—"}</DataRow>
         <DataRow label="Tipo de cliente de origen">
           {s.tipoClienteOrigen ?? "—"}
@@ -609,6 +617,11 @@ function DatosTab({
         </DataRow>
         <DataRow label="Banco">{s.banco}</DataRow>
         <DataRow label="Producto">{s.producto}</DataRow>
+        {/* `monto_estimado_uf` (`fldKZW799xIqMFN1I`) se lee desde D-02
+            (`mapRecord` vía `formatMontoUf`) y pasó a editable en V-3, pero
+            ninguna vista lo mostraba. Va aquí, entre Producto y Canal, para
+            espejar el orden del formulario de edición. */}
+        <DataRow label="Monto estimado">{s.montoUf}</DataRow>
         <DataRow label="Canal de contacto">
           {etiquetaCatalogo(CANALES_ORIGEN, s.canal)}
         </DataRow>
@@ -617,9 +630,10 @@ function DatosTab({
       <Separator />
 
       <Section title="Propiedad">
-        {s.proyecto && (
-          <DataRow label="Proyecto o condominio">{s.proyecto}</DataRow>
-        )}
+        {/* Render incondicional: el resto del bloque muestra "—" cuando el dato
+            falta, y esconder la fila hacía que un `proyecto_condominio` borrado
+            fuera indistinguible de uno que nunca existió. */}
+        <DataRow label="Proyecto o condominio">{s.proyecto ?? "—"}</DataRow>
         <DataRow label="Dirección">{s.direccion}</DataRow>
         <DataRow label="Comuna">{s.comuna}</DataRow>
         <DataRow label="Región">{s.region}</DataRow>
