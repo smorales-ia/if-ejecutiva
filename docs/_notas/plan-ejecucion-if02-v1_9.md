@@ -1,8 +1,12 @@
 # Plan de Ejecución IF-02 v1.9 — Guía maestra para Claude Code
 
+> **Versión del plan: v1.5** (31-jul-2026). Cambio respecto de v1.4: se inserta
+> **§9.5 · P8.5 — Correo de asignación al tasador (SC05)** entre P8 y P9, y se corrigen las
+> referencias a "SC13" en §8.1, §10.4.1 y §10.4.3. Nuevo §13 con archivos afectados.
+>
 > **Uso.** Este archivo es la referencia única para construir IF-02. Claude Code lo lee al iniciar cada sesión, detecta la última P completada y ejecuta la siguiente **sin que Sergio le pase el prompt**. Sergio solo confirma que la P quedó ok y da señal para avanzar.
 >
-> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_1.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada.
+> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada. *(La ruta canónica es `v1_9_4`; el nombre de archivo de este plan conserva `v1_9` por compatibilidad con §0.1 — no renombrar.)*
 
 ---
 
@@ -1159,8 +1163,9 @@ Cada bloque es un componente `<BloqueXxx solicitud={s} readOnly={modoConsulta} /
    - `TX_Solicitudes.tasador_id` = X
    - `TX_Solicitudes.fecha_asignacion` = NOW
    - `TX_Solicitudes.estado` = `asignada`
-   - Insert en `A_Eventos`: `asignacion_manual` + `correo_asignacion_enviado`
-   - Dispara SC13 (envío del correo)
+   - Insert en `A_Eventos`: `asignacion_manual`
+   - Dispara **SC05** (envío del correo · **§9.5**), que es quien escribe
+     `correo_asignacion_enviado` **sólo si el correo salió de verdad**
 4. Front recibe 200 → toast éxito + refresh del detalle → botón "Asignar Tasador" desaparece (REGLA A).
 
 **Fetch de candidatos:**
@@ -1190,7 +1195,9 @@ Cada bloque es un componente `<BloqueXxx solicitud={s} readOnly={modoConsulta} /
 - [ ] Elegir tasador fuera de cobertura muestra Alert ámbar en Paso 2.
 - [ ] Confirmación cambia estado a `asignada`, oculta botón "Asignar Tasador", muestra bloque Asignación con datos.
 - [ ] Segundo intento de asignar (si por error se muestra el botón) devuelve 409.
-- [ ] Historial muestra evento `asignacion_manual` + `correo_asignacion_enviado`.
+- [ ] Historial muestra evento `asignacion_manual`. El `correo_asignacion_enviado` lo aporta
+      SC05 (§9.5) y sólo aparece si el correo salió — su ausencia con SC05 sin provisionar es
+      el comportamiento correcto, no un fallo de P7.
 - [ ] `pnpm tsc --noEmit` pasa.
 - [ ] Archivo `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P7.md` creado.
 
@@ -1277,6 +1284,345 @@ Cada fila muestra:
 
 ---
 
+## §9.5 · P8.5 — Correo de asignación al tasador (SC05)
+
+> **⚙ Modo Claude Code recomendado:** `default`
+> **🔴 Contrato de comportamiento:** **pausa-total**. P8.5 emite comunicación real hacia fuera de la organización. Un error aquí no se ve en la consola: se ve en la bandeja de un tasador. Antes de cada edición y cada comando, Claude Code muestra qué va a hacer y pide confirmación.
+> **Posición.** Va después de P8 y antes de P9 por dependencia dura: el correo lleva los adjuntos de `TX_Adjuntos` como enlace a Dropbox (§1.6.3 de la Especificación), y esos adjuntos se guardan de forma confiable recién en P8. Mismo criterio con que P0.5 se insertó entre P0 y P1.
+
+### §9.5.1 Diseño
+
+#### Nombre del escenario y resolución de una contradicción documental
+
+La Especificación v1.9.4 titula §1.6.3 *"Correo de asignación al tasador (SC13)"*, pero
+`CLAUDE.md` declara **SC13 fuera de alcance de CU-002** y asigna a **SC05** la notificación
+al tasador; `docs/diseno.md` §278 y §546 dicen lo mismo. No es una contradicción real: el
+SC13 que CLAUDE.md excluye es el de **reasignación, prioridad y pausa**, flujos que v1.9 no
+tiene (§1.6: *"No hay trigger de reasignación"*). El correo de **primera asignación** sí está
+en alcance.
+
+**Decisión: el escenario se llama `SC05`.** Se conserva `SC13` únicamente como referencia
+cruzada en el texto de la Especificación. Toda mención a "SC13" en este plan que se refiera
+al correo de asignación queda corregida a SC05 (§8.1, §10.4.1, §10.4.3).
+
+#### Trigger — escenario propio encadenado desde SC-Asignar
+
+Tres opciones evaluadas:
+
+| Opción | A favor | En contra |
+|---|---|---|
+| Inline al final de SC-Asignar | Un solo escenario, un solo import | **Acopla la transición de estado al envío.** Si Gmail falla, SC-Asignar aborta; el rollback de Make **no deshace** el `Update` de Airtable ya ejecutado (m2), y la solicitud queda `asignada` con el webhook respondiendo error. La consola muestra fallo sobre una asignación que sí ocurrió. |
+| Webhook desde la UI post-asignación | Control fino del reintento | Dos llamadas de red desde Next para una sola acción de negocio, y la UI pasa a orquestar. Contradice *"la UI muestra y captura; nunca decide"* y la regla de que las escrituras van por Make. |
+| **Escenario propio SC05, invocado por SC-Asignar como último paso** ✅ | La asignación **nunca** falla porque el correo falló. Da un segundo punto de entrada gratis para el *Reenviar* manual de §1.6.3 sin tener que "asignar de nuevo". Aísla la conexión de correo del escenario que toca el estado. | Un webhook y un import más. |
+
+**Elegida la tercera.** SC-Asignar gana un módulo `HTTP · Make a request` al final que hace
+`POST` al webhook de SC05 y **no espera** el resultado del envío (timeout corto, error
+tolerado por el `maxErrors: 3` del escenario). El webhook y el scenario ID de SC-Asignar
+**no se tocan** — sólo se agregan y quitan módulos dentro del blueprint existente.
+
+#### Deuda que P8.5 corrige en SC-Asignar
+
+`SC-Asignar.blueprint.json` **m4** crea hoy un `A_Eventos` con
+`tipo_evento = correo_asignacion_enviado` y descripción *"Correo de asignación enviado al
+tasador {{1.tasadorId}}"* — **sin que exista ningún módulo de correo en el escenario**. El
+evento se escribe siempre, aunque no se haya enviado nada. Es exactamente el patrón que
+`docs/aprendizajes.md` prohíbe: un registro de éxito indistinguible de un éxito real.
+
+**m4 se elimina de SC-Asignar y su evento se reemite desde SC05, condicionado al envío
+efectivo.** m3 (`asignacion_manual`) se conserva sin cambios.
+
+#### Origen de los datos — verificado vía MCP contra `app9G7lLkIV3CpeLa`
+
+**Cero campos nuevos.** Todo lo que el correo necesita ya existe en el schema:
+
+| Bloque §1.6.3 | Campo real | Tabla · FIELD_ID |
+|---|---|---|
+| Empresa (cliente institucional) | `cliente` → link | `TX_Solicitudes.fldttL5myzLohDwHv` → `M_Clientes` |
+| N° Interno | `nro_interno` | `fldVmmYBH2Ierbs9N` |
+| N° Solicitud | `numero_solicitud` | `fldISkFfKlfP4BLhv` |
+| Fecha de Solicitud | `fecha_solicitud` | `fldvkn9CsORy4eU0Z` |
+| Código VP | `codigo_ext` (formula) | `fldSuJx1fDNYYwDcD` |
+| Dirección | `direccion` | `fldKP0yxwQkSdrFuZ` |
+| Proyecto (sólo si Nuevo) | `proyecto_condominio` | `fldbmGmyMHOtfX2Az` |
+| Marca Nuevo/Usado | `nuevo_usado` · `tipo_propiedad_nuevo_usado` | `fld24mFTP2pmh2qDK` · `fldHxx1P1ao33PWrl` |
+| Comuna | `comuna` → link | `fldJTjjzCPBHMOWZv` → `M_Comunas` |
+| Valor estimado | `monto_estimado_uf` | `fldKZW799xIqMFN1I` |
+| Tabla de unidades con roles | `TX_Unidades` | `numero_unidad` `fldJGXS8jGDKZDdWM` · `subtipo` `fldNU8ee30AvvRWHZ` · `rol_sii` `fldC5yUYC2wTTLJBV` |
+| Comprador y RUT | `cliente_final_nombre` · `cliente_final_rut` | `fld7jxcbmMYz6kmbj` · `fldwNEPL8fXkWwUBd` |
+| Vendedor y RUT | `vendedor_razon_social_o_nombre` (fallback `vendedor_nombre`) · `vendedor_rut` | `fldNkFwB5p3Mljtrg` · `fldfUXb9vzxklu8ES` · `fldrITDFkbk95Da00` |
+| Ejec. Formalizador | `ejecutivo_formalizador` | `fldM9ELuMvgRwbmUn` |
+| Ejec. Comercializador | `ejecutivo_comercializador` | `fldDP232hBLsZ0PWJ` |
+| Contactos de visita | `TX_ContactosVisita` ordenados por `orden_prioridad` | `nombre` `fldOTpkaWOkkxzJoc` · `telefono` `fld8Rai7BCgfKS8F8` · `email` `fldHTPcQgIvAP6QlP` · `rol` `fldeTuIlU6uxDYwHY` · `orden_prioridad` `fldL93B1kOZZ1pNFs` |
+| Observaciones | `observaciones_internas` | `fldjmx9pLOyJKx1Mw` |
+| Adjuntos (enlace Dropbox) | `TX_Adjuntos.url_dropbox` | `fldEccoUrOjV7oKZ5` · filtrar por `solicitud` `fldZTVpXDRtXXPjyv` |
+| Hilo de correo (RN-52) | `email_thread_id` **ya existe** | `TX_Solicitudes.fldhy81fNSE5CF2Tc` |
+
+**Destinatario — corrección a un supuesto habitual.** El email del tasador **no** requiere
+saltar a `AUTH_Usuarios`: vive directo en **`M_Tasadores.email` (`fldsUu1pJ92HdYQUD`, tipo
+`email`)**. `M_Tasadores` **no tiene link a `AUTH_Usuarios`** (18 campos verificados, ninguno
+apunta a `tblbX3hPD2uhqhl5v`). `AUTH_Usuarios` es la tabla de la **Ejecutiva**
+(`clerk_user_id`), y se usa sólo para poblar el actor del evento — como ya hace m24 de
+SC-Edicion.
+
+**Si el tasador no tiene email cargado** (campo vacío): **no se envía y no se miente**.
+`TX_Notificaciones` con `estado_envio = Error` y `mensaje_error = "Tasador sin email en
+M_Tasadores"`; `A_Eventos` con `correo_asignacion_fallido`; `LogEscenarios` con
+`Estado = ⚠ Parcial`. **La asignación queda firme** — es una falla de dato maestro, no de la
+acción de la Ejecutiva. La consola lo muestra según §9.5.1 · UI.
+
+#### Plantilla — vive en Airtable, no en el blueprint
+
+La Especificación §1.6.3 dice que la plantilla `email_asignacion_tasador` se registra en
+`C_Plantillas` y se refiere desde `C_NotificacionesConfig` (§5.3). **Divergencia detectada:**
+`C_Plantillas` está modelada para documentos Carbone/DOCX (`url_dropbox`,
+`template_id_carbone`, `formato_salida`) — no tiene ningún campo donde quepa un cuerpo HTML.
+`C_NotificacionesConfig` **sí**: `plantilla_asunto` (`fldU5XOoslBPz2NFj`) y `plantilla_cuerpo`
+(`fldQro7jvi3RlxDs0`, multilineText).
+
+**Decisión: la fuente de runtime es `C_NotificacionesConfig`.** SC05 lee de ahí. Si Sergio
+quiere honrar la letra de la Especificación, se agrega una fila espejo en `C_Plantillas` con
+`codigo = email_asignacion_tasador` que apunte a la config — pero SC05 no la lee. Queda
+registrado como divergencia a documentar en `docs/schema-airtable.md`.
+
+**Asunto (es-CL):**
+
+```
+Nueva tasación asignada · {codigo_ext} · {comuna} — {direccion}
+```
+
+**Cuerpo:** HTML simple, sin CSS externo ni imágenes remotas (los clientes de correo los
+bloquean), tablas para el bloque de unidades y el de contactos. Voz en segunda persona
+singular, sin signos de exclamación, según §6.1 del Blueprint. Las **siete respuestas de la
+llamada** quedan nombradas sin enumerar mientras §15 · D-11 siga abierto — la plantilla trae
+el literal *"Siete respuestas de la llamada (pendiente de definición con el cliente)"*.
+
+Variables dinámicas: `{{codigo_ext}}`, `{{empresa}}`, `{{nro_interno}}`,
+`{{numero_solicitud}}`, `{{fecha_solicitud}}`, `{{direccion}}`, `{{proyecto}}`, `{{comuna}}`,
+`{{monto_estimado_uf}}`, `{{nuevo_usado}}`, `{{tabla_unidades}}`, `{{comprador}}`,
+`{{comprador_rut}}`, `{{vendedor}}`, `{{vendedor_rut}}`, `{{ejec_formalizador}}`,
+`{{ejec_comercializador}}`, `{{tabla_contactos}}`, `{{observaciones}}`,
+`{{lista_adjuntos}}`, `{{tasador_nombre}}`.
+
+#### Proveedor de envío — verificar antes de crear
+
+**Ninguna conexión de correo existe en los blueprints del repo.** Barrido de los 5
+blueprints: `airtable` ×46 (conexión `8847431`), `dropbox` ×2 (conexión `7553318`),
+`gateway`, `builtin`, `json`, `util`, `http`. Cero módulos de email.
+
+Pero hay dos señales de que **sí existe una conexión de correo en la org 1594725**, fuera del
+repo: `LogEscenarios.Escenario` tiene la opción **`E4_Notificacion_Email`** (parte del
+pipeline PDF E1/E2/E3 que está ACTIVO), y la única fila de `C_NotificacionesConfig`
+(`Notif_PDF_Listo_METLIFE`) declara `canal = gmail` con destinatario `info@valueproperty.cl`.
+
+**Decisión: módulo Gmail · "Send an Email", reutilizando la conexión que ya usa E4.**
+Motivo técnico decisivo: **RN-52 exige persistir `email_thread_id`**, y el módulo Gmail
+devuelve `Thread ID` en su salida. Un módulo SMTP genérico no lo devuelve — con SMTP,
+RN-52 quedaría degradada al `Message-ID`, que no agrupa hilo.
+
+> **Checkpoint bloqueante para Sergio (A-1).** Verificar en la UI de Make, org 1594725, qué
+> conexión de correo existe y de qué tipo. **No crear una conexión nueva antes de mirar.**
+> Si no hay Gmail sino SMTP, se usa SMTP y RN-52 se marca como parcialmente cumplida en
+> `docs/aprendizajes.md` — no se inventa un thread id.
+
+#### Idempotencia — clave natural en `TX_Notificaciones`
+
+`TX_Notificaciones` ya tiene todo lo necesario (21 campos verificados): `clave_notif`
+(`fldtXBuomgmFyvW2o`), `evento` (`fldBjsSHZCSWe6PSK`, con la opción **`solicitud_asignada`**
+ya existente), `canal` (`fldCEWGR5NOqqsEws`, con `email` y `gmail`), `destinatarios_to`,
+`asunto`, `cuerpo_renderizado`, `enviado_en`, `estado_envio` (`Pendiente` · `Enviado` ·
+`Error` · `Reintentando`), `intentos`, `mensaje_error`, `solicitud`, `config_origen`.
+
+```
+clave_notif = {codigo_ext}::solicitud_asignada::v1        ← envío automático
+clave_notif = {codigo_ext}::solicitud_asignada::reenvio-{n}  ← reenvío manual
+```
+
+SC05 **abre** con un `Search Records` sobre `TX_Notificaciones` por `clave_notif`. Si existe
+con `estado_envio = Enviado` → **no envía**, escribe `LogEscenarios` con `Estado = ⏭ Omitido`
+y responde 200. Eso cubre los tres vectores de doble envío: reintento de Make, doble POST de
+SC-Asignar, y doble clic de la Ejecutiva.
+
+> **Trampa conocida.** La fórmula del `Search` **no** puede comparar contra el link
+> `solicitud`: un campo Link se evalúa contra el *primary field* de la tabla destino, no
+> contra el record ID (`docs/aprendizajes.md` E-076). Por eso la clave es un
+> `singleLineText` propio y la fórmula compara texto contra texto.
+
+#### Manejo de errores y reintentos
+
+| Superficie | Éxito | Sin email del tasador | Fallo del proveedor |
+|---|---|---|---|
+| `TX_Notificaciones` | `estado_envio = Enviado`, `enviado_en = now`, `intentos +1` | `Error` + `mensaje_error` | `Error` + `mensaje_error` + `intentos +1` |
+| `A_Eventos` | `correo_asignacion_enviado` | `correo_asignacion_fallido` | `correo_asignacion_fallido` |
+| `LogEscenarios` | `Escenario = Email tasador`, `Estado = ✓ OK` | `⚠ Parcial` | `✗ Error` |
+| `TX_Solicitudes` | `email_thread_id` ← Thread ID | sin cambio | sin cambio |
+
+**`LogEscenarios.Escenario` ya tiene la opción `Email tasador` (`selj0DlOlp4kvZjnF`) y
+`Estado` ya tiene `✓ OK` · `✗ Error` · `⚠ Parcial` · `⏭ Omitido`.** No hay que crear
+opciones — lo que importa porque `typecast: true` sobre una opción inexistente **intenta
+crearla** y revienta con `Insufficient permissions to create new select option` si el token
+no tiene scope de schema (`docs/aprendizajes.md` E-088/E-089).
+
+**Política de reintento: ninguno automático.** `maxErrors` del escenario en 1 y sin
+auto-retry. Un correo reintentado por Make sin control es un correo duplicado en la bandeja
+del tasador. El reintento es **manual y explícito** vía el botón *Reenviar* de §1.6.3, que
+incrementa el sufijo de `clave_notif`.
+
+#### UI — no es 100% backend
+
+Dos cosas obligan a tocar UI, y ninguna es cosmética:
+
+1. **Degradación honesta.** Si el correo no salió, la consola tiene que decirlo. Sin esto, la
+   Ejecutiva cree que el tasador fue notificado cuando no lo fue — el mismo defecto que m4 de
+   SC-Asignar introdujo en Airtable, trasladado a la pantalla.
+2. **§1.6.3 exige un trigger manual de reenvío** en el bloque Asignación (§1.3.2).
+
+**Alcance mínimo (Tanda C), dentro del bloque Asignación ya existente del detalle:**
+
+- Badge de estado del correo: `Enviado {fecha}` (verde `#15803D`) · `No enviado` (ámbar
+  operacional `#D97706`, nunca el naranja de marca) · `Sin email del tasador` (ámbar, con el
+  motivo en tooltip).
+- Botón **Reenviar correo** — Regla D completa: `disabled` durante la operación,
+  `<Loader2 data-icon="inline-start" className="animate-spin" />`, texto a `"Reenviando…"`
+  con `…` U+2026, reset en `finally`.
+- Regla B en el resultado: toast sonner en éxito, `Alert` destructive en error, con el
+  literal §6 **"No pudimos completar la acción. Intenta nuevamente en unos segundos."**
+
+**Dependencia con D-09.** El *Panel Asignar Tasador* (D-09) está postergado sin fecha
+(`docs/construccion.md` §89). Tanda C **no lo desbloquea ni lo anticipa**: se limita al bloque
+Asignación que ya existe. Si D-09 se retoma después, el badge y el botón se mueven con él.
+**Si Sergio prefiere no tocar UI en esta iteración, Tandas A y B son entregables por sí
+solas** — el correo sale y queda auditado; lo único que falta es que la consola lo muestre.
+
+**Lectura del estado:** `GET /api/solicitudes/[id]` se extiende para devolver
+`correo_asignacion: { estado, enviado_en, motivo_error }` leyendo `TX_Notificaciones` por
+`clave_notif`. Token Airtable **server-side**, como todo el resto.
+
+### §9.5.2 Construcción — Tandas
+
+#### Tanda A · Preparación (sin código)
+
+1. **A-1 · Verificar la conexión de correo en Make** (Sergio, bloqueante). Org 1594725 →
+   Connections. Anotar tipo (Gmail / SMTP / otro) y nombre exacto. Si es Gmail, anotar el
+   `__IMTCONN__` para el blueprint.
+2. **A-2 · Crear la fila de configuración en `C_NotificacionesConfig`** (vía MCP, es dato, no
+   schema): `nombre = Notif_Asignacion_Tasador`, `evento = solicitud_asignada`,
+   `canal = gmail` (o `email` según A-1), `destinatarios_to_modo = campo_cliente`,
+   `destinatario_campo = M_Tasadores.email`, `activa = true`, más `plantilla_asunto` y
+   `plantilla_cuerpo` de A-3.
+3. **A-3 · Redactar asunto y cuerpo HTML** en es-CL según §9.5.1, con las siete respuestas
+   nombradas sin enumerar (§15 · D-11 abierto).
+4. **A-4 · Confirmar que no hace falta ningún campo nuevo.** Ya verificado vía MCP:
+   `email_thread_id`, `TX_Notificaciones.*` y la opción `Email tasador` de `LogEscenarios`
+   existen. Re-verificar sólo si el schema cambió desde el 31-jul-2026.
+
+**Criterios de aceptación de Tanda A:** conexión identificada y anotada; una fila en
+`C_NotificacionesConfig` con `activa = true`; cero campos nuevos creados en Airtable.
+
+#### Tanda B · Construcción (blueprints)
+
+5. **B-1 · `docs/_artefactos/make/SC05-EmailTasador.blueprint.json`**, escenario nuevo:
+
+```
+m1  Webhook (hook nuevo)                     ← { solicitudId, codigoSolicitud, tasadorId,
+                                                 ejecutivaClerkId, reenvio? }
+m2  Search TX_Notificaciones por clave_notif  → guard idempotencia
+m3  Search TX_Solicitudes (campos del correo)
+m4  Search M_Tasadores (nombre + email)
+m5  Search TX_ContactosVisita  → Aggregator (orden_prioridad ASC)
+m6  Search TX_Unidades         → Aggregator
+m7  Search TX_Adjuntos         → Aggregator (url_dropbox)
+m8  Search C_NotificacionesConfig (evento = solicitud_asignada, activa = true)
+m9  Router
+    ├ ruta 1 · sin email del tasador   → TX_Notificaciones(Error) + A_Eventos(fallido) + Log(⚠)
+    ├ ruta 2 · ya enviado              → Log(⏭ Omitido)
+    └ ruta 3 · envío
+        m10 Gmail · Send an Email
+        m11 Update TX_Solicitudes.email_thread_id ← {{m10.threadId}}   (RN-52)
+        m12 Create TX_Notificaciones (Enviado)
+        m13 Create A_Eventos (correo_asignacion_enviado)
+        m14 Create LogEscenarios (Email tasador · ✓ OK)
+m15 WebhookRespond 200
+```
+
+6. **B-2 · Modificar `SC-Asignar.blueprint.json`** — aditivo, sin tocar hook `3441086`:
+   - **Eliminar m4** (el `A_Eventos` de correo que miente).
+   - **Agregar** `http:ActionSendData` al final, `POST` a `MAKE_WEBHOOK_URL_SC05` con el
+     payload de B-1 y firma HMAC (D-03), timeout corto, error tolerado.
+   - Bump del `name` a `SC-Asignar v2.0 - Asignacion de tasador`.
+
+7. **B-3 · Verificación de integridad del blueprint antes de entregar**, con el
+   procedimiento que cerró F-1: contrastar las **claves del `mapper`** de cada módulo Airtable
+   contra un hermano de la misma app y misma `version` probado en producción (`id` para el
+   record ID en `ActionUpdateRecords` y `ActionDeleteRecord`; `record` como collection en
+   `ActionCreateRecord`), y verificar el **namespace de los operadores** de todo filtro
+   (`text:notequal`, `number:equal`; `exist` es la única excepción sin namespace).
+
+8. **B-4 · `pnpm tsc --noEmit` y `pnpm build` limpios** antes de cerrar la tanda.
+
+**Criterios de aceptación de Tanda B:** los dos `.json` existen y parsean; `SC-Asignar`
+conserva hook `3441086` y conexión `8847431`; no queda ningún `A_Eventos` de correo fuera de
+SC05; B-3 documentado en el reporte de la tanda.
+
+#### Tanda C · UI (condicionada — ver §9.5.1 · UI)
+
+9. **C-1 · Extender `GET /api/solicitudes/[id]`** con `correo_asignacion`.
+10. **C-2 · Badge de estado** en el bloque Asignación del detalle.
+11. **C-3 · Botón "Reenviar correo"** con Regla D completa y Regla B en el resultado.
+12. **C-4 · `POST /api/solicitudes/[id]/reenviar-correo`** → SC05 con `reenvio: true`.
+    Degradación fuera del rango de éxito: **503 en producción, 202 en desarrollo** — nunca un
+    200 con bandera, que es indistinguible de un envío real (`docs/aprendizajes.md`, cierre
+    de la tanda D).
+
+**Criterios de aceptación de Tanda C:** el badge refleja los tres estados; el botón cumple
+Regla D; el endpoint no devuelve 2xx cuando no pudo encolar.
+
+#### Checkpoints manuales de Sergio
+
+| # | Acción | Cuándo |
+|---|---|---|
+| M-1 | Verificar la conexión de correo en Make org 1594725 y reportar tipo | **Antes** de Tanda B |
+| M-2 | Importar `SC05-EmailTasador.blueprint.json` en eu1 y anotar la URL del webhook | Tras B-1 |
+| M-3 | Reimportar `SC-Asignar.blueprint.json` v2.0 | Tras B-2 |
+| M-4 | Configurar `MAKE_WEBHOOK_URL_SC05` en Railway y en `.env.local` | Tras M-2 |
+| M-5 | Verificar en la UI de Make que el módulo Gmail tiene la conexión resuelta y el destinatario mapeado a `M_Tasadores.email` | Antes del E2E |
+| M-6 | Activar SC05 en Make | Antes del E2E |
+
+> **M-5 no es opcional.** Es la verificación barata que cerró F-1: un campo obligatorio que
+> aparece vacío en el diseñador significa que la clave del mapper no es la que el módulo
+> espera. Cuesta treinta segundos y ahorra una corrida fallida.
+
+### §9.5.3 Prueba end-to-end y criterios de aceptación
+
+**Preparación:** un tasador de prueba en `M_Tasadores` con `email` apuntando a una casilla
+controlada por Sergio, `activo = true`. Una solicitud en `creada` con los tres datos mínimos
+de RN-44, al menos un contacto de visita, una unidad y un adjunto en Dropbox.
+
+- [ ] **E2E-1 · Envío feliz.** Asignar desde la consola. El correo llega en menos de un
+      minuto. Asunto y cuerpo corresponden a la plantilla, en es-CL, con los cinco bloques de
+      §1.6.3 poblados y el enlace de Dropbox abriendo el adjunto.
+- [ ] **E2E-2 · Trazas.** `TX_Notificaciones` con una fila `Enviado`, `enviado_en` poblado,
+      `intentos = 1`. `A_Eventos` con `asignacion_manual` **y** `correo_asignacion_enviado` —
+      exactamente uno de cada uno. `LogEscenarios` con `Email tasador · ✓ OK`.
+- [ ] **E2E-3 · RN-52.** `TX_Solicitudes.email_thread_id` quedó poblado con el Thread ID de
+      Gmail. (Si A-1 resolvió SMTP: el campo queda vacío y la degradación está documentada.)
+- [ ] **E2E-4 · Idempotencia.** Reenviar el mismo payload al webhook de SC05.
+      **No llega un segundo correo.** `LogEscenarios` registra `⏭ Omitido`.
+      `TX_Notificaciones` sigue con una sola fila.
+- [ ] **E2E-5 · Tasador sin email.** Vaciar `M_Tasadores.email` y asignar otra solicitud.
+      **La asignación se completa** (estado `asignada`, botón desaparece).
+      `TX_Notificaciones` con `Error` y motivo. `LogEscenarios` con `⚠ Parcial`. La consola
+      muestra el badge ámbar (si Tanda C está construida).
+- [ ] **E2E-6 · Fallo del proveedor.** Desconectar la cuenta de correo en Make y asignar.
+      **La asignación se completa igual.** `LogEscenarios` con `✗ Error`. Ningún
+      `correo_asignacion_enviado` en `A_Eventos`.
+- [ ] **E2E-7 · Reenvío manual** (si Tanda C está construida). El botón cumple Regla D. Llega
+      un segundo correo. `TX_Notificaciones` suma una fila con `clave_notif` sufijo
+      `reenvio-1`.
+- [ ] **E2E-8 · Regresión de SC-Asignar.** El evento `correo_asignacion_enviado` **ya no** se
+      escribe cuando SC05 no envió. Verificar contra una solicitud del caso E2E-6.
+
+---
+
 ## §10 · P9 — Deploy y validación en Railway
 
 > **⚙ Modo Claude Code recomendado:** `default`
@@ -1347,16 +1693,20 @@ Cada fila muestra:
 
 Ubicación: `docs/_artefactos/make/`
 
-- `SC01-ValidacionSolicitud.blueprint.json`
-- `SC-Asignar.blueprint.json`
-- `SC-Edicion.blueprint.json`
+- `SC01 - Crear solicitud.blueprint.json`
+- `SC-Asignar.blueprint.json` (**v2.0** tras §9.5 · B-2)
+- `SC-Edicion.blueprint.json` (**v3.4** · F-1 cerrado 31-jul-2026)
+- `SC05-EmailTasador.blueprint.json` (§9.5 · B-1)
+- `SC-Adjuntos-Upload.blueprint.json`
+- `SC-RF09-ExtraccionClaude.blueprint.json`
 
 Cada blueprint debe incluir:
 - Webhook trigger.
 - Módulo `Search Records` en Airtable con patrón `UPPER({field}) = UPPER("{{webhookField}}")`.
 - Módulos de escritura (`Update Records` / `Create Records`) — usar `ActionUpdateRecords` conforme aprendizajes.
 - Módulo de validación HMAC.
-- Solo `SC-Asignar`: módulo de correo con plantilla `email_asignacion_tasador` (§1.6.3).
+- El módulo de correo **no** va en `SC-Asignar` sino en `SC05-EmailTasador`, por las razones
+  de §9.5.1 (una asignación no puede fallar porque falló un correo).
 - Correcciones ya documentadas: `base64`, `dropbox:getFile v5` si aplica.
 
 Si algún módulo no se conoce con certeza, dejar TODO explícito en el JSON — mejor un blueprint parcial válido que uno inventado que falle al importar.
@@ -1378,15 +1728,15 @@ Cada `.js` debe llevar en el encabezado (comentario):
 
 Estructura: 6 secciones ya propuestas **con estas dos ampliaciones**:
 
-- **Sección 2 (Make):** para cada escenario, indicar nombre del archivo `.blueprint.json` y su ubicación en el repo. Agregar sub-bloque explícito **"Envío de correo al tasador (SC13)"** con: módulo, conexión, plantilla `email_asignacion_tasador` (§1.6.3), lookup de destinatario en `M_Tasadores`, adjuntos desde Dropbox y verificación en `A_Eventos`.
+- **Sección 2 (Make):** para cada escenario, indicar nombre del archivo `.blueprint.json` y su ubicación en el repo. Agregar sub-bloque explícito **"Envío de correo al tasador (SC05 · §9.5)"** con: módulo Gmail y su conexión (verificada en el checkpoint M-1, **no creada a ciegas**), plantilla en `C_NotificacionesConfig` (no en `C_Plantillas` — ver §9.5.1), destinatario desde **`M_Tasadores.email`** (no `AUTH_Usuarios`), adjuntos desde Dropbox, y verificación en `A_Eventos` + `TX_Notificaciones` + `LogEscenarios`.
 - **Sección 2 bis (Airtable Automations):** para cada `.js`, nombre del archivo, tabla destino, trigger type, condiciones exactas y variables a mapear en Input variables.
-- **Sección 5 (Smoke test):** sub-verificación explícita del correo al tasador — bandeja del tasador de prueba, asunto, cuerpo, registro en `A_Eventos`.
+- **Sección 5 (Smoke test):** sub-verificación explícita del correo al tasador — bandeja del tasador de prueba, asunto, cuerpo, registro en `A_Eventos`. Los ocho casos E2E están en **§9.5.3**; los dos que no se pueden omitir son **E2E-4** (idempotencia: reenviar el payload no genera un segundo correo) y **E2E-5** (tasador sin email: la asignación se completa igual).
 
 Todo lo demás del checklist queda tal cual la propuesta original.
 
 #### §10.4.4 Criterios de aceptación de §10.4
 
-- [ ] Los 3 blueprints existen en `docs/_artefactos/make/`.
+- [ ] Los blueprints listados en §10.4.1 existen en `docs/_artefactos/make/`.
 - [ ] Los `.js` de Automations existen en `docs/_artefactos/airtable/` (o marcados como diferidos con justificación).
 - [ ] `docs/_notas/checklist-P9-manual.md` existe con las 6 secciones + ampliaciones 2, 2 bis y 5.
 - [ ] Ningún artefacto contiene datos inventados; TODOs claros donde falte información.
@@ -1470,9 +1820,26 @@ Al iniciar la siguiente P, Claude Code:
 | RN-47 | Jerarquía vendedor: correo → ficha → certificado avalúo | P4 |
 | RN-48 | Avalúo fiscal total = suma de avalúos de unidades | P6 |
 | RN-49 | Estado de conservación se hereda a recintos | P4 |
-| RN-52 | Un solo hilo de correo por solicitud (email_thread_id) | P2, P7 |
+| RN-52 | Un solo hilo de correo por solicitud (email_thread_id) | P2, P7, **P8.5** |
 | RN-59 | Modo consulta: estado ≠ creada Y tasador asignado | P5, P6 |
+| D | Feedback de progreso en toda mutación (spinner + gerundio + `finally`) | P3, P4, P7, **P8.5** |
 
 ---
 
-*Última actualización: 24-jul-2026 · v1.4 del plan (P0.5 Schema Airtable IF-02 insertada entre P0 y P1) · Base: Especificación v1.9.1*
+## §13 · Archivos afectados (no modificados en esta iteración)
+
+La inserción de §9.5 genera desalineaciones en otros documentos. **Ninguno se editó**;
+quedan listados para que Sergio decida cuáles corregir y cuándo.
+
+| Archivo | Qué queda desalineado |
+|---|---|
+| `CLAUDE.md` | La tabla de escenarios Make marca `SC05` como *"❌ por provisionar (BQ-3) · verificar código libre (H-03)"*. Tras §9.5 el código deja de estar libre: SC05 es el correo de asignación. Falta también la fila de `SC-Asignar` (hook `3441086`), que existe pero no está en la tabla. |
+| `docs/diseno.md` | §269 y §546 dicen que SC05 se dispara desde AT02. **D-15 dejó AT02 fuera de alcance de IF-02** y §278 ya lo corrige — pero §269/§546 conservan la redacción vieja. Con §9.5, SC05 se dispara desde SC-Asignar. |
+| `docs/construccion.md` | §316 afirma *"SC05 se dispara desde AT02 al pasar a `asignada`, no desde la UI directamente"*. Misma corrección que arriba. §343 conserva el diagrama con AT02. |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md` | Fuente canónica, **no editable**. Dos divergencias a registrar en otro lado: (1) §1.6.3 llama SC13 al escenario que este plan llama SC05; (2) §1.6.3 ubica la plantilla en `C_Plantillas`, que no tiene ningún campo donde quepa un cuerpo HTML — la fuente de runtime es `C_NotificacionesConfig`. |
+| `docs/schema-airtable.md` | Conviene anotar que `M_Tasadores.email` (`fldsUu1pJ92HdYQUD`) es el destinatario del correo, que `M_Tasadores` **no** tiene link a `AUTH_Usuarios`, y la divergencia `C_Plantillas` / `C_NotificacionesConfig`. |
+| `docs/_notas/checklist-P9-manual.md` | §10.4.3 ya quedó actualizado en este archivo; el checklist en sí todavía dice SC13 y "módulo de correo en SC-Asignar". |
+
+---
+
+*Última actualización: 31-jul-2026 · **v1.5 del plan** (P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9) · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.4*
