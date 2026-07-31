@@ -1,5 +1,5 @@
 {
-  "name": "SC-Edicion v3.0 - Edicion de solicitud",
+  "name": "SC-Edicion v3.4 - Edicion de solicitud",
   "flow": [
     {
       "id": 1,
@@ -4520,7 +4520,7 @@
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblW3SSbKo6vRjwBJ",
                 "formula": "FIND(\",{{1.codigoSolicitud}},\", \",\" & ARRAYJOIN({solicitud}, \",\") & \",\") > 0",
-                "maxRecords": 100,
+                "maxRecords": "100",
                 "useColumnId": false
               },
               "metadata": {
@@ -4535,9 +4535,21 @@
                       "mode": "chose",
                       "label": "VProperty"
                     },
+                    "sort": {
+                      "mode": "chose"
+                    },
+                    "view": {
+                      "mode": "chose"
+                    },
                     "table": {
                       "mode": "chose",
                       "label": "TX_ContactosVisita"
+                    },
+                    "fields": {
+                      "mode": "chose"
+                    },
+                    "useColumnId": {
+                      "mode": "chose"
                     }
                   },
                   "parameters": {
@@ -4553,7 +4565,7 @@
                 "parameters": [
                   {
                     "name": "__IMTCONN__",
-                    "type": "account:airtable2",
+                    "type": "account:airtable3,airtable2",
                     "label": "Connection",
                     "required": true
                   }
@@ -4563,6 +4575,12 @@
                     "name": "base",
                     "type": "select",
                     "label": "Base",
+                    "required": true
+                  },
+                  {
+                    "name": "useColumnId",
+                    "type": "boolean",
+                    "label": "Use Column ID",
                     "required": true
                   },
                   {
@@ -4578,13 +4596,70 @@
                   },
                   {
                     "name": "maxRecords",
-                    "type": "uinteger",
-                    "label": "Max records"
+                    "type": "integer",
+                    "label": "Limit"
                   },
                   {
-                    "name": "useColumnId",
-                    "type": "boolean",
-                    "label": "Use column ID"
+                    "name": "sort",
+                    "spec": [
+                      {
+                        "name": "field",
+                        "type": "select",
+                        "label": "Field",
+                        "dynamic": true,
+                        "options": []
+                      },
+                      {
+                        "name": "direction",
+                        "type": "select",
+                        "label": "Direction",
+                        "options": [
+                          {
+                            "label": "Descending",
+                            "value": "desc"
+                          },
+                          {
+                            "label": "Ascending",
+                            "value": "asc"
+                          }
+                        ]
+                      }
+                    ],
+                    "type": "array",
+                    "label": "Sort"
+                  },
+                  {
+                    "name": "view",
+                    "type": "select",
+                    "label": "View"
+                  },
+                  {
+                    "name": "fields",
+                    "type": "select",
+                    "label": "Output Fields",
+                    "multiple": true
+                  }
+                ],
+                "interface": [
+                  {
+                    "name": "__IMTLENGTH__",
+                    "type": "uinteger",
+                    "label": "Total number of bundles"
+                  },
+                  {
+                    "name": "__IMTINDEX__",
+                    "type": "uinteger",
+                    "label": "Bundle order position"
+                  },
+                  {
+                    "name": "id",
+                    "type": "text",
+                    "label": "ID"
+                  },
+                  {
+                    "name": "createdTime",
+                    "type": "date",
+                    "label": "Created Time"
                   }
                 ]
               }
@@ -4599,7 +4674,7 @@
               "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblW3SSbKo6vRjwBJ",
-                "record": "{{12.id}}"
+                "id": "{{12.id}}"
               },
               "metadata": {
                 "designer": {
@@ -4650,7 +4725,7 @@
                     "required": true
                   },
                   {
-                    "name": "record",
+                    "name": "id",
                     "type": "text",
                     "label": "Record ID",
                     "required": true
@@ -4667,8 +4742,8 @@
                     },
                     {
                       "a": "{{12.id}}",
-                      "b": "",
-                      "o": "notequal"
+                      "o": "text:notequal",
+                      "b": ""
                     }
                   ]
                 ]
@@ -4894,7 +4969,7 @@
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tbl2QDLvJDyy3Rg2I",
                 "formula": "FIND(\",{{1.codigoSolicitud}},\", \",\" & ARRAYJOIN({solicitud}, \",\") & \",\") > 0",
-                "maxRecords": 100,
+                "maxRecords": "100",
                 "useColumnId": false
               },
               "metadata": {
@@ -4909,9 +4984,21 @@
                       "mode": "chose",
                       "label": "VProperty"
                     },
+                    "sort": {
+                      "mode": "chose"
+                    },
+                    "view": {
+                      "mode": "chose"
+                    },
                     "table": {
                       "mode": "chose",
                       "label": "TX_Unidades"
+                    },
+                    "fields": {
+                      "mode": "chose"
+                    },
+                    "useColumnId": {
+                      "mode": "chose"
                     }
                   },
                   "parameters": {
@@ -4927,7 +5014,7 @@
                 "parameters": [
                   {
                     "name": "__IMTCONN__",
-                    "type": "account:airtable2",
+                    "type": "account:airtable3,airtable2",
                     "label": "Connection",
                     "required": true
                   }
@@ -4937,6 +5024,12 @@
                     "name": "base",
                     "type": "select",
                     "label": "Base",
+                    "required": true
+                  },
+                  {
+                    "name": "useColumnId",
+                    "type": "boolean",
+                    "label": "Use Column ID",
                     "required": true
                   },
                   {
@@ -4952,13 +5045,70 @@
                   },
                   {
                     "name": "maxRecords",
-                    "type": "uinteger",
-                    "label": "Max records"
+                    "type": "integer",
+                    "label": "Limit"
                   },
                   {
-                    "name": "useColumnId",
-                    "type": "boolean",
-                    "label": "Use column ID"
+                    "name": "sort",
+                    "spec": [
+                      {
+                        "name": "field",
+                        "type": "select",
+                        "label": "Field",
+                        "dynamic": true,
+                        "options": []
+                      },
+                      {
+                        "name": "direction",
+                        "type": "select",
+                        "label": "Direction",
+                        "options": [
+                          {
+                            "label": "Descending",
+                            "value": "desc"
+                          },
+                          {
+                            "label": "Ascending",
+                            "value": "asc"
+                          }
+                        ]
+                      }
+                    ],
+                    "type": "array",
+                    "label": "Sort"
+                  },
+                  {
+                    "name": "view",
+                    "type": "select",
+                    "label": "View"
+                  },
+                  {
+                    "name": "fields",
+                    "type": "select",
+                    "label": "Output Fields",
+                    "multiple": true
+                  }
+                ],
+                "interface": [
+                  {
+                    "name": "__IMTLENGTH__",
+                    "type": "uinteger",
+                    "label": "Total number of bundles"
+                  },
+                  {
+                    "name": "__IMTINDEX__",
+                    "type": "uinteger",
+                    "label": "Bundle order position"
+                  },
+                  {
+                    "name": "id",
+                    "type": "text",
+                    "label": "ID"
+                  },
+                  {
+                    "name": "createdTime",
+                    "type": "date",
+                    "label": "Created Time"
                   }
                 ]
               }
@@ -4973,7 +5123,7 @@
               "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tbl2QDLvJDyy3Rg2I",
-                "record": "{{19.id}}"
+                "id": "{{19.id}}"
               },
               "metadata": {
                 "designer": {
@@ -5024,7 +5174,7 @@
                     "required": true
                   },
                   {
-                    "name": "record",
+                    "name": "id",
                     "type": "text",
                     "label": "Record ID",
                     "required": true
@@ -5041,8 +5191,8 @@
                     },
                     {
                       "a": "{{19.id}}",
-                      "b": "",
-                      "o": "notequal"
+                      "o": "text:notequal",
+                      "b": ""
                     }
                   ]
                 ]

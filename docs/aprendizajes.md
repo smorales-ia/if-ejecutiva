@@ -906,3 +906,143 @@ Dejar el flag encendido acumula ejecuciones incompletas en la cola del escenario
 **Prevención futura — mensajes de commit sobre blueprints.** Un blueprint de Make es un artefacto de 147 KB donde un cambio de una línea es invisible en el diff a menos que se lo busque. **El mensaje de commit debe enumerar TODAS las modificaciones del blueprint, no sólo la que motivó el commit.** Una fórmula alterada sin mención costó tres ciclos de diagnóstico: uno que la introdujo creyendo tocar otra cosa, uno que atribuyó el síntoma al filtro y lo eliminó, y uno que tuvo que instrumentar la API de Make para llegar al bundle. Corolario operativo: al tocar un blueprint, diffear los mapeos y filtros de *todos* los módulos contra la versión anterior antes de commitear, y dejar constancia del resultado.
 
 **Precondición conocida de F-5 — el módulo 11 no matchea nunca.** Descubierto de rebote al usarlo como control. El módulo 11 (`BancoFinancista`) busca con `UPPER({nombre}) = UPPER("{{1.cambios.bancoFinancista}}")`, igualdad **exacta**, y la app envía el slug del formulario (`"santander"`) mientras el catálogo `M_Bancos` (`tblGlYuJo5AeMehhs`) guarda el nombre canónico (`"Banco Santander"`, `"Banco Estado"`, `"Banco de Chile"`, `"Scotiabank Chile"`…). Nunca hay match ⇒ `{{11.id}}` vacío ⇒ **el link `banco_financista` (`fldxcfdKRctHCgwmB`) no se actualiza jamás al editar**. Es la misma familia que el `bancoId` muerto: los dos caminos de escritura del banco están rotos, uno por clave ausente y otro por vocabulario divergente. Fuera de alcance de esta tanda; F-5 arranca con el gap ya identificado y debe resolver ambos junto con la decisión de topología entre `banco` (texto legacy) y `banco_financista` (link). No confundir con [[E-088]]/[[E-091]]: acá **no** hay `typecast` en el `Search`, así que la divergencia no ensucia el catálogo — sólo deja el campo sin escribir.
+
+### 2026-07-30 — El módulo fabricado sin `metadata.interface`: causa raíz real del Delete que nunca borró
+
+**Contexto:** cierre de F-1. El fix anterior (revertir la fórmula de los módulos 12/19 a la de `9547d1b` y restaurar los guards de 14/20) se desplegó, se corrió el smoke test consolidado sobre `VP-2026-0055`, y **el síntoma volvió idéntico**: `status = 1`, toast verde, y duplicación silenciosa. De 2 contactos se pasó a 4 tras la primera edición y a 7 tras la segunda; de 1 unidad a 2 y luego a 4.
+
+**Autocrítica del fix de F-1 — por qué estuvo mal fundado.** Se diagnosticó como causa raíz la regresión de fórmula del commit `206e53b` y se revirtió. El razonamiento tomó como hecho establecido la afirmación de la bitácora de que la fórmula de `9547d1b` estaba "verificada en producción", **sin haber comprobado nunca que el `Delete` hubiera borrado alguna vez**. Peor: en la misma sesión ya se había medido que **las tres variantes de fórmula devuelven filas al ejecutarlas por REST contra Airtable**. Si las tres funcionan fuera de Make, la fórmula no puede ser la variable que distingue — esa contraevidencia estaba sobre la mesa y no se pesó. Es el mismo defecto que el diagnóstico de C-5 que esta misma tanda había refutado: **razonar sobre el mecanismo en vez de medirlo**, dos veces seguidas.
+
+**Causa raíz real:** los módulos 12 y 19 (`airtable:ActionSearchRecords`) **no declaran `metadata.interface`**. Todo módulo de ese tipo creado desde la UI de Make lleva una interface que declara su estructura de salida, empezando por `__IMTLENGTH__`, `__IMTINDEX__`, **`id`** y `createdTime`. Sin esa declaración no hay campo `id` al que enlazar, así que `{{12.id}}` y `{{19.id}}` resuelven a vacío — **con cualquier fórmula**. Con guard, el `Delete` se omite y el `Create` recrea encima ⇒ duplicación silenciosa. Sin guard, el `Delete` llama a Airtable con un array vacío ⇒ `[422] "records" must be a non-empty array of record IDs`. Los dos síntomas históricos, un solo origen.
+
+**Evidencia que lo sostiene:**
+
+1. **Correlación perfecta dentro del mismo tipo de módulo.** De los 7 `ActionSearchRecords` cuyo output se referencia aguas abajo, los 7 que funcionan (6, 7, 8, 9, 10, 11, 24) declaran `interface`; los 2 que fallan (12, 19) son exactamente los 2 que no la declaran.
+2. **La forma de los bundles en la DLQ.** El módulo 11 devolvió 0 resultados legítimamente y serializó `{"__IMTLENGTH__": 0}` — su primer campo de interface. Los módulos 12 y 19 serializaron **`null`**: no hay estructura que serializar. Son formas distintas, y esa diferencia es un artefacto de runtime, no del diseñador.
+3. **Independencia de la fórmula.** Tres variantes (`FIND` sobre `solicitudId`, `FIND` sobre `codigoSolicitud` delimitado, `ARRAYJOIN({solicitud_record_id}) =`) produjeron el mismo resultado dentro de Make y las tres devuelven filas por REST.
+4. **Procedencia.** [[E-076]] documenta que los módulos 12/14/15 y 19/20/21 se insertaron **por script Python determinista**, no desde la UI. Quedan otras huellas de fabricación en los mismos módulos: `maxRecords` como número `100` donde los sanos tienen el string `"1"`, y `restore.expect` con 2 claves donde los sanos tienen 6 (`base`, `fields`, `sort`, `table`, `useColumnId`, `view`). Es exactamente lo que advertía [[E-072]]: *no fabricar módulos Make sin referencia real*.
+
+**Solución aplicada:** `metadata.interface` en los módulos 12 y 19 con las **4 entradas estándar copiadas verbatim del módulo 6** —mismo tipo, misma versión, mismo escenario—, sin inventar vocabulario: no se declara ningún campo de tabla porque nada aguas abajo referencia otra cosa que `{{12.id}}` / `{{19.id}}`. `maxRecords` normalizado a string. Escenario bumpeado a **v3.1**. Preservados hook `3441135`, conexión `8847431`, módulo 24, mapper de `ejecutivo_comercializador` y los 48 campos del Update.
+
+**Salvedad honesta:** no está demostrado desde los archivos que Make use `metadata.interface` para enlazar referencias en runtime; podría ser una caché del diseñador. Lo que sí está demostrado es la correlación perfecta dentro del tipo de módulo y la diferencia de serialización `null` vs `{"__IMTLENGTH__": 0}`, que sí es de runtime. Confianza alta, no certeza. Si tras el import el síntoma persiste, el siguiente paso es un módulo sonda que escriba `{{12.id}}` y `{{12.__IMTLENGTH__}}` en `LogEscenarios` — no un cuarto fix por inferencia.
+
+**Hallazgo lateral — la interface del módulo 1 declara 28 de 47 campos.** El webhook declara bajo `cambios` sólo 28 de las 47 claves que el blueprint referencia como `{{1.cambios.X}}`. Quedan sin declarar, entre otras, `sucursalOriginadora`, `correoClienteRef`, `ejecutivoFormalizador`, `montoEstimadoUf`, `observaciones`, `modoCreacion`, `vendedorRazonSocialONombre`, `bancoId` y las 8 `financiero*`. **No está probado que eso impida escribirlas**: son también, en su mayoría, las que el mapper descarta cuando vienen vacías (`if (v !== undefined)`), así que la correlación observada en `VP-2026-0053` y `VP-2026-0055` es ambigua. Queda como línea de investigación con instrumento claro: editar una solicitud poniendo valor **no vacío** en `sucursalOriginadora` y `observaciones` y ver si persisten. Si no persisten, la interface del webhook gobierna el binding y hay que regenerarla.
+
+**Prevención futura:** al insertar módulos Make por script, **clonar un módulo real del mismo tipo y sustituir sólo los valores** — nunca construir el objeto desde cero. Y al auditar un módulo que no se comporta, comparar su JSON completo contra otro del mismo tipo que sí funcione en el mismo escenario: `metadata.interface`, `metadata.expect`, `restore.expect` y los tipos de los valores del mapper. La diferencia que importaba acá no estaba en el mapper ni en la fórmula, que es donde se miró tres veces, sino en metadata.
+
+### 2026-07-30 — Cierre de F-1: la procedencia por script deja huella en varias capas del módulo, no en una
+
+**Contexto:** tercer intento sobre el mismo síntoma. El fix de `metadata.interface` (v3.1) se importó, se corrió el smoke test sobre `VP-2026-0055` con baseline limpio de 2 contactos, y **falló idéntico**: 2 originales intactos + 3 nuevos encima = 5. El log del módulo 20 dijo literal **"The bundle did not pass through the filter"**.
+
+**Evidencia nueva que ese mensaje aporta:** el `Search` **sí emitió un bundle** y ese bundle **llegó al filtro**, que lo rechazó. No es que el módulo no corriera: es que `{{19.id}}` venía vacío dentro de un bundle existente. Descarta definitivamente la lectura "el Search no devuelve nada y por eso no corre el Delete".
+
+**Causa raíz definitiva:** los módulos 12 y 19 fueron insertados por script ([[E-076]]) y les faltan **tres** capas estructurales que la UI de Make completa al crear un `airtable:ActionSearchRecords` desde el botón `+`:
+
+| Propiedad | Sano (SC01 m9) | Roto (m12/m19) |
+|---|---|---|
+| `metadata.restore.expect` | 6 claves (`base`, `sort`, `view`, `table`, `fields`, `useColumnId`) | **2** (`base`, `table`) |
+| `metadata.parameters[0].type` | `account:airtable3,airtable2` | **`account:airtable2`** |
+| `metadata.expect` | 8 entradas · `useColumnId` required · `maxRecords` tipo `integer` etiqueta *Limit* | **5** · `maxRecords` tipo `uinteger` etiqueta *Max records* |
+
+**Autocrítica — el fix de v3.1 fue peor que insuficiente: apuntaba al campo equivocado.** Se diagnosticó `metadata.interface` como causa por correlación perfecta dentro del tipo de módulo (7 de 7 sanos la tenían, 2 de 2 rotos no). La correlación era real pero el control estaba mal elegido: **`SC01` módulo 9 tiene `metadata.interface` vacía —0 entradas— y funciona en producción**, con `{{9.id}}` referenciado aguas abajo para resolver el link de banco. Ese contraejemplo estaba en el repo, en un blueprint hermano, y no se buscó antes de proponer el fix. Tres diagnósticos fallidos seguidos en esta tanda —C-5, F-1 fórmula, v3.1 interface— con el mismo patrón: **una correlación tomada por mecanismo, sin buscar el contraejemplo que la rompiera**.
+
+**Solución aplicada (v3.2):** reconstrucción estructural de m12 y m19 clonando **verbatim de `SC01` módulo 9** —mismo tipo, misma versión 3, misma base, misma conexión `8847431`, y sano en producción— las tres capas: `metadata.parameters`, `metadata.expect` y `metadata.restore.parameters` + `restore.expect`. Se preservaron `id`, `designer`, `filter` upstream, y el `mapper` completo (tabla, fórmula `9547d1b`, `maxRecords: "100"`). Se conservó la `interface` de 4 entradas de v3.1: no hace falta —m9 demuestra que puede ir vacía— pero tampoco estorba, y m6 la tiene con 47.
+
+**Confianza: media-alta.** Más baja que la declarada en v3.1, y a propósito. Lo que sostiene el fix es que ahora m12 y m19 son estructuralmente indistinguibles de un módulo probado en producción, salvo por tabla, fórmula y filtro. Lo que **no** está demostrado es cuál de las tres capas es la operativa; se clonaron las tres juntas, así que si funciona no vamos a saber cuál importaba. Es aceptable para un fix y hay que registrarlo: la próxima vez que aparezca, la respuesta es "cloná el módulo entero", no "cambiá tal campo".
+
+**Prevención futura — regla dura:** **nunca insertar un módulo de Make por script construyéndolo desde cero.** Clonar el objeto completo de un módulo del mismo tipo y versión creado desde la UI —preferentemente de un blueprint hermano del mismo repo, ya probado en producción— y sustituir únicamente `id`, `designer`, `filter` y los valores del `mapper`. La procedencia deja huella en `metadata.parameters`, `metadata.expect`, `metadata.restore.expect` y `metadata.interface`, y el módulo **arranca, no lanza error y devuelve un bundle vacío**: falla en el modo más caro de diagnosticar. Corolario de método, que esta tanda pagó tres veces: **antes de convertir una correlación en causa, buscar activamente el contraejemplo** — un módulo sano que carezca del rasgo que se está culpando. Acá estaba a un `grep` de distancia en `SC01`.
+
+### 2026-07-30 — F-1 cuarto ciclo: el operador de filtro sin namespace, y el contraejemplo que estaba dentro del mismo escenario
+
+**Contexto:** cierre de F-1, cuarto diagnóstico sobre el mismo síntoma. La v3.2 (reconstrucción estructural de m12/m19 clonando de `SC01` m9) se importó y el smoke test sobre `VP-2026-0055` mostró un síntoma **nuevo**: el contacto y la unidad nuevos se crean correctamente, pero los preexistentes no se borran. De 2 contactos a 5 tras dos ediciones; de 1 unidad a 2.
+
+**Inconveniente:** el cambio de síntoma probaba que v3.2 había arreglado algo real —el `Search` ahora emite bundles— pero el `Delete` seguía sin correr. Las tres capas de metadata ya se habían clonado de un módulo sano, así que la hipótesis de procedencia estaba agotada.
+
+**Causa raíz:** el guard de los módulos 14 y 20 —preservado sin auditar en las tres iteraciones anteriores porque "venía de antes"— usa dos condiciones en AND, y la segunda es `{"a": "{{12.id}}", "b": "", "o": "notequal"}`. **`notequal` no es un operador válido de Make.** Los operadores de filtro de Make van con namespace (`text:notequal`, `number:notequal`); `exist` es la única excepción legítima porque es un operador básico. Sin resolver el operador, la condición evalúa falso, el AND falla y el bundle no pasa — que es literalmente el mensaje que el log del módulo 20 venía dando desde la v3.1: *"The bundle did not pass through the filter"*.
+
+**Evidencia dura — un barrido de operadores sobre los 5 blueprints del repo:**
+
+```
+'exist'            x7   SC-Edicion#12,#14,#19,#20 · SC01#19,#20 · Adjuntos#4
+'number:equal'     x3   RF09#13,#15,#18
+'notequal'         x2   SC-Edicion#14, SC-Edicion#20    <-- ÚNICOS SIN NAMESPACE
+'text:equal'       x1   Adjuntos#4
+'number:notequal'  x1   RF09#22                          <-- la forma correcta
+```
+
+Dos ocurrencias en todo el repo, y son exactamente los dos módulos que fallan. 47 módulos sanos, cero ocurrencias.
+
+**El contraejemplo, esta vez buscado antes de proponer el fix.** La lección de la entrada anterior era *"antes de convertir una correlación en causa, buscar activamente el contraejemplo"*. Aplicada, aparece dentro del propio SC-Edicion:
+
+| | m17 / m23 (Create) | m14 / m20 (Delete) |
+|---|---|---|
+| `metadata.interface` | **AUSENTE** | AUSENTE |
+| `metadata.restore.expect` | **2 claves** | 2 claves |
+| `metadata.parameters[0].type` | **`account:airtable2`** (m17) | `account:airtable2` |
+| `filter` | **ninguno** | `exist` + **`notequal`** |
+| Comportamiento | **✅ crea correctamente** | ❌ nunca corre |
+
+m17 y m23 cargan **todas** las huellas de procedencia por script que v3.1 y v3.2 culparon, y funcionan — el propio smoke test de esta tanda lo confirma. Eso liquida metadata/interface/tipo-de-conexión como mecanismo. La única variable que queda es el filtro. Desde fuera lo corroboran `SC01` m18/m21: `interface` ausente, `restore.expect` 0, `metadata.expect` 0, sanos en producción.
+
+**Solución aplicada (v3.3):** eliminada la segunda condición de los guards de m14 y m20, dejando sólo `{{12.id}} exist` / `{{19.id}} exist`. En Make `exist` ya significa "existe y no vacío", así que la condición era redundante además de inválida. Se prefirió eliminarla antes que corregirla a `text:notequal`: menos superficie, y `exist` tiene 7 usos en el repo incluidos dos en `SC01` probados en producción. Tres hunks en total —el bump de nombre y los dos bloques de filtro—, verificados contra `git diff`. Preservados hook `3441135`, conexión única `8847431`, módulo 24 → `AUTH_Usuarios`, los 48 campos del Update, las fórmulas y `maxRecords` de m12/m19, y los feeders 12/19 de los aggregators. `pnpm tsc --noEmit` y `pnpm build` limpios.
+
+**Confianza: alta.** Es el primer diagnóstico de esta tanda que aísla **una sola variable** con un control interno del mismo escenario y misma procedencia, en vez de apoyarse en una correlación entre módulos que difieren en varias dimensiones a la vez.
+
+**Aprendizaje transversal — cuando un fix cambia el síntoma pero no lo resuelve, la causa raíz no era única.** F-1 consumió cuatro ciclos y cada uno movió el síntoma sin cerrarlo: fórmula (422 → duplicación), `metadata.interface` (sin cambio), reconstrucción estructural (duplicación con Create sano), guard. El error de método fue tratar cada ciclo como *"me equivoqué de causa"* cuando la lectura correcta era *"acerté parcialmente y quedó otra capa"*. Un cambio de síntoma es información positiva: prueba que el fix anterior tocó algo real y **estrecha** el espacio de búsqueda aguas abajo. La regla que queda:
+
+1. **Cuando el síntoma cambia, no revertir el fix anterior.** v3.2 arregló el `Search` de verdad; revertirla habría reintroducido un defecto y enmascarado el guard.
+2. **Localizar la capa siguiente por el punto donde el flujo se detiene ahora**, no por la hipótesis previa. El log decía "did not pass through the filter" desde v3.1: señalaba el guard, y se leyó como consecuencia del `Search` en vez de como causa propia.
+3. **Auditar explícitamente lo que cada fix declaró "preservado".** Los guards de m14/m20 sobrevivieron tres iteraciones intactos justamente porque cada informe los listaba como preservados — "preservado" se leyó como "verificado", y nadie miró el operador.
+
+**Prevención futura:** al auditar un filtro de Make, verificar el **namespace del operador** contra los demás filtros del repo antes de mirar el mapper o la metadata. Un operador inválido no lanza error, no aparece en el diseñador y produce exactamente el mismo silencio que un valor vacío. Un `grep` de todos los `"o":` de los blueprints cuesta un comando y habría cerrado F-1 en el primer ciclo.
+
+### 2026-07-31 — F-1 (cierre): el Delete de SC-Edicion nunca recibió el record ID
+
+**Contexto:** primera corrida del smoke con el blueprint v3.3 ya importado (scenario 6682031, 31/07 14:51:26). Ruta de contactos: `m12 Search` ✅ +0.3s → `m14 Delete` ❌ +0.9s, `[422] "records" must be a non-empty array of record IDs`, rollback y webhook con automatic failure.
+
+**Inconveniente:** el texto del 422 es el del endpoint *bulk* de Airtable (`DELETE /v0/{base}/{table}?records[]=`), no el del singular (`DELETE /v0/{base}/{table}/{recordId}`). Eso llevó a plantear que m14/m20 eran módulos plurales (`ActionDeleteRecords`) con un escalar mal mapeado. La hipótesis era razonable pero falsa, y llevaba el fix hacia envolver el valor en un array literal — que no habría arreglado nada.
+
+**Causa raíz:** m14 y m20 son `airtable:ActionDeleteRecord` **singular**, `version: 3`, y el diagnóstico D1 de la sesión anterior era correcto en eso. Lo que estaba mal era **el nombre de la clave del mapper**: pasaban el record ID en `record`, cuando la app Airtable v3 de Make espera el record ID en **`id`** y reserva `record` para la *collection* de valores de campo. La prueba está dentro del mismo escenario, sin salir del repo:
+
+| Módulo | `module` | Claves del mapper |
+|---|---|---|
+| m2 (Update — funciona en producción) | `ActionUpdateRecords` v3 | **`id`** = `{{1.solicitudId}}` · `record` = collection de 48 campos · `base` · `table` · `typecast` · `useColumnId` |
+| m17 (Create — funciona) | `ActionCreateRecord` v3 | `record` = collection de campos · `base` · `table` · `typecast` · `useColumnId` |
+| m14 / m20 (Delete — fallaban) | `ActionDeleteRecord` v3 | **`record`** = `{{12.id}}` *(escalar)* · `base` · `table` |
+
+Con `id` sin definir, Make arma el request bulk sin ningún ID, `records[]` sale vacío y Airtable responde el 422. El `metadata.expect` de m14/m20 declaraba `{"name":"record","type":"text","label":"Record ID"}` — escrito a mano, arrastrando el mismo error de origen; Make ignora ese bloque en runtime y usa su propia definición de app, así que la metadata autoconsistente enmascaró el defecto en cuatro auditorías.
+
+**El guard `exist` valida el origen, no el destino.** `{{12.id}}` sí existía y sí traía `recFI5rG8LxZXlnjD`: el filtro pasó correctamente y **no podía** atrapar esto. Un guard confirma que el valor está disponible en el bundle; no dice nada sobre si ese valor llega al parámetro que el módulo exige. Un error de mapeo aguas abajo del filtro es invisible para cualquier condición que se escriba en el filtro. Corolario práctico: cuando un módulo falla *después* de que su guard pasó, el guard queda descartado como causa y hay que ir al mapper — no endurecer el guard.
+
+**Solución aplicada (v3.4):** cuatro cambios, verificados con conteo exacto de ocurrencias antes de escribir y `JSON.parse` antes de persistir.
+
+1. `m14.mapper.record` → `m14.mapper.id` (`{{12.id}}`); ídem `m20` con `{{19.id}}`.
+2. `metadata.expect` de ambos: `{"name":"record"}` → `{"name":"id"}` (2 ocurrencias, las únicas del archivo a esa indentación).
+3. Bump `SC-Edicion v3.3` → `v3.4`.
+4. Guards endurecidos con una segunda condición en AND: `{"a":"{{12.id}}","o":"text:notequal","b":""}` (ídem 19).
+
+Preservados: 23 módulos, hook `3441135`, conexión única `8847431`, m24 → `AUTH_Usuarios`, 48 campos del Update, fórmulas y `maxRecords` de m12/m19, feeders 12/19 de los aggregators. `pnpm tsc --noEmit` y `pnpm build` limpios.
+
+**Corrección al diagnóstico D1 de la fase anterior:** D1 reportó "m14 es `ActionDeleteRecord` singular con `mapper.record = {{12.id}}`". El tipo de módulo estaba bien identificado; lo que D1 no hizo fue **contrastar el contrato del mapper contra un módulo hermano de la misma app y versión**. Tenía a mano m2 —un `ActionUpdateRecords` v3 que funciona en producción y que usa `id` para el record ID— y no lo miró. La verificación "el módulo es del tipo correcto" se confundió con "el módulo está bien configurado".
+
+**Punto de tensión con la entrada anterior, declarado a propósito.** La entrada de v3.3 eliminó de estos mismos guards una segunda condición `{"a":"{{12.id}}","b":"","o":"notequal"}` — operador **sin namespace**, inválido en Make, que hacía fallar el AND y bloqueaba el bundle silenciosamente. v3.4 vuelve a introducir una segunda condición equivalente, ahora **con** namespace (`text:notequal`, la forma que la propia entrada anterior señalaba como correcta, cf. `RF09#22 number:notequal`). Es una decisión explícita del usuario, no un descuido, y queda registrada como tal. **Riesgo asumido:** si `text:notequal` con `b` vacío se comporta de forma inesperada en Make, el guard volvería a bloquear el bundle con el mismo silencio de F-1 (*"The bundle did not pass through the filter"*). Si eso ocurre, el fix es borrar la segunda condición de m14/m20 y volver al guard de una sola condición — **no** revertir el rename `record` → `id`, que es independiente y es lo que realmente cierra F-1.
+
+**Prevención futura:** antes de dar por buena la configuración de un módulo de Make escrito a mano, comparar las **claves del mapper** contra otro módulo de la misma app y la misma `version` que esté probado en producción, dentro del mismo blueprint si existe. El tipo de módulo, la `version` y el `metadata.expect` pueden ser los tres correctos y coherentes entre sí, y aun así el mapper puede estar nombrando mal el parámetro obligatorio. `metadata.expect` es descriptivo y editable a mano: **no es una fuente de verdad sobre el contrato real de la app.**
+
+### 2026-07-31 — Issue abierto: `tipo_bien` no se pobló en el smoke B de v3.4
+
+**No es F-1.** F-1 quedó cerrado en la misma sesión (ver entrada anterior); esto se detectó al verificar sus resultados y se registra aparte para que no se mezcle con aquel hilo.
+
+**Contexto:** verificación MCP de los hijos de VP-2026-0055 tras la corrida B del smoke de `SC-Edicion v3.4`. La unidad creada (`recHRdSVl9o5yQx2A`, `numero_unidad=D402`, `subtipo=Departamento`) quedó con **`tipo_bien` vacío**.
+
+**Campo:** `TX_Unidades.tipo_bien` = `fldHHo0iPek3vM77p`, tipo `multipleRecordLinks` → **M_TiposDeBien** (`tblQkurIaEqg6tMA4`, `inverseLinkFieldId` `fldyWxRy18HnZhhaE`). Los 8 registros activos del catálogo: `edificacion`, `terreno`, `bodega`, `estacionamiento_cubierto`, `estacionamiento_descubierto`, `estacionamiento_uso_goce`, `piscina`, `obras_complementarias`.
+
+**Ya investigado — la mitad Make está resuelta.** `m23` (`Crear unidad nueva`) de SC-Edicion mapea 17 campos y **`fldHHo0iPek3vM77p` no está entre ellos**. Tampoco lo mapea `m21` (`Crear Unidad`) de `SC01 - Crear solicitud`, que mapea los mismos 17. **No es una regresión de v3.4**: ningún flujo pobló nunca ese campo. Junto a `tipo_bien` quedan sin mapear en ambos escenarios: `clave_natural`, `es_principal`, `estado_unidad`, `origen_dato`, `notas` y `avaluo_uf` — algunos probablemente fuera del alcance del formulario, conviene decidirlo campo por campo y no en bloque.
+
+**Pendiente de investigar en la próxima tanda:**
+
+1. Si la UI de la consola envía `tipo_bien` en `unidadesJson` (revisar el payload del formulario de unidades y el schema zod correspondiente). Si no lo envía, el hueco empieza ahí y el mapeo en Make es el segundo paso, no el primero.
+2. Si el campo es obligatorio aguas abajo — IF-04 / pipeline PDF, cuadro de valoración (`TX_ItemsCuadroValoracion`) o el motor AT01/AT10. Eso decide si es bug o si el catálogo es informativo.
+3. Cómo mapear un `multipleRecordLinks` en Make: con `typecast: true` (ya activo en m23) Airtable acepta el **nombre** del registro vinculado y resuelve el link solo; si no, hay que pasar el record ID y haría falta un Search contra `M_TiposDeBien`. Determinar cuál antes de escribir el mapeo, y aplicar el mismo cambio a SC01 para que los dos flujos no diverjan.
+
+**Prioridad: a definir con Sergio.** No bloquea el cierre de F-1 ni el smoke.

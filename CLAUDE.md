@@ -289,6 +289,32 @@ schema real:
 | RF-09 | Extracción Claude API tras subir adjunto | ❌ por provisionar (BQ-3-c) · usar código propio, no SC07 |
 | SC13 | Notificaciones reasignación/prioridad/pausa | **FUERA DE ALCANCE CU-002** — no provisionar en este CU |
 | E1/E2/E3 | Pipeline PDF (IF-04 aguas abajo) | ✅ ACTIVO — no tocar desde IF-02 |
+| SC-Edicion | Edición de solicitud (scenario 6682031 · hook 3441135) | ✅ **v3.4 ACTIVO** — F-1 cerrado 31-jul-2026 |
+
+**Blueprint activo de SC-Edicion: `v3.4`.** El archivo de `docs/_artefactos/make/` es la
+fuente de verdad; Make sólo refleja el último import. Al tocarlo, bumpear el `name`
+(`SC-Edicion vX.Y - Edicion de solicitud`) y reimportar — el fix no llega a Make solo.
+
+#### Contrato de los módulos Airtable v3 en Make (verificado en runtime 31-jul-2026)
+
+Las claves del `mapper` **no son intercambiables entre acciones**. `metadata.expect` de un
+blueprint escrito a mano es descriptivo y **no** es fuente de verdad del contrato real:
+
+| Acción | Clave del record ID | Clave de los valores de campo |
+|---|---|---|
+| `airtable:ActionCreateRecord` | — | `record` (collection) |
+| `airtable:ActionUpdateRecords` | **`id`** (text) | `record` (collection) |
+| `airtable:ActionDeleteRecord` | **`id`** (text) | — (no aplica) |
+
+Poner el record ID en `record` dentro de un Delete deja `id` sin definir; Make emite el
+request contra el endpoint *bulk* de Airtable con `records[]` vacío y devuelve
+`[422] "records" must be a non-empty array of record IDs`. Ese texto en plural **no**
+implica que el módulo sea plural. Esa fue la causa raíz de F-1 (**CERRADO en v3.4**).
+
+Al auditar un módulo Make escrito a mano, contrastar las claves del `mapper` contra otro
+módulo de la misma app y misma `version` probado en producción, dentro del mismo blueprint
+si existe. Y verificar el **namespace del operador** en los filtros (`text:notequal`,
+`number:notequal`; `exist` es la única excepción válida sin namespace).
 
 Variables de entorno esperadas:
 ```
