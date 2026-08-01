@@ -539,11 +539,6 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 **Causa raíz:** Su bloque de texto había perdido el encabezado `## A-09 · …` y quedó arrastrado al final de A-10, de modo que su contenido se leía como parte de esa ficha. Un `grep "^## A-"` lo delataba; leer el archivo de corrido, no.
 **Solución aplicada:** Se restituyó el encabezado y se reubicó la ficha entre A-08 y A-10 con un script `python3`. Aprovechando la revisión se la elevó a **bloqueante del lote 3** con el mismo criterio aplicado a A-10 sobre el lote 1: `TX_CoordinacionVisita` no existe en Airtable, así que no hay TABLE_ID ni FIELD_IDs que documentar, y `CLAUDE.md` obliga a derivar los tipos TS desde `schema-airtable.md`.
 **Prevención futura:** Al abrir un archivo de fichas numeradas, verificar la secuencia con `grep "^## "` antes de darlo por completo. Un encabezado perdido no rompe el markdown: hace desaparecer una ficha en silencio.
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
 
 ### 2026-07-27 — E-078 · "Guardar" en edición de solicitud: toast verde sin persistencia
 **Contexto:** diagnóstico del bug reportado en IF-02: editar una solicitud en `/consola` y presionar "Guardar cambios" mostraba el toast de éxito, pero `TX_Solicitudes` no cambiaba.
@@ -1051,8 +1046,6 @@ Preservados: 23 módulos, hook `3441135`, conexión única `8847431`, m24 → `A
 3. Cómo mapear un `multipleRecordLinks` en Make: con `typecast: true` (ya activo en m23) Airtable acepta el **nombre** del registro vinculado y resuelve el link solo; si no, hay que pasar el record ID y haría falta un Search contra `M_TiposDeBien`. Determinar cuál antes de escribir el mapeo, y aplicar el mismo cambio a SC01 para que los dos flujos no diverjan.
 
 **Prioridad: a definir con Sergio.** No bloquea el cierre de F-1 ni el smoke.
-<<<<<<< Updated upstream
-=======
 
 ---
 
@@ -1091,5 +1084,3 @@ Preservados: 23 módulos, hook `3441135`, conexión única `8847431`, m24 → `A
 **Solución aplicada:** en `SC05-EmailTasador.blueprint.json` m19, `content` → `html`; `subject` pasa a llevar sólo los 3 `replace()` de los placeholders que `plantilla_asunto` realmente contiene (`codigo_ext`, `comuna`, `direccion`), de 1.502 a 199 chars. Verificado por diff módulo a módulo que sólo cambió m19; los 23 restantes intactos.
 **Prevención futura:** un campo obligatorio que aparece **vacío** en el diseñador de Make casi siempre significa *clave de mapper equivocada*, no *valor equivocado* — es la misma señal que cerró F-1 y por eso M-5 no es opcional. Y al auditar visualmente un módulo, recordar que una cadena de `replace()` anidados **siempre** exhibe todos los nombres de variable y sus fallbacks: no confundir el texto de la expresión con el texto que produce.
 **Pendiente de confirmar por Sergio:** que `html` sea efectivamente la clave correcta (síntoma idéntico si no lo fuera) y si `contentType: "html"` — agregado a petición, sin hermano productivo que lo respalde — sobrevive al import o hay que borrarlo.
->>>>>>> Stashed changes
->>>>>>> Stashed changes
