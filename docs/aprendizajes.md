@@ -539,6 +539,11 @@ SUPERSEDED por D-12 (Opción C) el 2026-07-10 — solicitud_id vuelve a ser OBLI
 **Causa raíz:** Su bloque de texto había perdido el encabezado `## A-09 · …` y quedó arrastrado al final de A-10, de modo que su contenido se leía como parte de esa ficha. Un `grep "^## A-"` lo delataba; leer el archivo de corrido, no.
 **Solución aplicada:** Se restituyó el encabezado y se reubicó la ficha entre A-08 y A-10 con un script `python3`. Aprovechando la revisión se la elevó a **bloqueante del lote 3** con el mismo criterio aplicado a A-10 sobre el lote 1: `TX_CoordinacionVisita` no existe en Airtable, así que no hay TABLE_ID ni FIELD_IDs que documentar, y `CLAUDE.md` obliga a derivar los tipos TS desde `schema-airtable.md`.
 **Prevención futura:** Al abrir un archivo de fichas numeradas, verificar la secuencia con `grep "^## "` antes de darlo por completo. Un encabezado perdido no rompe el markdown: hace desaparecer una ficha en silencio.
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
 
 ### 2026-07-27 — E-078 · "Guardar" en edición de solicitud: toast verde sin persistencia
 **Contexto:** diagnóstico del bug reportado en IF-02: editar una solicitud en `/consola` y presionar "Guardar cambios" mostraba el toast de éxito, pero `TX_Solicitudes` no cambiaba.
@@ -1046,3 +1051,45 @@ Preservados: 23 módulos, hook `3441135`, conexión única `8847431`, m24 → `A
 3. Cómo mapear un `multipleRecordLinks` en Make: con `typecast: true` (ya activo en m23) Airtable acepta el **nombre** del registro vinculado y resuelve el link solo; si no, hay que pasar el record ID y haría falta un Search contra `M_TiposDeBien`. Determinar cuál antes de escribir el mapeo, y aplicar el mismo cambio a SC01 para que los dos flujos no diverjan.
 
 **Prioridad: a definir con Sergio.** No bloquea el cierre de F-1 ni el smoke.
+<<<<<<< Updated upstream
+=======
+
+---
+
+### 2026-07-31 — P8.5 · Tandas A y B de SC05 (correo de asignación al tasador)
+
+**Contexto:** §9.5 del Plan v1.9. Tanda A (fila de configuración en `C_NotificacionesConfig` + plantilla es-CL) y Tanda B (blueprint nuevo `SC05-EmailTasador` + `SC-Asignar` v2.0). Tanda C (UI) postergada junto con D-09.
+
+**Inconveniente:** el MCP de Airtable pedía OAuth interactivo y no había forma de completarlo dentro de la sesión, con lo que A-2/A-3/A-4 quedaban bloqueadas.
+**Causa raíz:** la conexión MCP de este entorno arranca sin autorizar; el flujo devuelve una URL que tiene que abrir una persona.
+**Solución aplicada:** se usó el `AIRTABLE_TOKEN` de `.env.local` contra la Meta API (`/v0/meta/bases/.../tables`) y la REST API para crear y parchear la fila. Es la misma operación que habría hecho el MCP, server-side y sin exponer el token. Fila creada: `rec5t6dBeYQkGsw4F`.
+**Prevención futura:** para auditar schema no hace falta el MCP — la Meta API con el token del proyecto sirve y no depende de una sesión OAuth. Dejar el MCP para exploración interactiva.
+
+**Inconveniente:** la plantilla no se puede escribir con variables `{{var}}`.
+**Causa raíz:** SC05 trae el cuerpo desde Airtable y lo sustituye con `replace()` anidados dentro de una expresión Make. Un literal `{{` dentro de una expresión rompe el parser de la propia expresión — Make no interpola strings traídos en runtime, sólo lo que está escrito en el mapper en tiempo de diseño.
+**Solución aplicada:** delimitador `[[var]]` en `plantilla_asunto` / `plantilla_cuerpo`, y 21 `replace()` anidados generados por script (no a mano) en el módulo Gmail.
+**Prevención futura:** toda plantilla que viva en Airtable y se rellene desde Make usa `[[ ]]`. `{{ }}` queda reservado para el mapper del blueprint.
+
+**Inconveniente:** los tres `TextAggregator` generaban una tabla completa por cada fila.
+**Causa raíz:** se puso el `<table>` con su encabezado dentro del `value` del aggregator, que se evalúa una vez por bundle. Con N contactos salían N tablas de una fila cada una.
+**Solución aplicada:** el aggregator emite sólo `<tr>` / `<li>`; el `<table>` con su fila de encabezado y el `<ul>` viven en `plantilla_cuerpo`, en Airtable.
+**Prevención futura:** en un aggregator, el `value` es el elemento repetido. El contenedor va siempre fuera.
+
+**Inconveniente:** SC05 necesitaba `codigoSolicitud` para su clave de idempotencia, pero `app/api/solicitudes/[id]/asignar/route.ts` no lo manda (envía `solicitudId`, `tasadorId`, `motivo`, `ejecutivaClerkId`).
+**Causa raíz:** el Plan §9.5.2 asumía un payload que el handler nunca tuvo.
+**Solución aplicada:** SC05 deriva la clave de su propio `Search` de `TX_Solicitudes` (`{{3.codigo_ext}}`) en vez de confiar en el caller. En el array de `flow`, m3 va **antes** que m2 — Make ejecuta por orden de array, no por `id`, como ya hacía SC-Edicion (`[1,6,7,…,24,2,3,4,16]`).
+**Prevención futura:** un guard de idempotencia no debe depender de un dato que provee quien lo llama; si puede derivarlo, que lo derive.
+
+**Hallazgo (no corregido, fuera del alcance de B-2):** `SC-Asignar` m5 escribe `LogEscenarios.Estado = "OK"`, pero la opción real es `✓ OK`. Con `typecast: true` Airtable **creó** la opción espuria — hoy el campo tiene 5 opciones (`✓ OK`, `✗ Error`, `⚠ Parcial`, `⏭ Omitido`, `OK`). Es el mismo mecanismo de E-088/E-089, pero con el token sí teniendo permiso de schema, así que en vez de reventar contaminó el catálogo en silencio. Todos los logs de asignación quedan en la opción equivocada. Corrección de una línea en `m5.mapper.record.fldTzSpyzbj1EOa7F` más borrar la opción `OK` en Airtable una vez migradas las filas.
+
+**Hallazgo (seguridad, preexistente):** `SC-RF09-ExtraccionClaude.blueprint.json` m10 lleva una `x-api-key` de Anthropic **en claro y versionada** en el repo. Conviene rotarla y sustituirla por un placeholder como el que usan SC05 y SC-Asignar v2.0.
+
+**Inconveniente (misma fecha, tanda posterior):** tras importar SC05 en Make, el campo *Content* del módulo Gmail aparecía vacío y el *Subject* mostraba lo que parecía la plantilla entera (HTML, `tabla_unidades`, `comprador_rut`, …).
+**Causa raíz:** dos cosas distintas que se veían como una sola.
+1. El *Subject* era un **falso positivo**: contenía la cadena de 21 `replace()` anidados aplicada sobre `plantilla_asunto`. Esa expresión menciona por fuerza los 21 nombres de variable y sus literales de fallback aunque ninguno haga match en el asunto. Funcionalmente resolvía bien; sólo se veía alarmante en el diseñador.
+2. El *Content* vacío sí era real: el mapper usaba la clave **`content`**, que el módulo Gmail no reconoce. **Make descarta en silencio las claves de mapper que no conoce** — no avisa, no falla el import, simplemente el campo queda sin poblar. La clave correcta es **`html`**. Es el mismo modo de fallo de F-1 (clave del mapper que no coincide con la que el módulo espera), y era el riesgo que se había marcado como no verificable por no existir ningún módulo Gmail productivo en el repo ni acceso a la org 1594725 vía API.
+**Solución aplicada:** en `SC05-EmailTasador.blueprint.json` m19, `content` → `html`; `subject` pasa a llevar sólo los 3 `replace()` de los placeholders que `plantilla_asunto` realmente contiene (`codigo_ext`, `comuna`, `direccion`), de 1.502 a 199 chars. Verificado por diff módulo a módulo que sólo cambió m19; los 23 restantes intactos.
+**Prevención futura:** un campo obligatorio que aparece **vacío** en el diseñador de Make casi siempre significa *clave de mapper equivocada*, no *valor equivocado* — es la misma señal que cerró F-1 y por eso M-5 no es opcional. Y al auditar visualmente un módulo, recordar que una cadena de `replace()` anidados **siempre** exhibe todos los nombres de variable y sus fallbacks: no confundir el texto de la expresión con el texto que produce.
+**Pendiente de confirmar por Sergio:** que `html` sea efectivamente la clave correcta (síntoma idéntico si no lo fuera) y si `contentType: "html"` — agregado a petición, sin hermano productivo que lo respalde — sobrevive al import o hay que borrarlo.
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes

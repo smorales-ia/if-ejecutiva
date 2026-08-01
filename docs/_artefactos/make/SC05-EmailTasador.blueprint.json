@@ -1,0 +1,939 @@
+{
+  "name": "SC05 v1.0 - Email de asignacion al tasador",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": null,
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": {
+          "x": 0,
+          "y": 0,
+          "name": "SC05 · Webhook"
+        },
+        "restore": {
+          "parameters": {
+            "hook": {
+              "data": {
+                "editable": "true"
+              },
+              "label": "SC05-EmailTasador-Webhook (CREAR AL IMPORTAR)"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblaHTyMHYfmy7Fg6",
+        "formula": "RECORD_ID() = \"{{1.solicitudId}}\"",
+        "maxRecords": "1",
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 300,
+          "y": 0,
+          "name": "Solicitud · TX_Solicitudes"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbldgLQgjdgsOSZnt",
+        "formula": "AND({clave_notif} = \"{{3.codigo_ext}}::solicitud_asignada::{{ifempty(1.reenvio; 'v1')}}\", {estado_envio} = \"Enviado\")",
+        "maxRecords": "1",
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 600,
+          "y": 0,
+          "name": "Guard idempotencia · TX_Notificaciones"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblEi5jp18c1j00bQ",
+        "formula": "RECORD_ID() = \"{{1.tasadorId}}\"",
+        "maxRecords": "1",
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 900,
+          "y": 0,
+          "name": "Tasador · M_Tasadores"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblpK7AcYBMH93apK",
+        "formula": "RECORD_ID() = \"{{first(3.cliente)}}\"",
+        "maxRecords": "1",
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 1200,
+          "y": 0,
+          "name": "Empresa · M_Clientes"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 6,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblyggAfQfq682XHK",
+        "formula": "RECORD_ID() = \"{{first(3.comuna)}}\"",
+        "maxRecords": "1",
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 1500,
+          "y": 0,
+          "name": "Comuna · M_Comunas"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblW3SSbKo6vRjwBJ",
+        "formula": "ARRAYJOIN({solicitud_record_id}) = \"{{1.solicitudId}}\"",
+        "maxRecords": "20",
+        "useColumnId": false,
+        "sort": [
+          {
+            "field": "orden_prioridad",
+            "direction": "asc"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 1800,
+          "y": 0,
+          "name": "Contactos de visita"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "module": "util:TextAggregator",
+      "version": 1,
+      "parameters": {
+        "feeder": 7,
+        "rowSeparator": "other",
+        "otherRowSeparator": "\n",
+        "stopProcessingAfterEmpty": true
+      },
+      "mapper": {
+        "value": "<tr><td style='border:1px solid #e5e7eb;padding:4px 8px'>{{7.nombre}}</td><td style='border:1px solid #e5e7eb;padding:4px 8px'>{{7.rol}}</td><td style='border:1px solid #e5e7eb;padding:4px 8px'>{{7.telefono}}</td><td style='border:1px solid #e5e7eb;padding:4px 8px'>{{7.email}}</td></tr>"
+      },
+      "metadata": {
+        "designer": {
+          "x": 2100,
+          "y": 0,
+          "name": "Filas contactos"
+        }
+      }
+    },
+    {
+      "id": 9,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbl2QDLvJDyy3Rg2I",
+        "formula": "ARRAYJOIN({solicitud_record_id}) = \"{{1.solicitudId}}\"",
+        "maxRecords": "50",
+        "useColumnId": false,
+        "sort": [
+          {
+            "field": "orden",
+            "direction": "asc"
+          }
+        ]
+      },
+      "metadata": {
+        "designer": {
+          "x": 2400,
+          "y": 0,
+          "name": "Unidades"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 10,
+      "module": "util:TextAggregator",
+      "version": 1,
+      "parameters": {
+        "feeder": 9,
+        "rowSeparator": "other",
+        "otherRowSeparator": "\n",
+        "stopProcessingAfterEmpty": true
+      },
+      "mapper": {
+        "value": "<tr><td style='border:1px solid #e5e7eb;padding:4px 8px'>{{9.numero_unidad}}</td><td style='border:1px solid #e5e7eb;padding:4px 8px'>{{9.subtipo}}</td><td style='border:1px solid #e5e7eb;padding:4px 8px'>{{9.rol_sii}}</td></tr>"
+      },
+      "metadata": {
+        "designer": {
+          "x": 2700,
+          "y": 0,
+          "name": "Filas unidades"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tblur71x1oItbmKZc",
+        "formula": "ARRAYJOIN({solicitud}) = \"{{3.codigo_solicitud}}\"",
+        "maxRecords": "30",
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 3000,
+          "y": 0,
+          "name": "Adjuntos"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 12,
+      "module": "util:TextAggregator",
+      "version": 1,
+      "parameters": {
+        "feeder": 11,
+        "rowSeparator": "other",
+        "otherRowSeparator": "\n",
+        "stopProcessingAfterEmpty": true
+      },
+      "mapper": {
+        "value": "<li><a href='{{11.url_dropbox}}'>{{11.nombre_archivo}}</a></li>"
+      },
+      "metadata": {
+        "designer": {
+          "x": 3300,
+          "y": 0,
+          "name": "Lista adjuntos"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "module": "airtable:ActionSearchRecords",
+      "version": 3,
+      "parameters": {
+        "__IMTCONN__": 8847431
+      },
+      "mapper": {
+        "base": "app9G7lLkIV3CpeLa",
+        "table": "tbluB662ulWDaxqUY",
+        "formula": "AND({evento} = \"solicitud_asignada\", {activa} = TRUE())",
+        "maxRecords": "1",
+        "useColumnId": false
+      },
+      "metadata": {
+        "designer": {
+          "x": 3600,
+          "y": 0,
+          "name": "Plantilla · C_NotificacionesConfig"
+        },
+        "restore": {
+          "parameters": {
+            "__IMTCONN__": {
+              "data": {
+                "scoped": "true",
+                "connection": "airtable2"
+              },
+              "label": "Airtable VProperty"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": {
+          "x": 3750,
+          "y": 0
+        }
+      },
+      "routes": [
+        {
+          "flow": [
+            {
+              "id": 15,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tbldgLQgjdgsOSZnt",
+                "record": {
+                  "fldtXBuomgmFyvW2o": "{{3.codigo_ext}}::solicitud_asignada::{{ifempty(1.reenvio; 'v1')}}",
+                  "fldBjsSHZCSWe6PSK": "solicitud_asignada",
+                  "fldCEWGR5NOqqsEws": "gmail",
+                  "fldRQRj4k0EZoOzwY": "Error",
+                  "fldF7eH3VI1pCdQ7s": "Tasador sin email en M_Tasadores",
+                  "fldpWFhGXn6Ox168T": "1",
+                  "fldxrXzi3GUyF59Cc": "(no enviado)",
+                  "fldaWAVWxQTnLCtya": "{{1.solicitudId}}",
+                  "fldoQu40gnYWj7MP4": "{{13.id}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 3900,
+                  "y": -300,
+                  "name": "Notif · Error sin email"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              },
+              "filter": {
+                "name": "Sin email del tasador",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.email}}",
+                      "o": "notexist"
+                    },
+                    {
+                      "a": "{{2.id}}",
+                      "o": "notexist"
+                    }
+                  ],
+                  [
+                    {
+                      "a": "{{4.email}}",
+                      "o": "text:equal",
+                      "b": ""
+                    },
+                    {
+                      "a": "{{2.id}}",
+                      "o": "notexist"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 16,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblMKmDg2KrO5fMn8",
+                "record": {
+                  "fldZQdDQq8Ks5DkLN": "correo_asignacion_fallido",
+                  "fld0wMJTtEQjo6VX3": "{{now}}",
+                  "fldA4UrctU1pnHh9u": "No se envió el correo de asignación: el tasador {{4.nombre}} no tiene email en M_Tasadores",
+                  "fldP9mj66Qx9y1LOe": "{{1.ejecutivaClerkId}}",
+                  "fldVCWfHcWcfPi0q7": "{{1.solicitudId}}",
+                  "fldpl0xV9vjcXR4yK": "{{1.solicitudId}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 4200,
+                  "y": -300,
+                  "name": "Evento · correo fallido"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 17,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblR4VWpUHw1CSyIS",
+                "record": {
+                  "fldOLYPMstZl1cct6": "SC05 · {{3.codigo_ext}} · sin email",
+                  "fldGRchH2Cc82fO4b": "{{now}}",
+                  "fldPktGeTzNCRQ319": "Email tasador",
+                  "fldTzSpyzbj1EOa7F": "⚠ Parcial",
+                  "fldvgIczpgBQJe2Lx": "webhook",
+                  "fld8wqOuOfUuN1RCo": "(sin email)",
+                  "fldv9dn00kM8kNjDL": "Tasador {{4.nombre}} ({{1.tasadorId}}) sin email en M_Tasadores. La asignación queda firme.",
+                  "fldLHWGlkTZNTESOF": "{{3.codigo_ext}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 4500,
+                  "y": -300,
+                  "name": "Log · Parcial"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 18,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblR4VWpUHw1CSyIS",
+                "record": {
+                  "fldOLYPMstZl1cct6": "SC05 · {{3.codigo_ext}} · omitido",
+                  "fldGRchH2Cc82fO4b": "{{now}}",
+                  "fldPktGeTzNCRQ319": "Email tasador",
+                  "fldTzSpyzbj1EOa7F": "⏭ Omitido",
+                  "fldvgIczpgBQJe2Lx": "webhook",
+                  "fld8wqOuOfUuN1RCo": "{{4.email}}",
+                  "fldv9dn00kM8kNjDL": "Ya existe TX_Notificaciones Enviado con clave_notif {{3.codigo_ext}}::solicitud_asignada::{{ifempty(1.reenvio; 'v1')}}. No se reenvía.",
+                  "fldLHWGlkTZNTESOF": "{{3.codigo_ext}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 3900,
+                  "y": 300,
+                  "name": "Log · Omitido"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              },
+              "filter": {
+                "name": "Ya enviado (idempotencia)",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{2.id}}",
+                      "o": "exist"
+                    }
+                  ]
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 19,
+              "module": "google-email:ActionSendEmail",
+              "version": 2,
+              "parameters": {
+                "__IMTCONN__": null
+              },
+              "mapper": {
+                "from": "",
+                "to": [
+                  "{{4.email}}"
+                ],
+                "cc": [],
+                "bcc": [],
+                "replyTo": "",
+                "subject": "{{replace(replace(replace(13.plantilla_asunto; '[[comuna]]'; ifempty(6.nombre; 'sin comuna')); '[[codigo_ext]]'; ifempty(3.codigo_ext; '-')); '[[direccion]]'; ifempty(3.direccion; 'sin dirección'))}}",
+                "html": "{{replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(13.plantilla_cuerpo; '[[tasador_nombre]]'; 4.nombre); '[[empresa]]'; ifempty(5.nombre; '(sin empresa)')); '[[comuna]]'; ifempty(6.nombre; '(sin comuna)')); '[[codigo_ext]]'; 3.codigo_ext); '[[nro_interno]]'; ifempty(3.nro_interno; '-')); '[[numero_solicitud]]'; ifempty(3.numero_solicitud; '-')); '[[fecha_solicitud]]'; formatDate(3.fecha_solicitud; 'DD-MM-YYYY')); '[[direccion]]'; 3.direccion); '[[proyecto]]'; ifempty(3.proyecto_condominio; '-')); '[[nuevo_usado]]'; ifempty(3.nuevo_usado; '-')); '[[monto_estimado_uf]]'; ifempty(3.monto_estimado_uf; '-')); '[[comprador]]'; ifempty(3.cliente_final_nombre; '-')); '[[comprador_rut]]'; ifempty(3.cliente_final_rut; '-')); '[[vendedor]]'; ifempty(3.vendedor_razon_social_o_nombre; ifempty(3.vendedor_nombre; '-'))); '[[vendedor_rut]]'; ifempty(3.vendedor_rut; '-')); '[[ejec_formalizador]]'; ifempty(3.ejecutivo_formalizador; '-')); '[[ejec_comercializador]]'; ifempty(3.ejecutivo_comercializador; '-')); '[[observaciones]]'; ifempty(3.observaciones_internas; 'Sin observaciones registradas.')); '[[tabla_unidades]]'; ifempty(10.text; '<tr><td colspan=3>Sin unidades registradas.</td></tr>')); '[[tabla_contactos]]'; ifempty(8.text; '<tr><td colspan=4>Sin contactos de visita registrados.</td></tr>')); '[[lista_adjuntos]]'; ifempty(12.text; '<li>Sin documentos adjuntos.</li>'))}}",
+                "contentType": "html",
+                "attachments": [],
+                "copyToSent": true
+              },
+              "metadata": {
+                "designer": {
+                  "x": 3900,
+                  "y": 0,
+                  "name": "Gmail · Send an Email"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "google"
+                      },
+                      "label": "nuevo Gmail  ← RESOLVER AL IMPORTAR (M-5)"
+                    }
+                  }
+                }
+              },
+              "filter": {
+                "name": "Enviar correo",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{4.email}}",
+                      "o": "exist"
+                    },
+                    {
+                      "a": "{{4.email}}",
+                      "o": "text:notequal",
+                      "b": ""
+                    },
+                    {
+                      "a": "{{2.id}}",
+                      "o": "notexist"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "id": 20,
+              "module": "airtable:ActionUpdateRecords",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "id": "{{1.solicitudId}}",
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblaHTyMHYfmy7Fg6",
+                "record": {
+                  "fldhy81fNSE5CF2Tc": "{{19.threadId}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 4200,
+                  "y": 0,
+                  "name": "RN-52 · email_thread_id"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 21,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tbldgLQgjdgsOSZnt",
+                "record": {
+                  "fldtXBuomgmFyvW2o": "{{3.codigo_ext}}::solicitud_asignada::{{ifempty(1.reenvio; 'v1')}}",
+                  "fldBjsSHZCSWe6PSK": "solicitud_asignada",
+                  "fldCEWGR5NOqqsEws": "gmail",
+                  "fldRQRj4k0EZoOzwY": "Enviado",
+                  "fldcP7oQyRjPhEaKm": "{{4.email}}",
+                  "fldPhulAs6GSFtaJS": "{{4.email}}",
+                  "fldxrXzi3GUyF59Cc": "{{replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(13.plantilla_asunto; '[[tasador_nombre]]'; 4.nombre); '[[empresa]]'; ifempty(5.nombre; '(sin empresa)')); '[[comuna]]'; ifempty(6.nombre; '(sin comuna)')); '[[codigo_ext]]'; 3.codigo_ext); '[[nro_interno]]'; ifempty(3.nro_interno; '-')); '[[numero_solicitud]]'; ifempty(3.numero_solicitud; '-')); '[[fecha_solicitud]]'; formatDate(3.fecha_solicitud; 'DD-MM-YYYY')); '[[direccion]]'; 3.direccion); '[[proyecto]]'; ifempty(3.proyecto_condominio; '-')); '[[nuevo_usado]]'; ifempty(3.nuevo_usado; '-')); '[[monto_estimado_uf]]'; ifempty(3.monto_estimado_uf; '-')); '[[comprador]]'; ifempty(3.cliente_final_nombre; '-')); '[[comprador_rut]]'; ifempty(3.cliente_final_rut; '-')); '[[vendedor]]'; ifempty(3.vendedor_razon_social_o_nombre; ifempty(3.vendedor_nombre; '-'))); '[[vendedor_rut]]'; ifempty(3.vendedor_rut; '-')); '[[ejec_formalizador]]'; ifempty(3.ejecutivo_formalizador; '-')); '[[ejec_comercializador]]'; ifempty(3.ejecutivo_comercializador; '-')); '[[observaciones]]'; ifempty(3.observaciones_internas; 'Sin observaciones registradas.')); '[[tabla_unidades]]'; ifempty(10.text; '<tr><td colspan=3>Sin unidades registradas.</td></tr>')); '[[tabla_contactos]]'; ifempty(8.text; '<tr><td colspan=4>Sin contactos de visita registrados.</td></tr>')); '[[lista_adjuntos]]'; ifempty(12.text; '<li>Sin documentos adjuntos.</li>'))}}",
+                  "fldL8glkFAaESrQCf": "{{replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(13.plantilla_cuerpo; '[[tasador_nombre]]'; 4.nombre); '[[empresa]]'; ifempty(5.nombre; '(sin empresa)')); '[[comuna]]'; ifempty(6.nombre; '(sin comuna)')); '[[codigo_ext]]'; 3.codigo_ext); '[[nro_interno]]'; ifempty(3.nro_interno; '-')); '[[numero_solicitud]]'; ifempty(3.numero_solicitud; '-')); '[[fecha_solicitud]]'; formatDate(3.fecha_solicitud; 'DD-MM-YYYY')); '[[direccion]]'; 3.direccion); '[[proyecto]]'; ifempty(3.proyecto_condominio; '-')); '[[nuevo_usado]]'; ifempty(3.nuevo_usado; '-')); '[[monto_estimado_uf]]'; ifempty(3.monto_estimado_uf; '-')); '[[comprador]]'; ifempty(3.cliente_final_nombre; '-')); '[[comprador_rut]]'; ifempty(3.cliente_final_rut; '-')); '[[vendedor]]'; ifempty(3.vendedor_razon_social_o_nombre; ifempty(3.vendedor_nombre; '-'))); '[[vendedor_rut]]'; ifempty(3.vendedor_rut; '-')); '[[ejec_formalizador]]'; ifempty(3.ejecutivo_formalizador; '-')); '[[ejec_comercializador]]'; ifempty(3.ejecutivo_comercializador; '-')); '[[observaciones]]'; ifempty(3.observaciones_internas; 'Sin observaciones registradas.')); '[[tabla_unidades]]'; ifempty(10.text; '<tr><td colspan=3>Sin unidades registradas.</td></tr>')); '[[tabla_contactos]]'; ifempty(8.text; '<tr><td colspan=4>Sin contactos de visita registrados.</td></tr>')); '[[lista_adjuntos]]'; ifempty(12.text; '<li>Sin documentos adjuntos.</li>'))}}",
+                  "fldcJzEwniY5Z7Dhd": "{{now}}",
+                  "fldpWFhGXn6Ox168T": "1",
+                  "fldaWAVWxQTnLCtya": "{{1.solicitudId}}",
+                  "fldoQu40gnYWj7MP4": "{{13.id}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 4500,
+                  "y": 0,
+                  "name": "Notif · Enviado"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 22,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblMKmDg2KrO5fMn8",
+                "record": {
+                  "fldZQdDQq8Ks5DkLN": "correo_asignacion_enviado",
+                  "fld0wMJTtEQjo6VX3": "{{now}}",
+                  "fldA4UrctU1pnHh9u": "Correo de asignación enviado a {{4.nombre}} <{{4.email}}>. Thread {{19.threadId}}",
+                  "fldP9mj66Qx9y1LOe": "{{1.ejecutivaClerkId}}",
+                  "fldVCWfHcWcfPi0q7": "{{1.solicitudId}}",
+                  "fldpl0xV9vjcXR4yK": "{{1.solicitudId}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 4800,
+                  "y": 0,
+                  "name": "Evento · correo enviado"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "id": 23,
+              "module": "airtable:ActionCreateRecord",
+              "version": 3,
+              "parameters": {
+                "__IMTCONN__": 8847431
+              },
+              "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblR4VWpUHw1CSyIS",
+                "record": {
+                  "fldOLYPMstZl1cct6": "SC05 · {{3.codigo_ext}} · enviado",
+                  "fldGRchH2Cc82fO4b": "{{now}}",
+                  "fldPktGeTzNCRQ319": "Email tasador",
+                  "fldTzSpyzbj1EOa7F": "✓ OK",
+                  "fldvgIczpgBQJe2Lx": "webhook",
+                  "fld8wqOuOfUuN1RCo": "{{4.email}}",
+                  "fldv9dn00kM8kNjDL": "Correo de asignación enviado. Thread ID {{19.threadId}}",
+                  "fldLHWGlkTZNTESOF": "{{3.codigo_ext}}"
+                },
+                "typecast": true,
+                "useColumnId": false
+              },
+              "metadata": {
+                "designer": {
+                  "x": 5100,
+                  "y": 0,
+                  "name": "Log · OK"
+                },
+                "restore": {
+                  "parameters": {
+                    "__IMTCONN__": {
+                      "data": {
+                        "scoped": "true",
+                        "connection": "airtable2"
+                      },
+                      "label": "Airtable VProperty"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "flow": [
+            {
+              "id": 24,
+              "module": "gateway:WebhookRespond",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "body": "{\"ok\": true}",
+                "status": "200",
+                "headers": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ]
+              },
+              "metadata": {
+                "designer": {
+                  "x": 3900,
+                  "y": 600,
+                  "name": "Respond 200"
+                },
+                "restore": {
+                  "expect": {
+                    "headers": {
+                      "mode": "chose",
+                      "items": [
+                        null
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 1,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "slots": null,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com",
+    "notes": [],
+    "__documentation__": [
+      "SC05 · Correo de asignacion al tasador (Plan IF-02 v1.9 §9.5).",
+      "",
+      "PLACEHOLDERS A RESOLVER AL IMPORTAR:",
+      "  m1  hook = null            -> Make pide crear el webhook. Anotar la URL (M-2)",
+      "                                y cargarla en MAKE_WEBHOOK_URL_SC05 (M-4).",
+      "  m19 __IMTCONN__ = null     -> elegir la conexion existente 'nuevo Gmail'",
+      "                                (smorales@valueproperty.cl). NO crear una nueva.",
+      "  Los modulos Airtable ya traen la conexion 8847431 (Airtable VProperty).",
+      "",
+      "PLANTILLA: vive en C_NotificacionesConfig rec5t6dBeYQkGsw4F.",
+      "  El delimitador de variables es [[var]] y NO {{var}}: un literal '{{' dentro",
+      "  de una expresion Make rompe el parser. m19 sustituye las 21 variables con",
+      "  replace() anidados sobre {{13.plantilla_asunto}} / {{13.plantilla_cuerpo}}.",
+      "",
+      "IDEMPOTENCIA: m2 busca TX_Notificaciones por clave_notif + estado_envio=Enviado.",
+      "  OJO: en el array de flow m3 va ANTES que m2 (Make ejecuta por orden de array,",
+      "  no por id). Es deliberado: el guard necesita codigo_ext de m3.",
+      "  clave = {codigo_ext}::solicitud_asignada::v1  (o ::reenvio-N), derivada de m3.",
+      "  Las 3 rutas del router son mutuamente excluyentes por construccion.",
+      "",
+      "maxErrors=1 y sin auto-retry: un correo reintentado es un correo duplicado."
+    ]
+  }
+}
