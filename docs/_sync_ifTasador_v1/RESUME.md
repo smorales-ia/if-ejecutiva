@@ -326,11 +326,14 @@ Granularidad fijada: **RF-TAS × documento**, 10 filas × 3 columnas = **30 celd
 (autoridad §6.2 del prompt con desviación C-4). No es RF-TAS × SC — esa habría dado un
 diagnóstico distinto.
 
-| Métrica | Hoy |
-|---|:--:|
-| Cobertura A · identificador `RF-TAS-XX` presente | **47 %** (14/30) |
-| Cobertura B · comportamiento descrito | **67 %** (20/30) |
-| `VALIDATION.md` redactable | **50 %** (4/8 grupos) |
+⚠ **Actualizado por D-H2 (31-jul-2026): el denominador es 27, no 30.** Ver §6 al final de este
+archivo. Las cifras de este bloque son las del 26-jul y se conservan como registro de la medición.
+
+| Métrica | 26-jul (30 celdas) | **Vigente (27 celdas)** |
+|---|:--:|:--:|
+| Cobertura A · identificador `RF-TAS-XX` presente | 47 % (14/30) | **52 %** (14/27) |
+| Cobertura B · comportamiento descrito | 67 % (20/30) | **74 %** (20/27) |
+| `VALIDATION.md` redactable | **50 %** (4/8 grupos) | 50 % · sin cambio |
 
 **Marginales sobre cobertura A de `TRAZABILIDAD.md`:**
 
@@ -370,15 +373,16 @@ Escenarios descartados y por qué:
 
 ## 3. Decisiones pendientes, en orden estricto
 
-### 3.1 · H-2 — **GATE. Sin esto no se toma ninguna otra.**
+### 3.1 · H-2 — ✅ **RESUELTA el 31-jul-2026 · D-H2. Gate abierto.**
 
-Definir si `diseno.md` y `construccion.md` cuentan como "documento operativo" para las RF-TAS
-**puramente de IF-03**, o si esas celdas van `n/a` por ser operativos de **IF-02**.
+Decisión: **`n/a` en la columna operativo para RF-TAS-01, RF-TAS-03 y RF-TAS-08**, cada una con
+razón declarada. **Denominador 27.** RF-TAS-07 queda fuera del `n/a` pese a ser IF-03 puro:
+`diseno.md` ya describe su comportamiento y su hueco es de citación. Ficha completa en
+`03_prealcance_fase4.md` §10.
 
-No hay documento operativo de IF-03 en el repo. **Cambia el denominador de la matriz**: si
-tres filas llevan `n/a`, el 47 % de hoy se recalcula sobre 27 celdas, no 30, y todos los
-porcentajes de §1 se mueven. Alternativa intermedia: aceptar `schema-airtable.md` como
-operativo genérico.
+Enunciado original, conservado: definir si `diseno.md` y `construccion.md` cuentan como
+"documento operativo" para las RF-TAS **puramente de IF-03**, o si esas celdas van `n/a` por
+ser operativos de **IF-02**. No hay documento operativo de IF-03 en el repo.
 
 ### 3.2 · Autorizar lote 6 o no
 
@@ -426,4 +430,52 @@ Bloqueos externos vigentes: **A-09** (crear `TX_CoordinacionVisita`), **A-10** (
 `SC`, con la ampliación `SC03` del Motor detectada en el lote 5), **P-5** (género del dominio
 `tipo_propiedad`). **A-11** abierta, no bloqueante. **CI-001** abierta, fecha condicional.
 
-**Mañana se retoma por 3.1 (H-2).**
+---
+
+# 6. Punto de reanudación · 31-jul-2026 · tras D-H2
+
+**Hecho hoy:** sólo la decisión **3.1 · H-2**. Ningún lote ejecutado, ningún documento del sync
+fuera de `03_prealcance_fase4.md` §10 y este archivo. `TRAZABILIDAD.md` y `VALIDATION.md` siguen
+sin existir.
+
+**Nota de rama:** el sync se documentó sobre `docs/sync-ifTasador-v193`, pero **los cinco commits
+están ya en `main`** (`196c1e1`, `ae5202e`, `a08bd20`, `38f275d`, `2ddaf50` son ancestros de
+`HEAD`). Se trabaja sobre `main`. ⚠ El árbol suele tener cambios sucios de **otro frente**
+(blueprints Make · `aprendizajes.md`): al commitear el sync, **listar rutas explícitas**, nunca
+`git commit -a`.
+
+**Verificación de cobertura A (RO-02), reproducible:**
+
+```
+grep -on "RF-TAS-[0-9][0-9]" docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md \
+  docs/_md/VProperty_Blueprint_Interfaces_v2_10.md docs/diseno.md \
+  docs/construccion.md docs/schema-airtable.md CLAUDE.md
+```
+
+Al 31-jul-2026 devuelve: spec ×10 · Blueprint `{02,07}` · `diseno.md` `{04}` ·
+`schema-airtable.md` `{06}` = **14 celdas**. `construccion.md`, Motor v2.6 y Origen v1.1: cero.
+
+**3.2 · lote 6 — ✅ AUTORIZADO Y EJECUTADO el 31-jul-2026.** Ficha completa en
+`03_prealcance_fase4.md` §11. **5 citas, no 6:** Blueprint × `{01, 03, 06, 10}` y `diseno.md` ×
+`{07}`; `construccion.md` en 0. Cobertura A **52 % → 70 %** (19/27). La categoría *hueco de
+citación* queda en **cero**.
+
+Dos desviaciones registradas, ambas por verificación previa a escribir:
+
+- **RF-TAS-05 reclasificada** de *citación* a *contenido no escrito*. El Blueprint §7.2 (IF-02)
+  no menciona `TX_CoordinacionVisita` ni las pestañas Datos/Historial como lectoras de
+  coordinación: no había párrafo al que anclar. Escribirla es redacción, cae con H-1.
+- **RF-TAS-07 exigió +1 línea** en `diseno.md`: el archivo nombraba el botón pero no describía
+  el bloqueo durante el cálculo. Se completó el bullet con el comportamiento de la ficha §2 del
+  spec. Fuera del alcance estricto de anclaje — **pendiente de revisión humana**, revertible sin
+  tocar la cita.
+
+**Se retoma por 3.3 · H-1**, ahora con más peso: las 8 celdas vacías son **6 de contenido sin
+escribir** —Blueprint × `{04, 05, 08, 09}`, operativo × `{09, 10}`— y **2 bloqueadas por A-09**
+—operativo × `{02, 05}`—. No queda nada barato en el backlog documental: todo lo que restaba de
+anclaje ya está anclado. Después, **3.4 (secuencia de Fase 4)**.
+
+⚠ **Leer también `docs/aprendizajes.md`** al arrancar: las reglas operativas **RO-01**
+(validador de tablas antes de reportar listo), **RO-02** (grep como fuente de verdad de
+cobertura) y **RO-03** (los cambios a reglas se proponen, no se aplican en el mismo lote) viven
+ahí y no en este archivo. Rigen todos los lotes del sync.

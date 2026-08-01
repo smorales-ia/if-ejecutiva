@@ -2488,7 +2488,7 @@ sobre la base v0.dev:
   app/tasaciones/                    P1 · Cola personal del tasador
 
   app/tasaciones/\[id\]/coordinar/   P2 · Coordinación de visita
-                                     (**nueva** · §2.3 del spec)
+                                     (**nueva** · §2.3 · RF-TAS-03)
 
   app/tasaciones/\[id\]/             Detalle de solicitud (§2.4)
 
@@ -2510,9 +2510,9 @@ el estado backend**: la solicitud permanece `asignada` antes, durante y
 después; sólo cambia al presionarse "Calcular Tasación".
 
 **Componentes reutilizados sin regeneración:** TasacionCard, EstadoBadge,
-SLABadge, FileUploadZone (sheet documental) y el visor de adjuntos de
-IF-02/IF-04, que sirve el modal **"Ver expediente"**. Sin librerías
-nuevas.
+SLABadge, FileUploadZone (sheet documental · RF-TAS-06) y el visor de
+adjuntos de IF-02/IF-04, que sirve el modal **"Ver expediente"**
+(RF-TAS-10). Sin librerías nuevas.
 
 **Hook `use-estado-tasador`:** se elimina la coletilla "y el control de 3
 intentos". El polling sobre el estado backend gobierna el bloqueo de
@@ -2534,7 +2534,8 @@ la etiqueta numérica de horas restantes.
   -------------------- ------------------------------------------
   Chips de la cola     \"Hoy\" y \"Por coordinar\" filtran la cola
                        personal (P1). El filtro de estados es
-                       {asignada, visitada, calculada}.
+                       {asignada, visitada, calculada}
+                       (RF-TAS-01).
 
   Badge \"Esperando    Se muestra en la card cuando el tasador
   contacto de          devolvió la coordinación y la solicitud

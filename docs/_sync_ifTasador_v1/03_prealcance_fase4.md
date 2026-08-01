@@ -302,8 +302,162 @@ cola del tasador) aparezca en un operativo puede no tener destino natural: no ha
 operativo de IF-03 en el repo. O se acepta `schema-airtable.md` como operativo genérico, o la
 columna debería declararse `n/a` para las RF-TAS puramente de IF-03. **Afecta el denominador
 de la matriz** y conviene resolverlo antes de construirla.
+✅ **RESUELTA el 31-jul-2026 · decisión D-H2 · ver §10.** Los números de §§1–8 de este
+documento son la medición del 26-jul sobre 30 celdas y **se conservan intactos** como registro;
+§10 los recalcula sobre el denominador vigente de 27.
 
 **H-3 · El falso positivo de `RF-TAS-08`** en `schema-airtable.md` muestra que la cobertura B
 medida por grep de literales es frágil. Si Fase 4 automatiza la verificación de cobertura B,
 necesita marcadores explícitos, no coincidencia de frases. Es un argumento adicional a favor
 del lote 6: la cobertura A sí es automatizable sin ambigüedad.
+
+---
+
+## 10. D-H2 · resolución de H-2 (31-jul-2026)
+
+**Decisión.** La columna *documento operativo* se declara **`n/a` para las RF-TAS puramente de
+IF-03 sin destino operativo natural**. La matriz de `TRAZABILIDAD.md` pasa de 30 a **27 celdas**.
+
+### 10.1 Alcance exacto del `n/a` — tres filas, no cuatro
+
+Clasificación por ámbito, leída de las fichas §2 del spec v1.9.4:
+
+| RF-TAS | Ámbito | Columna operativo |
+|---|---|---|
+| RF-TAS-01 | IF-03 puro · chips de la cola del tasador | **`n/a`** |
+| RF-TAS-03 | IF-03 puro · ruta `app/tasaciones/[id]/coordinar/` | **`n/a`** |
+| RF-TAS-08 | IF-03 puro · precarga de factores en Pantalla 5 | **`n/a`** |
+| RF-TAS-07 | IF-03 puro **pero ya descrito** en `diseno.md` | se mantiene · hueco de **citación** |
+| RF-TAS-02 | transversal · semáforo RN-04 compartido con IF-02 | se mantiene · bloqueada **A-09** |
+| RF-TAS-04 | mixto · lo dispara la ejecutiva vía excepción RN-59 | se mantiene · cubierta |
+| RF-TAS-05 | **IF-02 explícito** | se mantiene · bloqueada **A-09** |
+| RF-TAS-06 | mixto · reutiliza el sheet documental de la ejecutiva | se mantiene · cubierta |
+| RF-TAS-09 | mixto · la observación se lee en IF-04 | se mantiene · contenido no escrito |
+| RF-TAS-10 | transversal · reutiliza el visor de IF-02 y IF-04 | se mantiene · contenido no escrito |
+
+**RF-TAS-07 queda fuera del `n/a`** aunque sea IF-03 puro: `diseno.md` ya describe el bloqueo de
+"Calcular Tasación" y el hook de polling. Declararlo `n/a` borraría cobertura real y convertiría
+un hueco de una línea en una celda inexistente.
+
+**Cada `n/a` se escribe con razón declarada** —`n/a · no existe documento operativo de IF-03 en
+el repo · reevaluar al abrirse ese repo`— y no como celda muda. La ausencia de un operativo de
+IF-03 es un hallazgo que la matriz debe seguir mostrando, no ocultar tras un guion.
+
+### 10.2 Recálculo sobre 27 celdas
+
+Denominador = spec 10 + Blueprint 10 + operativo 7 (`{02,04,05,06,07,09,10}`).
+El numerador **no cambia**: las tres celdas retiradas estaban vacías. Verificado por grep
+(RO-02): `spec ×10 · Blueprint {02,07} · diseno.md {04} · schema-airtable.md {06}` = 14.
+
+| Métrica | 30 celdas (26-jul) | **27 celdas (D-H2)** |
+|---|:--:|:--:|
+| Cobertura A · identificador | 47 % | **52 %** |
+| Cobertura B · contenido | 67 % | **74 %** |
+| Tras lote 6 | 67 % | **74 %** |
+| Tras lote 6 + A-09 | 77 % | **81 %** |
+| `VALIDATION.md` redactable | 50 % | 50 % · sin cambio |
+
+Descomposición de las 13 celdas vacías:
+
+| Causa | Celdas | % de 27 |
+|---|:--:|:--:|
+| Hueco de citación | **6** | 22 % |
+| Contenido no escrito | **5** | 19 % |
+| Bloqueada por A-09 | **2** | 7 % |
+
+Citación: Blueprint × `{01,03,05,06,10}` + operativo × `{07}`.
+Contenido no escrito: Blueprint × `{04,08,09}` + operativo × `{09,10}`.
+A-09: operativo × `{02,05}`.
+
+### 10.3 Consecuencias sobre las decisiones que siguen
+
+- **A-09 pierde peso.** Su marginal cae de **+10 pp a +7 pp** (52 → 59 %), porque operativo ×
+  RF-TAS-03 sale del denominador. Refuerza §5: no esperar bloqueos externos para arrancar Fase 4.
+- **A-10 y P-5 siguen en 0 pp.** El `n/a` no toca sus ejes.
+- **El lote 6 no cambia de alcance.** Sus 6 celdas de citación sobreviven íntegras al `n/a`;
+  ninguna de las tres retiradas era de citación. Sigue valiendo +22 pp, ahora 52 → 74 %.
+- **H-1 se abarata.** Con RF-TAS-08 en `n/a` operativo, escribir su contenido pasa de costar
+  2 celdas a 1 (sólo Blueprint). RF-TAS-09 sigue costando 2.
+
+### 10.4 Lo que esta decisión no hace (continúa en §11)
+
+No retira las tres RF-TAS de la matriz: sus celdas de **spec** y **Blueprint** siguen contando y
+las tres tienen hueco vivo en Blueprint (`{01,03}` de citación, `{08}` de contenido). El `n/a`
+es de columna, no de fila.
+
+---
+
+## 11. Lote 6 · citación de identificadores — EJECUTADO 31-jul-2026
+
+Autorizado el 31-jul-2026 (decisión 3.2). **5 citas aplicadas, no 6.** La estimación de §6.1
+asumía que las 6 celdas tenían contenido al que anclar; la verificación previa a escribir
+—exigida por RO-02— mostró que dos de ellas no lo tenían.
+
+### 11.1 Citas aplicadas
+
+| Documento | RF-TAS | Ancla | Naturaleza |
+|---|---|---|---|
+| Blueprint v2.10 | **RF-TAS-01** | fila *Chips de la cola* de la tabla de vocabulario UI | anclaje limpio |
+| Blueprint v2.10 | **RF-TAS-03** | tabla de rutas · `app/tasaciones/[id]/coordinar/` | anclaje limpio |
+| Blueprint v2.10 | **RF-TAS-06** | prosa de componentes reutilizados · `FileUploadZone` | **anclaje parcial** |
+| Blueprint v2.10 | **RF-TAS-10** | prosa de componentes reutilizados · modal "Ver expediente" | anclaje limpio |
+| `diseno.md` | **RF-TAS-07** | bullet de vocabulario del diagrama · "Calcular Tasación" | **+1 línea escrita** |
+| `construccion.md` | — | — | **0 citas**, como fijó D-H2 |
+
+Regla aplicada: **inline al primer uso**, la de §6.2. En la tabla de vocabulario UI se replicó
+el patrón exacto que ya usaba RF-TAS-02 —identificador en línea propia al cierre de la celda—
+para no alterar anchos de columna.
+
+### 11.2 Desviación 1 · RF-TAS-05 no era hueco de citación
+
+**El Blueprint no describe en ninguna parte que IF-02 lea la coordinación.** §7.2 (IF-02,
+líneas 2095–2266) no menciona `TX_CoordinacionVisita`, ni las pestañas Datos/Historial como
+lectoras de coordinación. Lo único que existe está en §7.3, escrito desde la perspectiva de
+IF-03. Anclar ahí `RF-TAS-05` habría producido una cita decorativa: el identificador señalando
+un párrafo que no describe su requisito.
+
+**Reclasificada: Blueprint × RF-TAS-05 pasa de _hueco de citación_ a _contenido no escrito_.**
+Escribirla es redacción en §7.2 y cae bajo el mismo criterio que H-1, no bajo el lote 6.
+Es el segundo caso del patrón que H-3 describe: cobertura B medida por proximidad temática
+sobreestima la cobertura real.
+
+### 11.3 Desviación 2 · RF-TAS-07 exigió una línea de redacción
+
+`diseno.md` nombraba el botón "Calcular Tasación" pero **no describía el bloqueo durante el
+cálculo**, que es el requisito de RF-TAS-07. La cita se aplicó junto con una frase que completa
+el bullet existente con el comportamiento de la ficha §2 del spec —bloqueo mientras el estado
+sea `visitada` o `calculada`, tooltip "Cálculo en curso", polling sobre estado backend—.
+
+**Se declara como desviación**: §6.5 acota el lote 6 a anclaje. La alternativa era una cita
+decorativa sobre el nombre del botón. **Una línea, revertible sin tocar la cita**; queda
+señalada para revisión humana.
+
+### 11.4 Cobertura resultante
+
+Verificado por grep (RO-02), no por recuento:
+
+```
+spec ×10 · Blueprint {01,02,03,06,07,10} · diseno.md {04,07} · schema-airtable.md {06}
+```
+
+| Métrica | Antes del lote 6 | **Después** |
+|---|:--:|:--:|
+| Cobertura A | 52 % (14/27) | **70 %** (19/27) |
+| Celdas de citación pendientes | 6 | **0** |
+| Celdas de contenido no escrito | 5 | **6** |
+| Celdas bloqueadas por A-09 | 2 | 2 |
+
+**+18 pp**, no los +22 pp proyectados: la diferencia es RF-TAS-05, que se movió de categoría en
+vez de cerrarse.
+
+**La categoría "hueco de citación" queda en cero.** Todo lo que quedaba por anclar está anclado;
+las 8 celdas vacías restantes son 6 de contenido sin escribir y 2 bloqueadas por A-09.
+
+Contenido no escrito, desglosado: Blueprint × `{04, 05, 08, 09}` · operativo × `{09, 10}`.
+A-09: operativo × `{02, 05}`.
+
+### 11.5 Efecto sobre `VALIDATION.md`
+
+El grupo **Trazabilidad RF-TAS** deja de depender del lote 6 y pasa a depender sólo de A-09 y
+de la redacción pendiente. Los grupos redactables siguen siendo 4 de 8: el lote 6 no mueve esa
+cifra porque ninguno de los cuatro bloqueados lo estaba por citación.

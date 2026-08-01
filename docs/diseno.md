@@ -76,7 +76,7 @@ cancelada          (estado terminal · cualquier etapa)
 
 **Vocabulario del diagrama (sincronizado con §2.11 del spec v1.9.3).** Dos cambios respecto de la versión anterior:
 
-- La acción de IF-03 se llama **"Calcular Tasación"**, no "Enviar visita". Es el botón único que dispara `asignada → visitada`.
+- La acción de IF-03 se llama **"Calcular Tasación"**, no "Enviar visita". Es el botón único que dispara `asignada → visitada`. Queda bloqueado mientras el estado backend sea `visitada` o `calculada`, con tooltip "Cálculo en curso" (RF-TAS-07); la comprobación es por polling sobre el estado backend, no por contador de intentos.
 - El estado **`devuelta` queda DEPRECATED**. Se conserva en el enum de `TX_Solicitudes` por compatibilidad con solicitudes históricas, pero no admite transiciones nuevas: "IF-04 Devolver" lleva **directamente `pdf_listo → asignada`**, sin estado intermedio. Por eso la rama derecha del diagrama apunta ahora a `asignada`. El estado `capturada` no existe en esta máquina; su rol lo cumple `visitada`.
 
 ---
