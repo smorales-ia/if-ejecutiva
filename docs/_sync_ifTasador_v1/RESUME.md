@@ -430,6 +430,7 @@ Bloqueos externos vigentes: **A-09** (crear `TX_CoordinacionVisita`), **A-10** (
 `SC`, con la ampliación `SC03` del Motor detectada en el lote 5), **P-5** (género del dominio
 `tipo_propiedad`). **A-11** abierta, no bloqueante. **CI-001** abierta, fecha condicional.
 
+<<<<<<< Updated upstream
 ---
 
 # 6. Punto de reanudación · 31-jul-2026 · tras D-H2
@@ -445,6 +446,145 @@ están ya en `main`** (`196c1e1`, `ae5202e`, `a08bd20`, `38f275d`, `2ddaf50` son
 `git commit -a`.
 
 **Verificación de cobertura A (RO-02), reproducible:**
+=======
+**Mañana se retoma por 3.1 (H-2).**
+
+---
+
+# 6. Punto de reanudación · 31-jul-2026
+
+> ⚠ **Leer entero antes de tocar nada.** La sesión del 31-jul ejecutó trabajo que **ya no está
+> en el árbol**. Lo que sigue distingue qué se decidió (vale) de qué se escribió y se perdió
+> (hay que rehacerlo).
+
+## 6.1 Lo que se decidió — vigente
+
+**H-2 · resuelta (D-H2).** La columna *documento operativo* va **`n/a` para RF-TAS-01,
+RF-TAS-03 y RF-TAS-08**, cada una con razón declarada (`n/a · no existe documento operativo de
+IF-03 en el repo · reevaluar al abrirse ese repo`). **Denominador de la matriz: 27, no 30.**
+
+RF-TAS-07 **queda fuera** del `n/a` pese a ser IF-03 puro: `diseno.md` ya nombra "Calcular
+Tasación". Las filas transversales o de otra interfaz —02, 04, 05, 06, 09, 10— se mantienen.
+
+Recálculo sobre 27 celdas: cobertura A **52 %** (14/27) · cobertura B **74 %** (20/27) ·
+`VALIDATION.md` sin cambio en 50 %. **A-09 pierde peso**: su marginal cae de +10 pp a **+7 pp**,
+porque operativo × RF-TAS-03 sale del denominador. A-10 y P-5 siguen en 0 pp.
+
+**3.2 · lote 6 autorizado.**
+
+## 6.2 Lo que se escribió y se perdió — hay que rehacerlo
+
+⚠ **La ficha D-H2 (§10 del pre-alcance), la ficha del lote 6 (§11) y las 5 citas del lote 6 se
+escribieron el 31-jul y desaparecieron del árbol al final de la sesión.** No estaban commiteadas
+y no son recuperables por git. Verificado por grep al cierre: el Blueprint sólo tiene RF-TAS-02
+y RF-TAS-07, `diseno.md` sólo RF-TAS-04, `schema-airtable.md` sólo RF-TAS-06 — **las 14 celdas
+de siempre.** La cobertura real hoy es **52 %** (14/27), no 70 %.
+
+`03_prealcance_fase4.md` está en su estado del 26-jul: sin §10, sin §11, y H-2 sin marcar como
+resuelta en §9. **La decisión D-H2 de §6.1 de este archivo es el único registro que queda de
+ella.**
+
+### Las 5 citas a rehacer — anclas exactas, es mecánico
+
+| Documento | RF-TAS | Ancla | Texto |
+|---|---|---|---|
+| Blueprint v2.10 | **01** | tabla vocabulario UI, fila *Chips de la cola* | línea propia `(RF-TAS-01).` tras `{asignada, visitada, calculada}` (sin punto) |
+| Blueprint v2.10 | **03** | tabla de rutas, `app/tasaciones/[id]/coordinar/` | `(**nueva** · §2.3 del spec)` → `(**nueva** · §2.3 · RF-TAS-03)` |
+| Blueprint v2.10 | **06** | prosa *Componentes reutilizados* | `FileUploadZone (sheet documental)` → `(sheet documental · RF-TAS-06)` |
+| Blueprint v2.10 | **10** | misma prosa | `modal **"Ver expediente"**` → `… **"Ver expediente"** (RF-TAS-10)` |
+| `diseno.md` | **07** | bullet de vocabulario del diagrama (~L88) | ver 6.3 · **no es anclaje puro** |
+
+`construccion.md` queda en **0 citas** (lo fija D-H2). Regla: **inline al primer uso**. En las
+tablas pandoc, replicar el patrón de RF-TAS-02 —identificador en línea propia al cierre de la
+celda— para no alterar anchos; validar separadores antes de reportar (RO-01).
+
+Rendimiento esperado al rehacerlo: **52 % → 70 %** (19/27), +18 pp. La categoría *hueco de
+citación* queda en cero.
+
+### Dos desviaciones halladas al ejecutar — el hallazgo sí sobrevive
+
+- **RF-TAS-05 no es hueco de citación.** El Blueprint §7.2 (IF-02, ~L2095–2266) **no menciona
+  `TX_CoordinacionVisita`** ni las pestañas Datos/Historial como lectoras de coordinación. No
+  hay párrafo al que anclar; la cita habría sido decorativa. **Reclasificada a _contenido no
+  escrito_**, cae con H-1. Por eso el lote 6 rinde 5 citas y +18 pp, no 6 y +22 pp.
+- **RF-TAS-07 exige redacción, no anclaje.** `diseno.md` nombra el botón pero **no describe el
+  bloqueo durante el cálculo**, que es el requisito. Ver 6.3.
+
+Ambos son el patrón de **H-3**: la cobertura B medida por proximidad temática sobreestimaba la
+real. Con esto, la clasificación de causas queda: **citación 5 · contenido no escrito 6 ·
+A-09 2** (antes se creía 6 · 5 · 2).
+
+## 6.3 Los tres pendientes que arrastramos
+
+**(a) Conflicto `UU` sin merge en curso — bloquea cualquier commit.**
+
+```
+UU docs/_artefactos/make/SC-Asignar.blueprint.json   (16 marcadores de conflicto)
+UU docs/aprendizajes.md                              (2 marcadores)
+A  docs/_artefactos/make/SC05-EmailTasador.blueprint.json
+```
+
+Apareció durante la sesión del 31-jul; al arrancar los dos primeros estaban como ` M` limpios.
+Son del frente **SC05 / SC-Asignar**, no del sync. Con entradas `UU` presentes `git commit` se
+niega en bloque. `SC-Asignar.blueprint.json` es **fuente de verdad de Make**: resolverlo a ojo
+es riesgoso, contrastar contra el escenario importado. **Mientras esto no se resuelva, el sync
+no puede commitear nada.**
+
+⚠ `docs/aprendizajes.md` tiene marcadores de conflicto: **no se le agregó la entrada de sesión
+del 31-jul**. Queda pendiente, con material: el `n/a` de columna vs. de fila; que
+`schema-airtable.md` ya contaba como operativo —lo que vaciaba de contenido a una de las
+opciones de H-2—; y el patrón de la cita decorativa.
+
+**(b) La línea extra en `diseno.md` para RF-TAS-07 — decisión pendiente.**
+
+Al rehacer el lote 6, la cita de RF-TAS-07 **no puede ser anclaje puro**: el archivo nombra el
+botón pero no describe el bloqueo. Las dos salidas son:
+
+1. Escribir la frase que completa el bullet con el comportamiento de la ficha §2 del spec
+   —bloqueo mientras el estado sea `visitada` o `calculada`, tooltip "Cálculo en curso", polling
+   sobre estado backend, sin contador de intentos— y citar ahí. **Es lo que se hizo el 31-jul**,
+   y es redacción: §6.5 del pre-alcance acota el lote 6 a anclaje.
+2. Anclar sobre el nombre del botón y aceptar una cita decorativa — lo que H-3 advierte.
+
+**Sin decidir.** Si se elige (1), declararlo como desviación explícita del alcance del lote 6.
+
+**(c) `CLAUDE.md` revertido a estado viejo.**
+
+Está **idéntico al commit**: la limpieza del 30-jul —que retiró las referencias a
+`PLAN_IMPLEMENTACION_IF02_v1_2.md`, `CHECKLIST_PRE_EJECUCION.md`, `ROADMAP_PRE_EJECUCION.md`,
+`NOTAS_DIVERGENCIA_v1_2.md` y `schema-2026-07-04.json`, y actualizó los punteros canónicos—
+**nunca se commiteó y se perdió**. Hoy `CLAUDE.md` cita spec **v1.8.2**, Blueprint **v2.7**,
+Capa de Datos **v2.6.2**, Motor **v2.5** y seis archivos que no existen en `docs/`.
+
+Afecta al sync: `CLAUDE.md` es uno de los documentos admitidos en la columna *operativo*, y su
+cabecera apunta a versiones superadas por los lotes 0 y 2. **Propuesto, no aplicado (RO-03).**
+
+## 6.4 Qué sigue
+
+**3.3 · H-1** — `RF-TAS-08` y `RF-TAS-09` existen sólo en el spec; ahora también **RF-TAS-05**
+por la reclasificación de 6.2. ¿Lote 7 de redacción, o se difieren? Decide precedente para los
+huecos de contenido.
+
+Con el lote 6 rehecho, las 8 celdas vacías serían **6 de contenido sin escribir** —Blueprint ×
+`{04, 05, 08, 09}`, operativo × `{09, 10}`— y **2 bloqueadas por A-09** —operativo × `{02, 05}`—.
+**No queda nada barato en el backlog documental.**
+
+Después, **3.4 · secuencia de Fase 4**.
+
+## 6.5 Higiene para la próxima sesión
+
+- **Rama:** los cinco commits del sync (`196c1e1`, `ae5202e`, `a08bd20`, `38f275d`, `2ddaf50`)
+  **ya están en `main`**; `docs/sync-ifTasador-v193` sigue existiendo pero `main` los contiene.
+  Se trabaja sobre `main`.
+- **Al commitear, listar rutas explícitas** — nunca `git add -A` ni `git commit -a`: el árbol
+  suele tener cambios del frente Make.
+- **Commitear cada lote apenas cierra.** Lo del 31-jul se perdió por no estar commiteado.
+- **Leer `docs/aprendizajes.md`** al arrancar: **RO-01** (validador de tablas antes de reportar
+  listo), **RO-02** (grep como fuente de verdad de cobertura, no el recuento del ejecutor) y
+  **RO-03** (los cambios a reglas se proponen, no se aplican en el mismo lote) viven ahí, no en
+  este archivo, y rigen todos los lotes.
+- **Verificación de cobertura A, reproducible:**
+>>>>>>> Stashed changes
 
 ```
 grep -on "RF-TAS-[0-9][0-9]" docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md \
@@ -452,6 +592,7 @@ grep -on "RF-TAS-[0-9][0-9]" docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.m
   docs/construccion.md docs/schema-airtable.md CLAUDE.md
 ```
 
+<<<<<<< Updated upstream
 Al 31-jul-2026 devuelve: spec ×10 · Blueprint `{02,07}` · `diseno.md` `{04}` ·
 `schema-airtable.md` `{06}` = **14 celdas**. `construccion.md`, Motor v2.6 y Origen v1.1: cero.
 
@@ -479,3 +620,8 @@ anclaje ya está anclado. Después, **3.4 (secuencia de Fase 4)**.
 (validador de tablas antes de reportar listo), **RO-02** (grep como fuente de verdad de
 cobertura) y **RO-03** (los cambios a reglas se proponen, no se aplican en el mismo lote) viven
 ahí y no en este archivo. Rigen todos los lotes del sync.
+=======
+  Al cierre del 31-jul devuelve **14 celdas**: spec ×10 · Blueprint `{02,07}` · `diseno.md`
+  `{04}` · `schema-airtable.md` `{06}`. Si devuelve 19 con `{01,03,06,10}` en el Blueprint, el
+  lote 6 ya se rehizo.
+>>>>>>> Stashed changes
