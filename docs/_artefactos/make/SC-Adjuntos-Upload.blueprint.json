@@ -1,5 +1,5 @@
 {
-    "name": "SC-Adjuntos-Upload",
+    "name": "SC-Adjuntos-Upload v1.1 - Subida de adjuntos",
     "flow": [
         {
             "id": 1,
@@ -775,6 +775,17 @@
                             "version": 5,
                             "parameters": {
                                 "__IMTCONN__": 7553318
+                            },
+                            "filter": {
+                                "name": "No existe (hash + solicitud nuevos)",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{2.id}}",
+                                            "o": "notexist"
+                                        }
+                                    ]
+                                ]
                             },
                             "mapper": {
                                 "data": "{{toBinary(1.contenido_base64; \"base64\")}}",

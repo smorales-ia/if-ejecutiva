@@ -1,6 +1,7 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.4** — sucede a `VProperty_Especificacion_Proyecto_v1_9_3.md`, que queda marcado SUPERSEDED.
+> **v1.9.5** — sucede a `VProperty_Especificacion_Proyecto_v1_9_4.md`, que queda marcado SUPERSEDED.
+> El nombre del archivo se conserva (`…_v1_9_4.md`) por estabilidad de las rutas que lo citan; la versión normativa es la del cuerpo.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
 > Identificadores históricos (RF · RNF · RN · RT · RR · SP · D · SC · AT · IF) **no se renumeran**.
 
@@ -23,7 +24,15 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.4 · Julio 2026 · Aplica las cinco correcciones
+  **Versión**         1.9.5 · 02-ago-2026 · Precisión sobre invariante
+                      único-por-tipo en checklist de documentos,
+                      idempotencia real por hash+solicitud en
+                      TX_Adjuntos, y flujo de reemplazo backend-driven
+                      con confirmación UI. Toca §1.5.1.1, RF-51 y §8.4
+                      (nuevos puntos f y g), y acota el soft-delete de
+                      §8.4 (d) para los dos únicos flujos de borrado
+                      duro del checklist. Sucede a 1.9.4, que queda
+                      SUPERSEDED y que aplicó las cinco correcciones
                       internas que v1.9.3 dejó pendientes sobre sí mismo
                       (§2.14): excepción acotada a RN-59 en §1.4, §1.9.1 y
                       §13; documentación del campo tipo_propiedad de
@@ -1093,13 +1102,61 @@ registra en TX_Adjuntos. Está disponible en cualquier momento después de
 crear la solicitud y en cualquier orden respecto de la asignación del
 tasador.
 
+La lista se construye leyendo D_TipoDocumento (§4.2.1) filtrado por el
+`tipo_propiedad` de la solicitud —de modo que la Ejecutiva sólo ve los
+tipos aplicables al inmueble que está gestionando— y se presenta
+**ordenada alfabéticamente** por nombre del tipo de documento. El orden
+es alfabético y no por momento de llegada ni por criticidad: es el único
+criterio estable cuando el catálogo crece, y evita que la posición de una
+fila cambie al agregarse tipos nuevos.
+
 Cada fila expone el tipo de documento, la entidad emisora y la vigencia
 por defecto. La lógica de marcado se conserva sin cambios: la solicitud
 puede crearse sin adjuntar documentos; sólo cuando el usuario marca
 explícitamente un documento del checklist, el sistema exige el archivo
-correspondiente. Si el usuario desmarca un documento que ya tenía
-archivo, se abre un AlertDialog de confirmación antes de descartar el
-vínculo.
+correspondiente.
+
+**Invariante de único archivo por tipo (v1.9.5).** Para cada par
+(solicitud, tipo_documento) existe a lo sumo **un** adjunto en
+TX_Adjuntos. El checklist no es un repositorio acumulativo: cada fila
+representa un documento, no una carpeta de versiones. La consecuencia es
+que subir un archivo a un tipo que ya lo tiene no agrega, sino que
+sustituye.
+
+De ese invariante se derivan tres comportamientos de subida, y sólo tres:
+
+1. **Tipo sin archivo previo → alta normal.** El binario va a Dropbox y
+   se indexa una fila nueva en TX_Adjuntos.
+2. **Tipo con archivo previo, mismo binario (mismo `hash_md5`) →
+   reutilización.** El sistema reconoce el hash contra el par
+   (hash_md5, solicitud) y no crea fila ni sube archivo: devuelve el
+   adjunto existente. Es la garantía de idempotencia: reintentar una
+   subida tras un timeout de red nunca duplica. No requiere confirmación
+   del usuario porque el estado final es idéntico al inicial.
+3. **Tipo con archivo previo, binario distinto (`hash_md5` distinto) →
+   reemplazo.** El adjunto anterior se elimina —binario en Dropbox y
+   fila en TX_Adjuntos— y el nuevo ocupa su lugar. Por ser destructivo e
+   irreversible, exige **confirmación explícita** del usuario mediante
+   AlertDialog previo a la subida, que nombra el archivo que se va a
+   perder.
+
+La detección del caso —alta, reutilización o reemplazo— es
+responsabilidad del **backend**, no del cliente. La interfaz no compara
+hashes ni consulta si existe un adjunto previo para decidir qué llamada
+hacer: envía siempre la misma petición de subida, y el escenario de
+integración resuelve cuál de los tres caminos corresponde (§8.4 f y g).
+El cliente es responsable únicamente de la UX de confirmación. Esto
+mantiene el principio rector de la consola: la UI muestra y captura,
+nunca decide.
+
+**Desmarcar es distinto de reemplazar.** Si el usuario desmarca un
+documento que ya tenía archivo, se abre un AlertDialog de confirmación
+—distinto del anterior— y, al confirmar, el adjunto se elimina sin
+sustituto: el tipo vuelve a quedar vacío en el checklist. El diálogo de
+reemplazo advierte que un archivo cede su lugar a otro; el de desmarcado
+advierte que un archivo desaparece y nada ocupa su lugar. Son dos flujos
+con dos confirmaciones y dos consecuencias, y no deben presentarse con el
+mismo texto.
 
 Lo que cambia es la consecuencia del marcado. Hasta v1.8.2, un documento
 marcado sin archivo deshabilitaba el botón Crear solicitud. Desde v1.9
@@ -3564,14 +3621,23 @@ mismo binario, el sistema reconoce el hash y linkea a la fila existente.
                     Carbone) se persiste como binario en Dropbox según la
                     estructura §8.1 y se indexa en TX_Adjuntos con los
                     campos §8.2. Los binarios nunca residen en Airtable;
-                    los índices nunca residen fuera de Airtable.
+                    los índices nunca residen fuera de Airtable. El
+                    escenario de subida es idempotente por (hash_md5,
+                    solicitud) y garantiza el invariante de único adjunto
+                    por (solicitud, tipo_documento) mediante reemplazo
+                    backend-driven (§1.5.1.1, §8.4 f y g).
 
   **Criterio de     Auditoría de schema: cero binarios en tablas Airtable
   aceptación**      (todas las URLs apuntan a Dropbox). Auditoría de path:
                     cero archivos en Dropbox fuera de la estructura
                     /VProperty/{cliente}/{año}/{codigo}/\... Test: subir un
                     PDF desde IF-02 crea una fila en TX_Adjuntos con
-                    dropbox_url resolvible y dropbox_path conforme.
+                    dropbox_url resolvible y dropbox_path conforme. Subir
+                    dos veces el mismo archivo al mismo tipo no crea filas
+                    duplicadas. Subir un archivo con hash distinto para un
+                    tipo que ya tiene adjunto reemplaza el anterior (borra
+                    Dropbox + TX_Adjuntos) tras confirmación explícita del
+                    usuario.
   -------------------------------------------------------------------------
 
 ## **8.4 Requisitos técnicos**
@@ -3583,7 +3649,31 @@ con backoff exponencial ante fallos de red (5 intentos,
 IndexedDB para fotos que se suben al recuperar señal. (d) Soft-delete:
 TX_Adjuntos.activo=FALSE nunca elimina el archivo de Dropbox; el binario
 se conserva por auditoría. (e) URLs firmadas con expiración de 4 horas
-para los previews embebidos; renovación transparente vía API Route.
+para los previews embebidos; renovación transparente vía API Route. (f)
+Idempotencia por hash+solicitud implementada en SC-Adjuntos-Upload
+(Router con filtros exist/notexist en ambas rutas). (g) Reemplazo
+backend-driven: el mismo escenario detecta adjunto previo del mismo tipo
+con distinto hash y ejecuta borrado del previo (Dropbox + Airtable) antes
+de subir el nuevo. El cliente sólo responsable de la UX de confirmación.
+
+Sobre el filtro de ambas rutas en (f). En Make, una ruta de Router sin
+filtro **no** es la rama "si no" de las anteriores: se ejecuta siempre y
+en paralelo a ellas. Dejar sin filtro la ruta de alta hace que un
+duplicado detectado responda "reutilizado" y, aun así, suba el archivo y
+cree la fila. Por eso el requisito exige el par complementario
+exist/notexist explícito en las dos rutas, y no sólo en la de detección.
+
+Alcance del soft-delete de (d) frente a (f) y (g). El soft-delete sigue
+siendo la regla general del sistema: `activo=FALSE` conserva el binario
+por auditoría. Los dos flujos del checklist descritos en §1.5.1.1
+—reemplazo por hash distinto y desmarcado explícito— son la **excepción
+acotada**: ejecutan borrado duro de la fila y del binario. El motivo es
+que el invariante de único archivo por tipo sería indistinguible de su
+violación si las versiones sustituidas siguieran presentes con
+`activo=FALSE`, y porque en ambos casos media una confirmación explícita
+del usuario sobre un documento que él mismo cargó y decide descartar. La
+excepción no se extiende a ninguna otra interfaz ni a los documentos
+generados por el sistema (SC09), que conservan el soft-delete íntegro.
 
 Reglas de negocio implicadas: RT-06 (persistencia exclusiva en Dropbox),
 RN-26 (hash SHA-256 para PDFs Carbone, aplicable también a documentos
