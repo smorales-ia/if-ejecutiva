@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { uploadConReintentos } from "@/lib/adjuntos-uploader"
 import { cn } from "@/lib/utils"
 
 const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"]
@@ -22,18 +23,27 @@ export type UploadStatus = "uploading" | "success" | "error"
 
 export interface UploadItem {
   id: string
+  file: File
   name: string
   size: number
   status: UploadStatus
   progress: number
   errorMsg?: string
   esImagen: boolean
+  /** Permite cancelar la subida en vuelo desde el botón X. */
+  abort?: AbortController
 }
 
 export interface ArchivoSubido {
   id: string
   nombre: string
   detalle: string
+  /** Record ID de `TX_Adjuntos`. Sólo en modo inmediato. */
+  adjuntoId?: string
+  /** `path_display` de Dropbox. Sólo en modo inmediato. */
+  urlDropbox?: string
+  /** El `File` original. Lo necesita la Opción C para subir tras crear el alta. */
+  file?: File
 }
 
 interface FileUploadZoneProps {
@@ -44,6 +54,19 @@ interface FileUploadZoneProps {
   onUploaded?: (archivos: ArchivoSubido[]) => void
   className?: string
   usuarioActual?: string
+  /**
+   * Record ID de la solicitud. Junto con `codigoExt` activa el **modo
+   * inmediato**: el archivo sube de verdad a Dropbox vía
+   * `/api/adjuntos/upload` → Make.
+   */
+  solicitudId?: string
+  codigoExt?: string
+  /**
+   * `codigo` de `D_TipoDocumento` declarado para estos archivos (RN-25: el
+   * tipo se declara, no se infiere). Vacío = adjunto suelto.
+   */
+  tipoDocumento?: string
+  disabled?: boolean
 }
 
 function formatearTamano(bytes: number): string {
@@ -66,74 +89,127 @@ function validar(file: File): string | null {
   return null
 }
 
+/**
+ * Zona de carga de archivos con dos modos.
+ *
+ * ## Modo inmediato (`solicitudId` + `codigoExt`)
+ *
+ * Sube de verdad: `uploadConReintentos()` → `POST /api/adjuntos/upload` →
+ * Make (`SC-Adjuntos-Upload`) → Dropbox → fila en `TX_Adjuntos`. El progreso
+ * es real (`XMLHttpRequest.upload.onprogress`; `fetch` no lo expone), con 3
+ * reintentos y backoff 0s/2s/5s heredados de D-14.2, e idempotencia por
+ * `hash_md5` resuelta en el escenario Make (D-14.4).
+ *
+ * ## Modo diferido (sin `solicitudId`)
+ *
+ * Captura local sin red. Existe porque `NewRequestSheet` monta esta zona
+ * **antes** de que la solicitud exista, y D-12 (Opción C) dejó `solicitud_id`
+ * como obligatorio en el Route Handler: no hay a qué asociar el archivo
+ * todavía. El `File` viaja en `ArchivoSubido.file` para que el padre lo suba
+ * después de crear el alta.
+ *
+ * Hasta el 02-ago-2026 este componente simulaba la subida con `setInterval` y
+ * emitía un toast verde sin haber escrito nada — el patrón que E-082 prohíbe.
+ */
 export function FileUploadZone({
   variant = "default",
   multiple = true,
   onUploaded,
   className,
-  usuarioActual = "María Espinoza",
+  usuarioActual = "Ejecutivo",
+  solicitudId,
+  codigoExt,
+  tipoDocumento,
+  disabled = false,
 }: FileUploadZoneProps) {
   const compact = variant === "compact"
   const permiteMultiple = compact ? false : multiple
+  const modoInmediato = Boolean(solicitudId && codigoExt)
 
   const [items, setItems] = React.useState<UploadItem[]>([])
   const [dragActivo, setDragActivo] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
-  const timers = React.useRef<Record<string, ReturnType<typeof setInterval>>>({})
 
+  // Aborta lo que quede en vuelo si el componente se desmonta (la Ejecutiva
+  // cierra el sheet a mitad de subida).
+  const itemsRef = React.useRef<UploadItem[]>([])
+  itemsRef.current = items
   React.useEffect(() => {
     return () => {
-      Object.values(timers.current).forEach(clearInterval)
+      itemsRef.current.forEach((i) => i.abort?.abort())
     }
   }, [])
 
   const subiendo = items.filter((i) => i.status === "uploading")
   const totalEnLote = items.length
 
-  function simularSubida(id: string, file: File) {
-    // Limpia timer previo si existe (retry)
-    if (timers.current[id]) clearInterval(timers.current[id])
-    timers.current[id] = setInterval(() => {
-      setItems((prev) =>
-        prev.map((it) => {
-          if (it.id !== id) return it
-          const next = Math.min(it.progress + Math.round(8 + Math.random() * 18), 100)
-          if (next >= 100) {
-            clearInterval(timers.current[id])
-            delete timers.current[id]
-            // Éxito: notifica al padre y descarta de la zona
-            window.setTimeout(() => {
-              setItems((cur) => cur.filter((c) => c.id !== id))
-              onUploaded?.([
-                {
-                  id,
-                  nombre: file.name,
-                  detalle: `Subido hace unos segundos · por ${usuarioActual}`,
-                },
-              ])
-              toast.success("Archivo adjuntado correctamente", {
-                duration: 3000,
-              })
-            }, 350)
-            return { ...it, progress: 100, status: "success" }
-          }
-          return { ...it, progress: next }
-        })
+  function actualizar(id: string, cambios: Partial<UploadItem>) {
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...cambios } : it)))
+  }
+
+  async function subir(item: UploadItem) {
+    const abort = new AbortController()
+    actualizar(item.id, {
+      status: "uploading",
+      progress: 0,
+      errorMsg: undefined,
+      abort,
+    })
+
+    const resultado = await uploadConReintentos({
+      file: item.file,
+      solicitud_id: solicitudId!,
+      codigo_ext: codigoExt!,
+      tipo_documento: tipoDocumento,
+      subido_por: usuarioActual,
+      signal: abort.signal,
+      onProgress: (pct) => actualizar(item.id, { progress: pct }),
+    })
+
+    if (resultado.ok) {
+      // Sólo aquí hay toast: la escritura está confirmada por el Route Handler,
+      // que a su vez exige `adjunto_id` en la respuesta de Make (E-082).
+      setItems((prev) => prev.filter((c) => c.id !== item.id))
+      onUploaded?.([
+        {
+          id: String(resultado.adjunto_id ?? item.id),
+          nombre: resultado.nombre_archivo ?? item.name,
+          detalle: resultado.reused
+            ? `Ya estaba subido · por ${usuarioActual}`
+            : `Subido recién · por ${usuarioActual}`,
+          adjuntoId: resultado.adjunto_id ? String(resultado.adjunto_id) : undefined,
+          urlDropbox: resultado.url_dropbox,
+          file: item.file,
+        },
+      ])
+      toast.success(
+        resultado.reused
+          ? "Este archivo ya estaba adjunto"
+          : "Archivo adjuntado correctamente",
+        { duration: 3000 },
       )
-    }, 280)
+      return
+    }
+
+    actualizar(item.id, {
+      status: "error",
+      progress: 0,
+      errorMsg: resultado.error ?? "No se pudo subir.",
+      abort: undefined,
+    })
   }
 
   function agregarArchivos(fileList: FileList | null) {
-    if (!fileList || fileList.length === 0) return
+    if (!fileList || fileList.length === 0 || disabled) return
     const archivos = permiteMultiple
       ? Array.from(fileList)
       : Array.from(fileList).slice(0, 1)
 
     const nuevos: UploadItem[] = archivos.map((file) => {
-      const id = `${file.name}-${file.size}-${crypto.randomUUID()}`
       const error = validar(file)
       return {
-        id,
+        id: `${file.name}-${file.size}-${crypto.randomUUID()}`,
+        file,
         name: file.name,
         size: file.size,
         status: error ? "error" : "uploading",
@@ -145,39 +221,44 @@ export function FileUploadZone({
 
     setItems((prev) => (permiteMultiple ? [...prev, ...nuevos] : nuevos))
 
-    nuevos.forEach((item, idx) => {
-      if (item.status === "uploading") simularSubida(item.id, archivos[idx])
-    })
-
     if (nuevos.some((n) => n.status === "error")) {
-      toast.error("Algunos archivos no se pudieron adjuntar.", {
-        duration: 3000,
-      })
+      toast.error("Algunos archivos no se pudieron adjuntar.", { duration: 3000 })
     }
+
+    const validos = nuevos.filter((n) => n.status === "uploading")
+
+    if (!modoInmediato) {
+      // Captura diferida: no hay red, así que no hay progreso que mostrar ni
+      // nada que celebrar. Se entrega al padre y se limpia la zona.
+      setItems((prev) => prev.filter((p) => !validos.some((v) => v.id === p.id)))
+      if (validos.length > 0) {
+        onUploaded?.(
+          validos.map((v) => ({
+            id: v.id,
+            nombre: v.name,
+            detalle: `${formatearTamano(v.size)} · pendiente de subir`,
+            file: v.file,
+          })),
+        )
+      }
+      return
+    }
+
+    validos.forEach((item) => void subir(item))
   }
 
   function cancelar(id: string) {
-    if (timers.current[id]) {
-      clearInterval(timers.current[id])
-      delete timers.current[id]
-    }
+    const item = items.find((i) => i.id === id)
+    item?.abort?.abort()
     setItems((prev) => prev.filter((i) => i.id !== id))
   }
 
   function reintentar(id: string) {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === id
-          ? { ...i, status: "uploading", progress: 0, errorMsg: undefined }
-          : i
-      )
-    )
-    // Reintento simulado: en este mock, el reintento completa la subida.
     const item = items.find((i) => i.id === id)
-    if (item) {
-      const fakeFile = new File([""], item.name)
-      simularSubida(id, fakeFile)
-    }
+    if (!item) return
+    // Reintento real sobre el `File` original — no un placeholder.
+    if (validar(item.file)) return
+    void subir(item)
   }
 
   return (
@@ -188,6 +269,7 @@ export function FileUploadZone({
         accept={EXT_PERMITIDAS.join(",")}
         multiple={permiteMultiple}
         className="sr-only"
+        disabled={disabled}
         onChange={(e) => {
           agregarArchivos(e.target.files)
           e.target.value = ""
@@ -197,10 +279,11 @@ export function FileUploadZone({
       {/* Estado IDLE / zona drag-and-drop */}
       <button
         type="button"
+        disabled={disabled}
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault()
-          setDragActivo(true)
+          if (!disabled) setDragActivo(true)
         }}
         onDragLeave={() => setDragActivo(false)}
         onDrop={(e) => {
@@ -209,7 +292,7 @@ export function FileUploadZone({
           agregarArchivos(e.dataTransfer.files)
         }}
         className={cn(
-          "flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input bg-muted/30 text-center transition-colors hover:border-brand/50 hover:bg-muted/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none",
+          "flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input bg-muted/30 text-center transition-colors hover:border-brand/50 hover:bg-muted/50 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
           compact ? "px-3 py-4" : "px-4 py-8",
           dragActivo && "border-brand bg-brand/5"
         )}
@@ -300,7 +383,7 @@ export function FileUploadZone({
                 </div>
 
                 <div className="flex shrink-0 items-center gap-1">
-                  {enError && (
+                  {enError && !validar(item.file) && (
                     <Button
                       variant="outline"
                       size="sm"

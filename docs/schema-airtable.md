@@ -591,6 +591,14 @@ Los TABLE_IDs deprecados se conservan tachados sólo para trazabilidad históric
 | `D_TipoDocumentoAtributo` | `fldNsN343wkTRiEmD` | Link → D_TipoDocumentoAtributo (multipleRecordLinks) |
 | `tipo_propiedad` | `fldIfdcjsr8KeNRCx` | Single select (`nueva` · `usada` · `ambas`) |
 
+**20 filas activas al 2026-08** (`activo = TRUE`), verificado vía MCP el 02-ago-2026.
+La columna `Campos` de la tabla de arriba cuenta campos (8), no filas. El 02-ago-2026
+se crearon 4 tipos que existían en el mock de `lib/console-data.ts` pero no en Airtable
+(`certificado_dominio_vigente`, `certificado_hipotecas_gravamenes`,
+`certificado_deuda_gastos_comunes`, `certificado_informaciones_previas`) y se reactivó
+`inscripcion_dominio_cbr`, la única fila que tenía `activo` sin marcar. Lectura desde el
+código: `getTiposDocumento()` en `lib/tipos-documento.ts` → `GET /api/tipos-documento`.
+
 Los `codigo` activos deben coincidir con los defaults de `nuevaSolicitudInternaDefaults` en `lib/schemas.ts` y con el checklist de `NewRequestSheet`. Verificar contra la base real antes de asumir la lista de 9 documentada en versiones previas de este archivo — sin re-auditar fila por fila el 17-jul-2026.
 
 ### D_TipoDocumentoAtributo

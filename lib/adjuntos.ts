@@ -12,15 +12,52 @@ export interface Adjunto {
   urlDropbox: string
   /** `requerido_por_ejecutiva` — distingue el checklist obligatorio de adjuntos sueltos (Fase 2 Tanda A). */
   requeridoPorEjecutiva: boolean
+  /**
+   * `clave_adjunto` (`fldaLLtzAaEn1O8IW`) — el `codigo` de `D_TipoDocumento`
+   * declarado al subir (RN-25). Es el campo que **sí** escribe
+   * `SC-Adjuntos-Upload` (módulo 8 del blueprint mapea `{{1.tipo_documento}}`
+   * aquí), y por tanto el único fiable para casar un adjunto con su fila del
+   * checklist.
+   *
+   * No confundir con `tipo` (`fldUYBO3LeOHxiIGW`), un `singleSelect` heredado
+   * con opciones incoherentes (`plano`, `sii`, `Permiso edificacion`,
+   * `Certificado avaluo`) que el escenario Make no escribe nunca. Se sigue
+   * leyendo sólo para no romper a `AdjuntosTab`.
+   */
+  claveAdjunto: string
 }
 
 type RawFields = {
   nombre_archivo?: string
   tipo?: string
+  clave_adjunto?: string
   url_dropbox?: string
   tamanio_kb?: number
   requerido_por_ejecutiva?: boolean
   solicitud?: string[]
+}
+
+/**
+ * `url_dropbox` (`fldEccoUrOjV7oKZ5`) es de tipo `url` en Airtable, pero
+ * `SC-Adjuntos-Upload` escribe ahí `{{6.path_display}}` — la **ruta** dentro de
+ * Dropbox, no un enlace navegable. Ej.:
+ * `/VProperty/Tasaciones/VP-2026-0053/Foto REF Ofertas.JPG`.
+ *
+ * Puesto tal cual en un `href`, el navegador lo resuelve como ruta **relativa
+ * al dominio de la app** y devuelve 404. Se normaliza al visor web de Dropbox,
+ * que acepta la ruta como query param y respeta los permisos de la cuenta.
+ *
+ * Devuelve `''` si no hay ruta: el consumidor pinta un badge en vez de un
+ * enlace roto.
+ */
+function urlNavegableDropbox(valor: string | undefined): string {
+  const v = valor?.trim()
+  if (!v) return ''
+  if (/^https?:\/\//i.test(v)) return v
+  return `https://www.dropbox.com/home${v.startsWith('/') ? '' : '/'}${v
+    .split('/')
+    .map(encodeURIComponent)
+    .join('/')}`
 }
 
 /** `tamanio_kb` ya viene en KB desde Airtable (no bytes) — sin dividir por 1024 antes de mostrar KB. */
@@ -43,7 +80,15 @@ function formatTamanioKb(kb: number): string {
  */
 export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Adjunto[]> {
   const records = await listRecords<RawFields>(TX_ADJUNTOS, {
-    fields: ['nombre_archivo', 'tipo', 'url_dropbox', 'tamanio_kb', 'requerido_por_ejecutiva', 'solicitud'],
+    fields: [
+      'nombre_archivo',
+      'tipo',
+      'clave_adjunto',
+      'url_dropbox',
+      'tamanio_kb',
+      'requerido_por_ejecutiva',
+      'solicitud',
+    ],
   })
 
   return records
@@ -56,8 +101,9 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
         nombre: r.fields.nombre_archivo ?? 'Sin nombre',
         tipo: r.fields.tipo ?? '—',
         detalle: tamano ? `${tamano} · subido ${hace}` : `Subido ${hace}`,
-        urlDropbox: r.fields.url_dropbox ?? '',
+        urlDropbox: urlNavegableDropbox(r.fields.url_dropbox),
         requeridoPorEjecutiva: Boolean(r.fields.requerido_por_ejecutiva),
+        claveAdjunto: r.fields.clave_adjunto?.trim() ?? '',
       }
     })
 }

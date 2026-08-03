@@ -22,7 +22,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { TIPOS_DOCUMENTO } from "@/lib/console-data"
+import { Progress } from "@/components/ui/progress"
+import { uploadConReintentos } from "@/lib/adjuntos-uploader"
+import type { TipoDocumento } from "@/lib/tipos-documento"
 import { cn } from "@/lib/utils"
 
 const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"]
@@ -35,6 +37,10 @@ export interface DocumentoArchivo {
   tamanio_kb: number
   mime_type: string
   url_local: string
+  /** Record ID de `TX_Adjuntos` cuando el archivo ya está persistido. */
+  adjunto_id?: string
+  /** `true` si vino de Airtable y no de una subida de esta sesión. */
+  persistido?: boolean
 }
 
 /** Item del array `documentos` controlado por react-hook-form. */
@@ -63,48 +69,90 @@ function validar(file: File): string | null {
 
 interface DocumentRowProps {
   item: DocumentoChecklistItem
+  /**
+   * Metadatos del tipo desde `D_TipoDocumento`. El lookup lo hace el padre —
+   * antes esta fila lo resolvía contra el mock `TIPOS_DOCUMENTO`, que ya no
+   * existe como fuente (Tanda 1, 02-ago-2026).
+   */
+  meta: TipoDocumento
+  solicitudId: string
+  codigoExt: string
+  usuarioActual: string
   onToggle: (codigo: string, marcado: boolean) => void
   onArchivo: (codigo: string, archivo: DocumentoArchivo | null) => void
+  /** Se invoca tras una subida confirmada, para releer `TX_Adjuntos`. */
+  onSubido: () => void
 }
 
-function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
-  const meta = TIPOS_DOCUMENTO.find((t) => t.codigo === item.codigo)
+function DocumentRow({
+  item,
+  meta,
+  solicitudId,
+  codigoExt,
+  usuarioActual,
+  onToggle,
+  onArchivo,
+  onSubido,
+}: DocumentRowProps) {
   const inputRef = React.useRef<HTMLInputElement>(null)
-  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null)
+  const abortRef = React.useRef<AbortController | null>(null)
 
   const [estado, setEstado] = React.useState<EstadoCarga>("idle")
+  const [progreso, setProgreso] = React.useState(0)
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = React.useState(false)
 
   React.useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
+      abortRef.current?.abort()
     }
   }, [])
-
-  if (!meta) return null
 
   const marcado = item.requerido_por_ejecutiva
   const tieneArchivo = item.archivo !== null
 
-  function simularSubida(file: File) {
-    if (timerRef.current) clearInterval(timerRef.current)
-    let progreso = 0
+  /**
+   * Sube el archivo declarando `tipo_documento = item.codigo` (RN-25: el tipo
+   * se declara al upload, no se infiere). Antes esto era un `setInterval` que
+   * fingía progreso y guardaba un `URL.createObjectURL` que moría con la
+   * pestaña.
+   */
+  async function subir(file: File) {
+    const abort = new AbortController()
+    abortRef.current = abort
+
     setEstado("uploading")
-    timerRef.current = setInterval(() => {
-      progreso = Math.min(progreso + 25, 100)
-      if (progreso >= 100) {
-        if (timerRef.current) clearInterval(timerRef.current)
-        timerRef.current = null
-        setEstado("idle")
-        onArchivo(item.codigo, {
-          nombre: file.name,
-          tamanio_kb: Math.round(file.size / 1024),
-          mime_type: file.type || "application/octet-stream",
-          url_local: URL.createObjectURL(file),
-        })
-      }
-    }, 200)
+    setProgreso(0)
+    setErrorMsg(null)
+
+    const resultado = await uploadConReintentos({
+      file,
+      solicitud_id: solicitudId,
+      codigo_ext: codigoExt,
+      tipo_documento: item.codigo,
+      subido_por: usuarioActual,
+      signal: abort.signal,
+      onProgress: setProgreso,
+    })
+
+    abortRef.current = null
+
+    if (!resultado.ok) {
+      setEstado("error")
+      setErrorMsg(resultado.error ?? "No se pudo subir.")
+      return
+    }
+
+    setEstado("idle")
+    onArchivo(item.codigo, {
+      nombre: resultado.nombre_archivo ?? file.name,
+      tamanio_kb: resultado.tamanio_kb ?? Math.round(file.size / 1024),
+      mime_type: file.type || "application/octet-stream",
+      url_local: resultado.url_dropbox ?? "",
+      adjunto_id: resultado.adjunto_id ? String(resultado.adjunto_id) : undefined,
+      persistido: true,
+    })
+    onSubido()
   }
 
   function seleccionar(fileList: FileList | null) {
@@ -117,7 +165,7 @@ function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
       return
     }
     setErrorMsg(null)
-    simularSubida(file)
+    void subir(file)
   }
 
   function handleCheckedChange(next: boolean) {
@@ -162,6 +210,7 @@ function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
         id={`doc-${item.tipo_id}`}
         checked={marcado}
         onCheckedChange={handleCheckedChange}
+        disabled={estado === "uploading"}
         className="mt-0.5 sm:mt-0"
       />
 
@@ -205,10 +254,13 @@ function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
             No incluido
           </span>
         ) : estado === "uploading" ? (
-          <span className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            Subiendo…
-          </span>
+          <div className="flex items-center justify-end gap-2">
+            <Loader2 className="size-4 shrink-0 animate-spin text-muted-foreground" />
+            <Progress value={progreso} className="w-24" />
+            <span className="w-9 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+              {progreso}%
+            </span>
+          </div>
         ) : estado === "error" ? (
           <div className="flex items-center justify-end gap-2">
             <span className="flex items-center gap-1.5 text-xs font-medium text-[#b91c1c]">
@@ -258,8 +310,13 @@ function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Quitar este documento?</AlertDialogTitle>
+            {/* El archivo ya subido NO se borra: no existe escenario Make de
+                borrado y las escrituras a Airtable nunca salen de la UI. Se
+                quita la marca del checklist; el adjunto sigue en la solicitud. */}
             <AlertDialogDescription>
-              Quitar este documento elimina el archivo cargado. ¿Continuar?
+              {item.archivo?.persistido
+                ? "Deja de exigirse en el checklist. El archivo ya subido se mantiene en los adjuntos de la solicitud."
+                : "Quitar este documento elimina el archivo cargado. ¿Continuar?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -280,9 +337,23 @@ function DocumentRow({ item, onToggle, onArchivo }: DocumentRowProps) {
 interface DocumentChecklistProps {
   value: DocumentoChecklistItem[]
   onChange: (next: DocumentoChecklistItem[]) => void
+  /** Catálogo real de `D_TipoDocumento` (`useTiposDocumento`). */
+  tipos: TipoDocumento[]
+  solicitudId: string
+  codigoExt: string
+  usuarioActual?: string
+  onSubido: () => void
 }
 
-export function DocumentChecklist({ value, onChange }: DocumentChecklistProps) {
+export function DocumentChecklist({
+  value,
+  onChange,
+  tipos,
+  solicitudId,
+  codigoExt,
+  usuarioActual = "Ejecutivo",
+  onSubido,
+}: DocumentChecklistProps) {
   function handleToggle(codigo: string, marcado: boolean) {
     onChange(
       value.map((d) =>
@@ -301,14 +372,23 @@ export function DocumentChecklist({ value, onChange }: DocumentChecklistProps) {
 
   return (
     <div className="flex flex-col gap-2">
-      {value.map((item) => (
-        <DocumentRow
-          key={item.tipo_id}
-          item={item}
-          onToggle={handleToggle}
-          onArchivo={handleArchivo}
-        />
-      ))}
+      {value.map((item) => {
+        const meta = tipos.find((t) => t.codigo === item.codigo)
+        if (!meta) return null
+        return (
+          <DocumentRow
+            key={item.tipo_id}
+            item={item}
+            meta={meta}
+            solicitudId={solicitudId}
+            codigoExt={codigoExt}
+            usuarioActual={usuarioActual}
+            onToggle={handleToggle}
+            onArchivo={handleArchivo}
+            onSubido={onSubido}
+          />
+        )
+      })}
     </div>
   )
 }

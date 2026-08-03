@@ -88,7 +88,7 @@
             "mapper": {
                 "base": "app9G7lLkIV3CpeLa",
                 "table": "tblur71x1oItbmKZc",
-                "formula": "{hash_md5} = \"{{1.hash_md5}}\"",
+                "formula": "AND({hash_md5} = \"{{1.hash_md5}}\", ARRAYJOIN({solicitud}) = \"{{1.codigo_ext}}\")",
                 "maxRecords": "1",
                 "useColumnId": false
             },
@@ -360,11 +360,6 @@
                                         {
                                             "a": "{{2.id}}",
                                             "o": "exist"
-                                        },
-                                        {
-                                            "a": "{{contains(2.solicitud; 1.solicitud_id)}}",
-                                            "b": "true",
-                                            "o": "text:equal"
                                         }
                                     ]
                                 ]

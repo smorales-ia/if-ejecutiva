@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@clerk/nextjs/server'
+import { isValidRecordId } from '@/lib/airtable-client'
 import { postToMake } from '@/lib/make-client'
 
 export const dynamic = 'force-dynamic'
@@ -80,6 +81,36 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = parsed.data
+
+  /**
+   * `solicitud_id` alimenta el Link `solicitud` (`fldZTVpXDRtXXPjyv`) del
+   * módulo 8 de `SC-Adjuntos-Upload`, que lo envía a Airtable como
+   * `["{{1.solicitud_id}}"]`. Airtable exige ahí un record ID; cualquier otra
+   * cosa revienta con `[422] Value "X" is not a valid record ID`.
+   *
+   * El problema es *dónde* revienta: el módulo 8 corre **después** del upload a
+   * Dropbox (módulo 6), así que un id inválido deja el archivo subido y sin
+   * fila en `TX_Adjuntos` — un huérfano que nadie limpia. Validar aquí corta
+   * antes de tocar Dropbox.
+   *
+   * Es el único de los 4 endpoints que hablan con Make donde el record ID llega
+   * en el *body* y no en el path: `/api/solicitudes/[id]` y
+   * `/api/solicitudes/[id]/asignar` ya validan con este mismo helper, y SC01
+   * crea el registro en vez de enlazarlo. Por eso este era el único hueco.
+   *
+   * Ocurrió de verdad el 02-ago-2026 con `solicitud_id: "3"`, el id del mock
+   * `SOLICITUDES` que renderizaba la página `/` (ver `app/page.tsx`).
+   */
+  if (!isValidRecordId(payload.solicitud_id)) {
+    console.error(
+      '[POST /api/adjuntos/upload] solicitud_id no es un record ID de Airtable',
+      { solicitud_id: payload.solicitud_id, codigo_ext: payload.codigo_ext }
+    )
+    return NextResponse.json(
+      { ok: false, error: MENSAJE_ERROR_RED, reintentable: false },
+      { status: 400 }
+    )
+  }
 
   if (payload.tamanio_kb > MAX_TAMANIO_KB) {
     return NextResponse.json(

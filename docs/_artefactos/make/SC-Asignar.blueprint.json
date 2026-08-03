@@ -2838,11 +2838,43 @@
                 "restore": {
                     "expect": {
                         "scope": {
-                            "mode": "chose",
                             "label": "One cycle"
                         }
                     }
-                }
+                },
+                "expect": [
+                    {
+                        "name": "name",
+                        "type": "text",
+                        "label": "Variable name",
+                        "required": true
+                    },
+                    {
+                        "name": "scope",
+                        "type": "select",
+                        "label": "Variable lifetime",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "roundtrip",
+                                "execution"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "type": "any",
+                        "label": "Variable value"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "value",
+                        "type": "any",
+                        "label": "sc05Payload"
+                    }
+                ],
+                "advanced": true
             }
         },
         {
@@ -2857,7 +2889,7 @@
                 "ca": "",
                 "qs": [],
                 "url": "https://hook.eu1.make.com/uf5hgjrtb0tmi7thd0nsg9ficoerzl8s",
-                "data": "{{7.sc05Payload}}",
+                "data": "{{7.value}}",
                 "gzip": true,
                 "method": "post",
                 "headers": [
@@ -2867,7 +2899,7 @@
                     },
                     {
                         "name": "X-VP-Signature",
-                        "value": "{{sha256(7.sc05Payload; \"hex\"; \"REEMPLAZAR_CON_MAKE_HMAC_SECRET\")}}"
+                        "value": "{{sha256(7.value; \"hex\"; \"REEMPLAZAR_CON_MAKE_HMAC_SECRET\")}}"
                     }
                 ],
                 "timeout": "10",
@@ -3129,7 +3161,21 @@
             "freshVariables": false
         },
         "designer": {
-            "orphans": []
+            "orphans": [
+                [
+                    {
+                        "id": 10,
+                        "module": "placeholder:Placeholder",
+                        "filter": null,
+                        "metadata": {
+                            "designer": {
+                                "x": 985,
+                                "y": 202
+                            }
+                        }
+                    }
+                ]
+            ]
         },
         "zone": "eu1.make.com",
         "notes": []

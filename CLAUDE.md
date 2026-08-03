@@ -61,10 +61,18 @@ Contrato operacional resumido:
 
 - **Entradas**: `TX_Solicitudes` (cartera del ejecutivo · filtros SLA), `M_Tasadores` (activos con `disponible = TRUE` y zona · ver H-05), `M_Visadores` (por `especialidades` — nombre plural en el schema real), `M_Clientes`, `A_Eventos` (cronología).
 - **Acciones**: crear alta interna, editar campos no-cálculo, asignar/reasignar tasador, fijar fecha de visita, cambiar prioridad, pausar, cancelar. **Acción primaria**: `Pasar a asignada`.
-- **Salidas**: `TX_Solicitudes` (insert/update, `origen_canal=ingreso_manual`), `A_Eventos` (alta · asignación · cambios), `A_Cambios` (override de AT02).
-- **Estado destino**: `creada → asignada` — bloqueado hasta tasador + visador + `fecha_visita_programada`. Transición ejecutada por AT02; SC05 notifica al tasador.
+- **Salidas**: `TX_Solicitudes` (insert/update, `origen_canal=ingreso_manual`), `A_Eventos` (alta · asignación · cambios). `A_Cambios` **no se escribe desde IF-02** — era el override de AT02.
+- **Estado destino**: `creada → asignada` — bloqueado hasta tasador + visador + `fecha_visita_programada`. La transición la ejecuta **SC-Asignar (Make)**, que escribe `estado`, `tasador` y `fecha_asignacion` en un solo update; SC05 notifica al tasador.
 
-Principio rector: **la UI muestra y captura; nunca decide**. Toda regla de negocio vive en Airtable (AT01/AT02/AT08 · `C_ReglasNegocio`).
+**AT02 fuera de alcance de IF-02 (REGLA A · D-15).** No hay asignación automática: la
+Ejecutiva asigna a mano, una sola vez, y no existe flujo de reasignación en v1.9. AT02
+sigue en el catálogo de automatizaciones para otros orígenes (IF-01), pero **IF-02 no lo
+invoca, no escribe su campo trigger y no depende de él**. Si AT02 apareciera encendida en
+Airtable con disparador `estado = creada`, asignaría un tasador por su cuenta y chocaría
+con el guard 409 de `asignar/route.ts` — verificar en la UI de Airtable ante cualquier
+asignación que falle sin causa aparente.
+
+Principio rector: **la UI muestra y captura; nunca decide**. Toda regla de negocio vive en Airtable (AT01/AT08 · `C_ReglasNegocio`) o en los escenarios Make.
 
 **SC13 fuera de alcance CU-002**: las acciones de reasignación, cambio de prioridad y pausa actualizan Airtable + `A_Eventos` pero **no envían email** en este CU. Deuda técnica para un CU posterior.
 
@@ -110,9 +118,10 @@ Principio rector: **la UI muestra y captura; nunca decide**. Toda regla de negoc
 
 ## Reglas de arquitectura de datos
 
-- **Cero lógica de negocio en la UI**. La transición `creada → asignada` la
-  ejecuta AT02 en Airtable tras validar tasador + visador + fecha_visita_programada.
-  La UI sólo habilita/deshabilita el botón para feedback rápido.
+- **Cero lógica de negocio en la UI**. La transición `creada → asignada` la ejecuta
+  `SC-Asignar` (Make) tras el POST del Route Handler; la UI sólo habilita/deshabilita el
+  botón para feedback rápido y el server revalida (409 si ya hay tasador). No interviene
+  ninguna automation de Airtable.
 - **Lecturas de producción**: Route Handlers server-side (`app/api/**/route.ts`)
   con token Airtable en `.env` (`AIRTABLE_TOKEN`). Nunca exponer el token al
   cliente (nada de `NEXT_PUBLIC_AIRTABLE_*`).
@@ -233,7 +242,7 @@ Dos ajustes al aplicar la regla en este repo, para no contradecir código ya esc
 
 | Recurso | TABLE_ID | Uso en IF-02 |
 |---|---|---|
-| `TX_Solicitudes` | `tblaHTyMHYfmy7Fg6` | Read cartera · Write via SC01 (create) y AT02 (update estado) |
+| `TX_Solicitudes` | `tblaHTyMHYfmy7Fg6` | Read cartera · Write via SC01 (create), SC-Edicion (update) y SC-Asignar (update estado) |
 | `M_Tasadores` | `tblEi5jp18c1j00bQ` | Read para selector inteligente. Filtrar por `disponible=TRUE` y ordenar por `casos_en_curso ASC` cuando existan (H-05). |
 | `M_Visadores` | `tbludtgDtHWvt0Q3D` | Read para selector de visador. Campo relevante: `especialidades` (multipleSelects, **plural**) |
 | `M_Clientes` | `tblpK7AcYBMH93apK` | Read para link + filtros de productos |
@@ -243,7 +252,7 @@ Dos ajustes al aplicar la regla en este repo, para no contradecir código ya esc
 | `M_TiposInforme` | `tblOcsdiwxQLfD178` | Read filtrado por cliente |
 | `M_TiposPropiedad` | `tbl8rxZA14xFIBGU6` | Read para select |
 | `A_Eventos` | `tblMKmDg2KrO5fMn8` | Write timeline (`tipo_evento` es singleLineText) |
-| `A_Cambios` | `tbl6Yd0c7MRqNeC0x` | Write override AT02 |
+| `A_Cambios` | `tbl6Yd0c7MRqNeC0x` | **Sin uso en IF-02** (era el override de AT02) |
 | `A_DecisionesMotor` | `tbluQQtXUI0Zd8jiN` | Read decisión del motor |
 | `A_ErroresMake` | `tbl46Q0BcfD57LWyQ` | Read/write errores Make (bonus) |
 | `TX_Adjuntos` | `tblur71x1oItbmKZc` | Write al subir archivos · campo `estado_extraccion` (RF-09) |
@@ -278,7 +287,9 @@ schema real:
 | `codigo_ext` (formula, `fldSuJx1fDNYYwDcD`) | Read-only. |
 | `semaforo_sla` (formula, `fldW4oUq7LvQUZq7W`) | Fórmula del semáforo. |
 | `notas_tasador` · `notas_visador` · `ejecutiva_asignada` | ⚠ **Pendientes de creación** (D-08-ejecución). Su creación es obligatoria antes de los Route Handlers de escritura. |
-| campo trigger AT02 | ⚠ **Nombre desconocido** (H-04). Confirmar en UI de Airtable Automations antes de RF-06. |
+
+*(La fila «campo trigger AT02 · H-04» se retiró: IF-02 no dispara AT02, así que no hay
+campo trigger que identificar. Ver REGLA A · D-15 arriba.)*
 
 ### Make (org 1594725 · `eu1.make.com`)
 
@@ -466,7 +477,7 @@ app/
 │  ├─ adjuntos/upload/route.ts       # POST streaming → Make → Dropbox
 │  ├─ webhooks/
 │  │  ├─ crear-solicitud/route.ts    # POST → SC01
-│  │  ├─ asignar/route.ts            # POST → AT02 vía campo trigger
+│  │  ├─ asignar/route.ts            # POST → SC-Asignar (fija tasador + estado; encadena SC05)
 │  │  ├─ reasignar/route.ts          # POST → Airtable + A_Eventos (sin SC13)
 │  │  ├─ prioridad/route.ts          # POST → Airtable + A_Eventos (sin SC13)
 │  │  └─ pausar/route.ts             # POST → Airtable + A_Eventos (sin SC13)
@@ -487,6 +498,8 @@ app/
 - Invocar el MCP Airtable desde código productivo compilado.
 - Escribir a Airtable durante la ejecución de tests contra la base productiva.
 - Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.4 §1.6 Nota v0 · D-01).
+- Invocar AT02 ni escribir un campo trigger de AT02 desde IF-02 — no hay asignación
+  automática (REGLA A · D-15). La asignación es manual y única.
 - Emitir mensajes de error técnicos al usuario — siempre humano.
 - Modificar los escenarios E1/E2/E3 activos (son del pipeline PDF, no de IF-02).
 - Introducir sesiones de negocio en el cliente (state machine vive en Airtable).
