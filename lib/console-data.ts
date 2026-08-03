@@ -1557,20 +1557,27 @@ export function mockVersionesInforme(s: Solicitud): VersionInforme[] {
   ]
 }
 
-/** Cuerpo del correo de asignación (SC13) simulado. */
+/** Cuerpo del correo de asignación (SC13) simulado — refleja plantilla real en Airtable. */
 export function mockEmailAsignacion(s: Solicitud, tasador: string): string {
   return [
     `Para: ${tasador.toLowerCase().replace(/\s+/g, "")}@vproperty.cl`,
-    `Asunto: Nueva asignación ${s.codigoExt}`,
+    `Asunto: Nueva tasación asignada · ${s.codigoExt} · ${s.comuna} — ${s.direccion}`,
     "",
     `Estimado/a ${tasador},`,
     "",
-    `Se te ha asignado la solicitud ${s.codigoExt} ubicada en ${s.direccion}, ${s.comuna}.`,
-    `Cliente: ${s.cliente}. SLA aplicable: ${s.slaAplicable}.`,
+    "Por medio de la presente adjunto información para realizar la tasación de la referencia.",
     "",
-    "Por favor coordina la visita dentro de las próximas 4 horas con los contactos indicados en el expediente.",
+    `Solicitud: ${s.codigoExt} · Cliente: ${s.cliente} · SLA: ${s.slaAplicable}`,
+    `Dirección: ${s.direccion}, ${s.comuna}`,
     "",
-    "Saludos,",
-    "Consola VProperty",
+    "Reglas de trabajo:",
+    "  1. Coordinación de la visita: llamar al contacto dentro de las siguientes 4 horas.",
+    "  2. Confección y envío del informe: dentro de los 2 días siguientes a la visita.",
+    "  3. Si la propiedad es usada: obtener permiso de edificación y recepción final.",
+    "",
+    "Saluda atentamente,",
+    "Tasaciones Value Property Ltda.",
+    "Área de Control y Seguimiento",
+    "Fono: 22 500 0366 · tasadores@valueproperty.cl",
   ].join("\n")
 }

@@ -1,0 +1,111 @@
+<!--
+  SNAPSHOT v1 · plantilla email_asignacion_tasador (POST-EDICIÓN)
+  Fecha        : 2026-08-03
+  Base         : app9G7lLkIV3CpeLa
+  Tabla        : C_NotificacionesConfig (tbluB662ulWDaxqUY)
+  Registro     : rec5t6dBeYQkGsw4F  (evento = solicitud_asignada, activa = TRUE)
+  Campo        : plantilla_cuerpo (fldQro7jvi3RlxDs0)
+  Consumido por: SC05-EmailTasador.blueprint.json · módulo 19 (google-email:ActionSendEmail)
+  Delimitador  : [[var]]  — NUNCA {{var}} (rompe el parser de expresiones de Make)
+  Origen       : contenido LEÍDO DE VUELTA desde Airtable tras el PATCH, no el
+                 planificado. Verificado sin pérdida de encoding.
+  Cambios v0→v1: saludo "Hola" → "Estimado/a"; intro reemplazada; nueva §5 "Reglas de
+                 trabajo" (3 puntos, 7 respuestas de la llamada, 3 fotos de escritura);
+                 "5. Antecedentes" → "6. Antecedentes"; eliminado el callout ámbar
+                 D-11 ("Siete respuestas… pendiente de definición"); eliminado el
+                 cierre "Coordina la visita…"; pie reemplazado por firma corporativa
+                 del Área de Control y Seguimiento.
+  Fix aplicado : margen inferior corregido en respuesta vii y foto iii
+                 (margin:0 12px 4px 20px → margin:0 0 12px 20px).
+  TODO         : validar con Control y Seguimiento si mantener el nombre propio
+                 "Fabiola" (respuesta iii) o reemplazarlo por un rol genérico.
+-->
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1f2937;line-height:1.5;max-width:680px">
+
+<p>Estimado/a [[tasador_nombre]],</p>
+
+<p>Por medio de la presente adjunto información para realizar la tasación de la referencia.</p>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">1. Identificación de la solicitud</h3>
+<table cellpadding="6" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px">
+  <tr><td style="color:#6b7280">Empresa</td><td><strong>[[empresa]]</strong></td></tr>
+  <tr><td style="color:#6b7280">Código VP</td><td><strong>[[codigo_ext]]</strong></td></tr>
+  <tr><td style="color:#6b7280">N° interno</td><td>[[nro_interno]]</td></tr>
+  <tr><td style="color:#6b7280">N° solicitud</td><td>[[numero_solicitud]]</td></tr>
+  <tr><td style="color:#6b7280">Fecha de solicitud</td><td>[[fecha_solicitud]]</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">2. Propiedad a tasar</h3>
+<table cellpadding="6" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px">
+  <tr><td style="color:#6b7280">Dirección</td><td><strong>[[direccion]]</strong></td></tr>
+  <tr><td style="color:#6b7280">Comuna</td><td>[[comuna]]</td></tr>
+  <tr><td style="color:#6b7280">Proyecto o condominio</td><td>[[proyecto]]</td></tr>
+  <tr><td style="color:#6b7280">Nuevo o usado</td><td>[[nuevo_usado]]</td></tr>
+  <tr><td style="color:#6b7280">Valor estimado</td><td>[[monto_estimado_uf]] UF</td></tr>
+</table>
+
+<h4 style="font-size:13px;color:#374151;margin:16px 0 4px">Unidades y roles</h4>
+<table style="border-collapse:collapse;font-size:13px" cellpadding="6" cellspacing="0" border="0">
+  <tr><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Unidad</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Subtipo</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Rol SII</th></tr>
+  [[tabla_unidades]]
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">3. Partes involucradas</h3>
+<table cellpadding="6" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px">
+  <tr><td style="color:#6b7280">Comprador</td><td>[[comprador]] &nbsp; <span style="color:#6b7280">RUT</span> [[comprador_rut]]</td></tr>
+  <tr><td style="color:#6b7280">Vendedor</td><td>[[vendedor]] &nbsp; <span style="color:#6b7280">RUT</span> [[vendedor_rut]]</td></tr>
+  <tr><td style="color:#6b7280">Ejec. formalizador</td><td>[[ejec_formalizador]]</td></tr>
+  <tr><td style="color:#6b7280">Ejec. comercializador</td><td>[[ejec_comercializador]]</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">4. Contactos para la visita</h3>
+<p style="margin:0 0 8px;color:#6b7280;font-size:12px">En orden de prioridad. Contacta al primero disponible.</p>
+<table style="border-collapse:collapse;font-size:13px" cellpadding="6" cellspacing="0" border="0">
+  <tr><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Nombre</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Rol</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Teléfono</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Email</th></tr>
+  [[tabla_contactos]]
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">5. Reglas de trabajo</h3>
+
+<p style="margin:8px 0 4px"><strong>1. Coordinación de la visita</strong></p>
+<p style="margin:0 0 8px">Favor llamar al contacto <strong>dentro de las siguientes 4 horas</strong> e informar el día y hora de la coordinación de la visita respondiendo este mismo mail. También informar algún problema con el llamado, colocando la gestión de la llamada, gestión que puede ser cualquiera, no esperen cerrar la fecha de la visita para responder el mail y las respuestas entonces pueden ser:</p>
+<p style="margin:0 0 4px 20px">i. La coordinación de la visita será el día xx a las xx horas.</p>
+<p style="margin:0 0 4px 20px">ii. Fono malo.</p>
+<p style="margin:0 0 4px 20px">iii. He llamado nn veces y nada (así Fabiola contesta el mail y pide otro fono).</p>
+<p style="margin:0 0 4px 20px">iv. He enviado WhatsApp y nada o no tiene WhatsApp y sin respuesta entonces.</p>
+<p style="margin:0 0 4px 20px">v. El contacto no tenía idea al respecto (así avisamos que le avisen al contacto o manden otro contacto).</p>
+<p style="margin:0 0 4px 20px">vi. El contacto es corredor y se coordinará con el arrendatario.</p>
+<p style="margin:0 0 12px 20px">vii. Etc, etc.</p>
+
+<p style="margin:8px 0 4px"><strong>2. Confección y envío del informe</strong></p>
+<p style="margin:0 0 8px">Una vez realizada la visita enviar el respectivo informe a los mails habituales dentro de los 2 días siguientes a la fecha de la visita.</p>
+<p style="margin:0 0 12px;padding:10px;background:#fef3c7;border-left:3px solid #D97706;font-size:13px"><strong>Los 2 puntos anteriores, el llamado para agendar la visita dentro de las 4 horas y enviar el informe a más tardar el 2° día desde la visita es mandatorio/obligatorio para así poder enviar los informes en tiempo y forma a nuestros clientes.</strong></p>
+
+<p style="margin:8px 0 4px"><strong>3. Si la propiedad es usada</strong></p>
+<p style="margin:0 0 8px">En el llamado de coordinación se puede validar/preguntar si es usada, y si lo es intentar obtener el Permiso de edificación y la recepción final. Estos datos pueden estar en la escritura de compraventa original. Ahí sacar las fotos e incorporar en los anexos 3 fotos:</p>
+<p style="margin:0 0 4px 20px">i. La primera hoja (ahí se ven los nombres del comprador/vendedor).</p>
+<p style="margin:0 0 4px 20px">ii. La o las hojas donde están los datos del permiso y la recepción (generalmente la cláusula 2 o 3 de la escritura).</p>
+<p style="margin:0 0 12px 20px">iii. La última hoja de la escritura donde están las firmas.</p>
+<p style="margin:0 0 8px">Es muy importante que estén todas las imágenes de los puntos anteriores en los anexos.</p>
+<p style="margin:0 0 12px">Adicionalmente, si la operación es una Compraventa preguntar el precio de venta y enviarlo junto con el informe. Si es un refinanciamiento no preguntar dado que no es venta. Esta información la pueden deducir y obtener del cliente o contacto en el llamado de coordinación.</p>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">6. Antecedentes</h3>
+<p style="margin:0 0 6px"><span style="color:#6b7280">Observaciones:</span><br>[[observaciones]]</p>
+<p style="margin:0 0 6px"><span style="color:#6b7280">Documentos adjuntos:</span></p>
+<ul style="margin:4px 0 0;padding-left:20px">
+  [[lista_adjuntos]]
+</ul>
+
+<hr style="border:0;border-top:1px solid #e5e7eb;margin:24px 0 12px"/>
+<p style="margin:0;color:#374151;font-size:12px;line-height:1.6">
+  Saluda atentamente,<br>
+  <strong>Tasaciones Value Property Ltda.</strong><br>
+  Área de Control y Seguimiento<br>
+  Santa Magdalena 75, Oficina 310, Providencia, Santiago<br>
+  Fono: 22 500 0366<br>
+  Mail: <a href="mailto:tasadores@valueproperty.cl" style="color:#075899;text-decoration:none">tasadores@valueproperty.cl</a><br>
+  <a href="https://www.valueproperty.cl" style="color:#075899;text-decoration:none">www.valueproperty.cl</a>
+</p>
+<p style="margin:8px 0 0;color:#9ca3af;font-size:11px;font-style:italic">Este correo se generó de forma automática al asignarte la solicitud.</p>
+
+</div>

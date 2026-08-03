@@ -1,0 +1,76 @@
+<!--
+  SNAPSHOT v0 · plantilla email_asignacion_tasador (PRE-EDICIÓN)
+  Fecha        : 2026-08-03
+  Base         : app9G7lLkIV3CpeLa
+  Tabla        : C_NotificacionesConfig (tbluB662ulWDaxqUY)
+  Registro     : rec5t6dBeYQkGsw4F  (evento = solicitud_asignada, activa = TRUE)
+  Campo        : plantilla_cuerpo (fldQro7jvi3RlxDs0)
+  Consumido por: SC05-EmailTasador.blueprint.json · módulo 19 (google-email:ActionSendEmail)
+  Delimitador  : [[var]]  — NUNCA {{var}} (rompe el parser de expresiones de Make)
+  Estado       : contenido tal como estaba ANTES de incorporar las reglas de trabajo
+                 reales y la firma corporativa del área de Control y Seguimiento.
+-->
+<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#1f2937;line-height:1.5;max-width:680px">
+
+<p>Hola [[tasador_nombre]],</p>
+
+<p>Se te asignó una nueva tasación. A continuación tienes los antecedentes para coordinar la visita.</p>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">1. Identificación de la solicitud</h3>
+<table cellpadding="6" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px">
+  <tr><td style="color:#6b7280">Empresa</td><td><strong>[[empresa]]</strong></td></tr>
+  <tr><td style="color:#6b7280">Código VP</td><td><strong>[[codigo_ext]]</strong></td></tr>
+  <tr><td style="color:#6b7280">N° interno</td><td>[[nro_interno]]</td></tr>
+  <tr><td style="color:#6b7280">N° solicitud</td><td>[[numero_solicitud]]</td></tr>
+  <tr><td style="color:#6b7280">Fecha de solicitud</td><td>[[fecha_solicitud]]</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">2. Propiedad a tasar</h3>
+<table cellpadding="6" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px">
+  <tr><td style="color:#6b7280">Dirección</td><td><strong>[[direccion]]</strong></td></tr>
+  <tr><td style="color:#6b7280">Comuna</td><td>[[comuna]]</td></tr>
+  <tr><td style="color:#6b7280">Proyecto o condominio</td><td>[[proyecto]]</td></tr>
+  <tr><td style="color:#6b7280">Nuevo o usado</td><td>[[nuevo_usado]]</td></tr>
+  <tr><td style="color:#6b7280">Valor estimado</td><td>[[monto_estimado_uf]] UF</td></tr>
+</table>
+
+<h4 style="font-size:13px;color:#374151;margin:16px 0 4px">Unidades y roles</h4>
+<table style="border-collapse:collapse;font-size:13px" cellpadding="6" cellspacing="0" border="0">
+  <tr><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Unidad</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Subtipo</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Rol SII</th></tr>
+  [[tabla_unidades]]
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">3. Partes involucradas</h3>
+<table cellpadding="6" cellspacing="0" border="0" style="border-collapse:collapse;font-size:13px">
+  <tr><td style="color:#6b7280">Comprador</td><td>[[comprador]] &nbsp; <span style="color:#6b7280">RUT</span> [[comprador_rut]]</td></tr>
+  <tr><td style="color:#6b7280">Vendedor</td><td>[[vendedor]] &nbsp; <span style="color:#6b7280">RUT</span> [[vendedor_rut]]</td></tr>
+  <tr><td style="color:#6b7280">Ejec. formalizador</td><td>[[ejec_formalizador]]</td></tr>
+  <tr><td style="color:#6b7280">Ejec. comercializador</td><td>[[ejec_comercializador]]</td></tr>
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">4. Contactos para la visita</h3>
+<p style="margin:0 0 8px;color:#6b7280;font-size:12px">En orden de prioridad. Contacta al primero disponible.</p>
+<table style="border-collapse:collapse;font-size:13px" cellpadding="6" cellspacing="0" border="0">
+  <tr><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Nombre</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Rol</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Teléfono</th><th style="border:1px solid #e5e7eb;background:#f3f4f6;text-align:left">Email</th></tr>
+  [[tabla_contactos]]
+</table>
+
+<h3 style="font-size:15px;color:#075899;margin:20px 0 6px">5. Antecedentes</h3>
+<p style="margin:0 0 6px"><span style="color:#6b7280">Observaciones:</span><br>[[observaciones]]</p>
+<p style="margin:0 0 6px"><span style="color:#6b7280">Documentos adjuntos:</span></p>
+<ul style="margin:4px 0 0;padding-left:20px">
+  [[lista_adjuntos]]
+</ul>
+
+<p style="margin:16px 0 0;padding:10px;background:#fef3c7;border-left:3px solid #D97706;font-size:13px">
+Siete respuestas de la llamada (pendiente de definición con el cliente)
+</p>
+
+<p style="margin:20px 0 0">Coordina la visita con el contacto de mayor prioridad y registra el resultado en la plataforma.</p>
+
+<p style="margin:20px 0 0;color:#6b7280;font-size:12px">
+VProperty · Tasaciones y Bienes Raíces<br>
+Este correo se generó de forma automática al asignarte la solicitud.
+</p>
+
+</div>
