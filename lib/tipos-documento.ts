@@ -50,7 +50,7 @@ import { listRecords } from '@/lib/airtable-client'
  *    Aquí convertía `vigencia_dias` (number) y `activo` (checkbox) en texto, y
  *    obligaba a un `Number()` de vuelta. Con JSON nativo ambos llegan tipados.
  *
- * @see docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md §4.1 · §4.2 (RN-25)
+ * @see docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md §4.1 · §4.2 (RN-25)
  * @see docs/_md/VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md — dominio D_
  * @see docs/schema-airtable.md §18 — FIELD_IDs verificados vía MCP
  */

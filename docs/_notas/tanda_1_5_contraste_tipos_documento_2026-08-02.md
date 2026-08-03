@@ -2,7 +2,7 @@
 
 > **Fecha**: 02-ago-2026
 > **Fuentes**: `D_TipoDocumento` (`tblkPhBnpdDmUWOl3`, 20 filas activas, leídas vía MCP)
-> vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_4.md` §4.2.1 (15 documentos).
+> vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md` §4.2.1 (15 documentos).
 > **Alcance**: sólo reporte. No se creó, modificó ni eliminó ningún registro en Airtable.
 
 ## Resumen numérico

@@ -1,7 +1,8 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
 > **v1.9.5** — sucede a `VProperty_Especificacion_Proyecto_v1_9_4.md`, que queda marcado SUPERSEDED.
-> El nombre del archivo se conserva (`…_v1_9_4.md`) por estabilidad de las rutas que lo citan; la versión normativa es la del cuerpo.
+> El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
+> **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
 > Identificadores históricos (RF · RNF · RN · RT · RR · SP · D · SC · AT · IF) **no se renumeran**.
 
@@ -31,7 +32,20 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
                       con confirmación UI. Toca §1.5.1.1, RF-51 y §8.4
                       (nuevos puntos f y g), y acota el soft-delete de
                       §8.4 (d) para los dos únicos flujos de borrado
-                      duro del checklist. Sucede a 1.9.4, que queda
+                      duro del checklist. Consolidación documental del
+                      mismo día: los contratos y blueprints conceptuales
+                      de SC-Adjuntos-Upload v1.2 y SC-Adjuntos-Delete se
+                      integran en el cuerpo oficial (§8.6 nueva, con
+                      RF-52); precisión en §8.2 sobre idempotencia por
+                      (hash_md5 + solicitud) y respuesta reused; se
+                      corrige la env var real MAKE_WEBHOOK_URL_ADJUNTOS
+                      en §8.4 (h); se registra que el campo `activo` de
+                      §8.2 nunca se creó en Airtable, lo que refuerza la
+                      acotación al soft-delete de §8.4 (d); y se
+                      establece la regla de fuente única de
+                      especificación, con coincidencia obligatoria entre
+                      el nombre del archivo y la versión del cuerpo.
+                      Sucede a 1.9.4, que queda
                       SUPERSEDED y que aplicó las cinco correcciones
                       internas que v1.9.3 dejó pendientes sobre sí mismo
                       (§2.14): excepción acotada a RN-59 en §1.4, §1.9.1 y
@@ -3598,7 +3612,8 @@ Airtable.
                                      (para PDFs Carbone)
 
   activo            Boolean          Soft-delete flag; se preservan filas
-                                     para auditoría
+                                     para auditoría. ⚠ **Nunca se creó en
+                                     Airtable** --- ver nota abajo
   --------------------------------------------------------------------------
 
 Notas de diseño: el campo tipo_adjunto es un Select tipado con enum
@@ -3606,9 +3621,33 @@ acotado para agilidad operativa; cuando el tipo tiene atributos
 declarados en D_TipoDocumentoAtributo, el resultado de la extracción
 (RN-25 · SC07) se guarda como JSON en el propio adjunto en el campo
 `atributos_obtenidos`, evitando tablas intermedias en el dominio D\_ y
-preservando el desacople de RN-33 (cero FK cruzada). El hash_md5 evita
-almacenar duplicados; si un mismo usuario intenta subir dos veces el
-mismo binario, el sistema reconoce el hash y linkea a la fila existente.
+preservando el desacople de RN-33 (cero FK cruzada).
+
+Idempotencia por (hash_md5 + solicitud) --- precisión v1.9.5. El hash_md5
+evita almacenar duplicados, pero la unidad de comparación **no es el hash
+solo**: es el par (hash_md5, solicitud). Un mismo binario puede existir
+legítimamente en dos solicitudes distintas —dos operaciones sobre la misma
+propiedad comparten escritura o certificado— y cada una necesita su propia
+fila. Cuando se sube un binario que ya está indexado **en esa misma
+solicitud**, el escenario de subida no crea fila, no vuelve a subir el
+archivo a Dropbox y **responde `reused: true` devolviendo el adjunto
+existente**. La redacción anterior decía que el sistema "linkea a la fila
+existente": es inexacto en dos sentidos --- no se crea vínculo alguno, y
+la comparación nunca fue global sino por solicitud. Contrato completo en
+§8.6.
+
+Sobre el campo `activo` --- hallazgo v1.9.5. La tabla de arriba lo declara
+desde v1.3, pero **no existe en el schema real de Airtable**: verificado
+vía MCP el 02-ago-2026, `TX_Adjuntos` tiene 26 campos y ninguno se llama
+`activo`. La consecuencia es que el soft-delete de §8.4 (d) es hoy letra
+muerta para esta tabla: no hay campo que poner en FALSE, y por tanto el
+borrado duro no es sólo la opción elegida en §8.6 sino la única semántica
+implementable. Dos implicaciones operativas: (1) ninguna fórmula de
+búsqueda puede filtrar por `{activo} = TRUE()` --- Airtable devuelve
+`INVALID_FILTER_BY_FORMULA` y falla la petición completa, no la degrada;
+(2) el rastro de auditoría de un adjunto eliminado queda exclusivamente en
+`A_Eventos` (§8.6). Crear el campo es prerrequisito de cualquier
+soft-delete real y queda como decisión abierta.
 
 ## **8.3 Requisito funcional consolidado**
 
@@ -3675,6 +3714,23 @@ del usuario sobre un documento que él mismo cargó y decide descartar. La
 excepción no se extiende a ninguna otra interfaz ni a los documentos
 generados por el sistema (SC09), que conservan el soft-delete íntegro.
 
+Refuerzo de la acotación (v1.9.5). El campo `activo` que (d) presupone
+**nunca se creó en Airtable** (§8.2). Mientras no exista, el soft-delete
+no es implementable en `TX_Adjuntos` y el borrado duro de (g) no compite
+con una alternativa: es la única semántica disponible. La compensación de
+auditoría es obligatoria y vive en `A_Eventos` (§8.6). Si se decidiera
+crear el campo, (d) recupera su alcance general y (g) sigue siendo la
+excepción acotada de los dos flujos del checklist.
+
+\(h\) Variables de entorno de los escenarios de adjuntos. La subida usa
+**`MAKE_WEBHOOK_URL_ADJUNTOS`** ---nombre real en el repositorio, no
+`MAKE_WEBHOOK_URL_ADJUNTOS_UPLOAD`---, que no cambia de valor al
+desplegar la v1.2 porque el escenario reutiliza el mismo hook y el mismo
+endpoint. El borrado exige una variable nueva,
+`MAKE_WEBHOOK_URL_ADJUNTOS_DELETE`. Ambas se leen server-side; ninguna
+admite prefijo `NEXT_PUBLIC_`. La firma HMAC de las dos usa el mismo
+`MAKE_HMAC_SECRET` (§8.6).
+
 Reglas de negocio implicadas: RT-06 (persistencia exclusiva en Dropbox),
 RN-26 (hash SHA-256 para PDFs Carbone, aplicable también a documentos
 críticos como escrituras firmadas).
@@ -3693,6 +3749,434 @@ TX_DocumentosGenerados. Tablas leídas: TX_Solicitudes (código,
 cliente_slug), M_Clientes (slug_url), D_TipoDocumento (referencia soft).
 Servicio externo: Dropbox API v2 (upload, thumbnail opcional, temporary
 link).
+
+## **8.6 Escenarios Make de adjuntos (SC-Adjuntos-Upload v1.2 · SC-Adjuntos-Delete)**
+
+Esta subsección especifica los dos escenarios Make que materializan el
+invariante de único archivo por tipo de §1.5.1.1 y los requisitos (f) y
+(g) de §8.4. Incorporada en v1.9.5.
+
+El invariante —para cada par (solicitud, tipo_documento) existe a lo sumo
+un adjunto en TX_Adjuntos— convierte la subida en una operación con tres
+desenlaces en vez de uno. El borrado deja de ser un flujo independiente y
+pasa a ser, en el caso más frecuente, una fase interna de la subida. De
+ahí el reparto:
+
+| Escenario | Cuándo corre | Estado |
+|---|---|---|
+| **SC-Adjuntos-Upload v1.2** | Toda subida desde el checklist. Resuelve alta / reemplazo / reutilización | Evolución de v1.1 (activo) |
+| **SC-Adjuntos-Delete** | Sólo cuando el usuario desmarca un documento y confirma | Por construir |
+
+**Decisión arquitectónica.** El reemplazo lo detecta y ejecuta el
+backend. El cliente no compara hashes, no consulta si hay adjunto previo
+y no envía flags: emite siempre la misma petición, y el escenario decide
+el camino. La interfaz sólo es responsable de la UX de confirmación. Esto
+sostiene el principio rector —la UI muestra y captura, nunca decide— y
+evita el modo de fallo del reparto contrario: un cliente que cree que no
+hay previo, porque su lista está desactualizada, manda un alta y rompe el
+invariante en silencio.
+
+**Plan Make: Pro.** Sin restricción de escenarios activos. Los cinco
+—SC01, SC-Edicion, SC-Asignar, SC-Adjuntos-Upload v1.2 y
+SC-Adjuntos-Delete— conviven activos, y desaparece la rotación manual que
+hasta ahora era fuente de fallos de prueba difíciles de diagnosticar: un
+escenario apagado se ve igual que un escenario roto.
+
+### **8.6.1 Contrato del webhook SC-Adjuntos-Upload v1.2**
+
+Payload de entrada: **ningún campo nuevo respecto de v1.1, ningún flag**.
+El contrato es idéntico al que ya emite el Route Handler de subida, lo
+que permite desplegar v1.2 sin tocar código.
+
+```json
+{
+  "solicitud_id":     "recIEvKCbe7J8TDaB",
+  "codigo_ext":       "VP-2026-0053",
+  "tipo_documento":   "foto_ofertas_comparables",
+  "nombre_archivo":   "Foto REF Ofertas y REF CBR del inf.JPG",
+  "mime_type":        "image/jpeg",
+  "tamanio_kb":       155,
+  "hash_md5":         "6a37495c2c7b5f324ab966b254067308",
+  "subido_por":       "Ejecutivo",
+  "contenido_base64": "…"
+}
+```
+
+`tipo_documento` es el `codigo` de D_TipoDocumento; se persiste en
+`clave_adjunto` (`fldaLLtzAaEn1O8IW`) y es la clave por la que el
+escenario localiza al adjunto previo. **No** se usa `tipo`
+(`fldUYBO3LeOHxiIGW`): es un singleSelect heredado con opciones
+incoherentes que ningún escenario escribe.
+
+Header: `X-VP-Signature: hmac-sha256(body, MAKE_HMAC_SECRET)`. Sin
+cambios respecto de los demás escenarios.
+
+Respuesta, con el campo nuevo `modo`:
+
+```jsonc
+// alta
+{ "ok": true, "modo": "nuevo", "adjunto_id": "24", "url_dropbox": "/VProperty/…", "nombre_archivo": "…", "tamanio_kb": 155, "reused": false }
+
+// mismo binario, ya existía en esta solicitud
+{ "ok": true, "modo": "reused", "adjunto_id": "24", "url_dropbox": "/VProperty/…", "nombre_archivo": "…", "tamanio_kb": 155, "reused": true }
+
+// binario distinto para un tipo que ya tenía archivo
+{ "ok": true, "modo": "reemplazo", "adjunto_id": "25", "adjunto_previo_id": "recn0UEsUU6FHHvgx", "url_dropbox": "/VProperty/…", "nombre_archivo": "…", "tamanio_kb": 210, "reused": false }
+
+// error
+{ "ok": false, "error": "…", "reintentable": true }
+```
+
+`modo` ∈ { `nuevo`, `reemplazo`, `reused` }. `adjunto_previo_id` sólo
+viaja en `reemplazo` y es el **record ID** del adjunto eliminado, que
+alimenta el evento de auditoría (§8.6.5). El campo `reused` se conserva
+por compatibilidad con el cliente actual, que ya lo consume; es
+redundante con `modo` y queda marcado para retiro cuando el cliente
+migre.
+
+### **8.6.2 Blueprint conceptual de SC-Adjuntos-Upload v1.2**
+
+Módulos, no JSON. El blueprint ejecutable se deriva del de v1.1, que
+conserva las conexiones de Airtable y Dropbox.
+
+**Módulo 1 · Webhook custom.** Mismo hook y mismo endpoint que v1.1. No
+se reprovisiona: el despliegue de v1.2 es transparente para la aplicación.
+
+**Módulo 2 · Search Records por (hash + solicitud).** Tabla TX_Adjuntos,
+límite 1, fórmula ya en producción desde v1.1:
+`AND({hash_md5} = "{{1.hash_md5}}", ARRAYJOIN({solicitud}) = "{{1.codigo_ext}}")`.
+Si encuentra, responde `reused: true`, `modo: "reused"` y termina, sin
+tocar Dropbox ni crear filas.
+
+> **Dependencia frágil a vigilar.** `ARRAYJOIN({solicitud})` rinde el
+> *primary field* del registro vinculado, que es `codigo_solicitud`
+> (`fldDXEE1ejMNVDlpB`, fórmula) --- **no** `codigo_ext`
+> (`fldSuJx1fDNYYwDcD`). Hoy coinciden (verificado vía MCP el
+> 02-ago-2026: ambos `VP-2026-0053` para `recIEvKCbe7J8TDaB`). Son campos
+> distintos que casualmente coinciden; si divergen, esta comparación y la
+> del módulo 3 fallan a la vez y en silencio.
+
+Este chequeo es por (hash, solicitud) y **no** por tipo: si el mismo
+binario ya está cargado en otro tipo de la misma solicitud, se devuelve
+`reused`. Es deliberado —el binario ya está en Dropbox y volver a subirlo
+no aporta— pero implica que un archivo no puede figurar en dos tipos a la
+vez. Si el negocio llegara a exigirlo, este módulo pasa a (hash +
+solicitud + tipo).
+
+**Módulo 3 · Search Records por (solicitud + tipo_documento).** Sólo se
+ejecuta si el módulo 2 no encontró nada. Tabla TX_Adjuntos, límite 1,
+fórmula
+`AND(ARRAYJOIN({solicitud}) = "{{1.codigo_ext}}", {clave_adjunto} = "{{1.tipo_documento}}")`.
+Si encuentra, hay adjunto previo del mismo tipo con distinto hash —el
+mismo hash ya se descartó en el módulo 2— y corresponde la rama de
+reemplazo. Si no encuentra, corresponde la rama de alta.
+
+La fórmula **no** filtra por `{activo} = TRUE()`: ese campo no existe en
+el schema real (§8.2) y su uso devolvería `INVALID_FILTER_BY_FORMULA`,
+haciendo fallar toda subida y no sólo los reemplazos.
+
+Salvaguarda: `tipo_documento` puede llegar vacío —los adjuntos sueltos no
+vienen del checklist—. Con `tipo_documento` vacío **el invariante no
+aplica** y la rama de reemplazo debe quedar inhibida: si no,
+`{clave_adjunto} = ""` haría match contra los adjuntos sueltos de la
+solicitud y el primero sería borrado. La rama exige `tipo_documento` no
+vacío como condición explícita.
+
+**Rama de reemplazo.** (1) Get record del previo, recuperando
+`url_dropbox` y `hash_md5`. (2) Dropbox · Delete a file del previo. (3)
+Airtable · Delete record del previo. (4) Continúa el flujo normal de
+subida: upload del nuevo binario y creación de la fila. (5) Responde
+`modo: "reemplazo"` con `adjunto_previo_id`.
+
+> `url_dropbox` (`fldEccoUrOjV7oKZ5`) **no es una URL** pese a ser de tipo
+> `url` en Airtable: el escenario escribe ahí el `path_display`, la ruta
+> dentro de Dropbox (`/VProperty/Tasaciones/VP-2026-0053/Foto REF
+> Ofertas.JPG`). Es exactamente lo que `Delete a file` espera; no debe
+> normalizarse al visor web.
+
+> `airtable:ActionDeleteRecord` exige el record ID en la clave **`id`**
+> del mapper, **no** en `record`. Ponerlo en `record` deja `id` sin
+> definir y produce `[422] "records" must be a non-empty array of record
+> IDs` --- la causa raíz del fallo F-1 de SC-Edicion. El plural del
+> mensaje no implica que el módulo sea plural.
+
+**Rama de alta.** Sin previo: upload a Dropbox y creación de fila, como
+en v1.1. Responde `modo: "nuevo"`.
+
+**Filtro explícito en todas las ramas.** En Make, una ruta de Router sin
+filtro se ejecuta siempre y en paralelo a las demás; no es un "si no".
+Con tres ramas el riesgo se triplica respecto del defecto corregido en
+v1.1: cada una lleva su filtro explícito y mutuamente excluyente,
+construido con el par `exist` / `notexist` sobre los identificadores de
+los dos Search Records.
+
+**Log.** Escritura en LogEscenarios con el mapper poblado, registrando el
+`modo` resuelto. Los módulos de log de v1.1 tienen el mapper vacío y
+crean filas en blanco en cada ejecución: ruido, no observabilidad. Es
+deuda preexistente que no debe replicarse.
+
+### **8.6.3 Contrato y blueprint de SC-Adjuntos-Delete**
+
+Se usa exclusivamente cuando el usuario desmarca un documento del
+checklist y confirma la eliminación. No participa del reemplazo, que es
+interno a v1.2.
+
+**Identificador: record ID, no `adjunto_id`.** Conviven dos y sólo uno
+sirve:
+
+| Identificador | Campo | Tipo | Quién lo tiene |
+|---|---|---|---|
+| `adjunto_id` | `fldVt7Lk1ptvmgbtT` | autoNumber (ej. 24) | Lo devuelve el escenario de subida; el cliente lo guarda en el estado del checklist |
+| record ID | — | `rec…` | Lo expone la lectura de adjuntos por solicitud |
+
+El contrato usa el record ID: es lo que `ActionDeleteRecord` exige,
+permite reutilizar el guard de validación de record ID y evita un Search
+adicional sólo para resolver el autoNumber. En consecuencia, el checklist
+debe casar su fila con el adjunto persistido por `clave_adjunto` para
+obtener el record ID; el autoNumber que hoy guarda el estado del
+componente no sirve para borrar.
+
+Payload:
+
+```json
+{
+  "adjunto_record_id": "recn0UEsUU6FHHvgx",
+  "solicitud_id":      "recIEvKCbe7J8TDaB",
+  "codigo_ext":        "VP-2026-0053",
+  "hash_md5":          "6a37495c2c7b5f324ab966b254067308",
+  "subido_por":        "Ejecutivo"
+}
+```
+
+Header `X-VP-Signature` idéntico al de subida. Respuestas:
+
+```jsonc
+{ "ok": true, "adjunto_id": "recn0UEsUU6FHHvgx", "dropbox_borrado": true,  "airtable_borrado": true }
+{ "ok": true, "adjunto_id": "recn0UEsUU6FHHvgx", "dropbox_borrado": false, "airtable_borrado": true,  "aviso": "huerfano_dropbox" }
+{ "ok": true, "adjunto_id": "recn0UEsUU6FHHvgx", "dropbox_borrado": false, "airtable_borrado": false, "ya_no_existia": true }
+{ "ok": false, "error": "…", "reintentable": true }
+```
+
+El campo `error` viaja para el log del servidor, **nunca al usuario**: la
+interfaz emite el literal humano canónico.
+
+**Blueprint conceptual.** (1) Webhook custom, con la URL registrada en
+Z_Webhooks. (2) Airtable Get record sobre TX_Adjuntos, con `url_dropbox`,
+`hash_md5` y `solicitud` entre los campos de salida, y tres salvaguardas
+antes de destruir nada: que el registro exista —si no, se responde
+`ya_no_existia`—; que su `hash_md5` coincida con el del payload, para
+borrar el archivo que el usuario vio y no otro que ocupe ese record ID
+tras una carrera; y que su `solicitud` corresponda al `codigo_ext`
+recibido, lo que impide que un identificador manipulado borre adjuntos de
+otra solicitud. (3) Dropbox · Delete a file, con manejo de error que
+continúa ante `path_not_found` —el binario ya no estaba, se borra la fila
+igual y se responde `dropbox_borrado: false`— y que corta antes del paso
+siguiente ante cualquier otro fallo, porque es preferible no borrar nada
+a crear un huérfano invisible. (4) Airtable Delete record, con el record
+ID en la clave `id`. (5) Respuesta del webhook. (6) Log en LogEscenarios
+con mapper poblado.
+
+Las opciones `ADJUNTOS_DELETE` y `ADJUNTOS_UPLOAD_V2` deben crearse
+primero como valores del singleSelect `Escenario` de LogEscenarios y
+recién después declararse en el cliente de Make: el helper degrada a
+`Escenario` vacío si la opción no existe, y la traza se pierde a medias.
+
+### **8.6.4 RF-52 · Eliminación y reemplazo de adjuntos del checklist**
+
+  -------------------------------------------------------------------------
+  **RF-52**         **Eliminación y reemplazo de adjuntos del checklist**
+  ----------------- -------------------------------------------------------
+  **Descripción**   La Ejecutiva puede sustituir el archivo de un tipo de
+                    documento del checklist por otro distinto, y puede
+                    eliminarlo sin sustituto al desmarcar el tipo. Ambas
+                    operaciones eliminan el binario en Dropbox y la fila en
+                    TX_Adjuntos, se ejecutan íntegramente en escenarios Make
+                    (§8.6.2 y §8.6.3) sin escritura directa desde la
+                    aplicación, y exigen confirmación explícita del usuario
+                    mediante diálogos distintos y no intercambiables
+                    (§1.5.1.1). Quedan deshabilitadas en modo consulta
+                    (RN-59).
+
+  **Criterio de     Reemplazo: subir un archivo con hash distinto a un tipo
+  aceptación**      que ya tiene adjunto deja exactamente una fila para ese
+                    par (solicitud, tipo_documento), con el binario anterior
+                    ausente de Dropbox y un evento `adjunto_reemplazado` en
+                    A_Eventos con ambos identificadores. Desmarcado: al
+                    confirmar, el tipo queda sin archivo, la fila desaparece
+                    de TX_Adjuntos, el binario de Dropbox y se registra
+                    `adjunto_eliminado`. Idempotencia: repetir la
+                    eliminación de un adjunto ya eliminado devuelve éxito
+                    sin efectos. Modo consulta: la petición de borrado o
+                    reemplazo sobre una solicitud asignada con tasador es
+                    rechazada por el servidor con 409, con independencia del
+                    estado de los controles de la interfaz.
+  -------------------------------------------------------------------------
+
+Requisitos de interfaz asociados, vinculados a §1.5.1.1:
+
+**Diálogo de reemplazo.** Al pulsar subir sobre un tipo que ya tiene
+adjunto, se muestra confirmación **antes** de abrir el selector de
+archivo, con el literal: *"El documento [Tipo de documento] ya tiene un
+archivo cargado ([nombre_archivo previo]). Si continúas con un archivo
+distinto, se reemplazará el anterior de forma permanente. Solo se
+conserva un archivo por tipo de documento. ¿Deseas continuar?"* Botones:
+destructivo "Reemplazar" y "Cancelar". El diálogo se dispara por *tener
+adjunto previo*, no por *saber que el hash difiere*: el cliente no conoce
+el hash hasta que el usuario elige archivo. Si acaba eligiendo el mismo
+binario, el backend responde `reused` y no se reemplaza nada; la
+confirmación habrá sido innecesaria pero nunca engañosa, porque advirtió
+de un riesgo que no llegó a materializarse.
+
+**Diálogo de desmarcado.** El literal pasa a: *"El archivo será eliminado
+permanentemente de la solicitud y del almacenamiento. Esta acción no se
+puede deshacer."* Botón destructivo "Eliminar definitivamente". El texto
+vigente hasta v1.9.5 —que el archivo se mantiene en los adjuntos— deja de
+ser cierto y no debe conservarse.
+
+**Feedback de progreso.** Ambas confirmaciones disparan escritura, así
+que aplican la regla de progreso: botón deshabilitado mientras la
+operación está en vuelo, indicador de carga, y el texto en gerundio
+("Eliminando…", "Reemplazando…"). El reset del estado va en la cláusula
+`finally`, nunca sólo en el manejo de error.
+
+**Endpoint de borrado.** Ruta nueva `app/api/adjuntos/[id]` con método
+DELETE, que espeja al de subida: rechaza sin sesión; degrada con aviso si
+faltan las variables de entorno en lugar de romper la consola; valida el
+segmento `[id]` con el guard de record ID; valida el cuerpo con esquema,
+incluido `solicitud_id`; revalida RN-59 server-side devolviendo 409; y
+delega en Make con firma HMAC. El tiempo de espera es menor que el de
+subida —30 segundos frente a 45— porque no viaja binario. Los errores
+técnicos sólo se registran en el log del servidor.
+
+**Lectura de adjuntos.** La lectura por solicitud debe incorporar
+`hash_md5` a los campos recuperados y al tipo expuesto: es el dato que
+alimenta la salvaguarda de §8.6.3.
+
+**Refresco tras la mutación.** Tras `modo: "nuevo"`, `modo: "reemplazo"`
+o un borrado confirmado, la lista de adjuntos se relee desde Airtable. No
+se confía en el estado local: si el borrado fue parcial o el reemplazo
+abortó, el checklist debe reflejar la verdad de la base y no el optimismo
+del cliente. En el desmarcado, el tipo sólo se marca como vacío si la
+relectura confirma la desaparición. Tras `reused` el refresco es
+innecesario —nada cambió— pero inofensivo.
+
+**Mensajes de resultado.** Reemplazo: "Documento reemplazado". Desmarcado:
+"Documento eliminado". Fallo: "No pudimos completar la acción. Intenta
+nuevamente en unos segundos." Éxito parcial con `dropbox_borrado: false`:
+se trata como éxito de cara al usuario, porque el huérfano en Dropbox es
+un problema de operación que la Ejecutiva no puede resolver ni necesita
+entender; queda registrado en LogEscenarios.
+
+Variables de entorno: §8.4 (h).
+
+### **8.6.5 Consistencia, fallos parciales y trazabilidad**
+
+**Orden de operaciones.** Dentro del reemplazo: Delete en Dropbox, Delete
+en Airtable, y sólo entonces subida del nuevo binario. Si el Delete de
+Dropbox falla, se **aborta el reemplazo completo**: no se borra la fila,
+no se sube el archivo nuevo, y se responde error reintentable. El estado
+queda exactamente como estaba antes de la petición, que es el único
+estado seguro. **Nunca debe quedar el previo borrado sin reemplazo real**:
+un tipo que pierde su archivo y no recibe el sustituto es peor que un
+reemplazo que no ocurrió, porque el usuario ya confirmó y asume que hay
+documento.
+
+El orden Dropbox→Airtable responde a que, de los dos estados
+inconsistentes alcanzables, sólo uno es recuperable:
+
+| Escenario | Estado resultante | Recuperable |
+|---|---|---|
+| Dropbox OK, Airtable falla | Fila apuntando a un archivo inexistente | **Sí** — visible en la interfaz y auditable; el usuario reintenta y el Delete de Dropbox falla benignamente mientras el de Airtable completa |
+| Airtable OK, Dropbox falla | Binario huérfano en Dropbox, sin fila que lo referencie | **No** — nadie lo ve nunca desde la aplicación |
+
+**No hay rollback transaccional.** Make no lo ofrece entre aplicaciones
+distintas y no se simulará re-subiendo binarios. La estrategia es orden,
+aborto temprano e idempotencia; no compensación.
+
+**Sin reintento automático.** Un reintento ciego sobre una operación
+destructiva con tiempo de espera agotado es la receta para borrar dos
+veces lo que la primera vez sí funcionó. El reintento lo decide la
+persona, con el botón, sobre una lista ya recargada. El campo
+`reintentable` es señal para el texto del aviso, no instrucción de
+reintento automático.
+
+Matriz de fallos parciales:
+
+| Fallo | Respuesta | Airtable | Dropbox | Acción |
+|---|---|---|---|---|
+| Delete Dropbox del previo (reemplazo) | `ok: false` | previo intacto | previo intacto | abortar; nada cambió |
+| Delete Airtable del previo (reemplazo) | `ok: false` | previo vivo, apunta a nada | previo borrado | visible y auditable; el reintento del usuario lo resuelve |
+| Upload del nuevo, tras borrar el previo | `ok: false` | tipo vacío | previo borrado | **peor caso**; el usuario ve el tipo vacío y vuelve a subir |
+| Delete Dropbox (desmarcado), `path_not_found` | `ok: true` + aviso | fila borrada | ya no estaba | ninguna |
+| Delete Dropbox (desmarcado), otro error | `ok: false` | fila intacta | archivo intacto | reintento manual |
+
+El peor caso —tercera fila— es el precio de no tener transacción. Se
+mitiga con el orden, que deja la subida del nuevo en último lugar cuando
+ya no queda nada que deshacer, y es visible: el tipo queda vacío en el
+checklist, no en un estado engañoso.
+
+**Idempotencia del borrado.** Dos defensas, ninguna suficiente sola. En
+el cliente, el botón deshabilitado en vuelo cubre el doble clic pero no
+la doble pestaña ni el reintento tras un tiempo de espera agotado. En el
+escenario, el Get record es el guard real: si el registro ya no existe,
+no corre ni el borrado en Dropbox ni el de Airtable, y se responde éxito
+con `ya_no_existia`. **Un borrado repetido devuelve éxito, no 404**: el
+estado final deseado ya se cumple, y devolver 404 obligaría al cliente a
+distinguir dos casos que para el usuario son el mismo. En el reemplazo la
+idempotencia la da el módulo 2: reintentar la misma subida encuentra el
+hash ya cargado y devuelve `reused`, sin volver a borrar nada.
+
+**RN-59 en dos capas.** Con la solicitud en modo consulta —estado
+distinto de creada y con tasador asignado, §1.4— quedan deshabilitados
+los tres flujos: subir, reemplazar y desmarcar. La interfaz deshabilita
+controles como feedback rápido; el servidor revalida y devuelve 409. La
+interfaz no decide reglas de negocio: deshabilitar un botón es feedback,
+no control de acceso.
+
+**Trazabilidad en A_Eventos.** Ambos flujos destructivos registran evento
+(`tipo_evento` es texto libre):
+
+| Flujo | `tipo_evento` | Contenido |
+|---|---|---|
+| Reemplazo | `adjunto_reemplazado` | `adjunto_previo_id` + `adjunto_nuevo_id` + `tipo_documento` + `subido_por` |
+| Desmarcado | `adjunto_eliminado` | `adjunto_id` + `tipo_documento` + `subido_por` |
+
+Sin esto, el borrado duro deja un hueco de auditoría: el binario ya no
+está, la fila tampoco, y no queda rastro de que existieron. Como
+TX_Adjuntos no tiene campo `activo` (§8.2), **el evento es lo único que
+sobrevive al borrado**, y es lo que hace aceptable la excepción al
+soft-delete de §8.4 (d). Se escribe desde el escenario Make, nunca desde
+la aplicación.
+
+**Consumo del plan.** Un reemplazo son unos siete módulos frente a los
+cuatro de un alta. No es preocupante al volumen actual del plan Pro, pero
+conviene medirlo antes de extender el patrón a IF-03, donde el volumen de
+fotografías es de otro orden de magnitud.
+
+### **8.6.6 Prerrequisitos de construcción**
+
+Dos decisiones bloquean el inicio de la construcción:
+
+1. **Guard de RN-59 server-side.** No existe hoy en el repositorio un
+   helper de editabilidad ni constante equivalente, pese a que la guía de
+   construcción lo cita como si existiera. Debe decidirse si se implementa
+   el helper o si el guard se resuelve leyendo estado y tasador en cada
+   Route Handler.
+2. **Campo `activo`.** Debe decidirse si se crea en TX_Adjuntos —lo que
+   devolvería vigencia al soft-delete de §8.4 (d)— o si se asume
+   formalmente el borrado duro como semántica única.
+
+Resto de la lista de construcción: crear las opciones de escenario en
+LogEscenarios; evolucionar el blueprint de subida a v1.2, reimportarlo y
+verificar el nombre del escenario en Make; escribir, importar, registrar
+y activar el blueprint de borrado; declarar la variable de entorno nueva
+en el entorno local, en Railway y en la guía del repositorio; incorporar
+`hash_md5` a la lectura de adjuntos; crear el endpoint DELETE; ajustar el
+checklist con los dos diálogos y el feedback de progreso; emitir los
+eventos de auditoría; verificar el orden alfabético del checklist exigido
+por §1.5.1.1, hoy sin garantía explícita en el cliente; y cubrir con
+pruebas el guard de record ID, el borrado repetido, los tres valores de
+`modo` y los literales humanos.
 
 # **9. Otros Requerimientos Funcionales**
 
