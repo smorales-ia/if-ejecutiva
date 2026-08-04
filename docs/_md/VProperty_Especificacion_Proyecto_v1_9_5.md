@@ -3636,6 +3636,35 @@ existente": es inexacto en dos sentidos --- no se crea vínculo alguno, y
 la comparación nunca fue global sino por solicitud. Contrato completo en
 §8.6.
 
+**RN-60 --- Unicidad de tipo de documento por solicitud (nueva v1.9.5).**
+Formaliza como regla de negocio el invariante ya enunciado en §1.5.1.1 y
+§8.2 y consolidado en RF-51 (§8.3) y RF-52 (§8.6.4).
+
+- *Precondición:* una subida desde el checklist declara `tipo_documento`
+  (persistido en `clave_adjunto`, `fldaLLtzAaEn1O8IW`) no vacío para una
+  `solicitud`.
+- *Acción:* el par (`clave_adjunto`, `solicitud`) es único en
+  TX_Adjuntos. El backend resuelve el desenlace de la subida --- alta,
+  reutilización o reemplazo --- sin que el cliente lo decida (§1.5.1.1,
+  §8.6.2). Si ya existe un adjunto de ese tipo con `hash_md5` distinto, el
+  previo se elimina de Dropbox y de TX_Adjuntos y el nuevo ocupa su lugar,
+  previa confirmación explícita del usuario (RF-52).
+- *Postcondición:* para cada par (`clave_adjunto`, `solicitud`) queda a lo
+  sumo un adjunto. La idempotencia por (`hash_md5`, `solicitud`) tiene
+  **precedencia**: un binario idéntico responde `reused` sin diálogo ni
+  reemplazo. Con `tipo_documento` vacío (adjuntos sueltos, fuera del
+  checklist) el invariante no aplica.
+- *Enforcement lógico, no físico.* El constraint no se implementa como
+  índice único en Airtable, que no soporta esa restricción, ni por
+  soft-delete sobre un campo `activo` --- que no existe en el schema real
+  (§8.2). La unicidad la garantizan el escenario SC-Adjuntos-Upload v1.2
+  (módulos 2 y 3, §8.6.2) y los diálogos de confirmación de la interfaz
+  (§1.5.1.1). No hay enforcement en la capa de datos: una escritura que
+  eludiera esos dos escenarios podría romper el invariante sin que Airtable
+  lo impida. Es la contraparte del principio "cero writes directos a
+  Airtable desde la aplicación" (RT-03): al no haber otra vía de escritura,
+  el escenario Make es el punto único donde el invariante se hace cumplir.
+
 Sobre el campo `activo` --- hallazgo v1.9.5. La tabla de arriba lo declara
 desde v1.3, pero **no existe en el schema real de Airtable**: verificado
 vía MCP el 02-ago-2026, `TX_Adjuntos` tiene 26 campos y ninguno se llama
@@ -5159,6 +5188,9 @@ cuando la regla afecta transversalmente varias interfaces.
            tasador asignado (nueva v1.9, reescrita §2.3, §2.5
            v1.9.1; excepción acotada a
            TX_ContactosVisita en v1.9.4)
+
+  RN-60    Unicidad de tipo de documento por       §1.5.1.1, §8.2, §8.3
+           solicitud (nueva v1.9.5)                (RF-51), §8.6.4 (RF-52)
   ------------------------------------------------------------------------
 
 Nota v1.3 sobre RN-25. La regla original de generación de texto
