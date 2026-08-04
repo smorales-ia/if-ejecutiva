@@ -1155,3 +1155,27 @@ Preservados: 23 módulos, hook `3441135`, conexión única `8847431`, m24 → `A
 **Causa raíz:** se optimizó por la comodidad del que enlaza en vez de por la confianza del que lee. Un archivo que miente en el nombre erosiona la credibilidad de todo su contenido, y el ahorro de no actualizar referencias es de minutos.
 **Solución aplicada:** política de coincidencia obligatoria, escrita en `CLAUDE.md` §Fuente única. El bump son tres pasos en el mismo commit: (1) actualizar la versión en el cuerpo y añadir entrada al historial; (2) `git mv` al nombre nuevo —nunca `rm` + `add`, que rompe `git log --follow`—; (3) `grep -rn` del nombre anterior y actualización de las referencias vivas. Al ejecutarlo aquí, de 21 apariciones sólo 8 eran punteros vivos: las 13 restantes —`_sync_ifTasador_v1/`, el changelog fechado de `diseno.md`, la línea de linaje "sucede a…"— son memoria histórica y **deben conservarse**.
 **Prevención futura:** el `grep` del paso 3 no es un buscar-y-reemplazar masivo. Cada aparición se clasifica antes de tocarla: un puntero a la fuente vigente se actualiza; un registro de lo que ocurrió en una fecha, no. Reescribir un changelog de julio para que cite una versión de agosto no arregla nada y falsifica el historial.
+
+### 2026-08-03 — Plantilla email_asignacion_tasador con reglas de trabajo reales y firma corporativa
+**Contexto:** §1.6.3 de la spec. Incorporación a la plantilla del correo de asignación al tasador (SC13) del texto operativo real que hoy usa el área de Control y Seguimiento de Value Property, provisto desde un correo de producción real.
+
+**Inconveniente (1):** no estaba claro dónde vivía la plantilla. El prompt inicial asumía un archivo HTML/MJML dentro del repo Next.js y un módulo Gmail dentro del blueprint de `SC-Asignar`.
+**Causa raíz:** la plantilla no es un archivo. Vive en Airtable, en `C_NotificacionesConfig` fila `rec5t6dBeYQkGsw4F`, campo `plantilla_cuerpo` (`fldQro7jvi3RlxDs0`). El blueprint que la consume es `SC05-EmailTasador` módulo 19, no `SC-Asignar`.
+**Solución aplicada:** PATCH vía MCP Airtable, con relectura independiente posterior para verificar el encoding. La plantilla quedó versionada por primera vez en `docs/_artefactos/airtable/`, en dos snapshots (v0 pre-cambio, v1 post-cambio); el v1 se escribió con el contenido leído de vuelta desde Airtable, no con el planificado.
+**Prevención futura:** antes de editar "una plantilla" en este proyecto, localizar primero dónde vive. Conviven tres capas —archivo del repo, blueprint Make y registro Airtable— y sólo la tercera es fuente de verdad para el contenido del correo.
+
+**Inconveniente (2):** el prompt pedía escribir la variable como `{{tasador_nombre}}`.
+**Causa raíz:** confusión con la sintaxis Handlebars habitual.
+**Solución aplicada:** se usó `[[tasador_nombre]]`, el delimitador ya fijado. Un literal `{{` dentro de un string traído en runtime rompe el parser de la propia expresión de Make.
+**Prevención futura:** `[[ ]]` para todo lo que viva en Airtable; `{{ }}` sólo en el mapper del blueprint.
+
+**Inconveniente (3):** las listas romanas se escribieron con `<ol type="i">`.
+**Causa raíz:** Outlook de escritorio usa el motor de Word, que ignora el atributo `type` y renderiza numeración arábiga.
+**Solución aplicada:** los 10 ítems (7 respuestas de la llamada + 3 fotos de escritura) se escribieron como `<p>` con el romano literal (`i.`, `ii.`, …) y sangría por `margin-left`.
+**Prevención futura:** en HTML de correo, no depender de atributos de lista ni de CSS que Word no soporte. Romano literal en el texto.
+
+**Hallazgo:** queda parcialmente cerrado D-11 (§15). Las 7 respuestas de la llamada dejan de estar "pendientes de definición" y pasan a ser texto operativo vigente, sujeto a validación formal con el cliente.
+
+**TODO abierto:** la respuesta `iii` nombra a "Fabiola" —un nombre propio en un correo automático a todos los tasadores—. Validar con Control y Seguimiento si se mantiene o se reemplaza por un rol genérico.
+
+**Pendiente próxima tanda:** bump de spec v1_9_5 → v1_9_6 actualizando §1.6.3 (el párrafo que declara pendientes las 7 respuestas quedó falso) y cerrando D-11 en §15; renombrar `SC05-EmailTasador` → `SC08` (deuda de nombre por la renumeración de escenarios).
