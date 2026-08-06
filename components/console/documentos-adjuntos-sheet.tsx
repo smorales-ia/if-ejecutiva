@@ -98,7 +98,16 @@ export function DocumentosAdjuntosSheet({
     error: errorAdjuntos,
     sesionExpirada,
     recargar,
+    eliminar,
+    eliminandoId,
   } = useAdjuntosSolicitud(solicitud.id, open)
+
+  // `eliminar` necesita el `codigo_ext` para el log del escenario; el checklist
+  // sólo conoce el record ID del adjunto, así que se cierra aquí.
+  const eliminarAdjunto = React.useCallback(
+    (adjuntoRecordId: string) => eliminar(adjuntoRecordId, solicitud.codigoExt),
+    [eliminar, solicitud.codigoExt],
+  )
 
   const [checklist, setChecklist] = React.useState<DocumentoChecklistItem[]>([])
 
@@ -202,9 +211,13 @@ export function DocumentosAdjuntosSheet({
                   value={checklist}
                   onChange={setChecklist}
                   tipos={tipos}
+                  adjuntos={adjuntos}
                   solicitudId={solicitud.id}
                   codigoExt={solicitud.codigoExt}
+                  readOnly={soloLectura}
+                  eliminandoId={eliminandoId}
                   onSubido={recargar}
+                  onEliminar={eliminarAdjunto}
                 />
               )}
             </section>

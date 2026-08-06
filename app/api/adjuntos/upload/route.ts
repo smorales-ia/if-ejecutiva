@@ -40,7 +40,16 @@ const uploadSchema = z.object({
 
 interface MakeAdjuntoResponse {
   ok?: boolean
+  /**
+   * `nuevo` · `reused` · `reemplazo` — desenlace resuelto por
+   * `SC-Adjuntos-Upload v1.2` (§8.6.1). El cliente no lo decide ni lo pide: no
+   * hay flag de reemplazo en el payload de subida. Si Make responde sin `modo`
+   * (blueprint v1.1 todavía en Make), se deriva de `reused` para no romper.
+   */
+  modo?: 'nuevo' | 'reused' | 'reemplazo'
   adjunto_id?: string | number
+  /** Record ID del adjunto eliminado; sólo en `modo: "reemplazo"`. */
+  adjunto_previo_id?: string
   url_dropbox?: string
   nombre_archivo?: string
   tamanio_kb?: number
@@ -156,14 +165,28 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const modo = data.modo ?? (data.reused ? 'reused' : 'nuevo')
+
+  if (modo === 'reemplazo') {
+    // El evento `adjunto_reemplazado` lo escribe Make en A_Eventos (§8.6.5);
+    // aquí sólo queda la traza de servidor para correlacionar con Dropbox.
+    console.info('[ADJUNTOS-UPLOAD] reemplazo por unicidad de tipo (RN-60)', {
+      codigo_ext: payload.codigo_ext,
+      tipo_documento: payload.tipo_documento,
+      adjunto_previo_id: data.adjunto_previo_id,
+    })
+  }
+
   return NextResponse.json(
     {
       ok: true,
+      modo,
       adjunto_id: data.adjunto_id,
+      adjunto_previo_id: data.adjunto_previo_id,
       url_dropbox: data.url_dropbox ?? '',
       nombre_archivo: data.nombre_archivo ?? payload.nombre_archivo,
       tamanio_kb: data.tamanio_kb ?? payload.tamanio_kb,
-      reused: data.reused ?? false,
+      reused: data.reused ?? modo === 'reused',
     },
     { status: 200 }
   )

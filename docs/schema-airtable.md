@@ -377,7 +377,7 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 |---|---|---|---|
 | `Titulo Log` | `fldOLYPMstZl1cct6` | Single line text | **Primary field** |
 | `Fecha / Hora` | `fldGRchH2Cc82fO4b` | Date time | |
-| `Escenario` | `fldPktGeTzNCRQ319` | Single select | Opciones fijas: `Email tasador · Email cliente visita · Alerta SLA 2d · Alerta SLA 3d · Email informe PDF · UF diaria · Solicitud repetida · Informe visado · E1_Airtable_Make · E2_Carbone_Render · E3_Carbone_Download_Dropbox · E4_Notificacion_Email`. Ninguna corresponde a un escenario de IF-02 — falta agregar `SC-RF09-ExtraccionClaude` a mano (§13.4) |
+| `Escenario` | `fldPktGeTzNCRQ319` | Single select | **19 opciones reales, verificadas vía meta API el 05-ago-2026** (`GET /v0/meta/bases/{base}/tables`, no MCP): `Email tasador · Email cliente visita · Alerta SLA 2d · Alerta SLA 3d · Email informe PDF · UF diaria · Solicitud repetida · Informe visado · E1_Airtable_Make · E2_Carbone_Render · E3_Carbone_Download_Dropbox · E4_Notificacion_Email · SC-RF09-ExtraccionClaude · SC-Asignar · SC-Edicion · SC01 · ADJUNTOS_UPLOAD · ADJUNTOS_DELETE · ADJUNTOS_UPLOAD_V2`. Las 6 últimas se crearon a mano en la UI (las cuatro primeras el 27-jul-2026; `ADJUNTOS_DELETE` y `ADJUNTOS_UPLOAD_V2` el 05-ago-2026 para Tanda 3). **Al agregar un escenario nuevo, crear primero la opción aquí y recién después declararla en `lib/make-client.ts` (`ESCENARIO_CHOICE`) o mapearla en un blueprint**: los módulos Airtable de los blueprints van con `typecast: false` y un valor inexistente devuelve 422 `INVALID_MULTIPLE_CHOICE_OPTIONS`, que corta la ejecución de Make; el lado Next.js va con `typecast: true` y falla más blando (`Insufficient permissions to create new select option`, error tragado y fila de log perdida) |
 | `Estado` | `fldTzSpyzbj1EOa7F` | Single select | Opciones reales: `✓ OK · ✗ Error · ⚠ Parcial · ⏭ Omitido` |
 | `Trigger` | `fldvgIczpgBQJe2Lx` | Single line text | |
 | `Destinatario` | `fld8wqOuOfUuN1RCo` | Single line text | |
@@ -452,12 +452,19 @@ Creados vía MCP en la sesión autónoma de construcción de RF-09 (panel de exp
 | `TX_Adjuntos` | `datos_pendientes_visador` | `fldRRgtfu6xxmhNEr` | Long text (JSON) | Lista de atributos no obtenidos tras 2 intentos fallidos. Se puebla solo cuando `estado_extraccion = delegado_visador`. |
 | `TX_Solicitudes` | `tiene_pendientes_visador` | `fldxozXDsho55PMd6` | Checkbox | `TRUE` cuando al menos un `TX_Adjuntos` de la solicitud queda en `delegado_visador`. Lo marca `AT03-Ext`/`AT-RF09-Trigger` directamente (no hay rollup automático — Airtable Automations no exponen "rollup" como tipo creable vía API de forma confiable para este caso, se escribe explícito). |
 
-**⚠ Pendiente manual — limitación real del MCP (no del diseño):** `mcp__airtable__update_field` sólo acepta `options.formula` en su schema — **no expone ningún parámetro para agregar `choices` a un campo `singleSelect` existente** (confirmado contra el schema de la herramienta, 13-jul-2026; ver `docs/aprendizajes.md` E-033, mismo patrón de limitación que E-007 pero para "agregar opción" en vez de "cambiar tipo"). Dos campos quedan con expansión de opciones **pendiente de hacerse a mano en la UI de Airtable** antes del Checkpoint 1:
+**⚠ Pendiente manual — limitación real del MCP (no del diseño):** `mcp__airtable__update_field` sólo acepta `options.formula` en su schema — **no expone ningún parámetro para agregar `choices` a un campo `singleSelect` existente** (confirmado contra el schema de la herramienta, 13-jul-2026; ver `docs/aprendizajes.md` E-033, mismo patrón de limitación que E-007 pero para "agregar opción" en vez de "cambiar tipo"). Dos campos quedaron con expansión de opciones **pendiente de hacerse a mano en la UI de Airtable** antes del Checkpoint 1 — ambos ya resueltos, ver columna «Estado»:
 
-| Tabla | Campo | Opciones a agregar |
-|---|---|---|
-| `TX_Adjuntos` | `estado_extraccion` (`fld54epvDJ7YdJIYD`) | `skipped` · `no_corresponde` · `delegado_visador` (ya existen: `idle · extrayendo · listo · error`) |
-| `LogEscenarios` | `Escenario` (`fldPktGeTzNCRQ319`) | `SC-RF09-ExtraccionClaude` (ver §13.5 — ninguna opción real actual corresponde a un escenario de IF-02) |
+| Tabla | Campo | Opciones a agregar | Estado |
+|---|---|---|---|
+| `TX_Adjuntos` | `estado_extraccion` (`fld54epvDJ7YdJIYD`) | `skipped` · `no_corresponde` · `delegado_visador` (ya existían: `idle · extrayendo · listo · error`) | ✅ **RESUELTO** — las 7 opciones existen, verificado vía meta API el 05-ago-2026 |
+| `LogEscenarios` | `Escenario` (`fldPktGeTzNCRQ319`) | `SC-RF09-ExtraccionClaude` (ver §13.5) | ✅ **RESUELTO** el 27-jul-2026 junto con `SC-Asignar`, `SC-Edicion`, `SC01` y `ADJUNTOS_UPLOAD`; ver §12 para las 19 opciones actuales |
+
+> ✅ **Ambas filas cerradas al 05-ago-2026.** La creación se hizo a mano en la UI de
+> Airtable, como exigía la limitación del MCP descrita arriba. La verificación **no** usó
+> MCP: se leyó el schema con `GET https://api.airtable.com/v0/meta/bases/{base}/tables` y
+> el token `AIRTABLE_TOKEN` (solo lectura de schema), comparando cada opción con `repr()`
+> para descartar espacios finales. El párrafo anterior se conserva porque documenta una
+> limitación real y fechada del MCP (E-033), no porque quede trabajo pendiente.
 
 ### 13.5 Hallazgo crítico: `LogEscenarios` tiene schema real distinto al documentado
 
@@ -466,7 +473,7 @@ Re-auditado vía MCP el 13-jul-2026 durante la construcción de RF-09. El §12 d
 | Documentado / usado en blueprint | Campo real | Tipo real |
 |---|---|---|
 | `log_id` | *(no existe — el primary field real es `Titulo Log`, singleLineText)* | — |
-| `escenario` | `Escenario` (`fldPktGeTzNCRQ319`) | singleSelect — opciones fijas: `Email tasador · Email cliente visita · Alerta SLA 2d · Alerta SLA 3d · Email informe PDF · UF diaria · Solicitud repetida · Informe visado · E1_Airtable_Make · E2_Carbone_Render · E3_Carbone_Download_Dropbox · E4_Notificacion_Email`. **Ninguna corresponde a SC01, SC-Adjuntos-Upload ni RF-09** |
+| `escenario` | `Escenario` (`fldPktGeTzNCRQ319`) | singleSelect — 19 opciones reales al 05-ago-2026 (ver §12 para la lista completa y la regla de "crear la opción antes de usarla"). ⚠ **La observación original de esta fila —"ninguna opción corresponde a SC01, SC-Adjuntos-Upload ni RF-09"— era cierta el 13-jul-2026 y quedó resuelta**: `SC-RF09-ExtraccionClaude`, `SC-Asignar`, `SC-Edicion`, `SC01` y `ADJUNTOS_UPLOAD` se crearon a mano el 27-jul-2026, y `ADJUNTOS_DELETE` + `ADJUNTOS_UPLOAD_V2` el 05-ago-2026 (Tanda 3) |
 | `solicitud_id` | `Solicitud` (`fldLHWGlkTZNTESOF`) | singleLineText |
 | `estado` | `Estado` (`fldTzSpyzbj1EOa7F`) | singleSelect — opciones reales: `✓ OK · ✗ Error · ⚠ Parcial · ⏭ Omitido` (no `ok/error/retry` como documentaba este archivo) |
 | `payload_enviado` | *(no existe un campo equivalente — usar `Detalle`, multilineText)* | — |

@@ -25,6 +25,20 @@ export interface Adjunto {
    * leyendo sólo para no romper a `AdjuntosTab`.
    */
   claveAdjunto: string
+  /**
+   * `hash_md5` (`fld9shmoBhZyNTK8x`) — MD5 del binario, calculado en el cliente
+   * antes de subir. Se expone porque es la **salvaguarda de integridad** del
+   * borrado (§8.6.3): `DELETE /api/adjuntos/[id]` lo reenvía a
+   * `SC-Adjuntos-Delete`, que se niega a destruir nada si el registro apuntado
+   * por el record ID ya no tiene ese hash. Cubre la carrera en la que el
+   * adjunto fue reemplazado entre la lectura y el clic.
+   */
+  hashMd5: string
+  /**
+   * Ruta cruda en Dropbox (`url_dropbox` sin normalizar al visor web). Se
+   * conserva junto a `urlDropbox` porque es lo que `Delete a file` espera.
+   */
+  pathDropbox: string
 }
 
 type RawFields = {
@@ -33,6 +47,7 @@ type RawFields = {
   clave_adjunto?: string
   url_dropbox?: string
   tamanio_kb?: number
+  hash_md5?: string
   requerido_por_ejecutiva?: boolean
   solicitud?: string[]
 }
@@ -86,6 +101,7 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
       'clave_adjunto',
       'url_dropbox',
       'tamanio_kb',
+      'hash_md5',
       'requerido_por_ejecutiva',
       'solicitud',
     ],
@@ -104,6 +120,8 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
         urlDropbox: urlNavegableDropbox(r.fields.url_dropbox),
         requeridoPorEjecutiva: Boolean(r.fields.requerido_por_ejecutiva),
         claveAdjunto: r.fields.clave_adjunto?.trim() ?? '',
+        hashMd5: r.fields.hash_md5?.trim() ?? '',
+        pathDropbox: r.fields.url_dropbox?.trim() ?? '',
       }
     })
 }

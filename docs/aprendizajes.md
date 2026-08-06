@@ -1219,3 +1219,77 @@ Preservados: 23 módulos, hook `3441135`, conexión única `8847431`, m24 → `A
 **Corrección de referencia:** la entrada "2026-08-03 — Idempotencia de adjuntos ya cerrada…" citó `[[E-092]]` como el diagnóstico de idempotencia. Es incorrecto: **E-092** (29-jul) es el bug de re-parsear JSON con `split()`. El diagnóstico de idempotencia de adjuntos vive en la entrada date-headed **"2026-08-02 — Idempotencia de SC-Adjuntos-Upload: la ruta sin filtro no es un `else`"**. No se reescribe la entrada previa (regla append-only); queda esta nota para enderezar el enlace.
 
 **Nota de formato:** desde el 01-ago la bitácora usa entradas date-headed (`### YYYY-MM-DD — …`), el formato canónico de CLAUDE.md; **E-096 (29-jul) fue el último ID `E-XXX`**. Por eso estos hallazgos no reciben `E-097`: se registran como sub-bloques date-headed, coherentes con las 7 entradas previas de agosto.
+
+### 2026-08-04 — Tanda 3: borrado real de adjuntos y reemplazo por unicidad (RN-60 · RF-52)
+
+**Contexto:** construcción de los dos flujos destructivos de §8.6 — `SC-Adjuntos-Delete` (desmarcado) y la rama de reemplazo de `SC-Adjuntos-Upload v1.2` — más el endpoint `DELETE /api/adjuntos/[id]` y los dos diálogos del checklist.
+
+**Inconveniente:** el checklist guardaba como identificador del adjunto el `adjunto_id` que devuelve el escenario de subida, y ese valor no sirve para borrar.
+**Causa raíz:** `TX_Adjuntos` tiene dos identificadores. `adjunto_id` (`fldVt7Lk1ptvmgbtT`) es un autoNumber; `airtable:ActionDeleteRecord` exige el record ID `rec…` en la clave `id` del mapper. La subida devuelve el primero y la lectura por solicitud expone el segundo, así que el estado local del componente nunca tuvo el dato que necesitaba.
+**Solución aplicada:** `DocumentChecklist` recibe ahora el array real de `TX_Adjuntos` y casa cada fila por `clave_adjunto` (`fldaLLtzAaEn1O8IW`), del que salen el record ID y el `hash_md5`. Los controles destructivos sólo se renderizan cuando esa coincidencia existe. Se añadió `hash_md5` a `lib/adjuntos.ts` y al tipo `Adjunto`.
+**Prevención futura:** cuando una tabla expone dos identificadores, documentar en el tipo TS cuál acepta cada operación. El comentario vive en `DocumentRowProps.persistido`.
+
+**Inconveniente:** al confirmar el borrado, el tipo quedaba desmarcado pero conservando el archivo en el estado del checklist.
+**Causa raíz:** `onArchivo(codigo, null)` y `onToggle(codigo, false)` derivan ambos el array nuevo del mismo `value` capturado en el render, así que la segunda llamada pisaba a la primera. El patrón venía del `confirmarQuitar` original, donde no se notaba porque nada releía después.
+**Solución aplicada:** un único `onQuitar(codigo)` que desmarca y vacía en la misma actualización (`components/console/document-checklist.tsx`).
+**Prevención futura:** dos `onChange` consecutivos sobre el mismo prop son siempre un bug de estado obsoleto, no un estilo. Si dos campos cambian juntos, cambian en una llamada.
+
+**Inconveniente:** la rama de reemplazo necesita saber si el tipo ya tenía archivo, pero §8.6.2 dice que ese Search Records «sólo se ejecuta si el módulo 2 no encontró nada».
+**Causa raíz:** en Make, un filtro sobre un módulo lineal no lo salta: detiene el flujo completo. Condicionar el módulo 11 habría matado también la ruta `reused`.
+**Solución aplicada:** el módulo 11 corre siempre (una búsqueda extra por subida) y la precedencia del hash la imponen los filtros del Router, mutuamente excluyentes y explícitos en las tres rutas. El desenlace observable es idéntico al que describe la spec.
+**Prevención futura:** «sólo se ejecuta si» en un blueprint conceptual se traduce a filtro de ruta, nunca a filtro de módulo lineal.
+
+**Inconveniente:** `TX_Adjuntos` no tiene campo `activo`, así que el soft-delete de §8.4 (d) no es implementable.
+**Causa raíz:** el campo se declara en la Capa de Datos desde v1.3 pero nunca se creó en Airtable — confirmado de nuevo por auditoría de schema el 04-ago-2026 (26 campos, ninguno `activo`).
+**Solución aplicada:** se asume formalmente el borrado duro como semántica única (prerrequisito 2 de §8.6.6) y la auditoría queda en `A_Eventos` (`adjunto_eliminado` · `adjunto_reemplazado`), escrita desde los escenarios Make. No se creó el campo: crear schema requiere aprobación explícita.
+**Prevención futura:** ninguna fórmula de búsqueda sobre `TX_Adjuntos` puede filtrar por `{activo} = TRUE()` — Airtable devuelve `INVALID_FILTER_BY_FORMULA` y falla la petición entera, no la degrada.
+
+**Inconveniente:** §8.6.6 daba por existente un helper de editabilidad para el guard de RN-59 server-side, y no existía en el repo.
+**Causa raíz:** la guía de construcción lo citaba como si estuviera escrito; `grep esEditable` no devuelve nada.
+**Solución aplicada:** se creó `lib/rn59.ts` con `esModoConsulta(estado, tasador)` y `verificarRN59(solicitudId)`, y el endpoint DELETE lo usa para devolver 409. Se eligió helper sobre guard copiado porque la regla es una conjunción de dos condiciones y un copiado a mano degrada a `estado !== 'creada'` sin que se note (bloquea de más, nunca de menos).
+**Prevención futura:** antes de citar un helper en documentación de construcción, verificar que exista con `grep`.
+
+### 2026-08-05 — Puesta en marcha de Tanda 3: nombre canónico del módulo Dropbox y tres deudas de conexión/log
+
+**Contexto:** ejecución de los pasos 1 y 2 de `docs/_notas/checkpoint_tanda_3_2026-08-04.md` — creación de las opciones de `LogEscenarios.Escenario` e importación de `SC-Adjuntos-Delete` en Make.
+
+**Inconveniente:** el import de `SC-Adjuntos-Delete` falló. El módulo 6 llegó en gris («Module Not Found») y Make avisó que los módulos 33 y 36 referenciaban un módulo inexistente `[module ID 6]`.
+**Causa raíz:** el blueprint escrito a mano usaba `dropbox:deleteAFile`, que no es el nombre canónico vigente en Make. El correcto es **`dropbox:deleteFile` v5**. Mismo patrón que ya había ocurrido en RF-09 con `dropbox:downloadFile` v1 → `dropbox:getFile` v5: el nombre plausible en inglés natural no es el identificador interno del módulo.
+**Solución aplicada:** un solo reemplazo en `docs/_artefactos/make/SC-Adjuntos-Delete.blueprint.json:438`, tomando el nombre de un blueprint-probe exportado desde la UI de Make (`docs/_artefactos/produccion-actual/dropbox-delete-probe.blueprint.json:6-7`) con únicamente ese módulo. Se preservaron el id 6, la conexión, el `mapper` del path y el `onerror` completo, así que las cuatro referencias a `{{6.…}}` (líneas 491, 633, 741, 757) no necesitaron recableado.
+**Prevención futura:** el nombre canónico de un módulo Make no se deduce ni se copia de otro blueprint escrito a mano — sólo de un export real. Antes de escribir a mano un módulo de una app que el repo todavía no usa, crear un escenario desechable con ese único módulo, exportarlo y leer el `module`/`version`. Un blueprint no importado nunca es fuente de verdad, por más que esté en `docs/_artefactos/make/`: al 05-ago-2026 el único Dropbox probado en producción era `dropbox:uploadLargeFile` v5.
+
+**Inconveniente:** avisar de las referencias rotas sirvió a medias — Make sólo reportó los módulos 33 y 36, pero había una tercera referencia a `{{6.error.message}}` en el filtro del módulo 31 (línea 491).
+**Causa raíz:** Make advierte de las referencias que aparecen en mappers visibles, no de las que viven dentro de las condiciones de un filtro.
+**Prevención futura:** ante un «module not found», hacer `grep -n "{{<id>\."` sobre el blueprint antes de reconstruir nada. Si esa referencia del módulo 31 hubiera quedado rota, la rama `path_not_found` no habría matcheado nunca y la fila de `TX_Adjuntos` no se borraría cuando el binario ya no está en Dropbox — un fallo silencioso, sin error visible.
+
+**Hallazgo sin resolver · Deuda #1 — dos conexiones Dropbox distintas conviven.** El export de producción (`docs/_artefactos/produccion-actual/SC-Adjuntos-Upload-v1.1-PRODUCCION.blueprint.json`, módulo 6) corre con `__IMTCONN__: 9536248`, etiqueta `dropbox_vproperty`. Los blueprints locales de Tanda 3 —`SC-Adjuntos-Delete` y `SC-Adjuntos-Upload v1.2`— usan `7553318`, «My Dropbox connection». **Decisión de Sergio el 05-ago-2026: mantener `7553318` en Tanda 3**, por consistencia con los archivos locales y con el checkpoint. Reconciliar en una tanda separada, decidiendo cuál de las dos conexiones es la buena antes de tocar el escenario activo.
+
+**Hallazgo sin resolver · Deuda #2 — el log de Upload v1.1 en producción escribe filas vacías.** Los módulos 4 y 9 (`airtable:ActionCreateRecord` sobre `LogEscenarios`) del export de producción llevan `record: {}`. Esto **corrige el diagnóstico del hallazgo 4 del 13-jul-2026** y de `docs/schema-airtable.md` §13.5, que suponían un fallo por nombres de campo equivocados: no es que escriban campos inexistentes, es que no escriben ningún campo. `SC-Adjuntos-Upload v1.2` ya lo corrige mapeando por FIELD_ID, así que la deuda se salda al ejecutar el paso 3 del checkpoint.
+
+**Hallazgo sin resolver · Deuda #3 — la copia versionada de Upload v1.1 no refleja Make.** `docs/_artefactos/make/SC-Adjuntos-Upload.blueprint.json` en su versión commiteada (v1.1) declara la conexión Dropbox `7553318`, mientras el export real de producción trae `9536248`. La copia del repo quedó desactualizada respecto de Make en algún momento no registrado. Se reconcilia junto con la Deuda #1. Recordatorio del patrón: el archivo del repo es la fuente de verdad **sólo si cada cambio hecho en la UI de Make se re-exporta**; en cuanto alguien edita en Make sin exportar, la relación se invierte sin aviso.
+
+**Inconveniente:** `.env.local` declaraba `MAKE_WEBHOOK_URL_ADJUNTOS_DELETE` dos veces — la línea 30 con la URL real del webhook y la línea 36 vacía, bajo el comentario «Pegar aqui la URL del webhook tras importar y activar el escenario en Make» que dejó la sesión del 04-ago como placeholder. Sergio había pegado la URL en la primera y el placeholder quedó huérfano.
+**Causa raíz:** `@next/env` carga el archivo con `dotenv.parse`, que recorre las líneas de arriba abajo asignando sobre el mismo objeto (`obj[key] = value`). Ante una clave repetida **gana la última**, no la primera. El valor efectivo era la cadena vacía.
+**Solución aplicada:** eliminadas las líneas 34-36 (los dos comentarios del placeholder y la declaración vacía), dejando sólo la línea 30. Verificado con `grep -c "^MAKE_WEBHOOK_URL_ADJUNTOS_DELETE="` → 1, y comparando hash a hash cada par clave=valor contra una copia previa para confirmar que ningún otro valor se tocó.
+**Prevención futura:** el fallo era invisible por diseño del endpoint: `app/api/adjuntos/[id]/route.ts:102` trata la variable ausente como degradación y responde `{ ok: false, degraded: true }` con **status 200**, sin error rojo en la UI. Un DELETE local no habría borrado nada y el síntoma habría apuntado a Make, no al entorno. Cuando se añada una variable de entorno a `.env.local`, comprobar antes que no exista ya un placeholder de una sesión anterior: `grep -c "^NOMBRE=" .env.local` debe devolver 1. No aplica a Railway, donde cada variable es una entrada discreta y la duplicación es imposible.
+
+### 2026-08-06 — `esRespuestaDeClerk` confunde un 404 de routing con expiración de sesión
+
+**Contexto:** paso 5 del checkpoint de Tanda 3, casos (a)–(e) de RF-52. Tras cerrar (e).1 (409 de RN-59) el sheet «Documentos y adjuntos» empezó a mostrar «Tu sesión expiró» y «0/0 con archivo» en cualquier solicitud, bloqueando toda prueba de UI.
+
+**Inconveniente:** se persiguió durante seis intercambios una hipótesis de autenticación —vida del token de Clerk, config del `ClerkProvider`, handshake de instancia dev, timeouts de sesión— que era falsa desde el principio. El disco `C:` estaba al 100 % (223 G / 223 G, 0 bytes libres) y Turbopack no podía escribir los chunks compilados.
+
+**Causa raíz:** doble.
+
+1. **La real:** `ENOSPC`. Turbopack compila las rutas bajo demanda; las ya compiladas seguían sirviendo 200 desde memoria (`/api/catalogos`, `/api/tasadores`, `/api/tipos-documento`, `/api/solicitudes/contadores`), mientras `/api/solicitudes/[id]/adjuntos` —que sólo se compila al abrir el sheet— fallaba al escribir sus chunks y Next devolvía un 404 de HTML sin ejecutar el handler. El log del server lo decía con todas las letras (`FATAL … No space left on device (os error 28)`, `Compaction failed`, `Input/output error (os error 5)`), pero nadie lo leyó hasta el sexto intercambio.
+2. **La que desvió el diagnóstico:** `esRespuestaDeClerk` en `lib/use-adjuntos-solicitud.ts:69-71` decide `!content-type.includes('application/json')` ⇒ «fue Clerk». Un 404 de routing de Next también es HTML, así que la heurística lo rotula como sesión expirada. El mensaje al usuario era un diagnóstico inventado por el propio código.
+
+**Solución aplicada:** liberar espacio en `C:` (quedaron 7,8 G), borrar el `.next` corrupto —la base interna de Turbopack se había dañado escribiendo sin espacio— y reiniciar en frío. El primer arranque limpio compiló la ruta sin problema y el sheet volvió a listar adjuntos.
+
+**Evidencia que descartó a Clerk** (útil como método, no sólo como anécdota): en el log del dev server, inmediatamente después de un login fresco, cuatro rutas protegidas devolvían 200 y sólo `/api/solicitudes/[id]/adjuntos` devolvía 404, en la misma carga de página y con las mismas cookies. Verificado además que las cuatro son fetches del cliente con idéntico `credentials: "same-origin"`, así que no había asimetría cliente/servidor. Y cero ocurrencias de `[ADJUNTOS-LEER]` en el log, pese a que esa instrumentación escribe en las tres salidas del handler (éxito, rechazo por `isValidRecordId` y fallo de Airtable): silencio total ⇒ el módulo nunca existió. El dato que cerró el caso lo aportó Sergio desde el Network tab: el 404 no traía **ningún** header `x-clerk-auth-*` y el `X-Middleware-Rewrite` apuntaba a la misma ruta (reescritura identidad), no al `/clerk_<timestamp>` con el que Clerk sí rechaza.
+
+**Fix propuesto (no aplicado — cambiaría código a mitad del paso 5):** que `esRespuestaDeClerk` mire el header `x-clerk-auth-status` (`signed-out`) en lugar del `content-type`. Es el header que Clerk emite justamente para esto y no colisiona con los 404 de Next. Mientras no se cambie, todo fallo de infraestructura que produzca un 404 de HTML va a reportarse al usuario como problema de sesión.
+
+**Prevención futura:** ante un fallo que sólo afecta a **una** ruta mientras sus hermanas responden 200, la autenticación queda descartada de entrada — las cookies son las mismas para todas. Leer el log del dev server **antes** de formular cualquier hipótesis: los errores de Turbopack no aparecen en la respuesta HTTP ni en la consola del browser, sólo en stdout del server. Y un mensaje de error de la propia app no es evidencia de su causa: `esRespuestaDeClerk` es una inferencia, no una medición.
+
+**Coste:** seis intercambios y ~458 MB borrados en falso (`rm -rf .next` como opción 2, que no podía funcionar: liberaba espacio que el arranque en frío volvía a consumir de inmediato). Se evaluó y **descartó** una opción 3 (marcar `/api/solicitudes/(.*)/adjuntos` como pública en `middleware.ts`) que habría dejado un endpoint sin autenticación en el árbol de código sin arreglar nada, y una opción 4 (bypass de auth gated por `NODE_ENV` + env var, tocando seis handlers) por el mismo motivo.

@@ -1,0 +1,1285 @@
+{
+    "name": "SC-Adjuntos-Delete v1.0 - Borrado de adjunto del checklist",
+    "flow": [
+        {
+            "id": 1,
+            "module": "gateway:CustomWebHook",
+            "version": 1,
+            "parameters": {
+                "hook": null,
+                "maxResults": 1
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0
+                },
+                "restore": {
+                    "parameters": {
+                        "hook": {
+                            "data": {
+                                "editable": "true"
+                            },
+                            "label": "SC-Adjuntos-Delete"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "hook",
+                        "type": "hook:gateway-webhook",
+                        "label": "Webhook",
+                        "required": true
+                    },
+                    {
+                        "name": "maxResults",
+                        "type": "number",
+                        "label": "Maximum number of results"
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "adjunto_record_id",
+                        "type": "text"
+                    },
+                    {
+                        "name": "solicitud_id",
+                        "type": "text"
+                    },
+                    {
+                        "name": "codigo_ext",
+                        "type": "text"
+                    },
+                    {
+                        "name": "hash_md5",
+                        "type": "text"
+                    },
+                    {
+                        "name": "subido_por",
+                        "type": "text"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 2,
+            "module": "airtable:ActionGetRecord",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblur71x1oItbmKZc",
+                "id": "{{1.adjunto_record_id}}",
+                "useColumnId": false
+            },
+            "onerror": [
+                {
+                    "id": 20,
+                    "module": "gateway:WebhookRespond",
+                    "version": 1,
+                    "parameters": {},
+                    "mapper": {
+                        "body": "{\"ok\": true, \"adjunto_id\": \"{{1.adjunto_record_id}}\", \"dropbox_borrado\": false, \"airtable_borrado\": false, \"ya_no_existia\": true}",
+                        "status": "200",
+                        "headers": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ]
+                    },
+                    "metadata": {
+                        "designer": {
+                            "x": 300,
+                            "y": 450
+                        },
+                        "parameters": [
+                            {
+                                "name": "status",
+                                "type": "text",
+                                "label": "Status"
+                            },
+                            {
+                                "name": "body",
+                                "type": "text",
+                                "label": "Body"
+                            },
+                            {
+                                "name": "headers",
+                                "type": "array",
+                                "label": "Headers"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 21,
+                    "module": "airtable:ActionCreateRecord",
+                    "version": 3,
+                    "parameters": {
+                        "__IMTCONN__": 8847431
+                    },
+                    "mapper": {
+                        "base": "app9G7lLkIV3CpeLa",
+                        "table": "tblR4VWpUHw1CSyIS",
+                        "record": {
+                            "fldOLYPMstZl1cct6": "ADJUNTOS_DELETE · ya_no_existia · {{1.codigo_ext}}",
+                            "fldGRchH2Cc82fO4b": "{{now}}",
+                            "fldPktGeTzNCRQ319": "ADJUNTOS_DELETE",
+                            "fldTzSpyzbj1EOa7F": "⏭ Omitido",
+                            "fldvgIczpgBQJe2Lx": "SC-Adjuntos-Delete",
+                            "fldv9dn00kM8kNjDL": "El registro {{1.adjunto_record_id}} ya no existe en TX_Adjuntos. Borrado idempotente: no se toca Dropbox ni Airtable.",
+                            "fldLHWGlkTZNTESOF": "{{1.codigo_ext}}"
+                        },
+                        "typecast": false,
+                        "useColumnId": false
+                    },
+                    "metadata": {
+                        "designer": {
+                            "x": 600,
+                            "y": 450
+                        },
+                        "restore": {
+                            "expect": {
+                                "base": {
+                                    "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                },
+                                "table": {
+                                    "label": "LogEscenarios (tblR4VWpUHw1CSyIS)"
+                                }
+                            },
+                            "parameters": {
+                                "__IMTCONN__": {
+                                    "data": {
+                                        "scoped": "true",
+                                        "connection": "airtable2"
+                                    },
+                                    "label": "Airtable VProperty"
+                                }
+                            }
+                        },
+                        "parameters": [
+                            {
+                                "name": "__IMTCONN__",
+                                "type": "account:airtable3,airtable2",
+                                "label": "Connection",
+                                "required": true
+                            }
+                        ]
+                    }
+                },
+                {
+                    "id": 22,
+                    "module": "builtin:Commit",
+                    "version": 1,
+                    "parameters": {},
+                    "mapper": {},
+                    "metadata": {
+                        "designer": {
+                            "x": 900,
+                            "y": 450
+                        }
+                    }
+                }
+            ],
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0
+                },
+                "restore": {
+                    "expect": {
+                        "base": {
+                            "mode": "chose",
+                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                        },
+                        "table": {
+                            "mode": "chose",
+                            "label": "TX_Adjuntos (tblur71x1oItbmKZc)"
+                        },
+                        "useColumnId": {
+                            "mode": "chose"
+                        }
+                    },
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "airtable2"
+                            },
+                            "label": "Airtable VProperty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:airtable3,airtable2",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "base",
+                        "type": "select",
+                        "label": "Base",
+                        "required": true
+                    },
+                    {
+                        "name": "useColumnId",
+                        "type": "boolean",
+                        "label": "Use Column ID",
+                        "required": true
+                    },
+                    {
+                        "name": "table",
+                        "type": "select",
+                        "label": "Table",
+                        "required": true
+                    },
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "Record ID",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "ID"
+                    },
+                    {
+                        "name": "createdTime",
+                        "type": "date",
+                        "label": "Created Time"
+                    },
+                    {
+                        "name": "nombre_archivo",
+                        "type": "text",
+                        "label": "nombre_archivo"
+                    },
+                    {
+                        "name": "url_dropbox",
+                        "type": "text",
+                        "label": "url_dropbox"
+                    },
+                    {
+                        "name": "hash_md5",
+                        "type": "text",
+                        "label": "hash_md5"
+                    },
+                    {
+                        "name": "clave_adjunto",
+                        "type": "text",
+                        "label": "clave_adjunto"
+                    },
+                    {
+                        "name": "tamanio_kb",
+                        "type": "number",
+                        "label": "tamanio_kb"
+                    },
+                    {
+                        "name": "solicitud",
+                        "spec": {
+                            "label": "Record ID"
+                        },
+                        "type": "array",
+                        "label": "solicitud"
+                    },
+                    {
+                        "name": "adjunto_id",
+                        "type": "number",
+                        "label": "adjunto_id"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 3,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "parameters": {},
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 4,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "filter": {
+                                "name": "Mismatch de hash o de solicitud",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{2.hash_md5}}",
+                                            "b": "{{1.hash_md5}}",
+                                            "o": "text:notequal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{join(2.solicitud; \",\")}}",
+                                            "b": "{{1.solicitud_id}}",
+                                            "o": "text:notequal"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblR4VWpUHw1CSyIS",
+                                "record": {
+                                    "fldOLYPMstZl1cct6": "ADJUNTOS_DELETE · mismatch · {{1.codigo_ext}}",
+                                    "fldGRchH2Cc82fO4b": "{{now}}",
+                                    "fldPktGeTzNCRQ319": "ADJUNTOS_DELETE",
+                                    "fldTzSpyzbj1EOa7F": "✗ Error",
+                                    "fldvgIczpgBQJe2Lx": "SC-Adjuntos-Delete",
+                                    "fldv9dn00kM8kNjDL": "Salvaguarda de integridad: no se borró nada.\nadjunto_record_id: {{1.adjunto_record_id}}\nhash payload: {{1.hash_md5}} · hash registro: {{2.hash_md5}}\nsolicitud payload: {{1.solicitud_id}} · solicitud registro: {{join(2.solicitud; \",\")}}",
+                                    "fldLHWGlkTZNTESOF": "{{1.codigo_ext}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 900,
+                                    "y": -300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "LogEscenarios (tblR4VWpUHw1CSyIS)"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 5,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "body": "{\"ok\": false, \"reason\": \"mismatch\", \"adjunto_id\": \"{{1.adjunto_record_id}}\", \"dropbox_borrado\": false, \"airtable_borrado\": false, \"error\": \"El registro no coincide con el hash o la solicitud del payload.\", \"reintentable\": false}",
+                                "status": "200",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": -300
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "text",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "type": "array",
+                                        "label": "Headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 6,
+                            "module": "dropbox:deleteFile",
+                            "version": 5,
+                            "parameters": {
+                                "__IMTCONN__": 7553318
+                            },
+                            "filter": {
+                                "name": "Coincide hash y solicitud · borrar",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{2.hash_md5}}",
+                                            "b": "{{1.hash_md5}}",
+                                            "o": "text:equal"
+                                        },
+                                        {
+                                            "a": "{{join(2.solicitud; \",\")}}",
+                                            "b": "{{1.solicitud_id}}",
+                                            "o": "text:equal"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "path": "{{2.url_dropbox}}"
+                            },
+                            "onerror": [
+                                {
+                                    "id": 30,
+                                    "module": "builtin:BasicRouter",
+                                    "version": 1,
+                                    "parameters": {},
+                                    "mapper": null,
+                                    "metadata": {
+                                        "designer": {
+                                            "x": 1200,
+                                            "y": 450
+                                        }
+                                    },
+                                    "routes": [
+                                        {
+                                            "flow": [
+                                                {
+                                                    "id": 31,
+                                                    "module": "airtable:ActionDeleteRecord",
+                                                    "version": 3,
+                                                    "parameters": {
+                                                        "__IMTCONN__": 8847431
+                                                    },
+                                                    "filter": {
+                                                        "name": "path_not_found · el binario ya no estaba",
+                                                        "conditions": [
+                                                            [
+                                                                {
+                                                                    "a": "{{6.error.message}}",
+                                                                    "b": "not_found",
+                                                                    "o": "text:contain"
+                                                                }
+                                                            ]
+                                                        ]
+                                                    },
+                                                    "mapper": {
+                                                        "base": "app9G7lLkIV3CpeLa",
+                                                        "table": "tblur71x1oItbmKZc",
+                                                        "id": "{{2.id}}",
+                                                        "useColumnId": false
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 1500,
+                                                            "y": 300
+                                                        },
+                                                        "restore": {
+                                                            "expect": {
+                                                                "base": {
+                                                                    "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                                                },
+                                                                "table": {
+                                                                    "label": "TX_Adjuntos (tblur71x1oItbmKZc)"
+                                                                }
+                                                            },
+                                                            "parameters": {
+                                                                "__IMTCONN__": {
+                                                                    "data": {
+                                                                        "scoped": "true",
+                                                                        "connection": "airtable2"
+                                                                    },
+                                                                    "label": "Airtable VProperty"
+                                                                }
+                                                            }
+                                                        },
+                                                        "parameters": [
+                                                            {
+                                                                "name": "__IMTCONN__",
+                                                                "type": "account:airtable3,airtable2",
+                                                                "label": "Connection",
+                                                                "required": true
+                                                            }
+                                                        ],
+                                                        "expect": [
+                                                            {
+                                                                "name": "base",
+                                                                "type": "select",
+                                                                "label": "Base",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "table",
+                                                                "type": "select",
+                                                                "label": "Table",
+                                                                "required": true
+                                                            },
+                                                            {
+                                                                "name": "id",
+                                                                "type": "text",
+                                                                "label": "Record ID",
+                                                                "required": true
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "id": 32,
+                                                    "module": "airtable:ActionCreateRecord",
+                                                    "version": 3,
+                                                    "parameters": {
+                                                        "__IMTCONN__": 8847431
+                                                    },
+                                                    "mapper": {
+                                                        "base": "app9G7lLkIV3CpeLa",
+                                                        "table": "tblMKmDg2KrO5fMn8",
+                                                        "record": {
+                                                            "fldZQdDQq8Ks5DkLN": "adjunto_eliminado",
+                                                            "fld0wMJTtEQjo6VX3": "{{now}}",
+                                                            "fldNlOw4cCNruTFeo": "TX_Adjuntos",
+                                                            "fldVCWfHcWcfPi0q7": "{{1.adjunto_record_id}}",
+                                                            "fldpl0xV9vjcXR4yK": [
+                                                                "{{1.solicitud_id}}"
+                                                            ],
+                                                            "fldP9mj66Qx9y1LOe": "{{1.subido_por}}",
+                                                            "fldA4UrctU1pnHh9u": "Adjunto eliminado del checklist: {{2.nombre_archivo}} (tipo {{2.clave_adjunto}}). El binario ya no estaba en Dropbox.",
+                                                            "fldrCJijKJTe8Nffa": "{\"adjunto_id\": \"{{1.adjunto_record_id}}\", \"tipo_documento\": \"{{2.clave_adjunto}}\", \"subido_por\": \"{{1.subido_por}}\", \"dropbox_borrado\": false}"
+                                                        },
+                                                        "typecast": true,
+                                                        "useColumnId": false
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 1800,
+                                                            "y": 300
+                                                        },
+                                                        "restore": {
+                                                            "expect": {
+                                                                "base": {
+                                                                    "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                                                },
+                                                                "table": {
+                                                                    "label": "A_Eventos (tblMKmDg2KrO5fMn8)"
+                                                                }
+                                                            },
+                                                            "parameters": {
+                                                                "__IMTCONN__": {
+                                                                    "data": {
+                                                                        "scoped": "true",
+                                                                        "connection": "airtable2"
+                                                                    },
+                                                                    "label": "Airtable VProperty"
+                                                                }
+                                                            }
+                                                        },
+                                                        "parameters": [
+                                                            {
+                                                                "name": "__IMTCONN__",
+                                                                "type": "account:airtable3,airtable2",
+                                                                "label": "Connection",
+                                                                "required": true
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "id": 33,
+                                                    "module": "airtable:ActionCreateRecord",
+                                                    "version": 3,
+                                                    "parameters": {
+                                                        "__IMTCONN__": 8847431
+                                                    },
+                                                    "mapper": {
+                                                        "base": "app9G7lLkIV3CpeLa",
+                                                        "table": "tblR4VWpUHw1CSyIS",
+                                                        "record": {
+                                                            "fldOLYPMstZl1cct6": "ADJUNTOS_DELETE · huerfano_dropbox · {{1.codigo_ext}}",
+                                                            "fldGRchH2Cc82fO4b": "{{now}}",
+                                                            "fldPktGeTzNCRQ319": "ADJUNTOS_DELETE",
+                                                            "fldTzSpyzbj1EOa7F": "⚠ Parcial",
+                                                            "fldvgIczpgBQJe2Lx": "SC-Adjuntos-Delete",
+                                                            "fldv9dn00kM8kNjDL": "Dropbox respondió path_not_found para {{2.url_dropbox}}. La fila {{1.adjunto_record_id}} se borró igual de TX_Adjuntos.\nError original: {{6.error.message}}",
+                                                            "fldLHWGlkTZNTESOF": "{{1.codigo_ext}}"
+                                                        },
+                                                        "typecast": false,
+                                                        "useColumnId": false
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 2100,
+                                                            "y": 300
+                                                        },
+                                                        "restore": {
+                                                            "expect": {
+                                                                "base": {
+                                                                    "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                                                },
+                                                                "table": {
+                                                                    "label": "LogEscenarios (tblR4VWpUHw1CSyIS)"
+                                                                }
+                                                            },
+                                                            "parameters": {
+                                                                "__IMTCONN__": {
+                                                                    "data": {
+                                                                        "scoped": "true",
+                                                                        "connection": "airtable2"
+                                                                    },
+                                                                    "label": "Airtable VProperty"
+                                                                }
+                                                            }
+                                                        },
+                                                        "parameters": [
+                                                            {
+                                                                "name": "__IMTCONN__",
+                                                                "type": "account:airtable3,airtable2",
+                                                                "label": "Connection",
+                                                                "required": true
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "id": 34,
+                                                    "module": "gateway:WebhookRespond",
+                                                    "version": 1,
+                                                    "parameters": {},
+                                                    "mapper": {
+                                                        "body": "{\"ok\": true, \"adjunto_id\": \"{{1.adjunto_record_id}}\", \"dropbox_borrado\": false, \"airtable_borrado\": true, \"aviso\": \"huerfano_dropbox\"}",
+                                                        "status": "200",
+                                                        "headers": [
+                                                            {
+                                                                "key": "Content-Type",
+                                                                "value": "application/json"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 2400,
+                                                            "y": 300
+                                                        },
+                                                        "parameters": [
+                                                            {
+                                                                "name": "status",
+                                                                "type": "text",
+                                                                "label": "Status"
+                                                            },
+                                                            {
+                                                                "name": "body",
+                                                                "type": "text",
+                                                                "label": "Body"
+                                                            },
+                                                            {
+                                                                "name": "headers",
+                                                                "type": "array",
+                                                                "label": "Headers"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "id": 35,
+                                                    "module": "builtin:Commit",
+                                                    "version": 1,
+                                                    "parameters": {},
+                                                    "mapper": {},
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 2700,
+                                                            "y": 300
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "flow": [
+                                                {
+                                                    "id": 36,
+                                                    "module": "airtable:ActionCreateRecord",
+                                                    "version": 3,
+                                                    "parameters": {
+                                                        "__IMTCONN__": 8847431
+                                                    },
+                                                    "filter": {
+                                                        "name": "Otro error de Dropbox · abortar sin tocar Airtable",
+                                                        "conditions": [
+                                                            [
+                                                                {
+                                                                    "a": "{{6.error.message}}",
+                                                                    "b": "not_found",
+                                                                    "o": "text:notcontain"
+                                                                }
+                                                            ]
+                                                        ]
+                                                    },
+                                                    "mapper": {
+                                                        "base": "app9G7lLkIV3CpeLa",
+                                                        "table": "tblR4VWpUHw1CSyIS",
+                                                        "record": {
+                                                            "fldOLYPMstZl1cct6": "ADJUNTOS_DELETE · dropbox_failed · {{1.codigo_ext}}",
+                                                            "fldGRchH2Cc82fO4b": "{{now}}",
+                                                            "fldPktGeTzNCRQ319": "ADJUNTOS_DELETE",
+                                                            "fldTzSpyzbj1EOa7F": "✗ Error",
+                                                            "fldvgIczpgBQJe2Lx": "SC-Adjuntos-Delete",
+                                                            "fldv9dn00kM8kNjDL": "Dropbox falló al borrar {{2.url_dropbox}}. NO se borró la fila {{1.adjunto_record_id}} de TX_Adjuntos: es preferible no borrar nada a dejar un huérfano invisible (§8.6.5).\nError: {{6.error.message}}",
+                                                            "fldLHWGlkTZNTESOF": "{{1.codigo_ext}}"
+                                                        },
+                                                        "typecast": false,
+                                                        "useColumnId": false
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 1500,
+                                                            "y": 600
+                                                        },
+                                                        "restore": {
+                                                            "expect": {
+                                                                "base": {
+                                                                    "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                                                },
+                                                                "table": {
+                                                                    "label": "LogEscenarios (tblR4VWpUHw1CSyIS)"
+                                                                }
+                                                            },
+                                                            "parameters": {
+                                                                "__IMTCONN__": {
+                                                                    "data": {
+                                                                        "scoped": "true",
+                                                                        "connection": "airtable2"
+                                                                    },
+                                                                    "label": "Airtable VProperty"
+                                                                }
+                                                            }
+                                                        },
+                                                        "parameters": [
+                                                            {
+                                                                "name": "__IMTCONN__",
+                                                                "type": "account:airtable3,airtable2",
+                                                                "label": "Connection",
+                                                                "required": true
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "id": 37,
+                                                    "module": "gateway:WebhookRespond",
+                                                    "version": 1,
+                                                    "parameters": {},
+                                                    "mapper": {
+                                                        "body": "{\"ok\": false, \"reason\": \"dropbox_failed\", \"adjunto_id\": \"{{1.adjunto_record_id}}\", \"dropbox_borrado\": false, \"airtable_borrado\": false, \"error\": \"Dropbox no pudo borrar el archivo.\", \"reintentable\": true}",
+                                                        "status": "200",
+                                                        "headers": [
+                                                            {
+                                                                "key": "Content-Type",
+                                                                "value": "application/json"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 1800,
+                                                            "y": 600
+                                                        },
+                                                        "parameters": [
+                                                            {
+                                                                "name": "status",
+                                                                "type": "text",
+                                                                "label": "Status"
+                                                            },
+                                                            {
+                                                                "name": "body",
+                                                                "type": "text",
+                                                                "label": "Body"
+                                                            },
+                                                            {
+                                                                "name": "headers",
+                                                                "type": "array",
+                                                                "label": "Headers"
+                                                            }
+                                                        ]
+                                                    }
+                                                },
+                                                {
+                                                    "id": 38,
+                                                    "module": "builtin:Commit",
+                                                    "version": 1,
+                                                    "parameters": {},
+                                                    "mapper": {},
+                                                    "metadata": {
+                                                        "designer": {
+                                                            "x": 2100,
+                                                            "y": 600
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ],
+                            "metadata": {
+                                "designer": {
+                                    "x": 900,
+                                    "y": 150
+                                },
+                                "restore": {
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "dropbox"
+                                            },
+                                            "label": "My Dropbox connection (nutricionsaludketo@gmail.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:dropbox",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "path",
+                                        "type": "text",
+                                        "label": "Path",
+                                        "required": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "path_display",
+                                        "type": "text",
+                                        "label": "Path"
+                                    },
+                                    {
+                                        "name": "name",
+                                        "type": "text",
+                                        "label": "Name"
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 7,
+                            "module": "airtable:ActionDeleteRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblur71x1oItbmKZc",
+                                "id": "{{2.id}}",
+                                "useColumnId": false
+                            },
+                            "onerror": [
+                                {
+                                    "id": 40,
+                                    "module": "airtable:ActionCreateRecord",
+                                    "version": 3,
+                                    "parameters": {
+                                        "__IMTCONN__": 8847431
+                                    },
+                                    "mapper": {
+                                        "base": "app9G7lLkIV3CpeLa",
+                                        "table": "tblR4VWpUHw1CSyIS",
+                                        "record": {
+                                            "fldOLYPMstZl1cct6": "ADJUNTOS_DELETE · airtable_orphan · {{1.codigo_ext}}",
+                                            "fldGRchH2Cc82fO4b": "{{now}}",
+                                            "fldPktGeTzNCRQ319": "ADJUNTOS_DELETE",
+                                            "fldTzSpyzbj1EOa7F": "⚠ Parcial",
+                                            "fldvgIczpgBQJe2Lx": "SC-Adjuntos-Delete",
+                                            "fldv9dn00kM8kNjDL": "Dropbox borró {{2.url_dropbox}} pero Airtable falló al borrar la fila {{1.adjunto_record_id}}. La fila apunta a un archivo inexistente: estado recuperable, el reintento del usuario lo resuelve (§8.6.5).\nError: {{7.error.message}}",
+                                            "fldLHWGlkTZNTESOF": "{{1.codigo_ext}}"
+                                        },
+                                        "typecast": false,
+                                        "useColumnId": false
+                                    },
+                                    "metadata": {
+                                        "designer": {
+                                            "x": 1500,
+                                            "y": -50
+                                        },
+                                        "restore": {
+                                            "expect": {
+                                                "base": {
+                                                    "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                                },
+                                                "table": {
+                                                    "label": "LogEscenarios (tblR4VWpUHw1CSyIS)"
+                                                }
+                                            },
+                                            "parameters": {
+                                                "__IMTCONN__": {
+                                                    "data": {
+                                                        "scoped": "true",
+                                                        "connection": "airtable2"
+                                                    },
+                                                    "label": "Airtable VProperty"
+                                                }
+                                            }
+                                        },
+                                        "parameters": [
+                                            {
+                                                "name": "__IMTCONN__",
+                                                "type": "account:airtable3,airtable2",
+                                                "label": "Connection",
+                                                "required": true
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "id": 41,
+                                    "module": "gateway:WebhookRespond",
+                                    "version": 1,
+                                    "parameters": {},
+                                    "mapper": {
+                                        "body": "{\"ok\": false, \"reason\": \"airtable_orphan\", \"adjunto_id\": \"{{1.adjunto_record_id}}\", \"dropbox_borrado\": true, \"airtable_borrado\": false, \"error\": \"Airtable no pudo borrar la fila tras borrar el binario.\", \"reintentable\": true}",
+                                        "status": "200",
+                                        "headers": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ]
+                                    },
+                                    "metadata": {
+                                        "designer": {
+                                            "x": 1800,
+                                            "y": -50
+                                        },
+                                        "parameters": [
+                                            {
+                                                "name": "status",
+                                                "type": "text",
+                                                "label": "Status"
+                                            },
+                                            {
+                                                "name": "body",
+                                                "type": "text",
+                                                "label": "Body"
+                                            },
+                                            {
+                                                "name": "headers",
+                                                "type": "array",
+                                                "label": "Headers"
+                                            }
+                                        ]
+                                    }
+                                },
+                                {
+                                    "id": 42,
+                                    "module": "builtin:Commit",
+                                    "version": 1,
+                                    "parameters": {},
+                                    "mapper": {},
+                                    "metadata": {
+                                        "designer": {
+                                            "x": 2100,
+                                            "y": -50
+                                        }
+                                    }
+                                }
+                            ],
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 150
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "TX_Adjuntos (tblur71x1oItbmKZc)"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "Record ID",
+                                        "required": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "deleted",
+                                        "type": "boolean",
+                                        "label": "Deleted"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 8,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblMKmDg2KrO5fMn8",
+                                "record": {
+                                    "fldZQdDQq8Ks5DkLN": "adjunto_eliminado",
+                                    "fld0wMJTtEQjo6VX3": "{{now}}",
+                                    "fldNlOw4cCNruTFeo": "TX_Adjuntos",
+                                    "fldVCWfHcWcfPi0q7": "{{1.adjunto_record_id}}",
+                                    "fldpl0xV9vjcXR4yK": [
+                                        "{{1.solicitud_id}}"
+                                    ],
+                                    "fldP9mj66Qx9y1LOe": "{{1.subido_por}}",
+                                    "fldA4UrctU1pnHh9u": "Adjunto eliminado del checklist: {{2.nombre_archivo}} (tipo {{2.clave_adjunto}}) por {{1.subido_por}}.",
+                                    "fldrCJijKJTe8Nffa": "{\"adjunto_id\": \"{{1.adjunto_record_id}}\", \"tipo_documento\": \"{{2.clave_adjunto}}\", \"subido_por\": \"{{1.subido_por}}\", \"dropbox_borrado\": true}"
+                                },
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 150
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "A_Eventos (tblMKmDg2KrO5fMn8)"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 9,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblR4VWpUHw1CSyIS",
+                                "record": {
+                                    "fldOLYPMstZl1cct6": "ADJUNTOS_DELETE · ok · {{1.codigo_ext}}",
+                                    "fldGRchH2Cc82fO4b": "{{now}}",
+                                    "fldPktGeTzNCRQ319": "ADJUNTOS_DELETE",
+                                    "fldTzSpyzbj1EOa7F": "✓ OK",
+                                    "fldvgIczpgBQJe2Lx": "SC-Adjuntos-Delete",
+                                    "fldv9dn00kM8kNjDL": "Borrado completo de {{2.nombre_archivo}} (tipo {{2.clave_adjunto}}).\nDropbox: {{2.url_dropbox}}\nTX_Adjuntos: {{1.adjunto_record_id}}\nSolicitado por: {{1.subido_por}}",
+                                    "fldLHWGlkTZNTESOF": "{{1.codigo_ext}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 150
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "LogEscenarios (tblR4VWpUHw1CSyIS)"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 10,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "body": "{\"ok\": true, \"adjunto_id\": \"{{1.adjunto_record_id}}\", \"dropbox_borrado\": true, \"airtable_borrado\": true}",
+                                "status": "200",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 150
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "text",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "type": "array",
+                                        "label": "Headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": true,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "eu1.make.com",
+        "notes": []
+    }
+}

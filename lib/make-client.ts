@@ -57,10 +57,18 @@ const ESTADO_CHOICE: Record<EstadoLog, string> = {
  * fila igual se crea (con `Escenario` vacío) y el código viaja en `Trigger` y
  * en `Detalle`, que son texto libre. Observabilidad degradada > sin log.
  *
- * Las cinco opciones de abajo están verificadas vía MCP el 27-jul-2026: las tres
+ * Las cinco primeras opciones están verificadas vía MCP el 27-jul-2026: las tres
  * `SC-*` ya existían y `SC01` / `ADJUNTOS_UPLOAD` las creó Sergio a mano ese
  * mismo día. Al agregar un escenario nuevo, créalo primero como opción en
  * Airtable y recién después añádelo aquí.
+ *
+ * `ADJUNTOS_DELETE` (RF-52 · Tanda 3) queda declarado aquí porque §8.6.3 fija
+ * ese orden —crear la opción primero, declararla después— y la creación es
+ * prerrequisito de importar `SC-Adjuntos-Delete`. Si la opción no existiera
+ * todavía, `createRecord` va con `typecast: true` y Airtable respondería
+ * `Insufficient permissions to create new select option`: `logEscenario` traga
+ * el error y la fila de log se pierde, pero el borrado en sí no se ve afectado.
+ * Observabilidad degradada, nunca negocio roto.
  */
 const ESCENARIO_CHOICE: Record<string, string> = {
   SC01: 'SC01',
@@ -68,6 +76,7 @@ const ESCENARIO_CHOICE: Record<string, string> = {
   'SC-Edicion': 'SC-Edicion',
   'SC-RF09-ExtraccionClaude': 'SC-RF09-ExtraccionClaude',
   ADJUNTOS_UPLOAD: 'ADJUNTOS_UPLOAD',
+  ADJUNTOS_DELETE: 'ADJUNTOS_DELETE',
 }
 
 /** Airtable acepta hasta 100.000 caracteres en un campo de texto largo. */

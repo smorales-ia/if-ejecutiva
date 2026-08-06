@@ -50,6 +50,19 @@ export interface EstadoAdjuntos {
   sesionExpirada: boolean
   /** Vuelve a leer desde Airtable. Se llama tras cada subida confirmada. */
   recargar: () => void
+  /**
+   * Borrado real del adjunto (RF-52 · §8.6.3): `DELETE /api/adjuntos/[id]` →
+   * `SC-Adjuntos-Delete` → Dropbox + `TX_Adjuntos`.
+   *
+   * Devuelve `true` sólo si la relectura posterior confirma que la fila
+   * desapareció. §8.6.4 lo exige: «En el desmarcado, el tipo sólo se marca como
+   * vacío si la relectura confirma la desaparición». No se confía en el estado
+   * local — si el borrado fue parcial, el checklist debe reflejar la verdad de
+   * la base y no el optimismo del cliente.
+   */
+  eliminar: (adjuntoRecordId: string, codigoExt: string) => Promise<boolean>
+  /** Record ID del adjunto que se está borrando ahora mismo, o `null`. */
+  eliminandoId: string | null
 }
 
 /** `true` si la respuesta de error no es JSON — es decir, no la emitió la app. */
@@ -71,8 +84,68 @@ export function useAdjuntosSolicitud(
   const [error, setError] = React.useState(false)
   const [sesionExpirada, setSesionExpirada] = React.useState(false)
   const [version, setVersion] = React.useState(0)
+  const [eliminandoId, setEliminandoId] = React.useState<string | null>(null)
 
   const recargar = React.useCallback(() => setVersion((v) => v + 1), [])
+
+  // Espejo de `adjuntos` en un ref para poder releer dentro de `eliminar` sin
+  // que el callback dependa del array (y se recree en cada render).
+  const adjuntosRef = React.useRef<Adjunto[]>(adjuntos)
+  adjuntosRef.current = adjuntos
+
+  const eliminar = React.useCallback(
+    async (adjuntoRecordId: string, codigoExt: string): Promise<boolean> => {
+      const previo = adjuntosRef.current.find((a) => a.id === adjuntoRecordId)
+      setEliminandoId(adjuntoRecordId)
+      try {
+        const res = await fetch(`/api/adjuntos/${adjuntoRecordId}`, {
+          method: "DELETE",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            solicitud_id: solicitudId,
+            codigo_ext: codigoExt,
+            // La salvaguarda de §8.6.3 sólo sirve si el hash sale de la lectura
+            // de Airtable, no de un valor que el cliente arrastre desde la
+            // subida: es precisamente la divergencia entre ambos lo que detecta.
+            hash_md5: previo?.hashMd5 ?? "",
+          }),
+        })
+
+        const body = (await res.json().catch(() => ({}))) as { ok?: boolean }
+        if (!res.ok || !body.ok) {
+          console.error("[useAdjuntosSolicitud.eliminar]", {
+            adjuntoRecordId,
+            status: res.status,
+          })
+          return false
+        }
+
+        // Relectura obligatoria: el retorno describe la base, no la respuesta.
+        const relectura = await fetch(`/api/solicitudes/${solicitudId}/adjuntos`, {
+          credentials: "same-origin",
+        })
+        if (!relectura.ok) {
+          setVersion((v) => v + 1)
+          return false
+        }
+        const data = ((await relectura.json()) as { data?: Adjunto[] }).data ?? []
+        setAdjuntos(data)
+        setError(false)
+        setSesionExpirada(false)
+        return !data.some((a) => a.id === adjuntoRecordId)
+      } catch (err) {
+        console.error("[useAdjuntosSolicitud.eliminar]", err)
+        return false
+      } finally {
+        // Regla D: el reset va en `finally`, nunca sólo en el `catch`. Un throw
+        // síncrono o un fallo de parseo dejaría la fila muerta el resto de la
+        // sesión.
+        setEliminandoId(null)
+      }
+    },
+    [solicitudId],
+  )
 
   React.useEffect(() => {
     if (!activo || !solicitudId) return
@@ -118,5 +191,13 @@ export function useAdjuntosSolicitud(
     }
   }, [solicitudId, activo, version])
 
-  return { adjuntos, cargando, error, sesionExpirada, recargar }
+  return {
+    adjuntos,
+    cargando,
+    error,
+    sesionExpirada,
+    recargar,
+    eliminar,
+    eliminandoId,
+  }
 }

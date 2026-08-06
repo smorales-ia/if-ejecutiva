@@ -6,8 +6,10 @@ import {
   CheckCircle2,
   Loader2,
   Paperclip,
-  X,
+  RefreshCw,
+  Trash2,
 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,12 +26,19 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Progress } from "@/components/ui/progress"
 import { uploadConReintentos } from "@/lib/adjuntos-uploader"
+import type { Adjunto } from "@/lib/adjuntos"
 import type { TipoDocumento } from "@/lib/tipos-documento"
 import { cn } from "@/lib/utils"
 
 const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"]
 const EXT_PERMITIDAS = [".pdf", ".jpg", ".jpeg", ".png"]
 const MAX_BYTES = 10 * 1024 * 1024 // 10 MB
+
+/** Literales §6 · §8.6.4. No admiten variación. */
+const MSG_ELIMINADO = "Documento eliminado"
+const MSG_REEMPLAZADO = "Documento reemplazado"
+const MSG_ERROR_RED =
+  "No pudimos completar la acción. Intenta nuevamente en unos segundos."
 
 /** Representación de un archivo cargado, según el schema zod. */
 export interface DocumentoArchivo {
@@ -75,24 +84,55 @@ interface DocumentRowProps {
    * existe como fuente (Tanda 1, 02-ago-2026).
    */
   meta: TipoDocumento
+  /**
+   * Fila real de `TX_Adjuntos` para este tipo, casada por `clave_adjunto`, o
+   * `null` si el tipo aún no tiene archivo persistido.
+   *
+   * Es la **única** fuente del record ID `rec…` y del `hash_md5` que exige el
+   * borrado (§8.6.3). El `adjunto_id` que devuelve la subida es el autoNumber
+   * (`fldVt7Lk1ptvmgbtT`) y `ActionDeleteRecord` no lo acepta: por eso la fila
+   * del checklist debe casarse contra el adjunto persistido antes de poder
+   * borrar, y por eso los controles destructivos sólo aparecen cuando este
+   * objeto existe.
+   */
+  persistido: Adjunto | null
   solicitudId: string
   codigoExt: string
   usuarioActual: string
+  /** RN-59 · modo consulta: oculta —no deshabilita— subir, reemplazar y eliminar. */
+  readOnly: boolean
+  /** `true` mientras el hook tiene un borrado en vuelo para este adjunto. */
+  eliminando: boolean
   onToggle: (codigo: string, marcado: boolean) => void
   onArchivo: (codigo: string, archivo: DocumentoArchivo | null) => void
+  /**
+   * Desmarca el tipo y le quita el archivo en **una sola** actualización.
+   *
+   * Encadenar `onArchivo(...)` y `onToggle(...)` no funciona: ambos derivan el
+   * array nuevo del mismo `value` capturado en este render, así que el segundo
+   * pisa al primero y el tipo queda desmarcado pero conservando el archivo.
+   */
+  onQuitar: (codigo: string) => void
   /** Se invoca tras una subida confirmada, para releer `TX_Adjuntos`. */
   onSubido: () => void
+  /** Borrado real. Resuelve `true` sólo si la relectura confirma la desaparición. */
+  onEliminar: (adjuntoRecordId: string) => Promise<boolean>
 }
 
 function DocumentRow({
   item,
   meta,
+  persistido,
   solicitudId,
   codigoExt,
   usuarioActual,
+  readOnly,
+  eliminando,
   onToggle,
   onArchivo,
+  onQuitar,
   onSubido,
+  onEliminar,
 }: DocumentRowProps) {
   const inputRef = React.useRef<HTMLInputElement>(null)
   const abortRef = React.useRef<AbortController | null>(null)
@@ -100,7 +140,8 @@ function DocumentRow({
   const [estado, setEstado] = React.useState<EstadoCarga>("idle")
   const [progreso, setProgreso] = React.useState(0)
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null)
-  const [confirmOpen, setConfirmOpen] = React.useState(false)
+  const [confirmarBorrado, setConfirmarBorrado] = React.useState(false)
+  const [confirmarReemplazo, setConfirmarReemplazo] = React.useState(false)
 
   React.useEffect(() => {
     return () => {
@@ -110,12 +151,17 @@ function DocumentRow({
 
   const marcado = item.requerido_por_ejecutiva
   const tieneArchivo = item.archivo !== null
+  const ocupado = estado === "uploading" || eliminando
 
   /**
    * Sube el archivo declarando `tipo_documento = item.codigo` (RN-25: el tipo
-   * se declara al upload, no se infiere). Antes esto era un `setInterval` que
-   * fingía progreso y guardaba un `URL.createObjectURL` que moría con la
-   * pestaña.
+   * se declara al upload, no se infiere).
+   *
+   * El reemplazo es **backend-driven** (§8.6.2 · RN-60): no hay flag en el
+   * payload. El cliente manda una subida normal y `SC-Adjuntos-Upload v1.2`
+   * decide el desenlace —alta, reutilización o reemplazo— buscando por
+   * (hash, solicitud) primero y por (solicitud, clave_adjunto) después. Aquí
+   * sólo se lee el `modo` que vuelve para elegir el toast.
    */
   async function subir(file: File) {
     const abort = new AbortController()
@@ -152,6 +198,12 @@ function DocumentRow({
       adjunto_id: resultado.adjunto_id ? String(resultado.adjunto_id) : undefined,
       persistido: true,
     })
+
+    // Si el usuario acabó eligiendo el mismo binario, el backend responde
+    // `reused` y no se reemplazó nada: la confirmación habrá sido innecesaria
+    // pero nunca engañosa (§8.6.4). Sin toast de reemplazo en ese caso.
+    if (resultado.modo === "reemplazo") toast.success(MSG_REEMPLAZADO)
+
     onSubido()
   }
 
@@ -168,31 +220,60 @@ function DocumentRow({
     void subir(file)
   }
 
+  /**
+   * Abre el selector de archivo. Si el tipo ya tiene adjunto, antes pide
+   * confirmación: §8.6.4 exige que el diálogo aparezca **antes** del selector y
+   * que se dispare por *tener adjunto previo*, no por *saber que el hash
+   * difiere* — el cliente no conoce el hash hasta que el usuario elige archivo.
+   */
+  function pedirArchivo() {
+    if (persistido) {
+      setConfirmarReemplazo(true)
+      return
+    }
+    inputRef.current?.click()
+  }
+
+  function confirmarReemplazar() {
+    setConfirmarReemplazo(false)
+    inputRef.current?.click()
+  }
+
+  async function eliminarAdjunto() {
+    if (!persistido) return
+    try {
+      const borrado = await onEliminar(persistido.id)
+      if (!borrado) {
+        toast.error(MSG_ERROR_RED)
+        return
+      }
+      // El tipo sólo se marca vacío si la relectura confirmó la desaparición
+      // (§8.6.4): no se confía en el estado local.
+      onQuitar(item.codigo)
+      setEstado("idle")
+      setErrorMsg(null)
+      toast.success(MSG_ELIMINADO)
+    } finally {
+      // Regla D: reset en `finally`, nunca sólo en el `catch`.
+      setConfirmarBorrado(false)
+    }
+  }
+
   function handleCheckedChange(next: boolean) {
-    // Si se desmarca un documento con archivo cargado, confirmar primero.
-    if (!next && tieneArchivo) {
-      setConfirmOpen(true)
+    // Desmarcar un tipo con archivo persistido ya no es un cambio de UI: borra
+    // el binario y la fila. Confirmar primero (RF-52).
+    if (!next && persistido) {
+      setConfirmarBorrado(true)
       return
     }
     if (!next) {
+      // Archivo sólo local (subida en curso abortada, o sin persistir todavía).
       setEstado("idle")
       setErrorMsg(null)
+      onQuitar(item.codigo)
+      return
     }
     onToggle(item.codigo, next)
-  }
-
-  function confirmarQuitar() {
-    onArchivo(item.codigo, null)
-    onToggle(item.codigo, false)
-    setEstado("idle")
-    setErrorMsg(null)
-    setConfirmOpen(false)
-  }
-
-  function removerArchivo() {
-    onArchivo(item.codigo, null)
-    setEstado("idle")
-    setErrorMsg(null)
   }
 
   return (
@@ -210,7 +291,7 @@ function DocumentRow({
         id={`doc-${item.tipo_id}`}
         checked={marcado}
         onCheckedChange={handleCheckedChange}
-        disabled={estado === "uploading"}
+        disabled={ocupado || readOnly}
         className="mt-0.5 sm:mt-0"
       />
 
@@ -267,14 +348,16 @@ function DocumentRow({
               <AlertCircle className="size-4" />
               {errorMsg}
             </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => inputRef.current?.click()}
-            >
-              Reintentar
-            </Button>
+            {!readOnly && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={pedirArchivo}
+              >
+                Reintentar
+              </Button>
+            )}
           </div>
         ) : tieneArchivo ? (
           <div className="flex items-center justify-end gap-2">
@@ -282,50 +365,91 @@ function DocumentRow({
               <CheckCircle2 className="size-4 shrink-0" />
               <span className="truncate">{truncar(item.archivo!.nombre)}</span>
             </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label="Quitar archivo"
-              onClick={removerArchivo}
-            >
-              <X />
-            </Button>
+            {/* RN-59: en modo consulta los controles destructivos no se
+                deshabilitan — no se renderizan. */}
+            {!readOnly && persistido && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={ocupado}
+                  onClick={pedirArchivo}
+                >
+                  <RefreshCw data-icon="inline-start" />
+                  Reemplazar
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Eliminar documento"
+                  disabled={ocupado}
+                  onClick={() => setConfirmarBorrado(true)}
+                >
+                  {eliminando ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                </Button>
+              </>
+            )}
           </div>
         ) : (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => inputRef.current?.click()}
-          >
-            <Paperclip data-icon="inline-start" />
-            Subir archivo
-          </Button>
+          !readOnly && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={pedirArchivo}
+            >
+              <Paperclip data-icon="inline-start" />
+              Subir archivo
+            </Button>
+          )
         )}
       </div>
 
-      {/* Confirmación al desmarcar un documento con archivo */}
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      {/* Diálogo de desmarcado · RF-52 §8.6.4 */}
+      <AlertDialog open={confirmarBorrado} onOpenChange={setConfirmarBorrado}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Quitar este documento?</AlertDialogTitle>
-            {/* El archivo ya subido NO se borra: no existe escenario Make de
-                borrado y las escrituras a Airtable nunca salen de la UI. Se
-                quita la marca del checklist; el adjunto sigue en la solicitud. */}
+            <AlertDialogTitle>¿Eliminar este documento?</AlertDialogTitle>
             <AlertDialogDescription>
-              {item.archivo?.persistido
-                ? "Deja de exigirse en el checklist. El archivo ya subido se mantiene en los adjuntos de la solicitud."
-                : "Quitar este documento elimina el archivo cargado. ¿Continuar?"}
+              El archivo será eliminado permanentemente de la solicitud y del
+              almacenamiento. Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Conservar</AlertDialogCancel>
+            <AlertDialogCancel disabled={eliminando}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
-              onClick={confirmarQuitar}
+              disabled={eliminando}
+              onClick={() => void eliminarAdjunto()}
             >
-              Quitar documento
+              {eliminando && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              {eliminando ? "Eliminando…" : "Eliminar definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Diálogo de reemplazo · RN-60 §8.6.4 */}
+      <AlertDialog open={confirmarReemplazo} onOpenChange={setConfirmarReemplazo}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Este tipo de documento ya tiene un archivo cargado
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              El documento {meta.nombre} ya tiene un archivo cargado (
+              {persistido?.nombre ?? item.archivo?.nombre}). Si continúas con un
+              archivo distinto, se reemplazará el anterior de forma permanente.
+              Solo se conserva un archivo por tipo de documento. ¿Deseas
+              continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={confirmarReemplazar}>
+              Reemplazar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -339,20 +463,31 @@ interface DocumentChecklistProps {
   onChange: (next: DocumentoChecklistItem[]) => void
   /** Catálogo real de `D_TipoDocumento` (`useTiposDocumento`). */
   tipos: TipoDocumento[]
+  /** Filas reales de `TX_Adjuntos` de esta solicitud (`useAdjuntosSolicitud`). */
+  adjuntos: Adjunto[]
   solicitudId: string
   codigoExt: string
   usuarioActual?: string
+  /** RN-59 · modo consulta. Oculta todo control de escritura. */
+  readOnly?: boolean
+  /** Record ID del adjunto con borrado en vuelo, o `null`. */
+  eliminandoId?: string | null
   onSubido: () => void
+  onEliminar: (adjuntoRecordId: string) => Promise<boolean>
 }
 
 export function DocumentChecklist({
   value,
   onChange,
   tipos,
+  adjuntos,
   solicitudId,
   codigoExt,
   usuarioActual = "Ejecutivo",
+  readOnly = false,
+  eliminandoId = null,
   onSubido,
+  onEliminar,
 }: DocumentChecklistProps) {
   function handleToggle(codigo: string, marcado: boolean) {
     onChange(
@@ -370,22 +505,65 @@ export function DocumentChecklist({
     )
   }
 
+  function handleQuitar(codigo: string) {
+    onChange(
+      value.map((d) =>
+        d.codigo === codigo
+          ? { ...d, requerido_por_ejecutiva: false, archivo: null }
+          : d
+      )
+    )
+  }
+
+  /**
+   * Índice de adjuntos por `clave_adjunto` (`fldaLLtzAaEn1O8IW`). Es el único
+   * campo que `SC-Adjuntos-Upload` escribe con el tipo declarado, y la vía por
+   * la que cada fila del checklist obtiene el record ID y el `hash_md5` que
+   * necesita para borrar (§8.6.3).
+   */
+  const porClave = React.useMemo(() => {
+    const mapa = new Map<string, Adjunto>()
+    for (const a of adjuntos) {
+      if (a.claveAdjunto && !mapa.has(a.claveAdjunto)) mapa.set(a.claveAdjunto, a)
+    }
+    return mapa
+  }, [adjuntos])
+
+  /**
+   * Orden alfabético por nombre del tipo (§1.5.1.1). El catálogo llega en el
+   * orden en que Airtable devuelve las filas, que no es estable ni alfabético;
+   * sin este `sort` el checklist se reordena solo entre sesiones.
+   */
+  const ordenados = React.useMemo(() => {
+    return value
+      .map((item) => ({ item, meta: tipos.find((t) => t.codigo === item.codigo) }))
+      .filter(
+        (fila): fila is { item: DocumentoChecklistItem; meta: TipoDocumento } =>
+          fila.meta != null
+      )
+      .sort((a, b) => a.meta.nombre.localeCompare(b.meta.nombre, "es"))
+  }, [value, tipos])
+
   return (
     <div className="flex flex-col gap-2">
-      {value.map((item) => {
-        const meta = tipos.find((t) => t.codigo === item.codigo)
-        if (!meta) return null
+      {ordenados.map(({ item, meta }) => {
+        const persistido = porClave.get(item.codigo) ?? null
         return (
           <DocumentRow
             key={item.tipo_id}
             item={item}
             meta={meta}
+            persistido={persistido}
             solicitudId={solicitudId}
             codigoExt={codigoExt}
             usuarioActual={usuarioActual}
+            readOnly={readOnly}
+            eliminando={persistido != null && eliminandoId === persistido.id}
             onToggle={handleToggle}
             onArchivo={handleArchivo}
+            onQuitar={handleQuitar}
             onSubido={onSubido}
+            onEliminar={onEliminar}
           />
         )
       })}

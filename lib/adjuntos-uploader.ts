@@ -5,9 +5,24 @@ import SparkMD5 from 'spark-md5'
  * nada de Next/React — server-safe y testeable en aislamiento.
  */
 
+/**
+ * Desenlace que resolvió el backend (§8.6.1). Es el campo canónico desde
+ * `SC-Adjuntos-Upload v1.2`; `reused` sobrevive sólo por compatibilidad con el
+ * cliente anterior y es redundante con `modo`.
+ *
+ * - `nuevo` — no había nada: alta limpia.
+ * - `reused` — mismo binario ya indexado en esta solicitud: no se subió nada.
+ * - `reemplazo` — el tipo ya tenía otro archivo (RN-60): el previo se borró de
+ *   Dropbox y de `TX_Adjuntos` y el nuevo ocupa su lugar.
+ */
+export type ModoUpload = 'nuevo' | 'reused' | 'reemplazo'
+
 export interface UploadResult {
   ok: boolean
+  modo?: ModoUpload
   adjunto_id?: string | number
+  /** Record ID del adjunto eliminado. Sólo viaja cuando `modo === 'reemplazo'`. */
+  adjunto_previo_id?: string
   url_dropbox?: string
   nombre_archivo?: string
   tamanio_kb?: number
