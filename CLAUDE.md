@@ -586,3 +586,14 @@ Formato de cada entrada:
 **Prevención futura:** <cómo evitar que vuelva a pasar>
 
 Si hay más de un inconveniente en la misma sesión, repite el bloque bajo el mismo encabezado de fecha.
+
+### Archivado de la bitácora
+
+Cuando `docs/aprendizajes.md` excede ~1500 líneas, o cuando el índice al inicio del
+archivo ya no permite ubicar entradas en menos de 30 segundos, o al cerrar un RF
+grande, mover lecciones asimiladas a `docs/_archivo/aprendizajes_YYYYMMDD.md`
+manteniendo en el archivo vivo únicamente las reglas activas destiladas al inicio y
+las últimas ~200 líneas de bitácora.
+
+El archivado es la **única** excepción a la regla de sólo-append de arriba, y es una
+operación deliberada: se hace como tanda propia, no a mitad de otra sesión.

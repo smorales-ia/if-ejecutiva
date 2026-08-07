@@ -1450,3 +1450,23 @@ Nota lateral del mismo hallazgo: cada **reemplazo** relanza la extracción, porq
 **5 · Aplicar el principio a los casos hermanos que nadie listó.** Al implementar CI-003b apareció un cuarto fallback silencioso de la misma familia que no estaba en la lista del panel: un `unidad_id` que no pertenece a la solicitud degradaba a `comun/`. Se convirtió también en 422 (`unidad_no_pertenece`), porque dejarlo habría sido mantener el anti-patrón con otra causa. Cuando una revisión establece un principio, barrer el módulo entero buscando sus otras instancias en la misma tanda.
 
 **Efecto colateral que hay que asumir:** con el checklist actual, **no se puede subir ningún documento a una solicitud multi-unidad**. Es deliberado: la limitación es visible, tiene dueño y tiene fecha —la tanda del selector de unidad, §9.1 caso b— en vez de ser un montón de archivos en `comun/` que nadie sabe que están mal. `document-checklist.tsx` sigue sin tocarse.
+
+---
+
+### 2026-08-07 (b) — Umbral de archivado de la bitácora: 300 → 1500 líneas
+
+**Contexto:** cierre de CI-003b. La tanda traía la instrucción de archivar `docs/aprendizajes.md` si superaba ~300 líneas después de la entrada nueva.
+
+**Inconveniente:** el archivo tenía **1452 líneas** —casi 5× el umbral— y las excedía desde mucho antes de esa sesión. Aplicar la regla al pie de la letra habría significado mover ~1000 líneas y decidir sobre la marcha qué de un año de memoria institucional está "asimilado", como paso final de una tanda que iba de otra cosa.
+
+**Causa raíz:** el umbral de 300 nunca estuvo en `CLAUDE.md`. Vivía sólo en los prompts de tanda, sin haber sido calibrado nunca contra el tamaño real del archivo. Un número que ningún documento del repo sostiene no es una regla: es una cifra que se arrastra de prompt en prompt, que nadie verifica y que en la práctica se ignora porque cumplirla sale carísimo.
+
+**Solución aplicada:** se agregó a `CLAUDE.md` una subsección «Archivado de la bitácora» dentro de «Aprendizajes de sesión», con el umbral recalibrado a **~1500 líneas** más dos disparadores cualitativos —que el índice deje de permitir ubicar una entrada en menos de 30 segundos, o el cierre de un RF grande—. El destino es `docs/_archivo/aprendizajes_YYYYMMDD.md` y en el archivo vivo quedan las reglas activas destiladas al inicio más las últimas ~200 líneas. Queda explícito que el archivado es la única excepción a la regla de sólo-append y que se ejecuta como tanda propia.
+
+**Prevención futura:** dos reglas.
+
+**1 · Un umbral cuantitativo que choca con la realidad se ignora, no se cumple.** El resultado de fijar 300 sobre un archivo de 1452 no fue que se archivara: fue que la regla quedó muerta. Cuando se detecta el desajuste, lo que corresponde es **recalibrar el número**, no forzar una limpieza masiva a mitad de sesión para salvar la regla. Un umbral es un instrumento; si mide mal, se ajusta el instrumento.
+
+**2 · Toda regla operativa vive en `CLAUDE.md`, no en el prompt de la tanda.** Una restricción que sólo existe en el enunciado de una sesión no sobrevive a esa sesión, nadie la puede verificar y —como aquí— puede llevar años desalineada de la realidad sin que se note. Si una restricción de un prompt merece aplicarse a la próxima tanda, su lugar es el documento; si no lo merece, no debería estar bloqueando el cierre de ésta.
+
+**Nota:** el archivado sigue **sin ejecutarse**. Con el umbral nuevo el archivo (1452 líneas) está justo por debajo, así que la próxima tanda que lo empuje sobre 1500 dispara la operación, y se hará como tanda propia.
