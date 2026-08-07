@@ -50,6 +50,23 @@ Lo que sigue vigente como regla vive abajo, destilado.
   construcción» se fija con un test que barre todas las combinaciones, no con un
   comentario. Y toda regresión conocida deja un test que nombra el bug pasado:
   viaja con el código, la documentación aparte no.
+- **RO-07 · Edición manual de `package.json` exige regenerar lockfile en la
+  misma tanda.** Toda modificación a mano de `package.json` (típicamente para
+  pinnear versiones exactas según `CLAUDE.md`) debe seguirse en la misma tanda
+  de:
+  1. `pnpm install --lockfile-only`
+  2. `pnpm install --frozen-lockfile` (el comando que Railway ejecuta)
+
+  Los comandos `pnpm build`/`typecheck`/`test` **no validan el lockfile** — usan
+  `node_modules` ya instalado. `--frozen-lockfile` es la única detección temprana
+  del desync.
+
+  Nota adicional: `--lockfile-only` re-resuelve el grafo completo y puede
+  colapsar duplicados transitivos (ej.: `picomatch` 4.0.4 → 4.0.5 en el fix de
+  este bug). Revisar el diff completo antes de aceptar.
+
+  Origen: commit `47821c9` pushó lockfile desincronizado; 5 deploys de Railway
+  fallaron hasta el fix con `--lockfile-only` + B1.
 
 ## Bitácora reciente
 
