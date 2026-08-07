@@ -191,6 +191,28 @@ function DocumentRow({
    * decide el desenlace —alta, reutilización o reemplazo— buscando por
    * (hash, solicitud) primero y por (solicitud, clave_adjunto) después. Aquí
    * sólo se lee el `modo` que vuelve para elegir el toast.
+   *
+   * ## Regla D · el reset va en `finally`
+   *
+   * Mientras `estado === "uploading"`, `ocupado` deshabilita el selector de
+   * destino de la fila y sus botones. Sin el `finally`, una excepción entre el
+   * `setEstado("uploading")` y las salidas —un callback que lanza, un fallo de
+   * parseo, cualquier cosa que `uploadConReintentos` no resuelva— dejaba la fila
+   * muerta hasta recargar la página. Es literalmente el bug que la Regla D
+   * describe, y por eso el reset es incondicional.
+   *
+   * El `finally` sólo apaga el estado de progreso si nadie escribió ya un estado
+   * terminal (`error`): no pisa el resultado, cierra el hueco.
+   *
+   * `file-upload-zone.tsx` resuelve lo mismo con `catch` en vez de `finally`,
+   * porque allá el camino de éxito borra el item de la lista y un `finally` lo
+   * resucitaría. Acá el éxito escribe `"idle"` **antes** de los callbacks, así
+   * que el patrón estándar aplica sin arista.
+   *
+   * Sin test unitario: el handler es un closure interno del componente, y
+   * probarlo exige `@testing-library/react` y jsdom, dependencias fuera del
+   * stack aprobado. La invariante se protege por diseño —todas las salidas
+   * escriben estado terminal—, no por test.
    */
   async function subir(file: File) {
     const abort = new AbortController()
@@ -200,41 +222,50 @@ function DocumentRow({
     setProgreso(0)
     setErrorMsg(null)
 
-    const resultado = await uploadConReintentos({
-      file,
-      solicitud_id: solicitudId,
-      codigo_ext: codigoExt,
-      tipo_documento: item.codigo,
-      subido_por: usuarioActual,
-      signal: abort.signal,
-      onProgress: setProgreso,
-      ...destinoAPayload(destino, unidades.length > 0),
-    })
+    try {
+      const resultado = await uploadConReintentos({
+        file,
+        solicitud_id: solicitudId,
+        codigo_ext: codigoExt,
+        tipo_documento: item.codigo,
+        subido_por: usuarioActual,
+        signal: abort.signal,
+        onProgress: setProgreso,
+        ...destinoAPayload(destino, unidades.length > 0),
+      })
 
-    abortRef.current = null
+      if (!resultado.ok) {
+        setEstado("error")
+        setErrorMsg(resultado.error ?? "No se pudo subir.")
+        return
+      }
 
-    if (!resultado.ok) {
+      setEstado("idle")
+      onArchivo(item.codigo, {
+        nombre: resultado.nombre_archivo ?? file.name,
+        tamanio_kb: resultado.tamanio_kb ?? Math.round(file.size / 1024),
+        mime_type: file.type || "application/octet-stream",
+        url_local: resultado.url_dropbox ?? "",
+        adjunto_id: resultado.adjunto_id ? String(resultado.adjunto_id) : undefined,
+        persistido: true,
+      })
+
+      // Si el usuario acabó eligiendo el mismo binario, el backend responde
+      // `reused` y no se reemplazó nada: la confirmación habrá sido innecesaria
+      // pero nunca engañosa (§8.6.4). Sin toast de reemplazo en ese caso.
+      if (resultado.modo === "reemplazo") toast.success(MSG_REEMPLAZADO)
+
+      onSubido()
+    } catch (err) {
+      console.error("[DocumentRow.subir]", err)
       setEstado("error")
-      setErrorMsg(resultado.error ?? "No se pudo subir.")
-      return
+      setErrorMsg(MSG_ERROR_RED)
+    } finally {
+      abortRef.current = null
+      // Nunca dejar la fila en `uploading`. Si alguna salida ya escribió un
+      // estado terminal, esto es un no-op.
+      setEstado((actual) => (actual === "uploading" ? "idle" : actual))
     }
-
-    setEstado("idle")
-    onArchivo(item.codigo, {
-      nombre: resultado.nombre_archivo ?? file.name,
-      tamanio_kb: resultado.tamanio_kb ?? Math.round(file.size / 1024),
-      mime_type: file.type || "application/octet-stream",
-      url_local: resultado.url_dropbox ?? "",
-      adjunto_id: resultado.adjunto_id ? String(resultado.adjunto_id) : undefined,
-      persistido: true,
-    })
-
-    // Si el usuario acabó eligiendo el mismo binario, el backend responde
-    // `reused` y no se reemplazó nada: la confirmación habrá sido innecesaria
-    // pero nunca engañosa (§8.6.4). Sin toast de reemplazo en ese caso.
-    if (resultado.modo === "reemplazo") toast.success(MSG_REEMPLAZADO)
-
-    onSubido()
   }
 
   function seleccionar(fileList: FileList | null) {

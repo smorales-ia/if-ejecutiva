@@ -4,6 +4,8 @@ import {
   DESTINO_COMUN,
   destinoAPayload,
   destinoInicial,
+  ETIQUETA_COMUN,
+  etiquetaDestino,
   etiquetaUnidad,
   MSG_SIN_DESTINO,
   requiereSeleccion,
@@ -134,6 +136,47 @@ describe('etiquetaUnidad · misma cascada que el path (CI-003b)', () => {
   it('sin tipoBien declarado no produce una etiqueta vacía', () => {
     const u = unidad({ id: 'rec1', tipoBien: '' })
     expect(etiquetaUnidad(u, [u])).toBe('Unidad')
+  })
+})
+
+describe('etiquetaDestino · lo que muestra el trigger cerrado', () => {
+  const depto = unidad({ id: 'recA', tipoBien: 'Departamento', ubicacion: '411' })
+  const bodega = unidad({ id: 'recB', tipoBien: 'Bodega', rolSii: '1234-56' })
+  const unidades = [depto, bodega]
+
+  it('el sentinel de común se traduce a su etiqueta, no al literal `__comun__`', () => {
+    expect(etiquetaDestino(DESTINO_COMUN, unidades)).toBe(ETIQUETA_COMUN)
+    expect(etiquetaDestino(DESTINO_COMUN, unidades)).not.toContain('__')
+  })
+
+  it('un record ID existente se traduce a la etiqueta de su unidad', () => {
+    expect(etiquetaDestino('recA', unidades)).toBe('Departamento 411')
+    expect(etiquetaDestino('recB', unidades)).toBe('Bodega · rol 1234-56')
+  })
+
+  it('un record ID que no está en la lista devuelve vacío', () => {
+    // El componente lo traduce a su placeholder, que invita a reelegir.
+    expect(etiquetaDestino('recFANTASMA12345', unidades)).toBe('')
+  })
+
+  it('un id temporal de unidad sin guardar devuelve vacío', () => {
+    // Regresión del bug observado con id temporal en producción
+    // (VP-2026-0053, 07-ago sesión): `agregarUnidad` genera `u-{ts}-{seq}` y ese
+    // id llegaba al trigger, que lo pintaba crudo.
+    expect(etiquetaDestino('u-1786133674735-2', unidades)).toBe('')
+  })
+
+  it('sin destino elegido devuelve vacío', () => {
+    expect(etiquetaDestino('', unidades)).toBe('')
+  })
+
+  it('trigger cerrado y opción abierta muestran el mismo string', () => {
+    // Fija que trigger cerrado y opción abierta muestran el mismo string. Sin
+    // este test, el bug puede volver por otra puerta: basta con que alguien
+    // cambie `etiquetaUnidad` y no `etiquetaDestino`, o al revés.
+    for (const u of unidades) {
+      expect(etiquetaDestino(u.id, unidades)).toBe(etiquetaUnidad(u, unidades))
+    }
   })
 })
 

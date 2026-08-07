@@ -28,6 +28,10 @@ const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"]
 const EXT_PERMITIDAS = [".pdf", ".jpg", ".jpeg", ".png"]
 const MAX_BYTES = 10 * 1024 * 1024 // 10MB
 
+/** Literal §6.1 para el fallo que no sabemos explicar al usuario. */
+const MSG_ERROR_RED =
+  "No pudimos completar la acción. Intenta nuevamente en unos segundos."
+
 export type UploadStatus = "uploading" | "success" | "error"
 
 export interface UploadItem {
@@ -192,6 +196,30 @@ export function FileUploadZone({
     setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...cambios } : it)))
   }
 
+  /**
+   * Regla D · el estado de progreso no puede quedar encendido por ninguna vía.
+   *
+   * Mientras un item está en `uploading`, `subiendo.length > 0` deshabilita el
+   * selector de destino. Sin el `catch`, una excepción entre el `actualizar` de
+   * entrada y el de salida —un callback del padre que lanza, un fallo de parseo,
+   * cualquier cosa que `uploadConReintentos` no resuelva— dejaba el item en
+   * `uploading` para siempre, y con él el selector muerto hasta recargar la
+   * página. Es el bug que la propia Regla D describe.
+   *
+   * **Asimetría deliberada con `document-checklist.tsx`, que sí usa `finally`.**
+   * Acá el reset va en el `catch` y no en un `finally` porque el camino de éxito
+   * **elimina el item de la lista**: un `finally` que escribiera
+   * `status: "error"` resucitaría una fila recién borrada. La garantía de Regla
+   * D se mantiene igual, porque las tres salidas escriben estado terminal —éxito
+   * borra el item, error y `catch` escriben `status: "error"`—. En el checklist
+   * el estado terminal del éxito (`"idle"`) se escribe antes de los callbacks,
+   * así que ahí el `finally` es limpio y se usa el patrón estándar.
+   *
+   * Sin test unitario: el handler es un closure interno del componente, y
+   * probarlo exige `@testing-library/react` y jsdom, dependencias fuera del
+   * stack aprobado. La invariante se protege por diseño —todas las salidas
+   * escriben estado terminal—, no por test.
+   */
   async function subir(item: UploadItem) {
     const abort = new AbortController()
     actualizar(item.id, {
@@ -201,48 +229,58 @@ export function FileUploadZone({
       abort,
     })
 
-    const resultado = await uploadConReintentos({
-      file: item.file,
-      solicitud_id: solicitudId!,
-      codigo_ext: codigoExt!,
-      tipo_documento: tipoDocumento,
-      subido_por: usuarioActual,
-      signal: abort.signal,
-      onProgress: (pct) => actualizar(item.id, { progress: pct }),
-      ...destinoAPayload(destino, unidades.length > 0),
-    })
+    try {
+      const resultado = await uploadConReintentos({
+        file: item.file,
+        solicitud_id: solicitudId!,
+        codigo_ext: codigoExt!,
+        tipo_documento: tipoDocumento,
+        subido_por: usuarioActual,
+        signal: abort.signal,
+        onProgress: (pct) => actualizar(item.id, { progress: pct }),
+        ...destinoAPayload(destino, unidades.length > 0),
+      })
 
-    if (resultado.ok) {
-      // Sólo aquí hay toast: la escritura está confirmada por el Route Handler,
-      // que a su vez exige `adjunto_id` en la respuesta de Make (E-082).
-      setItems((prev) => prev.filter((c) => c.id !== item.id))
-      onUploaded?.([
-        {
-          id: String(resultado.adjunto_id ?? item.id),
-          nombre: resultado.nombre_archivo ?? item.name,
-          detalle: resultado.reused
-            ? `Ya estaba subido · por ${usuarioActual}`
-            : `Subido recién · por ${usuarioActual}`,
-          adjuntoId: resultado.adjunto_id ? String(resultado.adjunto_id) : undefined,
-          urlDropbox: resultado.url_dropbox,
-          file: item.file,
-        },
-      ])
-      toast.success(
-        resultado.reused
-          ? "Este archivo ya estaba adjunto"
-          : "Archivo adjuntado correctamente",
-        { duration: 3000 },
-      )
-      return
+      if (resultado.ok) {
+        // Sólo aquí hay toast: la escritura está confirmada por el Route Handler,
+        // que a su vez exige `adjunto_id` en la respuesta de Make (E-082).
+        setItems((prev) => prev.filter((c) => c.id !== item.id))
+        onUploaded?.([
+          {
+            id: String(resultado.adjunto_id ?? item.id),
+            nombre: resultado.nombre_archivo ?? item.name,
+            detalle: resultado.reused
+              ? `Ya estaba subido · por ${usuarioActual}`
+              : `Subido recién · por ${usuarioActual}`,
+            adjuntoId: resultado.adjunto_id ? String(resultado.adjunto_id) : undefined,
+            urlDropbox: resultado.url_dropbox,
+            file: item.file,
+          },
+        ])
+        toast.success(
+          resultado.reused
+            ? "Este archivo ya estaba adjunto"
+            : "Archivo adjuntado correctamente",
+          { duration: 3000 },
+        )
+        return
+      }
+
+      actualizar(item.id, {
+        status: "error",
+        progress: 0,
+        errorMsg: resultado.error ?? "No se pudo subir.",
+        abort: undefined,
+      })
+    } catch (err) {
+      console.error("[FileUploadZone.subir]", err)
+      actualizar(item.id, {
+        status: "error",
+        progress: 0,
+        errorMsg: MSG_ERROR_RED,
+        abort: undefined,
+      })
     }
-
-    actualizar(item.id, {
-      status: "error",
-      progress: 0,
-      errorMsg: resultado.error ?? "No se pudo subir.",
-      abort: undefined,
-    })
   }
 
   function agregarArchivos(fileList: FileList | null) {

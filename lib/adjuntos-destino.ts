@@ -24,6 +24,14 @@ import type { Unidad } from '@/lib/console-data'
 export const DESTINO_COMUN = '__comun__'
 
 /**
+ * Etiqueta visible del destino «común». Se declara acá y no en el componente
+ * porque la consumen **dos** renders del mismo `Select`: la opción de la lista
+ * abierta y el valor del trigger cerrado. Con el literal escrito a mano en cada
+ * sitio, los dos pueden divergir sin que nada falle.
+ */
+export const ETIQUETA_COMUN = 'Común a todas las unidades'
+
+/**
  * Destino de un adjunto: el record ID de una unidad de `TX_Unidades` o el
  * sentinel `DESTINO_COMUN`. La cadena vacía es "sin decidir" y bloquea la
  * subida.
@@ -97,4 +105,26 @@ export function etiquetaUnidad(unidad: Unidad, todas: Unidad[]): string {
   const delMismoTipo = todas.filter((u) => u.tipoBien === unidad.tipoBien)
   if (delMismoTipo.length < 2) return tipo
   return `${tipo} ${delMismoTipo.findIndex((u) => u.id === unidad.id) + 1}`
+}
+
+/**
+ * Etiqueta de un **destino** —lo que muestra el trigger cerrado del `Select`—,
+ * a diferencia de `etiquetaUnidad`, que etiqueta una unidad concreta.
+ *
+ * `Select.Value` de `@base-ui/react` renderiza el `value` crudo si no se le pasa
+ * una función de formato. Como acá el `value` es un record ID o el sentinel
+ * `__comun__`, el trigger mostraba `recTzdOaalt8Doa5L` o `__comun__` mientras la
+ * lista abierta mostraba las etiquetas correctas. El resto de los `Select` del
+ * repo no lo notaron nunca porque en todos ellos el `value` **es** la etiqueta.
+ *
+ * Devuelve `''` cuando el destino no corresponde a ninguna unidad de la lista.
+ * El componente lo traduce a su placeholder, que invita a reelegir. No es un
+ * caso hipotético: pasa con un id temporal `u-…` de una unidad sin guardar, y
+ * pasa después de cada guardado, porque SC-Edicion borra y recrea las unidades y
+ * cambia todos sus record IDs.
+ */
+export function etiquetaDestino(destino: DestinoUnidad, unidades: Unidad[]): string {
+  if (destino === DESTINO_COMUN) return ETIQUETA_COMUN
+  const unidad = unidades.find((u) => u.id === destino)
+  return unidad ? etiquetaUnidad(unidad, unidades) : ''
 }
