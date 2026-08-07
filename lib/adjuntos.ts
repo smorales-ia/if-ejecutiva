@@ -55,8 +55,15 @@ type RawFields = {
 /**
  * `url_dropbox` (`fldEccoUrOjV7oKZ5`) es de tipo `url` en Airtable, pero
  * `SC-Adjuntos-Upload` escribe ahí `{{6.path_display}}` — la **ruta** dentro de
- * Dropbox, no un enlace navegable. Ej.:
- * `/VProperty/Tasaciones/VP-2026-0053/Foto REF Ofertas.JPG`.
+ * Dropbox, no un enlace navegable. Desde `v1.3` del escenario esa ruta sigue la
+ * estructura de spec v1.9.6 §8.1, compuesta en `lib/dropbox-path.ts`. Ej.:
+ * `/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/departamento/cert.pdf`.
+ *
+ * Los adjuntos subidos antes del cierre de CI-003 conservan el path viejo
+ * —`/VProperty/Tasaciones/VP-2026-0053/Foto REF Ofertas.JPG`—: quedaron
+ * *grandfathered* por la cláusula de corte de RF-51 §8.3 y no se migran. Este
+ * lector tiene que seguir tragando las dos formas, que es justo lo que hace: no
+ * parsea el path, sólo lo normaliza a enlace.
  *
  * Puesto tal cual en un `href`, el navegador lo resuelve como ruta **relativa
  * al dominio de la app** y devuelve 404. Se normaliza al visor web de Dropbox,

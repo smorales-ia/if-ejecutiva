@@ -130,14 +130,48 @@ agrupadas.
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-003 |
-| **Archivo:línea** | `docs/_artefactos/make/SC-Adjuntos-Upload.blueprint.json:1001` y `:1825` · `docs/_artefactos/produccion-actual/SC-Adjuntos-Upload-v1.1-PRODUCCION.blueprint.json:792` · `lib/adjuntos.ts:59` (comentario) · `docs/_notas/checklist-P9-manual.md:64` |
+| **Archivo:línea** | `docs/_artefactos/make/SC-Adjuntos-Upload.blueprint.json:1005` y `:1829` (eran `:1001` y `:1825` antes del cierre; hoy ya consumen `{{1.dropbox_path}}`) · `docs/_artefactos/produccion-actual/SC-Adjuntos-Upload-v1.1-PRODUCCION.blueprint.json:792` (registro histórico, **no se toca**) · `lib/adjuntos.ts:59` (comentario) · `docs/_notas/checklist-P9-manual.md:64` |
 | **Síntoma** | El spec normativo describe desde v1.9.6 la ruta `/Test_ValueProperty/INFORMES_{AAAA}/{Cliente}/{codigo_solicitud}/{Unidad}/…` (§8.1), mientras que el escenario `SC-Adjuntos-Upload` activo en producción y el helper `lib/adjuntos.ts` producen y consumen `/VProperty/Tasaciones/{codigo_ext}/…`. Todo archivo subido hoy queda fuera de la estructura normativa. También quedaba fuera de la estructura de v1.9.5 (`/VProperty/{ClienteSlug}/{AAAA}/{codigo}/{subcarpeta}/`): la divergencia es anterior al bump, que sólo la hace explícita. |
 | **Causa** | La ruta de producción nunca implementó la estructura §8.1 de ninguna versión del spec: el mapper del módulo Dropbox se escribió con un path plano por código de solicitud y así quedó. La reestructuración de v1.9.6 es 100% documental por decisión de alcance de la tanda —no se toca código ni blueprints—, de modo que la brecha se amplía en vez de cerrarse. |
 | **Resolución** | (1) Decidir el momento de la migración y su alcance: sólo archivos nuevos, o también reubicación del histórico. (2) Cambiar el mapper `path` de los módulos Dropbox de `SC-Adjuntos-Upload` para componer los cinco segmentos, lo que exige que el payload del webhook incluya cliente, año y unidad —hoy sólo viaja `codigo_ext`. (3) Alinear `SC-Adjuntos-Delete` y `SC-RF09-ExtraccionClaude`, que leen `url_dropbox` y no componen path, por lo que probablemente no requieran cambio. (4) Fijar `fecha_corte` en el criterio de aceptación de RF-51 (§8.3), hoy pendiente. (5) Actualizar el comentario de ejemplo de `lib/adjuntos.ts:59`. |
 | **Dueño** | Sergio |
 | **Fecha objetivo** | Tanda futura, sin fecha comprometida. No bloqueante: los archivos actuales se guardan y recuperan correctamente; lo que falla es la conformidad con la norma, no la operación. |
-| **Estado** | abierta |
+| **Estado** | **cerrada (2026-08-07)** — implementada en la tanda CI-003, commit `<pendiente>` |
 | **Origen** | Tanda documental de reestructuración de path Dropbox · sesión del 06-ago-2026 |
+
+**Cierre (2026-08-07).** Los cinco puntos de *Resolución*, uno por uno:
+
+1. **Momento y alcance de la migración** — sólo archivos nuevos. Cero reubicación de
+   histórico: las solicitudes anteriores al 06-ago-2026 quedan *grandfathered* por la
+   cláusula de corte de RF-51 §8.3 y sus adjuntos siguen resolviéndose por `url_dropbox`.
+   Corte limpio, sin coexistencia: desde este commit **toda** subida usa la plantilla nueva,
+   incluidas las que se hagan sobre una solicitud vieja —que por tanto puede acabar con
+   archivos en las dos estructuras—.
+2. **Composición de los cinco segmentos** — **no** se hizo en el mapper de Make sino en
+   Next.js (`lib/dropbox-path.ts`), que ya tiene el token de Airtable server-side y donde la
+   regla es testeable sin red. Make pasa a transportista puro: `SC-Adjuntos-Upload v1.3`
+   consume `{{1.dropbox_path}}` del payload en vez de armar el path. Es la alternativa que la
+   nota de esta misma entrada proponía evaluar, y resuelve de paso lo que la nota anterior
+   señalaba como no derivable desde Make con el payload de v1.1.
+3. **`SC-Adjuntos-Delete` y `SC-RF09-ExtraccionClaude`** — confirmado que **no requieren
+   cambio**: los dos leen `url_dropbox` y ninguno compone path. No se tocaron.
+4. **`fecha_corte` de RF-51 §8.3** — ya estaba fijada en `2026-08-06` America/Santiago por la
+   tanda documental del 06-ago-2026. No se toca el spec desde aquí.
+5. **Comentario de ejemplo de `lib/adjuntos.ts:59`** — actualizado al path nuevo, con la nota
+   de que el path viejo sigue siendo lo que devuelven los adjuntos *grandfathered*.
+
+**Lo que este cierre NO resuelve** (y por qué no reabre la entrada):
+
+- **CI-004 sigue abierta**, como corresponde: el path es un snapshot inmutable y ahora que el
+  segmento `{Unidad}` existe de verdad, la divergencia que describe deja de ser teórica.
+- **El selector de unidad del checklist (§9.1 caso b) queda pendiente**, en tanda propia. El
+  backend auto-deriva la unidad cuando la solicitud tiene una sola —el caso mayoritario— y
+  manda a `comun/` cuando tiene dos o más, porque atribuir el adjunto a una unidad al azar
+  sería un dato falso persistido en un path que ya no se recalcula.
+- **La convención de naming de archivo de §8.1**
+  (`{tipo}__{AAAAMMDD-HHMMSS}__{nombre_saneado}`) sigue sin implementarse: Make sube con el
+  nombre original. CI-003 era sobre el path; el naming es una divergencia distinta y, si se
+  quiere rastrear, corresponde una entrada nueva.
 
 **Notas:**
 
@@ -163,6 +197,14 @@ agrupadas.
 
 **Notas:**
 
+- **Actualización 2026-08-07 — deja de ser teórica.** Al cerrarse CI-003, la implementación ya
+  produce el segmento `{Unidad}`, así que la divergencia que esta entrada describe puede
+  ocurrir de verdad: basta con corregir `TX_Unidades.subtipo` después de subir un adjunto. La
+  *Fecha objetivo* «junto con CI-003» queda vencida y la entrada sigue **abierta** con las
+  cuatro opciones (a)-(d) intactas. Matiz que reduce la exposición inmediata: mientras el
+  checklist no capture la unidad, el backend sólo produce segmento de unidad real cuando la
+  solicitud tiene **una sola** unidad —con dos o más manda a `comun/`—, y ese caso de una
+  unidad es también donde menos se corrige el subtipo. La ventana existe igual.
 - El mismo razonamiento aplica, con menor probabilidad, a `{Cliente}`: si se corrige `M_Clientes.nombre` o se reasigna `TX_Solicitudes.cliente`, el path también envejece. Y a `_ingreso/`, por diseño: esos archivos se quedan ahí para siempre aunque después se declaren unidades (§1.5.3).
 - La opción (c) tiene un efecto lateral que conviene medir antes de elegirla: obligaría a rehacer la subida de un documento por corregir un dato de la unidad, justo en el estado del flujo donde más se corrigen datos.
 - **Ambas entradas nuevas de esta sesión (CI-003, CI-004) son divergencias doc↔código en el sentido estricto del alcance de este archivo** —hay blueprint y hay `lib/adjuntos.ts`—, a diferencia de CI-002, que se aceptó como excepción. No abren la discusión de alcance pospuesta en las líneas 16-31.

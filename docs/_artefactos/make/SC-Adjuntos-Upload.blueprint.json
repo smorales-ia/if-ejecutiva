@@ -1,5 +1,5 @@
 {
-    "name": "SC-Adjuntos-Upload v1.2 - Subida con reemplazo backend-driven",
+    "name": "SC-Adjuntos-Upload v1.3 - Path v1.9.6 desde payload",
     "flow": [
         {
             "id": 1,
@@ -73,6 +73,10 @@
                     },
                     {
                         "name": "contenido_base64",
+                        "type": "text"
+                    },
+                    {
+                        "name": "dropbox_path",
                         "type": "text"
                     }
                 ]
@@ -998,7 +1002,7 @@
                             },
                             "mapper": {
                                 "data": "{{toBinary(1.contenido_base64; \"base64\")}}",
-                                "path": "/VProperty/Tasaciones/{{1.codigo_ext}}",
+                                "path": "{{1.dropbox_path}}",
                                 "filename": "{{1.nombre_archivo}}",
                                 "overwrite": false
                             },
@@ -1822,7 +1826,7 @@
                             },
                             "mapper": {
                                 "data": "{{toBinary(1.contenido_base64; \"base64\")}}",
-                                "path": "/VProperty/Tasaciones/{{1.codigo_ext}}",
+                                "path": "{{1.dropbox_path}}",
                                 "filename": "{{1.nombre_archivo}}",
                                 "overwrite": false
                             },

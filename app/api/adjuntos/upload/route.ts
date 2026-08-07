@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@clerk/nextjs/server'
 import { isValidRecordId } from '@/lib/airtable-client'
+import { componerCarpetaDropbox } from '@/lib/dropbox-path'
+import { resolverCasoPath, resolverContextoSolicitud } from '@/lib/dropbox-path-contexto'
 import { postToMake } from '@/lib/make-client'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +32,18 @@ const uploadSchema = z.object({
   // Código de D_TipoDocumento (ej. "permiso_edificacion") cuando el archivo viene
   // del checklist de documentos requeridos; ausente/vacío para adjuntos sueltos.
   tipo_documento: z.string().optional(),
+  /**
+   * Señales del segmento `{Unidad}` del path (§8.1). Las dos son opcionales y
+   * hoy **ninguna interfaz de IF-02 las manda**: el checklist todavía no
+   * captura la unidad, así que el backend la auto-deriva. Se declaran ya para
+   * que la tanda del selector por fila no tenga que tocar el contrato.
+   *
+   * `carpeta` tiene precedencia sobre `unidad_id` y sirve para los adjuntos que
+   * no pertenecen a una unidad: `comun` (documento multi-unidad), `ingreso`
+   * (carga previa a declarar unidades) e `informe` (PDF de Carbone, SC09).
+   */
+  unidad_id: z.string().optional(),
+  carpeta: z.enum(['comun', 'ingreso', 'informe']).optional(),
   nombre_archivo: z.string().min(1, 'Falta el nombre del archivo.'),
   mime_type: z.string().min(1, 'Falta el tipo de archivo.'),
   tamanio_kb: z.number().positive('Tamaño de archivo inválido.'),
@@ -128,9 +142,76 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  if (payload.unidad_id && !isValidRecordId(payload.unidad_id)) {
+    console.error('[POST /api/adjuntos/upload] unidad_id no es un record ID de Airtable', {
+      unidad_id: payload.unidad_id,
+      codigo_ext: payload.codigo_ext,
+    })
+    return NextResponse.json(
+      { ok: false, error: MENSAJE_ERROR_RED, reintentable: false },
+      { status: 400 }
+    )
+  }
+
+  /**
+   * Composición del path Dropbox de spec v1.9.6 §8.1 — cierre de **CI-003**.
+   *
+   * Hasta este commit el path lo armaba el mapper del módulo Dropbox de
+   * `SC-Adjuntos-Upload` (`/VProperty/Tasaciones/{{1.codigo_ext}}`). Ahora lo
+   * compone Next.js y viaja en el payload: Make es transportista puro (RT-03) y
+   * la regla vive en un único lugar testeable (`lib/dropbox-path.ts`).
+   *
+   * Se corta **antes** de tocar Dropbox y no se cae al path viejo: el corte es
+   * limpio (sin coexistencia), así que un contexto irresoluble tiene que fallar
+   * la subida y no producir un archivo fuera de la estructura normativa. Es
+   * reintentable —lo típico es un Airtable con hipo— y el usuario ve el literal
+   * humano de §6.1, nunca el error técnico.
+   *
+   * Las solicitudes anteriores al 06-ago-2026 conservan sus adjuntos donde
+   * están: no hay migración, quedan *grandfathered* por la cláusula de corte de
+   * RF-51 §8.3. Lo que sí cambia es que un adjunto **nuevo** sobre una de esas
+   * solicitudes va ya al árbol nuevo, y por eso una misma solicitud vieja puede
+   * terminar con archivos en las dos estructuras.
+   */
+  let dropboxPath: string
+  try {
+    const contexto = await resolverContextoSolicitud(payload.solicitud_id, payload.codigo_ext)
+    const caso = await resolverCasoPath({
+      codigoSolicitud: contexto.codigoSolicitud,
+      unidadId: payload.unidad_id,
+      carpeta: payload.carpeta,
+    })
+    dropboxPath = componerCarpetaDropbox({ ...contexto, caso })
+  } catch (err) {
+    console.error('[POST /api/adjuntos/upload] no se pudo componer el path Dropbox', err)
+    return NextResponse.json(
+      { ok: false, error: MENSAJE_ERROR_RED, reintentable: true },
+      { status: 502 }
+    )
+  }
+
+  /**
+   * `dropbox_path` es la **carpeta destino**, sin el nombre del archivo:
+   * `dropbox:uploadLargeFile` recibe `path` y `filename` por separado y los
+   * concatena él. Mandarle el path completo haría que Dropbox creara una
+   * carpeta con el nombre del archivo dentro.
+   */
+  const payloadMake = {
+    solicitud_id: payload.solicitud_id,
+    codigo_ext: payload.codigo_ext,
+    tipo_documento: payload.tipo_documento,
+    nombre_archivo: payload.nombre_archivo,
+    mime_type: payload.mime_type,
+    tamanio_kb: payload.tamanio_kb,
+    hash_md5: payload.hash_md5,
+    subido_por: payload.subido_por,
+    contenido_base64: payload.contenido_base64,
+    dropbox_path: dropboxPath,
+  }
+
   let makeRes: Response
   try {
-    makeRes = await postToMake(webhookUrl, payload, {
+    makeRes = await postToMake(webhookUrl, payloadMake, {
       escenario: 'ADJUNTOS_UPLOAD',
       solicitudId: payload.codigo_ext,
       timeoutMs: 45000,

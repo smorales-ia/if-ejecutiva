@@ -144,8 +144,8 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `solicitud_id` | — | Autonumber (PK) | Read-only |
 | `codigo_solicitud` | `fldDXEE1ejMNVDlpB` ✅ | **Formula** (⚠ corregido 13-jul-2026, ver §19) | **Primary field de la tabla**. Hasta el 10-jul-2026 este campo era Single line text poblado manualmente (ver `docs/aprendizajes.md` E-024) — la re-auditoría del 13-jul-2026 confirmó vía `get_table_schema` que **hoy es un campo formula, read-only**: `"VP-" & YEAR({fecha_solicitud}) & "-" & RIGHT("0000" & {solicitud_id} & "", 4)`, prácticamente idéntica a `codigo_ext`. Alguien convirtió el campo de texto a fórmula entre el 10-jul y el 13-jul; no hay registro de quién/cuándo exacto. **La tarea "mapear codigo_solicitud en el módulo 7 de SC01" queda obsoleta** — el campo ya no acepta escritura. **Importante**: como primary field, cualquier campo Link hacia `TX_Solicitudes` (ej. `TX_Adjuntos.solicitud`) se evalúa contra ESTE campo — no contra `codigo_ext` ni contra el record ID — dentro de un `filterByFormula` (misma lección que E-018). |
 | `codigo_ext` | `fldSuJx1fDNYYwDcD` ✅ | Formula | `'VP-' & YEAR(fecha_solicitud) & '-' & LPAD(solicitud_id,4,'0')`. Read-only |
-| `fecha_solicitud` | — | Date (⚠ real es **Date time**, ver §19) | Cuándo se recibió |
-| `cliente` | — | Link → M_Clientes | FK. Solo activos en selectores |
+| `fecha_solicitud` | `fldvkn9CsORy4eU0Z` ✅ | Date (⚠ real es **Date time**, ver §19) | Cuándo se recibió. Alimenta el segmento `INFORMES_{AAAA}` del path Dropbox (spec §8.1) — el año se calcula sobre la marca **convertida a America/Santiago**, no sobre el UTC crudo (§8.5) |
+| `cliente` | `fldttL5myzLohDwHv` ✅ | Link → M_Clientes | FK. Solo activos en selectores. Es el único camino al segmento `{Cliente}` del path Dropbox: se resuelve el link y se lee `M_Clientes.nombre` (§8.5). Los campos `cliente_slug` y `M_Clientes.slug_url` que las versiones ≤ v1.9.5 del spec daban por fuente **no existen** en esta base |
 | `banco` | ver fila detallada más abajo (⚠ **no** es Link → M_Bancos; ver corrección 08-jul-2026) | — | — |
 | `tipo_informe` | — | Link → M_TiposInforme | FK. Filtrado por M_Clientes.productos |
 | `tipo_propiedad` | — | Link → M_TiposPropiedad | FK |
@@ -243,17 +243,17 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 
 **TABLE_ID**: `tblpK7AcYBMH93apK`
 
-| Campo | Tipo Airtable | Notas |
-|---|---|---|
-| `cliente_id` | Autonumber (PK) | |
-| `codigo_externo` | Single line text (UQ) | Para identificación en informes |
-| `nombre` | Single line text | Razón social |
-| `tipo` | Single select | Banco · Compañía de seguros · Mutuaria · Caja · Inmobiliaria |
-| `rut` | Single line text (UQ) | |
-| `email_contacto` | Email | |
-| `productos` | Link → M_Productos | Filtra M_TiposInforme disponibles en el formulario |
-| `bancos_asociados` | Link → M_Bancos | |
-| `activo` | Checkbox | Solo activos en selectores |
+| Campo | FIELD_ID | Tipo Airtable | Notas |
+|---|---|---|---|
+| `cliente_id` | — | Autonumber (PK) | |
+| `codigo_externo` | — | Single line text (UQ) | Para identificación en informes |
+| `nombre` | `fldDGR9WLhOtIbikW` ✅ | Single line text | Razón social. **Fuente única del segmento `{Cliente}` del path Dropbox** (spec §8.5, verificado vía MCP 06-ago-2026): se normaliza con `normalizarCliente()` de `lib/dropbox-path.ts`. Es texto libre con mayúsculas y acentos inconsistentes —conviven `AFIANZA` y `Afianza` como filas distintas—, y la normalización los colapsa a la misma carpeta a propósito |
+| `tipo` | — | Single select | Banco · Compañía de seguros · Mutuaria · Caja · Inmobiliaria |
+| `rut` | — | Single line text (UQ) | |
+| `email_contacto` | — | Email | |
+| `productos` | — | Link → M_Productos | Filtra M_TiposInforme disponibles en el formulario |
+| `bancos_asociados` | — | Link → M_Bancos | |
+| `activo` | — | Checkbox | Solo activos en selectores |
 
 ---
 
@@ -650,7 +650,7 @@ Tabla transaccional que persiste una fila por unidad física del inmueble. Desti
 | `es_principal` | `flduvn0eU2lfG6RqR` | Checkbox |
 | `rol_sii` | `fldC5yUYC2wTTLJBV` | Single line text |
 | `sup_m2` | `fldZLvJKuXuWhRV8P` | Number |
-| `numero_unidad` | `fldJGXS8jGDKZDdWM` | Single line text |
+| `numero_unidad` | `fldJGXS8jGDKZDdWM` | Single line text — alimenta el sufijo `_{numero_unidad}` que desambigua dos unidades del mismo subtipo en el path Dropbox (spec §8.1). ⚠ Es **texto libre y está vacío en la mayoría de las filas reales** (valores observados el 06-ago-2026: `1`, `105`, `411`, `2100`, `D402`), así que `lib/dropbox-path.ts` lo sanea a snake_case y, cuando falta, cae al ordinal de la unidad dentro de su grupo de mismo subtipo |
 | `avaluo_uf` | `fld3fwTUt4GN8pYXf` | Number |
 | `orden` | `fld9iRM3hhCNNj4DJ` | Number |
 | `notas` | `fld08OmgUPgIWHyCk` | Long text |
