@@ -67,6 +67,36 @@ Lo que sigue vigente como regla vive abajo, destilado.
 
   Origen: commit `47821c9` pushó lockfile desincronizado; 5 deploys de Railway
   fallaron hasta el fix con `--lockfile-only` + B1.
+- **RO-08 · `Select` con `value` no legible exige función de formato.** El
+  wrapper de `components/ui/select.tsx` es un passthrough de `@base-ui/react`, y
+  `Select.Value` renderiza el **`value` crudo** si no se le pasa `children` como
+  función. Cuando el `value` sea un record ID, un sentinel o cualquier cosa que
+  no se le muestre a un humano, el trigger cerrado lleva
+  `{(v) => etiquetaDe(v)}` — y esa función vive en `lib/`, no en el componente,
+  para que la opción abierta y el valor cerrado no puedan divergir (RO-05).
+- **RO-09 · Regla D tiene dos formas correctas; la invariante es una sola.** Lo
+  que hay que garantizar es que **ninguna salida deje el flag de progreso
+  encendido**, no que todo handler use `finally`. Antes de elegir la estructura,
+  mirar qué hace la salida de éxito: si **borra** el elemento cuyo estado se
+  resetearía, el `finally` lo resucita y corresponde `catch`; si escribe su
+  estado terminal antes de los callbacks, el `finally` estándar es limpio. Un
+  `finally` incondicional pisa el estado de error que acaba de escribir el
+  `catch` o un `return` temprano: usar updater condicional.
+- **RO-10 · Al importar un blueprint Make vN, pausar v(N-1) en el mismo turno.**
+  Un escenario viejo **no pausado sigue consumiendo el webhook** aunque exista
+  una versión nueva importada; la única URL que importa es la que Railway apunta
+  en la env var. Pausar en el mismo turno y registrar la fecha del cambio en
+  `docs/construccion.md`.
+- **RO-11 · La de-duplicación por hash no es un fallo.** «Binario ya indexado»
+  en `SC-Adjuntos-Upload` es comportamiento esperado (RT-03), no un error. Un
+  archivo que «no aparece en la ruta nueva» puede ser dedupe legítimo si su
+  `hash_md5` coincide con un adjunto histórico, incluso de otra sesión. Validar
+  un path nuevo end-to-end **exige un archivo con hash nunca visto**: renombrarlo
+  no alcanza, hay que cambiar el contenido.
+- **RO-12 · Dropbox crea las subcarpetas al vuelo.** El módulo de subida crea
+  la estructura que venga en el `path`; no hay que pre-provisionar nada. Aplica
+  igual a las carpetas de unidad y a las tres reservadas de §8.1 —`comun/`,
+  `informe/`, `_ingreso/`—.
 
 ## Bitácora reciente
 
@@ -283,3 +313,50 @@ Dos casos de la sesión:
 Un test llamado «regresión de X», con un comentario que nombre el bug pasado, vale más que la documentación aparte: **viaja con el código**. El de `content-type` es el ejemplo — describe la heurística vieja y por qué fallaba, justo donde alguien que la reintroduzca lo va a ver.
 
 **Prevención futura:** las tres lecciones quedaron destiladas como **RO-04**, **RO-05** y **RO-06** en las reglas operativas de este archivo, que es lo que se lee al abrir sesión. Esta entrada conserva el contexto; las reglas son lo operativo.
+
+---
+
+### 2026-08-07 (d) — Cierre del día: lockfile, selector legible y validación end-to-end del path v1.9.6
+
+**Contexto:** segunda mitad de la sesión del 07-ago. Dos tandas de código —`fix(deps)` sobre `pnpm-lock.yaml` y `fix(adjuntos)` sobre los dos bugs del selector de destino— más la validación en producción del camino completo UI → Next.js → Make v1.3 → Dropbox con la ruta de spec v1.9.6.
+
+**1 · El wrapper de `Select` era un passthrough, y nadie lo sabía.**
+
+`components/ui/select.tsx` no formatea nada: reenvía a `Select.Value` de `@base-ui/react`, que renderiza el `value` **crudo** salvo que reciba `children` como función. El trigger cerrado mostraba `recTzdOaalt8Doa5L` y `__comun__` mientras la lista abierta mostraba las etiquetas correctas.
+
+Lo interesante no es el bug sino **por qué tardó tanto en aparecer**: todos los `Select` anteriores del repo usan `value` **igual a la etiqueta** —`"si"`/`"no"`, los tipos de cliente, el `TODOS` de la lista—, así que el defecto del wrapper era invisible por construcción. `SelectorDestinoUnidad` fue el primero con `value ≠ label`, y lo destapó. Un defecto latente en un componente compartido no se manifiesta hasta que llega el primer consumidor que usa el eje que nadie había usado.
+
+El fix es una función pura, `etiquetaDestino`, en `lib/adjuntos-destino.ts` —no en el componente— para que el trigger cerrado y la opción abierta lean del mismo sitio. Destilado como **RO-08**.
+
+**2 · Regla D admite dos estructuras, y elegir la equivocada rompe otra cosa.**
+
+Los dos handlers de subida dejaban el flag de progreso encendido ante cualquier excepción: sin `try/catch`, un throw entre el `setEstado("uploading")` y las salidas dejaba el selector muerto hasta recargar la página. Es literalmente el bug que la Regla D de `CLAUDE.md` describe.
+
+Lo que no estaba en la regla es que **la estructura correcta depende de qué hace la salida de éxito**:
+
+- `file-upload-zone.tsx` → **`catch`**. Su camino de éxito *elimina el item de la lista*; un `finally` que escribiera `status: "error"` resucitaría una fila recién borrada.
+- `document-checklist.tsx` → **`try/catch/finally`**, con el reset como updater condicional (`actual === "uploading" ? "idle" : actual`). Un `setEstado("idle")` seco pisaría el `"error"` que acaban de escribir el `return` temprano o el `catch`, y la fila perdería su mensaje justo después de mostrarlo.
+
+La invariante es «ninguna salida deja el flag encendido», no «todo handler usa `finally`». Destilado como **RO-09**.
+
+**3 · Cuando un componente tiene dos renders del mismo dato, el test fija que coincidan.**
+
+Un `Select` pinta el mismo valor dos veces —como opción en la lista abierta y como texto del trigger cerrado— por caminos de código distintos. El caso #6 de `lib/adjuntos-destino.test.ts` afirma que `etiquetaDestino(u.id, us) === etiquetaUnidad(u, us)` para toda unidad. Sin él, basta con que alguien toque una de las dos funciones para que el bug vuelva por otra puerta, y ningún test lo notaría porque las dos seguirían pasando sus casos propios.
+
+Es **RO-06** aplicada a un caso nuevo: la invariante estructural no es aquí «dos campos excluyentes» sino «dos renders convergentes». Vale la pena reconocer la forma —*el mismo dato pintado por dos caminos*— porque se repite en toda UI con estado seleccionado.
+
+**4 · Un escenario Make viejo sin pausar sigue atendiendo el webhook.**
+
+Importar `v1.3` no desactiva `v1.2`. Mientras la env var de Railway apunte a esa URL, lo que responde es el escenario que esté activo, no el más nuevo del repo. `v1.2` quedó pausado como respaldo, pero el orden correcto es pausarlo en el mismo turno de la importación: si no, la pregunta «¿qué versión está corriendo?» se responde mirando Make en vez de mirando el repo, y esa es exactamente la deuda cognitiva que causó E-090. Destilado como **RO-10**.
+
+**5 · «El archivo no llegó a la ruta nueva» puede ser dedupe correcto.**
+
+Durante la validación end-to-end, la Ruta 1 de `v1.3` respondió «Binario ya indexado» y el archivo no apareció bajo la estructura nueva. No era un fallo del path: el `hash_md5` coincidía con un adjunto histórico de la misma solicitud, así que el escenario respondió `reused` sin subir nada —comportamiento esperado de RT-03—.
+
+La lección operativa es de **método de prueba**: validar un path nuevo exige un archivo con hash nunca visto, y **renombrarlo no alcanza** porque el hash es del contenido. Un falso negativo de este tipo cuesta caro precisamente porque el sistema está funcionando bien. Destilado como **RO-11**.
+
+**6 · Dropbox crea las subcarpetas al vuelo.**
+
+Confirmado en producción: al subir con destino «Departamento», Dropbox creó `/…/VP-2026-0053/departamento/` desde cero. No hay que pre-provisionar la estructura, y lo mismo aplica a `comun/`, `informe/` y `_ingreso/`. Elimina un paso de setup que el diseño de §8.1 podía sugerir. Destilado como **RO-12**.
+
+**Estado al cierre:** camino completo validado en producción —común, unidad específica (departamento) y de-duplicación por hash—, con `SC-Adjuntos-Upload v1.3` activo y `v1.2` pausado como respaldo.
