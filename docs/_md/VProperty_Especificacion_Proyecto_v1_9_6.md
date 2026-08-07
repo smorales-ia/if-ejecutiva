@@ -3881,9 +3881,10 @@ correctamente guardados según la norma vigente cuando se subieron. Por
 eso:
 
 - La auditoría de path aplica **sólo a solicitudes con
-  `fecha_solicitud >= fecha_corte`**, siendo `fecha_corte` la fecha del
-  merge del commit que incorpora esta v1.9.6 (**pendiente de completar
-  tras el push**).
+  `fecha_solicitud >= 2026-08-06`**, fecha del merge del commit que
+  incorpora esta v1.9.6. El corte se evalúa sobre `fecha_solicitud`
+  convertida a America/Santiago, con el mismo criterio de zona que el
+  segmento `INFORMES_{AAAA}` (§8.5).
 - Las solicitudes anteriores quedan *grandfathered* en la estructura
   `/VProperty/Tasaciones/{codigo_ext}/…` y **no cuentan** para el
   criterio, ni a favor ni en contra.
