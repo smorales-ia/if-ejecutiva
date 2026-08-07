@@ -3,7 +3,12 @@ import { z } from 'zod'
 import { auth } from '@clerk/nextjs/server'
 import { isValidRecordId } from '@/lib/airtable-client'
 import { componerCarpetaDropbox } from '@/lib/dropbox-path'
-import { resolverCasoPath, resolverContextoSolicitud } from '@/lib/dropbox-path-contexto'
+import {
+  ErrorPathIrresoluble,
+  resolverCasoPath,
+  resolverContextoSolicitud,
+  type MotivoPathIrresoluble,
+} from '@/lib/dropbox-path-contexto'
 import { postToMake } from '@/lib/make-client'
 
 export const dynamic = 'force-dynamic'
@@ -18,6 +23,25 @@ const MENSAJE_ARCHIVO_GRANDE =
   'Este archivo supera el límite de 7 MB. Comprímelo o divídelo.'
 
 const MAX_TAMANIO_KB = 7 * 1024 // 7MB, ya en KB (D-13)
+
+/**
+ * Mensajes de los tres motivos por los que el path no se puede componer
+ * (CI-003b). Estilo §6.1: segunda persona, sin signos de exclamación, sin
+ * exponer el error técnico y **diciendo qué hacer** — un mensaje que sólo
+ * informa del bloqueo deja al usuario sin salida.
+ *
+ * `solicitud_irresoluble` no está en la tabla a propósito: no es un dato que la
+ * Ejecutiva pueda aportar desde el diálogo de adjuntos, así que cae al mensaje
+ * genérico de red y se reintenta.
+ */
+const MENSAJE_POR_MOTIVO: Partial<Record<MotivoPathIrresoluble, string>> = {
+  cliente_sin_vincular:
+    'Esta solicitud no tiene cliente asignado. Asígnalo en el detalle y vuelve a subir el documento.',
+  unidad_no_especificada:
+    'Esta solicitud tiene más de una unidad. Indica a qué unidad pertenece el documento antes de subirlo.',
+  unidad_no_pertenece:
+    'La unidad indicada ya no pertenece a esta solicitud. Vuelve a abrir el detalle y repite la subida.',
+}
 
 /**
  * Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026): reescritura completa de
@@ -163,9 +187,13 @@ export async function POST(request: NextRequest) {
    *
    * Se corta **antes** de tocar Dropbox y no se cae al path viejo: el corte es
    * limpio (sin coexistencia), así que un contexto irresoluble tiene que fallar
-   * la subida y no producir un archivo fuera de la estructura normativa. Es
-   * reintentable —lo típico es un Airtable con hipo— y el usuario ve el literal
-   * humano de §6.1, nunca el error técnico.
+   * la subida y no producir un archivo fuera de la estructura normativa.
+   *
+   * Dos desenlaces distintos (CI-003b): si falta una señal que alguien puede
+   * aportar —cliente sin vincular, unidad sin especificar— se responde **422**
+   * con `code`, para que la interfaz diga qué falta y no ofrezca reintentar lo
+   * mismo. Cualquier otro fallo es infraestructura: 502 reintentable. En los dos
+   * casos el usuario ve un literal humano de §6.1, nunca el error técnico.
    *
    * Las solicitudes anteriores al 06-ago-2026 conservan sus adjuntos donde
    * están: no hay migración, quedan *grandfathered* por la cláusula de corte de
@@ -183,7 +211,22 @@ export async function POST(request: NextRequest) {
     })
     dropboxPath = componerCarpetaDropbox({ ...contexto, caso })
   } catch (err) {
-    console.error('[POST /api/adjuntos/upload] no se pudo componer el path Dropbox', err)
+    if (err instanceof ErrorPathIrresoluble) {
+      const mensaje = MENSAJE_POR_MOTIVO[err.code]
+      console.error('[POST /api/adjuntos/upload] falta un dato para componer el path', {
+        code: err.code,
+        detalle: err.message,
+        codigo_ext: payload.codigo_ext,
+      })
+      if (mensaje) {
+        return NextResponse.json(
+          { ok: false, code: err.code, error: mensaje, reintentable: false },
+          { status: 422 }
+        )
+      }
+    } else {
+      console.error('[POST /api/adjuntos/upload] no se pudo componer el path Dropbox', err)
+    }
     return NextResponse.json(
       { ok: false, error: MENSAJE_ERROR_RED, reintentable: true },
       { status: 502 }

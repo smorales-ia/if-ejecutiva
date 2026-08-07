@@ -650,7 +650,7 @@ Tabla transaccional que persiste una fila por unidad física del inmueble. Desti
 | `es_principal` | `flduvn0eU2lfG6RqR` | Checkbox |
 | `rol_sii` | `fldC5yUYC2wTTLJBV` | Single line text |
 | `sup_m2` | `fldZLvJKuXuWhRV8P` | Number |
-| `numero_unidad` | `fldJGXS8jGDKZDdWM` | Single line text — alimenta el sufijo `_{numero_unidad}` que desambigua dos unidades del mismo subtipo en el path Dropbox (spec §8.1). ⚠ Es **texto libre y está vacío en la mayoría de las filas reales** (valores observados el 06-ago-2026: `1`, `105`, `411`, `2100`, `D402`), así que `lib/dropbox-path.ts` lo sanea a snake_case y, cuando falta, cae al ordinal de la unidad dentro de su grupo de mismo subtipo |
+| `numero_unidad` | `fldJGXS8jGDKZDdWM` | Single line text — alimenta el sufijo `_{numero_unidad}` que desambigua dos unidades del mismo subtipo en el path Dropbox (spec §8.1). ⚠ Es **texto libre y está vacío en la mayoría de las filas reales** (valores observados el 06-ago-2026: `1`, `105`, `411`, `2100`, `D402`), así que `lib/dropbox-path.ts` lo sanea a snake_case y, cuando falta, aplica la cascada de CI-003b: `numero_unidad` → `rol_sii` (`fldC5yUYC2wTTLJBV`) → ordinal dentro del grupo **con warning**. El ordinal es el último recurso porque es posicional: agregar o borrar una unidad hermana corre el de las demás y desalinea paths ya escritos (CI-004) |
 | `avaluo_uf` | `fld3fwTUt4GN8pYXf` | Number |
 | `orden` | `fld9iRM3hhCNNj4DJ` | Number |
 | `notas` | `fld08OmgUPgIWHyCk` | Long text |

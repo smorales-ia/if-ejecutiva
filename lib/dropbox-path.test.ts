@@ -149,11 +149,45 @@ describe('componerPathDropbox · plantilla §8.1', () => {
     ).toBe('/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/departamento_d_402')
   })
 
-  it('sin numero_unidad cae al ordinal del grupo, que siempre desambigua', () => {
+  // Cascada de desambiguación CI-003b: numero_unidad → rol_sii → ordinal.
+  it('sin numero_unidad usa rol_sii, que identifica de forma estable', () => {
+    expect(
+      componerCarpetaDropbox({
+        ...AFIANZA,
+        caso: {
+          tipo: 'unidad',
+          subtipoUnidad: 'Bodega',
+          numeroUnidad: null,
+          rolSii: '1234-56',
+          totalDelMismoSubtipo: 2,
+          ordinalEnGrupo: 1,
+        },
+      })
+    ).toBe('/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/bodega_1234_56')
+  })
+
+  it('numero_unidad tiene precedencia sobre rol_sii', () => {
+    expect(
+      componerCarpetaDropbox({
+        ...AFIANZA,
+        caso: {
+          tipo: 'unidad',
+          subtipoUnidad: 'Bodega',
+          numeroUnidad: '7',
+          rolSii: '1234-56',
+          totalDelMismoSubtipo: 2,
+        },
+      })
+    ).toBe('/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/bodega_7')
+  })
+
+  it('sin numero_unidad ni rol_sii cae al ordinal, y avisa de que es posicional', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const base = {
       tipo: 'unidad',
       subtipoUnidad: 'Bodega',
       numeroUnidad: null,
+      rolSii: null,
       totalDelMismoSubtipo: 2,
     } as const
     expect(componerCarpetaDropbox({ ...AFIANZA, caso: { ...base, ordinalEnGrupo: 1 } })).toBe(
@@ -162,6 +196,36 @@ describe('componerPathDropbox · plantilla §8.1', () => {
     expect(componerCarpetaDropbox({ ...AFIANZA, caso: { ...base, ordinalEnGrupo: 2 } })).toBe(
       '/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/bodega_2'
     )
+    expect(warn).toHaveBeenCalledTimes(2)
+    warn.mockRestore()
+  })
+
+  it('los tres escalones de la cascada producen carpetas distintas entre hermanas', () => {
+    const hermanas = [
+      { numeroUnidad: '1', rolSii: null, ordinalEnGrupo: 1 },
+      { numeroUnidad: null, rolSii: '999-1', ordinalEnGrupo: 2 },
+    ].map((u) =>
+      componerCarpetaDropbox({
+        ...AFIANZA,
+        caso: { tipo: 'unidad', subtipoUnidad: 'Estacionamiento', totalDelMismoSubtipo: 2, ...u },
+      })
+    )
+    expect(new Set(hermanas).size).toBe(2)
+  })
+
+  it('con una sola unidad del subtipo no hay sufijo aunque haya rol_sii', () => {
+    expect(
+      componerCarpetaDropbox({
+        ...AFIANZA,
+        caso: {
+          tipo: 'unidad',
+          subtipoUnidad: 'Casa',
+          numeroUnidad: '3',
+          rolSii: '1234-56',
+          totalDelMismoSubtipo: 1,
+        },
+      })
+    ).toBe('/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/casa')
   })
 
   it('unidad sin subtipo declarado → sin_subtipo', () => {

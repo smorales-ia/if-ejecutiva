@@ -156,12 +156,18 @@ export type CasoPath =
        * `"105"` a `"D402"` y `"2100"`, y en la mayoría de las filas está vacío.
        */
       numeroUnidad?: string | null
+      /**
+       * `TX_Unidades.rol_sii` (`fldC5yUYC2wTTLJBV`). Segundo escalón de la
+       * cascada de desambiguación: identifica la unidad de forma estable y
+       * verificable contra el SII, a diferencia del ordinal.
+       */
+      rolSii?: string | null
       /** Cuántas unidades de la solicitud comparten este mismo subtipo. */
       totalDelMismoSubtipo: number
       /**
        * Posición 1-based de la unidad dentro de su grupo de mismo subtipo, en el
-       * orden de `TX_Unidades.orden`. Sólo se usa como desempate cuando hace
-       * falta sufijo y `numero_unidad` está vacío — ver `sufijoDesambiguacion`.
+       * orden de `TX_Unidades.orden`. Último escalón de la cascada — ver
+       * `sufijoDesambiguacion`.
        */
       ordinalEnGrupo?: number
     }
@@ -185,23 +191,47 @@ function aSnakeCase(valor: string): string {
  *
  * ⚠ Borde que §8.1 no cubre: `numero_unidad` está **vacío en la mayoría de las
  * filas reales**, y dos estacionamientos sin número producirían la misma
- * carpeta —justo el choque que el sufijo existe para evitar—. Cuando falta, se
- * cae al ordinal dentro del grupo, que siempre existe. Es una extensión de la
- * norma, no una contradicción: el objetivo declarado del sufijo es que las
- * carpetas hermanas sean distintas.
+ * carpeta —justo el choque que el sufijo existe para evitar—.
+ *
+ * **Cascada de identificadores (CI-003b, 07-ago-2026).** Se resuelve en tres
+ * escalones, del más significativo al más frágil:
+ *
+ *   1. `numero_unidad` — lo que manda §8.1 y lo que un humano reconoce
+ *      (`estacionamiento_105`).
+ *   2. `rol_sii` — identificador estable, único y verificable contra el SII.
+ *      No es cosmético: sobrevive a un reordenamiento de las unidades.
+ *   3. ordinal dentro del grupo, **con warning**. Es posicional: si mañana se
+ *      agrega o borra una unidad hermana, el ordinal de las demás se corre y el
+ *      path ya escrito —que §8 declara inmutable— deja de corresponder. Sirve
+ *      para no colisionar hoy, no para identificar mañana; el warning existe
+ *      para que ese caso se vea en los logs y se corrija el dato maestro.
+ *
+ * La versión inicial de CI-003 saltaba directo de (1) a (3) e ignoraba
+ * `rol_sii`, que estaba disponible en la misma lectura de `TX_Unidades`.
  */
 function sufijoDesambiguacion(caso: Extract<CasoPath, { tipo: 'unidad' }>): string {
   if (caso.totalDelMismoSubtipo < 2) return ''
 
   const numero = aSnakeCase(caso.numeroUnidad?.trim() ?? '')
   if (numero) return `_${numero}`
-  if (caso.ordinalEnGrupo) return `_${caso.ordinalEnGrupo}`
 
-  // Sin número ni ordinal no hay forma de distinguirlas; se deja sin sufijo y se
-  // avisa, porque un path colisionado es un problema de datos, no de código.
+  const rol = aSnakeCase(caso.rolSii?.trim() ?? '')
+  if (rol) return `_${rol}`
+
+  if (caso.ordinalEnGrupo) {
+    console.warn(
+      '[dropbox-path] unidades del mismo subtipo sin numero_unidad ni rol_sii — ' +
+        `se desambigua por ordinal (_${caso.ordinalEnGrupo}), que es posicional y ` +
+        'envejece mal (CI-004). Conviene poblar numero_unidad en TX_Unidades'
+    )
+    return `_${caso.ordinalEnGrupo}`
+  }
+
+  // Sin ninguno de los tres no hay forma de distinguirlas; se deja sin sufijo y
+  // se avisa, porque un path colisionado es un problema de datos, no de código.
   console.warn(
-    '[dropbox-path] dos o más unidades del mismo subtipo sin numero_unidad ni ordinal — ' +
-      'las carpetas van a colisionar'
+    '[dropbox-path] dos o más unidades del mismo subtipo sin numero_unidad, ' +
+      'rol_sii ni ordinal — las carpetas van a colisionar'
   )
   return ''
 }

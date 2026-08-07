@@ -165,9 +165,13 @@ agrupadas.
 - **CI-004 sigue abierta**, como corresponde: el path es un snapshot inmutable y ahora que el
   segmento `{Unidad}` existe de verdad, la divergencia que describe deja de ser teórica.
 - **El selector de unidad del checklist (§9.1 caso b) queda pendiente**, en tanda propia. El
-  backend auto-deriva la unidad cuando la solicitud tiene una sola —el caso mayoritario— y
-  manda a `comun/` cuando tiene dos o más, porque atribuir el adjunto a una unidad al azar
-  sería un dato falso persistido en un path que ya no se recalcula.
+  backend auto-deriva la unidad cuando la solicitud tiene una sola —el caso mayoritario— y,
+  desde **CI-003b (07-ago-2026)**, **rechaza la subida con 422 `unidad_no_especificada`**
+  cuando tiene dos o más. La primera versión de este cierre mandaba esos adjuntos a `comun/`
+  con un warning; el panel lo revirtió antes del commit por ocultar la deuda de UX. Mientras
+  el selector no exista, subir un documento a una solicitud multi-unidad no es posible desde
+  el checklist: es una limitación visible y con fecha, no un archivo mal guardado para
+  siempre.
 - **La convención de naming de archivo de §8.1**
   (`{tipo}__{AAAAMMDD-HHMMSS}__{nombre_saneado}`) sigue sin implementarse: Make sube con el
   nombre original. CI-003 era sobre el path; el naming es una divergencia distinta y, si se
@@ -203,8 +207,14 @@ agrupadas.
   *Fecha objetivo* «junto con CI-003» queda vencida y la entrada sigue **abierta** con las
   cuatro opciones (a)-(d) intactas. Matiz que reduce la exposición inmediata: mientras el
   checklist no capture la unidad, el backend sólo produce segmento de unidad real cuando la
-  solicitud tiene **una sola** unidad —con dos o más manda a `comun/`—, y ese caso de una
-  unidad es también donde menos se corrige el subtipo. La ventana existe igual.
+  solicitud tiene **una sola** unidad —con dos o más rechaza la subida, CI-003b—, y ese caso
+  de una unidad es también donde menos se corrige el subtipo. La ventana existe igual.
+- **El ordinal como desambiguador agrava esta entrada, y por eso es el último recurso.** La
+  cascada de CI-003b —`numero_unidad` → `rol_sii` → ordinal— antepone dos identificadores
+  intrínsecos precisamente porque el ordinal es posicional: agregar o borrar una unidad
+  hermana corre el de las demás y desalinea paths ya escritos, que es esta misma divergencia
+  por una segunda vía. El warning del tercer escalón es la señal de que hay dato maestro que
+  poblar.
 - El mismo razonamiento aplica, con menor probabilidad, a `{Cliente}`: si se corrige `M_Clientes.nombre` o se reasigna `TX_Solicitudes.cliente`, el path también envejece. Y a `_ingreso/`, por diseño: esos archivos se quedan ahí para siempre aunque después se declaren unidades (§1.5.3).
 - La opción (c) tiene un efecto lateral que conviene medir antes de elegirla: obligaría a rehacer la subida de un documento por corregir un dato de la unidad, justo en el estado del flujo donde más se corrigen datos.
 - **Ambas entradas nuevas de esta sesión (CI-003, CI-004) son divergencias doc↔código en el sentido estricto del alcance de este archivo** —hay blueprint y hay `lib/adjuntos.ts`—, a diferencia de CI-002, que se aceptó como excepción. No abren la discusión de alcance pospuesta en las líneas 16-31.

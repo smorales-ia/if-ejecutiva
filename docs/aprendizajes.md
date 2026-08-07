@@ -1412,3 +1412,41 @@ Nota lateral del mismo hallazgo: cada **reemplazo** relanza la extracción, porq
 - Captura del nivel Unidad en el sheet P8, bloqueada por CI-003. El comportamiento previsto —auto-derivar con una unidad, selector con dos o más, `comun/` para multi-unidad— quedó como nota de diseño en §9.1 sin tocar el layout del sheet.
 
 **Divergencia menor descubierta al paso (no bloquea):** `SC-Adjuntos-Upload` declara `v1.2` en `docs/_artefactos/make/` y `v1.1` en el export de `docs/_artefactos/produccion-actual/`. Es la **Deuda #3** ya registrada el 05-ago-2026; §10.4.1 del plan ahora la deja explícita en vez de dejar el número sin marcar. Etiquetar la lista de artefactos-a-importar con la versión del repo y anotar aparte la de producción es lo que hace visible la brecha: un solo número habría escondido cuál de los dos se estaba nombrando.
+
+---
+
+### 2026-08-07 — CI-003b · Los tres fallbacks silenciosos que el panel revirtió
+
+**Contexto:** tanda de ajuste sobre CI-003, ya commiteada como `47821c9` (composición del path Dropbox v1.9.6 en Next.js, `SC-Adjuntos-Upload` v1.2 → v1.3). La implementación cerró la brecha con la norma, pero resolvió con fallbacks silenciosos tres bordes que §8.1 no cubre. El panel los revisó uno a uno antes de dar el commit por bueno y revirtió los tres. CI-003b es esa reversión.
+
+**Inconveniente:** los tres bordes producían una subida "exitosa" que dejaba el archivo en la carpeta equivocada, de forma permanente y sin que nadie se enterara:
+
+| Borde | Fallback inicial | Resolución CI-003b |
+|---|---|---|
+| Solicitud sin `cliente` vinculado (existe: VP-2026-0044) | carpeta `SIN_CLIENTE/` + `console.warn` | **422 `cliente_sin_vincular`** |
+| Solicitud con 2+ unidades y sin selector en el checklist | carpeta `comun/` + `console.warn` | **422 `unidad_no_especificada`** |
+| Dos unidades del mismo subtipo sin `numero_unidad` | ordinal directo | cascada `numero_unidad` → `rol_sii` → ordinal **con warning** |
+
+**Causa raíz:** el criterio con el que se eligieron los tres fue "no bloquear a la Ejecutiva por un defecto de datos que ella no causó". Es un buen criterio para operaciones reversibles y uno malo para ésta, por una razón que estaba escrita a dos secciones de distancia: §8 declara `TX_Adjuntos.dropbox_path` **snapshot inmutable** (CI-004). Un archivo mal archivado no se recalcula ni se mueve, y a los seis meses es indistinguible de uno bien archivado. El fallback no aplazaba el problema: lo convertía en permanente y lo volvía invisible.
+
+**Solución aplicada:**
+
+- `lib/dropbox-path-contexto.ts` — clase `ErrorPathIrresoluble` con `code` discriminado (`cliente_sin_vincular · unidad_no_especificada · unidad_no_pertenece · solicitud_irresoluble`). Se eliminó la constante `CLIENTE_SIN_DECLARAR`.
+- `app/api/adjuntos/upload/route.ts` — mapa `MENSAJE_POR_MOTIVO`, respuesta **422** con `code` y `reintentable: false` para los motivos accionables; **502 reintentable** para `solicitud_irresoluble`, que no es un dato que la Ejecutiva pueda aportar.
+- `lib/dropbox-path.ts` — cascada en `sufijoDesambiguacion()`, con `rol_sii` (`fldC5yUYC2wTTLJBV`) leído en la misma consulta a `TX_Unidades` que ya se hacía.
+- `lib/adjuntos-uploader.ts` — `code` propagado a `UploadResult`, para que la interfaz pueda reaccionar y no sólo informar.
+- 43 tests (antes 39), `pnpm typecheck` y `pnpm build` limpios.
+
+**Lecciones activas (patrones repetibles):**
+
+**1 · Los fallbacks silenciosos ocultan dos cosas distintas, y las dos hay que verlas.** `SIN_CLIENTE/` ocultaba un **error de datos maestros** —corregible, con dueño—; `comun/` ocultaba una **decisión de UX pendiente**, el selector de unidad del checklist (§9.1 caso b). Ninguna de las dos es una condición de error del sistema: son trabajo que alguien tiene que hacer, y el fallback lo borra de la vista justo cuando sería barato hacerlo. Regla: **cuando falta una señal que un operador puede aportar, el backend falla ruidoso y con `code` discriminador**. El silencio se reserva para lo que no tiene ni remedio ni consecuencia. El `console.warn` no cuenta como ruido: nadie lee los logs de Railway a tiempo.
+
+**2 · El criterio de "no bloquear al usuario" se evalúa contra la reversibilidad, no contra la comodidad.** Bloquear una subida cuesta un mensaje y un clic; el archivo no se pierde, se sube después. Guardarlo en la carpeta equivocada cuesta un dato falso permanente en un path que la norma declara inmutable. Antes de elegir un fallback conviene preguntar **qué cuesta deshacerlo**, no qué cuesta el bloqueo. Aquí la asimetría era de tres órdenes de magnitud y no se vio porque las dos mitades del razonamiento vivían en secciones distintas del spec.
+
+**3 · Cascada de identificadores para desambiguar unidades hermanas: `numero_unidad` → `rol_sii` → ordinal + warning.** Aplicable a cualquier path futuro que tenga que distinguir dos unidades del mismo subtipo. El orden no es arbitrario: los dos primeros son **intrínsecos** a la unidad —sobreviven a que se agregue o borre una hermana— y `rol_sii` además es verificable contra el SII; el ordinal es **posicional** y se corre solo, desalineando paths ya escritos, que es CI-004 por una segunda vía. La versión inicial saltaba de (1) a (3) ignorando `rol_sii`, que ya venía en la misma lectura de `TX_Unidades` y no costaba una query extra. Al escribir un desempate, recorrer los campos disponibles y ordenarlos por estabilidad antes de elegir.
+
+**4 · Una excepción a la spec se revisa una a una antes del commit, no en bloque.** Toda implementación que topa con un borde no cubierto por la norma produce excepciones; el reporte de cierre las lista explícitamente —fue lo que permitió esta revisión— y el panel decide cada una por separado: las que se aceptan se documentan en spec o en aprendizajes, las que no generan **tanda de ajuste inmediata**, antes de que el comportamiento se asiente y aparezcan datos que dependan de él. Aquí las tres se rechazaron, y el coste de revertirlas fue de una tanda porque no había todavía ningún archivo guardado bajo esas reglas. Con una semana de producción encima, la reversión habría requerido migración.
+
+**5 · Aplicar el principio a los casos hermanos que nadie listó.** Al implementar CI-003b apareció un cuarto fallback silencioso de la misma familia que no estaba en la lista del panel: un `unidad_id` que no pertenece a la solicitud degradaba a `comun/`. Se convirtió también en 422 (`unidad_no_pertenece`), porque dejarlo habría sido mantener el anti-patrón con otra causa. Cuando una revisión establece un principio, barrer el módulo entero buscando sus otras instancias en la misma tanda.
+
+**Efecto colateral que hay que asumir:** con el checklist actual, **no se puede subir ningún documento a una solicitud multi-unidad**. Es deliberado: la limitación es visible, tiene dueño y tiene fecha —la tanda del selector de unidad, §9.1 caso b— en vez de ser un montón de archivos en `comun/` que nadie sabe que están mal. `document-checklist.tsx` sigue sin tocarse.

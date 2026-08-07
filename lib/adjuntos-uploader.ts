@@ -29,6 +29,14 @@ export interface UploadResult {
   reused?: boolean
   error?: string
   reintentable?: boolean
+  /**
+   * Motivo discriminado cuando la subida se rechaza con 422 porque falta un dato
+   * para componer el path Dropbox (CI-003b): `cliente_sin_vincular`,
+   * `unidad_no_especificada` o `unidad_no_pertenece`. El texto que se muestra ya
+   * viene en `error`; este campo existe para que la interfaz pueda reaccionar
+   * —abrir el detalle, ofrecer el selector de unidad— en vez de sólo informar.
+   */
+  code?: string
 }
 
 export interface UploadUnArchivoParams {
