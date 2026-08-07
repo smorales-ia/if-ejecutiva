@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.5** — sucede a `VProperty_Especificacion_Proyecto_v1_9_4.md`, que queda marcado SUPERSEDED.
+> **v1.9.6** — sucede a `VProperty_Especificacion_Proyecto_v1_9_5.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,22 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.5 · 02-ago-2026 · Precisión sobre invariante
+  **Versión**         1.9.6 · 06-ago-2026 · Reestructuración de la ruta
+                      Dropbox para adjuntos. Introduce el nivel Unidad
+                      (TX_Unidades.subtipo), renombra la raíz a
+                      /Test_ValueProperty/, cambia el prefijo del año a
+                      INFORMES_{AAAA} (America/Santiago) e invierte el
+                      orden Año → Cliente. Incorpora carpetas hermanas
+                      `informe/`, `comun/` y `_ingreso/` para los casos
+                      que no encajan en el árbol por unidad. La regla de
+                      normalización de {Cliente} y de {Unidad} queda
+                      declarada explícitamente (§8.1, §8.5). La auditoría
+                      de RF-51 queda acotada por fecha de corte. Toca §8
+                      (intro, §8.1, §8.2, §8.3, §8.5), §7.1 paso 4,
+                      RF-39, §1.5.3, §2.5.2, §3.5.2 y el glosario. Sucede
+                      a 1.9.5, que queda SUPERSEDED.
+
+                      1.9.5 · 02-ago-2026 · Precisión sobre invariante
                       único-por-tipo en checklist de documentos,
                       idempotencia real por hash+solicitud en
                       TX_Adjuntos, y flujo de reemplazo backend-driven
@@ -1226,6 +1241,31 @@ carpetas, el naming de archivos y la persistencia de dropbox_url +
 tipo_adjunto en TX_Adjuntos se especifican en la §8 Guardar
 Archivos/Fotos en Dropbox.
 
+Resolución del destino desde IF-02 (v1.9.6). El segmento `{Unidad}` del
+path sale de la unidad vinculada en `TX_Adjuntos.unidad`, y los tres
+casos en que no hay una unidad única que resuelva el destino tienen
+carpeta propia al nivel de la solicitud:
+
+- **Fase 1 del wizard (§1.5.0) e IF-01**: las unidades todavía no
+  existen —de hecho la extracción de esos mismos documentos es lo que las
+  crea (§1.5.2)—, así que el archivo va a `_ingreso/` y **se queda ahí de
+  forma permanente**. No se reubica cuando después se declaran las
+  unidades: mover el binario invalidaría el `url_dropbox` ya persistido en
+  la fila de `TX_Adjuntos`, que es la referencia que la UI y los correos
+  ya entregaron.
+- **Documento que cubre varias unidades** (una escritura de departamento
+  + estacionamiento + bodega): va a `comun/`, como **un solo binario** con
+  N links en `TX_Adjuntos.unidad`. Subir una copia por unidad no es
+  alternativa: `SC-Adjuntos-Upload` es idempotente por
+  (`hash_md5`, solicitud) y ante el mismo hash responde `reused: true` sin
+  volver a subir (§8.6), de modo que las copias por unidad simplemente no
+  se producirían.
+- **PDF del informe** generado por SC09: va a `informe/` (§7.1 paso 4).
+
+En el resto de los casos —el flujo normal del checklist documental de
+§1.5.1.1, con la solicitud ya con unidades declaradas— el destino es la
+carpeta de la unidad correspondiente.
+
 ### **1.5.4 Cambio de estado automático**
 
 Al hacer submit válido, el sistema persiste la fila en TX_Solicitudes
@@ -1860,7 +1900,7 @@ Categorías predefinidas con límites dinámicos (mínimo/máximo) ligados a los
 - La categoría **"Documentos"** del organizador de fotos se **elimina**. En su lugar, un botón abre el sheet documental de la ejecutiva (componente **FileUploadZone**, §1.5.1.2 del spec) reutilizado tal cual, sin librerías nuevas.
 - El sheet documental **filtra** el listado de documentos por el nuevo campo `tipo_propiedad` de `D_TipoDocumento` (dominio `{nuevo, usado, ambos}`, ver §2.12), según si la solicitud es Nueva o Usada. **No** se usa la columna `cuándo`, que carga semántica de fase (`Reproceso`, `Cliente tipo 2`) y condición (`Depto con gas`) ortogonal al tipo de propiedad.
 
-Guardado en Dropbox por API Route con retry offline (cola local IndexedDB) en la subcarpeta `/captura/fotos/` y `/captura/documentos/`, con la estructura de carpetas definida en §8 del spec.
+Guardado en Dropbox por API Route con retry offline (cola local IndexedDB) en `{Unidad}/{seccion}/` —el subnivel de sección vive **dentro** de la carpeta de la unidad, no en un árbol `/captura/` paralelo—, con la estructura de carpetas definida en §8 del spec. Las tomas que no pertenecen a una unidad habitable en particular (fachada, áreas comunes) van a la unidad `edificacion` u `oo_cc` según corresponda; cuál de las dos es criterio del tasador en terreno. El campo `TX_Adjuntos.seccion` se sigue escribiendo aunque la sección ya aparezca en el path: es lo que permite filtrar por sección en Airtable sin parsear el string.
 
 | **RF-TAS-06** | **Organizador de fotos sin categoría Documentos** |
 |---|---|
@@ -2289,9 +2329,14 @@ flujos usan el patrón SC07 → Claude API descrito en §4.
 
 ### **3.5.2 Guardado en Dropbox**
 
-Cualquier archivo modificado o subido por el Visador queda en la
-subcarpeta /revision/ definida en §8, preservando historial (nunca
-sobrescritura destructiva). Revisión fotográfica (RF-06): la UI presenta
+Cualquier archivo modificado o subido por el Visador queda en la carpeta
+de la unidad a la que se refiere, y en `comun/` cuando cubre varias
+unidades o la solicitud entera, según la estructura de §8, preservando
+historial (nunca sobrescritura destructiva). La subcarpeta `/revision/`
+de v1.9.5 desaparece con la reestructuración de v1.9.6: el origen de la
+carga se sigue distinguiendo por `TX_Adjuntos.origen_interfaz = IF-04`,
+que es el dato con el que se consultaba, no por el segmento del path.
+Revisión fotográfica (RF-06): la UI presenta
 un grid por categoría con indicador de completitud (cumple mínimo /
 faltan N), lightbox para inspección detallada y acción \"Marcar no
 válida\" con motivo obligatorio (mínimo 20 caracteres). No existe
@@ -3349,8 +3394,12 @@ tablas hijas (inputs).
            Carbone.io                                  Timeout 60s, reintentos según
                                                        RNF-08 (3 × {30s, 2m, 5m}).
 
-  4        Persistencia del   SC09 → Dropbox →         Sube a Dropbox subcarpeta
-           PDF                TX_DocumentosGenerados   /informe_final/ (ver §8);
+  4        Persistencia del   SC09 → Dropbox →         Sube a Dropbox la carpeta
+           PDF                TX_DocumentosGenerados   /informe/ al nivel de la
+                                                       solicitud —hermana de las
+                                                       carpetas de unidad, no dentro
+                                                       de ninguna: el informe cubre la
+                                                       solicitud completa (ver §8.1);
                                                        registra hash SHA-256,
                                                        url_dropbox, version, timestamp
                                                        en TX_DocumentosGenerados
@@ -3431,7 +3480,13 @@ tablas hijas (inputs).
   ----------------- -------------------------------------------------------
   **Descripción**   Cada PDF queda en TX_DocumentosGenerados con hash
                     SHA-256, URL Dropbox, versión y timestamp. Esto permite
-                    detectar cualquier alteración posterior.
+                    detectar cualquier alteración posterior. El binario vive
+                    en
+                    /Test_ValueProperty/INFORMES\_{AAAA}/{Cliente}/{codigo_solicitud}/informe/
+                    (§8.1): una sola copia por versión, nunca duplicada por
+                    unidad, porque duplicarla rompería la correspondencia
+                    uno-a-uno entre hash y archivo de la que depende este
+                    requisito.
 
   **Criterio de     Volver a calcular el hash del PDF descargado de Dropbox
   aceptación**      debe coincidir con el almacenado. Discrepancia → alerta
@@ -3473,83 +3528,157 @@ indexación en Airtable. Regla arquitectónica no negociable RT-06: los
 binarios no viven en Airtable; sólo los índices (TX_Adjuntos,
 TX_DocumentosGenerados) viven ahí, con URL apuntando a Dropbox.
 
+**Nota de diseño (v1.9.6) — el path es un snapshot inmutable.** Con la
+estructura anterior los cuatro segmentos derivaban de datos que no
+cambian una vez creada la solicitud (cliente, año, código). El nivel
+`{Unidad}` rompe esa propiedad: `TX_Unidades.subtipo` es un singleSelect
+editable por la Ejecutiva mientras la solicitud está en estado creada
+(RN-59). Se resuelve declarando que **`TX_Adjuntos.dropbox_path` es un
+snapshot del momento de la subida y no se recalcula**: si el subtipo de
+una unidad se corrige después de subir un adjunto, el binario **no se
+mueve** y el path guardado deja de coincidir con el estado vigente de la
+unidad, sin que nada falle ni avise. Se prefiere esta divergencia sobre
+la alternativa —mover el binario y reescribir `url_dropbox`—, que
+invalidaría las referencias ya entregadas y exigiría un módulo Dropbox de
+movimiento no probado en la instancia Make del proyecto. La deuda queda
+registrada como **CI-004** en `docs/CODE_INCONSISTENCIES.md`.
+
 ## **8.1 Estructura de carpetas**
 
 La estructura de carpetas es descriptiva, jerárquica y coherente con el
-resto del proyecto: raíz por cliente institucional, año, código de
-solicitud, tipo de contenido. Un único árbol para toda la operación.
+resto del proyecto: raíz única, año de la solicitud, cliente
+institucional, código de solicitud y **unidad tasada**. Un único árbol
+para toda la operación. El nivel Unidad se incorpora en v1.9.6: una
+solicitud con N unidades produce N carpetas hermanas al mismo nivel, más
+las tres carpetas especiales descritas abajo.
+
+Plantilla canónica:
+
+```
+/Test_ValueProperty/INFORMES_{AAAA}/{Cliente}/{codigo_solicitud}/{Unidad}/{archivo}
+```
+
+Ejemplos válidos:
+
+```
+/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/departamento/certificado_avaluo__20260803-141207__cert_avaluo_depto.pdf
+/Test_ValueProperty/INFORMES_2026/AFIANZA/VP-2026-0053/bodega/certificado_avaluo__20260803-141355__cert_avaluo_bodega.pdf
+```
 
   --------------------------------------------------------------------------------------------------------------------
-  **Nivel**              **Path**                                              **Contenido**   **Origen del upload**
+  **Nivel**              **Path**                                              **Contenido**   **Origen del valor**
   ---------------------- ----------------------------------------------------- --------------- -----------------------
-  Raíz                   /VProperty/                                           Contenedor      Cuenta corporativa
-                                                                               único de todos  Dropbox del proyecto
-                                                                               los archivos    
+  Raíz                   /Test_ValueProperty/                                  Contenedor      Literal fijo. Cuenta
+                                                                               único de todos  corporativa Dropbox
+                                                                               los archivos    del proyecto
 
-  Cliente                /VProperty/{ClienteSlug}/                             Segmentación    M_Clientes.slug_url
-                                                                               por cliente     
-                                                                               institucional   
-                                                                               (p. ej.         
-                                                                               metlife,        
-                                                                               security, bch)  
+  Año                    /Test_ValueProperty/INFORMES_{AAAA}/                  Segmentación    Prefijo literal
+                                                                               anual para      "INFORMES\_" + año
+                                                                               retención y     calendario de
+                                                                               archivado       TX_Solicitudes.
+                                                                                               fecha_solicitud
+                                                                                               interpretada en
+                                                                                               America/Santiago
 
-  Año                    /VProperty/{ClienteSlug}/{AAAA}/                      Segmentación    Año calendario de
-                                                                               anual para      fecha_solicitud
-                                                                               retención y     
-                                                                               archivado       
+  Cliente                /Test_ValueProperty/INFORMES_{AAAA}/{Cliente}/        Segmentación    M_Clientes.nombre
+                                                                               por cliente     normalizado según la
+                                                                               institucional   regla de §8.5 (p. ej.
+                                                                               (p. ej.         AFIANZA,
+                                                                               AFIANZA)        BANCO_ESTADO, VALON)
 
-  Solicitud              /VProperty/{ClienteSlug}/{AAAA}/{codigo_solicitud}/   Carpeta por     TX_Solicitudes.codigo
-                                                                               solicitud       
-                                                                               (código         
+  Solicitud              .../{Cliente}/{codigo_solicitud}/                      Carpeta por     TX_Solicitudes.
+                                                                               solicitud       codigo_solicitud
+                                                                               (código         (fldDXEE1ejMNVDlpB)
                                                                                VP-AAAA-NNNN)   
 
-  /solicitud/            .../{codigo}/solicitud/                               Adjuntos        IF-01, IF-02 (§1.5.3)
-                                                                               iniciales       
-                                                                               cargados en     
-                                                                               IF-01 o IF-02:  
-                                                                               escritura, CBR, 
-                                                                               plano,          
-                                                                               certificados,   
-                                                                               etc.            
+  {Unidad}               .../{codigo_solicitud}/{Unidad}/                       Adjuntos que    TX_Unidades.subtipo,
+                                                                               pertenecen a    normalizado según la
+                                                                               una unidad      tabla de mapeo de esta
+                                                                               concreta de la  misma sección. La
+                                                                               solicitud       unidad se resuelve por
+                                                                                               TX_Adjuntos.unidad
+                                                                                               (fldnyrl4M3VGnA51n)
 
-  /captura/fotos/        .../{codigo}/captura/fotos/                           Fotos del       IF-03 (§2.5.2)
-                                                                               tasador         
-                                                                               organizadas por 
-                                                                               sección         
-                                                                               (fachada,       
-                                                                               living, cocina, 
-                                                                               baños,          
-                                                                               dormitorios,    
-                                                                               áreas comunes,  
-                                                                               etc.)           
+  {Unidad}/{seccion}/    .../{Unidad}/{seccion}/                                Fotos del       IF-03 (§2.5.2).
+                                                                               tasador         Secciones: fachada,
+                                                                               organizadas por living, cocina, baños,
+                                                                               sección dentro  dormitorios, áreas
+                                                                               de la unidad    comunes, etc.
 
-  /captura/documentos/   .../{codigo}/captura/documentos/                      Documentos      IF-03 (§2.5.2)
-                                                                               capturados en   
-                                                                               terreno         
-                                                                               (respaldo       
-                                                                               manual)         
-
-  /revision/             .../{codigo}/revision/                                Archivos        IF-04 (§3.5.2)
-                                                                               añadidos o      
-                                                                               modificados por 
-                                                                               el Visador      
-                                                                               durante la      
-                                                                               revisión        
-
-  /informe_final/        .../{codigo}/informe_final/                           PDF final       SC09 → Carbone (§7.1)
-                                                                               generado por    
-                                                                               Carbone         
-                                                                               (versiones      
-                                                                               sucesivas       
-                                                                               nombradas por   
+  /informe/              .../{codigo_solicitud}/informe/                        PDF final       SC09 → Carbone (§7.1).
+                                                                               generado por    Carpeta hermana de las
+                                                                               Carbone         unidades: el informe
+                                                                               (versiones      cubre la solicitud
+                                                                               sucesivas       completa, no una
+                                                                               nombradas por   unidad
                                                                                hash)           
+
+  /comun/                .../{codigo_solicitud}/comun/                          Documentos que  IF-01, IF-02 (§1.5.3),
+                                                                               cubren varias   IF-04. Un binario, N
+                                                                               unidades a la   links en
+                                                                               vez (p. ej. una TX_Adjuntos.unidad
+                                                                               escritura de    
+                                                                               depto +         
+                                                                               estacionamiento 
+                                                                               + bodega)       
+
+  /\_ingreso/            .../{codigo_solicitud}/\_ingreso/                      Adjuntos        IF-01 y Fase 1 del
+                                                                               cargados antes  wizard de IF-02
+                                                                               de que existan  (§1.5.0)
+                                                                               unidades        
+                                                                               declaradas      
   --------------------------------------------------------------------------------------------------------------------
+
+**Mapeo de {Unidad}.** El segmento sale del singleSelect
+`TX_Unidades.subtipo` (`fldNU8ee30AvvRWHZ`) y **no** del link `tipo_bien`
+→ M_TiposDeBien, que es una taxonomía paralela sin uso en el path. La
+normalización es lowercase + snake_case, con la tabla de equivalencia
+declarada aquí de forma cerrada:
+
+| `TX_Unidades.subtipo` | Segmento `{Unidad}` |
+|---|---|
+| Departamento | `departamento` |
+| Casa | `casa` |
+| Bodega | `bodega` |
+| Estacionamiento | `estacionamiento` |
+| Terreno | `terreno` |
+| Local | `local` |
+| Terraza | `terraza` |
+| Piscina | `piscina` |
+| OO.CC. | `oo_cc` |
+| Servidumbre | `servidumbre` |
+| Edificacion | `edificacion` |
+| *(vacío)* | `sin_subtipo` |
+
+`sin_subtipo` es una excepción documentada, no un valor de negocio:
+`subtipo` es un singleSelect no obligatorio y una unidad puede quedar sin
+él durante la carga. Su presencia en un path es señal de dato incompleto
+y debe poder auditarse como tal.
+
+**Desambiguación de unidades del mismo subtipo.** Una solicitud puede
+tener dos estacionamientos, o dos bodegas, y ambos producirían el mismo
+segmento. Cuando la solicitud tiene **dos o más unidades del mismo
+subtipo**, cada carpeta lleva el sufijo `_{numero_unidad}`
+(`TX_Unidades.numero_unidad`, `fldJGXS8jGDKZDdWM`):
+`estacionamiento_1/`, `estacionamiento_2/`. Cuando el subtipo es único
+dentro de la solicitud, la carpeta va **sin sufijo**: `departamento/`.
+La regla es contextual a la solicitud, no global.
+
+**Carpetas especiales.** `informe/`, `comun/` y `_ingreso/` son hermanas
+de las unidades, al nivel de `{codigo_solicitud}/`, y quedan reservadas:
+ninguna unidad puede normalizar a esos nombres, porque ninguno de los
+once valores de `subtipo` los produce.
 
 Convenciones de naming de archivos: prefijo con tipo_adjunto en
 snake_case + timestamp UTC en formato AAAAMMDD-HHMMSS + nombre original
 saneado. Ejemplo:
 escritura\_\_20260702-143012\_\_doc_escritura_prop_los_leones.pdf. Esto
-evita colisiones y facilita ordenamiento cronológico natural.
+evita colisiones y facilita ordenamiento cronológico natural. El
+timestamp del nombre de archivo va en **UTC**; la zona America/Santiago
+aplica sólo al cálculo del año del segmento `INFORMES_{AAAA}`. La
+reestructuración de v1.9.6 cambia el **path** y no el nombre del
+archivo: un ejemplo del tipo `certificado_de_evaluo_departamento.pdf` es
+ilustrativo de la ruta, no un nombre de archivo conforme.
 
 Retención: los archivos se conservan indefinidamente en Dropbox mientras
 la solicitud esté online en Airtable (H_Solicitudes_Cerradas incluida).
@@ -3583,13 +3712,36 @@ Airtable.
 
   seccion           Texto            Sección de origen (p. ej. \'living\',
                                      \'cocina\' para fotos;
-                                     \'documentos_legales\' para escrituras)
+                                     \'documentos_legales\' para escrituras).
+                                     Desde v1.9.6 el valor aparece también
+                                     como segmento del path
+                                     ({Unidad}/{seccion}/); la redundancia
+                                     es deliberada, para poder filtrar en
+                                     Airtable sin parsear el string del path
 
   dropbox_url       URL              URL firmada Dropbox de la última
                                      versión
 
   dropbox_path      Texto            Path completo en la estructura
-                                     /VProperty/\... (auditable)
+                                     /Test_ValueProperty/\... (auditable).
+                                     **Snapshot inmutable**: se fija al
+                                     subir y no se recalcula si cambia
+                                     TX_Unidades.subtipo (ver nota de
+                                     diseño de §8 y CI-004)
+
+  unidad            FK →             Unidad a la que pertenece el adjunto.
+                    TX_Unidades      Resuelve el segmento {Unidad} del path
+                                     (§8.1). Campo real
+                                     `TX_Adjuntos.unidad`
+                                     (fldnyrl4M3VGnA51n). **No** confundir
+                                     con el link de respaldo de superficie
+                                     (fldbuwozOajok69sS, inverso de
+                                     TX_Unidades.respaldo_adjunto), que
+                                     cumple otra función (§1.5.1 Sección B)
+                                     y no participa del path. Un mismo
+                                     binario puede tener N links cuando el
+                                     documento cubre varias unidades, y en
+                                     ese caso vive en /comun/
 
   nombre_archivo    Texto            Nombre saneado (naming convention §8.1)
 
@@ -3696,17 +3848,48 @@ soft-delete real y queda como decisión abierta.
                     backend-driven (§1.5.1.1, §8.4 f y g).
 
   **Criterio de     Auditoría de schema: cero binarios en tablas Airtable
-  aceptación**      (todas las URLs apuntan a Dropbox). Auditoría de path:
+  aceptación**      (todas las URLs apuntan a Dropbox). Auditoría de path
+                    (reformulada en v1.9.6, ver cláusula de corte abajo):
                     cero archivos en Dropbox fuera de la estructura
-                    /VProperty/{cliente}/{año}/{codigo}/\... Test: subir un
-                    PDF desde IF-02 crea una fila en TX_Adjuntos con
-                    dropbox_url resolvible y dropbox_path conforme. Subir
-                    dos veces el mismo archivo al mismo tipo no crea filas
-                    duplicadas. Subir un archivo con hash distinto para un
-                    tipo que ya tiene adjunto reemplaza el anterior (borra
-                    Dropbox + TX_Adjuntos) tras confirmación explícita del
-                    usuario.
+                    /Test_ValueProperty/INFORMES\_{AAAA}/{Cliente}/{codigo_solicitud}/{Unidad}/\...,
+                    donde {Unidad} es o bien un segmento derivado de una
+                    unidad realmente existente en TX_Unidades para esa
+                    solicitud, o bien una de las tres carpetas reservadas
+                    informe/, comun/ y \_ingreso/. Test: subir un PDF desde
+                    IF-02 crea una fila en TX_Adjuntos con dropbox_url
+                    resolvible y dropbox_path conforme. Subir dos veces el
+                    mismo archivo al mismo tipo no crea filas duplicadas.
+                    Subir un archivo con hash distinto para un tipo que ya
+                    tiene adjunto reemplaza el anterior (borra Dropbox +
+                    TX_Adjuntos) tras confirmación explícita del usuario.
   -------------------------------------------------------------------------
+
+**Cláusula de corte de la auditoría de path (v1.9.6).** El criterio
+anterior era estático —un patrón sobre el string bastaba— porque los
+cuatro segmentos salían de datos fijos. El nuevo es relacional: el
+segmento `{Unidad}` sólo se puede validar cruzando el path contra las
+unidades que la solicitud tiene en `TX_Unidades`, de modo que la
+auditoría deja de ser un barrido del árbol y pasa a ser una verificación
+cruzada archivo ↔ Airtable.
+
+Además, la estructura nueva no es la que produce hoy la implementación
+viva: el escenario `SC-Adjuntos-Upload` en producción y el helper
+`lib/adjuntos.ts` escriben `/VProperty/Tasaciones/{codigo_ext}/…`
+(registrado como **CI-003**). Aplicar el criterio retroactivamente daría
+100% de incumplimiento el primer día sobre archivos que están
+correctamente guardados según la norma vigente cuando se subieron. Por
+eso:
+
+- La auditoría de path aplica **sólo a solicitudes con
+  `fecha_solicitud >= fecha_corte`**, siendo `fecha_corte` la fecha del
+  merge del commit que incorpora esta v1.9.6 (**pendiente de completar
+  tras el push**).
+- Las solicitudes anteriores quedan *grandfathered* en la estructura
+  `/VProperty/Tasaciones/{codigo_ext}/…` y **no cuentan** para el
+  criterio, ni a favor ni en contra.
+- La migración del contenido histórico y el alineamiento de los
+  escenarios Make quedan diferidos a una tanda posterior, sin fecha
+  comprometida (CI-003).
 
 ## **8.4 Requisitos técnicos**
 
@@ -3774,10 +3957,68 @@ Reintento estándar según RNF-08. Idempotente: si thumbnail_url ya está
 poblado, no re-genera.
 
 Dependencias y entidades (Sección 8). Tablas escritas: TX_Adjuntos,
-TX_DocumentosGenerados. Tablas leídas: TX_Solicitudes (código,
-cliente_slug), M_Clientes (slug_url), D_TipoDocumento (referencia soft).
-Servicio externo: Dropbox API v2 (upload, thumbnail opcional, temporary
-link).
+TX_DocumentosGenerados. Tablas leídas: TX_Solicitudes
+(`codigo_solicitud`, `fecha_solicitud`, `cliente`), M_Clientes
+(`nombre`), TX_Unidades (`subtipo`, `numero_unidad`), D_TipoDocumento
+(referencia soft). Servicio externo: Dropbox API v2 (upload, thumbnail
+opcional, temporary link).
+
+**Corrección de v1.9.6.** Hasta v1.9.5 esta lista declaraba
+`TX_Solicitudes.cliente_slug` y `M_Clientes.slug_url` como fuentes del
+segmento de cliente. **Ninguno de los dos campos existe** en
+`app9G7lLkIV3CpeLa` —verificado vía MCP el 06-ago-2026—, de modo que la
+dependencia era ficticia. La fuente real es `M_Clientes.nombre`
+(`fldDGR9WLhOtIbikW`, singleLineText), alcanzado desde
+`TX_Solicitudes.cliente` (`fldttL5myzLohDwHv`, link).
+
+Las dos subsecciones siguientes desarrollan esa lista de dependencias y
+aplican a toda la Sección 8, no sólo a SC10.
+
+### Fuente y normalización del segmento {Cliente} (Sección 8)
+
+`M_Clientes.nombre` es texto libre y contiene mayúsculas inconsistentes,
+acentos, espacios y símbolos: conviven `AFIANZA` y `Afianza` como
+registros distintos, `VALÓN Hipotecaria`, `Banco Estado`, `M&V`,
+`La Construcción Hipotecaria`. El segmento del path se obtiene aplicando
+esta normalización, declarada aquí para que cualquier implementación
+—Route Handler, escenario Make o script de auditoría— produzca
+exactamente el mismo string:
+
+```
+normalizarCliente(nombre):
+    s = nombre
+    s = quitarDiacriticos(s)        # NFD + strip de marcas combinantes: VALÓN → VALON
+    s = mayusculas(s)               # UPPERCASE completo
+    s = reemplazar(s, "&", "_Y_")   # M&V → M_Y_V
+    s = eliminar(s, ".")            # los puntos se borran, no se sustituyen
+    s = reemplazar(s, " ", "_")     # Banco Estado → BANCO_ESTADO
+    s = colapsar(s, "__" → "_")     # repetir hasta que no queden dobles
+    s = recortarBordes(s, "_")      # sin guion bajo inicial ni final
+    devolver s
+```
+
+Casos verificados contra datos reales: `AFIANZA` → `AFIANZA`;
+`Afianza` → `AFIANZA`; `VALÓN Hipotecaria` → `VALON_HIPOTECARIA`;
+`Banco Estado` → `BANCO_ESTADO`; `M&V` → `M_Y_V`;
+`La Construcción Hipotecaria` → `LA_CONSTRUCCION_HIPOTECARIA`.
+
+Consecuencia aceptada: la normalización **colapsa registros duplicados**
+de `M_Clientes` que difieren sólo en capitalización o acentuación
+(`AFIANZA`/`Afianza`, las dos filas de `VALÓN Hipotecaria`). Dos
+solicitudes con clientes formalmente distintos en Airtable comparten
+carpeta. Se prefiere así: la alternativa —una carpeta por registro—
+fragmentaría el árbol de un mismo cliente institucional por un defecto de
+datos maestros. La deduplicación de `M_Clientes` es tarea aparte.
+
+### Zona horaria del segmento {AAAA} (Sección 8)
+
+`TX_Solicitudes.fecha_solicitud` (`fldvkn9CsORy4eU0Z`) es de tipo
+**dateTime y se almacena en UTC**. El año de `INFORMES_{AAAA}` se calcula
+sobre esa marca **convertida a America/Santiago**, no sobre el valor UTC
+crudo. Sin esa conversión, toda solicitud creada entre las 21:00 del 31
+de diciembre y la medianoche local caería en la carpeta del año
+siguiente. La zona es fija: el proyecto opera en Chile y no admite
+configuración por cliente.
 
 ## **8.6 Escenarios Make de adjuntos (SC-Adjuntos-Upload v1.2 · SC-Adjuntos-Delete)**
 
@@ -3844,13 +4085,13 @@ Respuesta, con el campo nuevo `modo`:
 
 ```jsonc
 // alta
-{ "ok": true, "modo": "nuevo", "adjunto_id": "24", "url_dropbox": "/VProperty/…", "nombre_archivo": "…", "tamanio_kb": 155, "reused": false }
+{ "ok": true, "modo": "nuevo", "adjunto_id": "24", "url_dropbox": "/Test_ValueProperty/…", "nombre_archivo": "…", "tamanio_kb": 155, "reused": false }
 
 // mismo binario, ya existía en esta solicitud
-{ "ok": true, "modo": "reused", "adjunto_id": "24", "url_dropbox": "/VProperty/…", "nombre_archivo": "…", "tamanio_kb": 155, "reused": true }
+{ "ok": true, "modo": "reused", "adjunto_id": "24", "url_dropbox": "/Test_ValueProperty/…", "nombre_archivo": "…", "tamanio_kb": 155, "reused": true }
 
 // binario distinto para un tipo que ya tenía archivo
-{ "ok": true, "modo": "reemplazo", "adjunto_id": "25", "adjunto_previo_id": "recn0UEsUU6FHHvgx", "url_dropbox": "/VProperty/…", "nombre_archivo": "…", "tamanio_kb": 210, "reused": false }
+{ "ok": true, "modo": "reemplazo", "adjunto_id": "25", "adjunto_previo_id": "recn0UEsUU6FHHvgx", "url_dropbox": "/Test_ValueProperty/…", "nombre_archivo": "…", "tamanio_kb": 210, "reused": false }
 
 // error
 { "ok": false, "error": "…", "reintentable": true }
@@ -3919,9 +4160,11 @@ subida: upload del nuevo binario y creación de la fila. (5) Responde
 
 > `url_dropbox` (`fldEccoUrOjV7oKZ5`) **no es una URL** pese a ser de tipo
 > `url` en Airtable: el escenario escribe ahí el `path_display`, la ruta
-> dentro de Dropbox (`/VProperty/Tasaciones/VP-2026-0053/Foto REF
-> Ofertas.JPG`). Es exactamente lo que `Delete a file` espera; no debe
-> normalizarse al visor web.
+> dentro de Dropbox. Es exactamente lo que `Delete a file` espera; no debe
+> normalizarse al visor web. El valor observado en producción sigue el
+> path de la implementación viva —`/VProperty/Tasaciones/VP-2026-0053/Foto
+> REF Ofertas.JPG`—, que a partir de v1.9.6 diverge de la estructura
+> normativa de §8.1 hasta que se ejecute la migración diferida (CI-003).
 
 > `airtable:ActionDeleteRecord` exige el record ID en la clave **`id`**
 > del mapper, **no** en `record`. Ponerlo en `record` deja `id` sin
@@ -5383,10 +5626,18 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
   (Documentos)           Materializa la gestión paramétrica de documentos opcionales (8 tablas,
                          patrón EAV polimórfico tipado).
 
-  Dropbox path (v1.3)    Ruta jerárquica
-                         /VProperty/{ClienteSlug}/{AAAA}/{codigo_solicitud}/{subcarpeta}/{archivo}.
-                         Descrita en §8.1. Se persiste en TX_Adjuntos.dropbox_path para
-                         auditabilidad.
+  Dropbox path           Ruta jerárquica
+  (v1.3 · reestructurado /Test_ValueProperty/INFORMES\_{AAAA}/{Cliente}/{codigo_solicitud}/{Unidad}/{archivo}.
+  en v1.9.6)             Raíz literal, año calendario de fecha_solicitud en America/Santiago
+                         con prefijo INFORMES\_, cliente normalizado desde M_Clientes.nombre
+                         (§8.5), código VP-AAAA-NNNN y unidad derivada de
+                         TX_Unidades.subtipo. Tres carpetas hermanas reservadas al nivel de
+                         la solicitud —informe/, comun/ y \_ingreso/— cubren lo que no
+                         pertenece a una unidad concreta. Descrita en §8.1. Se persiste en
+                         TX_Adjuntos.dropbox_path como snapshot inmutable, para
+                         auditabilidad. Sustituye a la ruta
+                         /VProperty/{ClienteSlug}/{AAAA}/{codigo_solicitud}/{subcarpeta}/
+                         vigente hasta v1.9.5.
 
   EAV polimórfico tipado Patrón Entity-Attribute-Value con columnas tipadas por valor primitivo
                          (texto, número, fecha, booleano, referencia a catálogo).
@@ -5707,7 +5958,10 @@ el resultado de la extracción se persiste en
 TX_DatosTasacion y TX_Unidades; el tipo `foto_fuente_sii` y el campo
 `estado_unidad` de TX_Unidades conservan su definición (RN-38). Todo
 está explicitado en §4. El motor de cálculo (§6), la impresión del
-informe (§7) y la estructura Dropbox (§8) no se modifican.
+informe (§7) no se modifican. La estructura Dropbox (§8) **sí se
+modifica desde v1.9.6**: se reestructura la ruta de adjuntos, se
+introduce el nivel Unidad y §7.1 paso 4 cambia de `/informe_final/` a
+`/informe/` en consecuencia.
 
 Alcance diferido declarado. Cinco funcionalidades quedan levantadas y
 documentadas pero no implementadas: captura de la fecha de visita y

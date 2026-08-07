@@ -26,7 +26,7 @@ Este repo implementa **IF-02**: la consola diaria de la Ejecutiva Comercial de V
 > **Antes de proponer cualquier comando de terminal, lee `docs/aprendizajes.md`.**
 
 1. Lee `docs/diseno.md`, `docs/construccion.md` y `docs/schema-airtable.md` al inicio de la sesión.
-   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md`.
+   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md`.
 2. Implementa **una RF por sesión**. Nunca "construir toda la consola" de golpe.
 3. Después de cada RF: `pnpm build` debe salir limpio antes del commit.
 4. Haz push; Railway redespliega automáticamente.
@@ -398,7 +398,7 @@ docs/
 ├─ aprendizajes.md                     (bitácora de sesión · sólo append)
 ├─ CODE_INCONSISTENCIES.md             (deuda detectada en código)
 ├─ _md/                               (fuentes canónicas en MD — no editar)
-│  ├─ VProperty_Especificacion_Proyecto_v1_9_5.md   ← FUENTE NORMATIVA
+│  ├─ VProperty_Especificacion_Proyecto_v1_9_6.md   ← FUENTE NORMATIVA
 │  ├─ VProperty_Blueprint_Interfaces_v2_10.md
 │  ├─ Arquitectura_Enterprise_VProperty_v2_9.md
 │  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md
@@ -421,7 +421,7 @@ sólo-append de ese archivo.
 ## Fuente única de especificación
 
 El único documento normativo del producto es
-`docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md`.
+`docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md`.
 La versión del archivo y la versión interna del cuerpo deben coincidir
 SIEMPRE.
 
@@ -430,7 +430,7 @@ Cuando se bumpea la versión normativa:
 1. Se actualiza la versión en el cuerpo del documento y se agrega entrada
    al historial de cambios.
 2. Se renombra el archivo con `git mv` al nuevo número (por ejemplo
-   v1_9_5 → v1_9_6).
+   v1_9_6 → v1_9_7).
 3. Se buscan todas las referencias al nombre anterior en el repositorio
    (`grep -rn`) y se actualizan en el mismo commit, excepto en documentos
    de archivo que tengan contexto histórico claro.
@@ -552,7 +552,7 @@ app/
 
 ## Referencias rápidas
 
-- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md`
+- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md`
 - Diseño funcional: `docs/diseno.md`
 - Guía de construcción: `docs/construccion.md`
 - Schema Airtable: `docs/schema-airtable.md`

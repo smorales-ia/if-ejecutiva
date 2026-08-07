@@ -2,7 +2,7 @@
 
 > **⚠ SUPERSEDED (2026-08-03).** El contrato definitivo ya se integró a la fuente
 > única de verdad: **§8.6 de
-> `docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md`** (§8.6.1–§8.6.6, RF-52,
+> `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md`** (§8.6.1–§8.6.6, RF-52,
 > RN-59, RN-60). Ese es el documento normativo; esta nota queda como borrador
 > histórico de trabajo y **no debe usarse como referencia de construcción**. Se
 > conserva sólo por la regla de append de `docs/_notas/`. Ante cualquier
@@ -23,7 +23,7 @@
 >
 > Nota de alcance: `docs/_notas/` es para notas operativas con fecha, no
 > especificación normativa. El contrato definitivo vive en
-> `docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md` §8.6.
+> `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md` §8.6.
 
 ## 0. Problema y decisión de producto
 
@@ -351,7 +351,7 @@ estado de la solicitud y bloquear tanto la subida como el borrado en consulta).
 8. [ ] Gate RN-59 (§4.6): borrado deshabilitado en consulta.
 9. [ ] `pnpm build` limpio antes del commit.
 10. [ ] Integrar el contrato definitivo en la spec normativa
-        `VProperty_Especificacion_Proyecto_v1_9_5.md`.
+        `VProperty_Especificacion_Proyecto_v1_9_6.md`.
 
 ---
 

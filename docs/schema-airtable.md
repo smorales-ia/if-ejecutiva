@@ -646,7 +646,7 @@ Tabla transaccional que persiste una fila por unidad física del inmueble. Desti
 |---|---|---|
 | `clave_natural` | `fldehh0Qqzo8U6z5a` | Single line text (primary) |
 | `solicitud` | `fldmBd2bzOWjPX0eW` | Link → TX_Solicitudes |
-| `subtipo` | `fldNU8ee30AvvRWHZ` | Single select (`Departamento · Casa · Bodega · Estacionamiento · Terreno · Local · Terraza · Piscina · OO.CC. · Servidumbre`) |
+| `subtipo` | `fldNU8ee30AvvRWHZ` | Single select — **11 opciones, reverificadas vía MCP el 06-ago-2026**: `Departamento · Casa · Bodega · Estacionamiento · Terreno · Local · Terraza · Piscina · OO.CC. · Servidumbre · Edificacion`. `Edificacion` (`selCKKz4gOLe6TFlL`) se añadió después del snapshot del 17-jul-2026 y faltaba en esta tabla. Este campo alimenta el segmento `{Unidad}` del path Dropbox (spec §8.1): al agregar una opción nueva hay que declarar su normalización en la tabla de mapeo de §8.1, o el path resultante queda sin regla |
 | `es_principal` | `flduvn0eU2lfG6RqR` | Checkbox |
 | `rol_sii` | `fldC5yUYC2wTTLJBV` | Single line text |
 | `sup_m2` | `fldZLvJKuXuWhRV8P` | Number |
