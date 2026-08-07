@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import type { Adjunto } from "@/lib/adjuntos"
+import { esRespuestaDeClerkSinSesion } from "@/lib/clerk-response"
 
 /**
  * Hook cliente para los adjuntos ya persistidos de una solicitud
@@ -36,16 +37,11 @@ export interface EstadoAdjuntos {
   /**
    * `true` cuando el fallo fue de sesión, no de datos.
    *
-   * Clerk no responde 401 a una petición sin sesión: `auth.protect()`
-   * **reescribe a un 404 de HTML** (`x-clerk-auth-reason: protect-rewrite`,
-   * `x-clerk-auth-status: signed-out`). Ese 404 es indistinguible de "la ruta
-   * no existe" o de "la solicitud no existe", y costó tres rondas de
-   * diagnóstico el 02-ago-2026: se revisó el regex de `isValidRecordId`, la
-   * existencia del archivo de ruta y su registro en el manifiesto, cuando el
-   * handler simplemente nunca se ejecutaba.
-   *
-   * Se distingue por el `content-type`: los errores propios de la app viajan
-   * como JSON; el de Clerk, como `text/html`.
+   * Clerk no responde 401 a una petición sin sesión: `auth.protect()` reescribe
+   * a un 404 de HTML indistinguible —por el body— de "la ruta no existe". La
+   * discriminación vive en `lib/clerk-response.ts`, que mira el header
+   * `x-clerk-auth-status` y no el `content-type`; ahí está el detalle de por qué
+   * la heurística anterior confundía las dos causas.
    */
   sesionExpirada: boolean
   /** Vuelve a leer desde Airtable. Se llama tras cada subida confirmada. */
@@ -63,11 +59,6 @@ export interface EstadoAdjuntos {
   eliminar: (adjuntoRecordId: string, codigoExt: string) => Promise<boolean>
   /** Record ID del adjunto que se está borrando ahora mismo, o `null`. */
   eliminandoId: string | null
-}
-
-/** `true` si la respuesta de error no es JSON — es decir, no la emitió la app. */
-function esRespuestaDeClerk(res: Response): boolean {
-  return !(res.headers.get('content-type') ?? '').includes('application/json')
 }
 
 export function useAdjuntosSolicitud(
@@ -117,6 +108,7 @@ export function useAdjuntosSolicitud(
           console.error("[useAdjuntosSolicitud.eliminar]", {
             adjuntoRecordId,
             status: res.status,
+            deClerk: esRespuestaDeClerkSinSesion(res),
           })
           return false
         }
@@ -158,7 +150,7 @@ export function useAdjuntosSolicitud(
     })
       .then(async (res) => {
         if (!res.ok) {
-          const deClerk = esRespuestaDeClerk(res)
+          const deClerk = esRespuestaDeClerkSinSesion(res)
           if (vivo) setSesionExpirada(deClerk)
           throw new Error(
             `GET /api/solicitudes/${solicitudId}/adjuntos → ${res.status}` +
