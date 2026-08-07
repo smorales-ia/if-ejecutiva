@@ -25,8 +25,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Progress } from "@/components/ui/progress"
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { uploadConReintentos } from "@/lib/adjuntos-uploader"
 import type { Adjunto } from "@/lib/adjuntos"
+import type { Unidad } from "@/lib/console-data"
 import type { TipoDocumento } from "@/lib/tipos-documento"
 import { cn } from "@/lib/utils"
 
@@ -39,6 +48,21 @@ const MSG_ELIMINADO = "Documento eliminado"
 const MSG_REEMPLAZADO = "Documento reemplazado"
 const MSG_ERROR_RED =
   "No pudimos completar la acción. Intenta nuevamente en unos segundos."
+const MSG_SIN_DESTINO = "Seleccioná una unidad de destino antes de subir."
+
+/**
+ * Sentinel del destino «común a todas las unidades». No es un record ID: viaja
+ * al backend como `carpeta: "comun"` y aterriza en la carpeta hermana `comun/`
+ * de §8.1, la de los documentos que cubren varias unidades a la vez.
+ */
+export const DESTINO_COMUN = "__comun__"
+
+/**
+ * Destino Dropbox de un documento: el record ID de una unidad de `TX_Unidades`
+ * o el sentinel `DESTINO_COMUN`. La cadena vacía es "sin decidir" y bloquea la
+ * subida.
+ */
+export type DestinoUnidad = string
 
 /** Representación de un archivo cargado, según el schema zod. */
 export interface DocumentoArchivo {
@@ -76,6 +100,89 @@ function validar(file: File): string | null {
   return null
 }
 
+/**
+ * Traduce un destino de UI a los campos que entiende `POST /api/adjuntos/upload`.
+ *
+ * Los dos campos son **mutuamente excluyentes por construcción**: esta función
+ * es el único sitio que los produce, así que no existe forma de emitir un
+ * `unidad_id` y una `carpeta` a la vez, ni de mandar un destino a medias. Con
+ * cero unidades declaradas no se manda ninguno de los dos y el backend deriva
+ * `_ingreso/`, que es exactamente su definición en §8.1: adjuntos cargados
+ * antes de que existan unidades.
+ */
+function destinoAPayload(
+  destino: DestinoUnidad,
+  hayUnidades: boolean,
+): { unidad_id?: string; carpeta?: "comun" } {
+  if (!hayUnidades) return {}
+  if (destino === DESTINO_COMUN) return { carpeta: "comun" }
+  return { unidad_id: destino }
+}
+
+/**
+ * Etiqueta legible de una unidad, con la **misma cascada de identificadores**
+ * que usa el backend para el segmento `{Unidad}` del path (CI-003b):
+ * `numero_unidad` → `rol_sii` → ordinal dentro del grupo de mismo tipo.
+ *
+ * La simetría no es cosmética: si la Ejecutiva elige "Estacionamiento 2" porque
+ * es el segundo de la lista y el path acaba diciendo `estacionamiento_2`, el
+ * archivo se puede encontrar. Si la UI numerara por su cuenta, los dos números
+ * podrían no coincidir y nadie lo notaría hasta auditar.
+ */
+function etiquetaUnidad(unidad: Unidad, todas: Unidad[]): string {
+  const tipo = unidad.tipoBien || "Unidad"
+  if (unidad.ubicacion) return `${tipo} ${unidad.ubicacion}`
+  if (unidad.rolSii) return `${tipo} · rol ${unidad.rolSii}`
+
+  const delMismoTipo = todas.filter((u) => u.tipoBien === unidad.tipoBien)
+  if (delMismoTipo.length < 2) return tipo
+  return `${tipo} ${delMismoTipo.findIndex((u) => u.id === unidad.id) + 1}`
+}
+
+interface SelectorDestinoProps {
+  value: DestinoUnidad
+  onValueChange: (destino: DestinoUnidad) => void
+  unidades: Unidad[]
+  disabled?: boolean
+  id?: string
+  className?: string
+  "aria-label"?: string
+}
+
+/**
+ * Selector de destino: una entrada por unidad declarada más «Común a todas las
+ * unidades» al final. Se usa igual arriba del checklist (destino por defecto de
+ * la sesión) y en cada fila (override).
+ */
+function SelectorDestino({
+  value,
+  onValueChange,
+  unidades,
+  disabled,
+  id,
+  className,
+  "aria-label": ariaLabel,
+}: SelectorDestinoProps) {
+  return (
+    <Select value={value} onValueChange={(v) => onValueChange(v ?? "")} disabled={disabled}>
+      <SelectTrigger id={id} className={className} aria-label={ariaLabel}>
+        <SelectValue placeholder="Elige la unidad" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectGroup>
+          {unidades.map((u) => (
+            <SelectItem key={u.id} value={u.id}>
+              {etiquetaUnidad(u, unidades)}
+            </SelectItem>
+          ))}
+          {/* Siempre al final de la lista: es el destino que no es una unidad. */}
+          <SelectItem value={DESTINO_COMUN}>Común a todas las unidades</SelectItem>
+        </SelectGroup>
+      </SelectContent>
+    </Select>
+  )
+}
+
 interface DocumentRowProps {
   item: DocumentoChecklistItem
   /**
@@ -103,6 +210,13 @@ interface DocumentRowProps {
   readOnly: boolean
   /** `true` mientras el hook tiene un borrado en vuelo para este adjunto. */
   eliminando: boolean
+  /** Unidades de la solicitud. Vacío o de una sola → sin selector visible. */
+  unidades: Unidad[]
+  /** Destino efectivo de esta fila (override propio o el global heredado). */
+  destino: DestinoUnidad
+  /** `true` si la Ejecutiva cambió el destino de esta fila a mano. */
+  destinoManual: boolean
+  onDestino: (codigo: string, destino: DestinoUnidad) => void
   onToggle: (codigo: string, marcado: boolean) => void
   onArchivo: (codigo: string, archivo: DocumentoArchivo | null) => void
   /**
@@ -128,6 +242,10 @@ function DocumentRow({
   usuarioActual,
   readOnly,
   eliminando,
+  unidades,
+  destino,
+  destinoManual,
+  onDestino,
   onToggle,
   onArchivo,
   onQuitar,
@@ -154,11 +272,20 @@ function DocumentRow({
   const ocupado = estado === "uploading" || eliminando
 
   /**
+   * El selector por fila sólo aparece cuando hay ambigüedad real: con cero
+   * unidades el backend deriva `_ingreso/` y con una sola no hay nada que
+   * elegir (§9.1 caso a). En los dos casos la fila se ve exactamente igual que
+   * antes de esta tanda.
+   */
+  const eligeDestino = unidades.length >= 2
+  const destinoDefinido = !eligeDestino || destino !== ""
+
+  /**
    * Sube el archivo declarando `tipo_documento = item.codigo` (RN-25: el tipo
-   * se declara al upload, no se infiere).
+   * se declara al upload, no se infiere) y el destino resuelto para esta fila.
    *
    * El reemplazo es **backend-driven** (§8.6.2 · RN-60): no hay flag en el
-   * payload. El cliente manda una subida normal y `SC-Adjuntos-Upload v1.2`
+   * payload. El cliente manda una subida normal y `SC-Adjuntos-Upload v1.3`
    * decide el desenlace —alta, reutilización o reemplazo— buscando por
    * (hash, solicitud) primero y por (solicitud, clave_adjunto) después. Aquí
    * sólo se lee el `modo` que vuelve para elegir el toast.
@@ -179,6 +306,7 @@ function DocumentRow({
       subido_por: usuarioActual,
       signal: abort.signal,
       onProgress: setProgreso,
+      ...destinoAPayload(destino, unidades.length > 0),
     })
 
     abortRef.current = null
@@ -221,12 +349,23 @@ function DocumentRow({
   }
 
   /**
-   * Abre el selector de archivo. Si el tipo ya tiene adjunto, antes pide
-   * confirmación: §8.6.4 exige que el diálogo aparezca **antes** del selector y
-   * que se dispare por *tener adjunto previo*, no por *saber que el hash
-   * difiere* — el cliente no conoce el hash hasta que el usuario elige archivo.
+   * Abre el selector de archivo. Dos guardas antes:
+   *
+   * 1. Cinturón y tirantes sobre el destino. Con el default global no debería
+   *    poder dispararse, pero el path que produce esta subida es un snapshot
+   *    inmutable (§8, CI-004): un archivo mal archivado no se recoloca después,
+   *    así que la comprobación se paga sola.
+   * 2. Si el tipo ya tiene adjunto, confirmación previa: §8.6.4 exige que el
+   *    diálogo aparezca **antes** del selector y que se dispare por *tener
+   *    adjunto previo*, no por *saber que el hash difiere* — el cliente no
+   *    conoce el hash hasta que el usuario elige archivo.
    */
   function pedirArchivo() {
+    if (!destinoDefinido) {
+      setEstado("error")
+      setErrorMsg(MSG_SIN_DESTINO)
+      return
+    }
     if (persistido) {
       setConfirmarReemplazo(true)
       return
@@ -306,6 +445,34 @@ function DocumentRow({
         <span className="text-xs text-muted-foreground">
           {meta.entidad_emisora}
         </span>
+
+        {/* Selector de destino por fila · sólo con dos o más unidades */}
+        {eligeDestino && !readOnly && (
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <SelectorDestino
+              value={destino}
+              onValueChange={(d) => onDestino(item.codigo, d)}
+              unidades={unidades}
+              // Regla D · punto 4: los inputs del contenedor se deshabilitan
+              // mientras la mutación está en vuelo.
+              disabled={ocupado}
+              className="h-8 w-full max-w-[15rem] text-xs"
+              aria-label={`Unidad de destino de ${meta.nombre}`}
+            />
+            {/* Indicador sutil de override manual: esta fila dejó de seguir al
+                selector global y ya no se reinicia cuando aquél cambia. */}
+            {destinoManual && (
+              <span
+                aria-hidden
+                title="Destino elegido para este documento"
+                className="size-1.5 shrink-0 rounded-full bg-brand"
+              />
+            )}
+            {destinoManual && (
+              <span className="sr-only">Destino elegido para este documento</span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Zona 3 · Badge de vigencia */}
@@ -353,6 +520,7 @@ function DocumentRow({
                 type="button"
                 variant="outline"
                 size="sm"
+                disabled={ocupado || !destinoDefinido}
                 onClick={pedirArchivo}
               >
                 Reintentar
@@ -373,7 +541,7 @@ function DocumentRow({
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={ocupado}
+                  disabled={ocupado || !destinoDefinido}
                   onClick={pedirArchivo}
                 >
                   <RefreshCw data-icon="inline-start" />
@@ -398,6 +566,7 @@ function DocumentRow({
               type="button"
               variant="outline"
               size="sm"
+              disabled={ocupado || !destinoDefinido}
               onClick={pedirArchivo}
             >
               <Paperclip data-icon="inline-start" />
@@ -465,6 +634,12 @@ interface DocumentChecklistProps {
   tipos: TipoDocumento[]
   /** Filas reales de `TX_Adjuntos` de esta solicitud (`useAdjuntosSolicitud`). */
   adjuntos: Adjunto[]
+  /**
+   * Unidades declaradas de la solicitud (`TX_Unidades`, ya hidratadas en
+   * `Solicitud.unidades`). Resuelven el segmento `{Unidad}` del path Dropbox
+   * (§8.1). Con cero o una unidad no se renderiza ningún selector.
+   */
+  unidades?: Unidad[]
   solicitudId: string
   codigoExt: string
   usuarioActual?: string
@@ -481,6 +656,7 @@ export function DocumentChecklist({
   onChange,
   tipos,
   adjuntos,
+  unidades = [],
   solicitudId,
   codigoExt,
   usuarioActual = "Ejecutivo",
@@ -489,6 +665,51 @@ export function DocumentChecklist({
   onSubido,
   onEliminar,
 }: DocumentChecklistProps) {
+  const eligeDestino = unidades.length >= 2
+
+  /**
+   * Destino por defecto de la sesión.
+   *
+   * Con una sola unidad se auto-selecciona esa —caso (a) de §9.1— y no se
+   * muestra ningún control. Con dos o más arranca en **«Común a todas»** y no
+   * en la primera unidad de la lista: elegir una unidad concreta por el
+   * operador sería exactamente el default silencioso que CI-003b revirtió, y
+   * quedaría congelado en un path que ya no se recalcula (CI-004). `comun/` es
+   * un destino legítimo de §8.1, la Ejecutiva lo ve escrito en el selector y
+   * puede afinarlo documento por documento.
+   */
+  const destinoInicial = React.useMemo<DestinoUnidad>(() => {
+    if (unidades.length === 1) return unidades[0].id
+    if (unidades.length >= 2) return DESTINO_COMUN
+    return ""
+  }, [unidades])
+
+  const [destinoGlobal, setDestinoGlobal] = React.useState<DestinoUnidad>(destinoInicial)
+
+  /**
+   * Overrides por documento. Una fila entra en este mapa **sólo** cuando la
+   * Ejecutiva cambia su selector a mano; las que no están heredan de
+   * `destinoGlobal` en cada render.
+   *
+   * De ahí sale gratis la regla del enunciado: cambiar el global reinicia las
+   * filas no tocadas —porque nunca tuvieron valor propio que reiniciar— y
+   * respeta las tocadas. No hay que sincronizar dos estados ni distinguir "lo
+   * puse yo" de "lo heredé": la ausencia en el mapa *es* la herencia.
+   */
+  const [overrides, setOverrides] = React.useState<Record<string, DestinoUnidad>>({})
+
+  // Cambiar de solicitud (o que lleguen sus unidades) reinicia el destino y
+  // descarta los overrides: son de la solicitud anterior y sus record IDs ya no
+  // existen en esta lista.
+  React.useEffect(() => {
+    setDestinoGlobal(destinoInicial)
+    setOverrides({})
+  }, [solicitudId, destinoInicial])
+
+  function handleDestinoFila(codigo: string, destino: DestinoUnidad) {
+    setOverrides((prev) => ({ ...prev, [codigo]: destino }))
+  }
+
   function handleToggle(codigo: string, marcado: boolean) {
     onChange(
       value.map((d) =>
@@ -544,10 +765,47 @@ export function DocumentChecklist({
       .sort((a, b) => a.meta.nombre.localeCompare(b.meta.nombre, "es"))
   }, [value, tipos])
 
+  const conOverride = Object.keys(overrides).length
+
   return (
     <div className="flex flex-col gap-2">
+      {/* Selector global · sólo con dos o más unidades declaradas */}
+      {eligeDestino && !readOnly && (
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex flex-col gap-0.5">
+            <label
+              htmlFor="destino-global"
+              className="text-sm font-medium text-foreground"
+            >
+              Unidad de destino
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Se aplica a todo lo que subas. Puedes cambiarlo documento por
+              documento.
+            </p>
+          </div>
+          <SelectorDestino
+            id="destino-global"
+            value={destinoGlobal}
+            onValueChange={setDestinoGlobal}
+            unidades={unidades}
+            className="w-full sm:max-w-xs"
+            aria-label="Unidad de destino por defecto"
+          />
+          {conOverride > 0 && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-brand" />
+              {conOverride === 1
+                ? "1 documento tiene un destino propio y no cambia con éste."
+                : `${conOverride} documentos tienen destino propio y no cambian con éste.`}
+            </p>
+          )}
+        </div>
+      )}
+
       {ordenados.map(({ item, meta }) => {
         const persistido = porClave.get(item.codigo) ?? null
+        const destinoManual = item.codigo in overrides
         return (
           <DocumentRow
             key={item.tipo_id}
@@ -559,6 +817,10 @@ export function DocumentChecklist({
             usuarioActual={usuarioActual}
             readOnly={readOnly}
             eliminando={persistido != null && eliminandoId === persistido.id}
+            unidades={unidades}
+            destino={overrides[item.codigo] ?? destinoGlobal}
+            destinoManual={destinoManual}
+            onDestino={handleDestinoFila}
             onToggle={handleToggle}
             onArchivo={handleArchivo}
             onQuitar={handleQuitar}

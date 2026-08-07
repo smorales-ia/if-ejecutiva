@@ -212,6 +212,10 @@ export function DocumentosAdjuntosSheet({
                   onChange={setChecklist}
                   tipos={tipos}
                   adjuntos={adjuntos}
+                  // Resuelven el segmento `{Unidad}` del path Dropbox (§8.1).
+                  // Con dos o más, el checklist exige elegir destino; el backend
+                  // rechaza la subida si no llega (CI-003b).
+                  unidades={solicitud.unidades}
                   solicitudId={solicitud.id}
                   codigoExt={solicitud.codigoExt}
                   readOnly={soloLectura}

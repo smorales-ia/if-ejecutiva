@@ -45,6 +45,16 @@ export interface UploadUnArchivoParams {
   codigo_ext: string
   /** Código de D_TipoDocumento (ej. "permiso_edificacion") si el archivo viene del checklist; vacío si es un adjunto suelto. */
   tipo_documento?: string
+  /**
+   * Destino del adjunto dentro de la solicitud (§8.1). Los dos campos son
+   * **excluyentes**: `unidad_id` es el record ID de `TX_Unidades` cuando el
+   * documento pertenece a una unidad concreta; `carpeta` nombra una de las tres
+   * hermanas reservadas cuando no. Si no viaja ninguno, el backend auto-deriva:
+   * `_ingreso/` sin unidades, la única unidad si hay una, y **rechaza con 422
+   * `unidad_no_especificada`** si hay dos o más (CI-003b).
+   */
+  unidad_id?: string
+  carpeta?: "comun" | "ingreso" | "informe"
   subido_por?: string
   onProgress?: (pct: number) => void
   signal?: AbortSignal
@@ -107,6 +117,8 @@ export async function uploadUnArchivo(params: UploadUnArchivoParams): Promise<Up
     solicitud_id,
     codigo_ext,
     tipo_documento,
+    unidad_id,
+    carpeta,
     subido_por = 'Ejecutivo',
     onProgress,
     signal,
@@ -173,6 +185,10 @@ export async function uploadUnArchivo(params: UploadUnArchivoParams): Promise<Up
         solicitud_id,
         codigo_ext,
         tipo_documento,
+        // `undefined` no se serializa: la clave simplemente no viaja, que es lo
+        // que el schema zod del Route Handler espera de un destino ausente.
+        unidad_id,
+        carpeta,
         nombre_archivo: file.name,
         mime_type: file.type || 'application/octet-stream',
         tamanio_kb: Math.round(file.size / 1024),
@@ -228,6 +244,8 @@ export interface ArchivoEnLote {
   solicitud_id: string
   codigo_ext: string
   tipo_documento?: string
+  unidad_id?: string
+  carpeta?: "comun" | "ingreso" | "informe"
   subido_por?: string
   signal?: AbortSignal
   onProgress?: (pct: number) => void
@@ -259,6 +277,8 @@ export async function uploadEnLotes(
         solicitud_id: item.solicitud_id,
         codigo_ext: item.codigo_ext,
         tipo_documento: item.tipo_documento,
+        unidad_id: item.unidad_id,
+        carpeta: item.carpeta,
         subido_por: item.subido_por,
         signal: item.signal,
         onProgress: item.onProgress,
