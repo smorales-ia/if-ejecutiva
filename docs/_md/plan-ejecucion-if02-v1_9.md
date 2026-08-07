@@ -1,12 +1,20 @@
 # Plan de Ejecución IF-02 v1.9 — Guía maestra para Claude Code
 
-> **Versión del plan: v1.5** (31-jul-2026). Cambio respecto de v1.4: se inserta
+> **Versión del plan: v1.6** (06-ago-2026). Cambio respecto de v1.5: realineamiento a la
+> Especificación v1.9.6 (reestructura de §8 · path Dropbox). Cambio de ubicación del archivo
+> a `docs/_md/` (pasa a ser normativo). Precisión de comportamiento del checklist P8:
+> desmarcar un tipo con archivo borra la fila y el binario (RF-52), no sólo desvincula.
+> Nueva nota de diseño sobre el nivel Unidad en el sheet P8 (§9.1). Resueltas dos deudas
+> previas de §1.5.1 P0.5 (`superficie_terreno_m2` y `tipo_bien`, ambas marcadas
+> "verificar existencia"). Tres filas nuevas en §13.
+>
+> **v1.5** (31-jul-2026). Cambio respecto de v1.4: se inserta
 > **§9.5 · P8.5 — Correo de asignación al tasador (SC05)** entre P8 y P9, y se corrigen las
 > referencias a "SC13" en §8.1, §10.4.1 y §10.4.3. Nuevo §13 con archivos afectados.
 >
 > **Uso.** Este archivo es la referencia única para construir IF-02. Claude Code lo lee al iniciar cada sesión, detecta la última P completada y ejecuta la siguiente **sin que Sergio le pase el prompt**. Sergio solo confirma que la P quedó ok y da señal para avanzar.
 >
-> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada. *(La ruta canónica es `v1_9_4`; el nombre de archivo de este plan conserva `v1_9` por compatibilidad con §0.1 — no renombrar.)*
+> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada. *(La ruta canónica es `v1_9_6`; el nombre de archivo de este plan conserva `v1_9` por compatibilidad con §0.1 — no renombrar.)*
 
 ---
 
@@ -14,7 +22,7 @@
 
 ### §0.1 Archivos a leer al iniciar sesión (en este orden)
 
-1. `docs/_notas/plan-ejecucion-if02-v1_9.md` (este archivo, completo)
+1. `docs/_md/plan-ejecucion-if02-v1_9.md` (este archivo, completo)
 2. `docs/_notas/inventario-if02.md` (generado en P0 — obligatorio a partir de P1)
 3. `docs/aprendizajes.md`
 4. `docs/schema-airtable.md`
@@ -311,7 +319,7 @@ NO crea "components/console/form-solicitud/" nuevo.
 
 - `modelo` (singleLine)
 - `superficie_terraza_m2` (number, 2 dec)
-- `superficie_terreno_m2` (number, 2 dec) ← **verificar existencia**
+- `superficie_terreno_m2` (number, 2 dec) ← **descartado el 24-jul-2026: se usa `sup_terreno_m2` (`fld6lgF0KxUh9oPCB`)**
 - `con_rol_o_uso_y_goce` (singleSelect: `con_rol, uso_y_goce`)
 - `rol_sii_en_tramite` (checkbox)
 - `ampliacion_m2` (number, 2 dec)
@@ -319,7 +327,7 @@ NO crea "components/console/form-solicitud/" nuevo.
 - `origen_superficie` (singleSelect: `carta_ficha_inmobiliaria, plano, base_interna_sii, certificado_avaluo, medicion_tasador`)
 - `respaldo_adjunto` (linkedRecord → `TX_Adjuntos`)
 - `detalle_item` (multilineText)
-- `tipo_bien` (linkedRecord → `M_TiposDeBien`) ← **verificar existencia**
+- `tipo_bien` (linkedRecord → `M_TiposDeBien`) ← **verificado: existe (`fldHHo0iPek3vM77p`)**
 
 **Alcance — CAMPOS EN `TX_DocumentosLegales`** (9 campos; crear tabla si no existe con link 1:N a `TX_Solicitudes`)
 
@@ -1255,8 +1263,20 @@ Cada fila muestra:
 **Comportamiento:**
 - Marcar un tipo sin archivo → estado "requerido, no subido" (no bloquea nada).
 - Subir archivo → `POST /api/adjuntos` (ya existe RF-09) con `tipo_documento_id`.
-- Desmarcar un tipo con archivo → `AlertDialog` "¿Descartar vínculo con este archivo?". El archivo queda en Dropbox pero se desvincula (`tipo_documento_id = null`).
+- Desmarcar un tipo con archivo → `AlertDialog` de confirmación. Al confirmar, el sistema **borra la fila de `TX_Adjuntos` y elimina el binario de Dropbox** vía `SC-Adjuntos-Delete` (RF-52 · §8.6 de la Especificación). No es una desvinculación: el archivo desaparece. El confirm del `AlertDialog` es la única barrera, así que su redacción debe decir que se elimina, no que se descarta un vínculo.
 - **Modo consulta si `modoConsulta=true`:** solo visor y descarga, sin subir ni editar.
+
+> **Nota de diseño (v1.6) — Nivel Unidad en el path Dropbox.**
+> Con la reestructura §8 de spec v1.9.6 el path incorpora un nivel `{Unidad}`. En el sheet
+> del checklist P8 se resuelve así:
+> (a) si la solicitud tiene UNA sola unidad, se auto-deriva (`TX_Adjuntos.unidad` = esa única
+> unidad);
+> (b) si tiene DOS O MÁS, aparece un selector por fila con las unidades declaradas + opción
+> "común" (documentos multi-unidad, carpeta hermana `comun/` de v1.9.6 D8);
+> (c) documentos subidos por IF-01 o Fase 1 del wizard antes de declarar unidades caen en
+> `_ingreso/` de forma permanente (v1.9.6 D10).
+> La implementación de esta captura de unidad depende de CI-003 (migración del path
+> implementado). Hasta CI-003, el sheet opera sin capturar unidad; ver §13.
 
 ### §9.2 Construcción — Pasos para Claude Code
 
@@ -1281,6 +1301,7 @@ Cada fila muestra:
 - [ ] Cerrar Sheet no pierde archivos ya subidos.
 - [ ] `pnpm tsc --noEmit` pasa.
 - [ ] Archivo `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P8.md` creado.
+- [ ] Desmarcar un tipo con archivo confirma el `AlertDialog` y produce borrado real: la fila de `TX_Adjuntos` deja de existir y el binario ya no está en Dropbox (verificable en Airtable y en Dropbox por `url_dropbox`).
 
 ---
 
@@ -1697,7 +1718,8 @@ Ubicación: `docs/_artefactos/make/`
 - `SC-Asignar.blueprint.json` (**v2.0** tras §9.5 · B-2)
 - `SC-Edicion.blueprint.json` (**v3.4** · F-1 cerrado 31-jul-2026)
 - `SC05-EmailTasador.blueprint.json` (§9.5 · B-1)
-- `SC-Adjuntos-Upload.blueprint.json`
+- `SC-Adjuntos-Upload.blueprint.json` (**v1.2** · reemplazo backend-driven · en producción sigue corriendo **v1.1**, ver export en `docs/_artefactos/produccion-actual/`)
+- `SC-Adjuntos-Delete.blueprint.json` (**v1.0** · creado en Tanda 3 · RF-52)
 - `SC-RF09-ExtraccionClaude.blueprint.json`
 
 Cada blueprint debe incluir:
@@ -1839,7 +1861,10 @@ quedan listados para que Sergio decida cuáles corregir y cuándo.
 | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md` | Fuente canónica, **no editable**. Dos divergencias a registrar en otro lado: (1) §1.6.3 llama SC13 al escenario que este plan llama SC05; (2) §1.6.3 ubica la plantilla en `C_Plantillas`, que no tiene ningún campo donde quepa un cuerpo HTML — la fuente de runtime es `C_NotificacionesConfig`. |
 | `docs/schema-airtable.md` | Conviene anotar que `M_Tasadores.email` (`fldsUu1pJ92HdYQUD`) es el destinatario del correo, que `M_Tasadores` **no** tiene link a `AUTH_Usuarios`, y la divergencia `C_Plantillas` / `C_NotificacionesConfig`. |
 | `docs/_notas/checklist-P9-manual.md` | §10.4.3 ya quedó actualizado en este archivo; el checklist en sí todavía dice SC13 y "módulo de correo en SC-Asignar". |
+| `docs/_artefactos/make/SC-Adjuntos-Upload.blueprint.json` · `lib/adjuntos.ts` | Producen `/VProperty/Tasaciones/{codigo}/…` en vez de la plantilla de spec v1.9.6 `/Test_ValueProperty/INFORMES_{AAAA}/{Cliente}/{codigo}/{Unidad}/…`. Migración diferida — registrada como **CI-003** en `docs/CODE_INCONSISTENCIES.md`. **No bloquea P8**: los archivos se guardan y recuperan bien; lo que falla es la conformidad con la norma, no la operación. |
+| *(norma · sin archivo específico)* | `TX_Adjuntos.dropbox_path` no se recompone si `TX_Unidades.subtipo` se edita después de la subida: el binario no se mueve y el path envejece en silencio. Deuda conocida, documentada como nota de diseño en §8 de spec v1.9.6 y registrada como **CI-004**. |
+| `components/console/document-checklist.tsx` *(referencia — **no** se toca en esta tanda)* | El sheet no captura la unidad a la que pertenece cada adjunto, dato que el path de v1.9.6 necesita para componer el nivel `{Unidad}`. El comportamiento previsto está descrito en la nota de diseño de §9.1. Se implementará junto con CI-003. |
 
 ---
 
-*Última actualización: 31-jul-2026 · **v1.5 del plan** (P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9) · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.4*
+*Última actualización: 06-ago-2026 · **v1.6 del plan** (realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/`) · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
