@@ -1390,3 +1390,25 @@ Nota lateral del mismo hallazgo: cada **reemplazo** relanza la extracción, porq
 - `lib/tipos-documento.ts:53` cita `VProperty_Especificacion_Proyecto_v1_9_5.md`, archivo que ya no existe tras el `git mv`. Fix trivial, próxima tanda de código.
 - §5.4 (IF-11) sigue citando el fantasma `M_Clientes.slug_url`. No se corrigió en esta tanda porque decidir qué campo real cumple la función que `slug_url` tenía en IF-11 es una decisión de producto, no una corrección de redacción.
 - **CI-003**: migrar el path implementado (`/VProperty/Tasaciones/{codigo_ext}/…`) al del spec v1.9.6. Toca `SC-Adjuntos-Upload`, `lib/adjuntos.ts` y probablemente un helper de composición de path. Nota de diseño ya registrada en la ficha: el payload actual del webhook no alcanza —`{Cliente}` exige leer y normalizar `M_Clientes.nombre`, `{AAAA}` exige convertir a Santiago y `{Unidad}` exige contar unidades hermanas para decidir el sufijo—, así que conviene componer el path en el Route Handler y dejar Make como transporte. Tanda futura, sin fecha.
+
+---
+
+### 2026-08-06 (b) — Tanda plan-ejecucion-if02 v1.5 → v1.6
+
+**Contexto:** realineamiento del plan de ejecución IF-02 con la reestructura del §8 (path Dropbox) de spec v1.9.6, hecha en la tanda anterior del mismo día. Incluyó el move `docs/_notas/` → `docs/_md/` —el plan pasa a ser normativo— y 11 ediciones puntuales, +33 líneas. Cero secciones nuevas, cero renumeración, cero cambios de formato.
+
+**Lecciones activas (patrones repetibles):**
+
+**1 · La normativa que habla en abstracto envejece mejor.** El diagnóstico anticipaba paths literales `/VProperty/…` regados por el plan; el grep devolvió **cero**. Ni `{ClienteSlug}`, ni `slug_url`, ni `/captura/fotos/`, ni `/informe_final/`. El plan menciona Dropbox una docena de veces y siempre en abstracto —«sube archivos a Dropbox», «enlace Dropbox»—, y por eso una reestructura completa de §8 apenas lo rozó. Regla: **en documentos normativos que no son el spec, no embeber paths, FIELD_IDs ni estructuras concretas**; referir por § o por RF y dejar que sólo el spec los materialice. Cada dato concreto duplicado fuera del spec es una unidad de arrastre en el próximo bump. Contraejemplo del mismo archivo: §9.5 sí lleva FIELD_IDs (`fldEccoUrOjV7oKZ5`, `fldZTVpXDRtXXPjyv`) porque son el contrato del correo al tasador, y ahí la concreción se paga sola.
+
+**2 · Un diagnóstico puede revelar que el trabajo previsto no existe.** El prompt de la tanda anticipaba grep exhaustivo, arrastres múltiples y «checkpoints repetidos *verificar path /VProperty/…*» que había que enumerar. Ninguno existía. El resultado real fueron 8 ediciones puntuales, de ellas **una sola sustantiva**. Sin el paso de diagnóstico se habría reescrito de más, con el coste añadido de que reescribir un plan de 1.845 líneas para nada tiene un riesgo de regresión que el trabajo evitado no compensa. Refuerza la lección 3 de la entrada anterior de hoy —diagnóstico-antes-de-código también aplica a documentación—, con un matiz nuevo: **el diagnóstico vale especialmente cuando el prompt hace supuestos sobre la magnitud del trabajo**, porque esos supuestos son la parte que nadie verifica.
+
+**3 · La app y la norma divergen en las dos direcciones.** §9.1 del plan describía que desmarcar un tipo del checklist «desvincula el archivo, que queda en Dropbox», mientras `document-checklist.tsx` ejecuta desde Tanda 3 el borrado duro de fila y binario vía `SC-Adjuntos-Delete` (RF-52 · §8.6). Lo habitual es que la norma vaya adelante y el código atrás; aquí era al revés, y el reflejo de «corregir el código para que cumpla el documento» habría revertido una funcionalidad probada en producción hace un día. Regla: **ante una contradicción entre documento y código, determinar cuál representa la verdad vigente antes de decidir qué se corrige**. El default «manda el documento» falla tantas veces como el opuesto; lo que decide es la fecha y la evidencia de ejecución, no la jerarquía del artefacto.
+
+**Deuda registrada en §13 del plan v1.6:**
+
+- **CI-003** · path Dropbox v1.9.6: `SC-Adjuntos-Upload` y `lib/adjuntos.ts` siguen produciendo `/VProperty/Tasaciones/{codigo}/…`, el path pre-v1.9.6. No bloquea P8.
+- **CI-004** · `TX_Adjuntos.dropbox_path` como snapshot inmutable.
+- Captura del nivel Unidad en el sheet P8, bloqueada por CI-003. El comportamiento previsto —auto-derivar con una unidad, selector con dos o más, `comun/` para multi-unidad— quedó como nota de diseño en §9.1 sin tocar el layout del sheet.
+
+**Divergencia menor descubierta al paso (no bloquea):** `SC-Adjuntos-Upload` declara `v1.2` en `docs/_artefactos/make/` y `v1.1` en el export de `docs/_artefactos/produccion-actual/`. Es la **Deuda #3** ya registrada el 05-ago-2026; §10.4.1 del plan ahora la deja explícita en vez de dejar el número sin marcar. Etiquetar la lista de artefactos-a-importar con la versión del repo y anotar aparte la de producción es lo que hace visible la brecha: un solo número habría escondido cuál de los dos se estaba nombrando.
