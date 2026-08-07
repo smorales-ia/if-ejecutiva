@@ -245,6 +245,9 @@ export function DocumentosAdjuntosSheet({
                 <FileUploadZone
                   solicitudId={solicitud.id}
                   codigoExt={solicitud.codigoExt}
+                  // Mismo selector de destino que el checklist: sin esto, una
+                  // solicitud multi-unidad recibe 422 `unidad_no_especificada`.
+                  unidades={solicitud.unidades}
                   onUploaded={recargar}
                 />
               )}

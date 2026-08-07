@@ -12,7 +12,16 @@ import {
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { SelectorDestinoUnidad } from "@/components/console/selector-destino-unidad"
+import {
+  destinoAPayload,
+  destinoInicial,
+  MSG_SIN_DESTINO,
+  requiereSeleccion,
+  type DestinoUnidad,
+} from "@/lib/adjuntos-destino"
 import { uploadConReintentos } from "@/lib/adjuntos-uploader"
+import type { Unidad } from "@/lib/console-data"
 import { cn } from "@/lib/utils"
 
 const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"]
@@ -66,6 +75,14 @@ interface FileUploadZoneProps {
    * tipo se declara, no se infiere). Vacío = adjunto suelto.
    */
   tipoDocumento?: string
+  /**
+   * Unidades declaradas de la solicitud. Resuelven el segmento `{Unidad}` del
+   * path Dropbox (§8.1). Con dos o más aparece el selector de destino; con cero
+   * o una no se renderiza nada y el comportamiento es el de siempre.
+   *
+   * Sólo aplica en modo inmediato: en modo diferido no hay subida que dirigir.
+   */
+  unidades?: Unidad[]
   disabled?: boolean
 }
 
@@ -110,6 +127,14 @@ function validar(file: File): string | null {
  *
  * Hasta el 02-ago-2026 este componente simulaba la subida con `setInterval` y
  * emitía un toast verde sin haber escrito nada — el patrón que E-082 prohíbe.
+ *
+ * ## Destino Dropbox
+ *
+ * A diferencia del checklist, los adjuntos libres no tienen filas fijas a las
+ * que colgar un override: los archivos entran y salen de la lista en cada
+ * tanda. Por eso hay **un solo selector** y se aplica a todo lo que se suba
+ * mientras esté puesto. Cambiarlo no reubica lo ya subido —el path es un
+ * snapshot inmutable (§8, CI-004)—, sólo dirige lo siguiente.
  */
 export function FileUploadZone({
   variant = "default",
@@ -120,6 +145,7 @@ export function FileUploadZone({
   solicitudId,
   codigoExt,
   tipoDocumento,
+  unidades = [],
   disabled = false,
 }: FileUploadZoneProps) {
   const compact = variant === "compact"
@@ -129,6 +155,25 @@ export function FileUploadZone({
   const [items, setItems] = React.useState<UploadItem[]>([])
   const [dragActivo, setDragActivo] = React.useState(false)
   const inputRef = React.useRef<HTMLInputElement>(null)
+
+  const inicial = React.useMemo(() => destinoInicial(unidades), [unidades])
+  const [destino, setDestino] = React.useState<DestinoUnidad>(inicial)
+
+  // Cambiar de solicitud (o que lleguen sus unidades) reinicia el destino: los
+  // record IDs de la anterior ya no existen en esta lista.
+  React.useEffect(() => {
+    setDestino(inicial)
+  }, [solicitudId, inicial])
+
+  /**
+   * El selector sólo aparece cuando hay ambigüedad real **y** la subida es de
+   * verdad. Con cero unidades el backend deriva `_ingreso/`, con una sola no
+   * hay nada que elegir (§9.1 caso a), y en modo diferido no hay subida que
+   * dirigir todavía. En los tres casos la zona se ve exactamente igual que
+   * antes de esta tanda.
+   */
+  const eligeDestino = modoInmediato && requiereSeleccion(unidades)
+  const destinoDefinido = !eligeDestino || destino !== ""
 
   // Aborta lo que quede en vuelo si el componente se desmonta (la Ejecutiva
   // cierra el sheet a mitad de subida).
@@ -164,6 +209,7 @@ export function FileUploadZone({
       subido_por: usuarioActual,
       signal: abort.signal,
       onProgress: (pct) => actualizar(item.id, { progress: pct }),
+      ...destinoAPayload(destino, unidades.length > 0),
     })
 
     if (resultado.ok) {
@@ -201,6 +247,19 @@ export function FileUploadZone({
 
   function agregarArchivos(fileList: FileList | null) {
     if (!fileList || fileList.length === 0 || disabled) return
+
+    /**
+     * Cinturón y tirantes sobre el destino. Con el default no debería poder
+     * dispararse —la zona de arrastre ya está deshabilitada—, pero el drop
+     * nativo no respeta el `disabled` de un `<button>` en todos los navegadores
+     * y el path que produce esta subida es un snapshot inmutable (§8, CI-004):
+     * un archivo mal archivado no se recoloca después.
+     */
+    if (!destinoDefinido) {
+      toast.error(MSG_SIN_DESTINO, { duration: 4000 })
+      return
+    }
+
     const archivos = permiteMultiple
       ? Array.from(fileList)
       : Array.from(fileList).slice(0, 1)
@@ -263,13 +322,49 @@ export function FileUploadZone({
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
+      {/* Selector de destino · sólo en modo inmediato con dos o más unidades */}
+      {eligeDestino && (
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
+          <div className="flex flex-col gap-0.5">
+            <label
+              htmlFor="destino-adjuntos-libres"
+              className="text-sm font-medium text-foreground"
+            >
+              Unidad de destino
+            </label>
+            <p className="text-xs text-muted-foreground">
+              Se aplica a todos los archivos que subas ahora. No cambia los ya
+              subidos.
+            </p>
+          </div>
+          <SelectorDestinoUnidad
+            id="destino-adjuntos-libres"
+            value={destino}
+            onValueChange={setDestino}
+            unidades={unidades}
+            // Regla D · punto 4: los inputs se deshabilitan mientras hay una
+            // mutación en vuelo. Cambiar el destino a mitad del lote dejaría
+            // unos archivos en una carpeta y otros en otra.
+            disabled={disabled || subiendo.length > 0}
+            className="w-full sm:max-w-xs"
+            aria-label="Unidad de destino de los adjuntos libres"
+          />
+          {!destinoDefinido && (
+            <p className="flex items-center gap-1.5 text-xs font-medium text-[#b91c1c]">
+              <AlertCircle className="size-3.5 shrink-0" />
+              {MSG_SIN_DESTINO}
+            </p>
+          )}
+        </div>
+      )}
+
       <input
         ref={inputRef}
         type="file"
         accept={EXT_PERMITIDAS.join(",")}
         multiple={permiteMultiple}
         className="sr-only"
-        disabled={disabled}
+        disabled={disabled || !destinoDefinido}
         onChange={(e) => {
           agregarArchivos(e.target.files)
           e.target.value = ""
@@ -279,11 +374,11 @@ export function FileUploadZone({
       {/* Estado IDLE / zona drag-and-drop */}
       <button
         type="button"
-        disabled={disabled}
+        disabled={disabled || !destinoDefinido}
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault()
-          if (!disabled) setDragActivo(true)
+          if (!disabled && destinoDefinido) setDragActivo(true)
         }}
         onDragLeave={() => setDragActivo(false)}
         onDrop={(e) => {
@@ -387,6 +482,7 @@ export function FileUploadZone({
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={!destinoDefinido}
                       onClick={() => reintentar(item.id)}
                     >
                       <RotateCcw data-icon="inline-start" />
