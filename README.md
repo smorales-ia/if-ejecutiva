@@ -8,18 +8,18 @@
 
 ## Qué es este proyecto
 
-IF-02 es la consola diaria de la Ejecutiva Comercial de **VProperty** (Tasaciones · Bienes Raíces, Chile). Materializa la Capacidad C-2 (gestión comercial y bandeja operativa) definida en la Especificación v1.4.
+IF-02 es la consola diaria de la Ejecutiva Comercial de **VProperty** (Tasaciones · Bienes Raíces, Chile). Materializa la Capacidad C-2 (gestión comercial y bandeja operativa) definida en la Especificación v1.9.7.
 
 Funciones principales:
 
 - Ver y filtrar la cartera de solicitudes de tasación (vistas: Activas, SLA en riesgo, Por reasignar, Bloqueadas, Aprobadas pend. entrega, Mi cartera).
 - Crear solicitudes internas (canal: email, teléfono, WhatsApp, presencial).
 - Asignar tasador y visador, fijar fecha de visita y pasar la solicitud a `asignada`.
-- Reasignar tasador, cambiar prioridad, pausar o cancelar solicitudes.
+- Cambiar prioridad, pausar o cancelar solicitudes. No existe botón "Reasignar Tasador" ni flujo de reasignación formal (§1.3.1): modificar un tasador ya asignado se hace desde "Editar solicitud", disponible mientras el estado siga siendo `creada`, sin que eso dispare por sí solo la transición de estado (§1.4).
 - Consultar historial de eventos y adjuntos de cada expediente.
 - Extracción automática de datos de adjuntos con Claude API (RF-09).
 
-La UI **sólo muestra y captura**. Toda regla de negocio vive en Airtable (AT01/AT02/AT08) y en Make (SC01/SC05/RF-09).
+La UI **sólo muestra y captura**. Toda regla de negocio vive en Airtable (AT01/AT08 — AT02 queda fuera del alcance de IF-02: la asignación es manual y única, REGLA A · D-15) y en Make (SC01/SC05/RF-09).
 
 ---
 

@@ -90,3 +90,40 @@ decisión no es técnica.
 3. ¿Los 2 días actuales son correctos, o vienen de una prueba que quedó fija?
 4. ¿El SLA varía por cliente / tipo de informe? Si sí, hay que poblar `C_SLA`
    antes de cualquier cambio de fórmula.
+
+---
+
+## Actualización 08-ago-2026 — respondida por la spec v1.9.7 §5.2
+
+Las cuatro preguntas de arriba se llevaron a Héctor y volvieron respondidas. El
+insumo `VProperty_SLA_Negocio_v1.1` se incorporó a la especificación como §5.2
+(RF-53) en el bump v1.9.6 → v1.9.7. **El análisis y las tres opciones de arriba se
+conservan tal cual**: siguen siendo el registro de por qué la decisión era difícil
+y qué se evaluó. Lo que cambia es que ya hay respuesta.
+
+| Pregunta | Respuesta de la spec |
+|---|---|
+| 1 · ¿Atrasada respecto de la visita o del ingreso? | **Del ingreso.** El reloj arranca cuando Control y Seguimiento abre el correo e ingresa la solicitud — no cuando el correo llega al buzón (§5.2.2). |
+| 2 · ¿Hay compromiso ingreso → entrega? | **Sí.** End-to-end ~30 h hábiles ideal, ~62 h hábiles máximo (§5.2.4). |
+| 3 · ¿Los 2 días son correctos? | **Los supersede una matriz de 7 etapas.** El tramo visita → informe es 24 h ideal / 48 h máximo (etapa 5); disponible para visado 2–3 h (etapa 6); visación 30 min por informe (etapa 7). |
+| 4 · ¿Varía por cliente / tipo de informe? | **Sí, y convive con lo anterior.** `C_SLA` mantiene el plazo agregado por par (cliente, tipo_informe); la matriz por etapa es un segundo reloj, no un reemplazo (§5.2 intro). |
+
+Además, la spec fija dos cosas que esta nota no había planteado: el cómputo corre
+sólo de **lunes a viernes de 9:00 a 18:00**, excluidos feriados, y se pausa fuera de
+esa ventana (§5.2.1); y el **reproceso** tiene matriz propia R1–R3 con la regla
+"reproceso limpio" (§5.2.5).
+
+**Qué implica para las tres opciones.** El negocio eligió, en los hechos, algo
+cercano a **(c) dos relojes** —el agregado de `C_SLA` sigue vivo y se le suma el
+reloj por etapa—, pero con una diferencia que importa: el reloj nuevo no mide
+"ingreso → visita" como proponía (c), sino las siete etapas completas, y lo hace
+sobre calendario hábil, que ninguna de las tres opciones contemplaba. La objeción
+de (b) sobre reescribir la historia de las ~54 filas no aplica: la matriz por etapa
+es aditiva y no recalcula `semaforo_sla`.
+
+**Lo que sigue abierto** es la implementación, no la decisión. Nada de §5.2 está
+construido: no existen los timestamps por etapa, `C_SLA` sigue con una sola fila y
+sin links poblados, y `semaforo_sla` sigue contando desde `fecha_visita`. La brecha
+entre la norma y lo implementado está registrada como **CI-005** en
+`docs/CODE_INCONSISTENCIES.md`. La corrección cosmética de la fórmula que describe
+`20260729-fix-semaforo-sla.md` sigue siendo válida y sigue sin aplicarse.

@@ -60,7 +60,7 @@ código propio, no Airtable Interfaces.
 Contrato operacional resumido:
 
 - **Entradas**: `TX_Solicitudes` (cartera del ejecutivo · filtros SLA), `M_Tasadores` (activos con `disponible = TRUE` y zona · ver H-05), `M_Visadores` (por `especialidades` — nombre plural en el schema real), `M_Clientes`, `A_Eventos` (cronología).
-- **Acciones**: crear alta interna, editar campos no-cálculo, asignar/reasignar tasador, fijar fecha de visita, cambiar prioridad, pausar, cancelar. **Acción primaria**: `Pasar a asignada`.
+- **Acciones**: crear alta interna, editar campos no-cálculo, asignar tasador (única, sin flujo de reasignación · §1.3.1), fijar fecha de visita, cambiar prioridad, pausar, cancelar. **Acción primaria**: `Pasar a asignada`. Mientras el estado siga `creada` se puede cambiar el tasador ya fijado desde "Editar solicitud", sin que eso dispare por sí solo la transición de estado (§1.4 · RN-59).
 - **Salidas**: `TX_Solicitudes` (insert/update, `origen_canal=ingreso_manual`), `A_Eventos` (alta · asignación · cambios). `A_Cambios` **no se escribe desde IF-02** — era el override de AT02.
 - **Estado destino**: `creada → asignada` — bloqueado hasta tasador + visador + `fecha_visita_programada`. La transición la ejecuta **SC-Asignar (Make)**, que escribe `estado`, `tasador` y `fecha_asignacion` en un solo update; SC05 notifica al tasador.
 
@@ -73,6 +73,15 @@ con el guard 409 de `asignar/route.ts` — verificar en la UI de Airtable ante c
 asignación que falle sin causa aparente.
 
 Principio rector: **la UI muestra y captura; nunca decide**. Toda regla de negocio vive en Airtable (AT01/AT08 · `C_ReglasNegocio`) o en los escenarios Make.
+
+**SLA operacional (Spec v1.9.7 §5.2 · RF-53).** El reloj del servicio se especifica en una
+sola sección y es §5.2. Dos niveles que conviven: el **plazo agregado** por par (cliente,
+tipo_informe) en días, que alimenta el semáforo de bandeja (`C_SLA` · RN-04), y el **plazo
+por etapa** del workflow en horas hábiles (siete etapas, §5.2.4). El cómputo corre de lunes
+a viernes de 9:00 a 18:00, excluidos feriados, y se pausa fuera de esa ventana (§5.2.1); el
+reloj arranca cuando Control y Seguimiento abre el correo e ingresa la solicitud, no cuando
+el correo llega al buzón (§5.2.2). El reproceso tiene matriz propia (§5.2.5). **Nada de esto
+está implementado todavía** — ver CI-005 en `docs/CODE_INCONSISTENCIES.md`.
 
 **SC13 fuera de alcance CU-002**: las acciones de reasignación, cambio de prioridad y pausa actualizan Airtable + `A_Eventos` pero **no envían email** en este CU. Deuda técnica para un CU posterior.
 
@@ -527,7 +536,7 @@ app/
 - Poner el token Airtable/Make/Dropbox en el cliente (`NEXT_PUBLIC_*`).
 - Invocar el MCP Airtable desde código productivo compilado.
 - Escribir a Airtable durante la ejecución de tests contra la base productiva.
-- Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.4 §1.6 Nota v0 · D-01).
+- Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.7 §1.6 · D-01).
 - Invocar AT02 ni escribir un campo trigger de AT02 desde IF-02 — no hay asignación
   automática (REGLA A · D-15). La asignación es manual y única.
 - Emitir mensajes de error técnicos al usuario — siempre humano.

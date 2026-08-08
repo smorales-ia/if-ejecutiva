@@ -97,6 +97,32 @@ Lo que sigue vigente como regla vive abajo, destilado.
   la estructura que venga en el `path`; no hay que pre-provisionar nada. Aplica
   igual a las carpetas de unidad y a las tres reservadas de §8.1 —`comun/`,
   `informe/`, `_ingreso/`—.
+- **RO-13 · Filtrar por el formato real de la fórmula, no por el literal
+  humano.** Un campo fórmula de Airtable emite el string que su autor escribió,
+  con emoji, mayúsculas y adornos incluidos —no el vocabulario con que el equipo
+  habla del campo—. Un `filterByFormula` por igualdad contra el literal humano
+  (`{semaforo_sla} = "rojo"`) devuelve **cero filas para toda la tabla**, y cero
+  filas se lee como «no hay casos», no como «el filtro está mal»: el fallo es
+  silencioso y sobrevive a la revisión. Antes de escribir un filtro sobre un
+  campo fórmula, leer la fórmula con `get_table_schema` y copiar sus literales
+  exactos; ante adornos volátiles (emoji, tildes, prefijos), filtrar por
+  subcadena con `FIND(...)` en vez de por igualdad.
+- **RO-14 · Alias documentado en vez de renombrado, cuando ambos lados están en
+  producción.** Cuando un mismo identificador significa cosas distintas en el
+  spec y en el repo, la reacción natural —renombrar en uno de los dos— es la
+  cara si ambos ya corren: renombrar en el repo toca rutas, blueprints y campos
+  de Airtable; renombrar en el spec lo hace contradecirse en las secciones que
+  ya usan el otro sentido. La salida barata es registrar el alias con sufijos
+  explícitos (`RF-09-spec` / `RF-09-repo`) y diferir la unificación al próximo
+  bump normativo. Sirve porque el problema real es de lectura, no de runtime:
+  nada falla, sólo se lee mal. Ver **CI-006**.
+- **RO-15 · Ante un nombre de tabla en conflicto, gana la base real.** Si el
+  spec nombra una tabla que en Airtable se llama distinto, se corrige el spec,
+  no la base: renombrar en Airtable rompe fórmulas, automations y escenarios
+  Make vivos, y el coste no es simétrico. La corrección del spec se difiere al
+  próximo bump —un rename de N apariciones en el documento normativo merece su
+  propio changelog, no un parche dentro de otra tanda— y mientras tanto se
+  registra como CI. Ver **CI-007** (`H_Feriados` en el spec vs `C_Feriados` real).
 
 ## Bitácora reciente
 
@@ -360,3 +386,45 @@ La lección operativa es de **método de prueba**: validar un path nuevo exige u
 Confirmado en producción: al subir con destino «Departamento», Dropbox creó `/…/VP-2026-0053/departamento/` desde cero. No hay que pre-provisionar la estructura, y lo mismo aplica a `comun/`, `informe/` y `_ingreso/`. Elimina un paso de setup que el diseño de §8.1 podía sugerir. Destilado como **RO-12**.
 
 **Estado al cierre:** camino completo validado en producción —común, unidad específica (departamento) y de-duplicación por hash—, con `SC-Adjuntos-Upload v1.3` activo y `v1.2` pausado como respaldo.
+
+---
+
+### 2026-08-08 — Auditoría documental contra spec v1.9.7: tres divergencias que no eran de redacción
+
+**Contexto:** tanda 100% documental. Tras incorporar el insumo `VProperty_SLA_Negocio_v1.1` al spec (bump v1.9.6 → v1.9.7, §5.2 nueva con RF-53 y D-16), se auditaron los 81 archivos de documentación del repo contra la spec. Siete archivos modificados, tres fichas nuevas en `docs/CODE_INCONSISTENCIES.md`. No se tocó código.
+
+**1 · Un filtro por igualdad contra un literal humano devuelve cero filas, y cero filas no se lee como error.**
+
+`docs/construccion.md` documentaba la vista «SLA en riesgo» como `OR({semaforo_sla} = "rojo", {semaforo_sla} = "ambar")`. La fórmula viva nunca emitió esos strings: emite `VENCIDO`, `EN RIESGO`, `OK` y `Entregado`, además con los emoji mangleados a `?`. El filtro documentado devolvía **cero filas para toda la tabla**.
+
+Lo que hace peligroso a este fallo no es la equivocación —copiar el vocabulario con que el equipo habla del campo en vez del que la fórmula escribe es un desliz de un minuto— sino que **su síntoma es indistinguible del éxito**. Una bandeja vacía se lee como «no hay solicitudes en riesgo», que es una respuesta plausible y hasta deseable. El código de producción ya buscaba por subcadena desde la Tanda D-01, así que el defecto sobrevivió meses sólo en la documentación, esperando a que alguien construyera la vista siguiendo lo escrito.
+
+La regla es leer la fórmula con `get_table_schema` antes de escribir cualquier filtro sobre un campo calculado, y preferir `FIND(...)` a la igualdad cuando el literal traiga adornos volátiles. Destilado como **RO-13**.
+
+**2 · Cuando renombrar rompe algo en los dos lados, el alias documentado es la salida barata.**
+
+`RF-09` significa dos cosas: en el spec es «Acceso autenticado a sus solicitudes» (IF-03), y el escenario de extracción con Claude API se llama `SC07` (§4). En el repo, `RF-09` **es** la extracción —está en `CLAUDE.md`, en `app/api/extraccion/`, en `TX_Adjuntos.estado_extraccion` y en el nombre del blueprint—. `CLAUDE.md` llega a prohibir explícitamente el nombre que el spec afirma.
+
+El reflejo es elegir un ganador y renombrar. Con ambos lados en producción, las dos direcciones son caras: renombrar en el repo toca rutas, un campo de Airtable y un blueprint; renombrar en el spec lo pone a contradecirse en §4 y en la definición de RF-09. Se eligió la tercera vía —alias con sufijos `RF-09-spec` / `RF-09-repo`, unificación diferida al próximo bump—, y la clave para justificarla fue reconocer que **nada falla en runtime**: el daño es que alguien busque «RF-09», encuentre la definición equivocada y construya sobre ella. Un problema de lectura se paga con documentación, no con una migración.
+
+Detalle en **CI-006**. Destilado como **RO-14**.
+
+**3 · Entre el spec y la base real, la base gana.**
+
+El spec nombra `H_Feriados` en ocho lugares; la tabla real es `C_Feriados` (`tblJVh2kPd4uMgxpb`), poblada y funcional. El nombre viejo viene del diseño de la Capa de Datos, que la ubicaba en el dominio histórico `H_`; al crearse quedó en el de configuración `C_`, que además es el correcto por naturaleza —es un catálogo paramétrico, no un histórico—.
+
+El coste no es simétrico y por eso la regla no es «gana el documento normativo»: renombrar en Airtable rompería fórmulas, automations y escenarios Make vivos, mientras que corregir el spec es reemplazar ocho strings. La corrección se difiere al próximo bump en vez de parcharla dentro de esta tanda, porque un rename de ocho apariciones en el documento normativo merece su propio changelog.
+
+Esta entrada **subió de prioridad con v1.9.7**: mientras los feriados sólo aparecían de pasada en RN-04 era una molestia de lectura; §5.2.1 los convierte en dependencia del cómputo hábil de todo el SLA operacional, y §5.2 afirma que «H_Feriados sigue siendo la fuente única de feriados para ambos cómputos» apuntando a una tabla que no existe. Detalle en **CI-007**. Destilado como **RO-15**.
+
+**4 · Una política de higiene documental bien escrita evita el trabajo equivocado.**
+
+`diseno.md`, `construccion.md` y `schema-airtable.md` llevan desde el 30-jul una nota que prohíbe renumerar citas del cuerpo sin diffear el spec, *«porque cambiarles el número sin diffear el spec convertiría un puntero viejo en una afirmación falsa»*. El encargo de esta tanda pedía alinear referencias de versión; sin esa nota, el camino obvio era un reemplazo masivo `v1.9.4 → v1.9.7` sobre ~8 citas de cuerpo cuyo contenido nadie verificó contra el spec nuevo. Se movieron sólo los punteros de cabecera —que apuntaban a un archivo inexistente— y cada nota de higiene quedó registrando qué tocó esta tanda.
+
+Refuerza la lección del 06-ago sobre no embeber datos concretos fuera del spec, por el otro extremo: **cuando la deuda no se puede saldar en el momento, dejarla anotada con su razón vale más que dejarla anotada a secas**. La razón es lo que impide que la próxima tanda la «resuelva» mal.
+
+**5 · Verificar cada hallazgo antes de reportarlo descartó dos de dieciocho.**
+
+El borrador del informe incluía que la vista «Por reasignar» contradecía la REGLA A. Al abrir §1.1 apareció listada como vista pre-construida en RF-05: lo que el spec difiere (FUT-EJ-05) es la *reasignación automática por inactividad*, no la vista. Dos de dieciocho hallazgos candidatos se cayeron así. En auditorías documentales la tentación es reportar por coincidencia de término —«dice reasignar, y reasignar está prohibido»—, y el término casi nunca alcanza: **hay que abrir la sección citada**.
+
+**Estado al cierre:** 8 archivos modificados en el working tree, sin commitear. Tres CI abiertas (CI-005 reloj del SLA, CI-006 alias RF-09, CI-007 tabla de feriados), ninguna bloqueante para la construcción en curso.

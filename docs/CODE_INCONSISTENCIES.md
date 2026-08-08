@@ -218,3 +218,70 @@ agrupadas.
 - El mismo razonamiento aplica, con menor probabilidad, a `{Cliente}`: si se corrige `M_Clientes.nombre` o se reasigna `TX_Solicitudes.cliente`, el path también envejece. Y a `_ingreso/`, por diseño: esos archivos se quedan ahí para siempre aunque después se declaren unidades (§1.5.3).
 - La opción (c) tiene un efecto lateral que conviene medir antes de elegirla: obligaría a rehacer la subida de un documento por corregir un dato de la unidad, justo en el estado del flujo donde más se corrigen datos.
 - **Ambas entradas nuevas de esta sesión (CI-003, CI-004) son divergencias doc↔código en el sentido estricto del alcance de este archivo** —hay blueprint y hay `lib/adjuntos.ts`—, a diferencia de CI-002, que se aceptó como excepción. No abren la discusión de alcance pospuesta en las líneas 16-31.
+
+---
+
+## CI-005 · Alinear el reloj del SLA con §5.2: hoy arranca en la visita, no en el ingreso
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-005 |
+| **Archivo:línea** | `TX_Solicitudes.semaforo_sla` (`fldW4oUq7LvQUZq7W`, fórmula Airtable) y `TX_Solicitudes.fecha_limite_entrega` (`fldoT1LOSgVRo32TC`) · consumidores en `lib/solicitudes.ts` y la vista "SLA en riesgo" |
+| **Síntoma** | La spec v1.9.7 §5.2.2 fija el inicio del SLA en la recepción del correo por Control y Seguimiento, y §5.2.4 define siete etapas medidas en horas hábiles. La base real mide otra cosa: `semaforo_sla` cuenta días desde `{fecha_visita}` y `fecha_limite_entrega = DATEADD({fecha_visita}, 2, 'days')`. Una solicitud puede estar semanas entre `creada` y visitada sin SLA que la mida, sin aparecer en "SLA en riesgo" y sin poder priorizarse por urgencia. |
+| **Causa** | El modelo implementado nunca se definió por escrito: se construyó midiendo la entrega del informe posterior a la visita, que era el tramo que la operación controlaba en planilla. §5.2 es la primera especificación formal del reloj completo, y llega después de la implementación. |
+| **Resolución** | Por etapas, ninguna trivial: (1) poblar `C_SLA` —hoy tiene una sola fila, `SLA_METLIFE_Refinanciamiento`, con los links `cliente`/`tipo_informe`/`tipo_propiedad` vacíos— y elegir entre las dos familias de campos duplicadas (`dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` vs `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido`), borrando la que no gane; (2) crear los timestamps de entrada y salida por etapa en `TX_Solicitudes`, que no existen; (3) implementar el cómputo sobre ventana hábil 9:00–18:00 L-V con feriados, que ninguna fórmula Airtable resuelve sola —`WORKDAY` opera en días, no en horas—; (4) decidir la UI de los dos semáforos convivientes (ver nota en `docs/diseno.md` §3). El paso (1) es prerrequisito de todo lo demás y es de negocio, no técnico. |
+| **Dueño** | Sergio (coordinación) · Héctor + Óscar para poblar `C_SLA` · Arquitecto de Datos para los timestamps por etapa |
+| **Fecha objetivo** | Sin fecha — depende de que se priorice el RF. Condición de arranque: `C_SLA` poblada con al menos los pares (cliente, tipo_informe) vigentes. |
+| **Estado** | abierta |
+| **Origen** | Auditoría documental del 08-ago-2026, al contrastar §5.2 (nueva en v1.9.7) contra `docs/_notas/20260729-modelo-sla-pendiente.md`. |
+
+**Notas:**
+
+- **La decisión de negocio ya está tomada; lo que falta es construir.** `20260729-modelo-sla-pendiente.md` planteaba tres opciones y cuatro preguntas para Héctor. Las cuatro están respondidas en §5.2 y la nota lleva el bloque de cierre correspondiente. Esta entrada existe porque responder no es implementar.
+- **Lo elegido no es exactamente ninguna de las tres opciones de aquella nota.** Se parece a (c) *dos relojes* —el agregado de `C_SLA` sobrevive y se le suma el reloj por etapa—, pero el reloj nuevo mide las siete etapas completas sobre calendario hábil, no sólo el tramo ingreso → visita. La objeción de (b) sobre recalcular retroactivamente las ~54 filas históricas **no aplica**: la matriz por etapa es aditiva y no toca `semaforo_sla`.
+- **El `#ERROR` en altas nuevas es un síntoma distinto y tiene arreglo propio.** `DATETIME_DIFF` sobre `{fecha_visita}` vacía da error, no cero. La fórmula de reemplazo está escrita y probada en `docs/_notas/20260729-fix-semaforo-sla.md`; requiere edición manual en la UI de Airtable porque el MCP no modifica fórmulas. Es cosmético y no bloquea esta entrada, pero conviene aplicarlo antes de tocar el modelo, para no mezclar dos cambios en la misma fórmula.
+- **Los literales del semáforo son una tercera cosa.** La fórmula emite `VENCIDO` / `EN RIESGO` / `OK` / `Entregado`, no los colores; `docs/construccion.md` §5 documentaba un filtro por igualdad contra `"rojo"`/`"ambar"` que devolvía cero filas y quedó corregido en esta tanda. El código ya buscaba por subcadena desde la Tanda D-01.
+- Relación con **CI-007**: el cómputo hábil de §5.2.1 depende de la tabla de feriados, cuyo nombre diverge entre spec y base real.
+
+---
+
+## CI-006 · Alias RF-09: extracción documental vs acceso autenticado
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-006 |
+| **Archivo:línea** | `CLAUDE.md` (múltiples) · `README.md:20,22,39` · `app/api/extraccion/iniciar/route.ts` · `TX_Adjuntos.estado_extraccion` · `docs/_artefactos/make/SC-RF09-ExtraccionClaude.blueprint.json` |
+| **Síntoma** | Cualquier búsqueda por "RF-09" es ambigua sin contexto. La spec v1.9.7 define **RF-09 como "Acceso autenticado a sus solicitudes"** (IF-03, línea 1926) y llama **SC07** al escenario de extracción con Claude API (§4). El repositorio usa "RF-09" para el escenario de extracción, y `CLAUDE.md` llega a prohibir explícitamente el nombre que la spec afirma: *"No usar el código «SC07» para RF-09"* frente a *"se materializa en el escenario Make SC07 que llama a Claude API"*. |
+| **Causa** | Numeración local del repo IF-02 acuñada antes de que §4 de la spec consolidara el vocabulario, y nunca reconciliada. Ambos identificadores quedaron en uso simultáneo con significados distintos. |
+| **Resolución** | Decisión de panel del 08-ago-2026: **opción (c), documentar el alias sin renombrar en ninguno de los dos lados.** Renombrar en el repo tocaría rutas, nombres de blueprint y un campo de Airtable —coste alto, riesgo de regresión, y fuera del alcance de una tanda documental—; renombrar en la spec la haría contradecirse consigo misma en §4 y §1926. Mientras el alias exista, usar **`RF-09-spec`** (acceso autenticado, IF-03) y **`RF-09-repo`** (extracción documental) cuando la distinción importe. Alinear el vocabulario en el próximo bump normativo. |
+| **Dueño** | Sergio |
+| **Fecha objetivo** | Próximo bump de la spec (v1.9.8 o superior) |
+| **Estado** | abierta |
+| **Origen** | Auditoría documental del 08-ago-2026 · ambigüedad A del informe de Fase 4. |
+
+**Notas:**
+
+- **No es un bug: es deuda de vocabulario.** Nada falla hoy por esto. El riesgo es de lectura —alguien busca "RF-09", encuentra la definición equivocada y construye sobre ella—, y crece a medida que entra gente nueva al proyecto.
+- La prohibición de `CLAUDE.md` (*"SC07 queda reservado para IF-03 post-visita"*) **se deja intacta a propósito**: refleja una decisión operativa real del repo. Corregirla en esta tanda habría sido alinear el repo a la spec por la vía de romper una instrucción vigente de trabajo, que es exactamente lo que la opción (c) evita.
+
+---
+
+## CI-007 · Nombre de la tabla de feriados: la spec dice `H_Feriados`, la base real es `C_Feriados`
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-007 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md` (8 apariciones, incluidas §5.2, §5.2.1 y el glosario) vs `docs/schema-airtable.md:51` |
+| **Síntoma** | Quien lea la spec y vaya a Airtable a buscar `H_Feriados` no la encuentra. La tabla real es **`C_Feriados`** (`tblJVh2kPd4uMgxpb`), poblada y bien estructurada (`fecha`, `es_irrenunciable`, `activo`, `anno`). El `Blueprint de Interfaces v2.10` arrastra el mismo nombre incorrecto. |
+| **Causa** | El nombre `H_Feriados` viene del diseño de la Capa de Datos, que la ubicaba en el dominio histórico `H_`. Al crearse en la base real quedó en el dominio de configuración `C_`, que es donde corresponde por naturaleza —es un catálogo paramétrico, no un histórico—, y la spec nunca se actualizó. |
+| **Resolución** | Corregir la **spec** en el próximo bump: `H_Feriados` → `C_Feriados` en las 8 apariciones. **Gana la tabla real**, porque renombrarla en Airtable rompería la implementación y además el nombre real es el correcto por dominio. No se toca la spec en esta tanda por decisión explícita: un rename de 8 puntos en el documento normativo merece su propio bump con changelog, no un parche dentro de una auditoría. |
+| **Dueño** | Sergio |
+| **Fecha objetivo** | Próximo bump de la spec (v1.9.8 o superior) |
+| **Estado** | abierta |
+| **Origen** | Auditoría documental del 08-ago-2026 · ambigüedad B del informe de Fase 4. |
+
+**Notas:**
+
+- **Sube de prioridad desde v1.9.7.** Mientras la spec sólo mencionaba feriados de pasada en RN-04, el nombre equivocado era una molestia. §5.2.1 lo convierte en dependencia del cómputo hábil de todo el SLA operacional, y §5.2 declara explícitamente que "H_Feriados sigue siendo la fuente única de feriados para ambos cómputos". Esa frase apunta a una tabla que no existe.
+- Al corregir, revisar también `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md:2545`, que repite el error. Es fuente canónica importada y no se edita desde este repo: corresponde reportarlo aguas arriba.
+- Prerrequisito implícito de **CI-005**: no se puede implementar la ventana hábil de §5.2.1 sin resolver contra qué tabla se leen los feriados.

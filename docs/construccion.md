@@ -1,14 +1,15 @@
 # GUÍA DE CONSTRUCCIÓN · CU-002 · IF-02 Consola de la Ejecutiva Comercial
 
-> **Versión**: 1.6 — alineada a Blueprint v2.10 · Capa de Datos v2.6.5 · Especificación v1.9.4 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Re-alineamiento a Especificación v1.8.2 (17-jul-2026) · Maqueta v1.9 integrada a `main` + REGLAS A/B/C (22-jul-2026, ver §2bis).
+> **Versión**: 1.7 — alineada a Blueprint v2.10 · Capa de Datos v2.6.5 · Especificación v1.9.7 · schema-airtable.md · diseno.md · 06-jul-2026 · Fase Adjuntos 1 (D-11 a D-14, 10-jul-2026) · Re-alineamiento a Especificación v1.8.2 (17-jul-2026) · Maqueta v1.9 integrada a `main` + REGLAS A/B/C (22-jul-2026, ver §2bis).
 >
-> ⚠ **Higiene documental 30-jul-2026**: los punteros de versión de esta cabecera se
-> actualizaron a los archivos que realmente existen en `docs/_md/` (Especificación
-> **v1.9.4**, Blueprint **v2.10**, Capa de Datos **v2.6.5**). Las citas a secciones
-> concretas de versiones anteriores que aparecen en el cuerpo **no se re-verificaron**
-> contra v1.9.4 en esta tanda: se conservan tal cual y quedan marcadas como deuda de
+> ⚠ **Higiene documental 30-jul-2026 · re-verificada 08-ago-2026**: los punteros de versión
+> de esta cabecera se actualizaron a los archivos que realmente existen en `docs/_md/`
+> (Especificación **v1.9.7**, Blueprint **v2.10**, Capa de Datos **v2.6.5**). Las citas a
+> secciones concretas de versiones anteriores que aparecen en el cuerpo **no se
+> re-verificaron** contra v1.9.7: se conservan tal cual y quedan marcadas como deuda de
 > revisión, porque cambiarles el número sin diffear el spec convertiría un puntero
-> viejo en una afirmación falsa.
+> viejo en una afirmación falsa. La tanda del 08-ago-2026 sólo movió el puntero de
+> cabecera y corrigió los literales del filtro "SLA en riesgo" de §5.
 > **Propósito**: referencia operativa que Claude Code lee al inicio de cada sesión para saber qué construir, en qué orden, con qué criterios de aceptación y qué advertencias aplican por paso.  
 > **Regla dorada**: una RF por sesión de Claude Code — nunca "construye toda la consola".
 
@@ -156,11 +157,21 @@ Las siguientes vistas deben existir en `TX_Solicitudes` (crearlas en Airtable an
 | Vista | `filterByFormula` orientativo |
 |---|---|
 | Activas | `NOT({estado} = "cancelada"), NOT({estado} = "entregada")` |
-| SLA en riesgo | `OR({semaforo_sla} = "rojo", {semaforo_sla} = "ambar")` |
+| SLA en riesgo | `OR(FIND("VENCIDO", {semaforo_sla}), FIND("EN RIESGO", {semaforo_sla}))` ⚠ ver nota |
 | Por reasignar (>48 h) | `{estado} = "creada", DATETIME_DIFF(NOW(), {created_time}, 'hours') > 48` |
 | Bloqueadas por cliente | `{estado} = "bloqueada_cliente"` |
 | Aprobadas pend. entrega | `{estado} = "aprobada"` |
 | Mi cartera | `{ejecutiva_asignada} = "<id_clerk>"` (parámetro dinámico) |
+
+> ⚠ **Literales de `semaforo_sla`.** La fórmula viva **nunca emitió** `"rojo"` / `"ambar"` /
+> `"verde"`: emite `VENCIDO`, `EN RIESGO`, `OK` y `Entregado`, con los emoji mangleados a `?`.
+> Un filtro por igualdad contra los colores devuelve **cero filas para toda la tabla**. El
+> código ya busca por subcadena desde la Tanda D-01, así que funciona con la fórmula actual y
+> seguirá funcionando con la corregida. Detalle y fórmula de reemplazo en
+> `docs/_notas/20260729-fix-semaforo-sla.md`.
+>
+> Ojo con el significado: hoy el reloj arranca en `fecha_visita`, no en el ingreso. La spec
+> v1.9.7 §5.2.2 lo fija en la recepción del correo. Divergencia registrada como **CI-005**.
 
 El Route Handler recibe el nombre de la vista como query param `?vista=activas` (o el id_clerk para "Mi cartera") y construye el `filterByFormula` server-side. Nunca en el cliente.
 
