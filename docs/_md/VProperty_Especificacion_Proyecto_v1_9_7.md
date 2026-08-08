@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.6** — sucede a `VProperty_Especificacion_Proyecto_v1_9_5.md`, que queda marcado SUPERSEDED.
+> **v1.9.7** — sucede a `VProperty_Especificacion_Proyecto_v1_9_6.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,23 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.6 · 06-ago-2026 · Reestructuración de la ruta
+  **Versión**         1.9.7 · 07-ago-2026 · Incorpora los SLA
+                      operacionales del negocio como sección normativa
+                      transversal (§5.2, RF-53): horario hábil de
+                      aplicación, definición operativa de la recepción del
+                      correo, actores y responsabilidad sobre el reloj,
+                      matriz de SLA del flujo principal en siete etapas,
+                      flujo de reproceso con SLA propio y regla "reproceso
+                      limpio", entregable por perfil de cliente, capacidad
+                      de visación, métricas y alertas, y reportes de
+                      cumplimiento. Fuente: VProperty_SLA_Negocio_v1.1.
+                      Registra la decisión abierta D-16 (perfiles de
+                      entregable vs. PDF único de §7). Toca §1.2, §1.9
+                      (FUT-EJ-08), §1.9.1, §3.2, §3.5.5, §5 (intro),
+                      §5.2, §13 (RN-04, RN-53, RN-54, RN-55), §14 y §15.
+                      Sucede a 1.9.6, que queda SUPERSEDED.
+
+                      1.9.6 · 06-ago-2026 · Reestructuración de la ruta
                       Dropbox para adjuntos. Introduce el nivel Unidad
                       (TX_Unidades.subtipo), renombra la raíz a
                       /Test_ValueProperty/, cambia el prefijo del año a
@@ -411,6 +427,83 @@ y la notificación por WhatsApp quedan documentados como proceso real
 pero fuera de implementación en esta versión. Se registran en §1.9 con
 identificador propio para que no se pierdan.
 
+### **Cambios v1.9.6 → v1.9.7**
+
+Esta versión no altera el modelo de datos documental, el motor de cálculo
+ni ninguna interfaz: incorpora los SLA operacionales del negocio, hasta
+ahora sostenidos por acuerdo verbal y planilla, como contenido normativo
+de la especificación. El aporte se concentra en §5.2, que pasa de ser la
+parametrización del plazo agregado a ser la sección única donde se
+declara el reloj del servicio: horario de cómputo, hito que lo inicia,
+plazo por etapa, reproceso, entregable, capacidad, alertas y reportes. El
+insumo que la origina es `VProperty_SLA_Negocio_v1.1`, consolidado con
+las respuestas del cliente (Héctor) en dos sesiones de validación.
+
+  -------------------------------------------------------------------------
+  **Aspecto**         **v1.9.6 (anterior)**      **v1.9.7 (actual)**
+  ------------------- -------------------------- --------------------------
+  SLA del workflow    Sólo el SLA agregado por   Matriz de siete etapas con
+                      par (cliente,              SLA ideal y máximo en
+                      tipo_informe), en días     horas hábiles (§5.2.4 ·
+                      (C_SLA · RN-04). Sin       RF-53). El SLA agregado de
+                      plazos por etapa.          C_SLA se conserva y
+                                                 convive con ella.
+
+  Horario de cómputo  No declarado. RN-04        Lunes a viernes de 9:00 a
+                      excluye feriados con       18:00, con feriados
+                      WORKDAY, sin ventana       excluidos; el reloj se
+                      horaria.                   pausa fuera de la ventana
+                                                 (§5.2.1).
+
+  Inicio del reloj    Implícito en la fecha de   Recepción = apertura del
+                      solicitud.                 correo e ingreso al
+                                                 sistema por Control y
+                                                 Seguimiento, con acuse
+                                                 formal al ejecutivo
+                                                 (§5.2.2).
+
+  Reproceso           RN-55 enunciada en una     Matriz R1-R3 y regla
+                      línea; proceso documentado "reproceso limpio"
+                      en §1.9.1 y diferido       completas (§5.2.5). La
+                      (FUT-EJ-08).               implementación sigue
+                                                 diferida.
+
+  Entregable final    PDF único para todos los   Tres perfiles de
+                      clientes (§3.5.5, §7).     entregable: PDF; PDF +
+                                                 Excel de resumen; PDF con
+                                                 hoja de resumen embebida
+                                                 (§5.2.6).
+
+  Capacidad de        No parametrizada.          20 informes/día por
+  visación                                       visador, como parámetro
+                                                 operativo de referencia
+                                                 (§5.2.7).
+
+  Métricas y alertas  Semáforo de bandeja        Timestamp por transición,
+                      (RN-04).                   semáforo por etapa,
+                                                 notificación al
+                                                 responsable de área en
+                                                 rojo y alerta de cierre de
+                                                 jornada (§5.2.8, §5.2.9).
+
+  Identificadores     52 RF, RN hasta RN-60.     Se agrega RF-53. Cero
+                                                 renumeración.
+
+  Decisiones abiertas D-01 a D-15.               Se agrega D-16: los tres
+                                                 perfiles de entregable de
+                                                 §5.2.6 contra el PDF
+                                                 único que especifica §7,
+                                                 pendiente de definición
+                                                 con Héctor (§15).
+  -------------------------------------------------------------------------
+
+Alcance de implementación de v1.9.7. La sección declara el compromiso de
+servicio completo, no su implementación. Los plazos por etapa, la ventana
+horaria y el SLA de reproceso exigen campos que aún no existen en C_SLA y
+en TX_Solicitudes, y la tabla TX_Reprocesos sigue sin crearse (§1.9.1 ·
+FUT-EJ-08). La especificación se adelanta deliberadamente al schema para
+que el equipo de datos tenga el destino antes de construir el camino.
+
 ### **Nivel de detalle**
 
 Cada requisito tiene métrica o criterio de aceptación verificable; no se
@@ -489,6 +582,12 @@ dias_desde_solicitud vs sla_aplicable (C_SLA). El semáforo se debe poder
 ordenar y filtrar; los tres umbrales son configurables en C_SLA sin
 tocar código. Regla activa RN-04 (cálculo del SLA aplicable con WORKDAY
 excluyendo H_Feriados).
+
+Este semáforo refleja el plazo agregado de la solicitud. El plazo por
+etapa del workflow —las siete etapas entre la recepción del correo y el
+envío del informe visado, con su propio semáforo y sus propias alertas—
+se especifica en §5.2.4 (RF-53) y se computa sobre la ventana hábil de
+§5.2.1. Ambas lecturas conviven en la bandeja y son independientes.
 
   -------------------------------------------------------------------------
   **RF-08**         **Visión y mando del SLA**
@@ -1641,10 +1740,12 @@ en esta versión.
                                                       reloj SLA (RN-54).
 
   FUT-EJ-08   Gestión de reprocesos     Diferido      Requiere
-              post-entrega                            TX_Reprocesos,
+              post-entrega                            TX_Reprocesos y
                                                       catálogo cerrado de
-                                                      motivos y SLA propio
-                                                      (RN-55).
+                                                      motivos. El SLA
+                                                      propio ya está
+                                                      especificado en
+                                                      §5.2.5 (RN-55).
 
   FUT-EJ-09   Checklist de visita del   Diferido      Llamada en 4 h, siete
               tasador                                 respuestas y fotos de
@@ -1711,8 +1812,11 @@ el certificado de número; falta permiso de edificación; falta recepción
 final. Motivo de fondo: antecedente que exige reanálisis, por ejemplo un
 certificado de expropiación. Tiene SLA propio y estricto: lo que llega
 en la mañana se entrega al mediodía; lo que llega al mediodía, en la
-tarde (RN-55). En v1.9 se gestiona fuera del sistema, en el hilo de
-correo original.
+tarde (RN-55). La matriz completa del reproceso —R1 registro y acuse, R2
+ejecución, R3 visación y envío— y la regla "reproceso limpio" con sus
+cortes horarios se especifican en §5.2.5; aquí queda sólo el
+levantamiento de motivos y frecuencia que la origina. En v1.9 se gestiona
+fuera del sistema, en el hilo de correo original.
 
 **Las tres fechas y el tablero diario (FUT-EJ-06).** El seguimiento
 completo se sostiene sobre tres fechas: la de solicitud, automática al
@@ -1777,7 +1881,11 @@ mutuo, pago contado, bono captación, bono integración y precio de venta.
 `fecha_visita`, `fecha_envio_informe` y flag y motivo de bloqueo por
 contacto no logrado en TX_Solicitudes; la tabla TX_Reprocesos;
 `M_Tasadores.notificar_whatsapp`; y los plazos de primer contacto, envío
-post-visita y SLA de reproceso en C_SLA.
+post-visita y SLA de reproceso en C_SLA. Desde v1.9.7 esos tres plazos
+están especificados en §5.2.4 y §5.2.5, junto con la ventana hábil sobre
+la que se calculan (§5.2.1): lo que sigue diferido es su parametrización
+en C_SLA y los campos de timestamp por etapa que la sostienen, no su
+definición.
 
 # VProperty · IF-03 Interfaz Tasador · Requerimientos Funcionales de UI v1.0
 
@@ -2212,7 +2320,10 @@ ordenamiento por SLA descendente y por antigüedad.
 El Visador consume el mismo semáforo transversal (RN-04, C_SLA).
 Puntualmente para su bandeja, se destaca visualmente el sub-SLA del
 visado (plazo de revisión desde estado=pdf_listo), configurable en C_SLA
-como sla_revision separado del sla_aplicable global.
+como sla_revision separado del sla_aplicable global. Ese sub-SLA
+corresponde a la etapa 7 de la matriz operacional: 30 minutos por
+informe, con una capacidad de referencia de 20 informes diarios por
+visador (§5.2.4, §5.2.7).
 
 ## **3.3 Detalle de Solicitud**
 
@@ -2374,6 +2485,13 @@ adjunta por defecto; el flujo transita por estados idle → loading →
 success. Control de reenvío: máximo 3 reenvíos por solicitud; al
 agotarse el cupo, la UI muestra un banner rojo y el botón queda
 deshabilitado con tooltip \"Requiere aprobación del Administrador\".
+
+Esta acción es el envío manual del expediente y convive con el envío
+automático al cierre del visado (etapa 7 de §5.2.4), que no pasa por esta
+pantalla: lo dispara el sistema con el texto tipo y los adjuntos que
+correspondan al perfil del cliente según §5.2.6. El PDF es el adjunto
+base en ambos casos; los perfiles con resumen ejecutivo o con hoja de
+resumen embebida sólo aplican al envío automático.
 
 ## **3.6 Automatizaciones**
 
@@ -2978,7 +3096,9 @@ RN-35 (extendida), RN-36, RN-37 (nueva).
 Sección transversal que agrupa los requerimientos de configuración
 operacional del sistema: motor de reglas de negocio (C_ReglasNegocio),
 fórmulas del motor de cálculo (C_Formulas), acuerdos de nivel de
-servicio (C_SLA), notificaciones (C_NotificacionesConfig), precios
+servicio —tanto el plazo agregado de C_SLA como los plazos por etapa del
+workflow y su calendario hábil (§5.2)—, notificaciones
+(C_NotificacionesConfig), precios
 unitarios (C_PreciosUnitarios), vidas útiles (C_VidaUtil), factores
 (C_Factores, C_FactoresHomogeneizacion), plantillas Carbone
 (C_Plantillas, C_VariablesCliente), workflows (C_Workflows), y el
@@ -3051,13 +3171,36 @@ Tipo B).
                     Make solo orquesta, transporta y reintenta.
   -------------------------------------------------------------------------
 
-## **5.2 SLA (C_SLA + H_Feriados)**
+## **5.2 SLA operacional del servicio (C_SLA + H_Feriados)**
+
+Esta sección es la fuente única del reloj del servicio. §1.2, §2.2 y §3.2
+describen cómo cada interfaz lo muestra; la aritmética, los umbrales y el
+calendario se declaran acá y en ningún otro lugar.
+
+VProperty compromete el plazo en dos niveles complementarios, que no son
+intercambiables. El **plazo agregado** vive en C_SLA por par (cliente,
+tipo_informe), se expresa en días y gobierna el semáforo de bandeja que
+consumen las tres interfaces (RN-04 · RF-35). El **plazo por etapa** es el
+compromiso operacional del workflow: siete tramos entre la recepción del
+correo del cliente y el envío del informe visado, expresados en horas
+hábiles, que gobiernan el control diario del área (RF-53 · §5.2.4). El
+primero responde cuándo vence la solicitud; el segundo, dónde se está
+atrasando ahora. Ningún umbral del segundo modifica al primero: una
+solicitud puede tener una etapa en rojo con el semáforo agregado en
+verde, y eso no es una inconsistencia sino la lectura correcta de ambos.
 
 C_SLA define el plazo en días por cada par (cliente, tipo_informe),
 entre 1 y 30 días. Modificar un SLA no altera las solicitudes en curso
 (RN-04); aplica a nuevas solicitudes. Feriados chilenos H_Feriados (15
 fechas anuales) se aplican al cálculo WORKDAY. La regla RN-04 formaliza
 el cálculo.
+
+Unidad de cómputo común. RN-04 calcula el plazo agregado en días con
+WORKDAY sobre H_Feriados. La matriz por etapa se calcula en horas sobre
+ese mismo calendario, acotado además a la ventana hábil de §5.2.1.
+H_Feriados sigue siendo la fuente única de feriados para ambos cómputos:
+§5.2.1 no introduce un segundo calendario, sólo declara la ventana
+horaria que RN-04 no declaraba.
 
   -------------------------------------------------------------------------
   **RF-35**         **SLA por par (cliente, tipo_informe)**
@@ -3071,6 +3214,278 @@ el cálculo.
   aceptación**      Una solicitud nueva del par modificado adopta el nuevo
                     plazo.
   -------------------------------------------------------------------------
+
+El plazo por etapa se especifica en las nueve subsecciones que siguen y
+se resume en el requisito RF-53, que las toma en conjunto como su
+contenido normativo.
+
+  -------------------------------------------------------------------------
+  **RF-53**         **Workflow y control de SLA operacional**
+  ----------------- -------------------------------------------------------
+  **Descripción**   El sistema mide cada solicitud contra la matriz de SLA
+                    por etapa de §5.2.4, calculada sobre el calendario
+                    hábil de §5.2.1 y con el hito de inicio de §5.2.2.
+                    Registra timestamp de entrada y salida de cada etapa,
+                    compara el transcurrido contra el SLA ideal y el SLA
+                    máximo, expone el resultado como semáforo por etapa y
+                    emite las alertas de §5.2.8. El reproceso se mide con
+                    su matriz propia (§5.2.5), en paralelo al flujo
+                    principal y sin interrumpirlo.
+
+  **Criterio de     Toda solicitud cerrada permite reconstruir el tiempo
+  aceptación**      consumido en cada una de las siete etapas y su
+                    cumplimiento contra ambos umbrales. Una etapa que
+                    alcanza el SLA ideal sin completarse queda en ámbar;
+                    una que supera el SLA máximo queda en roja y notifica
+                    al responsable de área. El tiempo transcurrido fuera de
+                    la ventana hábil no suma. Los reportes de §5.2.9 se
+                    obtienen sin cálculo manual.
+  -------------------------------------------------------------------------
+
+### **5.2.1 Horario hábil y calendario de aplicación**
+
+Regla base de todo el cómputo de esta sección. Toda medición de tiempos
+que sigue —matriz principal, reproceso, alertas y reportes— se calcula
+sobre este calendario y no sobre horas corridas.
+
+- **Ventana de aplicación:** lunes a viernes, de 9:00 a 18:00 hrs.
+- **Días excluidos:** sábados, domingos y feriados oficiales chilenos.
+  Los tiempos de SLA no corren durante esos días. La fuente de feriados
+  es H_Feriados, la misma que usa RN-04.
+- **Pausa del reloj:** el conteo se detiene fuera de la ventana hábil y
+  se reanuda al abrir la jornada siguiente. Los buzones institucionales
+  reciben correo 24x5, pero la recepción fuera de ventana no adelanta el
+  inicio del cómputo.
+
+Esta pausa es distinta de la de RN-54, que detiene el reloj por contacto
+no logrado: aquélla depende del calendario y aplica siempre; ésta depende
+del estado de la solicitud y es excepcional.
+
+### **5.2.2 Recepción del correo como hito de inicio**
+
+Los clientes envían sus solicitudes a dos buzones institucionales,
+`info@valueproperty` y `contacto@valueproperty`; la asignación de cada
+cliente a un buzón ya está definida en configuración. El hito que arranca
+el reloj de la etapa 1 se define así:
+
+- **No constituye recepción** la llegada del correo al buzón.
+- **Sí constituye recepción** el momento en que Control y Seguimiento
+  abre el correo —deja de estar en negrita— e ingresa la solicitud al
+  sistema. Sólo Control y Seguimiento tiene esa responsabilidad.
+- **Acuse formal:** al ingresar la solicitud, el sistema envía al
+  ejecutivo del cliente un acuse con el texto tipo *"Estimado, acusamos
+  recepción, informamos que el proceso ya está en curso y le comentaremos
+  a la brevedad."*
+
+La definición es deliberada: mide lo que VProperty controla. Un correo
+que entra a las 22:00 de un viernes no consume SLA hasta las 9:00 del
+lunes, y el compromiso de la etapa 1 se cuenta desde que la Ejecutiva lo
+toma, no desde que el servidor lo recibe.
+
+### **5.2.3 Actores y responsabilidad sobre el reloj**
+
+  -------------------------------------------------------------------------
+  **Actor**                      **Rol en el proceso**
+  ------------------------------ ------------------------------------------
+  Cliente (ejecutivo de la       Solicita la tasación por correo.
+  empresa mandante)
+
+  Control y Seguimiento          Registra, coordina y comunica.
+  (Ejecutiva VProperty · IF-02)
+
+  Tasador (IF-03)                Llama al contacto, visita la propiedad y
+                                 emite el informe.
+
+  Visado (Visador · IF-04)       Revisa el informe, lo aprueba y cierra el
+                                 proceso con el envío del entregable final
+                                 al cliente.
+  -------------------------------------------------------------------------
+
+Cada etapa de §5.2.4 tiene un único responsable de los cuatro. El
+semáforo de una etapa en rojo escala al responsable de esa área, no al
+dueño de la solicitud completa (§5.2.8).
+
+### **5.2.4 Matriz de SLA del flujo principal (solicitud nueva)**
+
+Aplica a la solicitud nueva. Cada etapa registra timestamp automático de
+inicio y de fin, y se mide contra ambos umbrales sobre el calendario de
+§5.2.1.
+
+  ---------------------------------------------------------------------------------------------------------------
+  **#** **Etapa**                    **Responsable**        **De → A**                 **SLA        **SLA
+                                                                                       ideal**      máximo**
+  ----- ---------------------------- ---------------------- -------------------------- ------------ -------------
+  1     Ingreso de solicitud         Control y Seguimiento  Cliente (ejecutivo) →      2 h          3 h
+                                                            Tasador
+
+  2     Coordinación de visita       Tasador                Tasador → Contacto de la   4 h          6 h
+        (llamado)                                           propiedad
+
+  3     Informe post-llamado         Tasador                Tasador → Control y        30 min       30 min
+                                                            Seguimiento                (inmediato)
+
+  4     Aviso de coordinación al     Control y Seguimiento  Control y Seguimiento →    2 h          3 h
+        cliente                                             Cliente (ejecutivo)
+
+  5     Visita y envío de informe    Tasador                Tasador → Control y        24 h         48 h
+                                                            Seguimiento
+
+  6     Disponible para visado       Control y Seguimiento  Control y Seguimiento →    2 h          3 h
+                                                            Visado
+
+  7     Visación y envío final       Visado                 Visado → Cliente           30 min por   30 min por
+                                                            (ejecutivo), automático    informe      informe
+  ---------------------------------------------------------------------------------------------------------------
+
+Precisiones por etapa:
+
+- **Etapa 1** — el inicio del cómputo es la recepción según §5.2.2, no la
+  llegada del correo al buzón.
+- **Etapa 2** — las 4 h del SLA ideal son la política interna de primer
+  contacto ya declarada en RN-53: diferenciador comercial, no compromiso
+  contractual con el cliente. Las 6 h son el máximo tolerado antes de que
+  la etapa entre en rojo. El registro estructurado de la coordinación
+  ocurre en TX_CoordinacionVisita (§2.3, §2.12).
+- **Etapa 3** — el tasador debe registrar uno de dos desenlaces: día y
+  hora de la visita coordinada, o incidencia (teléfono malo, no contesta,
+  y demás motivos del catálogo). El segundo desenlace activa RN-54 y
+  detiene el reloj mientras la solicitud está bloqueada por contacto no
+  logrado.
+- **Etapa 6** — al subir el informe se dispara la extracción automática de
+  documentos descrita en §4 (escenario SC07 → Claude API) y la solicitud
+  queda en cola para visación. En la máquina de estados oficial (§2.11)
+  ese punto corresponde al estado `pdf_listo`; "en cola para visación" es
+  la etiqueta operacional de la bandeja del visador, no un estado nuevo.
+- **Etapa 7** — el envío al cliente es automático y su contenido depende
+  del perfil del cliente (§5.2.6). El sub-SLA de revisión del visador
+  sigue siendo `sla_revision` en C_SLA (§3.2).
+
+  -------------------------------------------------------------------------
+  **Métrica**                                    **Valor**
+  ---------------------------------------------- --------------------------
+  Tiempo total end-to-end (caso ideal)           ~30 horas hábiles
+
+  Tiempo total end-to-end (SLA máximo)           ~62 horas hábiles
+  -------------------------------------------------------------------------
+
+### **5.2.5 Reproceso con SLA propio**
+
+Hay reproceso cuando el ejecutivo del cliente devuelve un informe ya
+entregado para incorporar información faltante (permiso de recepción
+final, RUT o apellido del vendedor, certificado de profesión), modificar
+contenido o solicitar un aumento de valor (por ejemplo, +5%). El
+reproceso corre en paralelo al flujo principal, con su propia matriz, y
+no consume ni suspende los plazos de §5.2.4. El catálogo completo de
+motivos y la frecuencia observada están en §1.9.1.
+
+  ---------------------------------------------------------------------------------------------------------------
+  **#** **Etapa**                              **Responsable**        **SLA ideal**        **SLA máximo**
+  ----- -------------------------------------- ---------------------- -------------------- ----------------------
+  R1    Registro del reproceso y acuse al      Control y Seguimiento  2 h                  2 h
+        cliente
+
+  R2    Ejecución del reproceso                Tasador                Según tipo           Regla "reproceso
+                                                                                           limpio"
+
+  R3    Visación y envío del reproceso         Visado                 2 h                  3 h
+  ---------------------------------------------------------------------------------------------------------------
+
+En R1 la solicitud se marca en reproceso con motivo tipificado y se
+conserva la trazabilidad del informe original: el reproceso no reemplaza
+al informe entregado, lo sucede.
+
+**Regla operativa "reproceso limpio"** (enunciada como RN-55):
+
+- Reprocesos ingresados a última hora del día anterior (18:00–19:00) o
+  durante la mañana → despachados antes de las 12:00–14:00.
+- Reprocesos ingresados después de las 14:00–15:00 → despachados en la
+  tarde del mismo día.
+- Objetivo: iniciar cada día hábil sin reprocesos pendientes de la
+  jornada anterior.
+
+Estado de implementación. La marca de reproceso, el catálogo cerrado de
+motivos y la tabla TX_Reprocesos siguen diferidos (§1.9 · FUT-EJ-08); en
+v1.9 el reproceso se gestiona fuera del sistema, en el hilo de correo
+original. Esta subsección declara el compromiso de servicio para que la
+versión que lo implemente no vuelva a elicitarlo.
+
+### **5.2.6 Entregable por perfil de cliente**
+
+Configura la etapa 7. El correo automático al cierre del visado lleva
+siempre el texto tipo *"Estimado, se adjunta el informe de la
+referencia."*; lo que cambia entre clientes es el adjunto.
+
+  -------------------------------------------------------------------------
+  **Perfil de cliente**      **Entregable adjunto**
+  -------------------------- ----------------------------------------------
+  Estándar (la mayoría)      PDF del informe: carátula seguida del informe.
+
+  Con resumen ejecutivo      PDF del informe más un archivo Excel con el
+                             resumen del PDF, en formato tipo, idéntico
+                             para todos los clientes de esta categoría.
+
+  Unidad de Vivienda         PDF con una primera hoja de resumen embebida,
+  Habitacional               seguida de la carátula y el informe. El
+                             resumen va dentro del mismo PDF, no como
+                             archivo separado.
+  -------------------------------------------------------------------------
+
+Al cerrar el visado, el sistema sube el o los archivos a Dropbox según la
+estructura de §8.1 y dispara el correo automático con los adjuntos que
+correspondan al perfil. El perfil es un atributo del cliente y se
+parametriza junto al resto de sus variables en M_Clientes y
+C_VariablesCliente (§5.4); el envío manual del expediente desde IF-04
+sigue rigiéndose por §3.5.5.
+
+Pendiente D-16 (§15). §7 especifica hoy la generación de un PDF único con
+Carbone. Cómo se producen el Excel de resumen del segundo perfil y la
+hoja de resumen embebida del tercero —dentro de Carbone o fuera de él—
+queda por definir con el cliente. Los tres perfiles quedan especificados
+como compromiso de servicio; su mecanismo de generación, no.
+
+### **5.2.7 Capacidad de visación**
+
+- **Capacidad de referencia:** 20 informes por día y por visador.
+- **Base de cálculo:** ~400 tasaciones mensuales sobre 20 días hábiles.
+
+Es un parámetro operativo, no un límite del sistema: alimenta el
+dimensionamiento del área y los reportes de carga de §5.2.9, y queda
+referenciable desde esta sección de parametrización. Se deriva del SLA de
+30 minutos por informe de la etapa 7 aplicado a la jornada hábil de
+§5.2.1.
+
+### **5.2.8 Métricas y alertas de SLA**
+
+Cada solicitud registra automáticamente:
+
+- Timestamp de cada transición de estado.
+- Tiempo transcurrido por etapa, contra el SLA ideal y contra el SLA
+  máximo.
+- Indicador visual verde / ámbar / rojo según cumplimiento, con la misma
+  paleta operacional del semáforo agregado (RN-04).
+- Marca de reproceso, motivo tipificado y avance de su SLA propio
+  (R1–R3).
+
+Alertas:
+
+- **Ámbar:** al alcanzar el SLA ideal de una etapa sin haberla
+  completado.
+- **Rojo:** al superar el SLA máximo de la etapa.
+- Notificación al responsable del área correspondiente cuando una
+  solicitud entra en rojo, por los canales y destinatarios que declara
+  C_NotificacionesConfig (§5.3).
+- Alerta de fin de jornada para los reprocesos que sigan abiertos, en
+  cumplimiento de la regla "reproceso limpio" (§5.2.5).
+
+### **5.2.9 Reportes de cumplimiento**
+
+- Cumplimiento de SLA por etapa y por actor, en corte diario, semanal y
+  mensual.
+- Volumen procesado por visador, contra la capacidad de referencia de
+  §5.2.7.
+- Volumen y tipología de reprocesos, por cliente y por tasador.
+- Desviaciones y sus causas: teléfono malo, no contesta, reproceso y
+  demás motivos tipificados.
 
 ## **5.3 Notificaciones (C_NotificacionesConfig)**
 
@@ -5406,14 +5821,14 @@ cuando la regla afecta transversalmente varias interfaces.
   RN-52    Una tasación, un hilo de correo (nueva  §1.6.3, §5.3
            v1.9)
 
-  RN-53    Las 4 h de primer contacto son política §1.9, §1.9.1
-           interna configurable (nueva v1.9)
+  RN-53    Las 4 h de primer contacto son política §1.9, §1.9.1,
+           interna configurable (nueva v1.9)       §5.2.4
 
-  RN-54    El reloj del SLA se detiene con la      §1.9.1
+  RN-54    El reloj del SLA se detiene con la      §1.9.1, §5.2.1
            solicitud bloqueada por contacto no
            logrado (nueva v1.9, diferida)
 
-  RN-55    El reproceso tiene SLA propio: mañana → §1.9.1
+  RN-55    El reproceso tiene SLA propio: mañana → §1.9.1, §5.2.5
            mediodía, mediodía → tarde (nueva v1.9,
            diferida)
 
@@ -5522,11 +5937,17 @@ Se enuncian así:
 - RN-52 · Enunciada con precondición, acción y postcondición en §1.6.4.
 - RN-53 · El plazo de 4 h para el primer contacto del tasador es
   política interna configurable, no compromiso contractual con el cliente.
-  Cierra FUT-EJ-04 y responde el pendiente D-05.
+  Cierra FUT-EJ-04 y responde el pendiente D-05. Desde v1.9.7 es el SLA
+  ideal de la etapa 2 de §5.2.4, con 6 h como máximo tolerado antes de que
+  la etapa entre en rojo.
 - RN-54 · El reloj del SLA se detiene mientras la solicitud está
-  bloqueada por contacto no logrado.
+  bloqueada por contacto no logrado. Es una pausa por estado y es
+  excepcional; no debe confundirse con la pausa por calendario de §5.2.1,
+  que aplica a toda solicitud fuera de la ventana hábil.
 - RN-55 · El reproceso tiene SLA propio: lo que llega en la mañana se
-  entrega al mediodía; lo que llega al mediodía, en la tarde.
+  entrega al mediodía; lo que llega al mediodía, en la tarde. Desde v1.9.7
+  queda enunciada con sus cortes horarios completos y su matriz R1–R3 en
+  §5.2.5, bajo el nombre operativo "reproceso limpio".
 - RN-56 · Una tasación produce un solo archivo Excel de cálculo y hasta
   tres PDF versionados; los valores del PDF deben coincidir con los del
   Excel que lo originó.
@@ -5544,7 +5965,16 @@ Se enuncian así:
 Tres de estas reglas —RN-54, RN-55 y RN-57— describen comportamiento que
 v1.9 no implementa. Se declaran igualmente para que la versión que
 implemente los flujos diferidos de §1.9.1 no tenga que volver a
-definirlas.
+definirlas. v1.9.7 profundiza esa declaración para RN-53, RN-54 y RN-55
+al incorporar los SLA operacionales en §5.2, sin cambiar su estado de
+implementación: siguen diferidas.
+
+Nota v1.9.7 sobre RF-53 (nuevo). Es el único identificador que agrega
+esta versión. Se enuncia en §5.2 con las nueve subsecciones §5.2.1 a
+§5.2.9 como contenido normativo, y proviene del insumo
+`VProperty_SLA_Negocio_v1.1`. No renumera ningún RF previo: el último
+asignado era RF-52 (§8.6.4), y RF-13 y RF-28 siguen reservados sin
+reasignar, conforme a la regla de trazabilidad histórica.
 
 # **14. Glosario del dominio**
 
@@ -5577,6 +6007,11 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
                          por solicitud (TX_DatosTasacion) o una vez por unidad física del inmueble
                          (TX_Unidades). El campo `uso_campo_link_unidad` resuelve la unidad
                          destino cuando aplica.
+
+  Capacidad de visación  Número de informes que un visador procesa por jornada hábil: 20, derivado de
+  (v1.9.7)               ~400 tasaciones mensuales sobre 20 días hábiles y del SLA de 30 minutos por
+                         informe. Parámetro operativo de dimensionamiento, no límite del sistema
+                         (§5.2.7).
 
   Cap rate (tasa         Tasa de capitalización usada para estimar el valor de un inmueble que genera
   exigida)               renta. V = ingreso anual neto / cap rate. Varía por cliente y admite
@@ -5672,6 +6107,10 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
   Factor de seguro       Multiplicador (1.0 o 0.8) usado en el cálculo del valor para seguro de
                          incendio (RN-11).
 
+  Horario hábil (v1.9.7) Ventana en que corre el reloj del SLA: lunes a viernes de 9:00 a 18:00,
+                         excluidos sábados, domingos y feriados de H_Feriados. Fuera de ella el
+                         conteo se pausa, aunque los buzones reciban correo 24x5 (§5.2.1).
+
   Idempotencia           Ejecutar una operación N veces produce el mismo resultado que ejecutarla 1
                          vez. Obligatoria en todo escenario Make.
 
@@ -5701,6 +6140,10 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
 
   PRC                    Plan Regulador Comunal. Cargado en M_Zonificacion.
 
+  Recepción del correo   Hito que inicia el SLA. No es la llegada del correo al buzón institucional,
+  (v1.9.7)               sino el momento en que Control y Seguimiento lo abre e ingresa la solicitud
+                         al sistema, con acuse formal al ejecutivo del cliente (§5.2.2).
+
   Regla wildcard         Regla del motor con casi todos los filtros vacíos. Garantiza que cualquier
                          solicitud resuelva al menos a una regla (RN-19, RF-24).
 
@@ -5711,8 +6154,14 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
                          antecedente. Motivos de forma: nombre o RUT incompletos de comprador o
                          vendedor, dirección que no coincide con el certificado de número, permiso de
                          edificación o recepción final faltantes. Motivo de fondo: antecedente que
-                         exige reanálisis. Tiene SLA propio (RN-55). Documentado en §1.9.1; su
-                         gestión en el sistema se difiere (FUT-EJ-08).
+                         exige reanálisis. Tiene SLA propio (RN-55), especificado con su matriz
+                         R1--R3 en §5.2.5. Documentado en §1.9.1; su gestión en el sistema se
+                         difiere (FUT-EJ-08).
+
+  Reproceso limpio       Regla operativa de despacho de reprocesos: lo ingresado la tarde anterior o
+  (v1.9.7)               en la mañana sale antes de las 12:00--14:00; lo ingresado después de las
+                         14:00--15:00, en la tarde del mismo día. Objetivo: abrir cada jornada sin
+                         reprocesos pendientes (RN-55, §5.2.5).
 
   Rol SII                Identificador catastral asignado por el SII. Formato NNNNN-N.
 
@@ -5721,8 +6170,10 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
   Saneamiento            Capa previa al cálculo que normaliza valores no-numéricos sin abortar el
                          flujo (RN-24). Conserva el valor crudo en \*\_raw.
 
-  SLA                    Plazo acordado por cliente y tipo de informe (1 a 30 días). Excluye feriados
-                         chilenos. Semáforo verde/ámbar/rojo (RN-04).
+  SLA                    Compromiso de tiempo del servicio, en dos niveles: el plazo agregado por
+                         cliente y tipo de informe (1 a 30 días, C_SLA), que alimenta el semáforo
+                         verde/ámbar/rojo de bandeja (RN-04); y el plazo por etapa del workflow, en
+                         horas hábiles (§5.2.4, RF-53). Ambos excluyen feriados chilenos.
 
   Snapshot               Copia inmutable del estado de un registro o expresión de fórmula en un
                          momento dado. Embebido en TX_Calculos y A_DecisionesMotor.
@@ -5808,8 +6259,9 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
 Los puntos siguientes no pueden definirse hoy con la información
 disponible. Cada uno tiene responsable nominado y fecha límite
 vinculante. Se preserva el catálogo TBD de la v1.2, los D-01 a D-09
-emergentes de la reestructuración v1.3 y se añaden los D-10 a D-15
-emergentes del levantamiento operativo v1.9.
+emergentes de la reestructuración v1.3, los D-10 a D-15 emergentes del
+levantamiento operativo v1.9 y D-16, emergente de la incorporación de los
+SLA operacionales del negocio en v1.9.7.
 
   -------------------------------------------------------------------------------
   **ID**     **Punto pendiente**                 **Responsable**    **Fecha
@@ -5925,6 +6377,22 @@ emergentes del levantamiento operativo v1.9.
   (v1.9)     RN-43 (validaciones cruzadas del    Migración Legacy +
              XLSM), hoy referenciadas sin        Visador titular
              definición (§13).
+
+  D-16       Perfiles de entregable en           Héctor + Ingeniero 30-sep-2026
+  (v1.9.7)   generación documental (Carbone):    de Integraciones
+             §5.2.6 define tres perfiles         (Carbone.io)
+             —Estándar (PDF), Resumen ejecutivo
+             (PDF + Excel) y Unidad de Vivienda
+             Habitacional (PDF con hoja de
+             resumen embebida)—, pero §7
+             especifica hoy un PDF único. Falta
+             definir cómo Carbone genera el
+             Excel de resumen y el PDF con hoja
+             embebida, o si esa generación
+             ocurre fuera de Carbone. Origen:
+             insumo VProperty_SLA_Negocio_v1.1,
+             incorporado en v1.9.7. Impacto: §7
+             y §5.2.6. Abierta.
   -------------------------------------------------------------------------------
 
 # **Cierre y trazabilidad documental**

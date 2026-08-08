@@ -14,7 +14,7 @@
 >
 > **Uso.** Este archivo es la referencia única para construir IF-02. Claude Code lo lee al iniciar cada sesión, detecta la última P completada y ejecuta la siguiente **sin que Sergio le pase el prompt**. Sergio solo confirma que la P quedó ok y da señal para avanzar.
 >
-> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada. *(La ruta canónica es `v1_9_6`; el nombre de archivo de este plan conserva `v1_9` por compatibilidad con §0.1 — no renombrar.)*
+> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada. *(La ruta canónica es `v1_9_7`; el nombre de archivo de este plan conserva `v1_9` por compatibilidad con §0.1 — no renombrar.)*
 
 ---
 
@@ -1858,7 +1858,7 @@ quedan listados para que Sergio decida cuáles corregir y cuándo.
 | `CLAUDE.md` | La tabla de escenarios Make marca `SC05` como *"❌ por provisionar (BQ-3) · verificar código libre (H-03)"*. Tras §9.5 el código deja de estar libre: SC05 es el correo de asignación. Falta también la fila de `SC-Asignar` (hook `3441086`), que existe pero no está en la tabla. |
 | `docs/diseno.md` | §269 y §546 dicen que SC05 se dispara desde AT02. **D-15 dejó AT02 fuera de alcance de IF-02** y §278 ya lo corrige — pero §269/§546 conservan la redacción vieja. Con §9.5, SC05 se dispara desde SC-Asignar. |
 | `docs/construccion.md` | §316 afirma *"SC05 se dispara desde AT02 al pasar a `asignada`, no desde la UI directamente"*. Misma corrección que arriba. §343 conserva el diagrama con AT02. |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_6.md` | Fuente canónica, **no editable**. Dos divergencias a registrar en otro lado: (1) §1.6.3 llama SC13 al escenario que este plan llama SC05; (2) §1.6.3 ubica la plantilla en `C_Plantillas`, que no tiene ningún campo donde quepa un cuerpo HTML — la fuente de runtime es `C_NotificacionesConfig`. |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md` | Fuente canónica, **no editable**. Dos divergencias a registrar en otro lado: (1) §1.6.3 llama SC13 al escenario que este plan llama SC05; (2) §1.6.3 ubica la plantilla en `C_Plantillas`, que no tiene ningún campo donde quepa un cuerpo HTML — la fuente de runtime es `C_NotificacionesConfig`. |
 | `docs/schema-airtable.md` | Conviene anotar que `M_Tasadores.email` (`fldsUu1pJ92HdYQUD`) es el destinatario del correo, que `M_Tasadores` **no** tiene link a `AUTH_Usuarios`, y la divergencia `C_Plantillas` / `C_NotificacionesConfig`. |
 | `docs/_notas/checklist-P9-manual.md` | §10.4.3 ya quedó actualizado en este archivo; el checklist en sí todavía dice SC13 y "módulo de correo en SC-Asignar". |
 | `docs/_artefactos/make/SC-Adjuntos-Upload.blueprint.json` · `lib/adjuntos.ts` | Producen `/VProperty/Tasaciones/{codigo}/…` en vez de la plantilla de spec v1.9.6 `/Test_ValueProperty/INFORMES_{AAAA}/{Cliente}/{codigo}/{Unidad}/…`. Migración diferida — registrada como **CI-003** en `docs/CODE_INCONSISTENCIES.md`. **No bloquea P8**: los archivos se guardan y recuperan bien; lo que falla es la conformidad con la norma, no la operación. |
