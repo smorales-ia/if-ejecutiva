@@ -1424,6 +1424,73 @@ Variables dinámicas: `{{codigo_ext}}`, `{{empresa}}`, `{{nro_interno}}`,
 `{{ejec_comercializador}}`, `{{tabla_contactos}}`, `{{observaciones}}`,
 `{{lista_adjuntos}}`, `{{tasador_nombre}}`.
 
+#### Logo corporativo del pie — imagen embebida por CID
+
+El pie de `plantilla_cuerpo` cierra con la línea `www.valueproperty.cl` y debajo lleva el
+logo de la empresa. La imagen **no se referencia por URL**: viaja dentro del propio mensaje
+como adjunto inline con `Content-ID`, y el HTML la invoca con `src="cid:logo-vproperty"`.
+
+Tres alternativas evaluadas:
+
+| Alternativa | A favor | En contra |
+|---|---|---|
+| URL pública (`<img src="https://…/logo.png">` o link directo de Dropbox) | Cero cambios en el blueprint; se edita sólo la plantilla | Introduce una **dependencia de red permanente en cada apertura del correo**, fuera de nuestro control y para siempre: si el hosting cae o el link de Dropbox rota, todos los correos ya enviados quedan con la imagen rota, incluidos los del archivo histórico. Outlook de escritorio bloquea imágenes externas por defecto en remitentes no confiables. Contradice el criterio ya fijado en esta misma sección — *"sin CSS externo ni imágenes remotas"* |
+| **Adjunto inline por CID, con el binario embebido en base64 en el blueprint** ✅ | Se renderiza en Gmail, Outlook de escritorio, Outlook web y clientes móviles **sin pedir permiso**, porque la imagen es parte del mensaje y no un recurso externo. Sobrevive a cualquier caída de hosting. El correo queda autocontenido y sigue siendo legible dentro de diez años | El blueprint carga ~30 KB de base64; hay que regenerarlo si el logo cambia (operación de minutos, una vez) |
+| `data:` URI en el `src` del `<img>` | Sin adjunto y sin red | **Gmail lo bloquea sin excepción**, web y móvil, y Outlook de escritorio lo descarta. Descartada de entrada |
+
+**Elegida la segunda, y sin módulo de descarga.** El punto que decide no es la
+compatibilidad —CID y URL empatan en Gmail— sino **dónde vive el riesgo**. Con URL, el riesgo
+es de runtime, recurrente y ajeno: cada correo depende de que un host responda. Con CID, el
+riesgo es de configuración y se agota en la primera prueba de envío: el `data` del adjunto es
+una constante, así que si el primer correo sale bien, salen todos.
+
+Por la misma razón **no se agrega un `http:ActionGetFile` ni un módulo de Dropbox** para
+traer el binario en tiempo de envío. Un fetch previo al módulo Gmail devolvería el riesgo de
+runtime por la puerta de atrás y, con `maxErrors: 1` y sin auto-retry (ver *Política de
+reintento* más abajo), **un logo que no descarga cancelaría la notificación al tasador**. Un
+elemento decorativo no puede tener poder de veto sobre el mensaje: es el mismo principio con
+el que SC05 se separó de SC-Asignar.
+
+**Contrato en el módulo Gmail (m19).** `google-email:ActionSendEmail` v2 expone en su
+`attachments` los tres campos necesarios — `fileName` (`filename`), `data` (`buffer`) y
+**`cid` (`text`)** —, verificado contra el `expect` del módulo. El `mapper` queda:
+
+```json
+"attachments": [
+  {
+    "cid": "logo-vproperty",
+    "data": "{{toBinary('__LOGO_BASE64__'; 'base64')}}",
+    "fileName": "logo-vproperty.png"
+  }
+]
+```
+
+`__LOGO_BASE64__` es un marcador: se reemplaza por el base64 real del PNG **antes de
+importar** (checkpoint M-7). `toBinary(valor; 'base64')` es la conversión texto→buffer de
+Make; el campo `data` no acepta el base64 crudo.
+
+**Bloque HTML del pie**, a insertar en `plantilla_cuerpo` inmediatamente después del `</p>`
+que cierra la línea de `www.valueproperty.cl` y antes del párrafo *"Este correo se generó de
+forma automática…"*:
+
+```html
+<p style="margin:10px 0 0">
+  <img src="cid:logo-vproperty" alt="Tasaciones Value Property" width="160"
+       style="display:block;width:160px;max-width:160px;height:auto;border:0;outline:none;text-decoration:none" />
+</p>
+```
+
+El `width` como **atributo HTML** además del `style` no es redundante: el motor de renderizado
+de Outlook de escritorio es Word y sólo respeta el atributo. El `alt` cubre la degradación —
+si la imagen no carga, el pie sigue diciendo quién firma— y `display:block` evita la franja
+de espaciado que los clientes agregan bajo las imágenes inline.
+
+**Plan B documentado.** Si M-8 revelara que `toBinary` no produce un buffer válido en el
+módulo Gmail de esta instancia, la caída es a la alternativa de URL pública: se vacía
+`attachments` y el `<img>` pasa a `src="https://www.valueproperty.cl/img/logo-vproperty.png"`.
+Se registra entonces como degradación en `docs/aprendizajes.md`, con su dependencia de
+hosting explícita. **No** se cae a un módulo de descarga previo, por el motivo de arriba.
+
 #### Proveedor de envío — verificar antes de crear
 
 **Ninguna conexión de correo existe en los blueprints del repo.** Barrido de los 5
@@ -1531,7 +1598,8 @@ solas** — el correo sale y queda auditado; lo único que falta es que la conso
    `destinatario_campo = M_Tasadores.email`, `activa = true`, más `plantilla_asunto` y
    `plantilla_cuerpo` de A-3.
 3. **A-3 · Redactar asunto y cuerpo HTML** en es-CL según §9.5.1, con las siete respuestas
-   nombradas sin enumerar (§15 · D-11 abierto).
+   nombradas sin enumerar (§15 · D-11 abierto). El pie cierra con el bloque `<img>` de
+   `cid:logo-vproperty` definido en *Logo corporativo del pie*.
 4. **A-4 · Confirmar que no hace falta ningún campo nuevo.** Ya verificado vía MCP:
    `email_thread_id`, `TX_Notificaciones.*` y la opción `Email tasador` de `LogEscenarios`
    existen. Re-verificar sólo si el schema cambió desde el 31-jul-2026.
@@ -1606,11 +1674,19 @@ Regla D; el endpoint no devuelve 2xx cuando no pudo encolar.
 | M-3 | Reimportar `SC-Asignar.blueprint.json` v2.0 | Tras B-2 |
 | M-4 | Configurar `MAKE_WEBHOOK_URL_SC05` en Railway y en `.env.local` | Tras M-2 |
 | M-5 | Verificar en la UI de Make que el módulo Gmail tiene la conexión resuelta y el destinatario mapeado a `M_Tasadores.email` | Antes del E2E |
-| M-6 | Activar SC05 en Make | Antes del E2E |
+| M-6 | Activar SC05 en Make | Antes del E2E, **después** de M-8 |
+| M-7 | Reemplazar `__LOGO_BASE64__` en `SC05-EmailTasador.blueprint.json` por el base64 real del logo, y pegar el bloque `<img>` del pie en `C_NotificacionesConfig.plantilla_cuerpo` (`rec5t6dBeYQkGsw4F`) | **Antes** de M-2 |
+| M-8 | Envío de prueba en modo *Run once*: confirmar que el logo se ve bajo `www.valueproperty.cl` **y** que el correo no lo lista como adjunto suelto | Tras M-2, antes de M-6 |
 
 > **M-5 no es opcional.** Es la verificación barata que cerró F-1: un campo obligatorio que
 > aparece vacío en el diseñador significa que la clave del mapper no es la que el módulo
 > espera. Cuesta treinta segundos y ahorra una corrida fallida.
+
+> **M-7 va antes de M-2, no después.** Importar el blueprint con `__LOGO_BASE64__` sin
+> reemplazar deja un adjunto con datos basura, y el módulo Gmail falla en el envío entero —
+> no sólo en la imagen. Y el orden inverso entre plantilla y blueprint también importa: si la
+> plantilla ya trae `cid:logo-vproperty` y el blueprint todavía no adjunta nada, los correos
+> salen con la imagen rota. Los dos lados del CID se mueven juntos o no se mueve ninguno.
 
 ### §9.5.3 Prueba end-to-end y criterios de aceptación
 
@@ -1641,6 +1717,12 @@ de RN-44, al menos un contacto de visita, una unidad y un adjunto en Dropbox.
       `reenvio-1`.
 - [ ] **E2E-8 · Regresión de SC-Asignar.** El evento `correo_asignacion_enviado` **ya no** se
       escribe cuando SC05 no envió. Verificar contra una solicitud del caso E2E-6.
+- [ ] **E2E-9 · Logo del pie.** Abrir el correo de E2E-1 en **Gmail web, Gmail móvil y Outlook
+      de escritorio**. El logo aparece bajo `www.valueproperty.cl` en los tres, **sin pulsar
+      "mostrar imágenes"** — si hiciera falta pulsarlo, la imagen se está sirviendo por URL y
+      no por CID. Confirmar además que el mensaje **no** muestra `logo-vproperty.png` como
+      adjunto descargable junto a los enlaces de Dropbox: si aparece, el módulo Gmail no
+      construyó el `multipart/related` y hay que revisar el campo `cid` de m19.
 
 ---
 
@@ -1867,4 +1949,4 @@ quedan listados para que Sergio decida cuáles corregir y cuándo.
 
 ---
 
-*Última actualización: 06-ago-2026 · **v1.6 del plan** (realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/`) · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
+*Última actualización: 08-ago-2026 · **v1.7 del plan** (logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9) · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*

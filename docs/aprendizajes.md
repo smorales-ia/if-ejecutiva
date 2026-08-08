@@ -428,3 +428,71 @@ Refuerza la lección del 06-ago sobre no embeber datos concretos fuera del spec,
 El borrador del informe incluía que la vista «Por reasignar» contradecía la REGLA A. Al abrir §1.1 apareció listada como vista pre-construida en RF-05: lo que el spec difiere (FUT-EJ-05) es la *reasignación automática por inactividad*, no la vista. Dos de dieciocho hallazgos candidatos se cayeron así. En auditorías documentales la tentación es reportar por coincidencia de término —«dice reasignar, y reasignar está prohibido»—, y el término casi nunca alcanza: **hay que abrir la sección citada**.
 
 **Estado al cierre:** 8 archivos modificados en el working tree, sin commitear. Tres CI abiertas (CI-005 reloj del SLA, CI-006 alias RF-09, CI-007 tabla de feriados), ninguna bloqueante para la construcción en curso.
+
+---
+
+### 2026-08-08 (b) — Logo corporativo en el pie del correo SC05: CID sobre URL, y dónde vivía realmente la plantilla
+
+**Contexto:** encargo de agregar el logo de la empresa bajo la línea `www.valueproperty.cl` en el correo que SC05 envía al tasador asignado, eligiendo la solución técnica óptima para el stack Make eu1 + módulo Gmail m19.
+
+**1 · El artefacto que había que editar no era el que el encargo nombraba.**
+
+El encargo pedía actualizar «el HTML del footer» en `SC05-EmailTasador.blueprint.json`, dando por supuesto un `SetVariable` con `plantilla_cuerpo` dentro del escenario. **Ese módulo no existe.** El blueprint no contiene una sola línea de HTML: m13 hace `Search Records` sobre `C_NotificacionesConfig` y m19 aplica 21 `replace()` anidados sobre el `plantilla_cuerpo` que trae esa fila. La plantilla completa —cabecera, seis secciones, pie— vive en Airtable, en `C_NotificacionesConfig` (`tbluB662ulWDaxqUY`), registro `rec5t6dBeYQkGsw4F`, campo `plantilla_cuerpo` (`fldQro7jvi3RlxDs0`). Está decidido así desde §9.5.1 del plan de ejecución, bajo el título literal *«Plantilla — vive en Airtable, no en el blueprint»*.
+
+La consecuencia práctica es que **el cambio se reparte en dos sistemas que no se versionan juntos**: el `<img>` va a un campo de Airtable, el adjunto va al blueprint del repo, y ninguno de los dos funciona sin el otro. La regla que queda: **antes de editar un artefacto, verificar que el contenido que se va a tocar está efectivamente en él**. Un `grep` de `www.valueproperty.cl` sobre el repo entero devuelve cero coincidencias — treinta segundos que evitan editar el archivo equivocado y reportarlo como hecho.
+
+**2 · Entre URL y CID, lo que decide no es la compatibilidad sino dónde queda el riesgo.**
+
+Las tres alternativas evaluadas para la imagen se ordenan solas en compatibilidad: el `data:` URI se descarta de entrada porque **Gmail lo bloquea sin excepción**, web y móvil. Entre las otras dos, Gmail muestra ambas —su proxy de imágenes carga las remotas por defecto desde 2013—, así que la comparación por «¿se ve?» empata y no resuelve nada.
+
+Lo que las separa es el **tipo** de riesgo, no su tamaño:
+
+- **URL pública:** riesgo de *runtime*, recurrente y ajeno. Cada apertura de cada correo, hoy y en tres años, depende de que un host responda. Si el dominio cae o el link de Dropbox rota, se rompen también todos los correos ya enviados —un correo es un archivo histórico, no una página que se redespliega—. Y Outlook de escritorio bloquea imágenes externas por defecto en remitentes no confiables.
+- **CID con el binario embebido en base64:** riesgo de *configuración*, único y verificable. El `data` del adjunto es una constante: si el primer envío de prueba sale bien, salen todos los siguientes, porque no hay variable que cambie entre corridas.
+
+Elegido CID. El criterio general —**preferir el riesgo que se agota en la primera prueba sobre el que se repite en cada ejecución**— vale más allá de este caso; es el mismo con que §9.5 separó SC05 de SC-Asignar.
+
+**3 · La variante «cómoda» del CID reintroduce exactamente el riesgo que el CID venía a eliminar.**
+
+El camino natural para conseguir el `buffer` que pide `attachments[].data` es anteponer un `http:ActionGetFile` o un módulo de Dropbox que descargue el logo. Ese diseño **conserva la etiqueta CID y pierde su beneficio**: vuelve a haber un fetch de red en cada envío. Y es peor que la URL, no mejor — con `maxErrors: 1` y sin auto-retry, un logo que no descarga aborta el escenario y **el tasador no recibe la notificación**. Un elemento decorativo con poder de veto sobre el mensaje.
+
+La salida es embeber el base64 en el propio `mapper` y convertirlo con `toBinary(valor; 'base64')`. El blueprint carga ~30 KB de texto opaco; a cambio, el envío no depende de nada externo. Regla: **al elegir una alternativa por una propiedad concreta, verificar que la implementación que se está escribiendo conserva esa propiedad**. La etiqueta de la técnica no la garantiza.
+
+**4 · El módulo Gmail sí soporta CID, y el `expect` lo dice — pero eso no cierra la verificación.**
+
+`google-email:ActionSendEmail` v2 declara en su `attachments` tres campos: `fileName` (`filename`), `data` (`buffer`) y **`cid` (`text`)**. Suficiente para descartar la duda de si el módulo soporta imágenes inline, que era la pregunta abierta del encargo.
+
+Lo que el `expect` **no** prueba es que `toBinary` produzca un buffer que el módulo acepte, ni que Gmail arme el `multipart/related` que hace que la imagen se vea inline en vez de colgar como adjunto descargable. Es la lección de F-1 aplicada a un caso nuevo: el `expect` describe la forma del contrato, no el comportamiento en runtime. Por eso el cambio entra con dos checkpoints —M-7 (reemplazo del base64 antes de importar) y M-8 (envío de prueba en *Run once*)— y con un plan B escrito: si `toBinary` falla, se cae a URL pública y se registra la degradación, **nunca** a un módulo de descarga previo.
+
+**5 · Los dos lados de un CID se mueven juntos o no se mueve ninguno.**
+
+`cid:logo-vproperty` es una referencia cruzada entre dos artefactos con ciclos de despliegue independientes: el `<img>` en Airtable (efecto inmediato, sin import) y el adjunto en Make (requiere reimportar el blueprint). Cualquier orden parcial produce correos rotos en producción: la plantilla primero deja la imagen sin destino; el blueprint primero deja un adjunto que nadie referencia —y que Gmail entonces sí muestra como archivo descargable—. Peor todavía, importar el blueprint con el marcador `__LOGO_BASE64__` sin reemplazar no rompe la imagen: **rompe el envío completo**, porque el módulo Gmail falla al construir el adjunto.
+
+Vale como forma general para toda referencia cruzada entre sistemas que no comparten despliegue —CID, claves de i18n, IDs de plantilla—: la ventana entre los dos cambios es un estado inválido, y el orden de los pasos manuales es parte del diseño, no del instructivo.
+
+**Solución aplicada:** `docs/_artefactos/make/SC05-EmailTasador.blueprint.json` — `name` a `SC05 v1.1`, `attachments` de m19 con `{cid, data: toBinary('__LOGO_BASE64__'; 'base64'), fileName}` y `restore.expect.attachments` con un `item`. `docs/_md/plan-ejecucion-if02-v1_9.md` v1.7 — subsección *Logo corporativo del pie* en §9.5.1 con la tabla comparativa, el bloque `<img>` literal y el plan B; checkpoints M-7 y M-8; caso E2E-9. La edición de `plantilla_cuerpo` en Airtable **no se ejecutó**: P8.5 es pausa-total por emitir comunicación real hacia fuera, y escribirla antes de reimportar el blueprint dejaría correos con la imagen rota.
+
+**Prevención futura:** el detalle de renderizado que cierra el caso es el atributo `width` en el `<img>` **además** del `style`. El motor de Outlook de escritorio es Word y sólo respeta el atributo HTML; con CSS a secas la imagen sale a tamaño nativo. Junto con `display:block` (elimina la franja de espaciado bajo imágenes inline) y un `alt` con el nombre de la empresa (degradación legible), son las tres líneas que separan un pie que se ve bien en los tres clientes de uno que sólo se probó en Gmail.
+
+---
+
+### 2026-08-08 (c) — Ejecución del logo CID: orden de los dos lados y verificación byte a byte
+
+**Contexto:** ejecución de la recomendación de la entrada anterior. Sin decisiones de diseño nuevas: sólo materializar el CID en los dos artefactos que lo componen.
+
+**Acción ejecutada, en este orden:**
+
+1. **Ventana segura.** Se pidió a Sergio apagar SC05 en Make (switch OFF) y se **paró hasta su confirmación** antes de tocar Airtable. Con SC05 activo, cualquier asignación ocurrida entre la escritura de la plantilla y la reimportación del blueprint habría enviado un correo real, a un destinatario externo, con la imagen rota.
+2. **Blueprint primero** (`docs/_artefactos/make/SC05-EmailTasador.blueprint.json`). `__LOGO_BASE64__` reemplazado por los 53.076 caracteres del base64 de `docs/_artefactos/assets/logo-vproperty.png` (PNG 320×208 RGB, 39.807 bytes). Archivo 141.728 → 195.284 bytes.
+3. **Airtable después** (`C_NotificacionesConfig` · `rec5t6dBeYQkGsw4F` · `plantilla_cuerpo`). Bloque `<p><img src="cid:logo-vproperty" …></p>` insertado tras el `</p>` que cierra `www.valueproperty.cl`. 7.391 → 7.615 caracteres.
+
+**Criterio del orden.** El blueprint va primero porque es un archivo local: editarlo no cambia nada en producción y deja el repo listo mientras se coordina la ventana. La plantilla va última porque es el único de los dos cuyo efecto es **inmediato y sin import** — en cuanto se guarda, el próximo correo la usa. Y por eso el escenario tiene que estar OFF: el estado intermedio *plantilla nueva + escenario viejo* es el único que produce daño visible, y es precisamente el que la secuencia atraviesa. La regla operativa: **cuando dos artefactos con ciclos de despliegue distintos componen una referencia cruzada, el que despliega solo va último y el sistema se apaga durante la ventana.**
+
+**Verificación — dos round-trips, no dos inspecciones.**
+
+- *Blueprint*: se decodificó el base64 ya embebido en el `mapper` y se comparó contra el PNG de origen. SHA-256 idéntico (`e6dc9cc7…dd0924`). No basta con mirar que la cadena «empieza con `iVBORw0KGgo`»: eso sólo prueba que es un PNG, no que sea **este** PNG completo y sin truncar.
+- *Airtable*: el texto destino se calculó localmente con una sola sustitución sobre el original leído por API, y tras el `update` se releyó el campo y se comparó **byte a byte** contra ese destino. SHA-256 idéntico (`aa352e60…c7b2b`), delta de exactamente 224 caracteres —el largo del bloque—, 21 placeholders `[[…]]`, 6 `<h3>` y 5 `<table>` intactos, y el resto del cuerpo idéntico al original tras remover el bloque insertado.
+
+Lo que hace falta subrayar es **por qué** la comparación byte a byte era obligatoria acá y no paranoia: escribir el campo exige reenviar los 7.615 caracteres completos, o sea que una operación conceptualmente aditiva —«agregar cuatro líneas»— se implementa como un reemplazo total del contenido. Cualquier carácter perdido en el camino no toca el bloque nuevo sino alguna parte del cuerpo que nadie está mirando, y el síntoma aparecería semanas después en un correo a un tasador. **Cuando una API sólo ofrece reemplazo total para un cambio aditivo, la verificación tiene que cubrir lo que no se quiso cambiar, no lo que se quiso cambiar.**
+
+**Pendiente para Sergio:** reimportar el blueprint en Make, *Run once*, verificar recepción con logo, y recién ahí volver a poner SC05 en ON.
