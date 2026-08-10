@@ -1,6 +1,61 @@
-# Plan de Ejecución IF-02 v1.9 — Guía maestra para Claude Code
+# Plan de Ejecución IF-02 v1.10 — Guía maestra para Claude Code
 
-> **Versión del plan: v1.8** (10-ago-2026). Cambio respecto de v1.7: se inserta
+> **Versión del plan: v1.10** (10-ago-2026). Cambio respecto de v1.9: se incorporan las **tres
+> decisiones de negocio** que faltaban para que M-11 dejara de ser una elicitación abierta. No
+> cambia la estructura de §9.6 —ni un campo nuevo, ni una tanda nueva, ni un checkpoint nuevo—:
+> cambia **el contenido que se carga** y **el orden en que M-11 puede correr**.
+>
+> **Decisión 1 · la matriz por etapa se carga literal, no se elicita.** Los catorce números de
+> §5.2.4 son datos cerrados por Héctor. Se cargan tal cual en `C_SLA_Etapas` y se ratifican en
+> **M-11.b**; nadie tiene que definirlos.
+>
+> **Decisión 2 · el SLA agregado tiene baseline.** Una **única fila global default** en `C_SLA`
+> con 3 días de compromiso (rojo), ámbar a los 2 y verde de 0 a 1, y `sla_revision_horas` vacío.
+> M-11 pasa de "pedirle umbrales a Héctor/Óscar" a "cargar una fila y borrar la familia
+> perdedora": **deja de ser una compuerta de tiempo de respuesta ajeno** y puede ejecutarse el
+> mismo día. Héctor y Óscar quedan como **validadores post-carga**, no como bloqueadores.
+>
+> **Decisión 3 · el reproceso sigue diferido.** La matriz R1–R3 y RN-55 (§5.2.5) **no entran en
+> ninguna tanda** de esta iteración. v1.9 ya lo declaraba en §9.6.1 · *Reglas de reproceso*; aquí
+> se **ratifica sin duplicar**, con una línea de anclaje en ese mismo bloque.
+>
+> La traducción de la Decisión 2 al schema real obligó a una cuarta reconciliación greppable,
+> **§9.6-R4**: los nombres `sla_dias` / `umbral_ambar_dias` / `umbral_verde_dias` con que llegó
+> la decisión **no son los del schema** —el primero es la familia que M-11 borra y los otros dos
+> no existen—, así que se cargan sobre la familia superviviente conservando los valores exactos.
+> Ahí queda fijada también la convención de la fila comodín (los tres links **vacíos**, porque
+> `cliente`/`tipo_informe`/`tipo_propiedad` son `multipleRecordLinks` y no admiten un literal
+> `*`) y la precedencia campo a campo frente a la fila `SLA_METLIFE_Refinanciamiento` existente.
+>
+> Reverificación MCP del 10-ago-2026 (sólo lectura, previa a este pase): `C_SLA` sigue con **1
+> fila**, la familia `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` sigue **vacía en 1 de 1**,
+> `C_SLA_Etapas` **sigue sin existir** (66 tablas) y `TX_Solicitudes` sigue con **135 campos** y
+> cero con prefijo `sla_`. **Sin cambios de esquema desde v1.9.**
+>
+> **v1.9** (10-ago-2026). Cambio respecto de v1.8: se reconcilian las tres
+> divergencias entre §9.6 y la base real, releída campo por campo contra `app9G7lLkIV3CpeLa` el
+> 10-ago-2026, y quedan registradas como decisiones greppables **§9.6-R1** (`C_Feriados` es el
+> nombre canónico y la spec es la que se corrige), **§9.6-R2** (`AT08_Alertas_SLA` se **crea**;
+> lo que existe es su fila de inventario, que se **actualiza**, no se duplica) y **§9.6-R3**
+> (`sla_revision_horas` es el nombre canónico del sub-SLA del visador, y es un **override del
+> umbral de la etapa 7**, no una segunda fuente del mismo número).
+>
+> La reverificación además **corrige tres afirmaciones de v1.8** que resultaron inexactas: las
+> filas de 2026 sin `anno` en `C_Feriados` son **5, no 8**; **AT08 sí tiene fila** en
+> `C_AutomationsAirtable` (`estado = Inventariado`), aunque la Automation no exista; y AT02/AT04
+> figuran **`Activo`** en ese registro, no "sin desplegar" — lo que obliga a una verificación
+> manual de AT02 en M-9, porque la REGLA A · D-15 depende de que esté apagada y ninguna API puede
+> confirmarlo. Cuatro hallazgos nuevos: el par de campos `nombre`/`nombre_feriado` de
+> `C_Feriados` está **duplicado y divergente**; la fila basura **contaminó el select `tipo`** con
+> una opción homónima; `fecha_solicitud` quedó con `timeZone = client`, que los 14 timestamps
+> nuevos no deben heredar; y el caso **E2E-12** describía mal el calendario (19-sep-2026 es
+> sábado, no un segundo feriado hábil) — se conserva el caso, corregidos su descripción y su
+> resultado esperado, ahora calculado a mano en el propio criterio.
+>
+> Sin campos nuevos respecto de v1.8. Sin checkpoints nuevos: se amplían M-9, M-11, M-12, M-16,
+> M-17 y M-18, y se agrega el paso **F-5** a la Tanda F.
+>
+> **v1.8** (10-ago-2026). Cambio respecto de v1.7: se inserta
 > **§9.6 · P8.6 — Control de SLA en IF-02 (RF-08 agregado + RF-53 por etapa)** entre P8.5 y P9,
 > con el diseño de datos, el motor de cómputo hábil, la UI de los dos semáforos convivientes y
 > las siete tandas A–G con checkpoints M-9 a M-18. Se corrige la **secuencia oficial de §0.7**,
@@ -1764,21 +1819,166 @@ control diario del área (RF-53 · §5.2.4). El primero responde *cuándo vence 
 segundo, *dónde se está atrasando ahora*. Una etapa en rojo con el agregado en verde es la
 lectura correcta de ambos, no una inconsistencia. P8.6 construye el segundo y sanea el primero.
 
-#### Estado real verificado (MCP · 10-ago-2026) — nada de esto se asume
+#### Estado real verificado (10-ago-2026) — nada de esto se asume
+
+> **Reverificación de v1.9.** La tabla de abajo se releyó entera contra `app9G7lLkIV3CpeLa` el
+> 10-ago-2026 antes de reconciliar las tres divergencias. Tres afirmaciones de v1.8 resultaron
+> **inexactas** y quedan corregidas aquí, no en una adenda: el recuento de filas sin `anno` en
+> `C_Feriados` (eran 5 de 2026, no 8), la inexistencia total de AT08 (la *Automation* no existe,
+> pero **sí existe su fila de inventario** en `C_AutomationsAirtable`), y el estado de despliegue
+> de AT02/AT04, que el registro declara `Activo`. Las filas afectadas van marcadas **⚠ corrige v1.8**.
+>
+> **Reverificación de v1.10 (10-ago-2026, sólo lectura).** Antes de incorporar las tres
+> decisiones de negocio se releyeron los cuatro objetos que ellas tocan. **Nada cambió respecto
+> de v1.9 y ninguna fila de esta tabla se corrige:** `C_SLA` (`tblsPZokEK5aoinTn`) sigue con
+> **1 fila** (`recePRZ2pxuYimNoe`, `dias_totales = 4`, `activo = true`) y **12 campos**, con la
+> familia `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` **vacía en 1 de 1 filas** —la evidencia
+> que M-11 exige para borrarla sigue siendo válida—; `C_SLA_Etapas` **sigue sin existir** (66
+> tablas en la base, ninguna con ese nombre), de modo que **A-1 sigue siendo su creador y M-11.b
+> depende de él**; `TX_Solicitudes` sigue con **135 campos** y **cero** con prefijo `sla_` (el
+> único campo con "sla" en el nombre es la fórmula `semaforo_sla`); y `C_SLA` **sigue sin**
+> `sla_revision_horas`, `matriz_etapas` y `activo_desde`. Sin cambios de esquema desde v1.9.
 
 | Objeto | Estado real | Consecuencia para P8.6 |
 |---|---|---|
-| `C_SLA` (`tblsPZokEK5aoinTn`) | **1 sola fila** (`SLA_METLIFE_Refinanciamiento`, `dias_totales = 4`) con `cliente`/`tipo_informe`/`tipo_propiedad` poblados pero **sin umbrales de alerta**. Tiene **dos familias de campos duplicadas**: `dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` (la poblada) y `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` (vacía). **No existe `sla_revision`**, pese a que §5.2.4 · etapa 7 lo da por existente. | Tanda A · M-11 y M-9. RF-08 hoy **no está parametrizado**: el código no lee `C_SLA` en ningún punto. |
-| Campos por etapa en `C_SLA` | **Cero.** No hay ningún campo en horas. | Se crean en `C_SLA_Etapas` (tabla nueva), no como 14 columnas en `C_SLA` — ver *Dónde vive la matriz*. |
-| `TX_Solicitudes` (`tblaHTyMHYfmy7Fg6`, 135 campos) | Tiene `fecha_solicitud` (dateTime), `fecha_asignacion` (date) **y** `fecha_asignacion_ts` (dateTime), `fecha_visita`, `fecha_visita_programada`, `fecha_entrega`, `fecha_cierre` (todas date, sin hora). **Ningún timestamp de entrada/salida de etapa.** | Se crean los 14 + 7 derivados de *Modelo de datos*. Las fechas existentes **no sirven**: son `date`, y una matriz en horas necesita hora. |
-| `semaforo_sla` (`fldW4oUq7LvQUZq7W`) | Fórmula leída en vivo: cuenta días desde **`{fecha_visita}`**, no desde el ingreso, y emite `Entregado` / `Sin visita` / `VENCIDO` / `EN RIESGO` / `OK`. No lee `C_SLA`, no usa `WORKDAY`, no excluye feriados. `fecha_limite_entrega` = `DATEADD({fecha_visita}, 2, 'days')`. | Es **CI-005**. P8.6 la corrige en M-13 y deja el agregado leyendo `C_SLA` de verdad. |
-| `H_Feriados` | **No existe.** La tabla real es **`C_Feriados`** (`tblJVh2kPd4uMgxpb`), 18 filas. | **CI-007** · RO-15: manda la base real. Todo el código y los blueprints dicen `C_Feriados`. |
-| Contenido de `C_Feriados` | 15 feriados 2026 correctos; **una fila basura** (`nombre = "nombre_feriado"`, sin fecha, `tipo = "tipo"` — encabezado filtrado dentro de los datos), **2027-01-01 duplicado** (`recGB2eUtwWs3cIuM` y `reckuUbALWocT4kWX`), y **8 filas de 2026 sin `anno`**. | Tanda A · M-12. Una fila sin fecha rompe el `Set` de feriados del motor si no se filtra por `activo` **y** `fecha` no vacía. |
+| `C_SLA` (`tblsPZokEK5aoinTn`) | **1 sola fila** (`recePRZ2pxuYimNoe` · `SLA_METLIFE_Refinanciamiento`, `dias_totales = 4`, `activo = true`) con `cliente`/`tipo_informe`/`tipo_propiedad` poblados pero **sin umbrales de alerta**. Tiene **dos familias de campos duplicadas**: `dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` (poblada **sólo** en `dias_totales`) y `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` (**vacía en el 100 % de las filas: 0 de 1**). **No existe `sla_revision`** ni ningún campo equivalente, pese a que §5.2.4 · etapa 7 y §3.2 lo dan por existente. Tampoco existen `matriz_etapas` ni `activo_desde`. | Tanda A · M-11.a y M-9. RF-08 hoy **no está parametrizado**: el código no lee `C_SLA` en ningún punto. El borrado de la familia perdedora que exige M-11.a ya tiene su evidencia: 0 filas no vacías. La fila `SLA_METLIFE_Refinanciamiento` **se conserva** y convive con la default de la Decisión 2, resolviéndose campo a campo (**§9.6-R4**). Ver **§9.6-R3** y **§9.6-R4**. |
+| Campos por etapa en `C_SLA` | **Cero.** No hay ningún campo en horas. `C_SLA_Etapas` **no existe** en la base (66 tablas listadas, ninguna con ese nombre). | Se crean en `C_SLA_Etapas` (tabla nueva), no como 14 columnas en `C_SLA` — ver *Dónde vive la matriz*. |
+| `TX_Solicitudes` (`tblaHTyMHYfmy7Fg6`, 135 campos) | **Cero campos con prefijo `sla_`** (verificado por barrido del schema completo). Tiene `fecha_solicitud` (dateTime, **tz `client`**), `fecha_asignacion` (date) **y** `fecha_asignacion_ts` (dateTime, tz `America/Santiago`), `fecha_visita`, `fecha_visita_programada`, `fecha_entrega`, `fecha_cierre` (todas date, sin hora). **Ningún timestamp de entrada/salida de etapa.** | Se crean los 14 + 7 derivados de *Modelo de datos*. Las fechas existentes **no sirven**: son `date`, y una matriz en horas necesita hora. **M-9:** los 14 nuevos se crean con `timeZone = America/Santiago` explícito, no `client` — `fecha_solicitud` quedó en `client` y es la trampa que el motor no debe heredar. |
+| `semaforo_sla` (`fldW4oUq7LvQUZq7W`) | Fórmula leída en vivo: cuenta días desde **`{fecha_visita}`** (`fldpTBzjfbAw5FSYI`), no desde el ingreso, y emite `Entregado` / `Sin visita` / `VENCIDO` / `EN RIESGO` / `OK`. No lee `C_SLA`, no usa `WORKDAY`, no excluye feriados. `fecha_limite_entrega` (`fldoT1LOSgVRo32TC`) = `DATEADD({fecha_visita}, 2, 'days')`. | Es **CI-005**. P8.6 la corrige en M-13 y deja el agregado leyendo `C_SLA` de verdad. |
+| `H_Feriados` | **No existe, y no se va a crear.** La tabla real es **`C_Feriados`** (`tblJVh2kPd4uMgxpb`), 18 filas. | **CI-007** · RO-15 · **§9.6-R1**: manda la base real. Todo el código y los blueprints dicen `C_Feriados`. |
+| Contenido de `C_Feriados` | 15 feriados de 2026 con fecha correcta; **una fila basura** (`recdfwWtdHFcm05sb`: sin `fecha`, `nombre = "nombre_feriado"`, `tipo = "tipo"`, `activo = false` — un encabezado de CSV importado como dato); **2027-01-01 duplicado** (`recGB2eUtwWs3cIuM`, `activo = true`, `nombre` poblado · `reckuUbALWocT4kWX`, `activo = false`, **`nombre` vacío**); **5 filas de 2026 sin `anno`** ⚠ *corrige v1.8, que decía 8*; y 2027 con **un solo** feriado cargado. | Tanda A · M-12. Una fila sin fecha rompe el `Set` de feriados del motor si no se filtra por `activo` **y** `fecha` no vacía. |
+| Campos de `C_Feriados` | Tiene **dos campos de nombre**: `nombre` (`fld6tq4XCFdjr36YX`, **primary**) y `nombre_feriado` (`fldHb2bjnIpyuRqoR`), redundantes, **divergentes** (`recwAPk3zbnLgctHn`: `nombre = "Dia del Trabajo"` vs `nombre_feriado = "Dia del Trabajador"`) y desparejos (`nombre_feriado` vacío en 6 filas). Además, la fila basura **contaminó el select** `tipo` con una opción literal `"tipo"`. | **Hallazgo nuevo de v1.9.** El motor no lee ninguno de los dos —sólo `fecha` y `activo`—, así que no bloquea; entra en M-12 como saneamiento. Ver **§9.6-R1**. |
 | `A_Eventos` (`tblMKmDg2KrO5fMn8`) | `tipo_evento` es `singleLineText` (vocabulario abierto), con `timestamp`, `actor_*`, `detalle_json`, `clave_evento` y link `solicitud`. El filtro va contra el **primary field** de `TX_Solicitudes`, nunca contra el `rec…` (E-076/E-077, ya resuelto en `lib/eventos.ts`). | Patrón vigente: cada transición de etapa escribe un `A_Eventos`. No se crea vocabulario nuevo de tabla. |
-| `C_NotificacionesConfig` (`tbluB662ulWDaxqUY`) | `evento` **ya tiene** las opciones `sla_alerta_amarilla` y `sla_alerta_roja`. Sin filas para ninguna de las dos. | Tanda F · M-17: se crean filas, **no** opciones de select. |
-| `LogEscenarios` (`tblR4VWpUHw1CSyIS`) | `Escenario` tiene `Alerta SLA 2d` y `Alerta SLA 3d` (vocabulario viejo, en días). No hay opción para AT08. | Tanda F · M-17: agregar la opción `AT08_SLA`. Las dos viejas se dejan (RO-14: alias, no rename). |
+| `C_NotificacionesConfig` (`tbluB662ulWDaxqUY`) | `evento` (`fldrjziUXyYzkBunb`) **ya tiene** las opciones `sla_alerta_amarilla` y `sla_alerta_roja`. Sin filas para ninguna de las dos. | Tanda F · M-17: se crean filas, **no** opciones de select. |
+| `LogEscenarios` (`tblR4VWpUHw1CSyIS`) | `Escenario` (`fldPktGeTzNCRQ319`) tiene 19 opciones, entre ellas `Alerta SLA 2d` y `Alerta SLA 3d` (vocabulario viejo, en días). **No hay opción para AT08.** | Tanda F · M-17: agregar la opción `AT08_SLA`. Las dos viejas se dejan (RO-14: alias, no rename). |
 | `TX_Notificaciones` (`tbldgLQgjdgsOSZnt`) | Tiene `clave_notif`, `estado_envio`, `intentos`, `mensaje_error` — el mismo juego que hace idempotente a SC05. | Se reutiliza tal cual. Cero campos nuevos. |
-| Airtable Automations | Desplegadas: `AT01_Motor_Reglas`, `AT03_Calculos_DAG`, `AT-RF09-Trigger`, `AT03-Ext`. Sin desplegar: `AT02_Asignar_Tasador`, `AT04_Validar_Rangos`. **`AT08` no existe.** | Tanda F la crea desde cero. (De paso queda confirmado que AT02 sigue apagada, como exige la REGLA A · D-15.) |
+| **AT08 · fila de inventario** | ⚠ **corrige v1.8.** `C_AutomationsAirtable` (`tblYYtKEaPgH7GfY0`) **sí tiene** la fila `recxWkj3x8tzqzHmo`: `codigo = AT08`, `nombre_automation = AT08_alertas_sla` (minúscula), `tipo = Script_Scheduled`, `disparador = "Cron 08:00 diario"`, `tablas_lee = "TX_Solicitudes, C_SLA"`, `tablas_escribe = "TX_Notificaciones"`, `descripcion = "…dispara SC13"`, **`estado = Inventariado`**. | La fila es un **inventario de diseño**, no una automatización desplegada. Sigue siendo **creación**, no extensión — ver **§9.6-R2**. M-17 **actualiza** esta fila; no crea una segunda fila AT08. |
+| Airtable Automations (desplegadas) | El registro `C_AutomationsAirtable` marca `estado = Activo` para `AT01_Motor_Reglas`, `AT02_Asignar_Tasador`, `AT03_Calculos_DAG` y `AT04_Validar_Rangos`; `Inventariado` para AT05–AT10. **`AT08` no está desplegada.** ⚠ *corrige v1.8, que daba AT02 y AT04 por no desplegadas.* | Tanda F crea AT08 desde cero. **Lo de AT02 hay que mirarlo aparte** — ver el aviso inmediatamente debajo de esta tabla. |
+
+> **⚠ AT02 aparece `Activo` en el registro, y eso no es una constatación de runtime.**
+> `C_AutomationsAirtable` es una tabla de inventario que alguien mantiene a mano: dice lo que se
+> diseñó, no lo que está encendido. El MCP y la API de metadata **no pueden leer el estado real
+> de una Airtable Automation** (`CLAUDE.md` · alcance conocido del MCP), así que ni v1.8 ni v1.9
+> pueden afirmar si AT02 corre. Importa porque la **REGLA A · D-15** exige que AT02 esté apagada:
+> encendida con disparador `estado = creada`, asignaría un tasador por su cuenta y chocaría con
+> el guard 409 de `asignar/route.ts`. **Queda como verificación manual de Sergio dentro de M-9**
+> —abrir Airtable → Automations → confirmar que `AT02_Asignar_Tasador` está en *off*— y **no**
+> como un supuesto de este plan en ninguna dirección. No bloquea P8.6; bloquea la tranquilidad
+> sobre P7.
+
+#### Las tres divergencias, reconciliadas
+
+Las tres se resuelven **dentro** de §9.6, sin adenda y sin tocar la spec (RO-15: la spec se
+corrige en su propio bump, con changelog). Quedan con identificador greppable.
+
+**§9.6-R1 · `C_Feriados` es el nombre canónico. Se corrige el plan, no la tabla.**
+La spec la llama `H_Feriados` en 8 puntos y el `Blueprint v2.10` arrastra el mismo nombre; la
+tabla real es `C_Feriados` (`tblJVh2kPd4uMgxpb`) y está poblada y en uso. Gana la base real por
+**RO-15**, y además el prefijo `C_` es el correcto por dominio: es un catálogo paramétrico, no un
+histórico. Renombrar la tabla en Airtable sólo para complacer al documento rompería lo que ya
+funciona y no arregla nada. **Ningún artefacto de P8.6 escribe `H_Feriados`**: `lib/feriados.ts`,
+los blueprints y el script de AT08 usan `C_Feriados` y su `tbl…`. La corrección de la spec sigue
+siendo **CI-007**, con dueño Sergio y fecha objetivo el próximo bump normativo.
+*Ubicación del trabajo:* **Tanda A · A-4** (auditoría) y **M-12** (saneamiento). No genera
+checkpoint nuevo: el saneamiento de datos ya era M-12, sólo se amplía su alcance.
+*Impacto en campos declarados en §9.6:* **ninguno.** No se agrega, quita ni renombra un solo
+campo. Lo que cambia es el alcance de la limpieza (el par `nombre`/`nombre_feriado` y la opción
+`"tipo"` del select) y el recuento de filas sin `anno`, que era 8 y es **5**.
+
+**§9.6-R2 · `AT08_Alertas_SLA` se crea. La fila de inventario se actualiza, no se duplica.**
+La divergencia real no era "existe vs no existe", sino que había **dos objetos distintos con el
+mismo código**: la *Automation* desplegada —que no existe— y la *fila de inventario* en
+`C_AutomationsAirtable` —que sí existe, en `estado = Inventariado`, desde el 03-jun-2026—. La
+tanda F sigue siendo **creación** en el sentido que importa: hay que escribir el script, crear la
+automatización y activarla. Lo que v1.8 no contemplaba es que crearla obliga a **cerrar el ciclo
+del registro**, y que ese registro trae dos datos desalineados que hay que corregir en el mismo
+turno: el nombre está en minúscula (`AT08_alertas_sla`) contra la convención de las cuatro
+desplegadas (`AT01_Motor_Reglas`, `AT02_Asignar_Tasador`, `AT03_Calculos_DAG`,
+`AT04_Validar_Rangos`), y la `descripcion` dice *"dispara SC13"*, escenario que en este repo no
+existe y que §9.5.1 ya resolvió como alias (**RO-14**).
+*Nombre canónico:* **`AT08_Alertas_SLA`** — TitleCase, igual que las cuatro desplegadas. El
+`codigo` sigue siendo `AT08` y la fila sigue siendo `recxWkj3x8tzqzHmo`: se **actualiza**, no se
+crea una segunda.
+*Ubicación del trabajo:* **Tanda F**, con paso nuevo **F-5** y ampliación de **M-16** y **M-17**.
+No hay checkpoint nuevo.
+*Impacto en campos declarados en §9.6:* **ninguno en `TX_Solicitudes` ni en `C_SLA`.** El cambio
+es de datos en `C_AutomationsAirtable` (3 celdas de una fila existente) y de nomenclatura.
+
+**§9.6-R3 · `sla_revision_horas` es el nombre canónico, y su regla de consumo queda fijada.**
+`sla_revision` no existe en `C_SLA` — verificado campo por campo — y la spec lo da por existente
+en dos lugares (§3.2 y §5.2.4 · etapa 7). Se crea, pero **no** con el nombre de la spec: toda
+`C_SLA` está en días y este sub-SLA vale **30 minutos** (§5.2.4 · etapa 7), de modo que un campo
+llamado `sla_revision` junto a `dias_totales` se lee como días y produce un error de 48× que
+ninguna validación atraparía. El sufijo de unidad es la corrección barata. *(§3.2 nombra además
+un `sla_aplicable` global que tampoco existe; no se crea nada por él —el agregado ya vive en
+`dias_totales`— y se anota junto a CI-007 para el bump de la spec.)*
+*Regla de consumo —lo que v1.8 dejaba sin decidir y es la única pregunta de diseño real:*
+`C_SLA_Etapas.e7` y `C_SLA.sla_revision_horas` describen el mismo plazo, y dos fuentes para el
+mismo número es exactamente lo que **RO-05** prohíbe. Se resuelve por precedencia, no por
+duplicación: **`sla_revision_horas` es un override por par (cliente, tipo_informe,
+tipo_propiedad) del umbral de la etapa 7, y sólo de esa etapa.** Cuando está vacío —el caso de
+v1.9, donde nadie lo puebla— la etapa 7 usa `sla_ideal_horas`/`sla_max_horas` de `C_SLA_Etapas`,
+que valen `0.5` y `0.5`. Cuando está poblado, sustituye **ambos** umbrales de e7 para esa fila de
+`C_SLA` y para ninguna otra etapa. `recalcularSla()` recibe el override como parámetro opcional
+junto a la matriz; el motor no sabe de dónde salió y no conoce ningún número de §5.2.4. Es la
+misma mecánica que `matriz_etapas`, un peldaño más fino.
+*Ubicación del trabajo:* **Tanda A · A-3** (crear el campo) y **Tanda B · B-3** (el parámetro en
+`recalcularSla`). El poblado sería **M-11.a**, pero la Decisión 2 lo fija **vacío**: la fila
+default no lo puebla y ningún par tiene override de e7 en v1.9.
+No hay checkpoint nuevo.
+*Impacto en campos declarados en §9.6:* **cero campos nuevos respecto de v1.8.** Los tres campos
+de `C_SLA` siguen siendo `sla_revision_horas`, `matriz_etapas` y `activo_desde`, y los 21 de
+`TX_Solicitudes` no se tocan. Lo que se agrega es la **semántica de precedencia**, que antes no
+estaba escrita, más una firma de `recalcularSla()` con un parámetro opcional.
+
+---
+
+**§9.6-R4 · El baseline del SLA agregado se carga sobre la familia superviviente. Los nombres
+con que llegó la decisión no son los del schema.**
+
+La Decisión 2 fija el baseline en términos de negocio —**3 días de compromiso (umbral rojo), 2
+días de ámbar, 0 a 1 día de verde**— y lo expresó con los nombres `sla_dias`,
+`umbral_ambar_dias` y `umbral_verde_dias`. **Ninguno de los tres sirve tal cual**, y esto no es
+una objeción al contenido sino a la etiqueta:
+
+- `sla_dias` **es la familia que M-11 borra.** Cargarlo y borrarlo en el mismo checkpoint es
+  contradictorio: el borrado de `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` ya está decidido
+  en v1.9 sobre la evidencia de 0 filas no vacías, y la familia superviviente es
+  `dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja`.
+- `umbral_ambar_dias` y `umbral_verde_dias` **no existen** en `C_SLA` (12 campos, verificados
+  uno a uno). Crearlos sería estructura nueva, y la Decisión 2 es explícita en que cambia el
+  contenido cargado y no la estructura.
+
+*Resolución —se conservan los valores, se traducen los nombres:*
+
+| Decisión 2 dice | Se carga en | Valor | Por qué |
+|---|---|---|---|
+| `sla_dias = 3` | **`dias_totales`** | `3` | Es el compromiso total del par y el umbral rojo. Familia superviviente. |
+| `umbral_ambar_dias = 2` | **`dias_alerta_amarilla`** | `2` | Mismo concepto, nombre real. El vocabulario amarillo/rojo del campo coincide con RN-04. |
+| — | **`dias_alerta_roja`** | `3` | El rojo **es** el compromiso: se carga igual a `dias_totales`, no se deja vacío. Vacío significaría "sin umbral" y el semáforo nunca llegaría a rojo. |
+| `umbral_verde_dias = 1` | **ningún campo** | — | Es **derivado**, no un dato: verde = todo lo que está por debajo de `dias_alerta_amarilla`, es decir 0 a 1 día. Un cuarto campo para almacenar `ámbar − 1` sería la duplicación que **RO-05** prohíbe. |
+| `sla_revision_horas` vacío | `sla_revision_horas` | *(vacío)* | Sin override: la etapa 7 usa los `0.5`/`0.5` de `C_SLA_Etapas` (**§9.6-R3**). Es lo que v1.9 ya esperaba. |
+
+*La fila comodín no lleva `*` en ninguna parte.* `cliente`, `tipo_informe` y `tipo_propiedad`
+son `multipleRecordLinks` a `M_Clientes`, `M_TiposInforme` y `M_TiposPropiedad`: no aceptan un
+literal `"*"`. **La convención de comodín es el campo vacío.** La fila default se crea con los
+tres links **sin vincular**, `clave_natural = SLA_DEFAULT_GLOBAL`, `nombre` igual,
+`activo = true` y `activo_desde` = fecha de carga.
+
+*Precedencia de resolución —campo a campo, no fila a fila.* Tras M-11 conviven **dos** filas: la
+default y la `SLA_METLIFE_Refinanciamiento` preexistente, que tiene `dias_totales = 4` y **sus
+dos umbrales vacíos**. La regla que evita el hueco: para un par dado se toma la fila **más
+específica que empareje** (los tres links coincidiendo; si no hay, la default), y **cada campo
+vacío en esa fila se resuelve contra la default**. Consecuencia concreta y deliberada: MetLife ·
+Refinanciamiento · Casa conserva sus **4 días** de compromiso y hereda **ámbar a los 2** y
+**rojo a los 4** —el rojo hereda el compromiso de su propia fila, no el 3 de la default—;
+cualquier otro par lee 3 / 2 / 3. Nadie tiene que completar la fila de MetLife para que el
+semáforo funcione, y por eso esta decisión **no genera una nueva pregunta de negocio**.
+
+*Ubicación del trabajo:* **M-11.a** (la carga) y **Tanda C/D** (el consumo, cuando el lector de
+`C_SLA` se escriba: hoy el código no lee la tabla en ningún punto). *Impacto en campos
+declarados en §9.6:* **cero campos nuevos.** Se pobla lo que ya existe y se borra lo que v1.9 ya
+había decidido borrar.
 
 #### Modelo de datos
 
@@ -1807,7 +2007,9 @@ denormalizar.
 | `activo` | checkbox | Default `true`. |
 
 Siembra literal desde §5.2.4 — **estos catorce números son la única fuente**; el código no los
-lleva hardcodeados:
+lleva hardcodeados. **Son datos cerrados por Héctor (Decisión 1 · v1.10): se cargan literales y
+no se elicitan.** No hay nada que preguntar sobre esta tabla; lo único que se hace con ella es
+copiarla sin redondear ni convertir de unidad, y ratificar la copia en **M-11.b**:
 
 | `etapa_key` | `nombre_etapa` | `responsable` | `sla_ideal_horas` | `sla_max_horas` |
 |---|---|---|---|---|
@@ -1823,15 +2025,33 @@ lleva hardcodeados:
 
 | Campo | Tipo | Notas |
 |---|---|---|
-| `sla_revision_horas` | number (2 dec) | Sub-SLA de revisión del visador. §5.2.4 · etapa 7 y §3.2 lo dan por existente bajo el nombre `sla_revision`; **no existe**. Se crea con sufijo de unidad para que nadie lo confunda con días, que es la unidad del resto de la tabla. |
+| `sla_revision_horas` | number (2 dec) | Sub-SLA de revisión del visador (**§9.6-R3**). §5.2.4 · etapa 7 y §3.2 lo dan por existente bajo el nombre `sla_revision`; **no existe**. Se crea con sufijo de unidad para que nadie lo confunda con días, que es la unidad del resto de la tabla. **Es un override del umbral de la etapa 7 y de ninguna otra**: vacío → e7 usa `C_SLA_Etapas` (`0.5` / `0.5`); poblado → sustituye los dos umbrales de e7 para ese par. Nadie lo puebla en v1.9. |
 | `matriz_etapas` | multipleRecordLinks → `C_SLA_Etapas` | Vacío = matriz global de §5.2.4. Poblado = override del par. En esta iteración **nadie lo puebla**; existe para que el override futuro no exija migración. |
 | `activo_desde` | date | RF-35 exige que modificar un SLA no altere solicitudes en curso. Sin esta fecha la regla no es verificable. La solicitud adopta la fila vigente a su `sla_e1_inicio_ts`. |
 
-*Limpieza (M-11, decisión de Sergio):* de las dos familias duplicadas se conserva
+*Limpieza (M-11.a, decisión tomada):* de las dos familias duplicadas se conserva
 **`dias_totales` / `dias_alerta_amarilla` / `dias_alerta_roja`** —es la poblada y su vocabulario
 coincide con el amarillo/rojo de RN-04— y se eliminan `sla_dias`, `sla_dias_alerta` y
 `sla_dias_vencido`, previa verificación de que están vacías en las filas que existan al momento
 de borrarlas. Es la deuda (1) de CI-005 y es prerrequisito de todo lo demás.
+
+*Baseline del agregado (M-11.a · Decisión 2 · **§9.6-R4**):* además de la limpieza, `C_SLA`
+recibe **una sola fila nueva**, la global default, con los tres links vacíos como comodín:
+
+| Campo | Valor |
+|---|---|
+| `clave_natural` · `nombre` | `SLA_DEFAULT_GLOBAL` |
+| `cliente` · `tipo_informe` · `tipo_propiedad` | *(vacíos = comodín · **§9.6-R4**)* |
+| `dias_totales` | `3` — compromiso y umbral rojo |
+| `dias_alerta_amarilla` | `2` |
+| `dias_alerta_roja` | `3` |
+| `sla_revision_horas` | *(vacío — sin override de e7 · **§9.6-R3**)* |
+| `matriz_etapas` | *(vacío — matriz global de §5.2.4)* |
+| `activo` · `activo_desde` | `true` · fecha de carga |
+
+Verde no tiene campo: es todo lo que queda por debajo de `dias_alerta_amarilla`, o sea **0 a 1
+día**. Con esta fila RF-08 queda parametrizado para **todos** los pares, incluidos los que
+todavía no existen en `M_Clientes`, y ninguna solicitud puede quedar sin umbral.
 
 **Campos nuevos en `TX_Solicitudes`** (21: 20 de datos + 1 fórmula). Todos con prefijo `sla_`
 para que un `grep sla_` los liste completos, y todos `dateTime` **con hora**, en
@@ -1939,7 +2159,10 @@ export interface EtapaSla {
   tono?: 'green' | 'amber' | 'red'      // sólo en 'en_curso' y 'completada'
   minutosHabiles?: number
 }
-export function recalcularSla(fila, matriz, feriados): {
+/** `overrideE7Horas` implementa §9.6-R3: si viene, sustituye ideal y máximo de la etapa 7
+ *  —y sólo de la 7—. Llega desde `C_SLA.sla_revision_horas` de la fila vigente del par.
+ *  El motor no sabe de dónde salió y sigue sin conocer ningún número de §5.2.4. */
+export function recalcularSla(fila, matriz, feriados, overrideE7Horas?: number): {
   etapaActual?: number; alertaTs?: string; venceTs?: string; etapas: EtapaSla[]
 }
 ```
@@ -2081,9 +2304,14 @@ error técnico—:
 
 #### Alertas y notificaciones
 
-**AT08 · Alertas SLA — hay que crearla.** No existe en la base (verificado: la lista de
-Automations no la incluye). Se crea como `AT08_Alertas_SLA`, trigger `cron` 08:00 diario, y hace
-todo dentro de Airtable, sin depender de que Railway esté arriba: busca las solicitudes con
+**AT08 · Alertas SLA — hay que crearla (§9.6-R2).** La *Automation* no existe. Lo que sí existe
+es su **fila de inventario** en `C_AutomationsAirtable` (`recxWkj3x8tzqzHmo`, `estado =
+Inventariado`, del 03-jun-2026): un apunte de diseño, no algo desplegado. Por eso la Tanda F es
+**creación y no extensión** —hay que escribir el script, crear la automatización y activarla—,
+con la obligación añadida de **cerrar el ciclo del registro** en el mismo turno (F-5 · M-17), y
+no de crear una segunda fila `AT08`. Se crea como `AT08_Alertas_SLA` —TitleCase, como las cuatro
+desplegadas; el registro dice `AT08_alertas_sla` y se corrige—, trigger `cron` 08:00 diario, y
+hace todo dentro de Airtable, sin depender de que Railway esté arriba: busca las solicitudes con
 `sla_semaforo_etapa` en (`ambar`, `rojo`) **o** con el agregado en riesgo, arma el resumen que
 §1.7 pide ("visible en la Vista de SLA"), y por cada solicitud **en rojo** encola la notificación
 al responsable de área. Puede hacerlo sin recalcular nada porque el semáforo es una fórmula
@@ -2127,6 +2355,12 @@ ahora exigiría una tabla nueva, un catálogo cerrado de motivos que nadie ha el
 de estado que la máquina de estados de §2.11 no contempla. La alerta de fin de jornada de §5.2.8
 se difiere con él, por dependencia directa.
 
+**Ratificado en v1.10 (Decisión 3), sin cambios.** El diferimiento se revisó al incorporar las
+decisiones de negocio y se confirma tal cual: **ni la matriz R1–R3 ni RN-55 entran en ninguna
+tanda de esta iteración**, y `FUT-EJ-08` sigue siendo su único domicilio. Este párrafo es el
+anclaje greppable de la ratificación; el diferimiento en sí no se reescribe ni se duplica en
+otra sección.
+
 #### Impacto en documentos vigentes (se listan, no se editan)
 
 - **`docs/diseno.md`** — la nota de §3 dice "El reloj por etapa **no está implementado**
@@ -2143,7 +2377,13 @@ se difiere con él, por dependencia directa.
 - **`docs/CODE_INCONSISTENCIES.md`** — **CI-005** se cierra parcialmente con P8.6: los pasos (2),
   (3) y (4) de su resolución quedan cubiertos; el (1) —poblar `C_SLA`— es de negocio y depende de
   M-11. **CI-007** (`H_Feriados` vs `C_Feriados`) sigue abierta y P8.6 la respeta usando el
-  nombre real.
+  nombre real: **§9.6-R1** no la cierra, la ratifica. Conviene además anotar en CI-007 que el
+  saneamiento de datos de la tabla (fila basura, duplicado, `anno`, el par
+  `nombre`/`nombre_feriado`) es **M-12** de este plan, para que la corrección de la spec y la de
+  los datos no se confundan: son dos trabajos distintos sobre el mismo objeto.
+- **`C_AutomationsAirtable`** *(dato, no documento)* — la fila `recxWkj3x8tzqzHmo` describe un
+  AT08 que dispara "SC13" y se llama `AT08_alertas_sla`. Ninguna de las dos cosas será cierta al
+  cerrar la Tanda F. Se corrige en **F-5 · M-17** (**§9.6-R2**), no aquí.
 - **`docs/schema-airtable.md`** — no refleja `C_SLA_Etapas` ni los 21 campos nuevos. Se actualiza
   **dentro** de la Tanda A, no después: P1/Types y los Route Handlers lo leen como fuente.
 - **`CLAUDE.md`** — la tabla de escenarios Make no tiene fila para `SC-SLA-Alertas`; la lista de
@@ -2151,8 +2391,11 @@ se difiere con él, por dependencia directa.
 - **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md`** — **no requiere cambios**: es la
   fuente normativa y P8.6 la implementa sin desviarse. Las dos divergencias que P8.6 encuentra
   son de la spec hacia la base, ya registradas y sin editar aquí: `H_Feriados` no existe
-  (CI-007) y `sla_revision` en `C_SLA` tampoco (§5.2.4 · etapa 7 lo da por existente). Ambas se
-  corrigen en el próximo bump normativo, con su changelog, no dentro de esta tanda (RO-15).
+  (CI-007 · **§9.6-R1**) y `sla_revision` en `C_SLA` tampoco (§5.2.4 · etapa 7 y §3.2 lo dan por
+  existente · **§9.6-R3**). Se suma una tercera, menor, detectada en la reverificación de v1.9:
+  §3.2 nombra un `sla_aplicable` global que tampoco existe —el agregado vive en `dias_totales`—.
+  Las tres se corrigen en el próximo bump normativo, con su changelog, no dentro de esta tanda
+  (RO-15).
 
 ### §9.6.2 Construcción — Tandas
 
@@ -2163,19 +2406,43 @@ se difiere con él, por dependencia directa.
 **Entregable:** schema Airtable listo, matriz sembrada, `C_Feriados` limpia,
 `docs/schema-airtable.md` actualizado con IDs reales.
 
-1. **A-1 · Crear `C_SLA_Etapas`** con sus 8 campos. Vía MCP si `create_table` lo permite; si
-   falla, queda para M-9 en la UI. Sembrar las 7 filas de §5.2.4 **copiando la tabla de
-   §9.6.1**, sin redondear ni convertir: `0.5` es media hora, no 30.
+1. **A-1 · Crear `C_SLA_Etapas`** con sus 8 campos. **La tabla no existe** (reverificado el
+   10-ago-2026: 66 tablas, ninguna con ese nombre), así que A-1 es su creador y **M-11.b no
+   puede correr antes**. Vía MCP si `create_table` lo permite; si falla, queda para M-9 en la
+   UI. Sembrar las 7 filas de §5.2.4 **copiando la tabla de §9.6.1**, sin redondear ni
+   convertir: `0.5` es media hora, no 30. Los catorce números son **dato cerrado (Decisión 1)**:
+   A-1 los carga, M-10 los verifica contra la spec y M-11.b los ratifica como negocio. Ninguno
+   de los tres pasos abre una elicitación.
 2. **A-2 · Crear los 20 campos de datos en `TX_Solicitudes`** (14 timestamps + 4 derivados + 2
    de pausa). El MCP no siempre puede crear campos en `TX_Solicitudes` (aprendizaje ya conocido
    de P0.5): cada fallo se marca `pendiente_ui_manual` y pasa a M-9.
-3. **A-3 · Crear los 3 campos nuevos de `C_SLA`** (`sla_revision_horas`, `matriz_etapas`,
-   `activo_desde`) y **reportar** —sin borrar— el estado de las dos familias duplicadas, con el
-   recuento de filas no vacías de cada una, para que M-11 sea una decisión informada.
-4. **A-4 · Auditar `C_Feriados`** y entregar la lista exacta de correcciones: la fila sin fecha
-   (`recdfwWtdHFcm05sb`), el duplicado de 2027-01-01 (`recGB2eUtwWs3cIuM` /
-   `reckuUbALWocT4kWX`), las 8 filas de 2026 sin `anno`, y los feriados de 2027 faltantes. **No
-   ejecutar el borrado**: es M-12.
+3. **A-3 · Crear los 3 campos nuevos de `C_SLA`** (`sla_revision_horas` · **§9.6-R3**,
+   `matriz_etapas`, `activo_desde`) y **reportar** —sin borrar— el estado de las dos familias
+   duplicadas. El recuento ya está hecho en la reverificación de v1.9 y da **0 filas no vacías**
+   en `sla_dias` / `sla_dias_alerta` / `sla_dias_vencido` sobre un total de 1 fila: se vuelve a
+   correr al momento de ejecutar la tanda —la tabla puede haber crecido— y se entrega la salida
+   literal, no el número recordado (**RO-02**), porque es la evidencia con la que **M-11.a**
+   ejecuta el borrado. La reverificación del 10-ago-2026 la volvió a confirmar: **0 de 1**.
+   `activo_desde` se crea aquí porque la fila default de M-11.a lo puebla (**§9.6-R4**).
+4. **A-4 · Auditar `C_Feriados`** (**§9.6-R1**) y entregar la lista exacta de correcciones, que
+   la reverificación de v1.9 ya dejó cerrada:
+   - la fila basura `recdfwWtdHFcm05sb` (sin `fecha`, `nombre = "nombre_feriado"`, `tipo = "tipo"`);
+   - el duplicado de 2027-01-01: se conserva **`recGB2eUtwWs3cIuM`** (`activo = true`, `nombre`
+     poblado) y se borra **`reckuUbALWocT4kWX`**, que además tiene el **primary field vacío** y
+     ya está en `activo = false` —o sea, el motor hoy no lo ve, y por eso esto es higiene y no un
+     bug latente—;
+   - las **5** filas de 2026 sin `anno` — `recTAX7ivrtBMsBJy` (Sábado Santo), `recUnyg8a9Lz9fTKj`
+     (Asunción), `recYGijUy3oAQUtRk` (Glorias del Ejército), `recA6Z458pK6M6kOv` (Iglesias
+     Evangélicas), `recipUaWrj6Wy461y` (Todos los Santos). **v1.8 decía 8; son 5** (la sexta sin
+     `anno` es la fila basura, que se borra);
+   - la opción huérfana **`"tipo"`** en el select `tipo` (`fldoep4CBwmSObgBx`), que dejó la fila
+     basura al importarse;
+   - el par redundante **`nombre` / `nombre_feriado`**, divergente en `recwAPk3zbnLgctHn`
+     (`"Dia del Trabajo"` vs `"Dia del Trabajador"`) y con `nombre_feriado` vacío en 6 filas;
+   - los feriados de **2027 faltantes** (hoy sólo está Año Nuevo).
+
+   **No ejecutar ningún borrado ni rename**: todo es M-12. El motor lee sólo `fecha` y `activo`,
+   así que nada de esto bloquea la Tanda B.
 5. **A-5 · Backfill de las solicitudes existentes** (~54 filas), vía MCP, sólo datos: para cada
    fila, `sla_e1_inicio_ts = fecha_solicitud`; y si `fecha_asignacion_ts` está poblada,
    `sla_e1_fin_ts = sla_e2_inicio_ts = fecha_asignacion_ts`. Sin backfill, toda la cartera
@@ -2184,18 +2451,24 @@ se difiere con él, por dependencia directa.
 6. **A-6 · Actualizar `docs/schema-airtable.md`** con la tabla nueva y los 21 campos, con sus
    `tbl…`/`fld…` reales.
 
-**Checkpoints:** **M-9** (bloqueante), **M-10**, **M-11** (bloqueante), **M-12**, **M-13**
-(bloqueante).
+**Checkpoints:** **M-9** (bloqueante), **M-10**, **M-11.a** (bloqueante) y **M-11.b**, **M-12**,
+**M-13** (bloqueante).
 
 **Criterio de aceptación de Tanda A:** `C_SLA_Etapas` existe con 7 filas cuyos catorce valores
 coinciden uno a uno con §5.2.4; los 21 campos existen en `TX_Solicitudes` con el tipo declarado
-(o están listados como `pendiente_ui_manual`); `C_Feriados` devuelve 15 filas de 2026 y las de
-2027 sin duplicados ni filas sin fecha; `docs/schema-airtable.md` refleja todo con IDs reales.
+y `timeZone = America/Santiago` en los 14 timestamps (o están listados como
+`pendiente_ui_manual`); `C_SLA` tiene `sla_revision_horas`, `matriz_etapas` y `activo_desde`, su
+fila `SLA_DEFAULT_GLOBAL` cargada con 3 / 2 / 3 y los tres links vacíos, y **ya no tiene** los
+campos `sla_dias`, `sla_dias_alerta` ni `sla_dias_vencido`;
+`C_Feriados` devuelve 15 filas de 2026 y las de 2027 sin duplicados ni filas sin fecha;
+**cero ocurrencias de `H_Feriados`** en los artefactos de P8.6 (verificable con
+`grep -rn "H_Feriados" lib/ app/ docs/_artefactos/`, que debe salir vacío · **§9.6-R1** ·
+**RO-02**); `docs/schema-airtable.md` refleja todo con IDs reales.
 
 #### Tanda B · Motor de cálculo
 
 **Precondición:** Tanda A cerrada hasta A-1 (la matriz sembrada). El motor no toca Airtable, así
-que puede escribirse en paralelo a M-11/M-12.
+que puede escribirse en paralelo a M-11.a/M-11.b/M-12.
 **Actor:** Claude Code.
 **Entregable:** `lib/sla-habil.ts`, `lib/sla-etapas.ts`, `lib/feriados.ts` y sus tests.
 
@@ -2325,13 +2598,22 @@ solicitud del backfill sin `fecha_asignacion_ts` no muestra ningún ámbar fabri
 28. **F-3 · Filas de `C_NotificacionesConfig`** para las tres áreas, con asunto y cuerpo en
     es-CL siguiendo §6.1.
 29. **F-4 · Env var** `MAKE_WEBHOOK_URL_SC_SLA` en `.env.example` y en Railway.
+30. **F-5 · Cerrar el ciclo del registro (§9.6-R2).** Actualizar la fila existente
+    `recxWkj3x8tzqzHmo` de `C_AutomationsAirtable` — **no crear una segunda fila `AT08`**:
+    `nombre_automation` → `AT08_Alertas_SLA` (TitleCase, como las cuatro desplegadas);
+    `estado` → `Activo` **sólo después de M-18**, nunca antes; `descripcion` → reemplazar
+    *"dispara SC13"* por *"dispara SC-SLA-Alertas"* (RO-14: SC13 es el nombre de la spec, el
+    escenario real es SC-SLA-Alertas); `tablas_lee` → `TX_Solicitudes, C_SLA, C_SLA_Etapas`;
+    `tablas_escribe` → `TX_Notificaciones, LogEscenarios`. Es el paso que evita que el inventario
+    quede mintiendo justo sobre la automatización que este plan crea.
 
 **Checkpoints:** **M-15** (compuerta de aprobación), **M-16**, **M-17**, **M-18**.
 
 **Criterio de aceptación de Tanda F:** AT08 existe con trigger cron 08:00 y queda **sin activar**
 hasta pasar el E2E; el `.js` y el `.json` existen y no contienen datos inventados; hay tres filas
 en `C_NotificacionesConfig` con `activa = true`; `LogEscenarios.Escenario` tiene la opción
-`AT08_SLA`.
+`AT08_SLA`; `C_AutomationsAirtable` tiene **exactamente una** fila con `codigo = AT08`, es
+`recxWkj3x8tzqzHmo`, y su `nombre_automation` dice `AT08_Alertas_SLA`.
 
 #### Tanda G · QA end-to-end
 
@@ -2339,10 +2621,10 @@ en `C_NotificacionesConfig` con `activa = true`; `LogEscenarios.Escenario` tiene
 **Actor:** Sergio (ejecución) + Claude Code (preparación de datos y lectura de trazas).
 **Entregable:** los nueve casos de §9.6.3 verificados con evidencia.
 
-30. **G-1 · Preparar el juego de datos** de §9.6.3 con MCP.
-31. **G-2 · Ejecutar los nueve casos** y capturar la evidencia: fila de `TX_Solicitudes` con sus
+31. **G-1 · Preparar el juego de datos** de §9.6.3 con MCP.
+32. **G-2 · Ejecutar los nueve casos** y capturar la evidencia: fila de `TX_Solicitudes` con sus
     timestamps, `LogEscenarios`, `TX_Notificaciones`, `A_Eventos` y la pantalla.
-32. **G-3 · `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P8.6.md`** con la plantilla de §11.2, y
+33. **G-3 · `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P8.6.md`** con la plantilla de §11.2, y
     `docs/_notas/snapshot-P8.6.md`.
 
 **Criterio de aceptación de Tanda G:** los nueve casos de §9.6.3 en verde, cada uno con su
@@ -2355,16 +2637,17 @@ plan.
 
 | # | Acción | Cuándo |
 |---|---|---|
-| M-9 | Crear en la UI de Airtable lo que el MCP no haya podido: `C_SLA_Etapas` y/o los campos de `TX_Solicitudes` marcados `pendiente_ui_manual`. Confirmar tipo `dateTime` **con hora** en los 14 timestamps | **Antes** de A-5 · bloqueante para todo P8.6 |
+| M-9 | Crear en la UI de Airtable lo que el MCP no haya podido: `C_SLA_Etapas` y/o los campos de `TX_Solicitudes` marcados `pendiente_ui_manual`. Confirmar tipo `dateTime` **con hora** en los 14 timestamps y **`timeZone = America/Santiago`**, no `client` (así quedó `fecha_solicitud`, y es la trampa que el motor no debe heredar). **Además, y sin relación con SLA:** abrir Airtable → Automations y confirmar que **`AT02_Asignar_Tasador` está apagada**. El registro `C_AutomationsAirtable` la marca `Activo` y ninguna API puede desmentirlo; encendida rompe la REGLA A · D-15 y choca con el guard 409 de `asignar/route.ts` | **Antes** de A-5 · bloqueante para todo P8.6 |
 | M-10 | Verificar las 7 filas de `C_SLA_Etapas` contra §5.2.4 leyendo la spec, no el plan | Tras A-1 |
-| M-11 | Decidir qué familia de campos duplicados de `C_SLA` se conserva y borrar la otra; poblar `C_SLA` con los pares (cliente, tipo_informe) vigentes y sus tres umbrales. **Es de negocio (Héctor / Óscar), no técnico** | **Antes** de Tanda C · bloqueante para RF-08 |
-| M-12 | Limpiar `C_Feriados`: borrar la fila sin fecha, resolver el duplicado 2027-01-01, completar `anno` en las 8 filas de 2026 y cargar 2027 completo | Tras A-4 |
+| M-11.a | **Cargar el baseline del SLA agregado** (Decisión 2 · **§9.6-R4**). Crear en `C_SLA` la fila global default `SLA_DEFAULT_GLOBAL` con `cliente`/`tipo_informe`/`tipo_propiedad` **vacíos** (el comodín no se escribe `*`: son links), `dias_totales = 3`, `dias_alerta_amarilla = 2`, `dias_alerta_roja = 3`, `sla_revision_horas` **vacío** (sin override de e7 · **§9.6-R3**), `activo = true`, `activo_desde` = fecha de carga. Verde no se carga: es 0 a 1 día, derivado del ámbar. Y **borrar la familia perdedora** `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` tras reconfirmar con la salida literal de A-3 que están vacías en las filas existentes (al 10-ago-2026: **0 de 1**). **Ya no se elicita nada**: Héctor y Óscar son validadores post-carga si quieren revisar la fila default, no bloqueadores | **Antes** de Tanda C · bloqueante para RF-08 |
+| M-11.b | **Cargar y ratificar la matriz por etapa** (Decisión 1). Las 7 filas de §5.2.4 en `C_SLA_Etapas` con sus valores literales: e1 `2`/`3` · e2 `4`/`6` · e3 `0.5`/`0.5` · e4 `2`/`3` · e5 `24`/`48` · e6 `2`/`3` · e7 `0.5`/`0.5` (por informe). Son **datos cerrados por Héctor**: se cargan, no se definen. La carga material la ejecuta **A-1** y la verificación contra la spec es **M-10**; M-11.b es el visto bueno de negocio sobre esa copia. **Depende de A-1 / M-9** (la tabla no existe todavía) | Tras M-10 · no bloquea a M-11.a |
+| M-12 | Limpiar `C_Feriados` (**§9.6-R1**) con la lista cerrada de A-4: borrar la fila basura `recdfwWtdHFcm05sb`; borrar el duplicado `reckuUbALWocT4kWX` y conservar `recGB2eUtwWs3cIuM`; borrar la opción `"tipo"` del select `tipo` una vez que no quede fila usándola; completar `anno` en las **5** filas de 2026 que lo tienen vacío; decidir el par `nombre`/`nombre_feriado` —lo natural es dejar `nombre` (es el primary) y vaciar o eliminar `nombre_feriado`, revisando antes la divergencia de `recwAPk3zbnLgctHn`—; y cargar 2027 completo | Tras A-4 |
 | M-13 | Pegar la fórmula de `sla_semaforo_etapa` en la UI de Airtable — **el MCP no crea ni modifica fórmulas** — y verificar que emite exactamente `verde`/`ambar`/`rojo`/`sin_dato`, en minúscula y sin emoji | **Antes** de Tanda C |
 | M-14 | Reimportar `SC01` y `SC-Asignar` v2.1 en eu1 y **pausar la versión anterior en el mismo turno** (RO-10). Verificar en el diseñador que los seis campos SLA llegan mapeados y ninguno aparece vacío | Tras C-6 |
 | M-15 | **Aprobar la creación del escenario `SC-SLA-Alertas`** en Make. Sin este `sí` explícito, la Tanda F no arranca | **Antes** de F-2 |
-| M-16 | Crear `AT08_Alertas_SLA` en Airtable Automations con trigger cron 08:00 y el script de F-1, y **dejarla en borrador** | Tras F-1, **antes** de M-18 |
-| M-17 | Crear las 3 filas de `C_NotificacionesConfig` y agregar la opción `AT08_SLA` a `LogEscenarios.Escenario` | Antes de M-18 |
-| M-18 | Correr AT08 en modo prueba con una solicitud en rojo y verificar: llega **un** correo al área correcta, `TX_Notificaciones` tiene **una** fila, y una segunda corrida no genera un segundo correo. Recién ahí activar AT08 | Tras M-16 |
+| M-16 | Crear `AT08_Alertas_SLA` en Airtable Automations con trigger cron 08:00 y el script de F-1, y **dejarla en borrador**. Usar ese nombre exacto en TitleCase (**§9.6-R2**), no el `AT08_alertas_sla` que trae el registro | Tras F-1, **antes** de M-18 |
+| M-17 | Crear las 3 filas de `C_NotificacionesConfig`; agregar la opción `AT08_SLA` a `LogEscenarios.Escenario`; y **actualizar la fila `recxWkj3x8tzqzHmo` de `C_AutomationsAirtable`** según F-5 — sin crear una segunda fila `AT08`, y dejando `estado = Inventariado` hasta que M-18 pase | Antes de M-18 |
+| M-18 | Correr AT08 en modo prueba con una solicitud en rojo y verificar: llega **un** correo al área correcta, `TX_Notificaciones` tiene **una** fila, y una segunda corrida no genera un segundo correo. Recién ahí activar AT08 y recién ahí poner `estado = Activo` en su fila de registro | Tras M-16 |
 
 > **M-13 no es opcional y va antes de la Tanda C.** Toda la vista "SLA en riesgo", el filtro y el
 > contador se apoyan en los literales que emite esa fórmula. Si emite algo distinto de lo
@@ -2372,18 +2655,32 @@ plan.
 > toda la tabla** y cero filas se lee como "no hay casos", no como "el filtro está mal". Es
 > exactamente el fallo silencioso de RO-13, y verificarlo cuesta treinta segundos.
 
-> **M-11 es la única compuerta de negocio del plan.** Con `C_SLA` en una sola fila y sin umbrales,
-> RF-08 no está parametrizado: el semáforo agregado seguirá mostrando lo que muestra hoy por
-> defecto. P8.6 puede completarse igual —RF-53 no depende de `C_SLA`—, pero entonces se entrega
-> medio requerimiento. Conviene arrancar M-11 el primer día, porque su tiempo de respuesta no lo
-> controla el equipo técnico.
+> **M-11 dejó de ser una compuerta de tiempo ajeno (v1.10).** Hasta v1.9, M-11 esperaba que
+> Héctor y Óscar definieran umbrales, y ese tiempo de respuesta no lo controlaba el equipo
+> técnico: era el único punto del plan que podía quedar detenido indefinidamente. Con las
+> Decisiones 1 y 2 **ya no hay nada que preguntar** —la matriz por etapa es dato cerrado y el
+> agregado tiene baseline 3 / 2 / 1—, así que M-11 pasa a ser **una carga ejecutable el mismo
+> día**, en dos mitades: **M-11.a** (fila default en `C_SLA` + borrado de la familia perdedora),
+> que sólo necesita A-3 y es la que sigue bloqueando RF-08 y la Tanda C; y **M-11.b** (matriz de
+> 7 filas), que **depende de A-1 / M-9** porque `C_SLA_Etapas` todavía no existe. Sigue siendo
+> el checkpoint que hay que atacar el primer día, pero por precedencia en el grafo, no por
+> riesgo de espera. La validación de Héctor y Óscar ocurre **después** de la carga y no bloquea
+> ninguna tanda: si quieren mover el baseline, se edita una fila.
 
 ### §9.6.3 Prueba end-to-end y criterios de aceptación
 
 **Preparación:** una solicitud creada un **martes a las 10:00** (dentro de ventana), otra creada
-un **viernes a las 22:00** (fuera de ventana), y una tercera creada el **17-sep-2026 a las 16:00**
-(víspera de dos feriados consecutivos, 18 y 19 de septiembre). `C_SLA_Etapas` sembrada,
-`C_Feriados` limpia, AT08 en borrador.
+un **viernes a las 22:00** (fuera de ventana), y una tercera creada el **jueves 17-sep-2026 a las
+16:00** (víspera del feriado del viernes 18, que arrastra el fin de semana). `C_SLA_Etapas`
+sembrada, `C_Feriados` limpia, AT08 en borrador.
+
+> **Corrección de calendario respecto de v1.8.** v1.8 describía este caso como "dos feriados
+> consecutivos, 18 y 19 de septiembre". **19-sep-2026 cae sábado**, así que no aporta nada al
+> cómputo: ya era día no hábil. Lo que hace fuerte al caso es otra cosa —un feriado **en viernes**
+> encadenado con el fin de semana produce **cuatro días corridos** sin consumo de SLA (vie 18 a
+> dom 20), que es el hueco más largo del calendario 2026 y el que rompe cualquier aritmética que
+> asuma "restar 24 h de reloj"—. El caso se conserva; lo que se corrige es su descripción y el
+> resultado esperado.
 
 - [ ] **E2E-10 · Dentro de ventana.** La solicitud del martes 10:00 tiene
       `sla_etapa_alerta_ts = martes 12:00` y `sla_etapa_vence_ts = martes 13:00` (2 h y 3 h de la
@@ -2392,10 +2689,15 @@ un **viernes a las 22:00** (fuera de ventana), y una tercera creada el **17-sep-
       el fin de semana: su alerta cae el **lunes a las 11:00** y su vencimiento el **lunes a las
       12:00**. Un correo que entra el viernes por la noche no empieza a correr hasta que abre la
       jornada.
-- [ ] **E2E-12 · Cruce de feriado.** La del 17-sep 16:00 con la etapa 5 (24 h ideales) vence
-      contando sólo horas hábiles: 18 y 19 de septiembre **no suman**. El resultado se verifica
-      contra el cálculo a mano escrito en el reporte de la tanda, no contra lo que devuelve el
-      código.
+- [ ] **E2E-12 · Cruce de feriado en viernes.** La del jueves 17-sep 16:00 con la etapa 5 (24 h
+      ideales / 48 h máximas) cuenta sólo horas hábiles: el **viernes 18** no suma por feriado y
+      el **sábado 19 / domingo 20** no suman por fin de semana. El cálculo a mano, que es contra
+      lo que se verifica —no contra lo que devuelve el código—: jue 17 aporta 2 h (16:00→18:00),
+      lun 21 y mar 22 aportan 9 h cada uno, y las 4 h que faltan caen el mié 23 de 9:00 a 13:00,
+      de modo que **`sla_etapa_alerta_ts` = miércoles 23-sep-2026 13:00**. Siguiendo igual hasta
+      48 h: mié 23 aporta 5 h más, jue 24 y vie 25 nueve cada uno, y la hora restante cae el lun
+      28 a las 9:00, de modo que **`sla_etapa_vence_ts` = lunes 28-sep-2026 10:00**. Ambos valores
+      se escriben en el reporte de la tanda **antes** de correr el código.
 - [ ] **E2E-13 · Transición a ámbar.** Adelantando `sla_e1_inicio_ts` para cruzar el umbral
       ideal, la fila aparece en la pestaña "SLA en riesgo" **aunque su semáforo agregado siga
       verde**, la píldora de etapa se pone ámbar y el detalle muestra el `Alert` con el literal
@@ -2640,9 +2942,10 @@ son las que agrega el control de SLA en v1.8 del plan.
 | `docs/diseno.md` **(§9.6)** | La nota de §3 afirma que el reloj por etapa *"no está implementado (CI-005) y su UI no está diseñada"*: tras §9.6 queda diseñada, y e1/e2 quedan implementadas. La vista 2 de TabsVistas (§3) define "SLA en riesgo" como `semaforo_sla = ámbar o rojo`; pasa a ser la **unión** con `sla_semaforo_etapa`. §216 lista los campos de sólo lectura sin `sla_semaforo_etapa`. §519 asume que AT08 ya existe. |
 | `docs/construccion.md` **(§9.6)** | §85 lista *"AT08 activo en Airtable"* como prerrequisito de un paso ya construido, cuando AT08 **no existe** en la base. §160 documenta el filtro de "SLA en riesgo" sin el término de etapa. §510 afirma que *"AT08 actualiza `semaforo_sla` en `TX_Solicitudes`"*: con §9.6 el semáforo es fórmula viva y AT08 sólo resume y notifica, no lo escribe. |
 | `docs/schema-airtable.md` **(§9.6)** | No tiene `C_SLA_Etapas` ni los 21 campos `sla_*` de `TX_Solicitudes`. **Excepción:** este archivo sí se actualiza dentro de la Tanda A (paso A-6), porque P1/Types y los Route Handlers lo leen como fuente. Queda listado para que la corrección quede visible, no para diferirla. |
-| `CLAUDE.md` **(§9.6)** | La tabla de escenarios Make no tiene fila para `SC-SLA-Alertas`. La entrada de `C_SLA` lista las dos familias de campos duplicadas sin decir cuál gana (lo decide M-11). La sección de SLA operacional dice *"Nada de esto está implementado todavía — ver CI-005"*, que deja de ser exacto al cerrar §9.6. |
-| `docs/CODE_INCONSISTENCIES.md` **(§9.6)** | **CI-005** queda cubierta en sus pasos (2), (3) y (4); el (1) —poblar `C_SLA`— depende de M-11 y es de negocio. Corresponde actualizar su estado, no cerrarla. **CI-007** (`H_Feriados` vs `C_Feriados`) sigue abierta y §9.6 la respeta usando el nombre real. |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md` **(§9.6)** | Fuente canónica, **no editable** y **sin cambios requeridos**: §9.6 la implementa sin desviarse. Dos divergencias spec→base a corregir en el próximo bump normativo, con su changelog (RO-15): (1) §5.2 y §5.2.1 nombran `H_Feriados`, que no existe (CI-007); (2) §5.2.4 · etapa 7 da por existente `sla_revision` en `C_SLA`, que tampoco existe — §9.6 lo crea como `sla_revision_horas`. |
+| `CLAUDE.md` **(§9.6)** | La tabla de escenarios Make no tiene fila para `SC-SLA-Alertas`. La entrada de `C_SLA` lista las dos familias de campos duplicadas sin decir cuál gana: gana `dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` y la otra desaparece en M-11.a (**§9.6-R4**), así que tras P8.6 esa fila queda desactualizada. La sección de SLA operacional dice *"Nada de esto está implementado todavía — ver CI-005"*, que deja de ser exacto al cerrar §9.6. |
+| `docs/CODE_INCONSISTENCIES.md` **(§9.6)** | **CI-005** queda cubierta en sus pasos (2), (3) y (4); el (1) —poblar `C_SLA`— queda cubierto por **M-11.a** con la fila default de la Decisión 2 (**§9.6-R4**), así que deja de depender de una elicitación pendiente. Corresponde actualizar su estado, no cerrarla. **CI-007** (`H_Feriados` vs `C_Feriados`) sigue abierta y §9.6 la respeta usando el nombre real (**§9.6-R1**); conviene anotarle que el saneamiento de datos de la tabla es M-12 de este plan y no forma parte de la corrección de la spec. |
+| `C_AutomationsAirtable` **(§9.6 · dato, no documento)** | La fila `recxWkj3x8tzqzHmo` (`codigo = AT08`) dice `nombre_automation = AT08_alertas_sla`, `estado = Inventariado` y `descripcion = "…dispara SC13"`. Al cerrar la Tanda F ninguna de las tres es cierta. **Sí se corrige** —es el único ítem de esta tabla que no queda diferido—, en **F-5 · M-17** (**§9.6-R2**). |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md` **(§9.6)** | Fuente canónica, **no editable** y **sin cambios requeridos**: §9.6 la implementa sin desviarse. Tres divergencias spec→base a corregir en el próximo bump normativo, con su changelog (RO-15): (1) §5.2 y §5.2.1 nombran `H_Feriados`, que no existe (CI-007 · **§9.6-R1**); (2) §5.2.4 · etapa 7 y §3.2 dan por existente `sla_revision` en `C_SLA`, que tampoco existe — §9.6 lo crea como `sla_revision_horas` (**§9.6-R3**); (3) §3.2 nombra además un `sla_aplicable` global inexistente, cuyo equivalente real es `dias_totales`. |
 | `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` **(§9.6)** | §6 no incluye los dos literales de alerta de etapa (ámbar y rojo) que §9.6.1 propone. Se implementan tal cual quedaron escritos y esperan ratificación en el catálogo de mensajes canónicos. Arrastra además el nombre `H_Feriados` (CI-007). |
 | `docs/_notas/checklist-P9-manual.md` **(§9.6)** | Sin sección para `SC-SLA-Alertas` ni para `AT08_Alertas_SLA`. §10.4.1 y §10.4.2 de este plan tampoco listan todavía el blueprint y el `.js` de la Tanda F. |
 | `CLAUDE.md` | La tabla de escenarios Make marca `SC05` como *"❌ por provisionar (BQ-3) · verificar código libre (H-03)"*. Tras §9.5 el código deja de estar libre: SC05 es el correo de asignación. Falta también la fila de `SC-Asignar` (hook `3441086`), que existe pero no está en la tabla. |
@@ -2657,4 +2960,4 @@ son las que agrega el control de SLA en v1.8 del plan.
 
 ---
 
-*Última actualización: 10-ago-2026 · **v1.8 del plan** (P8.6 · Control de SLA en IF-02: RF-08 agregado + RF-53 por etapa · tandas A-G · checkpoints M-9 a M-18 · reproceso diferido en FUT-EJ-08) · v1.7: logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9 · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
+*Última actualización: 10-ago-2026 · **v1.10 del plan** (tres decisiones de negocio incorporadas: **Decisión 1** matriz por etapa de §5.2.4 como dato cerrado, se carga literal y se ratifica en **M-11.b** · **Decisión 2** baseline del agregado, fila global default en `C_SLA` con 3 / 2 / verde 0-1 y `sla_revision_horas` vacío, en **M-11.a**, que además borra la familia perdedora · **Decisión 3** reproceso §5.2.5 ratificado como diferido en FUT-EJ-08 · reconciliación nueva **§9.6-R4** con la traducción de nombres al schema real, la convención de comodín por link vacío y la precedencia campo a campo frente a `SLA_METLIFE_Refinanciamiento` · M-11 se parte en M-11.a/M-11.b y deja de ser compuerta de tiempo ajeno · sin campos ni tandas nuevas) · v1.9 (reconciliación de las tres divergencias entre §9.6 y la base real: **§9.6-R1** `C_Feriados` canónico · **§9.6-R2** `AT08_Alertas_SLA` se crea y su fila de inventario se actualiza · **§9.6-R3** `sla_revision_horas` con regla de override sobre la etapa 7 · paso F-5 nuevo · M-9/M-11/M-12/M-16/M-17/M-18 ampliados · E2E-12 con el calendario corregido) · v1.8: P8.6 · Control de SLA en IF-02: RF-08 agregado + RF-53 por etapa · tandas A-G · checkpoints M-9 a M-18 · reproceso diferido en FUT-EJ-08 · v1.7: logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9 · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
