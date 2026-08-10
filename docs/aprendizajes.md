@@ -123,6 +123,60 @@ Lo que sigue vigente como regla vive abajo, destilado.
   próximo bump —un rename de N apariciones en el documento normativo merece su
   propio changelog, no un parche dentro de otra tanda— y mientras tanto se
   registra como CI. Ver **CI-007** (`H_Feriados` en el spec vs `C_Feriados` real).
+- **RO-16 · `grep -v` excluye por `:`, nunca por `$`.** Las líneas que `grep`
+  emite tienen la forma `archivo:linea:contenido`, así que `$` ancla al final
+  del **contenido** y no del nombre del archivo. `grep -v '\.test\.ts$'` no
+  excluye ningún test: lo correcto es `grep -v '\.test\.ts:'`, anclando en el
+  separador. El modo de fallo es el peor posible —el filtro no filtra nada y
+  parece que sí— y sobrevive a la revisión porque el comando *se ve* bien.
+  Dos corolarios que costaron el mismo bug: **un criterio de aceptación es
+  código, tiene bugs y se corre antes de escribirse en un plan** (una corrección
+  redactada de memoria hereda el defecto que venía a arreglar); y **un criterio
+  se escribe sobre las señales inequívocas, no sobre todas** —meter `2`, `3`,
+  `4` y `6` en un patrón que busca umbrales de SLA no lo hace más estricto, lo
+  hace inservible, porque esos números son etapas y días de la semana en el
+  propio motor y obligan a ignorar el criterio todos los días—. Es **RO-02** por
+  el otro extremo: allí el riesgo era no correr el `grep`; acá se corre y lo que
+  está mal es su definición. Ver **§9.6-R6** del plan.
+- **RO-17 · Un campo que entra por dos rutas se normaliza en el borde, no en
+  cada consumidor.** `TX_Solicitudes` se lee de dos formas: la bandeja usa
+  `cellFormat: 'string'` —necesario para que los campos Link lleguen como texto
+  legible— y ahí un `dateTime` **no llega en ISO** sino renderizado con
+  `userLocale: 'es-CL'` (`"12-08-2026 13:00"`); los handlers que leen en JSON
+  reciben ISO. Sin normalizar, el mismo campo significa cosas distintas según
+  por dónde entró, y el bug aparece en una sola de las dos pantallas. La
+  solución es una función de parseo tolerante en el mapper —`parseInstante` en
+  `lib/solicitudes.ts`, que acepta ISO con y sin hora y reloj de pared es-CL— que
+  emite **siempre ISO** o `null`, nunca una fecha inventada. Dos detalles no
+  opcionales: la rama de reloj de pared se convierte con `desdeSantiago`, jamás
+  sumando un offset fijo (Chile alterna −03/−04 dos veces al año y el error sólo
+  se ve cuatro meses al año), y lo no parseable degrada a `null` para que el
+  llamador diga "sin dato" en vez de mostrar un plazo falso. Es **RO-05**
+  aplicado a la representación y no a la lógica: una sola forma canónica en
+  memoria, decidida donde el dato cruza el borde.
+- **RO-18 · Cuando el motor calcula y otro sistema persiste, lo calculado entra
+  al payload por spread condicional.** Patrón de §9.6 · C-5, reutilizable en todo
+  flujo Next.js → Make: el Route Handler invoca el motor en modo **no
+  persistente** (`persistir: false`), recibe el payload de campos y lo agrega al
+  webhook con `...campos`; **Make escribe, el handler no** (RT-03). Tres reglas
+  que lo hacen seguro, y las tres se rompen por separado:
+  1. **Calcular antes de disparar el webhook.** Al revés, un fallo del motor deja
+     la operación hecha y sin instrumentar, y nadie se entera.
+  2. **El fallo del cálculo no bloquea la operación de negocio.** El reloj es
+     instrumentación; la asignación es la acción. Se envuelve en `try/catch`, se
+     registra con prefijo greppable (`[SLA-ETAPA]`) para auditar qué filas
+     quedaron sin instrumentar, y se sigue. Es el criterio de **CI-003b** por su
+     lado bueno: ahí se bloqueaba porque el daño era permanente e invisible; acá
+     no se bloquea porque es recuperable con un recálculo posterior.
+  3. **Las claves se omiten, no se mandan vacías.** El spread de un objeto vacío
+     no agrega nada; mandar `""` a un campo `date` o `number` con `typecast` es
+     otra cosa. Del lado de Make, el mapeo se escribe
+     `{{if(x; parseDate(x))}}` —idioma ya probado en producción— para que una
+     clave ausente no escriba cadena vacía.
+
+  Y un guard que conviene testear explícitamente: el motor **no debe correr
+  antes del guard de idempotencia**, o un segundo click movería los umbrales
+  hacia adelante aunque la operación se rechace con 409.
 
 ## Bitácora reciente
 
