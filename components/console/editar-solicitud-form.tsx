@@ -36,9 +36,45 @@ import {
   type Unidad,
 } from "@/lib/console-data"
 import { useCatalogos } from "@/lib/use-catalogos"
+import { desdeSantiago, partesEnSantiago } from "@/lib/sla-habil"
 
 let uid = 0
 const nextId = (p: string) => `${p}-${Date.now()}-${uid++}`
+
+const dosDigitos = (n: number) => String(n).padStart(2, "0")
+
+/**
+ * ISO 8601 → valor de un `<input type="datetime-local">`, en reloj de pared de
+ * **Santiago**.
+ *
+ * El input trabaja siempre en la zona del navegador, y aunque hoy la Ejecutiva
+ * esté en Chile, dejar que el navegador decida convierte la zona en una
+ * propiedad del equipo de quien edita. El hito de §5.2.2 es un instante de la
+ * oficina de Santiago: se descompone con `partesEnSantiago` y se recompone con
+ * `desdeSantiago`, nunca con un offset fijo —Chile alterna −03/−04 dos veces al
+ * año—. Es la misma regla que ya rige el motor (`lib/sla-habil.ts`), aplicada a
+ * la única superficie de la app donde ese instante se escribe a mano.
+ */
+function isoAInputSantiago(iso: string | undefined): string {
+  if (!iso) return ""
+  const instante = new Date(iso)
+  if (Number.isNaN(instante.getTime())) return ""
+  const p = partesEnSantiago(instante)
+  return `${p.anio}-${dosDigitos(p.mes)}-${dosDigitos(p.dia)}T${dosDigitos(p.hora)}:${dosDigitos(p.minuto)}`
+}
+
+/** Vuelta del input a ISO. `undefined` si está vacío o a medio escribir. */
+function inputSantiagoAIso(valor: string): string | undefined {
+  const m = valor.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/)
+  if (!m) return undefined
+  return desdeSantiago(
+    Number(m[1]),
+    Number(m[2]),
+    Number(m[3]),
+    Number(m[4]),
+    Number(m[5]),
+  ).toISOString()
+}
 
 /**
  * Valor de un `<Input type="number">` a partir de un número opcional.
@@ -323,6 +359,22 @@ export function EditarSolicitudForm({
             type="email"
             value={d.correoClienteRef ?? ""}
             onChange={(e) => set("correoClienteRef", e.target.value)}
+          />
+        </EditField>
+        {/* Hito de inicio del SLA · §5.2.2 · RF-53 (C-7).
+            El wizard lo estampa al abrirse, pero el caso real es la ejecutiva
+            que abrió el correo a las 9:10 y terminó de cargar la solicitud a
+            las 11:40: sin este control, esas dos horas y media se le cobran a
+            la etapa 1 y el semáforo miente desde el primer día. Editable sólo
+            en estado `creada`, como todo este formulario (REGLA C), y el
+            servidor lo revalida.
+            La hora se muestra y se guarda en reloj de Santiago, no en el del
+            navegador — ver `isoAInputSantiago`. */}
+        <EditField label="Inicio del SLA (ingreso de la solicitud)">
+          <Input
+            type="datetime-local"
+            value={isoAInputSantiago(d.slaE1InicioTs)}
+            onChange={(e) => set("slaE1InicioTs", inputSantiagoAIso(e.target.value))}
           />
         </EditField>
         {/* V-2 · §1.4 "Origen". Los cuatro viajaban preservados desde

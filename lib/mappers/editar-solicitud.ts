@@ -270,6 +270,14 @@ export function mapearEdicionSolicitud(
     sucursalOriginadora: limpiar(d.sucursalOriginadora),
     correoClienteRef: limpiar(d.correoClienteRef),
     fechaAsignacion: limpiar(original.fechaAsignacion),
+
+    // Hito de inicio del SLA (§5.2.2 · RF-53 · C-7). Sale de la copia editada:
+    // es uno de los pocos campos de esta pantalla que la Ejecutiva **corrige**
+    // en vez de sólo consultar, porque el instante que el wizard estampó al
+    // abrirse puede ser posterior al momento real en que abrió el correo.
+    // `limpiar` lo omite si viene vacío, de modo que guardar sin tocarlo nunca
+    // borra un hito ya escrito.
+    slaE1InicioTs: limpiar(d.slaE1InicioTs),
   }
 
   // — Financiero (sólo propiedades nuevas) —

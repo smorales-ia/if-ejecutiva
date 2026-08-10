@@ -5,8 +5,19 @@ import {
   regionDeComuna,
   type EstadoSolicitud,
   type Prioridad,
+  type SlaEtapaSolicitud,
+  type SlaTonoEtapa,
   type Solicitud,
 } from '@/lib/console-data'
+import { desdeSantiago } from '@/lib/sla-habil'
+// `lib/sla-etapas.ts` importa `TX_SOLICITUDES` de este módulo, así que esto
+// cierra un ciclo de imports. Es seguro y deliberado: ninguno de los dos lados
+// evalúa un binding del otro en tiempo de carga —`TX_SOLICITUDES` se lee dentro
+// de los métodos de `DEPS_AIRTABLE`, y `obtenerMatrizEtapas` se llama dentro de
+// `fetchSolicitudes`—, de modo que el orden de inicialización no importa. La
+// alternativa era duplicar el lector de `C_SLA_Etapas` acá, que es peor: dos
+// lectores del mismo catálogo divergen (RO-05).
+import { obtenerMatrizEtapas, type MatrizEtapas } from '@/lib/sla-etapas'
 
 // TX_Solicitudes verified via MCP 2026-07-04
 export const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
@@ -46,11 +57,29 @@ const SEMAFORO_POR_SLA: Record<SlaFiltro, string> = {
   rojo: 'VENCIDO',
 }
 
+/**
+ * Valores admitidos por `?sla_etapa=` (RF-53 · §9.6.2 C-3).
+ *
+ * Lista cerrada de dos, no de cuatro: el filtro existe para **aislar lo que hay
+ * que mirar hoy**, y ni `verde` ni `sin_dato` son eso. Que sea una lista cerrada
+ * es además lo que hace segura la interpolación en la fórmula (RF-05 · D-07).
+ */
+export type SlaEtapaFiltro = 'ambar' | 'rojo'
+
+export const SLA_ETAPA_FILTROS_VALIDOS: SlaEtapaFiltro[] = ['ambar', 'rojo']
+
 // D-07: filtros de FiltrosBar persistidos como URL params (RF-05 Subtarea C · P5).
 export interface SolicitudesFiltros {
   cliente?: string
   estado?: string
   sla?: string
+  /**
+   * Semáforo **por etapa** (RF-53). Deliberadamente separado de `sla`, que
+   * sigue significando el agregado en días (RF-08): son dos relojes que
+   * conviven y no se sustituyen (§5.2). La clave lleva el mismo nombre que el
+   * parámetro de URL, como el resto de este objeto.
+   */
+  sla_etapa?: string
   desde?: string // YYYY-MM-DD
   hasta?: string // YYYY-MM-DD
   /** Nombre del tasador, o 'sin_asignar' para las que no tienen tasador. */
@@ -87,16 +116,33 @@ function buildVistaFormula(vista: Vista, ejecutivaNombre?: string): string {
     case 'todas':
       return 'TRUE()'
     case 'sla_riesgo':
-      // `semaforo_sla` NO emite "rojo"/"ámbar"/"verde": eso es lo que documenta
-      // `schema-airtable.md:160`, no lo que calcula la fórmula real. Verificada
-      // vía `get_table_schema` el 29-jul-2026, emite cuatro literales con emoji
-      // de prefijo — "… Entregado", "… VENCIDO", "… EN RIESGO", "… OK" — y el
-      // emoji llega mangleado a "?" según el cliente que lea el campo. Por eso
-      // se busca la subcadena y no se compara por igualdad: el prefijo no es
-      // confiable, la palabra sí. Ninguno de los cuatro literales contiene a
-      // otro como subcadena, así que no hay solapamiento.
-      // ⚠ Deuda: la fórmula de Airtable no se tocó en esta tanda (D-01).
-      return 'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0)'
+      // Unión de los dos relojes (§9.6.1 · C-3). La pregunta que la vista
+      // responde es "¿qué tengo que mirar hoy?", y tanto un vencimiento
+      // agregado (RF-08) como una etapa desbordada (RF-53) califican; filtrar
+      // por uno solo escondería casos reales.
+      //
+      // Los dos términos se escriben distinto **a propósito**:
+      //
+      // - `semaforo_sla` NO emite "rojo"/"ámbar"/"verde": eso es lo que
+      //   documenta `schema-airtable.md:160`, no lo que calcula la fórmula
+      //   real. Verificada vía `get_table_schema` el 29-jul-2026, emite cuatro
+      //   literales con emoji de prefijo — "… Entregado", "… VENCIDO",
+      //   "… EN RIESGO", "… OK" — y el emoji llega mangleado a "?" según el
+      //   cliente que lea el campo. Por eso se busca la subcadena: el prefijo no
+      //   es confiable, la palabra sí. Ninguno de los cuatro literales contiene
+      //   a otro como subcadena, así que no hay solapamiento.
+      //   ⚠ Deuda: esa fórmula de Airtable no se tocó (D-01).
+      // - `sla_semaforo_etapa` (`fldB6gJ3clZUPgaZk`) se compara por **igualdad**
+      //   y eso no contradice RO-13, lo aplica: RO-13 obliga a filtrar por el
+      //   formato real que emite la fórmula, y esta fórmula la escribimos
+      //   nosotros en M-13 precisamente para que emita cuatro literales en
+      //   minúscula, sin emoji ni adornos (§9.6-R5). Usar `FIND` aquí sería
+      //   arrastrar una defensa que ya no protege de nada y, peor, haría que
+      //   "verde" no se distinguiera de un futuro "verde_claro".
+      return (
+        'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0,' +
+        '{sla_semaforo_etapa}="ambar",{sla_semaforo_etapa}="rojo")'
+      )
     case 'por_asignar':
       // Sin tasador asignado y en un estado que aún admite asignación.
       return 'AND(OR({estado}="creada",{estado}="requiere_atencion"),ARRAYJOIN({tasador})="")'
@@ -131,6 +177,18 @@ function buildFiltrosClauses(filtros?: SolicitudesFiltros): string[] {
     // vive aquí y no en la UI para que el contrato de la URL (`?sla=rojo`) no
     // dependa de cómo esté redactada la fórmula de Airtable hoy.
     clauses.push(`FIND("${SEMAFORO_POR_SLA[filtros.sla as SlaFiltro]}",{semaforo_sla})>0`)
+  }
+  if (
+    filtros.sla_etapa &&
+    SLA_ETAPA_FILTROS_VALIDOS.includes(filtros.sla_etapa as SlaEtapaFiltro)
+  ) {
+    // Sin traducción de vocabulario, a diferencia de `sla`: la fórmula
+    // `sla_semaforo_etapa` emite exactamente estos literales, así que la URL y
+    // el campo hablan el mismo idioma. Igualdad, no `FIND` — ver la nota de
+    // `buildVistaFormula`. El valor ya pasó por la lista cerrada de arriba, y el
+    // escape se aplica igual porque la protección no debe depender de que la
+    // lista siga siendo cerrada mañana (RF-05 · D-07).
+    clauses.push(`{sla_semaforo_etapa}="${escapeFormulaString(filtros.sla_etapa)}"`)
   }
   if (filtros.desde && FECHA_VALIDA.test(filtros.desde)) {
     clauses.push(`NOT(IS_BEFORE({fecha_solicitud},DATETIME_PARSE("${filtros.desde}","YYYY-MM-DD")))`)
@@ -311,6 +369,28 @@ export const SOLICITUD_FIELDS: string[] = [
   'vendedor_telefono',
   'vendedor_tipo_persona',
   'vendedor_origen_dato',
+
+  // ── Reloj por etapa · RF-53 (Tanda C · §9.6.2 C-2) ───────────────────────
+  // Estos cinco van por **FIELD_ID** y no por nombre, a diferencia de los ~90
+  // de arriba. Tres razones, en este orden:
+  //
+  // 1. Son campos recién creados (Tanda A, 10-ago-2026) y todavía no están en
+  //    `docs/schema-airtable.md`; el `fld…` es lo único verificado.
+  // 2. El prefijo `sla_` es ancho —hay 21 campos— y un rename en la UI de
+  //    Airtable dejaría la lectura devolviendo `undefined` en silencio, que es
+  //    exactamente el fallo de `ejecutiva_asignada` (E-018/E-019).
+  // 3. Los IDs coinciden uno a uno con `FIELD_IDS_SLA` de `lib/sla-etapas.ts`,
+  //    que es la declaración canónica: si divergen, hay un solo sitio que mirar.
+  //
+  // ⚠ Airtable acepta IDs en `fields[]` pero **devuelve las claves por nombre**
+  // salvo `returnFieldsByFieldId`, que este cliente no envía. Por eso `mapRecord`
+  // sigue leyendo `f['sla_etapa_actual']` y no `f['fldYpHiAosqbxL85b']`: se pide
+  // por lo estable y se lee por lo legible.
+  'fldPZ7ReQbC1UbIMu', // sla_e1_inicio_ts   — hito §5.2.2 (REGLA C: editable en `creada`)
+  'fldYpHiAosqbxL85b', // sla_etapa_actual   — number 1-7, lo escribe el motor
+  'fldLfFftNm0Kvvu08', // sla_etapa_alerta_ts — SLA ideal (umbral ámbar)
+  'fldLJdanpV0FANjKS', // sla_etapa_vence_ts  — SLA máximo (umbral rojo)
+  'fldB6gJ3clZUPgaZk', // sla_semaforo_etapa  — fórmula, sólo lectura (M-13)
 ]
 
 function parseDate(str: string | undefined): Date | null {
@@ -384,6 +464,129 @@ function txt(str: string | undefined): string | undefined {
   return v === '' ? undefined : v
 }
 
+// ── Reloj por etapa · helpers server-side (RF-53 · §9.6.2 C-2) ─────────────
+
+/**
+ * Convierte a instante absoluto lo que Airtable devuelve en un campo
+ * `dateTime`, venga en el formato que venga.
+ *
+ * Hace falta porque esta capa lee con `cellFormat: 'string'` —necesario para
+ * que los campos Link lleguen como texto legible—, y con ese formato un
+ * `dateTime` **no llega en ISO**: llega renderizado con `userLocale: 'es-CL'` y
+ * `timeZone: 'America/Santiago'`, o sea `"12-08-2026 13:00"` / `"12/8/2026
+ * 13:00"`. El endpoint de cronología, en cambio, lee en JSON y recibe ISO. Sin
+ * normalizar, el mismo campo tendría dos formas según por dónde entró y
+ * `slaEtapa.venceTs` significaría cosas distintas en cada ruta (RO-05).
+ *
+ * La rama de reloj de pared se resuelve con `desdeSantiago`, nunca sumando un
+ * offset fijo: Chile alterna −03/−04 dos veces al año y un `-3` hardcodeado
+ * corre el vencimiento una hora durante cuatro meses.
+ *
+ * @returns El instante, o `null` si el texto no es una fecha reconocible. Nunca
+ *   una fecha inventada: sin dato, el llamador degrada a "sin plazo".
+ */
+function parseInstante(valor: string | undefined): Date | null {
+  const v = (valor ?? '').trim()
+  if (v === '') return null
+
+  // ISO con hora — lo que devuelve el formato JSON de Airtable.
+  if (/^\d{4}-\d{2}-\d{2}T/.test(v)) {
+    const d = new Date(v)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  // ISO sin hora: se ancla a medianoche de Santiago, no de UTC.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
+    const [a, m, d] = v.split('-').map(Number)
+    return desdeSantiago(a, m, d, 0, 0)
+  }
+
+  // Reloj de pared es-CL: D/M/YYYY o D-M-YYYY, con hora opcional y am/pm opcional.
+  const m = v.match(
+    /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:[,]?\s+(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap])\.?\s?m\.?)?/i
+  )
+  const mSinMeridiano = v.match(
+    /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})(?:[,]?\s+(\d{1,2}):(\d{2})(?::\d{2})?)?$/
+  )
+  const partes = m && m[6] ? m : mSinMeridiano
+  if (!partes) return null
+
+  const dia = Number(partes[1])
+  const mes = Number(partes[2])
+  const anio = Number(partes[3])
+  let hora = partes[4] === undefined ? 0 : Number(partes[4])
+  const minuto = partes[5] === undefined ? 0 : Number(partes[5])
+  const meridiano = partes[6]?.toLowerCase()
+  if (meridiano === 'p' && hora < 12) hora += 12
+  if (meridiano === 'a' && hora === 12) hora = 0
+  if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || hora > 23 || minuto > 59) return null
+
+  return desdeSantiago(anio, mes, dia, hora, minuto)
+}
+
+/** `"1d 3h"` · `"4h 10m"` · `"12m"`. Dos unidades como máximo: más es ruido. */
+function duracionCorta(minutosTotales: number): string {
+  const minutos = Math.max(0, Math.round(minutosTotales))
+  const dias = Math.floor(minutos / 1440)
+  const horas = Math.floor((minutos % 1440) / 60)
+  const mins = minutos % 60
+  if (dias > 0) return horas > 0 ? `${dias}d ${horas}h` : `${dias}d`
+  if (horas > 0) return mins > 0 ? `${horas}h ${mins}m` : `${horas}h`
+  return `${mins}m`
+}
+
+/**
+ * Etiqueta de la píldora de etapa, derivada **server-side** (§9.6.2 C-2).
+ *
+ * Mide contra `sla_etapa_vence_ts`, que es un **instante de pared** ya
+ * materializado por el motor: la aritmética hábil corrió una vez al entrar a la
+ * etapa, y desde ahí la distancia a `NOW()` es una resta de reloj. Por eso
+ * "Vence en 4h 10m" es literalmente cierto y no una aproximación —no dice horas
+ * hábiles, dice cuánto falta para ese instante—.
+ *
+ * Sin `venceTs` no se fabrica nada: el texto lo dice y la UI no pinta color.
+ */
+function etiquetaEtapa(vence: Date | null, ahora: Date): string {
+  if (!vence) return 'Sin datos de etapa'
+  const minutos = (vence.getTime() - ahora.getTime()) / 60_000
+  if (minutos >= 0) return `Vence en ${duracionCorta(minutos)}`
+  return `Vencida hace ${duracionCorta(-minutos)}`
+}
+
+const TONOS_ETAPA: readonly SlaTonoEtapa[] = ['verde', 'ambar', 'rojo', 'sin_dato']
+
+/**
+ * Lee el tono **tal cual** lo emitió `sla_semaforo_etapa`, por igualdad literal
+ * contra los cuatro valores del contrato (RO-13 · §9.6-R5). No normaliza, no
+ * baja a minúsculas y no recalcula: si algún día la fórmula emitiera otra cosa,
+ * lo correcto es que se note aquí como `sin_dato` y no que el mapper la
+ * disimule. Recalcular el tono en el cliente sería la segunda fuente de verdad
+ * que RO-05 prohíbe.
+ */
+function tonoEtapaDeFormula(valor: string | undefined): SlaTonoEtapa {
+  const v = (valor ?? '').trim()
+  return (TONOS_ETAPA as readonly string[]).includes(v) ? (v as SlaTonoEtapa) : 'sin_dato'
+}
+
+function esNumeroEtapa(n: number | undefined): n is SlaEtapaSolicitud['numero'] {
+  return n !== undefined && Number.isInteger(n) && n >= 1 && n <= 7
+}
+
+/**
+ * Nombres de las siete etapas indexados por `orden`, leídos de `C_SLA_Etapas`.
+ *
+ * No hay ningún nombre hardcodeado en el repo: §5.2.4 vive en la tabla, igual
+ * que los catorce umbrales. Si la lectura falla —tabla vacía, Airtable caído—
+ * el llamador degrada a `Etapa {n}`, que es feo pero honesto; tumbar la bandeja
+ * entera porque no se pudo leer un catálogo de rótulos sería peor.
+ */
+export function nombresDeEtapas(matriz: MatrizEtapas): Map<number, string> {
+  const nombres = new Map<number, string>()
+  for (const definicion of Object.values(matriz)) {
+    if (definicion.nombre) nombres.set(definicion.orden, definicion.nombre)
+  }
+  return nombres
+}
+
 export function relativeTime(iso: string): string {
   const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3_600_000)
   if (h < 1) return 'hace menos de 1 hora'
@@ -392,7 +595,43 @@ export function relativeTime(iso: string): string {
   return `hace ${d} día${d !== 1 ? 's' : ''}`
 }
 
-export function mapRecord(id: string, createdTime: string, f: Record<string, string | undefined>): Solicitud {
+/**
+ * @param nombresEtapa Rótulos de §5.2.4 por número de etapa, leídos de
+ *   `C_SLA_Etapas` una vez por request (ver `nombresDeEtapas`). Opcional: sin
+ *   él la etapa se rotula `Etapa {n}` en vez de tumbar la lectura.
+ */
+export function mapRecord(
+  id: string,
+  createdTime: string,
+  f: Record<string, string | undefined>,
+  nombresEtapa?: ReadonlyMap<number, string>
+): Solicitud {
+  // ── Reloj por etapa (RF-53) ──────────────────────────────────────────────
+  // `sla_etapa_actual` es la señal de "hay dato de etapa", no el semáforo: lo
+  // escribe el motor y sólo cuando hay una etapa abierta. Sin él, `slaEtapa`
+  // queda **ausente** y la bandeja no pinta píldora — que es el caso de casi
+  // toda la cartera en v1.9, donde sólo e1 y e2 tienen escritor.
+  //
+  // Cuando sí hay etapa pero los umbrales no están materializados, el campo
+  // viaja con `tono: 'sin_dato'` en vez de omitirse: "estoy en la etapa 3 y no
+  // sé su plazo" es información distinta de "no sé nada de esta solicitud", y
+  // fabricar un verde ahí es justo lo que §9.6 prohíbe.
+  const numeroEtapa = num(f['sla_etapa_actual'])
+  let slaEtapa: SlaEtapaSolicitud | undefined
+  if (esNumeroEtapa(numeroEtapa)) {
+    const alerta = parseInstante(f['sla_etapa_alerta_ts'])
+    const vence = parseInstante(f['sla_etapa_vence_ts'])
+    slaEtapa = {
+      numero: numeroEtapa,
+      nombre: nombresEtapa?.get(numeroEtapa) ?? `Etapa ${numeroEtapa}`,
+      tono: tonoEtapaDeFormula(f['sla_semaforo_etapa']),
+      etiqueta: etiquetaEtapa(vence, new Date()),
+      alertaTs: alerta ? alerta.toISOString() : null,
+      venceTs: vence ? vence.toISOString() : null,
+    }
+  }
+  const e1Inicio = parseInstante(f['sla_e1_inicio_ts'])
+
   return {
     id,
     codigoExt: f['codigo_ext'] ?? id,
@@ -466,6 +705,13 @@ export function mapRecord(id: string, createdTime: string, f: Record<string, str
     unidades: [],
     contactosVisita: [],
     contadorReasignaciones: 0,
+
+    // ── Reloj por etapa · RF-53 (Tanda C) ──────────────────────────────────
+    // `slaEtapa` puede quedar `undefined` a propósito; ver el bloque de arriba.
+    slaEtapa,
+    // Hito §5.2.2 normalizado a ISO para que el formulario de edición lo pueda
+    // poner en un `<input type="datetime-local">` sin volver a parsear es-CL.
+    slaE1InicioTs: e1Inicio ? e1Inicio.toISOString() : undefined,
 
     // ── Campos operacionales (Tanda D-02) ──────────────────────────────────
     nOperacionCliente: num(f['n_operacion_cliente']),
@@ -591,6 +837,19 @@ export async function fetchSolicitudes(
 
   const formula = buildFormula(vista, ejecutivaNombre, filtros)
   const sort = ordenToSort(orden)
+
+  // Los rótulos de §5.2.4 se leen una vez por request y van cacheados 12 h en
+  // `lib/sla-etapas.ts`. La lectura es **tolerante a fallo a propósito**: si
+  // `C_SLA_Etapas` no responde, la bandeja se sirve igual con `Etapa {n}` como
+  // rótulo. Un catálogo de nombres no puede tumbar la cartera entera; los
+  // umbrales sí son bloqueantes, pero esos no se leen acá.
+  let nombresEtapa: ReadonlyMap<number, string> | undefined
+  try {
+    nombresEtapa = nombresDeEtapas(await obtenerMatrizEtapas())
+  } catch (err) {
+    console.warn('[fetchSolicitudes] no se pudo leer C_SLA_Etapas; etapas sin rótulo', err)
+  }
+
   try {
     const records = await listRecords<RawFields>(TX_SOLICITUDES, {
       cellFormat: 'string',
@@ -601,7 +860,7 @@ export async function fetchSolicitudes(
       'sort[0][direction]': sort.direction,
       fields: SOLICITUD_FIELDS,
     })
-    const data = records.map((r) => mapRecord(r.id, r.createdTime, r.fields))
+    const data = records.map((r) => mapRecord(r.id, r.createdTime, r.fields, nombresEtapa))
     // El orden por SLA se resuelve aquí y no en Airtable (ver `ordenarPorSla`).
     // Es seguro hacerlo en memoria porque esta función ya devuelve el conjunto
     // completo y la paginación se aplica después, sobre el array ordenado.

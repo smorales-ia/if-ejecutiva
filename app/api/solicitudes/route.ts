@@ -26,6 +26,10 @@ export async function GET(request: NextRequest) {
     cliente: searchParams.get('cliente') ?? undefined,
     estado: searchParams.get('estado') ?? undefined,
     sla: searchParams.get('sla') ?? undefined,
+    // `?sla_etapa=ambar|rojo` (RF-53 · C-3). Convive con `?sla=`, que sigue
+    // significando el agregado en días: son dos relojes, no dos nombres del
+    // mismo. `buildFiltrosClauses` valida contra la lista cerrada.
+    sla_etapa: searchParams.get('sla_etapa') ?? undefined,
     desde: searchParams.get('desde') ?? undefined,
     hasta: searchParams.get('hasta') ?? undefined,
     tasador: searchParams.get('tasador') ?? undefined,

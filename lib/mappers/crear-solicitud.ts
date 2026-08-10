@@ -298,6 +298,18 @@ export function toMakeSnakePayload(
     // la fase de adjuntos lo consuma.
     subido_por: "Ejecutivo",
     ejecutiva_clerk_id: opciones.ejecutivaClerkId,
+    // Hito de inicio del SLA por etapa (§5.2.2 · RF-53 · §9.6.2 C-7). La clave
+    // lleva el nombre del campo destino de `TX_Solicitudes` porque el módulo 7
+    // de SC01 la mapea directo, sin Search ni transformación. Si el wizard no
+    // alcanzó a estamparla, `texto()` la deja en `undefined` y el filtro del
+    // final la omite: SC01 no escribe el campo y la solicitud nace en
+    // `sin_dato`, en vez de nacer con un instante inventado.
+    sla_e1_inicio_ts: texto(datos.slaInicioTs),
+    // El motor no puede correr en Make —la aritmética hábil de §5.2.1 no cabe
+    // en una fórmula— así que la etapa de arranque es una constante: toda alta
+    // nace en e1 · Ingreso de solicitud. Los umbrales de e1 los materializa el
+    // Route Handler antes de postear (ver `crear-solicitud/route.ts`).
+    sla_etapa_actual: 1,
 
     // ── Sección A · Origen y cliente ───────────────────────────────────────
     canal: texto(datos.canal),

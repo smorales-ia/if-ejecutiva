@@ -118,6 +118,25 @@ export const nuevaSolicitudInternaSchema = z
     // ── Contexto del wizard ──────────────────────────────────────────────
     tipoPropiedadNuevoUsado: z.enum(["nuevo", "usado"]),
 
+    /**
+     * Hito de inicio del SLA (§5.2.2 · RF-53). Campo **oculto**: no tiene
+     * control en el wizard, se estampa con `new Date().toISOString()` al montar
+     * la Fase 1 y viaja a SC01 como `sla_e1_inicio_ts`.
+     *
+     * El reloj arranca cuando Control y Seguimiento **abre el correo e ingresa
+     * la solicitud**, no cuando el correo llega al buzón ni cuando se presiona
+     * "Crear solicitud": entre abrir el wizard y terminar de cargarlo pueden
+     * pasar dos horas, y cobrárselas al tasador sería medir mal a quien no
+     * corresponde.
+     *
+     * Sin `.min(1)` a propósito: el estampado es responsabilidad de la pantalla
+     * y un `""` debe llegar al mapper para que éste **omita la clave**, no para
+     * que el formulario se bloquee con un error que la Ejecutiva no puede
+     * corregir —no hay campo donde escribirlo—. Si falta, SC01 no escribe el
+     * campo y la solicitud queda en `sin_dato`, que es degradación honesta.
+     */
+    slaInicioTs: z.string(),
+
     // ── Sección A · Origen y cliente ─────────────────────────────────────
     canal: z.string().min(1, "Selecciona el canal de origen."),
     cliente: z.string().min(1, "Selecciona un cliente."),
@@ -275,6 +294,10 @@ export function nuevoContacto(): ContactoVisitaFormulario {
 
 export const nuevaSolicitudInternaDefaults: NuevaSolicitudInternaValues = {
   tipoPropiedadNuevoUsado: "usado",
+  // Vacío en los defaults y estampado al montar la Fase 1: un `new Date()` aquí
+  // se evaluaría **una sola vez**, al cargar el módulo, y todas las solicitudes
+  // de la sesión compartirían el instante en que se abrió la consola.
+  slaInicioTs: "",
   canal: "",
   cliente: "",
   tipoClienteOrigen: "",

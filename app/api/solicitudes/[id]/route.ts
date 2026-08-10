@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { AirtableError, getRecord, isValidRecordId } from '@/lib/airtable-client'
-import { mapRecord, SOLICITUD_FIELDS, TX_SOLICITUDES } from '@/lib/solicitudes'
+import { mapRecord, nombresDeEtapas, SOLICITUD_FIELDS, TX_SOLICITUDES } from '@/lib/solicitudes'
+import { obtenerMatrizEtapas } from '@/lib/sla-etapas'
 import { postToMake } from '@/lib/make-client'
 import { editarSolicitudSchema, issuesToCampos } from '@/lib/validators/acciones-solicitud'
 
@@ -31,7 +32,19 @@ export async function GET(
       return NextResponse.json({ error: 'Solicitud no encontrada.' }, { status: 404 })
     }
 
-    const data = mapRecord(record.id, record.createdTime, record.fields)
+    // Mismo criterio que `fetchSolicitudes`: los rótulos de §5.2.4 salen de
+    // `C_SLA_Etapas` (cacheada 12 h) y su fallo degrada a `Etapa {n}` en vez de
+    // tumbar el detalle. Se pasan aquí para que el detalle y la bandeja rotulen
+    // la misma etapa igual — dos rótulos distintos del mismo dato divergen
+    // (RO-05).
+    let nombresEtapa: ReadonlyMap<number, string> | undefined
+    try {
+      nombresEtapa = nombresDeEtapas(await obtenerMatrizEtapas())
+    } catch (errMatriz) {
+      console.warn('[GET /api/solicitudes/[id]] C_SLA_Etapas ilegible; etapa sin rótulo', errMatriz)
+    }
+
+    const data = mapRecord(record.id, record.createdTime, record.fields, nombresEtapa)
     return NextResponse.json({ data })
   } catch (err) {
     if (err instanceof AirtableError && err.status === 404) {

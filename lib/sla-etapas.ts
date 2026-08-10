@@ -385,6 +385,34 @@ export function invalidarCachesSla(): void {
   cacheSla = null
 }
 
+/**
+ * Lectura pública de la matriz de §5.2.4 (Tanda C · §9.6.2 C-2/C-4).
+ *
+ * Es el mismo lector cacheado que usa `DEPS_AIRTABLE.leerMatriz`, expuesto sin
+ * cambiarle nada. Existe porque la Tanda C necesita los **nombres y
+ * responsables** de las siete etapas en dos sitios —el mapper de la bandeja y
+ * `GET /api/solicitudes/[id]/sla`— y la alternativa era escribir un segundo
+ * lector de `C_SLA_Etapas` en `lib/solicitudes.ts`. Dos lectores del mismo
+ * catálogo divergen, y es justo lo que **RO-05** prohíbe.
+ *
+ * Aditivo puro: no cambia ninguna firma ni comportamiento del motor.
+ */
+export function obtenerMatrizEtapas(): Promise<MatrizEtapas> {
+  return leerMatrizAirtable()
+}
+
+/**
+ * Resuelve la fila de `C_SLA` aplicable a una solicitud ya leída, con la
+ * precedencia de §9.6-R4. Misma razón de ser que `obtenerMatrizEtapas`: el
+ * override de e7 (`sla_revision_horas` · §9.6-R3) lo necesita el endpoint de
+ * cronología, y `leerFilasSla` es privado.
+ */
+export async function obtenerSlaDelPar(
+  solicitud: Record<string, unknown>
+): Promise<SlaDelPar> {
+  return resolverSlaDelPar(solicitud, await leerFilasSla())
+}
+
 // ---------------------------------------------------------------------------
 // Lógica de etapas
 // ---------------------------------------------------------------------------

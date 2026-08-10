@@ -1,6 +1,24 @@
-# Plan de Ejecución IF-02 v1.11 — Guía maestra para Claude Code
+# Plan de Ejecución IF-02 v1.12 — Guía maestra para Claude Code
 
-> **Versión del plan: v1.11** (10-ago-2026). Cambio respecto de v1.10: **el plan alcanza a la
+> **Versión del plan: v1.12** (10-ago-2026). Cambio respecto de v1.11: **el criterio de
+> aceptación de la Tanda B se corrige y sus entregables se completan**. La Tanda B cerró con 186
+> tests verdes, y al ejecutar su propio criterio de aceptación se descubrió que el `grep` estaba
+> mal escrito: barría también los `.test.ts`, donde los catorce números de §5.2.4 aparecen
+> **legítimamente** como fixtures. Un criterio que falla sobre código correcto no mide lo que
+> dice medir. Queda registrado como reconciliación greppable **§9.6-R6**, con el `grep` corregido
+> —exclusión explícita de tests— en el criterio de la Tanda B.
+>
+> Se ratifican además **dos entregables que la Tanda B produjo y que v1.11 no declaraba**:
+> `vitest.config.mts` (el alias `@/` de `tsconfig` no llegaba al runner) y `updateRecord` en
+> `lib/airtable-client.ts` (no existía patrón `PATCH` en el repo). Ambos son infraestructura
+> real de la tanda, no efectos colaterales, y omitirlos de la lista dejaría la próxima sesión
+> creyendo que hay que escribirlos.
+>
+> **La Tanda B no se reabre.** Está cerrada y committeada: v1.12 corrige su criterio de
+> aceptación y completa el listado de lo que entregó. Sin campos nuevos, sin tandas nuevas, sin
+> checkpoints nuevos.
+>
+> **v1.11** (10-ago-2026). Cambio respecto de v1.10: **el plan alcanza a la
 > base**. La Tanda A se ejecutó —`C_SLA_Etapas` (`tbl05zu5RLhH3u6pl`) creada y sembrada con las 7
 > filas de §5.2.4, los 3 campos nuevos de `C_SLA`, los 20 campos SLA de `TX_Solicitudes` con
 > `timeZone = America/Santiago` verificado uno a uno, y la fila `SLA_DEFAULT_GLOBAL`
@@ -2048,6 +2066,75 @@ Automation** (de ahí la verificación manual de AT02 en M-9).
 *Impacto en campos declarados en §9.6:* **ninguno.** El campo ya estaba declarado en el *Modelo
 de datos*; cambia quién lo crea, no qué es.
 
+---
+
+**§9.6-R6 · Un criterio de aceptación por `grep` declara sus exclusiones. Un literal en un
+fixture es correcto.**
+
+El criterio de la Tanda B pedía *«cero constantes de §5.2.4 en el código»* y lo verificaba con
+`grep -n "\b48\b\|\b0\.5\b"` sobre `lib/sla-*.ts`. El glob `lib/sla-*.ts` **incluye
+`lib/sla-habil.test.ts` y `lib/sla-etapas.test.ts`**, y ahí los catorce números de §5.2.4
+aparecen a propósito: un test que verifica que una etapa de `0.5` h vence donde debe **tiene**
+que escribir `0.5`. El criterio, corrido literalmente sobre la Tanda B cerrada, devolvía
+coincidencias y declaraba incumplida una tanda que sí cumple.
+
+*El fallo no es del código: es del criterio.* Lo que la regla protege es que el **motor** no
+lleve umbrales hardcodeados —viven en `C_SLA_Etapas` y llegan como parámetro—. Un fixture no es
+una constante de negocio: es el valor esperado contra el que se compara, y si se lo reemplazara
+por una lectura de la tabla el test dejaría de probar nada.
+
+*Dos correcciones, no una.* La primera versión de este criterio —`| grep -v '\.test\.ts$'`— se
+escribió y se probó, y **no excluía nada**: `$` ancla al final de la *línea*, y las líneas que
+`grep` emite son `lib/sla-etapas.test.ts:  e5: { … }`, o sea terminan en el contenido, no en el
+nombre del archivo. Colaba las 106 coincidencias de los tests intactas. La exclusión correcta
+ancla en el separador que `grep` pone después del nombre: `'\.test\.ts:'`.
+
+Con esa exclusión ya funcionando aparece el segundo problema, de fondo: **cuatro de los siete
+literales de §5.2.4 tienen usos legítimos en el motor y siempre los tendrán**. `2`, `3`, `4` y
+`6` aparecen en `export type NumeroEtapa = 1 | 2 | 3 | 4 | 5 | 6 | 7`, en `ETAPAS`, en los
+puntajes de `resolverSlaDelPar` y en `diasSemana: [1,2,3,4,5]` de la ventana hábil. Son números
+de etapa y de día de la semana, no plazos. Un criterio que los prohíbe exige borrar el tipo que
+hace seguro al motor.
+
+Los que **sí** son inequívocos son tres: `0.5`, `24` y `48`. Ninguno tiene otro significado
+posible en estos módulos, y son exactamente los que delatarían un umbral hardcodeado.
+
+*Criterio corregido (el que rige desde v1.12):*
+
+```bash
+grep -nE '\b(0\.5|24|48)\b' lib/sla-*.ts \
+  | grep -v '\.test\.ts:' \
+  | grep -vE '^[^:]+:[0-9]+: *(//|\*|/\*)'
+```
+
+Debe salir **vacío**. Los tres filtros son parte del criterio: el primero busca sólo los
+literales inequívocos, el segundo excluye los fixtures y el tercero excluye las líneas de
+comentario, donde `§5.2.4` y frases como *«24 h hábiles»* aparecen para explicar justamente la
+regla que el criterio protege. La misma tubería, con `-r … app/api --include='*.ts'`, es la que
+verifica la Tanda C.
+
+*Regla general que deja, en dos mitades:*
+
+1. **Todo criterio de aceptación basado en `grep` declara sus exclusiones en el propio comando,
+   y el comando se corre antes de escribirlo en el plan.** Un `grep` sin exclusión sobre un glob
+   que incluye tests mide la suma de dos poblaciones con reglas opuestas —producción, donde el
+   literal es un defecto; tests, donde es el instrumento— y por construcción no puede dar verde.
+   Es **RO-02** por el otro extremo: allí el `grep` era la fuente de verdad de la cobertura y el
+   riesgo era no correrlo; aquí se corre y lo que falla es su definición. El corolario lo probó
+   este mismo bump: la primera corrección se escribió sin ejecutarla y el ancla `$` la dejó
+   inerte. Un criterio de aceptación es código y se prueba como código.
+2. **Un criterio se escribe sobre las señales inequívocas, no sobre todas las señales.** Meter
+   `2`, `3`, `4` y `6` en el patrón no lo hace más estricto: lo hace inservible, porque obliga a
+   ignorarlo todos los días. Un criterio que grita siempre no distingue nada, y el hábito de
+   saltárselo es lo que hace que el día que grite de verdad tampoco se mire.
+
+*Ubicación del trabajo:* **Tanda B**, criterio de aceptación. La tanda **no se reabre** —está
+cerrada y committeada con 186 tests verdes—; lo que cambia es el comando con que se verifica, y
+la verificación se repite en la Tanda C extendiendo el mismo `grep` a `app/api/**/*.ts` con la
+misma exclusión.
+*Impacto en campos declarados en §9.6:* **ninguno.** No se toca ni un campo, ni un artefacto, ni
+una línea de `lib/sla-*.ts`.
+
 #### Modelo de datos
 
 **Dónde vive la matriz por etapa — decisión del panel.** §5.2.4 declara **una** matriz de siete
@@ -2542,7 +2629,20 @@ campos `sla_dias`, `sla_dias_alerta` ni `sla_dias_vencido`;
 **Precondición:** Tanda A cerrada hasta A-1 (la matriz sembrada). El motor no toca Airtable, así
 que puede escribirse en paralelo a M-11.a/M-11.b/M-12.
 **Actor:** Claude Code.
-**Entregable:** `lib/sla-habil.ts`, `lib/sla-etapas.ts`, `lib/feriados.ts` y sus tests.
+**Entregable:** `lib/sla-habil.ts`, `lib/sla-etapas.ts`, `lib/feriados.ts` y sus tests, más los
+dos artefactos de infraestructura que la tanda tuvo que producir para que lo anterior corriera
+(ratificados en **v1.12**; la tanda ya está cerrada, sólo se completa el listado):
+
+- **`vitest.config.mts`** — el alias `@/` vivía sólo en `tsconfig.compilerOptions.paths`, que
+  Next resuelve por su cuenta y el runner no lee. Los tres tests previos del repo no lo notaban
+  porque sólo importan módulos hoja por ruta relativa; `sla-etapas.test.ts` es el primero que
+  alcanza un módulo de `lib/` con dependencias transitivas y falló con
+  `Cannot find package '@/lib/airtable-client'`. Extensión **`.mts`**, no `.ts`: con `.ts` Vite
+  lo carga como CommonJS y `import.meta.url` emite un warning de sintaxis ESM en cada corrida.
+- **`updateRecord` en `lib/airtable-client.ts`** — el repo no tenía patrón `PATCH`; `postRequest`
+  pasó a aceptar el método. Es lo que permite el modo `persistir: true` del motor. Queda acotado
+  por contrato a **datos derivados server-side**: las escrituras de negocio siguen pasando por
+  Make (RT-03), y esta función no es la puerta trasera para saltárselo.
 
 7. **B-1 · `lib/sla-habil.ts`** con las tres funciones de §9.6.1, sin dependencias nuevas y con
    la descomposición horaria vía `Intl.DateTimeFormat` en `America/Santiago`.
@@ -2561,8 +2661,20 @@ que puede escribirse en paralelo a M-11.a/M-11.b/M-12.
     fechas de partida (**RO-06**).
 
 **Criterio de aceptación de Tanda B:** `pnpm test` verde con los seis escenarios; `pnpm typecheck`
-limpio; cero constantes de §5.2.4 en el código (verificable con `grep -n "\b48\b\|\b0\.5\b"` sobre
-`lib/sla-*.ts`, que debe salir vacío).
+limpio; cero umbrales de §5.2.4 hardcodeados en el **código de producción** —los catorce números
+viven en `C_SLA_Etapas` y llegan como parámetro—, verificable con:
+
+```bash
+grep -nE '\b(0\.5|24|48)\b' lib/sla-*.ts \
+  | grep -v '\.test\.ts:' \
+  | grep -vE '^[^:]+:[0-9]+: *(//|\*|/\*)'
+```
+
+que debe salir **vacío**. Los tres filtros son el criterio, no una licencia: se buscan sólo los
+literales que no tienen otro significado posible (`2`, `3`, `4` y `6` son números de etapa y de
+día de la semana en el propio motor), se excluyen los fixtures —donde el literal de §5.2.4 es el
+valor esperado y su presencia es correcta— y se excluyen los comentarios. Ver **§9.6-R6**, que
+documenta las dos versiones falladas de este comando y por qué.
 
 #### Tanda C · API y contratos
 
@@ -3037,4 +3149,14 @@ son las que agrega el control de SLA en v1.8 del plan.
 
 ---
 
-*Última actualización: 10-ago-2026 · **v1.11 del plan** (Tanda A ejecutada contra la base: `C_SLA_Etapas` `tbl05zu5RLhH3u6pl` con sus 7 filas, 3 campos nuevos en `C_SLA`, 21 campos SLA en `TX_Solicitudes`, fila `SLA_DEFAULT_GLOBAL` `recAoOl35rFwEuM8u` · `sla_revision_horas` pasa a 1 decimal · **M-13 CERRADO**: `sla_semaforo_etapa` `fldB6gJ3clZUPgaZk` creado por MCP en A-3, queda viva sólo la verificación de los cuatro literales en el E2E de la Tanda C · `matriz_etapas` de la fila default revertido a vacío para preservar §9.6-R4 · reconciliación nueva **§9.6-R5**: el MCP sí crea fórmulas) · v1.10 (tres decisiones de negocio incorporadas: **Decisión 1** matriz por etapa de §5.2.4 como dato cerrado, se carga literal y se ratifica en **M-11.b** · **Decisión 2** baseline del agregado, fila global default en `C_SLA` con 3 / 2 / verde 0-1 y `sla_revision_horas` vacío, en **M-11.a**, que además borra la familia perdedora · **Decisión 3** reproceso §5.2.5 ratificado como diferido en FUT-EJ-08 · reconciliación nueva **§9.6-R4** con la traducción de nombres al schema real, la convención de comodín por link vacío y la precedencia campo a campo frente a `SLA_METLIFE_Refinanciamiento` · M-11 se parte en M-11.a/M-11.b y deja de ser compuerta de tiempo ajeno · sin campos ni tandas nuevas) · v1.9 (reconciliación de las tres divergencias entre §9.6 y la base real: **§9.6-R1** `C_Feriados` canónico · **§9.6-R2** `AT08_Alertas_SLA` se crea y su fila de inventario se actualiza · **§9.6-R3** `sla_revision_horas` con regla de override sobre la etapa 7 · paso F-5 nuevo · M-9/M-11/M-12/M-16/M-17/M-18 ampliados · E2E-12 con el calendario corregido) · v1.8: P8.6 · Control de SLA en IF-02: RF-08 agregado + RF-53 por etapa · tandas A-G · checkpoints M-9 a M-18 · reproceso diferido en FUT-EJ-08 · v1.7: logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9 · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
+*Última actualización: 10-ago-2026 · **v1.12 del plan** (corrección del criterio de aceptación de
+la Tanda B y ratificación de sus dos entregables de infraestructura: reconciliación nueva
+**§9.6-R6** — un criterio por `grep` declara sus exclusiones y se **corre** antes de escribirse, y
+un literal de §5.2.4 dentro de un `.test.ts` es un fixture correcto, no una constante
+hardcodeada; el comando pasa a `grep -nE '\b(0\.5|24|48)\b' lib/sla-*.ts` filtrado por
+`grep -v '\.test\.ts:'` y por la exclusión de comentarios —sólo los tres literales inequívocos,
+porque `2`/`3`/`4`/`6` son números de etapa y de día de la semana en el propio motor, y el ancla
+`$` de la primera corrección no excluía nada— · entregables de la
+Tanda B completados con `vitest.config.mts` y `updateRecord` de `lib/airtable-client.ts` · la
+Tanda B **no se reabre**: cerrada con 186 tests verdes, sólo cambia cómo se la verifica · sin
+campos, tandas ni checkpoints nuevos) · v1.11 (Tanda A ejecutada contra la base: `C_SLA_Etapas` `tbl05zu5RLhH3u6pl` con sus 7 filas, 3 campos nuevos en `C_SLA`, 21 campos SLA en `TX_Solicitudes`, fila `SLA_DEFAULT_GLOBAL` `recAoOl35rFwEuM8u` · `sla_revision_horas` pasa a 1 decimal · **M-13 CERRADO**: `sla_semaforo_etapa` `fldB6gJ3clZUPgaZk` creado por MCP en A-3, queda viva sólo la verificación de los cuatro literales en el E2E de la Tanda C · `matriz_etapas` de la fila default revertido a vacío para preservar §9.6-R4 · reconciliación nueva **§9.6-R5**: el MCP sí crea fórmulas) · v1.10 (tres decisiones de negocio incorporadas: **Decisión 1** matriz por etapa de §5.2.4 como dato cerrado, se carga literal y se ratifica en **M-11.b** · **Decisión 2** baseline del agregado, fila global default en `C_SLA` con 3 / 2 / verde 0-1 y `sla_revision_horas` vacío, en **M-11.a**, que además borra la familia perdedora · **Decisión 3** reproceso §5.2.5 ratificado como diferido en FUT-EJ-08 · reconciliación nueva **§9.6-R4** con la traducción de nombres al schema real, la convención de comodín por link vacío y la precedencia campo a campo frente a `SLA_METLIFE_Refinanciamiento` · M-11 se parte en M-11.a/M-11.b y deja de ser compuerta de tiempo ajeno · sin campos ni tandas nuevas) · v1.9 (reconciliación de las tres divergencias entre §9.6 y la base real: **§9.6-R1** `C_Feriados` canónico · **§9.6-R2** `AT08_Alertas_SLA` se crea y su fila de inventario se actualiza · **§9.6-R3** `sla_revision_horas` con regla de override sobre la etapa 7 · paso F-5 nuevo · M-9/M-11/M-12/M-16/M-17/M-18 ampliados · E2E-12 con el calendario corregido) · v1.8: P8.6 · Control de SLA en IF-02: RF-08 agregado + RF-53 por etapa · tandas A-G · checkpoints M-9 a M-18 · reproceso diferido en FUT-EJ-08 · v1.7: logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9 · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*

@@ -1,5 +1,5 @@
 {
-    "name": "SC01 - Crear solicitud",
+    "name": "SC01 v1.1 - Crear solicitud",
     "flow": [
         {
             "id": 1,
@@ -2259,12 +2259,17 @@
                     "fldJTjjzCPBHMOWZv": "{{6.id}}",
                     "fldKP0yxwQkSdrFuZ": "{{1.direccion}}",
                     "fldKZW799xIqMFN1I": "{{parseNumber(1.valor_uf)}}",
+                    "fldLJdanpV0FANjKS": "{{if(1.sla_etapa_vence_ts; parseDate(1.sla_etapa_vence_ts))}}",
+                    "fldLfFftNm0Kvvu08": "{{if(1.sla_etapa_alerta_ts; parseDate(1.sla_etapa_alerta_ts))}}",
                     "fldM9ELuMvgRwbmUn": "{{1.ejecutivo_formalizador}}",
                     "fldMRFFXv9rOVfQlf": "{{1.vendedor_tipo_persona}}",
                     "fldNkFwB5p3Mljtrg": "{{1.vendedor_razon_social_o_nombre}}",
+                    "fldPZ7ReQbC1UbIMu": "{{if(1.sla_e1_inicio_ts; parseDate(1.sla_e1_inicio_ts))}}",
                     "fldPphw1FWfYdZI2Z": "{{1.origen_canal}}",
                     "fldRmC7IjhRUf1UPk": "{{parseNumber(1.financiero_subsidio_uf)}}",
                     "fldRweQyq3tTQGmPR": "{{1.ejecutivo_solicitante}}",
+                    "fldXG2TODJfP6Snq6": "{{if(1.sla_recalculado_ts; parseDate(1.sla_recalculado_ts))}}",
+                    "fldYpHiAosqbxL85b": "{{if(1.sla_etapa_actual; parseNumber(1.sla_etapa_actual))}}",
                     "fldb1vmKk7y3hi4uY": "{{if(1.n_operacion_cliente; parseNumber(1.n_operacion_cliente); emptystring)}}",
                     "fldbmGmyMHOtfX2Az": "{{1.proyecto}}",
                     "fldbxZh45lFTB7yVJ": "{{1.tipo_cliente_origen}}",
@@ -3042,6 +3047,15 @@
                                 "fldLFgbQx6gESsDnI": {
                                     "mode": "chose"
                                 },
+                                "fldLJdanpV0FANjKS": {
+                                    "mode": "edit"
+                                },
+                                "fldLfFftNm0Kvvu08": {
+                                    "mode": "edit"
+                                },
+                                "fldPZ7ReQbC1UbIMu": {
+                                    "mode": "edit"
+                                },
                                 "fldPphw1FWfYdZI2Z": {
                                     "mode": "edit"
                                 },
@@ -3051,6 +3065,12 @@
                                 "fldThm6gvkD6JRS1k": {
                                     "mode": "chose",
                                     "label": "Empty"
+                                },
+                                "fldXG2TODJfP6Snq6": {
+                                    "mode": "edit"
+                                },
+                                "fldYpHiAosqbxL85b": {
+                                    "mode": "edit"
                                 },
                                 "fldZ9Ap5zBGGJ8GSb": {
                                     "mode": "chose"
@@ -3701,6 +3721,35 @@
                                 },
                                 "type": "array",
                                 "label": "banco_link"
+                            },
+                            {
+                                "name": "fldPZ7ReQbC1UbIMu",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_e1_inicio_ts"
+                            },
+                            {
+                                "name": "fldYpHiAosqbxL85b",
+                                "type": "number",
+                                "label": "sla_etapa_actual"
+                            },
+                            {
+                                "name": "fldLfFftNm0Kvvu08",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_etapa_alerta_ts"
+                            },
+                            {
+                                "name": "fldLJdanpV0FANjKS",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_etapa_vence_ts"
+                            },
+                            {
+                                "name": "fldXG2TODJfP6Snq6",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_recalculado_ts"
                             }
                         ],
                         "type": "collection",

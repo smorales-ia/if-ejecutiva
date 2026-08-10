@@ -285,3 +285,26 @@ agrupadas.
 - **Sube de prioridad desde v1.9.7.** Mientras la spec sólo mencionaba feriados de pasada en RN-04, el nombre equivocado era una molestia. §5.2.1 lo convierte en dependencia del cómputo hábil de todo el SLA operacional, y §5.2 declara explícitamente que "H_Feriados sigue siendo la fuente única de feriados para ambos cómputos". Esa frase apunta a una tabla que no existe.
 - Al corregir, revisar también `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md:2545`, que repite el error. Es fuente canónica importada y no se edita desde este repo: corresponde reportarlo aguas arriba.
 - Prerrequisito implícito de **CI-005**: no se puede implementar la ventana hábil de §5.2.1 sin resolver contra qué tabla se leen los feriados.
+
+---
+
+## CI-008 · `docs/schema-airtable.md` no tiene `C_SLA_Etapas` ni los 21 campos `sla_` que el código ya referencia
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-008 |
+| **Archivo:línea** | `docs/schema-airtable.md` (sin ninguna aparición de `sla_e`, `sla_etapa`, `sla_semaforo`, `sla_recalculado`, `sla_pausa` ni `C_SLA_Etapas`) vs `lib/sla-etapas.ts:60-83` (`FIELD_IDS_SLA`, 21 entradas) y `lib/solicitudes.ts:390-410` (5 FIELD_IDs literales en `SOLICITUD_FIELDS`) |
+| **Síntoma** | El snapshot de schema que `CLAUDE.md` declara fuente para derivar tipos TS y Route Handlers no conoce la tabla `C_SLA_Etapas` (`tbl05zu5RLhH3u6pl`) ni los 21 campos `sla_*` de `TX_Solicitudes`. Quien derive un tipo o escriba un handler siguiendo ese archivo no encuentra los campos, y quien busque el FIELD_ID de `sla_etapa_vence_ts` para no romper una lectura tiene que ir al código o a Airtable. La divergencia es de **omisión**, no de contradicción: nada de lo que el archivo dice es falso. |
+| **Causa** | El paso **A-6** de la Tanda A de §9.6 (*"Actualizar `docs/schema-airtable.md` con la tabla nueva y los 21 campos, con sus `tbl…`/`fld…` reales"*) no se ejecutó cuando se ejecutó el resto de la Tanda A el 10-ago-2026. El plan lo declaraba explícitamente como excepción —el único ítem de su tabla de impacto que **no** quedaba diferido—, y aun así quedó fuera del pase. |
+| **Resolución** | Agregar a `docs/schema-airtable.md`: (1) la tabla `C_SLA_Etapas` (`tbl05zu5RLhH3u6pl`) con sus 8 campos y las 7 filas sembradas; (2) los 21 campos `sla_*` de `TX_Solicitudes` con FIELD_ID, tipo y —en los 18 `dateTime`— la `timeZone`; (3) los 3 campos nuevos de `C_SLA` (`sla_revision_horas` `fldyi1guWZwwhvbkF`, `matriz_etapas`, `activo_desde`). **Los datos ya están verificados y no hay que volver a levantarlos**: la verificación V1/V2 del 10-ago-2026 contra `GET /v0/meta/bases/.../tables` devolvió los 21 campos con cero divergencias contra el código y los 18 `dateTime` en `America/Santiago`. **No se rehace la Tanda A**: el esquema está bien creado; lo que falta es documentarlo. |
+| **Dueño** | Claude Code (ejecución) · Sergio (visto bueno) |
+| **Fecha objetivo** | Condicional a la **Tanda D de §9.6.2**, en su mismo lote: D-1 y D-4 derivan tipos de estos campos y son los primeros consumidores de UI, así que es el punto en que la omisión empieza a costar. |
+| **Estado** | abierta |
+| **Origen** | Cierre de la **Tanda C de §9.6** (10-ago-2026), al ejecutar las verificaciones V1/V2/V3 contra la REST API de Airtable. |
+
+**Notas:**
+
+- **Es doc-vs-código y por eso entra acá, no en `_ambiguedades.md`.** `CLAUDE.md` §*Cosas que Claude Code SÍ debe hacer* nombra a `docs/schema-airtable.md` como la fuente de la que se derivan los tipos; el código de producción ya referencia 21 campos que esa fuente no lista. No es una discrepancia entre dos documentos.
+- **La Tanda C no quedó bloqueada por esto y por una razón concreta:** los FIELD_IDs se tomaron de `FIELD_IDS_SLA` (`lib/sla-etapas.ts`), que la Tanda B había fijado desde el pase MCP, y la verificación V1 los confirmó uno a uno contra el schema vivo. La deuda es de legibilidad y de siguiente-sesión, no de corrección.
+- **Verificación V3 pendiente, y no es parte de esta entrada.** Al 10-ago-2026 las 39 filas de `TX_Solicitudes` devuelven `sla_semaforo_etapa = "sin_dato"` y ninguna tiene `sla_etapa_actual` poblado, porque el **backfill A-5 tampoco corrió**. Eso confirma un literal del contrato de M-13 —`sin_dato`, en minúscula y sin adornos— y deja los otros tres (`verde`/`ambar`/`rojo`) para el E2E de la Tanda G. Si al observarlos apareciera cualquier otra cadena, es **RO-13** y se registra como entrada propia.
+- Relación con **CI-005**: esta entrada no la cierra ni la afecta. CI-005 es que el reloj mide desde la visita; ésta es que el schema nuevo no está documentado.

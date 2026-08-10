@@ -901,6 +901,21 @@ export function NewRequestSheet() {
     }
   }
 
+  // §5.2.2 · RF-53 — el reloj del SLA arranca al **montar la Fase 1**, o sea
+  // cuando la Ejecutiva abre el wizard, no cuando presiona "Crear solicitud".
+  // Entre una cosa y otra pueden pasar horas, y el hito que §5.2.2 define es el
+  // momento en que Control y Seguimiento abre el correo e ingresa la solicitud.
+  //
+  // El guard `if (getValues(...))` hace el estampado idempotente: si el efecto
+  // se reejecuta (StrictMode monta dos veces en desarrollo, y `open` cambia al
+  // volver de un diálogo de confirmación) el instante original se conserva. Sin
+  // él, cada re-render adelantaría el reloj y la e1 mediría siempre cero.
+  React.useEffect(() => {
+    if (!open) return
+    if (getValues("slaInicioTs")) return
+    setValue("slaInicioTs", new Date().toISOString())
+  }, [open, getValues, setValue])
+
   function resetAll() {
     reset({
       ...nuevaSolicitudInternaDefaults,
@@ -925,6 +940,11 @@ export function NewRequestSheet() {
         tipoPropiedadNuevoUsado: tipo,
         unidades: [nuevaUnidad()],
         contactosVisita: [nuevoContacto()],
+        // `reset(base)` pisa **todo** el formulario, así que el hito de §5.2.2
+        // hay que arrastrarlo explícitamente: sin esta línea, elegir
+        // nuevo/usado borraría el instante estampado al abrir el wizard y el
+        // reloj arrancaría más tarde de lo que corresponde.
+        slaInicioTs: getValues("slaInicioTs") || new Date().toISOString(),
       }
       const keys = new Set<string>()
       if (modo === "documentos") {

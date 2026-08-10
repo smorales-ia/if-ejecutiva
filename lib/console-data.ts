@@ -188,6 +188,26 @@ export interface Solicitud {
   /** Nivel de SLA en español (verde/ámbar/rojo) — deriva de slaTone(). */
   nivelSla?: NivelSLA
 
+  // ── Reloj por etapa · RF-53 (Tanda C · §9.6.2 C-1) ───────────────────────
+  /**
+   * Etapa vigente del workflow de §5.2.4 con su semáforo propio. Convive con
+   * `slaDias`/`slaTotal` (RF-08, el agregado en días) y **no lo sustituye**:
+   * responden preguntas distintas —cuándo vence la solicitud vs. dónde se está
+   * atrasando ahora—, y una etapa en rojo con el agregado en verde es la lectura
+   * correcta de ambos, no una inconsistencia.
+   *
+   * Ausente cuando la solicitud no tiene `sla_etapa_actual`, que en v1.9 es el
+   * caso de casi toda la cartera: sólo e1 y e2 tienen escritor.
+   */
+  slaEtapa?: SlaEtapaSolicitud
+  /**
+   * `sla_e1_inicio_ts` — hito de §5.2.2: cuándo Control y Seguimiento abrió el
+   * correo e ingresó la solicitud, no cuándo llegó al buzón. Lo captura el
+   * wizard al montar la Fase 1 y es editable mientras el estado siga `creada`
+   * (REGLA C). ISO 8601.
+   */
+  slaE1InicioTs?: string
+
   // ── Campos operacionales de TX_Solicitudes (Tanda D-02, 29-jul-2026) ──────
   // Todos opcionales: el tipo lo construyen también los 8 mocks de este archivo
   // y el formulario de alta, que no los conocen. Se excluyen deliberadamente
@@ -281,6 +301,71 @@ export const PRIORIDAD_CLASSES: Record<Prioridad, string> = {
 }
 
 export type SlaTone = "green" | "amber" | "red"
+
+/**
+ * Tono del reloj **por etapa** (RF-53 · §5.2.4), tal como lo emite la fórmula
+ * `sla_semaforo_etapa` de Airtable (`fldB6gJ3clZUPgaZk`).
+ *
+ * Es un tipo distinto de `SlaTone` a propósito, y la diferencia no es cosmética:
+ *
+ * - `SlaTone` es un valor **derivado en el cliente** por `slaTone(dias, total)`
+ *   sobre el SLA agregado en días (RF-08), y su vocabulario en inglés es la
+ *   clave de `SLA_CLASSES`.
+ * - `SlaTonoEtapa` es un valor **leído literalmente de Airtable**. La fórmula la
+ *   escribimos nosotros en M-13 justamente para que emita cuatro literales en
+ *   minúscula, sin emoji ni adornos, y se compara **por igualdad** — no con
+ *   `FIND` — porque su formato es contrato nuestro y no herencia de nadie
+ *   (RO-13 · §9.6-R5). Renombrarlo al inglés obligaría a traducir en el mapper,
+ *   y una traducción es exactamente el punto donde el contrato se puede romper
+ *   sin que ningún test lo note.
+ *
+ * `sin_dato` no es un error: en v1.9 sólo e1 y e2 tienen escritor, así que buena
+ * parte de la cartera no tiene umbrales materializados. Se muestra como "sin
+ * datos de etapa", nunca como verde (degradación honesta).
+ */
+export type SlaTonoEtapa = "verde" | "ambar" | "rojo" | "sin_dato"
+
+/** Los tres tonos que la píldora de etapa pinta con color. `sin_dato` no pinta. */
+export const SLA_TONOS_ETAPA_CON_COLOR = ["verde", "ambar", "rojo"] as const
+
+/**
+ * Traduce el tono de etapa al vocabulario de `SLA_CLASSES`, para que la píldora
+ * de la Tanda D reutilice la paleta existente sin declarar una segunda.
+ * `sin_dato` devuelve `null`: no hay color que corresponda y fabricar uno sería
+ * el verde inventado que §9.6 prohíbe.
+ */
+export function toneDeEtapa(tono: SlaTonoEtapa): SlaTone | null {
+  switch (tono) {
+    case "verde":
+      return "green"
+    case "ambar":
+      return "amber"
+    case "rojo":
+      return "red"
+    case "sin_dato":
+      return null
+  }
+}
+
+/**
+ * Reloj por etapa de una solicitud (RF-53 · §5.2.4), tal como lo expone el
+ * read-layer server-side. Opcional en `Solicitud` para no romper los 8 mocks de
+ * este archivo ni el formulario de alta, que no lo conocen.
+ */
+export interface SlaEtapaSolicitud {
+  /** Etapa vigente, 1–7. Sale de `sla_etapa_actual`, que escribe el motor. */
+  numero: 1 | 2 | 3 | 4 | 5 | 6 | 7
+  /** Nombre de §5.2.4, leído de `C_SLA_Etapas`. Nunca hardcodeado. */
+  nombre: string
+  /** Literal de la fórmula, sin recalcular. Ver `SlaTonoEtapa`. */
+  tono: SlaTonoEtapa
+  /** Tiempo restante ya formateado server-side (ej. "Vence en 4h 10m"). */
+  etiqueta: string
+  /** `sla_etapa_alerta_ts` — instante en que la etapa alcanza su SLA ideal. */
+  alertaTs: string | null
+  /** `sla_etapa_vence_ts` — instante en que supera su SLA máximo. */
+  venceTs: string | null
+}
 
 export function slaTone(dias: number, total: number): SlaTone {
   if (dias < 0) return "red"

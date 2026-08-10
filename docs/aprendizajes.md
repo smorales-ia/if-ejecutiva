@@ -573,3 +573,45 @@ Lo que hace falta subrayar es **por qué** la comparación byte a byte era oblig
 
 **Inconveniente 3 — la jornada rinde 9 horas, no 8.** Las expectativas de dos casos del encargo estaban mal calculadas por asumir jornada de 8 h y, en un caso, que 24 h hábiles equivalen a un día. Con ventana 9:00–18:00 el día rinde **540 minutos**: 24 h hábiles desde un martes 10:00 vencen el **jueves a las 16:00**, no el miércoles a las 10:00. Corregido en el test, que ahora asienta el número real.
 **Prevención futura:** los umbrales de §5.2.4 están en horas hábiles y la ventana es de nueve; cualquier expectativa escrita "a ojo" con días de ocho horas queda corrida. El test de invariante `minutosHabilesEntre(t, sumarHorasHabiles(t, h)) === h * 60` (**RO-06**, 42 combinaciones) es lo que impide que un error así entre sin que nadie lo note.
+
+---
+
+### 2026-08-10 (b) — Un criterio de aceptación por `grep` que no podía dar verde
+
+**Contexto:** apertura de la Tanda C de §9.6. Antes de arrancar se corrió el criterio de aceptación de la Tanda B, ya cerrada con 186 tests verdes.
+
+**Inconveniente:** el criterio pedía «cero constantes de §5.2.4 en el código» y lo verificaba con `grep -n "\b48\b\|\b0\.5\b"` sobre `lib/sla-*.ts`. Devolvía coincidencias, o sea declaraba incumplida una tanda que cumple.
+
+**Causa raíz:** el glob `lib/sla-*.ts` incluye `lib/sla-habil.test.ts` y `lib/sla-etapas.test.ts`, y ahí los catorce números de §5.2.4 aparecen **legítimamente**: un test que verifica que una etapa de `0.5` h vence donde debe tiene que escribir `0.5`. El criterio medía la suma de dos poblaciones con reglas opuestas —en producción el literal es un defecto, en un fixture es el instrumento— y por construcción no podía dar verde.
+
+**Solución aplicada:** se corrigió el criterio, no el código. Hicieron falta **dos** correcciones, y la primera es la lección:
+
+1. `| grep -v '\.test\.ts$'` — escrito sin ejecutarlo, **no excluye nada**. `$` ancla al final de la *línea*, y las líneas que `grep` emite terminan en el contenido (`lib/sla-etapas.test.ts:  e5: { … }`), no en el nombre del archivo. Colaba las 106 coincidencias de los tests intactas. La exclusión correcta ancla en el separador: `'\.test\.ts:'`.
+2. Con la exclusión ya operativa apareció el problema de fondo: **cuatro de los siete literales tienen uso legítimo permanente en el motor**. `2`, `3`, `4` y `6` están en `export type NumeroEtapa = 1 | 2 | 3 | 4 | 5 | 6 | 7`, en `ETAPAS`, en los puntajes de `resolverSlaDelPar` y en `diasSemana: [1,2,3,4,5]`. Son números de etapa y de día de la semana, no plazos. Los inequívocos son tres: `0.5`, `24` y `48`.
+
+Criterio final: `grep -nE '\b(0\.5|24|48)\b' lib/sla-*.ts | grep -v '\.test\.ts:' | grep -vE '^[^:]+:[0-9]+: *(//|\*|/\*)'`, vacío sobre `lib/` y sobre `app/api`. Registrado como **§9.6-R6** en `docs/_md/plan-ejecucion-if02-v1_9.md` (plan v1.12), junto con la ratificación de los dos entregables de infraestructura que la Tanda B produjo y v1.11 no declaraba (`vitest.config.mts` y `updateRecord`). La Tanda B no se reabrió.
+
+**Prevención futura:** dos reglas, y la segunda salió de equivocarse en la primera pasada.
+
+1. **Todo criterio de aceptación basado en `grep` declara sus exclusiones dentro del propio comando, y el comando se corre antes de darlo por escrito.** Un literal en un fixture es correcto y no debe hacer fallar el criterio. Es **RO-02** por el otro extremo: allí el `grep` era la fuente de verdad de la cobertura y el riesgo era no correrlo; acá se corre y lo que está mal es su definición. Un criterio de aceptación es código —tiene sintaxis, tiene bugs y falla en silencio— y se prueba como código; una corrección de criterio escrita "de memoria" hereda el mismo defecto que venía a arreglar.
+2. **Un criterio se escribe sobre las señales inequívocas, no sobre todas.** Ampliar el patrón a `2|3|4|6` no lo hace más estricto: lo hace inservible, porque obliga a ignorarlo siempre, y un criterio que grita todos los días no distingue nada.
+
+La señal de alarma barata: si un criterio falla sobre código que se acaba de revisar y se sabe correcto, revisar primero el criterio.
+
+**Regla operativa concreta que deja:** `grep -v` con anclaje `$` falla sobre `filename:linenumber:content`; usar `:` como delimitador. Es decir, para excluir un archivo del resultado de un `grep` se escribe `grep -v '\.test\.ts:'`, nunca `grep -v '\.test\.ts$'` — `$` ancla al final de la línea emitida, que termina en el contenido, no en el nombre del archivo. El modo de fallo es silencioso en la dirección peor: el filtro no excluye nada y parece que sí.
+
+---
+
+### 2026-08-10 (c) — Cierre de Tanda C: verificación por REST API y dos deudas anotadas
+
+**Contexto:** cierre de la Tanda C de §9.6 (read-layer del reloj por etapa, endpoint de cronología, blueprints y wizard). Las tres verificaciones de contrato contra Airtable se corrieron **sin MCP**, con `AIRTABLE_TOKEN` de `.env.local` y `curl` contra la REST API.
+
+**Hallazgo 1 · el MCP no es la única vía de verificación de schema, y a veces no es la más barata.** `GET /v0/meta/bases/{baseId}/tables` devuelve el schema completo con FIELD_IDs, tipos y `options.timeZone`, que es exactamente lo que hacía falta para contrastar `FIELD_IDS_SLA` contra la base. Salió: 21 de 21 campos `sla_*` coinciden con el código, y los 18 `dateTime` están en `America/Santiago`, ninguno en `client`. Cuando el MCP no está autorizado, la sesión no tiene por qué detenerse: el token server-side ya está en el repo y el endpoint de metadata es de sólo lectura. **Nota de entorno: `jq` no está instalado en esta máquina** — el parseo se hizo con `python3`, que sí está.
+
+**Hallazgo 2 · un contrato de fórmula sólo se puede verificar sobre filas que existan.** `sla_semaforo_etapa` devolvió `"sin_dato"` en las 39 filas de `TX_Solicitudes`, y ninguna tiene `sla_etapa_actual` poblado porque **el backfill A-5 tampoco corrió**. Eso confirma un literal de los cuatro —en minúscula, sin emoji, sin adornos— y deja `verde`/`ambar`/`rojo` sin observar hasta el E2E de la Tanda G. La lección de método es la de §9.6-R5 aplicada de nuevo: `isValid: true` dice que la fórmula compila, y una lectura sobre base cruda dice qué emite **en el caso que la base tiene**, no en los cuatro. Marcar "verificado" con un solo literal observado sería el mismo optimismo que RO-02 castiga.
+
+**Deuda 1 · A-6 no se ejecutó.** `docs/schema-airtable.md` no tiene `C_SLA_Etapas` ni los 21 campos `sla_*`, pese a que el plan lo declaraba como el único ítem de su tabla de impacto que **no** quedaba diferido. Registrada como **CI-008**, con fecha objetivo condicional a la Tanda D —que es donde empieza a costar, porque D-1/D-4 derivan tipos de esos campos—. No se rehace la Tanda A: el esquema está bien creado; lo que falta es documentarlo.
+
+**Deuda 2 · higiene de placeholders en blueprints.** `SC-Asignar` m8 lleva la URL literal del webhook de SC05 (`hook.eu1.make.com/…`) mientras el secreto HMAC del mismo archivo sí usa `REEMPLAZAR_CON_MAKE_HMAC_SECRET`. La convención existe y está aplicada a medias. **No se tocó en esta tanda a propósito:** el reimport de M-14 tiene que ser idéntico a lo probado, y cambiar la URL por un placeholder obliga a restaurarla a mano en el import —y olvidarla deja al tasador sin correo, con Make reportando Success—. Corresponde hacerlo como tanda propia de higiene, sobre todos los blueprints a la vez y con el checklist de restauración escrito.
+
+**Prevención futura:** cuando una tanda declare un paso documental como "no diferido" (aquí A-6), verificarlo en el cierre de esa misma tanda con el `grep` correspondiente, no en la siguiente. Un paso que se declara excepción y no se ejecuta pierde las dos cosas: no se hace y deja de estar en la lista de lo diferido.

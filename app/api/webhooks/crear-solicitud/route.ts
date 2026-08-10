@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { listRecords } from '@/lib/airtable-client'
 import { toMakeSnakePayload } from '@/lib/mappers/crear-solicitud'
 import { postToMake } from '@/lib/make-client'
+import { recalcularSla } from '@/lib/sla-etapas'
 import { nuevaSolicitudInternaSchema } from '@/lib/validators/nueva-solicitud-interna'
 import { TX_SOLICITUDES } from '@/lib/solicitudes'
 
@@ -166,6 +167,59 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = toMakeSnakePayload(parsed.data, { ejecutivaClerkId: userId })
+
+  // ── Umbrales de la etapa 1 · RF-53 (§9.6.2 · C-6/C-7) ─────────────────────
+  //
+  // `sla_e1_inicio_ts` y `sla_etapa_actual = 1` los pone el mapper, pero los dos
+  // instantes de pared —alerta y vencimiento— **no puede calcularlos Make**: la
+  // aritmética hábil de §5.2.1 (L-V 9:00-18:00, feriados de `C_Feriados`, dos
+  // cambios de huso al año) no cabe en una fórmula de Airtable ni en una
+  // expresión del mapper. El motor los calcula aquí y Make los persiste, que es
+  // exactamente el reparto de C-5: **el motor calcula, Make persiste** (RT-03).
+  //
+  // Se hace con `recalcularSla` en modo `persistir: false` y con la solicitud
+  // **inyectada en memoria**: la fila todavía no existe en Airtable, así que no
+  // hay nada que leer ni nada que escribir. `deps.leerSolicitud` devuelve el
+  // registro sintético con el hito, y el resto de puertos (matriz, feriados,
+  // `C_SLA`) resuelven contra la base como siempre.
+  //
+  // Sin hito no hay reloj: si el wizard no estampó `sla_e1_inicio_ts` se omite
+  // el cálculo entero en vez de anclarlo a `now`, que sería fabricar el dato que
+  // §5.2.2 define con precisión.
+  const hito = payload.sla_e1_inicio_ts
+  if (typeof hito === 'string' && hito !== '') {
+    try {
+      const { campos } = await recalcularSla('rec_alta_sin_persistir', {
+        persistir: false,
+        deps: {
+          leerSolicitud: async () => ({
+            sla_e1_inicio_ts: hito,
+            // Los tres links viajan vacíos a propósito: en el alta todavía son
+            // nombres, no record IDs, así que `resolverSlaDelPar` cae en la fila
+            // comodín `SLA_DEFAULT_GLOBAL` (§9.6-R4). Da igual para e1 — el
+            // único override por par es el de e7 (§9.6-R3) —, y forzar una
+            // resolución con datos que aún no son links daría un falso positivo.
+            cliente: [],
+            tipo_informe: [],
+            tipo_propiedad: [],
+          }),
+        },
+      })
+      payload.sla_etapa_alerta_ts = campos.sla_etapa_alerta_ts
+      payload.sla_etapa_vence_ts = campos.sla_etapa_vence_ts
+      payload.sla_recalculado_ts = campos.sla_recalculado_ts
+    } catch (err) {
+      // Mismo criterio que en `asignar/route.ts`: el reloj es instrumentación y
+      // el alta es la operación de negocio. Un catálogo que no responde no
+      // puede impedir crear una solicitud; queda el prefijo greppable para
+      // auditar qué filas nacieron sin umbrales.
+      console.error(
+        '[POST /api/webhooks/crear-solicitud] [SLA-ETAPA] no se pudieron materializar los ' +
+          'umbrales de e1; el alta continúa sin ellos',
+        err,
+      )
+    }
+  }
 
   let makeRes: Response
   try {

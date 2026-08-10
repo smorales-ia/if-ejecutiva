@@ -1,5 +1,5 @@
 {
-    "name": "SC-Asignar v2.0 - Asignacion de tasador",
+    "name": "SC-Asignar v2.1 - Asignacion de tasador",
     "flow": [
         {
             "id": 1,
@@ -53,6 +53,12 @@
                 "table": "tblaHTyMHYfmy7Fg6",
                 "record": {
                     "fld2H2r0GMeVfNO26": "asignada",
+                    "fld9aaxAutxDJD9kI": "{{if(1.sla_e2_inicio_ts; parseDate(1.sla_e2_inicio_ts))}}",
+                    "fldLJdanpV0FANjKS": "{{if(1.sla_etapa_vence_ts; parseDate(1.sla_etapa_vence_ts))}}",
+                    "fldLfFftNm0Kvvu08": "{{if(1.sla_etapa_alerta_ts; parseDate(1.sla_etapa_alerta_ts))}}",
+                    "fldXG2TODJfP6Snq6": "{{if(1.sla_recalculado_ts; parseDate(1.sla_recalculado_ts))}}",
+                    "fldYpHiAosqbxL85b": "{{if(1.sla_etapa_actual; parseNumber(1.sla_etapa_actual))}}",
+                    "fldhjG9m8HQPIg7fU": "{{if(1.sla_e1_fin_ts; parseDate(1.sla_e1_fin_ts))}}",
                     "fldiaj4mwd17g25n1": "{{formatDate(now; \"YYYY-MM-DD\")}}",
                     "fldlgriK1jP5906wE": "{{1.tasadorId}}"
                 },
@@ -95,6 +101,9 @@
                                 "fld9FKZ9siAeSsH54": {
                                     "mode": "edit"
                                 },
+                                "fld9aaxAutxDJD9kI": {
+                                    "mode": "edit"
+                                },
                                 "fldBFKrJWJhAnP2PQ": {
                                     "mode": "chose"
                                 },
@@ -128,6 +137,12 @@
                                 "fldLFgbQx6gESsDnI": {
                                     "mode": "chose"
                                 },
+                                "fldLJdanpV0FANjKS": {
+                                    "mode": "edit"
+                                },
+                                "fldLfFftNm0Kvvu08": {
+                                    "mode": "edit"
+                                },
                                 "fldMRFFXv9rOVfQlf": {
                                     "mode": "edit"
                                 },
@@ -138,6 +153,12 @@
                                     "mode": "chose"
                                 },
                                 "fldThm6gvkD6JRS1k": {
+                                    "mode": "edit"
+                                },
+                                "fldXG2TODJfP6Snq6": {
+                                    "mode": "edit"
+                                },
+                                "fldYpHiAosqbxL85b": {
                                     "mode": "edit"
                                 },
                                 "fldZ9Ap5zBGGJ8GSb": {
@@ -160,6 +181,9 @@
                                 },
                                 "fldgr7FozUcXQcI48": {
                                     "mode": "chose"
+                                },
+                                "fldhjG9m8HQPIg7fU": {
+                                    "mode": "edit"
                                 },
                                 "fldhm86amyekWsEFY": {
                                     "mode": "chose"
@@ -1027,6 +1051,41 @@
                                 "name": "fldDP232hBLsZ0PWJ",
                                 "type": "text",
                                 "label": "ejecutivo_comercializador"
+                            },
+                            {
+                                "name": "fldhjG9m8HQPIg7fU",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_e1_fin_ts"
+                            },
+                            {
+                                "name": "fld9aaxAutxDJD9kI",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_e2_inicio_ts"
+                            },
+                            {
+                                "name": "fldYpHiAosqbxL85b",
+                                "type": "number",
+                                "label": "sla_etapa_actual"
+                            },
+                            {
+                                "name": "fldLfFftNm0Kvvu08",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_etapa_alerta_ts"
+                            },
+                            {
+                                "name": "fldLJdanpV0FANjKS",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_etapa_vence_ts"
+                            },
+                            {
+                                "name": "fldXG2TODJfP6Snq6",
+                                "time": true,
+                                "type": "date",
+                                "label": "sla_recalculado_ts"
                             }
                         ],
                         "type": "collection",

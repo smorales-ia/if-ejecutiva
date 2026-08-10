@@ -129,6 +129,19 @@ export const editarSolicitudSchema = z
     canal: z.string().optional(),
     prioridad: z.string().optional(),
     fechaAsignacion: z.string().optional(),
+    /**
+     * Hito de inicio del SLA por etapa (§5.2.2 · RF-53 · §9.6.2 C-7). ISO 8601.
+     *
+     * Se agrega **después** de mapearlo en SC-Edicion (`v3.5`, campo
+     * `fldPZ7ReQbC1UbIMu`), respetando el orden que fija la nota de este
+     * schema: una clave que viaja sin destino en Make se ignora en silencio y
+     * la ruta devuelve 200 con toast verde — el *silent 200* que `.strict()`
+     * existe para evitar.
+     *
+     * ⚠ Requiere que el escenario desplegado sea v3.5 o superior. Con v3.4 la
+     * clave viaja y no se escribe.
+     */
+    slaE1InicioTs: z.string().optional(),
 
     // Cliente final / comprador
     cliente: z.string().optional(),
