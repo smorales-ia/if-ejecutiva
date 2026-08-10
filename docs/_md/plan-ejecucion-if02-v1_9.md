@@ -1,6 +1,17 @@
 # Plan de Ejecución IF-02 v1.9 — Guía maestra para Claude Code
 
-> **Versión del plan: v1.6** (06-ago-2026). Cambio respecto de v1.5: realineamiento a la
+> **Versión del plan: v1.8** (10-ago-2026). Cambio respecto de v1.7: se inserta
+> **§9.6 · P8.6 — Control de SLA en IF-02 (RF-08 agregado + RF-53 por etapa)** entre P8.5 y P9,
+> con el diseño de datos, el motor de cómputo hábil, la UI de los dos semáforos convivientes y
+> las siete tandas A–G con checkpoints M-9 a M-18. Se corrige la **secuencia oficial de §0.7**,
+> que nunca incorporó P8.5, y se agregan sus dos filas a la tabla de modos de §0.5. Reproceso
+> (§5.2.5) **sigue diferido** en §1.9 · FUT-EJ-08. Filas nuevas en §12 y §13.
+>
+> **v1.7** (08-ago-2026). Logo corporativo del pie de SC05 como adjunto inline por CID,
+> checkpoints M-7 y M-8, y caso E2E-9. *(Este bump se registró sólo en el pie del archivo; la
+> entrada de encabezado se agrega aquí en v1.8 para que ambas versiones coincidan.)*
+>
+> **v1.6** (06-ago-2026). Cambio respecto de v1.5: realineamiento a la
 > Especificación v1.9.6 (reestructura de §8 · path Dropbox). Cambio de ubicación del archivo
 > a `docs/_md/` (pasa a ser normativo). Precisión de comportamiento del checklist P8:
 > desmarcar un tipo con archivo borra la fila y el binario (RF-52), no sólo desvincula.
@@ -95,6 +106,8 @@ Claude Code tiene 3 modos que Sergio cicla con **Shift+Tab** en la terminal:
 | P6 | Panel detalle | `accept edits on` | REGLAS A y C. Igual que P4. |
 | P7 | Diálogo asignación | `default` | Cambia estado real (`creada → asignada`) y dispara correo. |
 | P8 | Sheet documentos | `accept edits on` | Sube archivos a Dropbox. Bajo riesgo si RF-09 va bien. |
+| P8.5 | Correo de asignación (SC05) | `default` | Envía correo real a un tercero. Blueprints Make + plantilla en Airtable. |
+| P8.6 | Control de SLA (RF-08 + RF-53) | `default` | Muta schema Airtable (tabla + 21 campos + fórmula), toca dos blueprints ya en producción y crea una Automation con cron. |
 | P9 | Deploy | `default` | Deploy a producción. Cualquier error se propaga. |
 
 **Regla de comportamiento textual — red de seguridad:**
@@ -139,7 +152,7 @@ Cada P (incluido P0) es una **Tanda** independiente. Al terminar cada tanda:
 1. Lee todos los archivos de §0.1.
 2. Lista `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P*.md` ordenados por timestamp.
 3. Detecta la **última P completada**: la del archivo más reciente con timestamp válido y contenido no vacío.
-4. La siguiente P a ejecutar sigue la **secuencia oficial**: `P0 → P0.5 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8 → P9`. Ejemplo: si la última completada es `P0`, la siguiente es `P0.5`; si es `P0.5`, la siguiente es `P1`. (No usar aritmética `+1`: `P0.5` es una P nominal, no fraccional.)
+4. La siguiente P a ejecutar sigue la **secuencia oficial**: `P0 → P0.5 → P1 → P2 → P3 → P4 → P5 → P6 → P7 → P8 → P8.5 → P8.6 → P9`. Ejemplo: si la última completada es `P0`, la siguiente es `P0.5`; si es `P0.5`, la siguiente es `P1`. (No usar aritmética `+1`: `P0.5`, `P8.5` y `P8.6` son P nominales, no fraccionales. La secuencia de v1.5 a v1.7 omitía `P8.5` por descuido de la inserción de §9.5; corregido en v1.8 junto con la entrada de `P8.6`.)
 5. Si no hay archivos previos: la P a ejecutar es **P0**.
 6. Si el último snapshot `docs/_notas/snapshot-P{n}.md` existe pero el archivo de aprendizajes correspondiente **no existe**, esa P quedó a medias → **retomar P{n}** desde donde quedó (leer el snapshot para saber estado).
 7. **Antes de arrancar**, Claude Code muestra un mensaje breve:
@@ -1726,6 +1739,688 @@ de RN-44, al menos un contacto de visita, una unidad y un adjunto en Dropbox.
 
 ---
 
+## §9.6 · P8.6 — Control de SLA en IF-02 (RF-08 agregado + RF-53 por etapa)
+
+> **⚙ Modo Claude Code recomendado:** `default`
+> **🔴 Contrato de comportamiento:** **pausa-total** para toda mutación de schema Airtable y
+> para los dos blueprints ya en producción (SC01, SC-Asignar). Las lecturas MCP y la escritura
+> de código TS/UI son 🟡 **pausa-en-comandos**.
+
+> **Regla dura:** la Tanda A es bloqueante para todas las demás. El motor (Tanda B) se puede
+> escribir y testear sin Airtable —es aritmética pura—, pero **no se cablea nada** a la API ni a
+> la UI mientras `C_SLA_Etapas` no exista sembrada y los campos de `TX_Solicitudes` no estén
+> creados. Construir la UI contra campos inexistentes reproduce el bug de `mi_cartera` con
+> `ejecutiva_asignada` (E-018/E-019): degradación silenciosa que se lee como "no hay casos".
+
+### §9.6.1 Diseño
+
+#### El requerimiento en una frase
+
+La spec v1.9.7 §5.2 declara **dos relojes que conviven y no se sustituyen**: el **plazo
+agregado** por par (cliente, tipo_informe), en días, que gobierna el semáforo de bandeja
+(RF-08 · RN-04 · `C_SLA`), y el **plazo por etapa** del workflow —siete tramos entre la
+recepción del correo y el envío del informe visado, en **horas hábiles**— que gobierna el
+control diario del área (RF-53 · §5.2.4). El primero responde *cuándo vence la solicitud*; el
+segundo, *dónde se está atrasando ahora*. Una etapa en rojo con el agregado en verde es la
+lectura correcta de ambos, no una inconsistencia. P8.6 construye el segundo y sanea el primero.
+
+#### Estado real verificado (MCP · 10-ago-2026) — nada de esto se asume
+
+| Objeto | Estado real | Consecuencia para P8.6 |
+|---|---|---|
+| `C_SLA` (`tblsPZokEK5aoinTn`) | **1 sola fila** (`SLA_METLIFE_Refinanciamiento`, `dias_totales = 4`) con `cliente`/`tipo_informe`/`tipo_propiedad` poblados pero **sin umbrales de alerta**. Tiene **dos familias de campos duplicadas**: `dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` (la poblada) y `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` (vacía). **No existe `sla_revision`**, pese a que §5.2.4 · etapa 7 lo da por existente. | Tanda A · M-11 y M-9. RF-08 hoy **no está parametrizado**: el código no lee `C_SLA` en ningún punto. |
+| Campos por etapa en `C_SLA` | **Cero.** No hay ningún campo en horas. | Se crean en `C_SLA_Etapas` (tabla nueva), no como 14 columnas en `C_SLA` — ver *Dónde vive la matriz*. |
+| `TX_Solicitudes` (`tblaHTyMHYfmy7Fg6`, 135 campos) | Tiene `fecha_solicitud` (dateTime), `fecha_asignacion` (date) **y** `fecha_asignacion_ts` (dateTime), `fecha_visita`, `fecha_visita_programada`, `fecha_entrega`, `fecha_cierre` (todas date, sin hora). **Ningún timestamp de entrada/salida de etapa.** | Se crean los 14 + 7 derivados de *Modelo de datos*. Las fechas existentes **no sirven**: son `date`, y una matriz en horas necesita hora. |
+| `semaforo_sla` (`fldW4oUq7LvQUZq7W`) | Fórmula leída en vivo: cuenta días desde **`{fecha_visita}`**, no desde el ingreso, y emite `Entregado` / `Sin visita` / `VENCIDO` / `EN RIESGO` / `OK`. No lee `C_SLA`, no usa `WORKDAY`, no excluye feriados. `fecha_limite_entrega` = `DATEADD({fecha_visita}, 2, 'days')`. | Es **CI-005**. P8.6 la corrige en M-13 y deja el agregado leyendo `C_SLA` de verdad. |
+| `H_Feriados` | **No existe.** La tabla real es **`C_Feriados`** (`tblJVh2kPd4uMgxpb`), 18 filas. | **CI-007** · RO-15: manda la base real. Todo el código y los blueprints dicen `C_Feriados`. |
+| Contenido de `C_Feriados` | 15 feriados 2026 correctos; **una fila basura** (`nombre = "nombre_feriado"`, sin fecha, `tipo = "tipo"` — encabezado filtrado dentro de los datos), **2027-01-01 duplicado** (`recGB2eUtwWs3cIuM` y `reckuUbALWocT4kWX`), y **8 filas de 2026 sin `anno`**. | Tanda A · M-12. Una fila sin fecha rompe el `Set` de feriados del motor si no se filtra por `activo` **y** `fecha` no vacía. |
+| `A_Eventos` (`tblMKmDg2KrO5fMn8`) | `tipo_evento` es `singleLineText` (vocabulario abierto), con `timestamp`, `actor_*`, `detalle_json`, `clave_evento` y link `solicitud`. El filtro va contra el **primary field** de `TX_Solicitudes`, nunca contra el `rec…` (E-076/E-077, ya resuelto en `lib/eventos.ts`). | Patrón vigente: cada transición de etapa escribe un `A_Eventos`. No se crea vocabulario nuevo de tabla. |
+| `C_NotificacionesConfig` (`tbluB662ulWDaxqUY`) | `evento` **ya tiene** las opciones `sla_alerta_amarilla` y `sla_alerta_roja`. Sin filas para ninguna de las dos. | Tanda F · M-17: se crean filas, **no** opciones de select. |
+| `LogEscenarios` (`tblR4VWpUHw1CSyIS`) | `Escenario` tiene `Alerta SLA 2d` y `Alerta SLA 3d` (vocabulario viejo, en días). No hay opción para AT08. | Tanda F · M-17: agregar la opción `AT08_SLA`. Las dos viejas se dejan (RO-14: alias, no rename). |
+| `TX_Notificaciones` (`tbldgLQgjdgsOSZnt`) | Tiene `clave_notif`, `estado_envio`, `intentos`, `mensaje_error` — el mismo juego que hace idempotente a SC05. | Se reutiliza tal cual. Cero campos nuevos. |
+| Airtable Automations | Desplegadas: `AT01_Motor_Reglas`, `AT03_Calculos_DAG`, `AT-RF09-Trigger`, `AT03-Ext`. Sin desplegar: `AT02_Asignar_Tasador`, `AT04_Validar_Rangos`. **`AT08` no existe.** | Tanda F la crea desde cero. (De paso queda confirmado que AT02 sigue apagada, como exige la REGLA A · D-15.) |
+
+#### Modelo de datos
+
+**Dónde vive la matriz por etapa — decisión del panel.** §5.2.4 declara **una** matriz de siete
+etapas, igual para todos los clientes. `C_SLA` está indexada por (cliente, tipo_informe,
+tipo_propiedad). Meter ahí 14 columnas en horas replicaría los mismos catorce números en cada
+fila del par y garantizaría deriva el día que se agregue el segundo cliente. Por eso la matriz
+va en tabla propia, `C_SLA_Etapas`, con siete filas, y `C_SLA` recibe **sólo lo que es
+genuinamente por par**: el sub-SLA de revisión del visador que §5.2.4 · etapa 7 nombra
+explícitamente, más el enlace opcional a una matriz alternativa para el día que un cliente
+negocie plazos distintos. La alternativa —14 campos en `C_SLA`— se evaluó y se descarta: el
+único caso que resolvería mejor es el override por cliente, que el enlace ya cubre sin
+denormalizar.
+
+**Tabla nueva `C_SLA_Etapas`** — catálogo, 7 filas sembradas desde §5.2.4.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `etapa_key` | singleLineText (primary) | `e1` … `e7`. Es la clave que usa el código; el nombre es para humanos. |
+| `orden` | number (entero) | 1–7. |
+| `nombre_etapa` | singleLineText | Literal de §5.2.4. |
+| `responsable` | singleSelect | `control_seguimiento` · `tasador` · `visado` (§5.2.3). Destinatario de la alerta roja. |
+| `de_a` | singleLineText | Columna "De → A" de §5.2.4. Documental. |
+| `sla_ideal_horas` | number (2 dec) | Horas hábiles. `0.5` para las etapas de 30 min. |
+| `sla_max_horas` | number (2 dec) | Idem. |
+| `activo` | checkbox | Default `true`. |
+
+Siembra literal desde §5.2.4 — **estos catorce números son la única fuente**; el código no los
+lleva hardcodeados:
+
+| `etapa_key` | `nombre_etapa` | `responsable` | `sla_ideal_horas` | `sla_max_horas` |
+|---|---|---|---|---|
+| `e1` | Ingreso de solicitud | `control_seguimiento` | 2 | 3 |
+| `e2` | Coordinación de visita (llamado) | `tasador` | 4 | 6 |
+| `e3` | Informe post-llamado | `tasador` | 0.5 | 0.5 |
+| `e4` | Aviso de coordinación al cliente | `control_seguimiento` | 2 | 3 |
+| `e5` | Visita y envío de informe | `tasador` | 24 | 48 |
+| `e6` | Disponible para visado | `control_seguimiento` | 2 | 3 |
+| `e7` | Visación y envío final | `visado` | 0.5 | 0.5 |
+
+**Campos nuevos en `C_SLA`** (3, más una limpieza):
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `sla_revision_horas` | number (2 dec) | Sub-SLA de revisión del visador. §5.2.4 · etapa 7 y §3.2 lo dan por existente bajo el nombre `sla_revision`; **no existe**. Se crea con sufijo de unidad para que nadie lo confunda con días, que es la unidad del resto de la tabla. |
+| `matriz_etapas` | multipleRecordLinks → `C_SLA_Etapas` | Vacío = matriz global de §5.2.4. Poblado = override del par. En esta iteración **nadie lo puebla**; existe para que el override futuro no exija migración. |
+| `activo_desde` | date | RF-35 exige que modificar un SLA no altere solicitudes en curso. Sin esta fecha la regla no es verificable. La solicitud adopta la fila vigente a su `sla_e1_inicio_ts`. |
+
+*Limpieza (M-11, decisión de Sergio):* de las dos familias duplicadas se conserva
+**`dias_totales` / `dias_alerta_amarilla` / `dias_alerta_roja`** —es la poblada y su vocabulario
+coincide con el amarillo/rojo de RN-04— y se eliminan `sla_dias`, `sla_dias_alerta` y
+`sla_dias_vencido`, previa verificación de que están vacías en las filas que existan al momento
+de borrarlas. Es la deuda (1) de CI-005 y es prerrequisito de todo lo demás.
+
+**Campos nuevos en `TX_Solicitudes`** (21: 20 de datos + 1 fórmula). Todos con prefijo `sla_`
+para que un `grep sla_` los liste completos, y todos `dateTime` **con hora**, en
+`America/Santiago`:
+
+| Campo | Tipo | Escrito por | Notas |
+|---|---|---|---|
+| `sla_e1_inicio_ts` … `sla_e7_inicio_ts` (7) | dateTime | ver *Quién escribe cada etapa* | Entrada a la etapa. |
+| `sla_e1_fin_ts` … `sla_e7_fin_ts` (7) | dateTime | idem | Salida de la etapa. `sla_eN_fin_ts` y `sla_e(N+1)_inicio_ts` son el mismo instante en el flujo feliz, pero se guardan por separado: la etapa siguiente puede arrancar tarde, y esa brecha es justamente lo que los reportes de §5.2.9 tienen que poder ver. |
+| `sla_etapa_actual` | number (entero) | motor | 1–7. Vacío = sin datos de etapa. |
+| `sla_etapa_alerta_ts` | dateTime | motor | Instante de pared en que la etapa vigente alcanza su **SLA ideal**. |
+| `sla_etapa_vence_ts` | dateTime | motor | Instante de pared en que la etapa vigente supera su **SLA máximo**. |
+| `sla_recalculado_ts` | dateTime | motor | Auditoría: cuándo corrió el motor por última vez sobre esta fila. |
+| `sla_pausa_inicio_ts` | dateTime | — (RN-54) | **Declarado y sin escritor en esta iteración.** |
+| `sla_pausa_habil_min` | number (entero) | — (RN-54) | Minutos hábiles ya consumidos por pausas cerradas. El motor lo lee y lo resta; hoy lee 0. |
+| `sla_semaforo_etapa` | **formula** | Airtable | `verde` · `ambar` · `rojo` · `sin_dato`. Ver *El truco que hace barato todo lo demás*. |
+
+**El hito de inicio de §5.2.2, sin tocar el disparador de creación.** El reloj arranca cuando
+Control y Seguimiento **abre el correo e ingresa la solicitud**, no cuando el correo llega al
+buzón. Eso se captura sin cambiar nada del flujo actual: el wizard de creación (§4 · P3)
+registra `new Date().toISOString()` al **montar la Fase 1** en un campo oculto del formulario,
+y ese valor viaja como una clave más en el payload que ya se envía a SC01. `sla_e1_inicio_ts`
+**es** el hito —no se crea un campo aparte para el mismo instante— y queda editable desde
+"Editar solicitud" mientras el estado siga `creada` (REGLA C), para el caso real de la ejecutiva
+que abrió el correo a las 9:10 y terminó de cargar la solicitud a las 11:40. El disparador de
+SC01, su hook y su ID **no cambian**: el cambio es aditivo en el mapeo.
+
+**Derivados: fórmula, script o rollup.** `sla_semaforo_etapa` es **fórmula**, y es la única de
+las tres opciones que funciona. Un rollup no puede: no hay tabla hija por etapa. Un script
+tendría que correr por cron y dejaría el semáforo desactualizado entre corridas. La fórmula sí,
+porque lo único que compara es `NOW()` contra dos timestamps ya calculados:
+
+```
+IF(
+  OR({sla_etapa_vence_ts} = BLANK(), {sla_etapa_alerta_ts} = BLANK()),
+  "sin_dato",
+  IF(
+    IS_AFTER(NOW(), {sla_etapa_vence_ts}), "rojo",
+    IF(IS_AFTER(NOW(), {sla_etapa_alerta_ts}), "ambar", "verde")
+  )
+)
+```
+
+`sla_etapa_actual`, en cambio, **no** es fórmula: es un valor escrito por el motor, porque
+deducir la etapa vigente exige recorrer catorce campos y la matriz de umbrales.
+
+#### Motor de cálculo
+
+**El truco que hace barato todo lo demás.** La tentación es calcular "horas hábiles
+transcurridas" en cada lectura y compararlas contra el umbral. No hace falta: basta convertir
+**una sola vez**, al entrar a la etapa, el umbral en horas hábiles a un **instante de pared**
+(`sla_etapa_alerta_ts`, `sla_etapa_vence_ts`). Desde ahí el semáforo es una comparación contra
+`NOW()`, que Airtable hace nativamente en una fórmula, que la UI hace en el cliente sin lógica
+de negocio, y que un `filterByFormula` puede filtrar y ordenar sin campos materializados ni
+cron de refresco. La aritmética hábil corre unas siete veces por solicitud en toda su vida, no
+una vez por render.
+
+**Dónde vive el motor: TypeScript server-side.** Se descartan las otras tres:
+
+- **Airtable Formula** — imposible. `WORKDAY` opera en días, no en horas; ninguna fórmula puede
+  recorrer las filas de `C_Feriados`; y no hay forma de expresar "9:00–18:00 L-V" sin
+  literalizar el calendario dentro de la fórmula.
+- **Airtable Script (AT)** — posible pero equivocado como fuente: obligaría a mantener la misma
+  aritmética dos veces (script + TS para la UI), que es exactamente lo que **RO-05** prohíbe.
+  Los scripts de este plan quedan como *consumidores* del motor, no como copias de él.
+- **Make** — un escenario por recálculo agrega latencia, coste operacional y una dependencia de
+  red en un cómputo que es aritmética pura sobre datos ya presentes.
+- **Route Handler / `lib/` en Next.js** ✅ — función pura, testeable con el `vitest 4.1.10` que
+  el repo ya tiene, sin IO más allá de leer `C_Feriados` una vez y cachearla, y en el mismo
+  lugar donde `lib/solicitudes.ts` ya deriva `slaDias`. Los umbrales llegan como parámetro desde
+  `C_SLA_Etapas`: el motor no conoce ningún número de §5.2.4.
+
+**`lib/sla-habil.ts`** — aritmética de calendario, sin dependencias:
+
+```ts
+export interface VentanaHabil { horaInicio: number; horaFin: number; diasSemana: number[] }
+export const VENTANA_VPROPERTY: VentanaHabil = { horaInicio: 9, horaFin: 18, diasSemana: [1,2,3,4,5] }
+
+/** Si `ts` cae fuera de ventana, devuelve la apertura hábil siguiente (§5.2.1). */
+export function normalizarAVentana(ts: Date, feriados: Set<string>, v?: VentanaHabil): Date
+
+/** Minutos hábiles entre dos instantes, descontando noches, fines de semana y feriados. */
+export function minutosHabilesEntre(desde: Date, hasta: Date, feriados: Set<string>, v?: VentanaHabil): number
+
+/** Instante de pared resultante de consumir `horas` hábiles desde `desde`. */
+export function sumarHorasHabiles(desde: Date, horas: number, feriados: Set<string>, v?: VentanaHabil): Date
+```
+
+> **Zona horaria — la trampa que hay que evitar.** Chile cambia de huso dos veces al año
+> (−03/−04). Todo el cómputo se hace descomponiendo el instante en `America/Santiago` con
+> `Intl.DateTimeFormat(..., { timeZone })`, **nunca** sumando o restando un offset fijo. Un
+> `-3` hardcodeado produce solicitudes que vencen una hora antes o después durante cuatro meses
+> al año, y el error es invisible en desarrollo porque el bug sólo aparece cruzando el cambio de
+> horario. Es el mismo tipo de fallo silencioso que RO-13.
+
+**`lib/sla-etapas.ts`** — dominio, sobre el motor anterior:
+
+```ts
+export interface EtapaSla {
+  key: 'e1'|'e2'|'e3'|'e4'|'e5'|'e6'|'e7'
+  orden: number; nombre: string; responsable: Responsable
+  slaIdealHoras: number; slaMaxHoras: number
+  inicioTs?: string; finTs?: string
+  estado: 'completada' | 'en_curso' | 'pendiente'
+  tono?: 'green' | 'amber' | 'red'      // sólo en 'en_curso' y 'completada'
+  minutosHabiles?: number
+}
+export function recalcularSla(fila, matriz, feriados): {
+  etapaActual?: number; alertaTs?: string; venceTs?: string; etapas: EtapaSla[]
+}
+```
+
+**La pausa de RN-54 no duplica la pausa por calendario.** Son dos cosas distintas y se resuelven
+en niveles distintos, que es justo lo que impide la duplicación:
+
+- La **pausa por calendario** (§5.2.1) no es una pausa: es la definición misma de
+  `minutosHabilesEntre`. El tiempo fuera de ventana nunca entra al cómputo, así que no hay nada
+  que restar.
+- La **pausa por estado** (RN-54, contacto no logrado) es un intervalo explícito
+  `[sla_pausa_inicio_ts, reanudación]`. Al reanudar, su duración se mide **con la misma
+  función** `minutosHabilesEntre` —de modo que las noches y los feriados dentro de la pausa no
+  se descuentan dos veces— se acumula en `sla_pausa_habil_min`, y el motor desplaza
+  `sla_etapa_alerta_ts` y `sla_etapa_vence_ts` hacia adelante con `sumarHorasHabiles`. Una sola
+  implementación de calendario, dos usos.
+
+RN-54 sigue **diferida** (§1.9 · FUT-EJ-07): los dos campos se crean y el motor los soporta,
+pero en v1.9 nadie los escribe y `sla_pausa_habil_min` vale 0.
+
+**Separación entre RF-08 y RF-53 — cómputo y pantalla.** No se pisan porque no comparten ni una
+sola línea:
+
+| | RF-08 · agregado | RF-53 · por etapa |
+|---|---|---|
+| Unidad | días hábiles | horas hábiles con ventana 9–18 |
+| Parámetro | `C_SLA` por (cliente, tipo_informe, tipo_propiedad) | `C_SLA_Etapas`, matriz global |
+| Origen del cómputo | `semaforo_sla` (fórmula Airtable) | `sla_semaforo_etapa` (fórmula sobre timestamps del motor TS) |
+| Campo en el tipo `Solicitud` | `slaDias` · `slaTotal` (ya existen) | `slaEtapa` (nuevo, opcional) |
+| Superficie visual | píldora con "N días", a la derecha del código | píldora con "● E{n} · {tiempo}", en la línea de badges |
+| Qué responde | cuándo vence la solicitud | dónde se está atrasando ahora |
+
+#### Quién escribe cada etapa — y el alcance honesto de esta iteración
+
+De las siete etapas, **IF-02 sólo es dueña de dos límites**. Las demás pertenecen a interfaces
+que no existen todavía. Instrumentar los catorce campos igual es correcto —son aditivos, y el
+día que IF-03 los escriba el histórico no se pierde—, pero el plan lo declara sin adornos en vez
+de prometer un tablero completo:
+
+| Etapa | Escritor del `inicio` | Escritor del `fin` | Estado en v1.9 |
+|---|---|---|---|
+| e1 · Ingreso | **SC01** (hito §5.2.2 desde el wizard) | **SC-Asignar** | ✅ **operativa en P8.6** |
+| e2 · Coordinación | **SC-Asignar** | IF-03 · §2.3 | ⏳ inicio sí, fin no |
+| e3 · Informe post-llamado | IF-03 | IF-03 | ⏳ FUT-EJ-06 |
+| e4 · Aviso al cliente | IF-03 (al cerrar e3) | IF-02 · acción futura | ⏳ sin origen en v1.9 |
+| e5 · Visita e informe | IF-03 | IF-03 | ⏳ |
+| e6 · Disponible para visado | RF-09-repo (subida del informe) | IF-04 | ⏳ |
+| e7 · Visación y envío | IF-04 | IF-04 | ⏳ |
+
+Consecuencia visible: la cronología del detalle muestra e1 y e2 con datos y las cinco restantes
+como **pendientes**, no como atrasadas. `sla_semaforo_etapa` vale `sin_dato` mientras
+`sla_etapa_vence_ts` esté vacío, y la píldora dice "Sin datos de etapa". Es el mismo criterio de
+degradación honesta de todo el repo: nunca fabricar un valor que la base no respalda.
+
+#### UI en IF-02
+
+**Bandeja (§1.1, §1.2) — los dos semáforos conviviendo.** Sin componentes nuevos: `SLABadge`
+(`components/console/status-badges.tsx:31`) se **extiende** con un modo etapa, y `StateBadge`
+queda intacto. La regla visual que impide confundirlos es que **no se parecen**: el agregado es
+una píldora rellena con días; la etapa es una píldora neutra con punto de color y prefijo `E{n}`.
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ VP-2026-0081                              [ 3 días ]     │  ← agregado (RF-08, existente)
+│ MetLife                              Providencia         │
+│ [Asignada] [Normal] [● E2 · 4h 10m]                      │  ← etapa (RF-53, nuevo)
+│ María Espinoza                        Límite 12 ago      │
+└──────────────────────────────────────────────────────────┘
+```
+
+Firma extendida, con unión discriminada para que el compilador impida pasar los dos modos a la
+vez:
+
+```tsx
+type SLABadgeProps =
+  | { dias: number; total: number; etapa?: never; className?: string }
+  | { etapa: { numero: number; tono: SlaTone; etiqueta: string }; dias?: never; total?: never; className?: string }
+```
+
+En modo etapa reutiliza `SLA_CLASSES[tono]` **sólo para el punto**, sobre fondo neutro. Cuando
+la solicitud no tiene datos de etapa, la píldora no se renderiza: una píldora gris que dice
+"sin datos" en cada fila de la bandeja es ruido, y el dato ya está en el detalle.
+
+**Vista "SLA en riesgo" — criterio: unión.** La pregunta que la vista responde es "¿qué tengo
+que mirar hoy?", y tanto un vencimiento agregado como una etapa desbordada califican. Filtrar
+sólo por uno de los dos escondería casos reales. La fórmula extiende la que ya vive en
+`lib/solicitudes.ts:99`:
+
+```
+OR(
+  FIND("VENCIDO",{semaforo_sla})>0,
+  FIND("EN RIESGO",{semaforo_sla})>0,
+  {sla_semaforo_etapa}="ambar",
+  {sla_semaforo_etapa}="rojo"
+)
+```
+
+Se agrega un filtro nuevo en la URL, `?sla_etapa=ambar|rojo`, para aislar el reloj por etapa sin
+tocar el contrato de `?sla=`, que sigue significando el agregado. El contador de la pestaña
+(`/api/solicitudes/contadores`) cuenta la unión, que es lo que la pestaña muestra.
+
+> **`sla_semaforo_etapa` se compara por igualdad, no por `FIND`, y eso es deliberado.** RO-13
+> obliga a filtrar por el formato real que emite la fórmula. Esta fórmula la escribimos nosotros
+> en M-13 y emite exactamente cuatro literales en minúscula, sin emoji ni adornos —precisamente
+> para no repetir el problema de `semaforo_sla`, cuyos literales con emoji obligaron a filtrar
+> por subcadena—. El contrato queda fijado en el criterio de aceptación de M-13.
+
+**Detalle (§1.3) — cronología de las siete etapas.** Va en la pestaña **Historial**, arriba del
+listado de `A_Eventos`, como sección propia "Cronología de etapas (SLA)". No se crea un
+componente de timeline nuevo: se **generaliza `HistorialItem`**
+(`components/console/solicitud-detail.tsx:1062`) para aceptar `tono?: SlaTone`, `subtitulo?` y
+un icono ya presente en el repo, y el riel vertical existente se reutiliza tal cual. Cada etapa
+muestra: número y nombre, responsable (§5.2.3), entrada y salida con hora, tiempo hábil
+consumido contra el par ideal/máximo, y estado.
+
+```
+● 1 · Ingreso de solicitud            Control y Seguimiento    ✅ 1h 40m de 2h / 3h
+│   10 ago 09:10 → 10 ago 11:40
+● 2 · Coordinación de visita          Tasador                  🟡 4h 10m de 4h / 6h
+│   10 ago 11:40 → en curso
+○ 3 · Informe post-llamado            Tasador                  Pendiente
+○ 4 · Aviso de coordinación al cliente  Control y Seguimiento  Pendiente
+…
+```
+
+**Alertas visuales en el detalle.** Cuando la etapa vigente está en ámbar o rojo, se muestra un
+`Alert` (`components/ui/alert.tsx`, ya existente) sobre las pestañas, en la variante que
+corresponda, y la píldora de etapa acompaña a `SLABadge` en la cabecera. Literales propuestos,
+en el estilo de §6.1 —segunda persona, sin signos de exclamación, sin culpar al usuario, sin
+error técnico—:
+
+- Ámbar: **"La etapa {n} · {nombre} alcanzó su plazo ideal. Vence el {fecha} a las {hora}."**
+- Rojo: **"La etapa {n} · {nombre} superó su plazo máximo el {fecha} a las {hora}. Responsable: {área}."**
+
+> Estos dos literales **no están en §6 del Blueprint**: son nuevos y quedan propuestos, no
+> ratificados. Se implementan tal cual están escritos y se listan en §13 para que se incorporen
+> al catálogo de mensajes canónicos en el próximo bump. Ninguna otra pantalla los reutiliza
+> mientras tanto.
+
+#### Alertas y notificaciones
+
+**AT08 · Alertas SLA — hay que crearla.** No existe en la base (verificado: la lista de
+Automations no la incluye). Se crea como `AT08_Alertas_SLA`, trigger `cron` 08:00 diario, y hace
+todo dentro de Airtable, sin depender de que Railway esté arriba: busca las solicitudes con
+`sla_semaforo_etapa` en (`ambar`, `rojo`) **o** con el agregado en riesgo, arma el resumen que
+§1.7 pide ("visible en la Vista de SLA"), y por cada solicitud **en rojo** encola la notificación
+al responsable de área. Puede hacerlo sin recalcular nada porque el semáforo es una fórmula
+viva: ésa es la ventaja de haber materializado los dos instantes en vez del color.
+
+**Notificación de rojo por área (§5.2.8).**
+
+- **Canal:** correo, el único canal de v1.9 (§5.3; WhatsApp es FUT-EJ-10).
+- **Destinatario:** por área, desde `C_NotificacionesConfig`, tres filas nuevas con
+  `evento = sla_alerta_roja` —la opción ya existe en el select— y `destinatarios_to_modo`
+  `lista_fija` para Control y Seguimiento y Visado, y `campo_cliente` con
+  `destinatario_campo = M_Tasadores.email` para las etapas del tasador. La escalada va **al
+  responsable de la etapa**, no al dueño de la solicitud (§5.2.3).
+- **Plantilla:** en `C_NotificacionesConfig.plantilla_asunto` / `plantilla_cuerpo`, igual que
+  SC05 y por la misma razón: `C_Plantillas` no tiene ningún campo donde quepa un cuerpo HTML
+  (§9.5.1).
+- **Envío:** escenario Make nuevo **`SC-SLA-Alertas`**. Es el único camino: la app no tiene
+  librería de correo y P8.6 no agrega dependencias. Crear un escenario nuevo **exige aprobación
+  explícita de Sergio** (`CLAUDE.md`) — es el checkpoint M-15, y es una compuerta, no un aviso.
+  El nombre no es SC13: se sigue el precedente de §9.5.1, donde el escenario que la spec llama
+  SC13 se construyó como SC05 y el alias quedó documentado (RO-14).
+- **Idempotencia:** `TX_Notificaciones.clave_notif = "{codigo_solicitud}-sla-rojo-{etapa_key}"`.
+  Una alerta por solicitud y por etapa, para siempre: si la etapa 2 sigue roja cinco días, el
+  responsable recibe **un** correo, no cinco. Es la misma clave natural que hace idempotente a
+  SC05 y se verifica con el mismo guard antes de insertar.
+- **Ámbar no notifica por correo.** §5.2.8 pide indicador visual en ámbar y *notificación* en
+  rojo. El ámbar vive en la bandeja, en el detalle y en el resumen diario de AT08. Mandar correo
+  en ámbar convertiría la alerta roja en ruido de fondo en dos semanas.
+
+**Alerta de fin de jornada para reprocesos abiertos (§5.2.5).** **Queda diferida** junto con todo
+el reproceso — ver abajo. No hay nada que alertar mientras no exista la marca de reproceso.
+
+#### Reglas de reproceso
+
+**El reproceso de §5.2.5 (matriz R1–R3 y regla "reproceso limpio" · RN-55) queda diferido en
+§1.9 · FUT-EJ-08.** No entra en ninguna tanda de P8.6. La propia spec lo declara así en §5.2.5
+("la marca de reproceso, el catálogo cerrado de motivos y la tabla `TX_Reprocesos` siguen
+diferidos; en v1.9 el reproceso se gestiona fuera del sistema, en el hilo de correo original") y
+§5.2.5 existe para fijar el compromiso de servicio, no para pedir implementación. Implementarlo
+ahora exigiría una tabla nueva, un catálogo cerrado de motivos que nadie ha elicitado y una marca
+de estado que la máquina de estados de §2.11 no contempla. La alerta de fin de jornada de §5.2.8
+se difiere con él, por dependencia directa.
+
+#### Impacto en documentos vigentes (se listan, no se editan)
+
+- **`docs/diseno.md`** — la nota de §3 dice "El reloj por etapa **no está implementado**
+  (CI-005) y su UI no está diseñada". Tras P8.6 queda diseñada y parcialmente implementada. El
+  bloque TabsVistas (vista 2, "SLA en riesgo") pasa a ser unión. §216 lista `semaforo_sla` entre
+  los campos de sólo lectura sin mencionar `sla_semaforo_etapa`.
+- **`docs/construccion.md`** — §5 documenta el filtro de "SLA en riesgo" con sus literales; §9
+  (paso 7) afirma que "AT08 actualiza `semaforo_sla` en `TX_Solicitudes`", que no es lo que AT08
+  hará: el semáforo es fórmula y AT08 sólo resume y notifica. §85 lista "AT08 activo en Airtable"
+  como prerrequisito de un paso ya construido.
+- **`docs/aprendizajes.md`** — sólo-append. Al cerrar P8.6 corresponde una entrada nueva; y hay
+  al menos dos candidatas a regla activa: la trampa de zona horaria con DST y el patrón
+  "materializar el instante, no el color" que hace innecesario el cron de refresco.
+- **`docs/CODE_INCONSISTENCIES.md`** — **CI-005** se cierra parcialmente con P8.6: los pasos (2),
+  (3) y (4) de su resolución quedan cubiertos; el (1) —poblar `C_SLA`— es de negocio y depende de
+  M-11. **CI-007** (`H_Feriados` vs `C_Feriados`) sigue abierta y P8.6 la respeta usando el
+  nombre real.
+- **`docs/schema-airtable.md`** — no refleja `C_SLA_Etapas` ni los 21 campos nuevos. Se actualiza
+  **dentro** de la Tanda A, no después: P1/Types y los Route Handlers lo leen como fuente.
+- **`CLAUDE.md`** — la tabla de escenarios Make no tiene fila para `SC-SLA-Alertas`; la lista de
+  `C_SLA` menciona las dos familias duplicadas de campos sin decir cuál gana.
+- **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md`** — **no requiere cambios**: es la
+  fuente normativa y P8.6 la implementa sin desviarse. Las dos divergencias que P8.6 encuentra
+  son de la spec hacia la base, ya registradas y sin editar aquí: `H_Feriados` no existe
+  (CI-007) y `sla_revision` en `C_SLA` tampoco (§5.2.4 · etapa 7 lo da por existente). Ambas se
+  corrigen en el próximo bump normativo, con su changelog, no dentro de esta tanda (RO-15).
+
+### §9.6.2 Construcción — Tandas
+
+#### Tanda A · Preparación de datos
+
+**Precondición:** ninguna. Es la primera y bloquea a todas.
+**Actor:** Sergio (Airtable UI) + Claude Code (MCP para datos y documentación).
+**Entregable:** schema Airtable listo, matriz sembrada, `C_Feriados` limpia,
+`docs/schema-airtable.md` actualizado con IDs reales.
+
+1. **A-1 · Crear `C_SLA_Etapas`** con sus 8 campos. Vía MCP si `create_table` lo permite; si
+   falla, queda para M-9 en la UI. Sembrar las 7 filas de §5.2.4 **copiando la tabla de
+   §9.6.1**, sin redondear ni convertir: `0.5` es media hora, no 30.
+2. **A-2 · Crear los 20 campos de datos en `TX_Solicitudes`** (14 timestamps + 4 derivados + 2
+   de pausa). El MCP no siempre puede crear campos en `TX_Solicitudes` (aprendizaje ya conocido
+   de P0.5): cada fallo se marca `pendiente_ui_manual` y pasa a M-9.
+3. **A-3 · Crear los 3 campos nuevos de `C_SLA`** (`sla_revision_horas`, `matriz_etapas`,
+   `activo_desde`) y **reportar** —sin borrar— el estado de las dos familias duplicadas, con el
+   recuento de filas no vacías de cada una, para que M-11 sea una decisión informada.
+4. **A-4 · Auditar `C_Feriados`** y entregar la lista exacta de correcciones: la fila sin fecha
+   (`recdfwWtdHFcm05sb`), el duplicado de 2027-01-01 (`recGB2eUtwWs3cIuM` /
+   `reckuUbALWocT4kWX`), las 8 filas de 2026 sin `anno`, y los feriados de 2027 faltantes. **No
+   ejecutar el borrado**: es M-12.
+5. **A-5 · Backfill de las solicitudes existentes** (~54 filas), vía MCP, sólo datos: para cada
+   fila, `sla_e1_inicio_ts = fecha_solicitud`; y si `fecha_asignacion_ts` está poblada,
+   `sla_e1_fin_ts = sla_e2_inicio_ts = fecha_asignacion_ts`. Sin backfill, toda la cartera
+   histórica queda en `sin_dato` y el E2E no tiene contra qué correr. Se ejecuta **después** de
+   M-9 y se reporta fila por fila.
+6. **A-6 · Actualizar `docs/schema-airtable.md`** con la tabla nueva y los 21 campos, con sus
+   `tbl…`/`fld…` reales.
+
+**Checkpoints:** **M-9** (bloqueante), **M-10**, **M-11** (bloqueante), **M-12**, **M-13**
+(bloqueante).
+
+**Criterio de aceptación de Tanda A:** `C_SLA_Etapas` existe con 7 filas cuyos catorce valores
+coinciden uno a uno con §5.2.4; los 21 campos existen en `TX_Solicitudes` con el tipo declarado
+(o están listados como `pendiente_ui_manual`); `C_Feriados` devuelve 15 filas de 2026 y las de
+2027 sin duplicados ni filas sin fecha; `docs/schema-airtable.md` refleja todo con IDs reales.
+
+#### Tanda B · Motor de cálculo
+
+**Precondición:** Tanda A cerrada hasta A-1 (la matriz sembrada). El motor no toca Airtable, así
+que puede escribirse en paralelo a M-11/M-12.
+**Actor:** Claude Code.
+**Entregable:** `lib/sla-habil.ts`, `lib/sla-etapas.ts`, `lib/feriados.ts` y sus tests.
+
+7. **B-1 · `lib/sla-habil.ts`** con las tres funciones de §9.6.1, sin dependencias nuevas y con
+   la descomposición horaria vía `Intl.DateTimeFormat` en `America/Santiago`.
+8. **B-2 · `lib/feriados.ts`** — lee `C_Feriados` server-side con el token de `.env`, filtra
+   `activo = TRUE` **y** `fecha` no vacía (la fila basura de A-4 obliga a este segundo filtro,
+   que se conserva aunque M-12 la borre: el dato malo puede volver), y devuelve un
+   `Set<'YYYY-MM-DD'>` cacheado en memoria de proceso con TTL de 12 h, con el mismo patrón que
+   `ejecutivaCache` en `lib/solicitudes.ts:190`.
+9. **B-3 · `lib/sla-etapas.ts`** — `recalcularSla()` sobre la matriz leída de `C_SLA_Etapas`, sin
+   ningún umbral hardcodeado.
+10. **B-4 · Tests (`vitest`)**, como mínimo: dentro de ventana; arranque fuera de ventana
+    (viernes 22:00 → lunes 09:00, §5.2.2); cruce de fin de semana; cruce de feriado
+    (18-sep-2026); cruce del **cambio de horario chileno**, que es el caso que un offset fijo
+    falla; etapa de 0.5 h; y la invariante estructural de que
+    `minutosHabilesEntre(t, sumarHorasHabiles(t, h)) === h * 60` para las siete etapas y varias
+    fechas de partida (**RO-06**).
+
+**Criterio de aceptación de Tanda B:** `pnpm test` verde con los seis escenarios; `pnpm typecheck`
+limpio; cero constantes de §5.2.4 en el código (verificable con `grep -n "\b48\b\|\b0\.5\b"` sobre
+`lib/sla-*.ts`, que debe salir vacío).
+
+#### Tanda C · API y contratos
+
+**Precondición:** Tandas A y B cerradas. M-13 aplicado (la fórmula existe).
+**Actor:** Claude Code + Sergio (M-14).
+**Entregable:** el semáforo por etapa expuesto server-side, y los dos blueprints que escriben
+los timestamps de e1 y e2.
+
+11. **C-1 · Extender el tipo `Solicitud`** (`lib/console-data.ts:113`) con
+    `slaEtapa?: { numero, nombre, tono, etiqueta, alertaTs, venceTs }`, opcional para no romper
+    los 8 mocks del archivo ni el formulario de alta.
+12. **C-2 · `SOLICITUD_FIELDS` y `mapRecord`** (`lib/solicitudes.ts:218` y `:394`) incorporan
+    `sla_etapa_actual`, `sla_etapa_alerta_ts`, `sla_etapa_vence_ts` y `sla_semaforo_etapa`. El
+    tono **no se recalcula en el mapper**: llega de la fórmula. La etiqueta de tiempo restante sí
+    se deriva ahí, server-side.
+13. **C-3 · Vista y filtro:** `buildVistaFormula('sla_riesgo')` pasa a la unión de §9.6.1; se
+    agrega `sla_etapa` a `SolicitudesFiltros` con su lista cerrada de valores, escapado como el
+    resto (RF-05 · D-07).
+14. **C-4 · `GET /api/solicitudes/[id]/sla`** — devuelve las 7 etapas con nombre, responsable,
+    timestamps, minutos hábiles consumidos, umbrales y estado. Es la fuente del timeline de la
+    Tanda E. Sólo lectura, token server-side.
+15. **C-5 · `POST /api/solicitudes/[id]/asignar`** (existente) calcula, **antes** de llamar a
+    SC-Asignar, `sla_e1_fin_ts`, `sla_e2_inicio_ts`, `sla_etapa_actual = 2`,
+    `sla_etapa_alerta_ts`, `sla_etapa_vence_ts` y `sla_recalculado_ts`, y los agrega al payload.
+    La escritura la sigue haciendo Make: **la UI no escribe Airtable y el motor no escribe
+    Airtable** — el motor calcula, Make persiste.
+16. **C-6 · Blueprints, aditivos y sin tocar hooks:**
+    - `SC01 - Crear solicitud.blueprint.json` → mapea `sla_e1_inicio_ts` (hito §5.2.2 desde el
+      wizard), `sla_etapa_actual = 1`, `sla_etapa_alerta_ts`, `sla_etapa_vence_ts`. Bump de
+      `name`.
+    - `SC-Asignar.blueprint.json` → **v2.1**, agrega los seis campos de C-5 al `record` del
+      `ActionUpdateRecords` que ya existe. Hook `3441086` y conexión `8847431` **intactos**.
+    - Verificación B-3 de §9.5.2 antes de entregar: claves del `mapper` contrastadas contra un
+      módulo hermano probado, y namespace de los operadores de todo filtro.
+17. **C-7 · Wizard:** campo oculto `slaInicioTs` inicializado al montar la Fase 1, y su clave en
+    el payload de creación. En "Editar solicitud" el campo es editable mientras el estado sea
+    `creada` (REGLA C).
+
+**Checkpoint:** **M-14**.
+
+**Criterio de aceptación de Tanda C:** `GET /api/solicitudes` devuelve `slaEtapa` poblado para
+una solicitud con etapa en curso y ausente para una sin datos; `GET /api/solicitudes/[id]/sla`
+devuelve siete entradas siempre, con `estado: 'pendiente'` en las no instrumentadas; los dos
+`.json` parsean y conservan sus hooks; `pnpm build` limpio.
+
+#### Tanda D · UI de bandeja
+
+**Precondición:** Tanda C cerrada.
+**Actor:** Claude Code.
+**Entregable:** píldora de etapa en la fila y filtro "SLA en riesgo" extendido.
+
+18. **D-1 · Extender `SLABadge`** con la unión discriminada de §9.6.1. `StateBadge` y
+    `PriorityChip` no se tocan. Cero componentes nuevos.
+19. **D-2 · `FilaSolicitud`** (`components/console/solicitud-list.tsx:450`) renderiza la píldora
+    de etapa en la línea de badges, después de `PriorityChip`, y sólo cuando hay dato.
+20. **D-3 · Pestaña "SLA en riesgo"** con el contador de la unión, y selector de filtro
+    `?sla_etapa=` junto a los que ya existen, con su sincronización a la URL como el resto.
+21. **D-4 · Cabecera del detalle** (`solicitud-detail.tsx:309`): la píldora de etapa acompaña a
+    `SLABadge`, con el mismo criterio de no renderizar sin dato.
+
+**Criterio de aceptación de Tanda D:** con una solicitud cuya etapa está en ámbar, la fila
+muestra las dos píldoras y se distinguen a simple vista; la pestaña "SLA en riesgo" la incluye
+aunque su agregado esté verde; recargar con `?vista=sla_riesgo&sla_etapa=rojo` restaura el estado
+exacto; `pnpm typecheck` limpio.
+
+#### Tanda E · UI de detalle
+
+**Precondición:** Tanda C cerrada. Puede ir en paralelo a D.
+**Actor:** Claude Code.
+**Entregable:** cronología de las 7 etapas y alertas visuales, sin librerías nuevas.
+
+22. **E-1 · Generalizar `HistorialItem`** con `tono?` y `subtitulo?`, sin cambiar su
+    comportamiento actual para los eventos de `A_Eventos`.
+23. **E-2 · Sección "Cronología de etapas (SLA)"** al inicio de la pestaña Historial, alimentada
+    por `GET /api/solicitudes/[id]/sla`, con el layout de §9.6.1: número, nombre, responsable,
+    entrada/salida con hora, tiempo hábil consumido contra ideal/máximo y estado.
+24. **E-3 · `Alert` ámbar/rojo** sobre las pestañas cuando la etapa vigente lo amerite, con los
+    dos literales propuestos de §9.6.1.
+25. **E-4 · Estado vacío honesto:** sin datos de etapa, la sección dice "Todavía no hay
+    cronología de etapas para esta solicitud." y lista las siete como pendientes. No se inventan
+    tiempos ni se muestra verde por defecto.
+
+**Criterio de aceptación de Tanda E:** una solicitud recién creada muestra e1 en curso y seis
+pendientes; una asignada muestra e1 completada con su tiempo hábil real y e2 en curso; una
+solicitud del backfill sin `fecha_asignacion_ts` no muestra ningún ámbar fabricado;
+`pnpm build` limpio.
+
+#### Tanda F · Alertas
+
+**Precondición:** Tandas A–E cerradas y verificadas en pantalla. **M-15 aprobado.**
+**Actor:** Sergio (Airtable Automations UI, Make UI) + Claude Code (script y blueprint).
+**Entregable:** `AT08_Alertas_SLA` + `SC-SLA-Alertas` + configuración de destinatarios.
+
+26. **F-1 · `docs/_artefactos/airtable/AT08-AlertasSLA.js`** con el encabezado que exige
+    §10.4.2 (tabla destino, trigger, inputs, outputs). Lógica: buscar ámbar/rojo por etapa y en
+    riesgo agregado → componer resumen → por cada solicitud **en rojo**, verificar
+    `TX_Notificaciones.clave_notif` y, si no existe, crear la fila y postear a `SC-SLA-Alertas` →
+    escribir `LogEscenarios` con `Escenario = AT08_SLA`.
+27. **F-2 · `docs/_artefactos/make/SC-SLA-Alertas.blueprint.json`**: webhook → validación HMAC
+    (D-03) → `Search C_NotificacionesConfig` (`evento = sla_alerta_roja`, `activa = true`,
+    área) → router (sin destinatario → `TX_Notificaciones(Error)` + `Log(⚠ Parcial)`; ya enviado
+    → `Log(⏭ Omitido)`; envío → correo + `TX_Notificaciones(Enviado)` + `A_Eventos` +
+    `Log(✓ OK)`) → respond 200. Mismo esqueleto que SC05, misma conexión de correo verificada en
+    M-1.
+28. **F-3 · Filas de `C_NotificacionesConfig`** para las tres áreas, con asunto y cuerpo en
+    es-CL siguiendo §6.1.
+29. **F-4 · Env var** `MAKE_WEBHOOK_URL_SC_SLA` en `.env.example` y en Railway.
+
+**Checkpoints:** **M-15** (compuerta de aprobación), **M-16**, **M-17**, **M-18**.
+
+**Criterio de aceptación de Tanda F:** AT08 existe con trigger cron 08:00 y queda **sin activar**
+hasta pasar el E2E; el `.js` y el `.json` existen y no contienen datos inventados; hay tres filas
+en `C_NotificacionesConfig` con `activa = true`; `LogEscenarios.Escenario` tiene la opción
+`AT08_SLA`.
+
+#### Tanda G · QA end-to-end
+
+**Precondición:** Tandas A–F cerradas. AT08 activada (M-16 tras M-18).
+**Actor:** Sergio (ejecución) + Claude Code (preparación de datos y lectura de trazas).
+**Entregable:** los nueve casos de §9.6.3 verificados con evidencia.
+
+30. **G-1 · Preparar el juego de datos** de §9.6.3 con MCP.
+31. **G-2 · Ejecutar los nueve casos** y capturar la evidencia: fila de `TX_Solicitudes` con sus
+    timestamps, `LogEscenarios`, `TX_Notificaciones`, `A_Eventos` y la pantalla.
+32. **G-3 · `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P8.6.md`** con la plantilla de §11.2, y
+    `docs/_notas/snapshot-P8.6.md`.
+
+**Criterio de aceptación de Tanda G:** los nueve casos de §9.6.3 en verde, cada uno con su
+evidencia citada, no con un "verificado" sin respaldo (**RO-02**).
+
+#### Checkpoints manuales de Sergio
+
+La numeración continúa la serie de §9.5 (M-1 … M-8) para que ningún nombre se repita dentro del
+plan.
+
+| # | Acción | Cuándo |
+|---|---|---|
+| M-9 | Crear en la UI de Airtable lo que el MCP no haya podido: `C_SLA_Etapas` y/o los campos de `TX_Solicitudes` marcados `pendiente_ui_manual`. Confirmar tipo `dateTime` **con hora** en los 14 timestamps | **Antes** de A-5 · bloqueante para todo P8.6 |
+| M-10 | Verificar las 7 filas de `C_SLA_Etapas` contra §5.2.4 leyendo la spec, no el plan | Tras A-1 |
+| M-11 | Decidir qué familia de campos duplicados de `C_SLA` se conserva y borrar la otra; poblar `C_SLA` con los pares (cliente, tipo_informe) vigentes y sus tres umbrales. **Es de negocio (Héctor / Óscar), no técnico** | **Antes** de Tanda C · bloqueante para RF-08 |
+| M-12 | Limpiar `C_Feriados`: borrar la fila sin fecha, resolver el duplicado 2027-01-01, completar `anno` en las 8 filas de 2026 y cargar 2027 completo | Tras A-4 |
+| M-13 | Pegar la fórmula de `sla_semaforo_etapa` en la UI de Airtable — **el MCP no crea ni modifica fórmulas** — y verificar que emite exactamente `verde`/`ambar`/`rojo`/`sin_dato`, en minúscula y sin emoji | **Antes** de Tanda C |
+| M-14 | Reimportar `SC01` y `SC-Asignar` v2.1 en eu1 y **pausar la versión anterior en el mismo turno** (RO-10). Verificar en el diseñador que los seis campos SLA llegan mapeados y ninguno aparece vacío | Tras C-6 |
+| M-15 | **Aprobar la creación del escenario `SC-SLA-Alertas`** en Make. Sin este `sí` explícito, la Tanda F no arranca | **Antes** de F-2 |
+| M-16 | Crear `AT08_Alertas_SLA` en Airtable Automations con trigger cron 08:00 y el script de F-1, y **dejarla en borrador** | Tras F-1, **antes** de M-18 |
+| M-17 | Crear las 3 filas de `C_NotificacionesConfig` y agregar la opción `AT08_SLA` a `LogEscenarios.Escenario` | Antes de M-18 |
+| M-18 | Correr AT08 en modo prueba con una solicitud en rojo y verificar: llega **un** correo al área correcta, `TX_Notificaciones` tiene **una** fila, y una segunda corrida no genera un segundo correo. Recién ahí activar AT08 | Tras M-16 |
+
+> **M-13 no es opcional y va antes de la Tanda C.** Toda la vista "SLA en riesgo", el filtro y el
+> contador se apoyan en los literales que emite esa fórmula. Si emite algo distinto de lo
+> acordado —una mayúscula, un emoji, un acento en "ámbar"— el filtro devuelve **cero filas para
+> toda la tabla** y cero filas se lee como "no hay casos", no como "el filtro está mal". Es
+> exactamente el fallo silencioso de RO-13, y verificarlo cuesta treinta segundos.
+
+> **M-11 es la única compuerta de negocio del plan.** Con `C_SLA` en una sola fila y sin umbrales,
+> RF-08 no está parametrizado: el semáforo agregado seguirá mostrando lo que muestra hoy por
+> defecto. P8.6 puede completarse igual —RF-53 no depende de `C_SLA`—, pero entonces se entrega
+> medio requerimiento. Conviene arrancar M-11 el primer día, porque su tiempo de respuesta no lo
+> controla el equipo técnico.
+
+### §9.6.3 Prueba end-to-end y criterios de aceptación
+
+**Preparación:** una solicitud creada un **martes a las 10:00** (dentro de ventana), otra creada
+un **viernes a las 22:00** (fuera de ventana), y una tercera creada el **17-sep-2026 a las 16:00**
+(víspera de dos feriados consecutivos, 18 y 19 de septiembre). `C_SLA_Etapas` sembrada,
+`C_Feriados` limpia, AT08 en borrador.
+
+- [ ] **E2E-10 · Dentro de ventana.** La solicitud del martes 10:00 tiene
+      `sla_etapa_alerta_ts = martes 12:00` y `sla_etapa_vence_ts = martes 13:00` (2 h y 3 h de la
+      etapa 1). `sla_semaforo_etapa` = `verde`.
+- [ ] **E2E-11 · Fuera de ventana (§5.2.2).** La solicitud del viernes 22:00 **no** consume SLA
+      el fin de semana: su alerta cae el **lunes a las 11:00** y su vencimiento el **lunes a las
+      12:00**. Un correo que entra el viernes por la noche no empieza a correr hasta que abre la
+      jornada.
+- [ ] **E2E-12 · Cruce de feriado.** La del 17-sep 16:00 con la etapa 5 (24 h ideales) vence
+      contando sólo horas hábiles: 18 y 19 de septiembre **no suman**. El resultado se verifica
+      contra el cálculo a mano escrito en el reporte de la tanda, no contra lo que devuelve el
+      código.
+- [ ] **E2E-13 · Transición a ámbar.** Adelantando `sla_e1_inicio_ts` para cruzar el umbral
+      ideal, la fila aparece en la pestaña "SLA en riesgo" **aunque su semáforo agregado siga
+      verde**, la píldora de etapa se pone ámbar y el detalle muestra el `Alert` con el literal
+      de §9.6.1.
+- [ ] **E2E-14 · Transición a rojo y notificación.** Cruzado el máximo, `sla_semaforo_etapa` pasa
+      a `rojo`; AT08 en modo prueba encola **un** correo al responsable del área de esa etapa
+      —no al dueño de la solicitud—; `TX_Notificaciones` queda con una fila
+      `{codigo}-sla-rojo-e1`; `LogEscenarios` con `AT08_SLA · ✓ OK`.
+- [ ] **E2E-15 · Idempotencia de la alerta.** Segunda corrida de AT08 con la misma solicitud
+      todavía en rojo: **no llega un segundo correo**, `TX_Notificaciones` sigue con una sola
+      fila, `LogEscenarios` registra `⏭ Omitido`.
+- [ ] **E2E-16 · Los dos relojes no se pisan.** Una solicitud con etapa en rojo y agregado en
+      verde muestra las dos píldoras con colores distintos y **ninguna de las dos cambia por la
+      otra**. Es la lectura correcta según §5.2, y el caso existe para que nadie la "arregle"
+      más adelante.
+- [ ] **E2E-17 · Degradación honesta.** Una solicitud del backfill sin `fecha_asignacion_ts`
+      muestra e1 en curso y seis etapas **pendientes**; ninguna píldora de etapa en la bandeja;
+      cero ámbar fabricado. `sla_semaforo_etapa` = `sin_dato`.
+- [ ] **E2E-18 · Regresión de lo ya construido.** Crear, editar y asignar siguen funcionando
+      end-to-end tras el bump de SC01 y SC-Asignar v2.1: el correo al tasador (§9.5) sale igual,
+      `A_Eventos` recibe `asignacion_manual` y `correo_asignacion_enviado` exactamente una vez
+      cada uno, y ningún campo previo quedó pisado por los seis nuevos del payload.
+
+---
+
 ## §10 · P9 — Deploy y validación en Railway
 
 > **⚙ Modo Claude Code recomendado:** `default`
@@ -1927,16 +2622,29 @@ Al iniciar la siguiente P, Claude Code:
 | RN-52 | Un solo hilo de correo por solicitud (email_thread_id) | P2, P7, **P8.5** |
 | RN-59 | Modo consulta: estado ≠ creada Y tasador asignado | P5, P6 |
 | D | Feedback de progreso en toda mutación (spinner + gerundio + `finally`) | P3, P4, P7, **P8.5** |
+| RN-04 | SLA agregado por par (cliente, tipo_informe) en días, sobre `C_SLA` y `C_Feriados` | P5, **P8.6** |
+| RF-53 | SLA por etapa en horas hábiles 9–18 L-V; siete etapas de §5.2.4; semáforo propio e independiente del agregado | **P8.6** |
+| RN-54 | El reloj se detiene por contacto no logrado — campos creados, **sin escritor en v1.9** (FUT-EJ-07) | **P8.6** (declarativo) |
+| RN-55 | Reproceso con SLA propio — **diferido** en §1.9 · FUT-EJ-08, fuera de las tandas | — |
 
 ---
 
 ## §13 · Archivos afectados (no modificados en esta iteración)
 
-La inserción de §9.5 genera desalineaciones en otros documentos. **Ninguno se editó**;
-quedan listados para que Sergio decida cuáles corregir y cuándo.
+La inserción de §9.5 y de §9.6 genera desalineaciones en otros documentos. **Ninguno se editó**;
+quedan listados para que Sergio decida cuáles corregir y cuándo. Las filas marcadas **(§9.6)**
+son las que agrega el control de SLA en v1.8 del plan.
 
 | Archivo | Qué queda desalineado |
 |---|---|
+| `docs/diseno.md` **(§9.6)** | La nota de §3 afirma que el reloj por etapa *"no está implementado (CI-005) y su UI no está diseñada"*: tras §9.6 queda diseñada, y e1/e2 quedan implementadas. La vista 2 de TabsVistas (§3) define "SLA en riesgo" como `semaforo_sla = ámbar o rojo`; pasa a ser la **unión** con `sla_semaforo_etapa`. §216 lista los campos de sólo lectura sin `sla_semaforo_etapa`. §519 asume que AT08 ya existe. |
+| `docs/construccion.md` **(§9.6)** | §85 lista *"AT08 activo en Airtable"* como prerrequisito de un paso ya construido, cuando AT08 **no existe** en la base. §160 documenta el filtro de "SLA en riesgo" sin el término de etapa. §510 afirma que *"AT08 actualiza `semaforo_sla` en `TX_Solicitudes`"*: con §9.6 el semáforo es fórmula viva y AT08 sólo resume y notifica, no lo escribe. |
+| `docs/schema-airtable.md` **(§9.6)** | No tiene `C_SLA_Etapas` ni los 21 campos `sla_*` de `TX_Solicitudes`. **Excepción:** este archivo sí se actualiza dentro de la Tanda A (paso A-6), porque P1/Types y los Route Handlers lo leen como fuente. Queda listado para que la corrección quede visible, no para diferirla. |
+| `CLAUDE.md` **(§9.6)** | La tabla de escenarios Make no tiene fila para `SC-SLA-Alertas`. La entrada de `C_SLA` lista las dos familias de campos duplicadas sin decir cuál gana (lo decide M-11). La sección de SLA operacional dice *"Nada de esto está implementado todavía — ver CI-005"*, que deja de ser exacto al cerrar §9.6. |
+| `docs/CODE_INCONSISTENCIES.md` **(§9.6)** | **CI-005** queda cubierta en sus pasos (2), (3) y (4); el (1) —poblar `C_SLA`— depende de M-11 y es de negocio. Corresponde actualizar su estado, no cerrarla. **CI-007** (`H_Feriados` vs `C_Feriados`) sigue abierta y §9.6 la respeta usando el nombre real. |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md` **(§9.6)** | Fuente canónica, **no editable** y **sin cambios requeridos**: §9.6 la implementa sin desviarse. Dos divergencias spec→base a corregir en el próximo bump normativo, con su changelog (RO-15): (1) §5.2 y §5.2.1 nombran `H_Feriados`, que no existe (CI-007); (2) §5.2.4 · etapa 7 da por existente `sla_revision` en `C_SLA`, que tampoco existe — §9.6 lo crea como `sla_revision_horas`. |
+| `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` **(§9.6)** | §6 no incluye los dos literales de alerta de etapa (ámbar y rojo) que §9.6.1 propone. Se implementan tal cual quedaron escritos y esperan ratificación en el catálogo de mensajes canónicos. Arrastra además el nombre `H_Feriados` (CI-007). |
+| `docs/_notas/checklist-P9-manual.md` **(§9.6)** | Sin sección para `SC-SLA-Alertas` ni para `AT08_Alertas_SLA`. §10.4.1 y §10.4.2 de este plan tampoco listan todavía el blueprint y el `.js` de la Tanda F. |
 | `CLAUDE.md` | La tabla de escenarios Make marca `SC05` como *"❌ por provisionar (BQ-3) · verificar código libre (H-03)"*. Tras §9.5 el código deja de estar libre: SC05 es el correo de asignación. Falta también la fila de `SC-Asignar` (hook `3441086`), que existe pero no está en la tabla. |
 | `docs/diseno.md` | §269 y §546 dicen que SC05 se dispara desde AT02. **D-15 dejó AT02 fuera de alcance de IF-02** y §278 ya lo corrige — pero §269/§546 conservan la redacción vieja. Con §9.5, SC05 se dispara desde SC-Asignar. |
 | `docs/construccion.md` | §316 afirma *"SC05 se dispara desde AT02 al pasar a `asignada`, no desde la UI directamente"*. Misma corrección que arriba. §343 conserva el diagrama con AT02. |
@@ -1949,4 +2657,4 @@ quedan listados para que Sergio decida cuáles corregir y cuándo.
 
 ---
 
-*Última actualización: 08-ago-2026 · **v1.7 del plan** (logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9) · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
+*Última actualización: 10-ago-2026 · **v1.8 del plan** (P8.6 · Control de SLA en IF-02: RF-08 agregado + RF-53 por etapa · tandas A-G · checkpoints M-9 a M-18 · reproceso diferido en FUT-EJ-08) · v1.7: logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9 · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
