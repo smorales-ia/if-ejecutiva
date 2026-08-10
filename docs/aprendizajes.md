@@ -554,3 +554,22 @@ Lo que hace falta subrayar es **por qué** la comparación byte a byte era oblig
 **Solución aplicada:** se creó la fórmula por MCP con el texto literal de §9.6.1, se cerró M-13 y se registró el hallazgo como **§9.6-R5** en `docs/_md/plan-ejecucion-if02-v1_9.md`, junto con las dos incapacidades que **sí** están verificadas y siguen en pie: el MCP no borra campos y no lee el estado activo/inactivo de una Airtable Automation.
 
 **Prevención futura:** **verificar la capacidad real del MCP antes de declararla ausente en el plan; una ausencia asumida cuesta un turno manual que no era necesario.** La prueba vale un tool call y se hace una vez. Corolario del mismo tamaño: `isValid: true` en una fórmula sólo dice que la expresión compila, no qué cadena emite — la verificación de contrato de los cuatro literales sigue siendo obligatoria y se hace mirando filas reales, no metadata.
+
+---
+
+### 2026-08-10 — Tanda B del motor de SLA: tres cosas que no estaban donde parecía
+
+**Contexto:** construcción de `lib/sla-habil.ts`, `lib/feriados.ts` y `lib/sla-etapas.ts` con sus tests (plan §9.6.2 · B-1 a B-4), sobre el esquema que la Tanda A dejó cargado.
+
+**Inconveniente 1 — el alias `@/` no existe en vitest.** El primer test de `sla-etapas` falló con `Cannot find package '@/lib/airtable-client'`. El repo no tenía `vitest.config`, así que el alias declarado en `tsconfig.compilerOptions.paths` no llegaba al runner. Los tres tests previos (`dropbox-path`, `adjuntos-destino`, `clerk-response`) no lo notaban porque sólo importan módulos hoja con rutas relativas; en cuanto un test alcanza un módulo de `lib/` que importa con `@/`, revienta.
+**Causa raíz:** el alias vivía sólo en tsconfig, que Next resuelve por su cuenta. Nadie lo había necesitado en tests.
+**Solución aplicada:** `vitest.config.mts` con `resolve.alias` apuntando `@` a la raíz. Extensión **`.mts`**, no `.ts`: con `.ts` Vite carga el archivo como CommonJS y `import.meta.url` dispara un warning de sintaxis ESM en cada corrida.
+**Prevención futura:** el alias de tsconfig no es infraestructura compartida hasta que el runner también lo conoce. Cualquier test nuevo que toque un módulo con dependencias transitivas lo va a descubrir; mejor tenerlo resuelto.
+
+**Inconveniente 2 — el recálculo encadenado leía un estado que todavía no existía.** `marcarFinEtapa(3)` debe abrir la etapa 4 y recalcular sus umbrales. La primera versión hacía que el recálculo **releyera** la solicitud, y el test mostró que en ese momento la marca recién escrita no estaba visible: con `persistir: false` no está en la base por definición, y con `persistir: true` una relectura inmediata tras el `PATCH` tampoco la garantiza. El efecto era que `etapaVigente` devolvía `null` y el motor **borraba** los umbrales en vez de calcular los de la etapa 4.
+**Causa raíz:** mezclar "estado de negocio ya decidido" con "estado leído de la base". Son lo mismo sólo si la escritura ya se confirmó y la lectura es consistente; ninguna de las dos cosas está garantizada.
+**Solución aplicada:** todas las funciones que marcan una etapa proyectan el campo escrito sobre el objeto en memoria y le pasan esa **solicitud proyectada** al recálculo, en los dos modos de persistencia.
+**Prevención futura:** cuando una operación escribe y después necesita leer lo que escribió, proyectar en memoria y no releer. Una relectura inmediata a una API remota es un read-after-write que a veces funciona, y ésos son los peores.
+
+**Inconveniente 3 — la jornada rinde 9 horas, no 8.** Las expectativas de dos casos del encargo estaban mal calculadas por asumir jornada de 8 h y, en un caso, que 24 h hábiles equivalen a un día. Con ventana 9:00–18:00 el día rinde **540 minutos**: 24 h hábiles desde un martes 10:00 vencen el **jueves a las 16:00**, no el miércoles a las 10:00. Corregido en el test, que ahora asienta el número real.
+**Prevención futura:** los umbrales de §5.2.4 están en horas hábiles y la ventana es de nueve; cualquier expectativa escrita "a ojo" con días de ocho horas queda corrida. El test de invariante `minutosHabilesEntre(t, sumarHorasHabiles(t, h)) === h * 60` (**RO-06**, 42 combinaciones) es lo que impide que un error así entre sin que nadie lo note.

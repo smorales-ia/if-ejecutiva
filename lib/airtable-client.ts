@@ -134,12 +134,17 @@ export async function getRecord<T>(
   return (await res.json()) as AirtableRecord<T>
 }
 
-async function postRequest(url: string, body: unknown, attempt = 1): Promise<Response> {
+async function postRequest(
+  url: string,
+  body: unknown,
+  attempt = 1,
+  method: 'POST' | 'PATCH' = 'POST'
+): Promise<Response> {
   const token = process.env.AIRTABLE_TOKEN
   if (!token) throw new Error('AIRTABLE_TOKEN is not configured')
 
   const res = await fetch(url, {
-    method: 'POST',
+    method,
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
@@ -151,12 +156,12 @@ async function postRequest(url: string, body: unknown, attempt = 1): Promise<Res
   if (res.status === 429 && attempt < 3) {
     const retryAfter = Number(res.headers.get('Retry-After') ?? attempt)
     await new Promise((r) => setTimeout(r, retryAfter * 1000))
-    return postRequest(url, body, attempt + 1)
+    return postRequest(url, body, attempt + 1, method)
   }
 
   if (res.status >= 500 && attempt < 3) {
     await new Promise((r) => setTimeout(r, 500 * attempt))
-    return postRequest(url, body, attempt + 1)
+    return postRequest(url, body, attempt + 1, method)
   }
 
   return res
@@ -176,6 +181,33 @@ export async function createRecord<T>(
 
   const url = `${API_BASE}/${baseId}/${tableId}`
   const res = await postRequest(url, { fields, typecast: true })
+  if (!res.ok) {
+    throw new AirtableError(res.status, await res.text())
+  }
+
+  return (await res.json()) as AirtableRecord<T>
+}
+
+/**
+ * Actualiza campos de un registro existente (`PATCH`: los campos ausentes del
+ * payload quedan intactos, no se vacían).
+ *
+ * Sólo para **datos derivados server-side**. Las escrituras de negocio de IF-02
+ * siguen pasando por Make (`lib/make-client.ts`): la máquina de estados vive en
+ * Airtable/Make y esta función no es la puerta trasera para saltárselo. Su caso
+ * de uso es el motor de SLA, que materializa timestamps calculados a partir de
+ * datos que ya están en la base.
+ */
+export async function updateRecord<T>(
+  tableId: string,
+  recordId: string,
+  fields: Record<string, unknown>
+): Promise<AirtableRecord<T>> {
+  const baseId = process.env.AIRTABLE_BASE_ID
+  if (!baseId) throw new Error('AIRTABLE_BASE_ID is not configured')
+
+  const url = `${API_BASE}/${baseId}/${tableId}/${recordId}`
+  const res = await postRequest(url, { fields, typecast: true }, 1, 'PATCH')
   if (!res.ok) {
     throw new AirtableError(res.status, await res.text())
   }
