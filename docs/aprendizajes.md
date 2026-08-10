@@ -524,3 +524,33 @@ Lo que hace falta subrayar es **por qué** la comparación byte a byte era oblig
 **Solución aplicada:** se conservaron los **valores** y se tradujeron los **nombres**, registrando la traducción como decisión greppable **§9.6-R4** en `docs/_md/plan-ejecucion-if02-v1_9.md`: `dias_totales = 3`, `dias_alerta_amarilla = 2`, `dias_alerta_roja = 3`, y verde sin campo por ser derivado (todo lo que está bajo el ámbar). El comodín se define como **link vacío**, no como `*`. Y como la fila `SLA_METLIFE_Refinanciamiento` (`dias_totales = 4`, umbrales vacíos) sobrevive junto a la default, se fijó precedencia **campo a campo**: gana la fila más específica que empareje y cada campo vacío se resuelve contra la default — así MetLife conserva sus 4 días sin que nadie tenga que completar su fila. M-11 se partió en **M-11.a** (carga en `C_SLA` + borrado de la familia perdedora) y **M-11.b** (ratificación de las 7 filas de §5.2.4, que carga A-1).
 
 **Prevención futura:** una decisión de negocio que nombra campos se contrasta contra el schema **antes** de escribirla en el plan, y si los nombres no existen se traduce explícitamente en vez de crear campos para que calcen. La señal de alarma barata: si un mismo checkpoint dice *cargar X* y *borrar X*, el problema no es el orden de las instrucciones sino que dos vocabularios distintos se están usando como si fueran uno.
+
+---
+
+### 2026-08-10 — Ejecución de Tanda A de §9.6: esquema + carga + script AT08
+
+**Contexto:** pase único que creó `C_SLA_Etapas`, los 3 campos de `C_SLA` y los 20 campos SLA de `TX_Solicitudes` vía MCP, cargó la fila default y las 7 filas de §5.2.4, y dejó escrito `docs/_artefactos/airtable/AT08_Alertas_SLA.js`.
+
+**Inconveniente:** el paso 4.3 del encargo pedía linkear `matriz_etapas` de `SLA_DEFAULT_GLOBAL` a las 7 filas recién creadas, pero §9.6-R4 define ese campo como **vacío = matriz global · poblado = override del par**. Poblarlo en la fila comodín invierte la convención: la fila que representa "sin override" queda con override declarado.
+
+**Causa raíz:** dos lecturas razonables del mismo campo. Una lo entiende como navegación (dejar la matriz alcanzable desde la fila de SLA) y otra como bandera semántica (poblado = este par negocia plazos distintos). El plan fijó la segunda; el encargo asumió la primera.
+
+**Solución aplicada:** se ejecutó el link como se pidió —es reversible en un clic y hoy es funcionalmente inerte, porque apunta exactamente a las 7 filas globales y el motor todavía no existe (Tanda B)— y se dejó el conflicto anotado para que Sergio elija: vaciar la celda, o ampliar la redacción de §9.6-R4 a "poblado = matriz explícita" y distinguir el override real por otra vía.
+
+**Prevención futura:** cuando un campo es a la vez enlace navegable y bandera de comportamiento, la bandera pierde. Conviene separar los dos roles —`matriz_etapas` para el override y un lookup o una vista para navegar— antes de que exista el primer override real, porque después no hay forma de distinguir una fila que "usa la global explícitamente" de una que "negoció la misma matriz".
+
+**Hallazgo aparte, que corrige el plan:** §9.6 · M-13 afirma que *"el MCP no crea ni modifica fórmulas"*. Ya no es cierto: `create_field` de este MCP acepta `type: "formula"` con `options.formula`. `sla_semaforo_etapa` no se creó en este pase porque el encargo lo excluía explícitamente, pero M-13 puede automatizarse y dejar de ser un paso manual. Antes de darlo por hecho conviene probarlo contra los 14 timestamps ya creados, porque una fórmula mal escrita que emita una mayúscula de más deja el filtro de la Tanda C en cero filas sin avisar.
+
+---
+
+### 2026-08-10 — El MCP sí crea fórmulas: una incapacidad supuesta costó un checkpoint manual
+
+**Contexto:** cierre de las tres correcciones abiertas de §9.6 (plan v1.10 → v1.11): vaciar `matriz_etapas` de la fila default, crear `sla_semaforo_etapa` y alinear la precisión de `sla_revision_horas`.
+
+**Inconveniente:** el plan declaraba en la fila M-13, como si fuera un hecho verificado, que *"el MCP no crea ni modifica fórmulas"*. Sobre esa premisa M-13 existía como turno manual de Sergio en la UI de Airtable, y además **bloqueaba la Tanda C entera**. La premisa era falsa: `create_field` acepta `type: "formula"` con `options.formula`, y devuelve el campo con `isValid`, `referencedFieldIds` y `result.type` resueltos. `sla_semaforo_etapa` quedó creado en un tool call (`fldB6gJ3clZUPgaZk`).
+
+**Causa raíz:** la afirmación entró al plan como inferencia —el `CLAUDE.md` lista un alcance del MCP centrado en lectura de schema y búsqueda de registros— y nunca se probó. Una vez escrita, sobrevivió tres bumps de versión copiándose de una tabla de checkpoints a la siguiente, ganando apariencia de dato verificado por el solo hecho de repetirse.
+
+**Solución aplicada:** se creó la fórmula por MCP con el texto literal de §9.6.1, se cerró M-13 y se registró el hallazgo como **§9.6-R5** en `docs/_md/plan-ejecucion-if02-v1_9.md`, junto con las dos incapacidades que **sí** están verificadas y siguen en pie: el MCP no borra campos y no lee el estado activo/inactivo de una Airtable Automation.
+
+**Prevención futura:** **verificar la capacidad real del MCP antes de declararla ausente en el plan; una ausencia asumida cuesta un turno manual que no era necesario.** La prueba vale un tool call y se hace una vez. Corolario del mismo tamaño: `isValid: true` en una fórmula sólo dice que la expresión compila, no qué cadena emite — la verificación de contrato de los cuatro literales sigue siendo obligatoria y se hace mirando filas reales, no metadata.

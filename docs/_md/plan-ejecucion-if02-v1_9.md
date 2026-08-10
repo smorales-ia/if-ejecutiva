@@ -1,6 +1,34 @@
-# Plan de Ejecución IF-02 v1.10 — Guía maestra para Claude Code
+# Plan de Ejecución IF-02 v1.11 — Guía maestra para Claude Code
 
-> **Versión del plan: v1.10** (10-ago-2026). Cambio respecto de v1.9: se incorporan las **tres
+> **Versión del plan: v1.11** (10-ago-2026). Cambio respecto de v1.10: **el plan alcanza a la
+> base**. La Tanda A se ejecutó —`C_SLA_Etapas` (`tbl05zu5RLhH3u6pl`) creada y sembrada con las 7
+> filas de §5.2.4, los 3 campos nuevos de `C_SLA`, los 20 campos SLA de `TX_Solicitudes` con
+> `timeZone = America/Santiago` verificado uno a uno, y la fila `SLA_DEFAULT_GLOBAL`
+> (`recAoOl35rFwEuM8u`)— y esta versión corrige las tres cosas que ese pase dejó desalineadas:
+>
+> **1 · `sla_revision_horas` se declara con 1 decimal, no 2.** El valor más fino que puede tomar
+> es `0.5`; el segundo decimal no representa nada. Alinea el plan con el campo real
+> `fldyi1guWZwwhvbkF`.
+>
+> **2 · M-13 queda cerrado.** `sla_semaforo_etapa` (`fldB6gJ3clZUPgaZk`) se creó **por MCP**
+> durante A-3, con el texto literal de §9.6.1 y `isValid: true`. Deja de ser un turno manual de
+> UI y deja de bloquear la Tanda C. La **verificación de los cuatro literales** sigue viva y se
+> hace en el E2E de la Tanda C: `isValid` dice que compila, no qué cadena emite.
+>
+> **3 · `matriz_etapas` de la fila default vuelve a estar vacío.** Se había linkeado a las 7
+> filas globales; un override que apunta a la matriz global es un no-op semántico que quema la
+> señal de §9.6-R4. Revertido el mismo día.
+>
+> Reconciliación greppable nueva: **§9.6-R5** — *el MCP sí crea fórmulas* (`create_field` acepta
+> `type: "formula"`), contra lo que v1.10 afirmaba. La regla que deja: antes de declarar en el
+> plan que el MCP no puede algo, probarlo; una incapacidad supuesta cuesta un turno manual que
+> nadie necesitaba y se copia de versión en versión como si fuera un hecho verificado. Las dos
+> incapacidades **sí** verificadas siguen en pie: el MCP no borra campos y no lee el estado de una
+> Airtable Automation.
+>
+> Sin campos nuevos, sin tandas nuevas, sin checkpoints nuevos.
+>
+> **v1.10** (10-ago-2026). Cambio respecto de v1.9: se incorporan las **tres
 > decisiones de negocio** que faltaban para que M-11 dejara de ser una elicitación abierta. No
 > cambia la estructura de §9.6 —ni un campo nuevo, ni una tanda nueva, ni un checkpoint nuevo—:
 > cambia **el contenido que se carga** y **el orden en que M-11 puede correr**.
@@ -1980,6 +2008,46 @@ semáforo funcione, y por eso esta decisión **no genera una nueva pregunta de n
 declarados en §9.6:* **cero campos nuevos.** Se pobla lo que ya existe y se borra lo que v1.9 ya
 había decidido borrar.
 
+*Corolario ejecutado el 10-ago-2026:* `matriz_etapas` de `SLA_DEFAULT_GLOBAL` quedó **vacío**.
+Durante la carga se linkeó a las 7 filas globales y se revirtió en el mismo día: un override que
+apunta a la matriz global es un no-op semántico que quema la señal. La invariante que el motor
+lee —**vacío = matriz global, poblado = override de este par**— sólo sirve si nadie la usa como
+enlace de navegación. Para recorrer la matriz desde `C_SLA` está el link inverso `C_SLA` de
+`C_SLA_Etapas` (`fldxb9ztHRyYfyXWX`), que Airtable creó solo y no significa nada.
+
+---
+
+**§9.6-R5 · El MCP sí crea fórmulas. M-13 no era un turno manual.**
+
+v1.10 declaraba, en la fila M-13 de la tabla de checkpoints, que *"el MCP no crea ni modifica
+fórmulas"*, y sobre esa premisa M-13 quedaba como un paso de UI a cargo de Sergio, bloqueante
+antes de la Tanda C. **La premisa era falsa:** `create_field` de este MCP acepta
+`type: "formula"` con `options.formula`, y devuelve el campo con `isValid`,
+`referencedFieldIds` y `result.type` resueltos.
+
+*Ejecutado:* `sla_semaforo_etapa` = **`fldB6gJ3clZUPgaZk`**, creado el 10-ago-2026 con el texto
+literal de este §9.6.1, `isValid: true`, referenciando `sla_etapa_vence_ts`
+(`fldLJdanpV0FANjKS`) y `sla_etapa_alerta_ts` (`fldLfFftNm0Kvvu08`), con `result.type`
+`singleLineText`. Airtable normalizó los nombres de campo a FIELD_IDs dentro de la expresión, que
+es lo que queremos: la fórmula sobrevive a un rename.
+
+*Lo que esto cierra y lo que no.* Cierra **M-13 como compuerta de ejecución**: no hay que esperar
+un turno de UI y la Tanda C deja de depender de una acción humana. **No cierra la verificación de
+contrato.** `isValid: true` sólo afirma que la expresión compila; no dice qué cadena emite. Los
+cuatro literales `verde`/`ambar`/`rojo`/`sin_dato` se verifican mirando filas reales en el E2E de
+la Tanda C, y esa parte de M-13 sigue viva.
+
+*Regla que queda para el resto del plan:* antes de declarar en el plan que el MCP **no** puede
+algo, probarlo. Una incapacidad supuesta cuesta un turno manual que nadie necesitaba, y —peor—
+se copia de versión en versión como si fuera un hecho verificado. Las demás fórmulas que este
+plan pueda necesitar se crean por MCP salvo prueba en contrario. La incapacidad que **sí** está
+verificada es otra: el MCP **no borra campos** (los tres de la familia perdedora de `C_SLA` en
+M-11.a siguen siendo trabajo de UI) y **no lee el estado activo/inactivo de una Airtable
+Automation** (de ahí la verificación manual de AT02 en M-9).
+
+*Impacto en campos declarados en §9.6:* **ninguno.** El campo ya estaba declarado en el *Modelo
+de datos*; cambia quién lo crea, no qué es.
+
 #### Modelo de datos
 
 **Dónde vive la matriz por etapa — decisión del panel.** §5.2.4 declara **una** matriz de siete
@@ -2025,7 +2093,7 @@ copiarla sin redondear ni convertir de unidad, y ratificar la copia en **M-11.b*
 
 | Campo | Tipo | Notas |
 |---|---|---|
-| `sla_revision_horas` | number (2 dec) | Sub-SLA de revisión del visador (**§9.6-R3**). §5.2.4 · etapa 7 y §3.2 lo dan por existente bajo el nombre `sla_revision`; **no existe**. Se crea con sufijo de unidad para que nadie lo confunda con días, que es la unidad del resto de la tabla. **Es un override del umbral de la etapa 7 y de ninguna otra**: vacío → e7 usa `C_SLA_Etapas` (`0.5` / `0.5`); poblado → sustituye los dos umbrales de e7 para ese par. Nadie lo puebla en v1.9. |
+| `sla_revision_horas` | number (**1 dec**) | Sub-SLA de revisión del visador (**§9.6-R3**). *(Un decimal, no dos: el valor más fino que este campo puede tomar es `0.5` —los 30 min de e7— y el segundo decimal no representa nada. Así quedó creado el campo real `fldyi1guWZwwhvbkF`.)* §5.2.4 · etapa 7 y §3.2 lo dan por existente bajo el nombre `sla_revision`; **no existe**. Se crea con sufijo de unidad para que nadie lo confunda con días, que es la unidad del resto de la tabla. **Es un override del umbral de la etapa 7 y de ninguna otra**: vacío → e7 usa `C_SLA_Etapas` (`0.5` / `0.5`); poblado → sustituye los dos umbrales de e7 para ese par. Nadie lo puebla en v1.9. |
 | `matriz_etapas` | multipleRecordLinks → `C_SLA_Etapas` | Vacío = matriz global de §5.2.4. Poblado = override del par. En esta iteración **nadie lo puebla**; existe para que el override futuro no exija migración. |
 | `activo_desde` | date | RF-35 exige que modificar un SLA no altere solicitudes en curso. Sin esta fecha la regla no es verificable. La solicitud adopta la fila vigente a su `sla_e1_inicio_ts`. |
 
@@ -2268,7 +2336,8 @@ tocar el contrato de `?sla=`, que sigue significando el agregado. El contador de
 > obliga a filtrar por el formato real que emite la fórmula. Esta fórmula la escribimos nosotros
 > en M-13 y emite exactamente cuatro literales en minúscula, sin emoji ni adornos —precisamente
 > para no repetir el problema de `semaforo_sla`, cuyos literales con emoji obligaron a filtrar
-> por subcadena—. El contrato queda fijado en el criterio de aceptación de M-13.
+> por subcadena—. El contrato queda fijado en el criterio de aceptación de M-13, que sigue
+> exigiendo verlos salir aunque el campo ya exista (**§9.6-R5**).
 
 **Detalle (§1.3) — cronología de las siete etapas.** Va en la pestaña **Historial**, arriba del
 listado de `A_Eventos`, como sección propia "Cronología de etapas (SLA)". No se crea un
@@ -2424,6 +2493,9 @@ otra sección.
    literal, no el número recordado (**RO-02**), porque es la evidencia con la que **M-11.a**
    ejecuta el borrado. La reverificación del 10-ago-2026 la volvió a confirmar: **0 de 1**.
    `activo_desde` se crea aquí porque la fila default de M-11.a lo puebla (**§9.6-R4**).
+   **A-3 crea además `sla_semaforo_etapa` en `TX_Solicitudes`** —la fórmula de M-13, por MCP:
+   `create_field` acepta `type: "formula"` (**§9.6-R5**)—, de modo que A-2 y A-3 juntos dejan los
+   21 campos del *Modelo de datos* y M-13 queda cerrado dentro de la Tanda A.
 4. **A-4 · Auditar `C_Feriados`** (**§9.6-R1**) y entregar la lista exacta de correcciones, que
    la reverificación de v1.9 ya dejó cerrada:
    - la fila basura `recdfwWtdHFcm05sb` (sin `fecha`, `nombre = "nombre_feriado"`, `tipo = "tipo"`);
@@ -2452,7 +2524,7 @@ otra sección.
    `tbl…`/`fld…` reales.
 
 **Checkpoints:** **M-9** (bloqueante), **M-10**, **M-11.a** (bloqueante) y **M-11.b**, **M-12**,
-**M-13** (bloqueante).
+**M-13** (~~bloqueante~~ · **cerrado el 10-ago-2026** vía MCP en A-3 · **§9.6-R5**).
 
 **Criterio de aceptación de Tanda A:** `C_SLA_Etapas` existe con 7 filas cuyos catorce valores
 coinciden uno a uno con §5.2.4; los 21 campos existen en `TX_Solicitudes` con el tipo declarado
@@ -2642,18 +2714,23 @@ plan.
 | M-11.a | **Cargar el baseline del SLA agregado** (Decisión 2 · **§9.6-R4**). Crear en `C_SLA` la fila global default `SLA_DEFAULT_GLOBAL` con `cliente`/`tipo_informe`/`tipo_propiedad` **vacíos** (el comodín no se escribe `*`: son links), `dias_totales = 3`, `dias_alerta_amarilla = 2`, `dias_alerta_roja = 3`, `sla_revision_horas` **vacío** (sin override de e7 · **§9.6-R3**), `activo = true`, `activo_desde` = fecha de carga. Verde no se carga: es 0 a 1 día, derivado del ámbar. Y **borrar la familia perdedora** `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido` tras reconfirmar con la salida literal de A-3 que están vacías en las filas existentes (al 10-ago-2026: **0 de 1**). **Ya no se elicita nada**: Héctor y Óscar son validadores post-carga si quieren revisar la fila default, no bloqueadores | **Antes** de Tanda C · bloqueante para RF-08 |
 | M-11.b | **Cargar y ratificar la matriz por etapa** (Decisión 1). Las 7 filas de §5.2.4 en `C_SLA_Etapas` con sus valores literales: e1 `2`/`3` · e2 `4`/`6` · e3 `0.5`/`0.5` · e4 `2`/`3` · e5 `24`/`48` · e6 `2`/`3` · e7 `0.5`/`0.5` (por informe). Son **datos cerrados por Héctor**: se cargan, no se definen. La carga material la ejecuta **A-1** y la verificación contra la spec es **M-10**; M-11.b es el visto bueno de negocio sobre esa copia. **Depende de A-1 / M-9** (la tabla no existe todavía) | Tras M-10 · no bloquea a M-11.a |
 | M-12 | Limpiar `C_Feriados` (**§9.6-R1**) con la lista cerrada de A-4: borrar la fila basura `recdfwWtdHFcm05sb`; borrar el duplicado `reckuUbALWocT4kWX` y conservar `recGB2eUtwWs3cIuM`; borrar la opción `"tipo"` del select `tipo` una vez que no quede fila usándola; completar `anno` en las **5** filas de 2026 que lo tienen vacío; decidir el par `nombre`/`nombre_feriado` —lo natural es dejar `nombre` (es el primary) y vaciar o eliminar `nombre_feriado`, revisando antes la divergencia de `recwAPk3zbnLgctHn`—; y cargar 2027 completo | Tras A-4 |
-| M-13 | Pegar la fórmula de `sla_semaforo_etapa` en la UI de Airtable — **el MCP no crea ni modifica fórmulas** — y verificar que emite exactamente `verde`/`ambar`/`rojo`/`sin_dato`, en minúscula y sin emoji | **Antes** de Tanda C |
+| M-13 | ✅ **CERRADO el 10-ago-2026 — creado vía MCP durante A-3, sin turno manual** (**§9.6-R5**). `sla_semaforo_etapa` = `fldB6gJ3clZUPgaZk`, `isValid: true`, `referencedFieldIds` = `sla_etapa_vence_ts` + `sla_etapa_alerta_ts`, `result.type` = `singleLineText`. Queda pendiente **sólo la verificación de contrato**: con una fila de cada caso, confirmar que emite exactamente `verde`/`ambar`/`rojo`/`sin_dato`, en minúscula y sin emoji. Eso se hace en el E2E de la Tanda C, no en un turno propio de UI | ~~Antes de Tanda C~~ · hecho |
 | M-14 | Reimportar `SC01` y `SC-Asignar` v2.1 en eu1 y **pausar la versión anterior en el mismo turno** (RO-10). Verificar en el diseñador que los seis campos SLA llegan mapeados y ninguno aparece vacío | Tras C-6 |
 | M-15 | **Aprobar la creación del escenario `SC-SLA-Alertas`** en Make. Sin este `sí` explícito, la Tanda F no arranca | **Antes** de F-2 |
 | M-16 | Crear `AT08_Alertas_SLA` en Airtable Automations con trigger cron 08:00 y el script de F-1, y **dejarla en borrador**. Usar ese nombre exacto en TitleCase (**§9.6-R2**), no el `AT08_alertas_sla` que trae el registro | Tras F-1, **antes** de M-18 |
 | M-17 | Crear las 3 filas de `C_NotificacionesConfig`; agregar la opción `AT08_SLA` a `LogEscenarios.Escenario`; y **actualizar la fila `recxWkj3x8tzqzHmo` de `C_AutomationsAirtable`** según F-5 — sin crear una segunda fila `AT08`, y dejando `estado = Inventariado` hasta que M-18 pase | Antes de M-18 |
 | M-18 | Correr AT08 en modo prueba con una solicitud en rojo y verificar: llega **un** correo al área correcta, `TX_Notificaciones` tiene **una** fila, y una segunda corrida no genera un segundo correo. Recién ahí activar AT08 y recién ahí poner `estado = Activo` en su fila de registro | Tras M-16 |
 
-> **M-13 no es opcional y va antes de la Tanda C.** Toda la vista "SLA en riesgo", el filtro y el
-> contador se apoyan en los literales que emite esa fórmula. Si emite algo distinto de lo
-> acordado —una mayúscula, un emoji, un acento en "ámbar"— el filtro devuelve **cero filas para
-> toda la tabla** y cero filas se lee como "no hay casos", no como "el filtro está mal". Es
-> exactamente el fallo silencioso de RO-13, y verificarlo cuesta treinta segundos.
+> **M-13 está creado, pero su contrato sigue sin verificarse (v1.11).** El campo existe y
+> Airtable lo dio por válido (`fldB6gJ3clZUPgaZk`, `isValid: true`), así que ya no hay un turno
+> manual bloqueando la Tanda C. Lo que **no** cambió es por qué el checkpoint existía: toda la
+> vista "SLA en riesgo", el filtro y el contador se apoyan en los literales que emite esa
+> fórmula, y si emite algo distinto de lo acordado —una mayúscula, un emoji, un acento en
+> "ámbar"— el filtro devuelve **cero filas para toda la tabla**, que se lee como "no hay casos" y
+> no como "el filtro está mal". `isValid` sólo dice que la sintaxis compila, no qué cadena sale.
+> La verificación de los cuatro literales se hace con una fila de cada caso en el E2E de la
+> Tanda C (E2E-13, E2E-14, E2E-15), cuesta treinta segundos y sigue siendo obligatoria. Es el
+> fallo silencioso de RO-13.
 
 > **M-11 dejó de ser una compuerta de tiempo ajeno (v1.10).** Hasta v1.9, M-11 esperaba que
 > Héctor y Óscar definieran umbrales, y ese tiempo de respuesta no lo controlaba el equipo
@@ -2960,4 +3037,4 @@ son las que agrega el control de SLA en v1.8 del plan.
 
 ---
 
-*Última actualización: 10-ago-2026 · **v1.10 del plan** (tres decisiones de negocio incorporadas: **Decisión 1** matriz por etapa de §5.2.4 como dato cerrado, se carga literal y se ratifica en **M-11.b** · **Decisión 2** baseline del agregado, fila global default en `C_SLA` con 3 / 2 / verde 0-1 y `sla_revision_horas` vacío, en **M-11.a**, que además borra la familia perdedora · **Decisión 3** reproceso §5.2.5 ratificado como diferido en FUT-EJ-08 · reconciliación nueva **§9.6-R4** con la traducción de nombres al schema real, la convención de comodín por link vacío y la precedencia campo a campo frente a `SLA_METLIFE_Refinanciamiento` · M-11 se parte en M-11.a/M-11.b y deja de ser compuerta de tiempo ajeno · sin campos ni tandas nuevas) · v1.9 (reconciliación de las tres divergencias entre §9.6 y la base real: **§9.6-R1** `C_Feriados` canónico · **§9.6-R2** `AT08_Alertas_SLA` se crea y su fila de inventario se actualiza · **§9.6-R3** `sla_revision_horas` con regla de override sobre la etapa 7 · paso F-5 nuevo · M-9/M-11/M-12/M-16/M-17/M-18 ampliados · E2E-12 con el calendario corregido) · v1.8: P8.6 · Control de SLA en IF-02: RF-08 agregado + RF-53 por etapa · tandas A-G · checkpoints M-9 a M-18 · reproceso diferido en FUT-EJ-08 · v1.7: logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9 · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
+*Última actualización: 10-ago-2026 · **v1.11 del plan** (Tanda A ejecutada contra la base: `C_SLA_Etapas` `tbl05zu5RLhH3u6pl` con sus 7 filas, 3 campos nuevos en `C_SLA`, 21 campos SLA en `TX_Solicitudes`, fila `SLA_DEFAULT_GLOBAL` `recAoOl35rFwEuM8u` · `sla_revision_horas` pasa a 1 decimal · **M-13 CERRADO**: `sla_semaforo_etapa` `fldB6gJ3clZUPgaZk` creado por MCP en A-3, queda viva sólo la verificación de los cuatro literales en el E2E de la Tanda C · `matriz_etapas` de la fila default revertido a vacío para preservar §9.6-R4 · reconciliación nueva **§9.6-R5**: el MCP sí crea fórmulas) · v1.10 (tres decisiones de negocio incorporadas: **Decisión 1** matriz por etapa de §5.2.4 como dato cerrado, se carga literal y se ratifica en **M-11.b** · **Decisión 2** baseline del agregado, fila global default en `C_SLA` con 3 / 2 / verde 0-1 y `sla_revision_horas` vacío, en **M-11.a**, que además borra la familia perdedora · **Decisión 3** reproceso §5.2.5 ratificado como diferido en FUT-EJ-08 · reconciliación nueva **§9.6-R4** con la traducción de nombres al schema real, la convención de comodín por link vacío y la precedencia campo a campo frente a `SLA_METLIFE_Refinanciamiento` · M-11 se parte en M-11.a/M-11.b y deja de ser compuerta de tiempo ajeno · sin campos ni tandas nuevas) · v1.9 (reconciliación de las tres divergencias entre §9.6 y la base real: **§9.6-R1** `C_Feriados` canónico · **§9.6-R2** `AT08_Alertas_SLA` se crea y su fila de inventario se actualiza · **§9.6-R3** `sla_revision_horas` con regla de override sobre la etapa 7 · paso F-5 nuevo · M-9/M-11/M-12/M-16/M-17/M-18 ampliados · E2E-12 con el calendario corregido) · v1.8: P8.6 · Control de SLA en IF-02: RF-08 agregado + RF-53 por etapa · tandas A-G · checkpoints M-9 a M-18 · reproceso diferido en FUT-EJ-08 · v1.7: logo corporativo del pie de SC05 por adjunto inline CID · checkpoints M-7/M-8 · caso E2E-9 · v1.6: realineamiento a spec v1.9.6 · path Dropbox con nivel Unidad · borrado real en el checklist P8 · archivo movido a `docs/_md/` · v1.5: P8.5 Correo de asignación al tasador · SC05, insertada entre P8 y P9 · v1.4: P0.5 Schema Airtable IF-02 insertada entre P0 y P1 · Base: Especificación v1.9.6*
