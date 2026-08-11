@@ -123,25 +123,78 @@ describe('mapRecord · slaEtapa (C-2)', () => {
     expect(s.slaEtapa?.etiqueta).toBe('Sin datos de etapa')
   })
 
-  it('normaliza a ISO tanto la fecha es-CL de cellFormat=string como el ISO crudo', () => {
-    // El mismo campo llega renderizado en es-CL por la bandeja (cellFormat
-    // string) y en ISO por el endpoint de cronología (JSON). Si el mapper no
-    // normalizara, `venceTs` significaría cosas distintas según por dónde entró
-    // (RO-05).
-    const desdeCL = mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '12-08-2026 13:00' })
-    const p = partesEnSantiago(new Date(desdeCL.slaEtapa!.venceTs!))
-    expect([p.anio, p.mes, p.dia, p.hora, p.minuto]).toEqual([2026, 8, 12, 13, 0])
+  /**
+   * ⚠ **Los strings de este bloque están copiados del wire, no del contrato.**
+   *
+   * La versión anterior de estos tests usaba `'12-08-2026 13:00'` como caso
+   * principal —el formato que el docblock documentaba— y daba verde mientras la
+   * pantalla mostraba "Sin datos de etapa" en toda la cartera: Airtable emite
+   * `"2026-08-11 14:00"` para estos campos, que ninguna rama reconocía. El
+   * fixture inventado es lo que dejó pasar el bug (RO-13 del lado del parseo).
+   *
+   * Respuesta real de `GET tblaHTyMHYfmy7Fg6` con `cellFormat=string`,
+   * `timeZone=America/Santiago`, `userLocale=es-CL`, el 11-ago-2026:
+   *
+   * ```json
+   * { "codigo_ext": "VP-2026-0048", "sla_etapa_actual": "2",
+   *   "sla_etapa_vence_ts": "2026-08-11 14:00",
+   *   "sla_etapa_alerta_ts": "2026-08-11 12:00",
+   *   "sla_e1_inicio_ts":    "2026-07-27 00:00",
+   *   "sla_semaforo_etapa":  "verde" }
+   * ```
+   */
+  it('parsea el formato REAL de cellFormat=string: "YYYY-MM-DD HH:MM"', () => {
+    const s = mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '2026-08-11 14:00' })
+    // 14:00 de Santiago en invierno (UTC−4) = 18:00Z. Si esto diera 14:00Z,
+    // el string se estaría leyendo en la zona del proceso.
+    expect(s.slaEtapa?.venceTs).toBe('2026-08-11T18:00:00.000Z')
+    // Lo que veía la Ejecutiva cuando esta rama no existía:
+    expect(s.slaEtapa?.etiqueta).not.toBe('Sin datos de etapa')
+  })
 
+  it('parsea la variante am/pm del mismo formato ("2026-07-27 12:00am")', () => {
+    // Es el que emite `fecha_solicitud`, verificado el mismo día. Medianoche de
+    // Santiago, no mediodía: el "12:00am" hay que convertirlo, no truncarlo.
+    const s = mapear({ sla_etapa_actual: '1', sla_etapa_vence_ts: '2026-07-27 12:00am' })
+    expect(s.slaEtapa?.venceTs).toBe('2026-07-27T04:00:00.000Z')
+  })
+
+  it('el ISO con T sigue siendo absoluto y no se convierte dos veces', () => {
+    // Mismo prefijo que el caso de arriba, semántica opuesta: con `T` y `Z` el
+    // texto ya es un instante. Pasarlo por `desdeSantiago` lo correría 4 horas.
     const desdeIso = mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '2026-08-12T17:00:00.000Z' })
     expect(desdeIso.slaEtapa?.venceTs).toBe('2026-08-12T17:00:00.000Z')
   })
 
-  it('interpreta la fecha es-CL en reloj de Santiago, no en el del proceso', () => {
-    // El proceso corre en UTC en Railway. Un `new Date("12-08-2026 13:00")`
-    // ingenuo daría las 13:00 UTC, o sea las 09:00 de Santiago: cuatro horas de
-    // corrimiento en todos los vencimientos.
-    const s = mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '12-08-2026 13:00' })
-    expect(s.slaEtapa?.venceTs).toBe('2026-08-12T17:00:00.000Z') // invierno = UTC-4
+  it('sigue aceptando el reloj es-CL D-M-YYYY de los campos con formato local', () => {
+    // Caso secundario, no principal: los campos viejos de `TX_Solicitudes` sí
+    // llegan así, y la rama tiene que seguir viva.
+    const desdeCL = mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '12-08-2026 13:00' })
+    const p = partesEnSantiago(new Date(desdeCL.slaEtapa!.venceTs!))
+    expect([p.anio, p.mes, p.dia, p.hora, p.minuto]).toEqual([2026, 8, 12, 13, 0])
+  })
+
+  it('interpreta los dos relojes de pared en Santiago, no en el del proceso', () => {
+    // El proceso corre en UTC en Railway. Un `new Date(…)` ingenuo daría las
+    // 13:00 UTC, o sea las 09:00 de Santiago: cuatro horas de corrimiento en
+    // todos los vencimientos, en las dos ramas.
+    expect(
+      mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '12-08-2026 13:00' }).slaEtapa?.venceTs
+    ).toBe('2026-08-12T17:00:00.000Z') // invierno = UTC-4
+    expect(
+      mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '2026-08-12 13:00' }).slaEtapa?.venceTs
+    ).toBe('2026-08-12T17:00:00.000Z')
+  })
+
+  it('no confunde el formato real con basura parcial', () => {
+    // Sin minutos no es una hora, y media fecha no es una fecha. El null es la
+    // degradación correcta; lo que no puede pasar es inventar un instante.
+    expect(
+      mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '2026-08-11 14' }).slaEtapa?.venceTs
+    ).toBeNull()
+    expect(
+      mapear({ sla_etapa_actual: '2', sla_etapa_vence_ts: '2026-13-45 14:00' }).slaEtapa?.venceTs
+    ).toBeNull()
   })
 
   it('devuelve null y no una fecha inventada cuando el texto no es parseable', () => {

@@ -11,6 +11,14 @@ const alertVariants = cva(
         default: "bg-card text-card-foreground",
         destructive:
           "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+        /**
+         * Ámbar **operacional** del semáforo (§4.4: `#D97706`), no el naranja de
+         * marca. Los dos no pueden colisionar: uno es identidad y el otro
+         * significa "esto se está atrasando". El hex se escribe igual que en
+         * `SLA_CLASSES.amber` para que la paleta siga siendo una sola.
+         */
+        warning:
+          "border-amber-200 bg-amber-50 text-[#d97706] *:data-[slot=alert-description]:text-[#d97706]/90 *:[svg]:text-current",
       },
     },
     defaultVariants: {

@@ -759,3 +759,99 @@ q 'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0,{sla_s
 Dos detalles de implementación que no son cosméticos. El estado usa **inicializador perezoso** (`useState(() => …)`), **no** un `useEffect`: con efecto, cerrar el panel a mano teniendo filtros puestos lo reabriría en el render siguiente, y el usuario perdería la pelea contra su propia UI. Y `vista`, `orden`, `page` y `solicitud` **no** entran en la lista: son estado de navegación, no filtros; incluirlos habría dejado el panel abierto siempre, que es lo mismo que no tener la función.
 
 **Prevención futura:** **cuando una constante se enumera por segunda vez en el mismo archivo, extraerla ahí, no la tercera.** La regla barata para detectarlo sin pensar: si agregar un elemento obliga a tocar dos sitios y olvidarse de uno no rompe nada, ya es una fuente duplicada aunque todavía no haya divergido (RO-05). Y el corolario de esta tanda: la lista quedó sin test porque vive en un componente `"use client"` y el repo no tiene runner de DOM — la única defensa es que sea una sola, así que la extracción no es higiene opcional sino lo que sustituye al test que no se puede escribir.
+
+---
+
+### 2026-08-11 — Tanda E: la cronología de etapas, el color que no existe para las etapas cerradas y un `&&` que no cortó nada
+
+**Contexto:** Tanda E de §9.6.2 completa — `HistorialItem` generalizado (E-1), sección "Cronología de etapas (SLA)" al inicio de la pestaña Historial alimentada por `GET /api/solicitudes/[id]/sla` (E-2), `Alert` ámbar/rojo sobre las pestañas con los dos literales de §9.6.1 (E-3) y estado vacío honesto (E-4). 278/278 tests, `pnpm build` y `tsc --noEmit` limpios.
+
+**Inconveniente 1 · el endpoint no expone tono por etapa, y la tentación era calcularlo.** La cronología muestra las siete etapas, pero `sla_semaforo_etapa` —la fórmula de Airtable— sólo habla de la **etapa vigente**: para una etapa ya cerrada no existe semáforo en la base. Comparar `minutosHabiles` contra `slaIdealHoras`/`slaMaxHoras` en el cliente para pintarlas era una línea de código y habría quedado bien en pantalla.
+
+**Causa raíz:** el endpoint devuelve los hechos (minutos consumidos, umbrales, entrada/salida) pero no el juicio, porque el juicio es de la fórmula. Derivarlo en el cliente crea un segundo semáforo que nadie sincroniza con el primero: divergiría de la píldora de la cabecera y de la bandeja el día que la fórmula cambie de umbral, sin que ningún test lo note.
+
+**Solución aplicada:** el color vive **sólo** en la etapa vigente y llega ya decidido en `Solicitud.slaEtapa.tono` (`components/console/solicitud-detail.tsx` · `CronologiaEtapasSection`), con un guard extra: si la fila y la cronología discrepan sobre cuál es la vigente, no se pinta ninguna. Las cerradas muestran el hecho crudo —`"3h 20m de 2h / 3h"`, vía `resumenTiempoEtapa`— que deja ver el desborde sin inventar un color. Mismo criterio en el `Alert`: sin `venceTs` no se emite, porque un literal de §9.6.1 con la fecha en blanco es peor que ningún literal.
+
+**Prevención futura:** **cuando una capa devuelve hechos y no juicios, es a propósito.** Antes de derivar un color/estado en el cliente, buscar quién lo emite hoy; si ya hay un emisor, el cliente lo consume o no lo muestra — nunca lo recalcula (RO-05).
+
+**Inconveniente 2 · `duracionCorta` estaba privada en `lib/solicitudes.ts`, que es servidor.** La cronología del detalle necesita el mismo formato de duración (`"4h 10m"`) que la píldora de la bandeja, y el detalle es `"use client"`: importar de `lib/solicitudes.ts` arrastra `lib/airtable-client.ts` al bundle. Es la **misma frontera** del Inconveniente 1 de la Tanda D, ahora en sentido inverso (antes era una lista de dos strings; ahora un formateador de nueve líneas).
+
+**Solución aplicada:** `duracionCorta` se mudó a `lib/sla-cronologia.ts` —módulo puro, sin `fetch`, sin Airtable, sin Clerk— y `lib/solicitudes.ts` la **importa** desde ahí en vez de conservar su copia. `lib/sla-cronologia.ts` es también donde viven los dos literales de alerta y los formatos de instante, todos en hora de Santiago explícita (`ZONA_VPROPERTY`), con 23 tests que comparan los literales por igualdad exacta: son canónicos y un refactor no puede reescribirlos en silencio.
+
+**Prevención futura:** la pregunta antes de escribir un helper de formato es "¿esto lo va a necesitar el cliente?". Si la respuesta es sí o quizás, nace en un módulo puro. Mover después cuesta un commit; duplicar cuesta un bug que nadie ve.
+
+**Inconveniente 3 · `components/ui/alert.tsx` no tenía variante ámbar.** Sólo `default` y `destructive`. El rojo de E-3 usa `destructive` tal cual, pero el ámbar de §9.6.1 no tenía dónde apoyarse, y la salida fácil —usar el naranja de marca `#F5A213`— está expresamente prohibida por §4.4: el ámbar operacional (`#D97706`) significa "esto se está atrasando" y el naranja es identidad; colisionarlos vacía de sentido al primero.
+
+**Solución aplicada:** variante `warning` agregada al `cva` existente, con el **mismo hex** que ya declara `SLA_CLASSES.amber` en `lib/console-data.ts`. Cero colores nuevos: la paleta sigue declarada en un solo sitio. Mismo criterio en la fila de la cronología, que reusa `SLA_CLASSES` por su `text-*` y deja que `tailwind-merge` descarte el fondo — el truco que ya usaba `EtapaPill`.
+
+**Inconveniente 4 · `pnpm lint && pnpm build` lanzó dos builds simultáneos y el segundo murió con "Another next build process is already running".** El comando era `pnpm lint 2>&1 | tail -20 && pnpm build …`.
+
+**Causa raíz:** dos cosas a la vez. (a) **`pnpm lint` no funciona en este repo**: `eslint` no está en `devDependencies` —es deuda diferida anotada el 22-jul-2026 en el «Estado de tareas» de este mismo archivo— y el script falla con `sh: 1: eslint: not found`. (b) El `&&` no lo detuvo porque el exit status de un *pipeline* es el del **último** comando: `tail` devuelve 0 aunque `eslint` reviente. Así que el build arrancó igual, y un segundo `pnpm build` lanzado creyendo que el primero nunca había corrido chocó con el lock de `.next/`.
+
+**Solución aplicada:** esperar al build en curso (`until ! ps aux | grep -q "[n]ext build"; do sleep 5; done`) y leer su salida — salió limpio. No se tocó el lock: borrarlo a mano con un build vivo corrompe `.next/`.
+
+**Prevención futura:** dos reglas. **No encadenar `pnpm lint` en este repo** —no existe—; la compuerta antes del commit es `pnpm build` + `pnpm typecheck` + `pnpm test`. Y **`cmd | tail && otro` no es un `&&` condicional**: si hace falta la condición, o se quita el pipe, o se usa `set -o pipefail`. Un comando que "no falló" porque su salida pasó por `tail` es exactamente la clase de verde que no significa nada.
+
+---
+
+### 2026-08-11 (b) — `cellFormat=string` no devuelve ISO con `T`, y el fixture inventado dejó pasar el bug dos tandas
+
+**Contexto:** verificación en pantalla de la Tanda E. Sergio bloqueó el commit con dos bugs: la píldora de etapa mostraba **"Sin datos de etapa" en toda la cartera** pese a tener el punto de color correcto, y el `Alert` de etapa desbordada no aparecía nunca. Reproducidos en `VP-2026-0048` (e2 verde) y `VP-2026-0056` (e2 rojo).
+
+**Inconveniente:** un solo bug con dos síntomas. `parseInstante` (`lib/solicitudes.ts`) devolvía `null` para **todos** los `dateTime` del prefijo `sla_`, de modo que `slaEtapa.venceTs` quedaba vacío; de ahí el fallback `'Sin datos de etapa'` de `etiquetaEtapa` y el corte en el guard "sin `venceTs` no hay alerta" de `mensajeAlertaEtapa`. El tono sobrevivía porque `sla_semaforo_etapa` es texto plano y no pasa por el parser: **color correcto con texto mentiroso**, que es la peor combinación posible porque parece que el dato llegó.
+
+**Causa raíz:** `cellFormat=string` con `timeZone=America/Santiago` y `userLocale=es-CL` devuelve, para un `dateTime` cuyo campo está configurado con formato de fecha **ISO**, la forma `"2026-08-11 14:00"` — orden ISO, **separador espacio, sin `T`, sin zona** — y no `"11-08-2026 14:00"` como suponía el docblock. La variante am/pm existe también: `fecha_solicitud` llega como `"2026-07-27 12:00am"`. `parseInstante` cubría tres formas (ISO con `T`, ISO sin hora, reloj es-CL `D/M/YYYY`) y ninguna matchea: la primera exige la `T` y la tercera empieza por día, así que `\d{1,2}` no puede comerse `2026`. Caía al `return null` final.
+
+Dos funciones del mismo archivo parsean fechas y **sólo una era tolerante**, que es la razón de que nadie lo notara antes: `parseDate` comprueba el prefijo `^\d{4}-\d{2}-\d{2}` y corta con `substring(0,10)`, así que los campos viejos funcionan hace meses con el mismo formato raro.
+
+**Y por qué los tests daban verde.** El fixture de la Tanda C era `'12-08-2026 13:00'`: **el formato del contrato documentado, no el del wire**. Se testeó lo que creíamos que Airtable manda. Es RO-13 —"filtrar por el formato real que emite la fuente"— aplicado al parseo, y el corolario es que un test escrito desde el docblock hereda el error del docblock en vez de detectarlo.
+
+**Solución aplicada:** rama nueva en `parseInstante`, entre la de ISO sin hora y la de reloj es-CL:
+
+```ts
+const isoConEspacio = v.match(
+  /^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::\d{2})?\s*(?:([ap])\.?\s?m\.?)?$/i
+)
+```
+
+resuelta con **`desdeSantiago`, nunca `new Date`**: el texto no trae zona y su hora es la de Santiago porque es la que se pidió en `timeZone`; leerlo con `new Date` lo interpretaría en la zona del proceso —UTC en Railway— y correría cada vencimiento cuatro horas. La rama de ISO con `T` se queda primera y sin tocar: **mismo prefijo, semántica opuesta** —con `T` y `Z` el texto ya es un instante absoluto y pasarlo por `desdeSantiago` lo correría igual—. La normalización am/pm y la validación de rango se extrajeron a `instanteDePartes`, compartida por las dos ramas de reloj de pared: duplicarla era garantizar que una se arreglara sin la otra.
+
+Los fixtures se rehicieron **copiados de la respuesta HTTP**, con el JSON real pegado en el docblock del bloque de tests, y `'12-08-2026 13:00'` bajó de caso principal a caso secundario —sigue siendo válido para los campos con formato local—. 286/286 tests.
+
+**Prevención futura:** tres reglas, en orden de utilidad.
+
+1. **El fixture de un parser se copia del wire, no del documento.** Antes de escribir el primer `expect`, hacer el `curl` con **los mismos parámetros que usa el código** (`cellFormat`, `timeZone`, `userLocale`) y pegar la respuesta literal en el test. Si el formato no se observó, no se testea: se supone.
+2. **Un `null` de parseo nunca debe ser silencioso en un campo que la UI muestra.** Acá el `null` degradaba a un literal legítimo ("Sin datos de etapa") que existe para un caso real, así que el fallo se disfrazó de dato. Cuando un fallback es también un estado válido de negocio, hay que poder distinguirlos — aunque sea con un `console.warn` en el mapper.
+3. **Cuando dos funciones del mismo módulo parsean lo mismo con rigores distintos, la laxa está tapando el bug de la estricta.** `parseDate` toleraba el formato desde siempre; esa asimetría era la pista y estaba a doce líneas de distancia.
+
+---
+
+### 2026-08-11 (c) — El watcher de `next dev` no ve `/mnt/c`: un ciclo de verificación entero persiguiendo un bug ya arreglado
+
+**Contexto:** verificación en pantalla del fix de `parseInstante` (entrada (b) de hoy). Los tests daban verde contra el JSON del wire y el pipeline real de `fetchSolicitudes` devolvía `etiqueta: "Vence en 3h 40m"`, pero el navegador seguía mostrando **"Sin datos de etapa"** en las 39 filas después de `Ctrl+Shift+R`. Sergio bloqueó el commit por segunda vez, con razón.
+
+**Inconveniente:** el código correcto en disco y el navegador mostrando el anterior, sin ningún error en ninguna parte.
+
+**Causa raíz:** el repo vive en `/mnt/c/Users/...`, un montaje **drvfs** de Windows dentro de WSL2, donde los eventos `inotify` no se propagan de forma fiable. El watcher de `next dev` nunca vio las escrituras, así que el servidor siguió sirviendo **el grafo de módulos compilado al arrancar**. Está medido en el log del propio servidor, y ésta es la evidencia que conviene saber reproducir:
+
+```
+09:31  ○ Compiling /consola ...        ← única compilación en toda su vida
+10:04  lib/solicitudes.ts modificado   ← el fix
+10:15  GET /consola?solicitud=... 200  ← refrescos servidos con el grafo de 09:31
+```
+
+No hay una segunda línea `Compiling /consola` después de las 10:04 y sin embargo respondió 200. **`Ctrl+Shift+R` no podía arreglarlo**: invalida la caché del navegador, y lo obsoleto estaba en el servidor. Los otros dos archivos de la tanda (09:44) quedaron igual de congelados, y por eso tampoco aparecía el `Alert`.
+
+**Solución aplicada:** **reinicio en frío** — `rm -rf .next && pnpm exec next dev`. Es lo único que garantiza que el servidor en curso sirva lo que hay en disco: un arranque compila desde el fuente, sin depender del watcher. No hay arreglo de raíz disponible; la mitigación es operativa y hay que aplicarla a mano tras cada edición de un módulo de servidor.
+
+**⚠ Lo que NO funciona, probado en esta misma sesión.** `watchOptions.pollIntervalMs: 1000` en `next.config.mjs` parece la respuesta obvia —la opción existe y está soportada en Next 16.2.6, verificada en `node_modules/next/dist/server/config-shared.d.ts:1239`— y **cuelga el servidor**. El sondeo recorre el árbol completo, `node_modules` incluido, sobre un filesystem de Windows: `curl` a `/` devolvió `HTTP 000` a los 25 s en dos intentos seguidos y el log acumuló 23 `watch error … NotFound`. Next no expone patrón de exclusión para esa opción, así que no hay forma de acotar el sondeo al código propio. Se revirtió en el acto y quedó un comentario de advertencia en `next.config.mjs` para que el próximo que sufra el HMR no lo reintente. **Cambiar un watcher que no ve cambios por un servidor que no atiende es peor negocio.**
+
+**Prevención futura:** cinco reglas.
+
+1. **Un test verde no prueba que el runtime corre ese código.** Prueban cosas distintas y esta sesión gastó un ciclo completo confundiéndolas. Cuando la pantalla contradice al test, el sospechoso número uno es el **artefacto servido**, no la lógica.
+2. **La evidencia está en el log del dev server, y es de lectura directa:** `grep -E "Compiling|Compiled"` contra su salida. Si el `mtime` del fuente es posterior a la última compilación de esa ruta, el navegador está viendo código viejo — sin ambigüedad y sin discusión.
+3. **Tras editar un módulo de servidor con el repo en `/mnt/c`, reiniciar `pnpm dev`.** No confiar en el HMR para `lib/**` ni para Server Components: en drvfs no es que sea lento, es que puede no enterarse nunca. Para componentes cliente suele funcionar, pero no vale la pena adivinar cuál es cuál.
+4. **Nunca correr `pnpm build` con `pnpm dev` arriba.** Comparten `.next`; el build lo reescribe bajo los pies del servidor vivo. Hoy pasó dos veces y enturbió el diagnóstico —parecía caché del navegador— aunque no fuera la causa raíz. Si hay que buildear, bajar el dev primero.
+5. **`pkill -f "next dev"` se mata a sí mismo.** El patrón matchea la propia línea de comando del `bash -c` que lo ejecuta, que contiene el literal `next dev`; el shell muere antes de llegar al `pnpm dev` siguiente y el comando "no hace nada" con un exit code raro (144). Usar un patrón que no se auto-matchee (`pkill -f "node.*next"`) o separar el kill del arranque en dos comandos.
+
+**Corolario de método, que es lo que de verdad hay que llevarse:** una mitigación de entorno se verifica **midiendo el servicio**, no leyendo la documentación de la opción. El polling estaba bien documentado, bien tipado y era la recomendación estándar para WSL2; bastó un `curl -w "%{http_code} %{time_total}"` para ver que dejaba el servidor inservible. Treinta segundos de medición contra un diagnóstico equivocado que el usuario habría descubierto refrescando.

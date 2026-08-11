@@ -3,6 +3,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // ⚠ NO agregar `watchOptions.pollIntervalMs` acá. Probado el 11-ago-2026 con
+  // 1000 ms para compensar que inotify no se propaga sobre /mnt/c (drvfs): el
+  // sondeo recorre el árbol completo —`node_modules` incluido— sobre un
+  // filesystem de Windows, el servidor se cuelga (HTTP 000 a los 25 s) y el log
+  // se llena de `watch error … NotFound`. Next no expone patrón de exclusión
+  // para esa opción, así que no hay forma de acotarlo. El HMR poco fiable se
+  // maneja reiniciando el dev tras editar módulos de servidor; ver la entrada
+  // 2026-08-11 (c) de docs/aprendizajes.md.
   images: {
     unoptimized: true,
   },

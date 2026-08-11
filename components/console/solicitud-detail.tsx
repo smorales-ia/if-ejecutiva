@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   ChevronDown,
+  CircleAlert,
   Download,
   Eye,
   FileText,
@@ -20,6 +21,7 @@ import {
   UserPlus,
 } from "lucide-react"
 
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -51,6 +53,7 @@ import {
   ESTADO_CORREO_CLASSES,
   ESTADO_CORREO_LABELS,
   HISTORIAL,
+  SLA_CLASSES,
   mockAntecedentesLegales,
   CANALES_ORIGEN,
   ESTADOS_CONSERVACION,
@@ -61,11 +64,29 @@ import {
   mockDecisionMotor,
   mockEmailAsignacion,
   mockVersionesInforme,
+  toneDeEtapa,
   type EstadoCorreo,
   type EstadoSolicitud,
   type EventoHistorial,
+  type SlaTone,
+  type SlaTonoEtapa,
   type Solicitud,
 } from "@/lib/console-data"
+import {
+  ETIQUETA_ESTADO,
+  MSG_ERROR_CRONOLOGIA,
+  MSG_SIN_CRONOLOGIA,
+  etiquetaResponsable,
+  mensajeAlertaEtapa,
+  rangoEtapa,
+  resumenTiempoEtapa,
+  tieneCronologia,
+  type EtapaCronologia,
+} from "@/lib/sla-cronologia"
+import {
+  useCronologiaSla,
+  type EstadoCronologia,
+} from "@/lib/use-cronologia-sla"
 
 const historialIcons = {
   check: CheckCircle2,
@@ -133,6 +154,12 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [docsOpen, setDocsOpen] = React.useState(false)
   const [emailOpen, setEmailOpen] = React.useState(false)
+
+  // Cronología de las siete etapas (RF-53 · E-2/E-3). Se lee de entrada, no al
+  // abrir "Historial": el `Alert` de etapa desbordada va sobre las pestañas y
+  // tiene que verse sin navegar. En la demo (`/`) el id no es un record id de
+  // Airtable, así que no se dispara la lectura.
+  const cronologiaSla = useCronologiaSla(s.id, ES_RECORD_ID.test(s.id))
 
   // Resetea el estado local cuando cambia la solicitud seleccionada.
   const prevId = React.useRef(s.id)
@@ -297,6 +324,30 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
 
   const historialCompleto = [...historialExtra, ...HISTORIAL]
 
+  // E-3 · Alerta de etapa desbordada.
+  //
+  // El tono es el que emitió `sla_semaforo_etapa` y llegó en `slaEtapa.tono`:
+  // no se recalcula comparando `venceTs` contra el reloj del navegador, porque
+  // eso sería un segundo semáforo que divergiría de la píldora y de la bandeja
+  // (RO-05). El número, el nombre y el vencimiento salen de la misma fila; el
+  // responsable es lo único que aporta la cronología, y por eso la alerta no
+  // espera a que esa lectura termine: si degrada, el literal rojo sale sin la
+  // frase del área en vez de no salir.
+  const etapaEnCurso =
+    s.slaEtapa && cronologiaSla.cronologia
+      ? (cronologiaSla.cronologia.etapas.find(
+          (e) => e.numero === s.slaEtapa?.numero,
+        ) ?? null)
+      : null
+  const alertaEtapa = s.slaEtapa
+    ? mensajeAlertaEtapa(s.slaEtapa.tono, {
+        numero: s.slaEtapa.numero,
+        nombre: s.slaEtapa.nombre,
+        responsable: etapaEnCurso?.responsable ?? null,
+        venceTs: s.slaEtapa.venceTs,
+      })
+    : null
+
   return (
     <div className="flex h-full w-full flex-col bg-background">
       {/* Detail header */}
@@ -352,6 +403,19 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
         </div>
       </div>
 
+      {/* E-3 · Etapa vigente en ámbar o rojo, sobre las pestañas. Los dos
+          literales son los de §9.6.1 y se emiten sin variación. */}
+      {alertaEtapa && (
+        <div className="border-b border-border bg-card px-6 pb-4">
+          <Alert variant={s.slaEtapa?.tono === "rojo" ? "destructive" : "warning"}>
+            <AlertTriangle />
+            <AlertDescription className="text-current">
+              {alertaEtapa}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
       {/* Tabs */}
       <Tabs
         value={tab}
@@ -393,7 +457,12 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
             )}
           </TabsContent>
           <TabsContent value="historial">
-            <HistorialTab eventos={historialCompleto} />
+            <HistorialTab
+              eventos={historialCompleto}
+              cronologia={cronologiaSla}
+              tonoEtapaVigente={s.slaEtapa?.tono}
+              numeroEtapaVigente={s.slaEtapa?.numero}
+            />
           </TabsContent>
           <TabsContent value="adjuntos">
             <AdjuntosTab solicitud={datos} />
@@ -1049,64 +1118,274 @@ function DatosTab({
   )
 }
 
-function HistorialTab({ eventos }: { eventos: EventoHistorial[] }) {
+function HistorialTab({
+  eventos,
+  cronologia,
+  tonoEtapaVigente,
+  numeroEtapaVigente,
+}: {
+  eventos: EventoHistorial[]
+  cronologia: EstadoCronologia
+  tonoEtapaVigente?: SlaTonoEtapa
+  numeroEtapaVigente?: EtapaCronologia["numero"]
+}) {
   return (
-    <ol className="flex flex-col">
-      {eventos.map((ev, idx) => (
-        <HistorialItem
-          key={ev.id}
-          evento={ev}
-          last={idx === eventos.length - 1}
-        />
-      ))}
-    </ol>
+    <div className="flex flex-col gap-6">
+      <CronologiaEtapasSection
+        estado={cronologia}
+        tonoEtapaVigente={tonoEtapaVigente}
+        numeroEtapaVigente={numeroEtapaVigente}
+      />
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Historial de eventos
+        </h2>
+        <ol className="flex flex-col">
+          {eventos.map((ev, idx) => {
+            const Icon = historialIcons[ev.icono]
+            return (
+              <HistorialItem
+                key={ev.id}
+                icono={Icon}
+                titulo={ev.titulo}
+                pie={ev.hace}
+                last={idx === eventos.length - 1}
+              >
+                {ev.detalle && <DetalleCorreo detalle={ev.detalle} />}
+              </HistorialItem>
+            )
+          })}
+        </ol>
+      </section>
+    </div>
   )
 }
 
-function HistorialItem({
-  evento: ev,
+/**
+ * E-2 · Cronología de las siete etapas de §5.2.4.
+ *
+ * No es un componente de timeline nuevo: reutiliza `HistorialItem` y su riel
+ * vertical, que es exactamente lo que el plan pide (§9.6.2 · E-1/E-2). La
+ * sección se pinta **completa o no se pinta**: el endpoint devuelve siempre las
+ * siete etapas, así que una lista corta significaría "las otras no existen",
+ * cosa que nadie afirmó.
+ *
+ * Sin datos de etapa se muestran las siete como pendientes con el aviso de E-4
+ * arriba. Nunca un verde por defecto.
+ */
+function CronologiaEtapasSection({
+  estado,
+  tonoEtapaVigente,
+  numeroEtapaVigente,
+}: {
+  estado: EstadoCronologia
+  tonoEtapaVigente?: SlaTonoEtapa
+  numeroEtapaVigente?: EtapaCronologia["numero"]
+}) {
+  const { cronologia, cargando, error } = estado
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        Cronología de etapas (SLA)
+      </h2>
+
+      {cargando && (
+        <p className="text-sm text-muted-foreground">Cargando la cronología…</p>
+      )}
+
+      {/* Un fallo de lectura no puede parecerse a "esta solicitud no tiene
+          etapas": son estados visualmente idénticos y operativamente opuestos. */}
+      {!cargando && error && (
+        <p className="text-sm text-muted-foreground">{MSG_ERROR_CRONOLOGIA}</p>
+      )}
+
+      {!cargando && !error && !cronologia && (
+        <p className="text-sm text-muted-foreground">{MSG_SIN_CRONOLOGIA}</p>
+      )}
+
+      {!cargando && !error && cronologia && (
+        <>
+          {!tieneCronologia(cronologia.etapas) && (
+            <p className="text-sm text-muted-foreground">{MSG_SIN_CRONOLOGIA}</p>
+          )}
+          <ol className="flex flex-col">
+            {cronologia.etapas.map((etapa, idx) => (
+              <EtapaItem
+                key={etapa.etapaKey || etapa.numero}
+                etapa={etapa}
+                // El color sólo se aplica a la etapa que la fórmula está
+                // evaluando de verdad. Si la fila y la cronología discrepan
+                // sobre cuál es la vigente, no se pinta ninguna: un tono puesto
+                // en la etapa equivocada es peor que ningún tono.
+                tono={
+                  etapa.estado === "en_curso" && etapa.numero === numeroEtapaVigente
+                    ? tonoEtapaVigente
+                    : undefined
+                }
+                last={idx === cronologia.etapas.length - 1}
+              />
+            ))}
+          </ol>
+        </>
+      )}
+    </section>
+  )
+}
+
+/** Una etapa como fila del riel. Traduce el contrato del endpoint a props. */
+function EtapaItem({
+  etapa,
+  tono,
   last,
 }: {
-  evento: EventoHistorial
+  etapa: EtapaCronologia
+  tono?: SlaTonoEtapa
   last: boolean
 }) {
-  const [abierto, setAbierto] = React.useState(false)
-  const Icon = historialIcons[ev.icono]
+  const pendiente = etapa.estado === "pendiente"
+  const tiempo = resumenTiempoEtapa(etapa)
+  const tone = tono ? toneDeEtapa(tono) : null
+
+  return (
+    <HistorialItem
+      icono={
+        etapa.estado === "completada"
+          ? CheckCircle2
+          : etapa.estado === "en_curso"
+            ? CircleAlert
+            : undefined
+      }
+      tono={tone}
+      apagado={pendiente}
+      titulo={`${etapa.numero} · ${etapa.nombre}`}
+      subtitulo={etiquetaResponsable(etapa.responsable) ?? undefined}
+      pie={rangoEtapa(etapa) ?? undefined}
+      aside={
+        <span
+          className={cn(
+            "shrink-0 text-xs tabular-nums",
+            // Mismo truco que `EtapaPill`: se reusa `SLA_CLASSES` por su
+            // `text-*` y `tailwind-merge` descarta el fondo. Así el semáforo
+            // sigue declarado en un solo sitio (§4.4 · RO-05).
+            tone
+              ? cn(SLA_CLASSES[tone], "bg-transparent")
+              : "text-muted-foreground",
+          )}
+        >
+          {tiempo ?? ETIQUETA_ESTADO[etapa.estado]}
+        </span>
+      }
+      last={last}
+    />
+  )
+}
+
+/**
+ * Riel + fila del historial. Generalizado en E-1 para servir a las dos
+ * cronologías —los eventos de `A_Eventos` y las siete etapas de §5.2.4— sin
+ * cambiar en nada lo que ya mostraba: `titulo` + `pie` + detalle desplegable era
+ * su forma anterior y sigue siendo la que usa `HistorialTab`.
+ *
+ * Lo que se agregó es `subtitulo` (el responsable de §5.2.3), `aside` (el
+ * tiempo consumido o el estado, a la derecha), `tono` (el color del punto, que
+ * llega ya decidido por la fórmula) y `apagado` (las etapas que no empezaron:
+ * círculo hueco y texto atenuado, para que "pendiente" no se lea como "listo").
+ *
+ * Es un componente sin estado: el desplegable de "Ver correo" se mudó a
+ * `DetalleCorreo` y entra como `children`. Así la misma fila sirve para algo
+ * que no tiene nada que desplegar.
+ */
+function HistorialItem({
+  icono: Icon,
+  titulo,
+  subtitulo,
+  pie,
+  tono,
+  apagado = false,
+  aside,
+  last,
+  children,
+}: {
+  /** Sin icono se dibuja el círculo hueco de las etapas pendientes. */
+  icono?: React.ComponentType<{ className?: string }>
+  titulo: string
+  /** Segunda línea del encabezado: el responsable del tramo (§5.2.3). */
+  subtitulo?: string
+  /** Línea de tiempo: "hace 2 horas" o el rango entrada → salida. */
+  pie?: string
+  /** Semáforo por etapa, ya resuelto. `null`/ausente = punto neutro. */
+  tono?: SlaTone | null
+  apagado?: boolean
+  /** Contenido alineado a la derecha del título. */
+  aside?: React.ReactNode
+  last: boolean
+  children?: React.ReactNode
+}) {
   return (
     <li className="flex gap-3">
       <div className="flex flex-col items-center">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground">
-          <Icon className="size-4" />
+        <span
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-full border",
+            tono
+              ? SLA_CLASSES[tono]
+              : "border-border bg-card text-muted-foreground",
+            apagado && "border-dashed bg-transparent",
+          )}
+        >
+          {Icon && <Icon className="size-4" />}
         </span>
         {!last && <span className="w-px flex-1 bg-border" />}
       </div>
-      <div className="flex flex-col gap-0.5 pb-6">
-        <p className="text-sm leading-snug text-foreground">{ev.titulo}</p>
-        <span className="text-xs text-muted-foreground">{ev.hace}</span>
-        {ev.detalle && (
-          <>
-            <button
-              type="button"
-              onClick={() => setAbierto((v) => !v)}
-              className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-brand hover:underline"
-            >
-              <ChevronDown
-                className={cn(
-                  "size-3.5 transition-transform",
-                  abierto && "rotate-180",
-                )}
-              />
-              {abierto ? "Ocultar correo" : "Ver correo"}
-            </button>
-            {abierto && (
-              <pre className="mt-2 max-w-xl overflow-auto rounded-lg border border-border bg-muted/40 p-3 text-xs leading-relaxed whitespace-pre-wrap text-foreground">
-                {ev.detalle}
-              </pre>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 pb-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+          <p
+            className={cn(
+              "text-sm leading-snug",
+              apagado ? "text-muted-foreground" : "text-foreground",
             )}
-          </>
+          >
+            {titulo}
+          </p>
+          {aside}
+        </div>
+        {subtitulo && (
+          <span className="text-xs text-muted-foreground">{subtitulo}</span>
         )}
+        {pie && (
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {pie}
+          </span>
+        )}
+        {children}
       </div>
     </li>
+  )
+}
+
+/** Desplegable del cuerpo del correo. Era parte de `HistorialItem` (E-1). */
+function DetalleCorreo({ detalle }: { detalle: string }) {
+  const [abierto, setAbierto] = React.useState(false)
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        className="mt-1 inline-flex w-fit items-center gap-1 text-xs font-medium text-brand hover:underline"
+      >
+        <ChevronDown
+          className={cn("size-3.5 transition-transform", abierto && "rotate-180")}
+        />
+        {abierto ? "Ocultar correo" : "Ver correo"}
+      </button>
+      {abierto && (
+        <pre className="mt-2 max-w-xl overflow-auto rounded-lg border border-border bg-muted/40 p-3 text-xs leading-relaxed whitespace-pre-wrap text-foreground">
+          {detalle}
+        </pre>
+      )}
+    </>
   )
 }
 

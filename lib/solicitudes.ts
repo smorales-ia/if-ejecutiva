@@ -11,6 +11,10 @@ import {
   type SlaTonoEtapa,
   type Solicitud,
 } from '@/lib/console-data'
+// `duracionCorta` es del módulo de cronología (Tanda E) y se importa en vez de
+// redeclararse: la píldora de la bandeja y las filas del detalle tienen que
+// escribir la misma duración con el mismo formato (RO-05).
+import { duracionCorta } from '@/lib/sla-cronologia'
 import { desdeSantiago } from '@/lib/sla-habil'
 // `lib/sla-etapas.ts` importa `TX_SOLICITUDES` de este módulo, así que esto
 // cierra un ciclo de imports. Es seguro y deliberado: ninguno de los dos lados
@@ -476,15 +480,36 @@ function txt(str: string | undefined): string | undefined {
  *
  * Hace falta porque esta capa lee con `cellFormat: 'string'` —necesario para
  * que los campos Link lleguen como texto legible—, y con ese formato un
- * `dateTime` **no llega en ISO**: llega renderizado con `userLocale: 'es-CL'` y
- * `timeZone: 'America/Santiago'`, o sea `"12-08-2026 13:00"` / `"12/8/2026
- * 13:00"`. El endpoint de cronología, en cambio, lee en JSON y recibe ISO. Sin
- * normalizar, el mismo campo tendría dos formas según por dónde entró y
- * `slaEtapa.venceTs` significaría cosas distintas en cada ruta (RO-05).
+ * `dateTime` **no llega en ISO con `T`**. El endpoint de cronología, en cambio,
+ * lee en JSON y recibe ISO de verdad. Sin normalizar, el mismo campo tendría dos
+ * formas según por dónde entró y `slaEtapa.venceTs` significaría cosas distintas
+ * en cada ruta (RO-05).
  *
- * La rama de reloj de pared se resuelve con `desdeSantiago`, nunca sumando un
- * offset fijo: Chile alterna −03/−04 dos veces al año y un `-3` hardcodeado
- * corre el vencimiento una hora durante cuatro meses.
+ * ## Los tres formatos, y cuál manda Airtable de verdad
+ *
+ * Verificado contra `tblaHTyMHYfmy7Fg6` el 11-ago-2026, con los mismos
+ * parámetros que usa `fetchSolicitudes`:
+ *
+ * | Origen | Ejemplo real | Semántica |
+ * |---|---|---|
+ * | JSON (`GET …/sla`) | `"2026-08-11T18:00:00.000Z"` | instante absoluto |
+ * | `cellFormat: 'string'`, campo con formato ISO | `"2026-08-11 14:00"` · `"2026-07-27 12:00am"` | **reloj de pared de Santiago** |
+ * | `cellFormat: 'string'`, campo con formato local | `"12-08-2026 13:00"` | reloj de pared de Santiago |
+ *
+ * El segundo es el que emiten los 21 campos `sla_` creados en la Tanda A, y es
+ * el que esta función **no** reconocía: la rama ISO exigía la `T` y la de reloj
+ * de pared empieza por día, no por año. El resultado era `null` silencioso —
+ * "Sin datos de etapa" sobre solicitudes que sí tenían plazo—. `parseDate`, dos
+ * funciones más arriba, nunca lo sufrió porque comprueba el prefijo
+ * `^\d{4}-\d{2}-\d{2}` sin exigir separador.
+ *
+ * **El mismo prefijo, dos semánticas opuestas.** Con `T` y `Z` el texto es
+ * absoluto y se lee tal cual; con espacio no trae zona, y la hora es la de
+ * Santiago porque es la que se pidió en `timeZone`. Por eso las dos ramas de
+ * reloj de pared pasan por `desdeSantiago` y nunca por `new Date`, que las
+ * leería en la zona del proceso —UTC en Railway— y correría cada vencimiento
+ * cuatro horas. Un offset fijo tampoco sirve: Chile alterna −03/−04 dos veces
+ * al año.
  *
  * @returns El instante, o `null` si el texto no es una fecha reconocible. Nunca
  *   una fecha inventada: sin dato, el llamador degrada a "sin plazo".
@@ -493,7 +518,7 @@ function parseInstante(valor: string | undefined): Date | null {
   const v = (valor ?? '').trim()
   if (v === '') return null
 
-  // ISO con hora — lo que devuelve el formato JSON de Airtable.
+  // ISO con `T` — formato JSON de Airtable. Absoluto: se lee tal cual.
   if (/^\d{4}-\d{2}-\d{2}T/.test(v)) {
     const d = new Date(v)
     return Number.isNaN(d.getTime()) ? null : d
@@ -502,6 +527,22 @@ function parseInstante(valor: string | undefined): Date | null {
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
     const [a, m, d] = v.split('-').map(Number)
     return desdeSantiago(a, m, d, 0, 0)
+  }
+
+  // Reloj de pared en orden ISO: "2026-08-11 14:00" · "2026-07-27 12:00am".
+  // Es el formato real de los campos `sla_` (ver la tabla del docblock).
+  const isoConEspacio = v.match(
+    /^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::\d{2})?\s*(?:([ap])\.?\s?m\.?)?$/i
+  )
+  if (isoConEspacio) {
+    return instanteDePartes(
+      Number(isoConEspacio[3]),
+      Number(isoConEspacio[2]),
+      Number(isoConEspacio[1]),
+      Number(isoConEspacio[4]),
+      Number(isoConEspacio[5]),
+      isoConEspacio[6]
+    )
   }
 
   // Reloj de pared es-CL: D/M/YYYY o D-M-YYYY, con hora opcional y am/pm opcional.
@@ -514,28 +555,37 @@ function parseInstante(valor: string | undefined): Date | null {
   const partes = m && m[6] ? m : mSinMeridiano
   if (!partes) return null
 
-  const dia = Number(partes[1])
-  const mes = Number(partes[2])
-  const anio = Number(partes[3])
-  let hora = partes[4] === undefined ? 0 : Number(partes[4])
-  const minuto = partes[5] === undefined ? 0 : Number(partes[5])
-  const meridiano = partes[6]?.toLowerCase()
+  return instanteDePartes(
+    Number(partes[1]),
+    Number(partes[2]),
+    Number(partes[3]),
+    partes[4] === undefined ? 0 : Number(partes[4]),
+    partes[5] === undefined ? 0 : Number(partes[5]),
+    partes[6]
+  )
+}
+
+/**
+ * Componentes de reloj de pared → instante, con la normalización am/pm y la
+ * validación de rango en un solo sitio. Las dos ramas de reloj de pared de
+ * `parseInstante` la comparten: duplicar la conversión de meridiano era
+ * garantizar que una de las dos se arreglara sin la otra.
+ */
+function instanteDePartes(
+  dia: number,
+  mes: number,
+  anio: number,
+  horaBruta: number,
+  minuto: number,
+  meridianoBruto?: string
+): Date | null {
+  const meridiano = meridianoBruto?.toLowerCase()
+  let hora = horaBruta
   if (meridiano === 'p' && hora < 12) hora += 12
   if (meridiano === 'a' && hora === 12) hora = 0
   if (mes < 1 || mes > 12 || dia < 1 || dia > 31 || hora > 23 || minuto > 59) return null
 
   return desdeSantiago(anio, mes, dia, hora, minuto)
-}
-
-/** `"1d 3h"` · `"4h 10m"` · `"12m"`. Dos unidades como máximo: más es ruido. */
-function duracionCorta(minutosTotales: number): string {
-  const minutos = Math.max(0, Math.round(minutosTotales))
-  const dias = Math.floor(minutos / 1440)
-  const horas = Math.floor((minutos % 1440) / 60)
-  const mins = minutos % 60
-  if (dias > 0) return horas > 0 ? `${dias}d ${horas}h` : `${dias}d`
-  if (horas > 0) return mins > 0 ? `${horas}h ${mins}m` : `${horas}h`
-  return `${mins}m`
 }
 
 /**
