@@ -2,9 +2,11 @@ import { listRecords, AirtableError } from '@/lib/airtable-client'
 import {
   ESTADO_LABELS,
   PRIORIDAD,
+  SLA_ETAPA_FILTROS,
   regionDeComuna,
   type EstadoSolicitud,
   type Prioridad,
+  type SlaEtapaFiltro,
   type SlaEtapaSolicitud,
   type SlaTonoEtapa,
   type Solicitud,
@@ -60,13 +62,15 @@ const SEMAFORO_POR_SLA: Record<SlaFiltro, string> = {
 /**
  * Valores admitidos por `?sla_etapa=` (RF-53 · §9.6.2 C-3).
  *
- * Lista cerrada de dos, no de cuatro: el filtro existe para **aislar lo que hay
- * que mirar hoy**, y ni `verde` ni `sin_dato` son eso. Que sea una lista cerrada
- * es además lo que hace segura la interpolación en la fórmula (RF-05 · D-07).
+ * La lista canónica se declara en `lib/console-data.ts` y se reexporta acá con
+ * el nombre que este módulo ya venía exponiendo. El motivo del traslado es el
+ * selector de la bandeja (D-3): es un componente cliente, y si importara el
+ * valor desde este archivo se llevaría el cliente de Airtable al bundle del
+ * navegador. Una lista, dos consumidores (RO-05).
  */
-export type SlaEtapaFiltro = 'ambar' | 'rojo'
+export type { SlaEtapaFiltro }
 
-export const SLA_ETAPA_FILTROS_VALIDOS: SlaEtapaFiltro[] = ['ambar', 'rojo']
+export const SLA_ETAPA_FILTROS_VALIDOS: SlaEtapaFiltro[] = SLA_ETAPA_FILTROS
 
 // D-07: filtros de FiltrosBar persistidos como URL params (RF-05 Subtarea C · P5).
 export interface SolicitudesFiltros {

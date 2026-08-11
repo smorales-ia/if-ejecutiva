@@ -348,6 +348,33 @@ export function toneDeEtapa(tono: SlaTonoEtapa): SlaTone | null {
 }
 
 /**
+ * Valores admitidos por `?sla_etapa=` (RF-53 · §9.6.2 C-3 · D-3).
+ *
+ * Lista cerrada de dos, no de cuatro: el filtro existe para **aislar lo que hay
+ * que mirar hoy**, y ni `verde` ni `sin_dato` son eso. Que sea cerrada es además
+ * lo que hace segura su interpolación en la fórmula de Airtable (RF-05 · D-07).
+ *
+ * Vive en este archivo —y no en `lib/solicitudes.ts`, que es quien la usa para
+ * construir la fórmula— porque el selector de la bandeja es un componente
+ * cliente: importar el valor desde `lib/solicitudes.ts` arrastraría el cliente
+ * de Airtable al bundle del navegador. Declarar la lista dos veces era la otra
+ * salida, y es la que RO-05 prohíbe.
+ */
+export type SlaEtapaFiltro = "ambar" | "rojo"
+
+export const SLA_ETAPA_FILTROS: SlaEtapaFiltro[] = ["ambar", "rojo"]
+
+/**
+ * Rótulos del selector. Nombran la **condición**, no el color: un filtro que
+ * dice "Ámbar" obliga a saberse la convención, y uno que dice "En alerta" se
+ * entiende solo. El color ya está en la píldora.
+ */
+export const SLA_ETAPA_FILTRO_LABELS: Record<SlaEtapaFiltro, string> = {
+  ambar: "En alerta",
+  rojo: "Vencida",
+}
+
+/**
  * Reloj por etapa de una solicitud (RF-53 · §5.2.4), tal como lo expone el
  * read-layer server-side. Opcional en `Solicitud` para no romper los 8 mocks de
  * este archivo ni el formulario de alta, que no lo conocen.

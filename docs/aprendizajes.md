@@ -688,6 +688,50 @@ La señal de alarma barata: si un criterio falla sobre código que se acaba de r
 
 Resultado: 39 filas escritas · 0 con `_ts` · **9 con fallback** · 30 con e1 abierta · 30 en etapa 1 y 9 en etapa 2. **Excepción que queda registrada:** el backfill A-5 aceptó `fecha_asignacion` (date deprecado) como fuente de `sla_e1_fin_ts` para las 9 filas históricas anteriores a la creación de `fecha_asignacion_ts`; el deprecado de §21.4-d queda para retirar en migración posterior, **no aquí** — y esa migración tiene ahora un consumidor más del que hacerse cargo.
 
+**Efecto sobre la verificación V3, que la entrada (c) había dejado abierta.** Aquella decía que `verde`/`ambar`/`rojo` quedaban sin observar hasta el E2E de la Tanda G, con `sin_dato` como único literal confirmado. Tras el backfill, el conjunto observado sobre las mismas 39 filas es **`['rojo', 'verde']`** — 38 y 1—, así que van **tres de los cuatro**. El `verde` es `VP-2026-0048` y apareció **solo**, por efecto del ancla a 17:00 sobre una asignación fechada hoy: su e2 vence mañana. Falta `ambar`, y no falta por defecto de la fórmula sino por aritmética —exige `NOW()` dentro de una ventana de 1 h en e1 o 2 h en e2, sobre una cartera con todos los vencimientos en el pasado salvo uno—. La lección de método corrige a la (c) por el lado optimista: **un contrato de fórmula no se cierra observando los casos que la base regala, pero tampoco hace falta esperar al E2E para cobrar los que sí aparecen**; se reporta el conjunto observado y se nombra el que falta con su razón, que es distinto de dejar los tres en "pendiente".
+
 **Hallazgo de entorno · cómo correr TypeScript del repo fuera de Next, con Node 20 y sin agregar dependencias.** No hay `tsx` ni `ts-node`, y Node 20.20 no hace type-stripping. Lo que funcionó, sin tocar `package.json` ni el lockfile (RO-07): compilar con el `tsc` ya instalado usando un `tsconfig` aparte —fuera del repo, en el scratchpad— con `module: commonjs` y `outDir` propio, y ejecutar con `node --env-file=.env.local`. **La trampa:** `tsc` **no reescribe** `compilerOptions.paths`, así que el `.js` emitido conserva `require("@/lib/…")` y revienta en runtime. Se resuelve con un hook de 10 líneas cargado con `node -r` que parchea `Module._resolveFilename` para el prefijo `@/`. Ni `vitest` ni `pnpm dlx` hicieron falta: correr un backfill de producción como si fuera un test viola la regla de `CLAUDE.md` de no escribir a Airtable desde los tests, y no hay por qué acercarse a esa frontera.
 
+La receta completa, para no re-derivarla la próxima vez. El `tsconfig` lleva `baseUrl`/`rootDir` apuntando a la **raíz del repo** en absoluto, `paths: {"@/*": ["./*"]}`, `outDir` en el scratchpad y `include` con el script; el hook es:
+
+```js
+// alias.cjs — tsc no reescribe `paths`; esto lo resuelve en runtime.
+const path = require('node:path'); const Module = require('node:module')
+const RAIZ = path.join(__dirname, 'a5-out')            // el outDir
+const original = Module._resolveFilename
+Module._resolveFilename = function (request, ...resto) {
+  if (request.startsWith('@/')) return original.call(this, path.join(RAIZ, request.slice(2)), ...resto)
+  return original.call(this, request, ...resto)
+}
+```
+
+```bash
+node_modules/.bin/tsc -p <scratchpad>/tsconfig.a5.json
+node --env-file=.env.local -r <scratchpad>/alias.cjs <scratchpad>/a5-out/scripts/backfill-sla-a5.js
+```
+
+Dos detalles que costaron un intento cada uno: `tsc` emite `error TS2688: Cannot find type definition file for 'node'` porque el `tsconfig` vive fuera del repo y `typeRoots` deja de resolver — **es inocuo, el emit igual sale** y no vale la pena pelearlo para un script de una vez; y `set -a; . ./.env.local` para exportar el token a `curl` falla en la línea 23 del archivo (`completar: command not found`), porque hay un valor placeholder sin comillas — tampoco bloquea, el resto de las variables carga.
+
 **Prevención futura:** antes de ejecutar cualquier paso de datos que un plan describa por nombre de campo, **contar las filas que efectivamente cumplen la condición**, no asumir que el campo canónico es el que tiene el dato. Un `SELECT` de dos columnas —la condición del plan y el estado que debería acompañarla— cuesta un minuto y es lo que distinguió "9 filas asignadas" de "1 fila con el timestamp". La versión general: **cuando existe un par campo-nuevo / campo-deprecado, todo backfill sobre datos históricos debe mirar los dos y declarar cuál usó**, porque la migración que creó el par casi nunca movió los datos viejos. Y el corolario de proceso: una desviación de la letra del plan sobre datos de producción se lleva a decisión explícita del dueño **antes** de escribir, con los dos resultados contados sobre la tabla real, no con la desviación ya aplicada.
+
+---
+
+### 2026-08-10 (e) — Tanda D: la lista compartida entre servidor y cliente, y la vista que quedó saturada
+
+**Contexto:** Tanda D de §9.6.2 — píldora de etapa en `SLABadge` (D-1), su render en `FilaSolicitud` (D-2) y el selector `?sla_etapa=` con el contador de la unión (D-3).
+
+**Inconveniente 1 · una lista cerrada que dos capas necesitan, y sólo una puede importarla.** El selector de la bandeja tenía que ofrecer los valores válidos de `?sla_etapa=`, que la Tanda C había declarado en `lib/solicitudes.ts` (`SLA_ETAPA_FILTROS_VALIDOS`). Pero `solicitud-list.tsx` es `"use client"`, y `lib/solicitudes.ts` importa `lib/airtable-client.ts`: **importar el valor —no el tipo— habría arrastrado el cliente de Airtable al bundle del navegador**. Hasta ahora el componente importaba de ese módulo sólo `type Vista`, que TypeScript borra en compilación, así que el problema nunca se había manifestado.
+
+**Causa raíz:** la frontera server/client de Next no la marca el archivo que declara el dato sino el que lo importa, y un `import type` y un `import` se ven casi iguales en el diff. Una lista de dos strings no parece código de servidor, pero vive en un módulo que sí lo es.
+
+**Solución aplicada:** la lista canónica (`SLA_ETAPA_FILTROS`) y sus rótulos (`SLA_ETAPA_FILTRO_LABELS`) se trasladaron a `lib/console-data.ts`, que no tiene dependencias de servidor y que el componente ya importaba; `lib/solicitudes.ts` la importa desde ahí y **conserva su export `SLA_ETAPA_FILTROS_VALIDOS`** para no romper a sus consumidores. La alternativa —declararla dos veces— es la que RO-05 prohíbe, así que quedó un test que compara las dos referencias (`toEqual`) y otro que exige rótulo para cada valor y ninguno de más. Verificado además de forma empírica, que es lo que cierra el punto: tras `next build`, `grep -rl 'api\.airtable\.com' .next/static/` y `grep -rl 'AIRTABLE_TOKEN' .next/static/` devuelven **0 archivos**.
+
+**Inconveniente 2 · la vista "SLA en riesgo" pasó de 7 a 38 de 39 filas.** Medido contra la base real con las tres fórmulas por separado: agregado (`semaforo_sla`) **7**, etapa (`sla_semaforo_etapa`) **38**, unión **38** — o sea las 7 del agregado son subconjunto de las 38, y la vista dejó de discriminar.
+
+**Causa raíz:** no es un bug de la fórmula ni del filtro. El backfill A-5 ancló `sla_e1_inicio_ts` a `fecha_solicitud` sobre una cartera de mayo a julio, y la etapa 1 tiene un SLA máximo de **3 horas hábiles**. Aplicar retroactivamente un reloj en horas a solicitudes de hace dos meses las deja todas vencidas, y eso es aritméticamente cierto: son 30 solicitudes que llevan semanas en "Ingreso". El dato no miente; lo que deja de servir es la vista, porque una pestaña que marca el 97 % de la cartera no responde "qué tengo que mirar hoy".
+
+**Solución aplicada:** ninguna en código — se reporta y la decisión es de negocio (confirmado por Sergio el 10-ago-2026: **no se toca el filtro**). **No se tocó el filtro para disimularlo**, que era la salida tentadora y la equivocada: bajar el umbral o excluir lo antiguo desde la UI sería inventar una regla de negocio en la capa que tiene prohibido decidir.
+
+**Se autocorrige con datos vivos post-M-14, pero sólo por un lado y conviene ser exacto.** Una vez reimportados SC01 y SC-Asignar, toda solicitud nueva arranca su reloj en el momento real del hito (§5.2.2) y entra a la bandeja en verde, así que el flujo entrante deja de contribuir al rojo. Lo que **no** se corrige solo son las **30 filas históricas que quedaron en etapa 1**: nadie cierra su e1 salvo una asignación, de modo que seguirán en rojo mientras sigan en `creada`. La proporción mejora conforme la cartera rote —no porque el dato viejo cambie, sino porque deja de ser mayoría—. Si hiciera falta antes, la palanca correcta no es el filtro sino los datos: cerrar o cancelar lo que ya no está vivo. Medirlo de nuevo con la consulta de tres líneas de abajo es lo que dirá cuándo la pestaña volvió a ser útil.
+
+**Prevención futura:** **un backfill retroactivo de un reloj operacional satura toda vista construida sobre ese reloj, y hay que medirlo en el mismo lote en que se backfillea, no descubrirlo en pantalla.** La comprobación es una consulta de tres líneas —contar la vista antes, contar el término nuevo, contar la unión— y distingue "el filtro funciona" de "el filtro funciona y sigue siendo útil". Son dos preguntas distintas y sólo la primera la contesta un test.

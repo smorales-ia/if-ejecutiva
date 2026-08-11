@@ -22,6 +22,8 @@ export default async function ConsolaPage({
     cliente?: string
     estado?: string
     sla?: string
+    /** Semáforo por etapa (RF-53). Distinto de `sla`, que es el agregado. */
+    sla_etapa?: string
     desde?: string
     hasta?: string
     tasador?: string
@@ -43,6 +45,7 @@ export default async function ConsolaPage({
     cliente: sp.cliente,
     estado: sp.estado,
     sla: sp.sla,
+    sla_etapa: sp.sla_etapa,
     desde: sp.desde,
     hasta: sp.hasta,
     tasador: sp.tasador,

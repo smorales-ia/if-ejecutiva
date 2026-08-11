@@ -308,6 +308,10 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
           <StateBadge estado={estado} />
           <SLABadge dias={s.slaDias} total={s.slaTotal} />
           <PriorityChip prioridad={s.prioridad} />
+          {/* D-4: la etapa acompaña al agregado, con la misma condición de
+              render que en la bandeja — sin `slaEtapa` no se pinta nada, y
+              `SLABadge` además descarta el tono `sin_dato`. */}
+          {s.slaEtapa && <SLABadge etapa={s.slaEtapa} />}
         </div>
         <p className="text-xs text-muted-foreground">
           Modificado {s.modificado} por {s.modificadoPor}

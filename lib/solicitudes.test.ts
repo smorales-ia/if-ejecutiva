@@ -9,6 +9,12 @@ import {
   SOLICITUD_FIELDS,
 } from './solicitudes'
 import { FIELD_IDS_SLA, type MatrizEtapas } from './sla-etapas'
+import {
+  SLA_ETAPA_FILTROS,
+  SLA_ETAPA_FILTRO_LABELS,
+  toneDeEtapa,
+  type SlaTonoEtapa,
+} from './console-data'
 
 /**
  * Tanda C · §9.6.2 — contrato del read-layer del reloj por etapa.
@@ -210,6 +216,20 @@ describe('filtro ?sla_etapa= (C-3)', () => {
     expect(SLA_ETAPA_FILTROS_VALIDOS).toEqual(['ambar', 'rojo'])
   })
 
+  // D-3: la lista se trasladó a `console-data.ts` para que el selector cliente
+  // no arrastre el cliente de Airtable al bundle. Este test es lo que impide
+  // que las dos vuelvan a ser dos listas.
+  it('reexporta exactamente la lista canónica de console-data', () => {
+    expect(SLA_ETAPA_FILTROS_VALIDOS).toEqual(SLA_ETAPA_FILTROS)
+  })
+
+  it('tiene rótulo para cada valor del filtro, y ninguno de más', () => {
+    expect(Object.keys(SLA_ETAPA_FILTRO_LABELS).sort()).toEqual([...SLA_ETAPA_FILTROS].sort())
+    for (const valor of SLA_ETAPA_FILTROS) {
+      expect(SLA_ETAPA_FILTRO_LABELS[valor]).toBeTruthy()
+    }
+  })
+
   it('interpola el valor de la lista cerrada por igualdad', () => {
     expect(buildFormula('todas', undefined, { sla_etapa: 'rojo' })).toContain(
       '{sla_semaforo_etapa}="rojo"'
@@ -233,5 +253,40 @@ describe('filtro ?sla_etapa= (C-3)', () => {
     const f = buildFormula('todas', undefined, { sla: 'rojo', sla_etapa: 'ambar' })
     expect(f).toContain('FIND("VENCIDO",{semaforo_sla})>0')
     expect(f).toContain('{sla_semaforo_etapa}="ambar"')
+  })
+})
+
+/**
+ * Tanda D · §9.6.2 — contrato visual de la píldora de etapa.
+ *
+ * `SLABadge` es un componente y el repo no tiene runner de DOM, así que lo que
+ * se fija acá es la **decisión** que el componente delega en `lib/`: qué tono
+ * pinta color y cuál no se renderiza. Es la regla que evita el verde fabricado,
+ * y vive en una función pura justamente para poder fijarla sin montar React.
+ */
+describe('píldora de etapa · toneDeEtapa (D-1)', () => {
+  it('traduce los tres tonos con color al vocabulario de SLA_CLASSES', () => {
+    expect(toneDeEtapa('verde')).toBe('green')
+    expect(toneDeEtapa('ambar')).toBe('amber')
+    expect(toneDeEtapa('rojo')).toBe('red')
+  })
+
+  it('devuelve null sólo para sin_dato, que es lo que impide renderizar', () => {
+    // Si esto empezara a devolver un tono, la bandeja pintaría una píldora por
+    // cada solicitud sin umbrales materializados — y en v1.9 son casi todas,
+    // porque sólo e1 y e2 tienen escritor.
+    expect(toneDeEtapa('sin_dato')).toBeNull()
+
+    const conColor = (['verde', 'ambar', 'rojo'] as SlaTonoEtapa[]).filter(
+      (t) => toneDeEtapa(t) !== null
+    )
+    expect(conColor).toHaveLength(3)
+  })
+
+  it('los valores del filtro son un subconjunto de los tonos que sí pintan', () => {
+    // `?sla_etapa=` no puede ofrecer un tono que la píldora no sabe pintar.
+    for (const valor of SLA_ETAPA_FILTROS) {
+      expect(toneDeEtapa(valor)).not.toBeNull()
+    }
   })
 })

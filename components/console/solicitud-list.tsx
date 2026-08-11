@@ -31,6 +31,8 @@ import {
   ESTADO_LABELS,
   PRIORIDAD,
   PRIORIDAD_LABELS,
+  SLA_ETAPA_FILTROS,
+  SLA_ETAPA_FILTRO_LABELS,
   type EstadoSolicitud,
   type Prioridad,
   type Solicitud,
@@ -60,6 +62,25 @@ const ORDENES: { value: string; label: string }[] = [
 
 const TODOS = "__todos__"
 
+/**
+ * Claves de URL que cuentan como "filtro activo". Una sola lista para sus tres
+ * consumidores —el indicador, "Limpiar filtros" y la apertura automática del
+ * panel—, porque tres copias divergen en cuanto se agregue el cuarto filtro y
+ * el síntoma sería silencioso: un filtro aplicado que el panel no ofrece
+ * limpiar (RO-05). `vista`, `orden`, `page` y `solicitud` no entran: no son
+ * filtros.
+ */
+const CLAVES_FILTRO = [
+  "cliente",
+  "tasador",
+  "estado",
+  "prioridad",
+  "sla_etapa",
+  "desde",
+  "hasta",
+  "q",
+] as const
+
 export function SolicitudList({
   solicitudes,
   selectedId,
@@ -85,7 +106,15 @@ export function SolicitudList({
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const [showFilters, setShowFilters] = React.useState(false)
+  // Abierto de entrada si la URL ya trae algún filtro. Es un inicializador
+  // perezoso —corre una sola vez, al montar— y no un efecto a propósito: con un
+  // efecto, cerrar el panel a mano con filtros puestos lo volvería a abrir en el
+  // siguiente render. Así un deep link como `?vista=sla_riesgo&sla_etapa=rojo`
+  // llega mostrando qué está filtrando, en vez de una lista recortada sin
+  // explicación visible.
+  const [showFilters, setShowFilters] = React.useState(() =>
+    CLAVES_FILTRO.some((k) => !!searchParams.get(k))
+  )
   const [contadores, setContadores] = React.useState<Record<string, number>>({})
   const [tasadores, setTasadores] = React.useState<{ id: string; nombre: string }[]>([])
 
@@ -167,26 +196,11 @@ export function SolicitudList({
     }
   }, [])
 
-  const filtrosActivos =
-    !!get("cliente") ||
-    !!get("tasador") ||
-    !!get("estado") ||
-    !!get("prioridad") ||
-    !!get("desde") ||
-    !!get("hasta") ||
-    !!get("q")
+  const filtrosActivos = CLAVES_FILTRO.some((k) => !!get(k))
 
   function limpiarFiltros() {
     setQLocal("")
-    updateParams({
-      cliente: null,
-      tasador: null,
-      estado: null,
-      prioridad: null,
-      desde: null,
-      hasta: null,
-      q: null,
-    })
+    updateParams(Object.fromEntries(CLAVES_FILTRO.map((k) => [k, null])))
   }
 
   const totalPaginas = Math.max(1, Math.ceil(total / pageSize))
@@ -339,6 +353,19 @@ export function SolicitudList({
               }))}
               onChange={(v) => updateParams({ prioridad: v })}
             />
+            {/* Reloj por etapa (RF-53). Separado de `?sla=`, que sigue
+                significando el agregado en días: son dos relojes que conviven y
+                no se sustituyen (§5.2). */}
+            <FilterSelect
+              label="Etapa SLA"
+              value={get("sla_etapa")}
+              placeholder="Todas"
+              options={SLA_ETAPA_FILTROS.map((t) => ({
+                value: t,
+                label: SLA_ETAPA_FILTRO_LABELS[t],
+              }))}
+              onChange={(v) => updateParams({ sla_etapa: v })}
+            />
             <div className="col-span-2 flex flex-col gap-1">
               <span className="text-[11px] font-medium text-muted-foreground">
                 Fecha solicitud
@@ -482,9 +509,15 @@ function FilaSolicitud({
           <span className="shrink-0 text-xs text-muted-foreground">{s.comuna}</span>
         </div>
 
+        {/* Los dos relojes de §5.2 conviven: el agregado (RF-08) va arriba,
+            relleno y en días; la etapa (RF-53) va acá, neutra y con punto de
+            color. Sin `slaEtapa` no se renderiza nada — el mapper omite el
+            campo cuando `sla_etapa_actual` está vacío, y `SLABadge` además no
+            pinta el tono `sin_dato`. */}
         <div className="flex flex-wrap items-center gap-1.5">
           <StateBadge estado={s.estado} />
           <PriorityChip prioridad={s.prioridad} />
+          {s.slaEtapa && <SLABadge etapa={s.slaEtapa} />}
         </div>
 
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
