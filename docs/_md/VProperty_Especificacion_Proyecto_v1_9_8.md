@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.7** — sucede a `VProperty_Especificacion_Proyecto_v1_9_6.md`, que queda marcado SUPERSEDED.
+> **v1.9.8** — sucede a `VProperty_Especificacion_Proyecto_v1_9_7.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -504,6 +504,85 @@ en TX_Solicitudes, y la tabla TX_Reprocesos sigue sin crearse (§1.9.1 ·
 FUT-EJ-08). La especificación se adelanta deliberadamente al schema para
 que el equipo de datos tenga el destino antes de construir el camino.
 
+### **Cambios v1.9.7 → v1.9.8**
+
+Esta versión no altera el modelo de datos, el motor de cálculo ni el SLA:
+documenta la **Interfaz Ejecutiva tal como quedó construida** al cablear
+el Detalle de Solicitud contra datos reales, y fija tres decisiones de
+producto que la maqueta v0.dev tenía sin definir. Todo el cambio se
+concentra en §1. No se agregan RF ni RN; no se renumera nada.
+
+  -------------------------------------------------------------------------
+  **Aspecto**         **v1.9.7 (anterior)**      **v1.9.8 (actual)**
+  ------------------- -------------------------- --------------------------
+  Navegación          Tres entradas en la barra  §1.0 nueva. Consola y Cola
+  principal           superior sin propósito     operativa operativas;
+                      definido en la spec.       Expediente deshabilitada
+                                                 con motivo y condición de
+                                                 reactivación.
+
+  Buscador y estado   No especificados.          §1.1. Buscador único
+  de la bandeja                                  server-side por código,
+                                                 RUT o dirección, y tabla
+                                                 de los 12 parámetros de
+                                                 URL que hacen la bandeja
+                                                 enlazable.
+
+  Indicador de        No especificado.           §1.2. Cifras reales de la
+  cartera                                        cartera propia, con la
+                                                 regla de que el número y
+                                                 su enlace miden la misma
+                                                 consulta.
+
+  Bloque del motor    "Decisión del motor",      §1.3.2. "Decisión del
+  en Datos            declaraba mostrar          motor **de reglas**", sin
+                      "tasador y visador         tasador ni visador: AT01
+                      asignados".                resuelve plantilla,
+                                                 fórmulas y workflow, nunca
+                                                 un profesional. Corrige
+                                                 una contradicción con
+                                                 §1.6 y §6.2.
+
+  Alcance del         Enumeraba coordinación,    §1.3.3. Los tres quedan
+  Historial           descargas y autor sin      fuera **por falta de
+                      salvedad.                  origen de datos**, cada
+                                                 uno con su causa; el resto
+                                                 se cablea contra A_Eventos
+                                                 y A_Cambios reales.
+
+  Agrupación de       "La pestaña agrupa los     §1.3.4. La agrupación es
+  Adjuntos            archivos por versión",     de TX_DocumentosGenerados;
+                      sobre TX_Adjuntos.         TX_Adjuntos va como lista
+                                                 plana. El valor en UF por
+                                                 versión queda pendiente de
+                                                 campo y de decisión de
+                                                 negocio.
+
+  Modo "documentos    Modo plenamente            §1.5.0. Deshabilitado
+  adjuntos"           especificado y             temporalmente por
+                      disponible.                dependencia de RF-09
+                                                 (CI-002). El modo no se
+                                                 retira de la spec ni del
+                                                 código.
+
+  Identificadores     52 RF, RN hasta RN-60,     Sin cambios. Cero RF, RN o
+                      D-01 a D-16.               D nuevos.
+  -------------------------------------------------------------------------
+
+Divergencias registradas, no resueltas. La construcción de esta versión
+levantó tres inconsistencias entre documentación y base real, abiertas
+como **CI-010** (A_DecisionesMotor sin documentar en
+`docs/schema-airtable.md`), **CI-011** (A_Cambios documentada con campos
+que no existen) y **CI-012** (TX_CoordinacionVisita referenciada en §1.3.2,
+§1.3.3, §2.3 y §2.12 pero inexistente en la base). CI-012 requiere
+decisión de negocio: crear la tabla o retirarla de la especificación.
+
+Reglas operativas destiladas. La construcción aportó cinco reglas nuevas
+al repositorio —**RO-19** a **RO-23** en `docs/aprendizajes.md`—, sobre
+separación cliente/servidor en módulos que leen Airtable, verificación de
+campos Link poblados antes de filtrar, y reconciliación de UI optimista.
+No son normativas de producto y por eso viven allí y no acá.
+
 ### **Nivel de detalle**
 
 Cada requisito tiene métrica o criterio de aceptación verificable; no se
@@ -551,6 +630,53 @@ notificación por WhatsApp al tasador. Cada uno queda registrado con
 identificador propio en §1.9, con el proceso real documentado, para que
 la versión siguiente no tenga que volver a levantarlo.
 
+## **1.0 Navegación principal**
+
+La barra superior ofrece tres entradas de navegación. Los tres nombres
+provienen de la maqueta v0.dev y **no estaban definidos en ninguna
+versión anterior de esta especificación**: hasta v1.9.7 eran enlaces
+decorativos sin destino. Su propósito se fija acá.
+
+  ---------------------------------------------------------------------------
+  **Entrada**         **Destino**                    **Estado en v1.9.8**
+  ------------------- ------------------------------ ------------------------
+  Consola             La bandeja unificada de §1.1    Operativa. Es la única
+                      con el detalle de §1.3, patrón  pantalla construida
+                      P2 Lista + Detalle              de IF-02
+
+  Cola operativa      La misma bandeja filtrada a lo  Operativa. Enlace
+                      que espera acción de la         directo, sin pantalla
+                      Ejecutiva: sin tasador          ni consulta propias
+                      asignado, ordenado por
+                      urgencia de SLA
+
+  Expediente          ---                             **Deshabilitada**:
+                                                      visible, no accionable,
+                                                      con tooltip "No
+                                                      disponible en esta
+                                                      versión"
+  ---------------------------------------------------------------------------
+
+Sobre Cola operativa. §1.1 enumeraba "Por reasignar (\>48 h sin
+actividad)" entre las vistas pre-construidas, pero v1.9 retiró el flujo
+de reasignación (§1.6): esa vista se quedó sin acción que ofrecer. Lo que
+conserva sentido operativo es el conjunto de solicitudes que aún no
+tienen tasador, que es el que esta entrada abre. No introduce ruta,
+consulta ni estado nuevos.
+
+Sobre Expediente. Una vista de expediente por solicitud no está descrita
+en ninguna sección de §1, y el detalle de §1.3 ya cubre el registro
+completo con sus tres pestañas. Se deja visible y deshabilitada en vez de
+ocultarla, para que la barra no contradiga al diseño de referencia
+mientras el alcance no esté definido. Definirlo es trabajo de una versión
+posterior.
+
+El elemento activo de la barra se **calcula** desde la ruta y los
+parámetros de la URL; no se fija en el código. Como Consola y Cola
+operativa comparten ruta y se distinguen sólo por `vista`, la primera se
+marca activa únicamente cuando la segunda no lo está: de lo contrario se
+encenderían ambas a la vez.
+
 ## **1.1 Vista de Solicitudes**
 
 Bandeja unificada con vistas filtradas pre-construidas: Activas, SLA en
@@ -574,6 +700,60 @@ estado y última actividad.
                     vista coinciden 1:1 con consultas equivalentes sobre
                     TX_Solicitudes.
   -------------------------------------------------------------------------
+
+Buscador global (v1.9.8). Un único campo de búsqueda, ubicado en la barra
+superior, que filtra por código VP-AAAA-NNNN, RUT del comprador o
+dirección. Es **server-side**: la consulta viaja como parámetro de URL y
+se resuelve contra TX_Solicitudes; el cliente no filtra en memoria. Tiene
+debounce de 300 ms, y la tecla Intro dispara sin esperarlo. Existe un
+solo buscador en toda la interfaz.
+
+Filtros y estado en la URL (v1.9.8). Vista, filtros, orden, página,
+búsqueda y solicitud seleccionada se reflejan en la barra de direcciones,
+de modo que cualquier estado de la bandeja es enlazable y el
+retroceso/avance del navegador lo restaura. Todos se resuelven
+server-side:
+
+  ---------------------------------------------------------------------------
+  **Parámetro**       **Valores**                    **Significado**
+  ------------------- ------------------------------ ------------------------
+  vista               mi_cartera · sla_riesgo ·       Pestaña de la bandeja
+                      por_asignar · aprobadas ·
+                      todas
+
+  q                   texto libre                    Código VP, RUT del
+                                                     comprador o dirección
+
+  cliente             nombre de M_Clientes           Cliente institucional
+
+  tasador             nombre, o sin_asignar          Tasador asignado
+
+  estado              enum de estado                 Estado de la solicitud
+
+  prioridad           normal · urgente · crítico     Prioridad
+
+  sla                 verde · ambar · rojo           Semáforo **agregado**
+                                                     en días (RF-08 · RN-04)
+
+  sla_etapa           ambar · rojo                   Semáforo **por etapa**
+                                                     del workflow (RF-53 ·
+                                                     §5.2.4)
+
+  desde · hasta       AAAA-MM-DD                     Rango de fecha de
+                                                     solicitud
+
+  orden               fecha_solicitud_desc ·         Criterio de orden
+                      sla_desc · sla_asc ·
+                      prioridad
+
+  page                entero ≥ 1                     Página (20 por página)
+
+  solicitud           record ID                      Detalle preseleccionado
+  ---------------------------------------------------------------------------
+
+`sla` y `sla_etapa` son los dos relojes de §5.2 y **no se sustituyen**:
+conviven como filtros independientes y la bandeja los ofrece por
+separado.
 
 ## **1.2 Vista de SLA por Solicitud**
 
@@ -602,6 +782,27 @@ se especifica en §5.2.4 (RF-53) y se computa sobre la ventana hábil de
   aceptación**      menor a un minuto desde el cambio de fecha). Los tres
                     umbrales son configurables en C_SLA sin tocar código.
   -------------------------------------------------------------------------
+
+Indicador de cartera (v1.9.8). La barra superior muestra de forma
+permanente "En tu cartera: X activas · Y en SLA rojo", con cifras reales
+de la cartera de la Ejecutiva conectada —no del total de la operación—.
+El número en rojo es un enlace que abre la bandeja ya filtrada por esa
+misma condición.
+
+La regla que gobierna el indicador es que **el número y su destino miden
+la misma consulta**. Y se cuenta como la cartera propia cruzada con el
+semáforo agregado en rojo, y el enlace lleva exactamente a esa
+combinación (`vista=mi_cartera` + `sla=rojo`). Enlazar en cambio a la
+pestaña global "SLA en riesgo" —que no filtra por cartera propia y además
+incluye el ámbar— haría que la Ejecutiva leyera una cifra y aterrizara en
+una lista distinta, que es el modo de fallo que esta regla evita.
+
+Con Y = 0 no se enlaza nada: el destino sería una lista vacía. El cero se
+muestra sin acción, que además es la lectura correcta —no hay nada
+vencido—. Mientras las cifras no han llegado no se pinta el indicador: un
+"0 activas · 0 en SLA rojo" provisional es una afirmación falsa sobre la
+carga de trabajo, y en el caso del rojo es justo la que haría bajar la
+guardia.
 
 ## **1.3 Detalle de Solicitud**
 
@@ -721,9 +922,12 @@ Consolida el registro completo de la solicitud. Los bloques son:
                       cuando el tipo de propiedad es
                       Nuevo
 
-  Decisión del motor  Regla ganadora y candidatas         A_DecisionesMotor
-                      descartadas, tasador y visador
-                      asignados
+  Decisión del motor  Regla ganadora, motivo de la        A_DecisionesMotor
+  de reglas           elección y candidatas
+                      descartadas. Resultado aplicado:
+                      plantilla, fórmulas y flujo de
+                      trabajo. No incluye tasador ni
+                      visador (§1.6 · §6.2)
   ---------------------------------------------------------------------------
 
 Tres precisiones de negocio sobre esta pestaña. Primera: Comercializador
@@ -767,6 +971,25 @@ estuvo detenida. Se listan también las ediciones de contactos de visita
 hechas bajo la excepción acotada a RN-59, que llegan al timeline por la
 vía habitual de A_Cambios (§1.4).
 
+Alcance implementado en v1.9.8. El timeline se cablea contra A_Eventos y
+A_Cambios reales; las dos tablas se referencian de forma distinta y
+ambas hacen falta: A_Eventos por el campo Link —que dentro de una
+fórmula se evalúa contra el código de la solicitud, no contra el record
+ID— y A_Cambios por su par registro_id + tabla_origen, porque esa tabla
+audita varias entidades y no tiene Link a la solicitud. Tres contenidos
+que esta sección enumera **quedan fuera por falta de origen de datos, no
+por decisión de alcance**:
+
+- **Eventos de coordinación**: dependen de TX_CoordinacionVisita, que no
+  existe en la base (§2.12 la declara como tabla nueva; registrada como
+  CI-012 y como DEP-EXT:A-09 en el Blueprint y en Arquitectura).
+- **Descargas de documentos**: no se registran en ninguna tabla. Las
+  cargas sí llegan al timeline como eventos de A_Eventos.
+- **Autor del evento**: A_Eventos.actor_nombre está vacío en el 100% de
+  las filas y actor guarda el clerk_user_id crudo. Mostrar un
+  identificador técnico incumpliría §6.1, así que el autor se omite
+  mientras los escenarios Make no pueblen actor_nombre.
+
 ### **1.3.4 Pestaña Adjuntos**
 
 Vista de sólo lectura: listado de los archivos de TX_Adjuntos vinculados
@@ -786,6 +1009,25 @@ archivo Excel de cálculo y hasta tres PDF sucesivos por tasación, y el
 negocio necesita comparar el valor informado entre versiones (RN-56). La
 pestaña agrupa los archivos por versión y muestra, para cada una,
 número, fecha de envío, valor en UF y motivo del cambio.
+
+Precisión v1.9.8 sobre qué se agrupa. La agrupación por versión recae
+sobre **TX_DocumentosGenerados**, que es donde el pipeline PDF (E1/E2/E3)
+registra cada informe emitido con su version_doc, su motivo_regeneracion
+y su marca es_vigente. **No recae sobre TX_Adjuntos**, que no tiene campo
+de versión: sus filas son antecedentes *de entrada* —certificados,
+planos, escrituras— que no pertenecen a ninguna versión del informe.
+Agruparlos exigiría inventar esa pertenencia. La pestaña presenta por
+tanto dos secciones: "Documentos de la solicitud", lista plana de
+TX_Adjuntos con su estado de extracción, y "Versiones del informe",
+alimentada por TX_DocumentosGenerados y con estado vacío explícito
+mientras el pipeline no haya generado nada para esa solicitud.
+
+El **valor en UF por versión** queda pendiente. TX_DocumentosGenerados no
+tiene columna que lo guarde, y el valor disponible en TX_Solicitudes y
+TX_Calculos es el **actual**: mostrarlo junto a una versión emitida
+semanas antes afirmaría algo falso, que es lo contrario de lo que RN-56
+persigue. Recuperarlo exige un campo nuevo en esa tabla, con decisión de
+negocio previa.
 
 ## **1.4 Modificación de detalles**
 
@@ -987,6 +1229,24 @@ una decisión previa, persistida en TX_Solicitudes.
   Precio de referencia    Lista más descuentos y    Valor de venta directa
                           bonos
   ---------------------------------------------------------------------------
+
+Deshabilitación temporal del modo "En base a documentos adjuntos"
+(v1.9.8). La opción se muestra en la Fase 1 pero **no es seleccionable**:
+aparece atenuada, no responde al clic y expone el tooltip "No disponible
+en esta versión". "Manual" queda como único modo operativo.
+
+El motivo es de dependencia, no de diseño: el modo requiere la
+extracción documental con Claude API (§4), cuyo escenario Make no está
+provisionado y cuyo disparador desde Airtable falla hoy al invocar el
+webhook (CI-002 abierta). Ofrecer el modo sin extracción llevaría a la
+Ejecutiva a subir documentos y encontrarse un formulario en blanco.
+
+La deshabilitación es de superficie: el código del modo —zona de carga,
+marca visual "extraído", sugerencia asistida de Nuevo/Usado y
+confirmación de continuar sin documentos— **se conserva íntegro**. La
+condición de reactivación es una sola: que RF-09 quede operativo end to
+end y CI-002 cerrada. Nada de lo descrito arriba en esta sección se
+retira de la especificación.
 
 Las filas de bloques, unidades, rol y estado se reflejan en esta
 interfaz. Las filas de fuentes y documentos condicionan además la

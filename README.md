@@ -8,7 +8,7 @@
 
 ## Qué es este proyecto
 
-IF-02 es la consola diaria de la Ejecutiva Comercial de **VProperty** (Tasaciones · Bienes Raíces, Chile). Materializa la Capacidad C-2 (gestión comercial y bandeja operativa) definida en la Especificación v1.9.7.
+IF-02 es la consola diaria de la Ejecutiva Comercial de **VProperty** (Tasaciones · Bienes Raíces, Chile). Materializa la Capacidad C-2 (gestión comercial y bandeja operativa) definida en la Especificación v1.9.8.
 
 Funciones principales:
 

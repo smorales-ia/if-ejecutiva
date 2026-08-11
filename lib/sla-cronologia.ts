@@ -1,5 +1,5 @@
 /**
- * Cronología de las siete etapas (RF-53 · Spec v1.9.7 §5.2.4 · plan §9.6.2 · Tanda E).
+ * Cronología de las siete etapas (RF-53 · Spec v1.9.8 §5.2.4 · plan §9.6.2 · Tanda E).
  *
  * Módulo **puro y apto para el cliente**: sin `fetch`, sin Airtable, sin Clerk.
  * Es lo que permite que `components/console/solicitud-detail.tsx` —que es

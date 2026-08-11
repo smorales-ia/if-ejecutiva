@@ -186,6 +186,33 @@ Lo que sigue vigente como regla vive abajo, destilado.
   Y un guard que conviene testear explícitamente: el motor **no debe correr
   antes del guard de idempotencia**, o un segundo click movería los umbrales
   hacia adelante aunque la operación se rechace con 409.
+- **RO-19 · Un módulo `lib/` que importa `airtable-client` no puede exportar
+  literales que consuma un componente cliente.** El import arrastra el cliente
+  REST —y su lectura de `AIRTABLE_TOKEN`— al bundle del navegador. Partir en
+  dos: `lib/x.ts` con el tipo, los literales de pantalla y el mapeo puro
+  (cliente-safe) y `lib/x-airtable.ts` con el `listRecords`. `import type` sí es
+  seguro: se borra en compilación. Nada falla al escribirlo mal; el bundle
+  simplemente crece y el token viaja. Molde: `sla-cronologia` / `sla-etapas`.
+- **RO-20 · Un campo Link puede existir y estar vacío, y eso rompe el filtro
+  igual que E-076.** Antes de escribir un `filterByFormula` sobre un Link,
+  contar cuántas filas lo tienen poblado — no basta con que el campo esté en el
+  schema. En `A_DecisionesMotor` y `TX_DocumentosGenerados` el Link `solicitud`
+  existe y está vacío en el 100% de las filas; la referencia real vive en un
+  texto plano. Cero filas se lee como «no hay datos»: el fallo es silencioso.
+- **RO-21 · Verificar población, no existencia, también en los campos que la UI
+  muestra.** `A_Eventos.actor_nombre` está vacío en toda la tabla mientras
+  `actor` trae el `clerk_user_id` crudo: construir la fila sobre él compila,
+  pasa los tests y no muestra nada nunca. Y si lo único disponible es un
+  identificador técnico, **se omite el dato** — exponerlo incumple §6.1.
+- **RO-22 · Reconciliar UI optimista con el servidor se hace comparando, no
+  esperando.** Descartar las entradas fabricadas en el navegador cuyo
+  `timestamp` ya alcanzó al del registro de servidor más reciente, nunca con un
+  `setTimeout` de ventana adivinada. No hay carrera que perder ni duplicado
+  permanente si el escenario Make se demora.
+- **RO-23 · `Button` renderizado como `<a>` necesita `nativeButton={false}`.**
+  §4.4 pide `render` prop en vez de `asChild`; lo que no estaba escrito es que
+  Base UI sigue tratando el elemento como botón nativo salvo que se le diga lo
+  contrario. El tipo lo admite sin quejarse.
 
 ## Bitácora reciente
 
@@ -864,3 +891,75 @@ No hay una segunda línea `Compiling /consola` después de las 10:04 y sin embar
 5. **`pkill -f "next dev"` se mata a sí mismo.** El patrón matchea la propia línea de comando del `bash -c` que lo ejecuta, que contiene el literal `next dev`; el shell muere antes de llegar al `pnpm dev` siguiente y el comando "no hace nada" con un exit code raro (144). Usar un patrón que no se auto-matchee (`pkill -f "node.*next"`) o separar el kill del arranque en dos comandos.
 
 **Corolario de método, que es lo que de verdad hay que llevarse:** una mitigación de entorno se verifica **midiendo el servicio**, no leyendo la documentación de la opción. El polling estaba bien documentado, bien tipado y era la recomendación estándar para WSL2; bastó un `curl -w "%{http_code} %{time_total}"` para ver que dejaba el servidor inservible. Treinta segundos de medición contra un diagnóstico equivocado que el usuario habría descubierto refrescando.
+
+---
+
+### 2026-08-11 (d) — Fase 2 del cableado del Detalle: nueve reglas reutilizables
+
+Entrada de **patrones**, no de bitácora: las diez tareas de la fase están en el commit y no se
+narran acá. Lo que sigue es lo que sirve para la próxima vez, en orden de coste evitado.
+
+**1 · Un módulo `lib/` que importa `airtable-client` no puede exportar literales que consuma un
+componente cliente.** El import arrastra el cliente REST —y su lectura de `AIRTABLE_TOKEN`— al
+bundle del navegador. Partir en dos: `lib/x.ts` con el tipo, los literales de pantalla y el
+mapeo puro (cliente-safe, sin imports de Airtable) y `lib/x-airtable.ts` con el `listRecords`.
+El molde ya existía en `sla-cronologia` / `sla-etapas` y se replicó en `decision-motor`,
+`historial` y `documentos-generados`. `import type` sí es seguro: se borra en compilación.
+Nada falla al escribirlo — el bundle simplemente crece y el token viaja.
+
+**2 · Un campo Link puede existir y estar vacío, y eso rompe el filtro igual que E-076.** En
+`A_DecisionesMotor` (43 filas) y `TX_DocumentosGenerados` (1 fila) el campo `solicitud` existe en
+el schema y **no está poblado en ninguna fila**; la referencia real vive en un texto plano
+(`solicitud_codigo`, `clave_natural`). Filtrar por el link devuelve cero filas, y cero filas se
+lee como "no hay datos". Es un modo de fallo distinto de E-076 —allí el link existe pero se
+evalúa contra el primary field— y comparte con él que **es silencioso**. Regla: antes de escribir
+un `filterByFormula` sobre un Link, contar cuántas filas lo tienen poblado, no sólo comprobar que
+el campo está en el schema. Un `curl` con `pageSize=100` y un `filter(x => x.fields.link?.length)`
+lo resuelve en un minuto.
+
+**3 · Verificar población, no existencia, también vale para los campos que la UI muestra.**
+`A_Eventos.actor_nombre` está vacío en las 66 filas de la tabla mientras `actor` trae el
+`clerk_user_id` crudo. Construir la fila del timeline sobre `actor_nombre` compila, pasa los tests
+y no muestra autor nunca. Corolario de estilo: si lo único disponible es un identificador técnico,
+**se omite el dato** — un `user_3GBF4Jp…` en pantalla incumple §6.1 y es peor que el hueco.
+
+**4 · Reconciliar UI optimista con el servidor se hace comparando, no esperando.** Tras asignar,
+la entrada fabricada en el navegador convive con las que escribe Make en `A_Eventos`. La regla es
+una comparación —descartar las optimistas cuyo `timestamp` ya alcanzó el del evento de servidor
+más reciente— y no un `setTimeout` con una ventana adivinada. Se autocorrige tarde o temprano sin
+carrera que perder ni duplicado permanente si Make se demora.
+
+**5 · Estado activo de navegación: calculado, nunca `active: true`.** Sale de `pathname` +
+`useSearchParams`. Y cuando dos entradas apuntan a la **misma ruta** con distinto `?vista=`, la
+general tiene que restar la específica (`activo = enBase && !enHijo`); sin la resta se encienden
+las dos a la vez, que se lee peor que ninguna.
+
+**6 · Tras crear, la certeza "creo → veo" gana a conservar los filtros.** Una solicitud nueva nace
+en `estado = creada` y sin tasador: con `?vista=aprobadas` o un rango de fechas puesto **no entra
+en el conjunto**, y la pantalla respondería que no existe justo después de crearla. Navegar a la
+ruta canónica sin parámetros (`/consola?solicitud=<id>`). Y `push` **más** `refresh`: si la URL
+destino coincide con la actual, el Router Cache serviría el árbol anterior sin la fila nueva.
+
+**7 · No forzar una agrupación sobre un campo que el schema no tiene.** §1.3.4 pide agrupar
+adjuntos por versión del informe, pero `TX_Adjuntos` no tiene campo de versión y no es un olvido:
+sus filas son antecedentes *de entrada* que no pertenecen a ninguna versión. Las versiones están
+en `TX_DocumentosGenerados`. Dos secciones separadas, cada una con la verdad de su tabla y estado
+vacío honesto, antes que inventar la clave de pertenencia. Aplica igual al dato que no existe:
+el valor en UF por versión no se pinta porque el que hay es el actual, y ponerlo junto a la v1
+afirmaría algo falso.
+
+**8 · Al retirar un mock, dejar el hueco explicado.** Comentario corto en el sitio: adónde se fue
+y por qué estaba mal. `mockDecisionMotor` describía asignación de tasador por cobertura y carga
+—o sea AT02, fuera de alcance desde v1.9— y sin la nota la próxima sesión lo reintroduce al ver
+el vacío. Vale doble cuando el mock contradecía la spec, porque entonces el hueco es la
+corrección.
+
+**9 · `Button` renderizado como `<a>` necesita `nativeButton={false}`.** §4.4 pide `render` prop en
+vez de `asChild`; lo que no estaba escrito es que Base UI sigue tratando el elemento como botón
+nativo salvo que se le diga lo contrario. No había precedente en el repo (`grep -rn nativeButton
+components/` daba cero) y el tipo lo admite sin quejarse.
+
+*Recordatorio, no hallazgo:* un componente cliente con `useSearchParams` va envuelto en
+`Suspense` o Next fuerza render dinámico de **toda la ruta** que lo monte. El patrón ya estaba en
+`console-shell.tsx`; se repitió al extraer `NavPrincipal` y `BuscadorSolicitudes` del header, que
+queda como server shell.

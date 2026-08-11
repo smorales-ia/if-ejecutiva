@@ -1,5 +1,5 @@
 /**
- * Motor de las siete etapas de SLA (RF-53 · Spec v1.9.7 §5.2.4 · plan §9.6.2 B-3).
+ * Motor de las siete etapas de SLA (RF-53 · Spec v1.9.8 §5.2.4 · plan §9.6.2 B-3).
  *
  * ## Qué hace y qué no
  *

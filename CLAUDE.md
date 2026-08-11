@@ -26,7 +26,7 @@ Este repo implementa **IF-02**: la consola diaria de la Ejecutiva Comercial de V
 > **Antes de proponer cualquier comando de terminal, lee `docs/aprendizajes.md`.**
 
 1. Lee `docs/diseno.md`, `docs/construccion.md` y `docs/schema-airtable.md` al inicio de la sesión.
-   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md`.
+   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md`.
 2. Implementa **una RF por sesión**. Nunca "construir toda la consola" de golpe.
 3. Después de cada RF: `pnpm build` debe salir limpio antes del commit.
 4. Haz push; Railway redespliega automáticamente.
@@ -59,7 +59,7 @@ código propio, no Airtable Interfaces.
 
 Contrato operacional resumido:
 
-- **Entradas**: `TX_Solicitudes` (cartera del ejecutivo · filtros SLA), `M_Tasadores` (activos con `disponible = TRUE` y zona · ver H-05), `M_Visadores` (por `especialidades` — nombre plural en el schema real), `M_Clientes`, `A_Eventos` (cronología).
+- **Entradas**: `TX_Solicitudes` (cartera del ejecutivo · filtros SLA), `M_Tasadores` (activos con `disponible = TRUE` y zona · ver H-05), `M_Visadores` (por `especialidades` — nombre plural en el schema real), `M_Clientes`, `A_Eventos` (cronología), `A_Cambios` (ediciones auditadas del timeline §1.3.3), `A_DecisionesMotor` (regla ganadora · §1.3.2), `TX_DocumentosGenerados` (versiones del informe · §1.3.4).
 - **Acciones**: crear alta interna, editar campos no-cálculo, asignar tasador (única, sin flujo de reasignación · §1.3.1), fijar fecha de visita, cambiar prioridad, pausar, cancelar. **Acción primaria**: `Pasar a asignada`. Mientras el estado siga `creada` se puede cambiar el tasador ya fijado desde "Editar solicitud", sin que eso dispare por sí solo la transición de estado (§1.4 · RN-59).
 - **Salidas**: `TX_Solicitudes` (insert/update, `origen_canal=ingreso_manual`), `A_Eventos` (alta · asignación · cambios). `A_Cambios` **no se escribe desde IF-02** — era el override de AT02.
 - **Estado destino**: `creada → asignada` — bloqueado hasta tasador + visador + `fecha_visita_programada`. La transición la ejecuta **SC-Asignar (Make)**, que escribe `estado`, `tasador` y `fecha_asignacion` en un solo update; SC05 notifica al tasador.
@@ -74,7 +74,7 @@ asignación que falle sin causa aparente.
 
 Principio rector: **la UI muestra y captura; nunca decide**. Toda regla de negocio vive en Airtable (AT01/AT08 · `C_ReglasNegocio`) o en los escenarios Make.
 
-**SLA operacional (Spec v1.9.7 §5.2 · RF-53).** El reloj del servicio se especifica en una
+**SLA operacional (Spec v1.9.8 §5.2 · RF-53).** El reloj del servicio se especifica en una
 sola sección y es §5.2. Dos niveles que conviven: el **plazo agregado** por par (cliente,
 tipo_informe) en días, que alimenta el semáforo de bandeja (`C_SLA` · RN-04), y el **plazo
 por etapa** del workflow en horas hábiles (siete etapas, §5.2.4). El cómputo corre de lunes
@@ -261,8 +261,9 @@ Dos ajustes al aplicar la regla en este repo, para no contradecir código ya esc
 | `M_TiposInforme` | `tblOcsdiwxQLfD178` | Read filtrado por cliente |
 | `M_TiposPropiedad` | `tbl8rxZA14xFIBGU6` | Read para select |
 | `A_Eventos` | `tblMKmDg2KrO5fMn8` | Write timeline (`tipo_evento` es singleLineText) |
-| `A_Cambios` | `tbl6Yd0c7MRqNeC0x` | **Sin uso en IF-02** (era el override de AT02) |
-| `A_DecisionesMotor` | `tbluQQtXUI0Zd8jiN` | Read decisión del motor |
+| `A_Cambios` | `tbl6Yd0c7MRqNeC0x` | **Read** para el timeline de §1.3.3 (desde Fase 2) · **nunca write** desde IF-02. ⚠ No tiene Link a la solicitud: filtrar por `tabla_origen` + `registro_id` (CI-011) |
+| `A_DecisionesMotor` | `tbluQQtXUI0Zd8jiN` | Read decisión del motor (§1.3.2). ⚠ El Link `solicitud` está vacío en todas las filas: casar por `solicitud_codigo` (CI-010) |
+| `TX_DocumentosGenerados` | `tbl5sYnGPZXgYCBSY` | Read versiones del informe (§1.3.4 · RN-56). Lo escribe el pipeline PDF, nunca IF-02 |
 | `A_ErroresMake` | `tbl46Q0BcfD57LWyQ` | Read/write errores Make (bonus) |
 | `TX_Adjuntos` | `tblur71x1oItbmKZc` | Write al subir archivos · campo `estado_extraccion` (RF-09) |
 | `TX_Notificaciones` | `tbldgLQgjdgsOSZnt` | Write notificaciones (SC05) |
@@ -407,7 +408,7 @@ docs/
 ├─ aprendizajes.md                     (bitácora de sesión · sólo append)
 ├─ CODE_INCONSISTENCIES.md             (deuda detectada en código)
 ├─ _md/                               (fuentes canónicas en MD — no editar)
-│  ├─ VProperty_Especificacion_Proyecto_v1_9_7.md   ← FUENTE NORMATIVA
+│  ├─ VProperty_Especificacion_Proyecto_v1_9_8.md   ← FUENTE NORMATIVA
 │  ├─ VProperty_Blueprint_Interfaces_v2_10.md
 │  ├─ Arquitectura_Enterprise_VProperty_v2_9.md
 │  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md
@@ -430,7 +431,7 @@ sólo-append de ese archivo.
 ## Fuente única de especificación
 
 El único documento normativo del producto es
-`docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md`.
+`docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md`.
 La versión del archivo y la versión interna del cuerpo deben coincidir
 SIEMPRE.
 
@@ -439,7 +440,7 @@ Cuando se bumpea la versión normativa:
 1. Se actualiza la versión en el cuerpo del documento y se agrega entrada
    al historial de cambios.
 2. Se renombra el archivo con `git mv` al nuevo número (por ejemplo
-   v1_9_7 → v1_9_8).
+   v1_9_8 → v1_9_9).
 3. Se buscan todas las referencias al nombre anterior en el repositorio
    (`grep -rn`) y se actualizan en el mismo commit, excepto en documentos
    de archivo que tengan contexto histórico claro.
@@ -536,7 +537,7 @@ app/
 - Poner el token Airtable/Make/Dropbox en el cliente (`NEXT_PUBLIC_*`).
 - Invocar el MCP Airtable desde código productivo compilado.
 - Escribir a Airtable durante la ejecución de tests contra la base productiva.
-- Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.7 §1.6 · D-01).
+- Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.8 §1.6 · D-01).
 - Invocar AT02 ni escribir un campo trigger de AT02 desde IF-02 — no hay asignación
   automática (REGLA A · D-15). La asignación es manual y única.
 - Emitir mensajes de error técnicos al usuario — siempre humano.
@@ -561,7 +562,7 @@ app/
 
 ## Referencias rápidas
 
-- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_7.md`
+- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md`
 - Diseño funcional: `docs/diseno.md`
 - Guía de construcción: `docs/construccion.md`
 - Schema Airtable: `docs/schema-airtable.md`

@@ -1,16 +1,16 @@
 # diseno.md · VProperty · IF-02 · CU-002
 
-> **Versión**: 1.7 · Alineado a Blueprint v2.10 · Especificación v1.9.7 · Capa de Datos v2.6.5 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026) · Maqueta v1.9 integrada a `main` (22-jul-2026): wizard 3 fases, formulario 4 secciones, REGLA A (asignar tasador sin reasignación), REGLA B (validación toast+Alert), REGLA C (edición solo en creada)
+> **Versión**: 1.7 · Alineado a Blueprint v2.10 · Especificación v1.9.8 · Capa de Datos v2.6.5 · Auditoría v1.2 (06-jul-2026) · Fase Adjuntos 1 — D-11 a D-14 (10-jul-2026) · Maqueta v1.9 integrada a `main` (22-jul-2026): wizard 3 fases, formulario 4 secciones, REGLA A (asignar tasador sin reasignación), REGLA B (validación toast+Alert), REGLA C (edición solo en creada)
 >
-> ⚠ **Higiene documental 30-jul-2026 · re-verificada 08-ago-2026**: los punteros de versión
+> ⚠ **Higiene documental 30-jul-2026 · re-verificada 08-ago-2026 · puntero movido a v1.9.8 el 11-ago-2026**: los punteros de versión
 > de esta cabecera se actualizaron a los archivos que realmente existen en `docs/_md/`
-> (Especificación **v1.9.7**, Blueprint **v2.10**, Capa de Datos **v2.6.5**). Las citas a
+> (Especificación **v1.9.8**, Blueprint **v2.10**, Capa de Datos **v2.6.5**). Las citas a
 > secciones concretas de versiones anteriores que aparecen en el cuerpo **no se
-> re-verificaron** contra v1.9.7: se conservan tal cual y quedan marcadas como deuda de
+> re-verificaron** contra v1.9.7 ni contra v1.9.8: se conservan tal cual y quedan marcadas como deuda de
 > revisión, porque cambiarles el número sin diffear el spec convertiría un puntero
 > viejo en una afirmación falsa. La tanda del 08-ago-2026 sólo movió el puntero de
 > cabecera y agregó la nota de SLA operacional de §1.2.
-> **Fuentes canónicas**: Blueprint Interfaces v2.10 §7.2 · Especificación v1.9.7 · Capa Datos v2.6.5
+> **Fuentes canónicas**: Blueprint Interfaces v2.10 §7.2 · Especificación v1.9.8 · Capa Datos v2.6.5
 > (versiones reales en `docs/_md/` · verificado 08-ago-2026)
 > **Propósito**: diseño funcional y visual de IF-02 para Claude Code. Leer al inicio de cada sesión junto con `schema-airtable.md` y `construccion.md`.
 > **Principio rector**: la UI muestra y captura; nunca decide. Todo estado, regla, asignación y cálculo vive en Airtable.
@@ -182,9 +182,9 @@ Diseño fundamental de IF-02. La cola (izquierda) lista solicitudes de la carter
 5. **Aprobadas pendientes de entrega** — `estado = pendiente_final`
 6. **Mi cartera** — filtradas por `ejecutiva_asignada` = usuario Clerk autenticado
 
-> **SLA: dos relojes, no uno (spec v1.9.7 §1.2 · §5.2).** El `SLABadge` y la vista 2 muestran
+> **SLA: dos relojes, no uno (spec v1.9.8 §1.2 · §5.2).** El `SLABadge` y la vista 2 muestran
 > el **plazo agregado** por par (cliente, tipo_informe), en días, sobre `C_SLA` (RN-04). Desde
-> v1.9.7 la spec define además un **plazo por etapa** del workflow —siete etapas, en horas
+> v1.9.8 la spec define además un **plazo por etapa** del workflow —siete etapas, en horas
 > hábiles de 9:00 a 18:00 L-V— con su propio semáforo y sus propias alertas (§5.2.4 · RF-53).
 > Ambas lecturas conviven y son independientes: una etapa en rojo con el agregado en verde es
 > la lectura correcta, no una inconsistencia. El reloj por etapa **no está implementado**

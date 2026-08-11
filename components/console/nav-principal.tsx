@@ -15,10 +15,11 @@ import {
  *
  * ## De dónde salen estos tres nombres
  *
- * "Consola", "Cola operativa" y "Expediente" vienen de la maqueta v0.dev y **no
- * están definidos en la spec v1.9.7**. Hasta esta tanda eran tres `<a href="#">`
- * decorativos con `active: true` escrito a mano en el primero. Su propósito se
- * fijó con Sergio el 11-ago-2026 y se integra a la spec en v1.9.8:
+ * "Consola", "Cola operativa" y "Expediente" vienen de la maqueta v0.dev y no
+ * estaban definidos en ninguna versión de la spec hasta v1.9.7. Hasta esta
+ * tanda eran tres `<a href="#">` decorativos con `active: true` escrito a mano
+ * en el primero. Su propósito se fijó con Sergio el 11-ago-2026 y quedó
+ * normativo en **§1.0 de la spec v1.9.8**:
  *
  * - **Consola** — la bandeja unificada de §1.1 con el detalle de §1.3, que es el
  *   patrón P2 Lista + Detalle y lo único operativo hoy.
