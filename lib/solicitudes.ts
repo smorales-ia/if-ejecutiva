@@ -2,10 +2,12 @@ import { listRecords, AirtableError } from '@/lib/airtable-client'
 import {
   ESTADO_LABELS,
   PRIORIDAD,
+  SLA_AGREGADO_FILTROS,
   SLA_ETAPA_FILTROS,
   regionDeComuna,
   type EstadoSolicitud,
   type Prioridad,
+  type SlaAgregadoFiltro,
   type SlaEtapaFiltro,
   type SlaEtapaSolicitud,
   type SlaTonoEtapa,
@@ -46,9 +48,18 @@ export const VISTAS_VALIDAS: Vista[] = [
 
 export const VISTA_DEFAULT: Vista = 'todas'
 
-export type SlaFiltro = 'verde' | 'ambar' | 'rojo'
+/**
+ * Valores admitidos por `?sla=` — el semáforo agregado en días (RF-08).
+ *
+ * La lista canónica se declara en `lib/console-data.ts` y se reexporta acá con
+ * los nombres que este módulo ya venía exponiendo, exactamente igual que
+ * `SlaEtapaFiltro` justo abajo: el selector de la bandeja es un componente
+ * cliente y si importara el valor desde este archivo se llevaría el cliente de
+ * Airtable al bundle del navegador. Una lista, dos consumidores (RO-05).
+ */
+export type SlaFiltro = SlaAgregadoFiltro
 
-export const SLA_FILTROS_VALIDOS: SlaFiltro[] = ['verde', 'ambar', 'rojo']
+export const SLA_FILTROS_VALIDOS: SlaFiltro[] = SLA_AGREGADO_FILTROS
 
 /**
  * Traduce el vocabulario de la UI al que emite realmente la fórmula

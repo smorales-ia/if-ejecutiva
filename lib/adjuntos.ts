@@ -39,7 +39,23 @@ export interface Adjunto {
    * conserva junto a `urlDropbox` porque es lo que `Delete a file` espera.
    */
   pathDropbox: string
+  /**
+   * `estado_extraccion` (`fld54epvDJ7YdJIYD`) — avance de la lectura del
+   * documento con Claude API (§4 · RF-09). Lo escribe `AT-RF09-Trigger`, que
+   * hoy **falla al disparar el webhook**: el campo está vacío en todo adjunto
+   * nuevo (CI-002 abierta). Por eso la pestaña Adjuntos lo muestra sólo cuando
+   * trae valor, en vez de pintar un "idle" que nadie escribió.
+   */
+  estadoExtraccion: string
+  /**
+   * `true` si el archivo es una imagen. Se deriva de la extensión del nombre y
+   * no de `mime_type`, que está vacío en la mayoría de las filas. Sólo decide
+   * qué icono se pinta, así que un falso negativo es inocuo.
+   */
+  esImagen: boolean
 }
+
+const EXTENSIONES_IMAGEN = /\.(jpe?g|png|gif|webp|bmp|heic|tiff?)$/i
 
 type RawFields = {
   nombre_archivo?: string
@@ -49,6 +65,7 @@ type RawFields = {
   tamanio_kb?: number
   hash_md5?: string
   requerido_por_ejecutiva?: boolean
+  estado_extraccion?: string
   solicitud?: string[]
 }
 
@@ -110,6 +127,7 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
       'tamanio_kb',
       'hash_md5',
       'requerido_por_ejecutiva',
+      'estado_extraccion',
       'solicitud',
     ],
   })
@@ -119,9 +137,10 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
     .map((r) => {
       const tamano = formatTamanioKb(Number(r.fields.tamanio_kb ?? 0))
       const hace = relativeTime(r.createdTime)
+      const nombre = r.fields.nombre_archivo ?? 'Sin nombre'
       return {
         id: r.id,
-        nombre: r.fields.nombre_archivo ?? 'Sin nombre',
+        nombre,
         tipo: r.fields.tipo ?? '—',
         detalle: tamano ? `${tamano} · subido ${hace}` : `Subido ${hace}`,
         urlDropbox: urlNavegableDropbox(r.fields.url_dropbox),
@@ -129,6 +148,8 @@ export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Ad
         claveAdjunto: r.fields.clave_adjunto?.trim() ?? '',
         hashMd5: r.fields.hash_md5?.trim() ?? '',
         pathDropbox: r.fields.url_dropbox?.trim() ?? '',
+        estadoExtraccion: r.fields.estado_extraccion?.trim() ?? '',
+        esImagen: EXTENSIONES_IMAGEN.test(nombre),
       }
     })
 }

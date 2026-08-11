@@ -52,8 +52,9 @@ function mapContacto(id: string, f: RawFields): ContactoVisita {
  * resuelve al **primary field** de la tabla destino — no al record ID (E-076 y
  * `schema-airtable.md` §137). El primary de `TX_Solicitudes` es
  * `codigo_solicitud`, funcionalmente idéntico a `codigo_ext`, así que se filtra
- * por `codigoExt`. El molde sigue siendo `fetchEventosPorSolicitud`
- * (`lib/eventos.ts`), corrigiendo ese detalle.
+ * por `codigoExt`. El molde sigue siendo `fetchEventosPorSolicitud`, que hoy
+ * vive en `lib/historial-airtable.ts` — el `lib/eventos.ts` original se retiró
+ * al cablear la pestaña Historial contra `A_Eventos` + `A_Cambios`.
  *
  * Degradación silenciosa: si Airtable falla, se loguea y se devuelven las
  * solicitudes intactas (con el `contactosVisita: []` que ya trae `mapRecord`),

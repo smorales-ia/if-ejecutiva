@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Search,
   SlidersHorizontal,
   X,
 } from "lucide-react"
@@ -26,11 +25,12 @@ import {
   SLABadge,
   StateBadge,
 } from "@/components/console/status-badges"
-import { useDebounce } from "@/lib/use-debounce"
 import {
   ESTADO_LABELS,
   PRIORIDAD,
   PRIORIDAD_LABELS,
+  SLA_AGREGADO_FILTROS,
+  SLA_AGREGADO_FILTRO_LABELS,
   SLA_ETAPA_FILTROS,
   SLA_ETAPA_FILTRO_LABELS,
   type EstadoSolicitud,
@@ -75,6 +75,12 @@ const CLAVES_FILTRO = [
   "tasador",
   "estado",
   "prioridad",
+  // Los dos relojes de §5.2, cada uno con su clave: `sla` es el agregado en
+  // días (RF-08) y `sla_etapa` el de la etapa del workflow (RF-53). Conviven y
+  // no se sustituyen. `sla` faltaba en esta lista aunque el backend ya lo
+  // soportaba, así que un enlace con `?sla=rojo` —el del indicador del header—
+  // recortaba la lista sin que el panel lo mostrara ni ofreciera limpiarlo.
+  "sla",
   "sla_etapa",
   "desde",
   "hasta",
@@ -85,6 +91,7 @@ export function SolicitudList({
   solicitudes,
   selectedId,
   onSelect,
+  onSolicitudCreada,
   vistaActiva,
   total,
   page,
@@ -95,6 +102,11 @@ export function SolicitudList({
   solicitudes: Solicitud[]
   selectedId: string
   onSelect: (id: string) => void
+  /** Alta confirmada por el servidor. Lo maneja `ConsoleShell` (Tarea 1). */
+  onSolicitudCreada?: (
+    solicitudId: string | null,
+    codigoExt: string | null,
+  ) => void
   vistaActiva: Vista
   total: number
   page: number
@@ -145,18 +157,6 @@ export function SolicitudList({
     [router, pathname, searchParams]
   )
 
-  // ── Buscador con debounce (sin deps externas) ──
-  const qParam = get("q")
-  const [qLocal, setQLocal] = React.useState(qParam)
-  const qDebounced = useDebounce(qLocal, 300)
-  React.useEffect(() => {
-    setQLocal(qParam)
-  }, [qParam])
-  React.useEffect(() => {
-    if (qDebounced !== qParam) updateParams({ q: qDebounced || null })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qDebounced])
-
   // ── Contadores por vista ──
   // Los contadores son globales por vista y no aplican los filtros activos —
   // esa parte no cambia. Lo que sí cambió (deuda D-01 · ítem 7) es *cuándo* se
@@ -199,7 +199,9 @@ export function SolicitudList({
   const filtrosActivos = CLAVES_FILTRO.some((k) => !!get(k))
 
   function limpiarFiltros() {
-    setQLocal("")
+    // `q` sigue en CLAVES_FILTRO aunque el input viva en el header: es un
+    // filtro del conjunto de resultados y "Limpiar filtros" tiene que dejar la
+    // lista sin recortar. El input del header se realinea solo al leer la URL.
     updateParams(Object.fromEntries(CLAVES_FILTRO.map((k) => [k, null])))
   }
 
@@ -207,35 +209,9 @@ export function SolicitudList({
 
   return (
     <div className="flex h-full w-full flex-col border-r border-border bg-card">
-      {/* Buscador global */}
-      <div className="px-3 pt-3">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={qLocal}
-            onChange={(e) => setQLocal(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") updateParams({ q: qLocal || null })
-            }}
-            placeholder="Buscar por código VP-AAAA-NNNN, RUT o dirección"
-            className="h-9 w-full rounded-md border border-input bg-background pl-8 pr-8 text-sm outline-none focus-visible:border-ring"
-          />
-          {qLocal && (
-            <button
-              type="button"
-              onClick={() => {
-                setQLocal("")
-                updateParams({ q: null })
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="Limpiar búsqueda"
-            >
-              <X className="size-4" />
-            </button>
-          )}
-        </div>
-      </div>
+      {/* El buscador vive en el header (`BuscadorSolicitudes`), no acá: había
+          dos inputs en pantalla y el del header no buscaba. Ambos escriben el
+          mismo `?q=`, así que "Limpiar filtros" de abajo sigue limpiándolo. */}
 
       {/* Tabs de vista con contadores */}
       <div className="flex flex-wrap gap-1 px-3 pt-3">
@@ -353,9 +329,21 @@ export function SolicitudList({
               }))}
               onChange={(v) => updateParams({ prioridad: v })}
             />
-            {/* Reloj por etapa (RF-53). Separado de `?sla=`, que sigue
-                significando el agregado en días: son dos relojes que conviven y
-                no se sustituyen (§5.2). */}
+            {/* Los dos relojes de §5.2, uno al lado del otro. El agregado
+                (RF-08) mide el plazo total comprometido con el cliente; el de
+                etapa (RF-53) mide el tramo del workflow en curso. Van juntos
+                para que se lean como lo que son —dos lecturas distintas— y no
+                como dos nombres de lo mismo. */}
+            <FilterSelect
+              label="SLA total"
+              value={get("sla")}
+              placeholder="Todos"
+              options={SLA_AGREGADO_FILTROS.map((t) => ({
+                value: t,
+                label: SLA_AGREGADO_FILTRO_LABELS[t],
+              }))}
+              onChange={(v) => updateParams({ sla: v })}
+            />
             <FilterSelect
               label="Etapa SLA"
               value={get("sla_etapa")}
@@ -399,7 +387,7 @@ export function SolicitudList({
           </div>
         )}
 
-        <NewRequestSheet />
+        <NewRequestSheet onCreada={onSolicitudCreada} />
       </div>
 
       <Separator />

@@ -1,0 +1,181 @@
+import { listRecords } from '@/lib/airtable-client'
+import {
+  fundirHistorial,
+  iconoDeEvento,
+  tituloDeCambio,
+  tituloDeEvento,
+  type ItemHistorial,
+} from '@/lib/historial'
+import { relativeTime } from '@/lib/solicitudes'
+
+// Verificadas vía MCP 2026-07-04 y re-verificadas vía REST 11-ago-2026.
+export const A_EVENTOS = 'tblMKmDg2KrO5fMn8'
+export const A_CAMBIOS = 'tbl6Yd0c7MRqNeC0x'
+
+/** Nombre de la tabla tal como `A_Cambios.tabla_origen` lo escribe. */
+const TABLA_ORIGEN_SOLICITUDES = 'TX_Solicitudes'
+
+type EventoFields = {
+  tipo_evento?: string
+  descripcion?: string
+  actor?: string
+  actor_nombre?: string
+  timestamp?: string
+}
+
+type CambioFields = {
+  tabla_origen?: string
+  registro_id?: string
+  campo_modificado?: string
+  valor_anterior?: string
+  valor_nuevo?: string
+  modificado_por_email?: string
+  razon_cambio?: string
+  timestamp?: string
+}
+
+function escapar(valor: string): string {
+  return valor.replace(/"/g, '\\"')
+}
+
+/**
+ * Quién hizo la acción, en algo que se le pueda mostrar a una persona.
+ *
+ * `A_Eventos.actor` trae el **clerk user id** crudo (`user_3GBF4Jp…`) en las 50
+ * filas que lo tienen pobladas, y `actor_nombre` está vacío en las 66 — o sea,
+ * en toda la tabla. Mostrar el id sería exponer jerga técnica (§6.1), así que se
+ * omite el autor cuando lo único disponible es un identificador.
+ *
+ * Resolver el id a nombre exigiría una lectura extra de `AUTH_Usuarios` por cada
+ * evento; queda pendiente para cuando los escenarios Make empiecen a poblar
+ * `actor_nombre`, que es donde corresponde que viva el dato.
+ */
+function autorLegible(valor: string | undefined): string | undefined {
+  const v = valor?.trim()
+  if (!v) return undefined
+  if (/^user_[A-Za-z0-9]+$/.test(v)) return undefined
+  return v
+}
+
+/**
+ * Eventos de `A_Eventos` para una solicitud, ya mapeados al riel.
+ *
+ * ⚠ Recibe el **código** (`VP-2026-0054`), no el record ID. `solicitud` es un
+ * campo Link y dentro de un `filterByFormula` un link se evalúa contra el
+ * *primary field* de la tabla destino —que en `TX_Solicitudes` es
+ * `codigo_solicitud`— nunca contra el record ID (E-076/E-077). Interpolar un
+ * `rec…` acá devuelve **cero filas siempre**, sin error: el historial se ve
+ * vacío y es indistinguible de "no hay eventos".
+ */
+export async function fetchEventosPorSolicitud(
+  codigoSolicitud: string
+): Promise<ItemHistorial[]> {
+  // Sin código no hay filtro posible: devolver [] es preferible a emitir una
+  // fórmula con FIND("") que matchea todas las filas de A_Eventos.
+  if (!codigoSolicitud || codigoSolicitud.includes('"')) return []
+
+  // Delimitado con comas a ambos lados para exigir match de token exacto: un
+  // FIND suelto haría que "VP-2026-0054" matchee dentro de "VP-2026-00541" el
+  // día que el correlativo pase de 4 dígitos.
+  const formula = `FIND(",${codigoSolicitud},", "," & ARRAYJOIN({solicitud}, ",") & ",") > 0`
+
+  const records = await listRecords<EventoFields>(A_EVENTOS, {
+    cellFormat: 'string',
+    timeZone: 'America/Santiago',
+    userLocale: 'es-CL',
+    filterByFormula: formula,
+    'sort[0][field]': 'timestamp',
+    'sort[0][direction]': 'desc',
+    fields: ['tipo_evento', 'descripcion', 'actor', 'actor_nombre', 'timestamp'],
+  })
+
+  return records.map((r) => ({
+    id: r.id,
+    titulo: tituloDeEvento(r.fields.descripcion, r.fields.tipo_evento),
+    autor: autorLegible(r.fields.actor_nombre) ?? autorLegible(r.fields.actor),
+    // `timestamp` llega formateado por `cellFormat: 'string'`, así que no sirve
+    // para ordenar; `createdTime` es ISO y siempre viene. Las filas de esta
+    // tabla son append-only, de modo que ambos coinciden en la práctica.
+    timestamp: r.createdTime,
+    hace: relativeTime(r.createdTime),
+    origen: 'evento' as const,
+    icono: iconoDeEvento(r.fields.tipo_evento),
+  }))
+}
+
+/**
+ * Cambios auditados de `A_Cambios` para una solicitud.
+ *
+ * ⚠ A diferencia de `A_Eventos`, esta tabla **no tiene campo Link a la
+ * solicitud**: la referencia vive en `registro_id` (`singleLineText`) junto a
+ * `tabla_origen`, porque `A_Cambios` audita varias tablas —hoy hay filas de
+ * `TX_Solicitudes` y de `C_ReglasNegocio`—. Por eso el filtro es igualdad de
+ * texto contra el **record ID**, y no la traducción a código que exige
+ * `A_Eventos`. Filtrar sólo por `registro_id` sin `tabla_origen` funcionaría hoy
+ * por la unicidad de los `rec…`, pero deja de expresar la intención en cuanto
+ * se audite otra tabla.
+ */
+export async function fetchCambiosPorSolicitud(
+  solicitudId: string
+): Promise<ItemHistorial[]> {
+  if (!solicitudId || solicitudId.includes('"')) return []
+
+  const formula = `AND({tabla_origen}="${TABLA_ORIGEN_SOLICITUDES}",{registro_id}="${escapar(solicitudId)}")`
+
+  const records = await listRecords<CambioFields>(A_CAMBIOS, {
+    filterByFormula: formula,
+    'sort[0][field]': 'timestamp',
+    'sort[0][direction]': 'desc',
+    fields: [
+      'tabla_origen',
+      'registro_id',
+      'campo_modificado',
+      'valor_anterior',
+      'valor_nuevo',
+      'modificado_por_email',
+      'razon_cambio',
+      'timestamp',
+    ],
+  })
+
+  return records.map((r) => ({
+    id: r.id,
+    titulo: tituloDeCambio(
+      r.fields.campo_modificado,
+      r.fields.valor_anterior,
+      r.fields.valor_nuevo
+    ),
+    autor: autorLegible(r.fields.modificado_por_email),
+    timestamp: r.fields.timestamp ?? r.createdTime,
+    hace: relativeTime(r.fields.timestamp ?? r.createdTime),
+    origen: 'cambio' as const,
+    icono: 'edit' as const,
+    detalle: r.fields.razon_cambio?.trim() || undefined,
+  }))
+}
+
+/**
+ * Timeline completo de §1.3.3: eventos + cambios, en un solo riel cronológico.
+ *
+ * Las dos lecturas son independientes, así que corren en paralelo. Una lectura
+ * que falle **no** degrada a lista vacía: se propaga, porque un historial
+ * incompleto que se ve completo es peor que un error visible — la Ejecutiva no
+ * tendría forma de saber que le falta la mitad de la secuencia.
+ *
+ * Fuera de alcance, y documentado para que no se busque: los **eventos de
+ * coordinación de la visita** que §1.3.3 describe requieren
+ * `TX_CoordinacionVisita`, que no existe en la base; y las **descargas** de
+ * documentos no se registran en ninguna tabla (`A_Accesos` existe pero nadie la
+ * escribe). Ninguno de los dos es una omisión de este módulo.
+ */
+export async function fetchHistorialSolicitud(
+  solicitudId: string,
+  codigoSolicitud: string
+): Promise<ItemHistorial[]> {
+  const [eventos, cambios] = await Promise.all([
+    fetchEventosPorSolicitud(codigoSolicitud),
+    fetchCambiosPorSolicitud(solicitudId),
+  ])
+
+  return fundirHistorial(eventos, cambios)
+}

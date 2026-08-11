@@ -375,6 +375,37 @@ export const SLA_ETAPA_FILTRO_LABELS: Record<SlaEtapaFiltro, string> = {
 }
 
 /**
+ * Valores admitidos por `?sla=` — el semáforo **agregado** en días (RF-08 ·
+ * RN-04), distinto del de etapa de arriba. Son los dos relojes de §5.2 y
+ * conviven: uno mide el plazo total comprometido con el cliente y el otro el
+ * tramo del workflow en curso.
+ *
+ * Vive acá por la misma razón que `SLA_ETAPA_FILTROS`: lo consumen el selector
+ * de la bandeja (cliente) y `buildFiltrosClauses` (servidor), y declararlo dos
+ * veces es lo que RO-05 prohíbe. `lib/solicitudes.ts` lo traduce a los literales
+ * que la fórmula `semaforo_sla` emite de verdad —"OK", "EN RIESGO", "VENCIDO"—,
+ * que no son estas etiquetas (RO-13).
+ *
+ * A diferencia del filtro por etapa, acá sí entra `verde`: el agregado sirve
+ * también para confirmar qué va en plazo, que es una pregunta que la ejecutiva
+ * se hace al revisar su cartera.
+ */
+export type SlaAgregadoFiltro = "verde" | "ambar" | "rojo"
+
+export const SLA_AGREGADO_FILTROS: SlaAgregadoFiltro[] = [
+  "verde",
+  "ambar",
+  "rojo",
+]
+
+/** Nombran la condición, no el color — mismo criterio que las de etapa. */
+export const SLA_AGREGADO_FILTRO_LABELS: Record<SlaAgregadoFiltro, string> = {
+  verde: "En plazo",
+  ambar: "En riesgo",
+  rojo: "Vencida",
+}
+
+/**
  * Reloj por etapa de una solicitud (RF-53 · §5.2.4), tal como lo expone el
  * read-layer server-side. Opcional en `Solicitud` para no romper los 8 mocks de
  * este archivo ni el formulario de alta, que no lo conocen.
@@ -1619,55 +1650,21 @@ export function mockAntecedentesLegales(s: Solicitud): AntecedentesLegales {
   }
 }
 
-export interface DecisionMotor {
-  reglaGanadora: string
-  descripcion: string
-  candidatasDescartadas: { regla: string; motivo: string }[]
-}
-
-export function mockDecisionMotor(s: Solicitud): DecisionMotor {
-  return {
-    reglaGanadora: "R-07 · Cobertura territorial + menor carga",
-    descripcion: `Asignación sugerida por cobertura de ${s.comuna} y balance de carga entre tasadores disponibles.`,
-    candidatasDescartadas: [
-      { regla: "R-02 · Round robin puro", motivo: "No respeta cobertura territorial" },
-      { regla: "R-11 · Especialidad comercial", motivo: "Tipo de informe no coincide" },
-    ],
-  }
-}
-
-export interface VersionInforme {
-  numero: number
-  fechaEnvio: string
-  valorUf: string
-  motivoCambio: string
-  archivos: { id: string; nombre: string; esImagen: boolean }[]
-}
-
-export function mockVersionesInforme(s: Solicitud): VersionInforme[] {
-  return [
-    {
-      numero: 2,
-      fechaEnvio: "26 jun 2026 · 14:20",
-      valorUf: s.montoUf,
-      motivoCambio: "Ajuste de superficie construida tras visita",
-      archivos: [
-        { id: `${s.id}-v2-1`, nombre: "informe_tasacion_v2.pdf", esImagen: false },
-        { id: `${s.id}-v2-2`, nombre: "fotos_fachada.jpg", esImagen: true },
-      ],
-    },
-    {
-      numero: 1,
-      fechaEnvio: "24 jun 2026 · 09:05",
-      valorUf: s.montoUf,
-      motivoCambio: "Versión inicial",
-      archivos: [
-        { id: `${s.id}-v1-1`, nombre: "informe_tasacion_v1.pdf", esImagen: false },
-        { id: `${s.id}-v1-2`, nombre: "certificado_avaluo.pdf", esImagen: false },
-      ],
-    },
-  ]
-}
+// `DecisionMotor` / `mockDecisionMotor` y `VersionInforme` /
+// `mockVersionesInforme` vivían aquí y se retiraron al cablear la pestaña Datos
+// y la pestaña Adjuntos contra datos reales:
+//
+// - La decisión del motor sale de `A_DecisionesMotor` (`lib/decision-motor.ts` ·
+//   `lib/decision-motor-airtable.ts`). El mock describía una asignación de
+//   tasador por cobertura territorial y carga, que es AT02 — fuera del alcance
+//   de IF-02 desde v1.9 (§1.6 · §6.2 · REGLA A · D-15). Además de muerto,
+//   contradecía la spec.
+// - Las versiones del informe salen de `TX_DocumentosGenerados`
+//   (`lib/documentos-generados.ts`). El mock agrupaba adjuntos por versión, algo
+//   que `TX_Adjuntos` no soporta porque no tiene campo de versión.
+//
+// No se reemplazan por nada en este archivo: los tipos nuevos viven junto a su
+// lector, no en el módulo de mocks.
 
 /** Cuerpo del correo de asignación (SC13) simulado — refleja plantilla real en Airtable. */
 export function mockEmailAsignacion(s: Solicitud, tasador: string): string {

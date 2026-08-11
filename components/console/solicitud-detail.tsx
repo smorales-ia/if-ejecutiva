@@ -52,7 +52,6 @@ import { cn } from "@/lib/utils"
 import {
   ESTADO_CORREO_CLASSES,
   ESTADO_CORREO_LABELS,
-  HISTORIAL,
   SLA_CLASSES,
   mockAntecedentesLegales,
   CANALES_ORIGEN,
@@ -61,13 +60,10 @@ import {
   ROLES_CONTACTO_VISITA,
   etiquetaCatalogo,
   mockDatosSii,
-  mockDecisionMotor,
   mockEmailAsignacion,
-  mockVersionesInforme,
   toneDeEtapa,
   type EstadoCorreo,
   type EstadoSolicitud,
-  type EventoHistorial,
   type SlaTone,
   type SlaTonoEtapa,
   type Solicitud,
@@ -87,14 +83,48 @@ import {
   useCronologiaSla,
   type EstadoCronologia,
 } from "@/lib/use-cronologia-sla"
+import {
+  MSG_ERROR_DECISION,
+  MSG_SIN_DECISION,
+} from "@/lib/decision-motor"
+import {
+  useDecisionMotor,
+  type EstadoDecisionMotor,
+} from "@/lib/use-decision-motor"
+import {
+  MSG_ERROR_HISTORIAL,
+  MSG_SIN_HISTORIAL,
+  type IconoHistorial,
+  type ItemHistorial,
+} from "@/lib/historial"
+import {
+  useHistorialSolicitud,
+  type EstadoHistorial,
+} from "@/lib/use-historial-solicitud"
+import {
+  MSG_ERROR_VERSIONES,
+  MSG_SIN_VERSIONES,
+} from "@/lib/documentos-generados"
+import {
+  useVersionesInforme,
+  type EstadoVersionesInforme,
+} from "@/lib/use-versiones-informe"
+import {
+  useAdjuntosSolicitud,
+  type EstadoAdjuntos,
+} from "@/lib/use-adjuntos-solicitud"
 
-const historialIcons = {
+const historialIcons: Record<
+  IconoHistorial,
+  React.ComponentType<{ className?: string }>
+> = {
   check: CheckCircle2,
   plus: PlusCircle,
   alert: AlertTriangle,
   eye: Eye,
   mail: Mail,
   upload: Download,
+  edit: Pencil,
 }
 
 const SIN_TASADOR = "Sin asignar"
@@ -105,6 +135,31 @@ const ES_RECORD_ID = /^rec[a-zA-Z0-9]{14}$/
 const MSG_RED =
   "No pudimos completar la acción. Intenta nuevamente en unos segundos."
 const MSG_GUARDADO = "Cambios guardados en la solicitud."
+
+/** Mismo literal que usa el sheet de documentos, para no decirlo de dos formas. */
+const MSG_ERROR_ADJUNTOS =
+  "No pudimos cargar los adjuntos de esta solicitud. Intenta nuevamente en unos segundos."
+
+/**
+ * `TX_Adjuntos.estado_extraccion` → etiqueta de pantalla (§4 · RF-09).
+ *
+ * Los siete valores son los del `singleSelect` real. Vive acá y no en
+ * `lib/adjuntos.ts` porque es puramente de presentación y tiene un solo
+ * consumidor: no hay ningún derivado de servidor con el que pudiera divergir.
+ */
+const EXTRACCION_LABELS: Record<string, string> = {
+  idle: "Sin procesar",
+  extrayendo: "Extrayendo datos",
+  listo: "Datos extraídos",
+  error: "Error de extracción",
+  skipped: "Omitido",
+  no_corresponde: "No corresponde",
+  delegado_visador: "Delegado al visador",
+}
+
+function etiquetaExtraccion(valor: string): string {
+  return EXTRACCION_LABELS[valor] ?? valor.replace(/_/g, " ")
+}
 
 /** Evalúa RN-44: datos mínimos para poder asignar tasador. */
 function datosMinimosFaltantes(s: Solicitud): string[] {
@@ -148,9 +203,11 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   const [fechaAsignacion, setFechaAsignacion] = React.useState(
     s.fechaAsignacion ?? "",
   )
-  const [historialExtra, setHistorialExtra] = React.useState<EventoHistorial[]>(
-    [],
-  )
+  // Entradas optimistas del historial: las que la UI muestra en el acto tras
+  // asignar, antes de que SC-Asignar haya escrito sus filas en A_Eventos. Se
+  // descartan solas en cuanto la relectura trae eventos de servidor iguales o
+  // más nuevos — ver `historialCompleto`.
+  const [historialExtra, setHistorialExtra] = React.useState<ItemHistorial[]>([])
   const [dialogOpen, setDialogOpen] = React.useState(false)
   const [docsOpen, setDocsOpen] = React.useState(false)
   const [emailOpen, setEmailOpen] = React.useState(false)
@@ -160,6 +217,26 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   // tiene que verse sin navegar. En la demo (`/`) el id no es un record id de
   // Airtable, así que no se dispara la lectura.
   const cronologiaSla = useCronologiaSla(s.id, ES_RECORD_ID.test(s.id))
+
+  // Decisión del motor de reglas (AT01 · §5.1). Se lee junto al resto del
+  // detalle y no al entrar a la pestaña Datos, que es donde se muestra: la
+  // pestaña es la que abre por defecto, así que diferirlo sólo agregaría un
+  // salto visual. En la demo (`/`) el id no es un record id y no se dispara.
+  const decisionMotor = useDecisionMotor(s.id, ES_RECORD_ID.test(s.id))
+
+  // Timeline de §1.3.3: A_Eventos + A_Cambios reales. Sustituye al mock
+  // `HISTORIAL` de `lib/console-data.ts`, que pintaba siempre los mismos tres
+  // eventos de ejemplo en toda solicitud.
+  const historial = useHistorialSolicitud(s.id, ES_RECORD_ID.test(s.id))
+
+  // Pestaña Adjuntos (§1.3.4). Las dos lecturas se activan sólo con la pestaña
+  // abierta: no alimentan ningún aviso fuera de ella, y `fetchAdjuntosPorSolicitud`
+  // recorre la tabla entera en cada llamada, así que dispararla en cada
+  // selección de la lista sería pagar caro por nada (ver la nota de 429 en
+  // `app/api/solicitudes/[id]/adjuntos/route.ts`).
+  const enAdjuntos = tab === "adjuntos" && ES_RECORD_ID.test(s.id)
+  const adjuntosSolicitud = useAdjuntosSolicitud(s.id, enAdjuntos)
+  const versionesInforme = useVersionesInforme(s.id, enAdjuntos)
 
   // Resetea el estado local cuando cambia la solicitud seleccionada.
   const prevId = React.useRef(s.id)
@@ -230,9 +307,13 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
 
     setDatos(actualizada)
     setEditando(false)
-    // El evento `datos_modificados` lo escribe SC-Edicion en A_Eventos; el
-    // historial se refresca desde el servidor, no se fabrica en el cliente.
+    // El evento `datos_modificados` y las filas de A_Cambios las escribe
+    // SC-Edicion; el historial se refresca desde el servidor, no se fabrica en
+    // el cliente. `router.refresh()` recarga el Server Component (la lista y la
+    // ficha); `historial.recargar()` relee el timeline, que es un fetch cliente
+    // y por tanto no entra en ese refresh.
     router.refresh()
+    historial.recargar()
     toast.success(MSG_GUARDADO, { duration: 3000 })
   }
 
@@ -273,13 +354,15 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       }
     }
 
-    const ahora = new Date().toLocaleString("es-CL", {
+    const instante = new Date()
+    const ahora = instante.toLocaleString("es-CL", {
       day: "2-digit",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     })
+    const iso = instante.toISOString()
     setTasador(nuevo)
     if (estado === "creada") setEstado("asignada")
     setFechaAsignacion(ahora)
@@ -289,7 +372,9 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       {
         id: `email-${Date.now()}`,
         titulo: `Correo de asignación enviado al tasador · Asunto: Nueva asignación ${datos.codigoExt}`,
+        timestamp: iso,
         hace: "hace unos segundos",
+        origen: "evento",
         icono: "mail",
         detalle: mockEmailAsignacion(datos, nuevo),
       },
@@ -297,12 +382,19 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
         id: `asig-${Date.now()}`,
         titulo: `Asignación manual de tasador · ${nuevo}${
           nota ? ` · Nota: ${nota}` : ""
-        } · por María Espinoza`,
+        }`,
+        timestamp: iso,
         hace: "hace unos segundos",
+        origen: "evento",
         icono: "check",
       },
       ...prev,
     ])
+
+    // SC-Asignar escribe los dos eventos reales en A_Eventos. Se relee para
+    // quedarse con esas filas —id y timestamp de servidor— en vez de con las
+    // fabricadas acá, que desaparecen solas cuando la relectura las alcanza.
+    historial.recargar()
 
     toast.success(`Solicitud asignada a ${nuevo}`, { duration: 3500 })
   }
@@ -313,7 +405,9 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       {
         id: `reenvio-${Date.now()}`,
         titulo: `Reenvío de correo de asignación a ${tasador}`,
+        timestamp: new Date().toISOString(),
         hace: "hace unos segundos",
+        origen: "evento",
         icono: "mail",
         detalle: mockEmailAsignacion(datos, tasador),
       },
@@ -322,7 +416,19 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
     toast.success("Correo reenviado al tasador.", { duration: 3000 })
   }
 
-  const historialCompleto = [...historialExtra, ...HISTORIAL]
+  // Las entradas optimistas viven sólo hasta que el servidor confirma.
+  //
+  // `useHistorialSolicitud` devuelve la lista ordenada de más reciente a más
+  // antigua, así que `items[0]` es el evento de servidor más nuevo. Si ese
+  // instante alcanza al de una entrada optimista, las filas que SC-Asignar
+  // escribió ya están leídas y mantener la copia fabricada en el navegador sólo
+  // duplicaría el renglón. La regla es una comparación, no un temporizador: no
+  // hay ventana que adivinar ni carrera que perder.
+  const masNuevoDelServidor = historial.items[0]?.timestamp ?? ""
+  const optimistasVigentes = historialExtra.filter(
+    (e) => e.timestamp > masNuevoDelServidor,
+  )
+  const historialCompleto = [...optimistasVigentes, ...historial.items]
 
   // E-3 · Alerta de etapa desbordada.
   //
@@ -451,6 +557,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
                 estadoCorreo={estadoCorreo}
                 fechaAsignacion={fechaAsignacion}
                 soloLectura={soloLectura}
+                motor={decisionMotor}
                 onVerEmail={() => setEmailOpen(true)}
                 onReenviar={reenviarCorreo}
               />
@@ -459,13 +566,18 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
           <TabsContent value="historial">
             <HistorialTab
               eventos={historialCompleto}
+              estadoHistorial={historial}
               cronologia={cronologiaSla}
               tonoEtapaVigente={s.slaEtapa?.tono}
               numeroEtapaVigente={s.slaEtapa?.numero}
             />
           </TabsContent>
           <TabsContent value="adjuntos">
-            <AdjuntosTab solicitud={datos} />
+            <AdjuntosTab
+              solicitud={datos}
+              adjuntos={adjuntosSolicitud}
+              versiones={versionesInforme}
+            />
           </TabsContent>
         </div>
       </Tabs>
@@ -614,6 +726,7 @@ function DatosTab({
   estadoCorreo,
   fechaAsignacion,
   soloLectura,
+  motor,
   onVerEmail,
   onReenviar,
 }: {
@@ -623,13 +736,13 @@ function DatosTab({
   estadoCorreo: EstadoCorreo
   fechaAsignacion: string
   soloLectura: boolean
+  motor: EstadoDecisionMotor
   onVerEmail: () => void
   onReenviar: () => void
 }) {
   const esNuevo = s.tipoPropiedadNuevoUsado === "nuevo"
   const sii = mockDatosSii(s)
   const legales = mockAntecedentesLegales(s)
-  const motor = mockDecisionMotor(s)
   const tieneTasador = tasador !== SIN_TASADOR && tasador.trim() !== ""
 
   return (
@@ -1023,34 +1136,7 @@ function DatosTab({
 
       <Separator />
 
-      {/* Decisión del motor */}
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Decisión del motor de asignación
-        </h2>
-        <div className="rounded-lg border border-border bg-card p-3">
-          <p className="text-sm font-medium text-foreground">
-            {motor.reglaGanadora}
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {motor.descripcion}
-          </p>
-          <div className="mt-3 flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">
-              Reglas candidatas descartadas
-            </span>
-            {motor.candidatasDescartadas.map((c) => (
-              <div
-                key={c.regla}
-                className="flex flex-wrap items-center gap-x-2 text-xs"
-              >
-                <span className="font-medium text-foreground">{c.regla}</span>
-                <span className="text-muted-foreground">· {c.motivo}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <DecisionMotorSection estado={motor} />
 
       <Separator />
 
@@ -1118,17 +1204,127 @@ function DatosTab({
   )
 }
 
+/**
+ * Decisión del motor de reglas (§5.1 · AT01 · RF-22 · RN-19).
+ *
+ * ## Por qué ya no dice "motor de asignación"
+ *
+ * El bloque se llamaba "Decisión del motor de asignación" y su mock hablaba de
+ * cobertura territorial y balance de carga entre tasadores. Eso describía a
+ * AT02, que **está fuera del alcance de IF-02** desde v1.9 (§1.6 · §6.2 · REGLA
+ * A · D-15): en esta versión no hay asignación automática, la Ejecutiva asigna
+ * a mano y una sola vez. Lo que AT01 sí decide es plantilla, fórmulas y
+ * workflow — nunca un profesional. De ahí el nombre actual, que es el que usa
+ * §5.1, y de ahí que aquí no se muestre ni tasador ni visador.
+ *
+ * ## Los tres estados no se colapsan
+ *
+ * "Todavía no evaluó" y "no pudimos leer" se ven iguales si se pintan iguales,
+ * y significan cosas opuestas: la primera es el curso normal de una solicitud
+ * recién creada, la segunda es un fallo que hay que reintentar.
+ */
+function DecisionMotorSection({ estado }: { estado: EstadoDecisionMotor }) {
+  const { decision, cargando, error } = estado
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        Decisión del motor de reglas
+      </h2>
+
+      {cargando && (
+        <p className="text-sm text-muted-foreground">
+          Cargando la decisión del motor…
+        </p>
+      )}
+
+      {!cargando && error && (
+        <p className="text-sm text-muted-foreground">{MSG_ERROR_DECISION}</p>
+      )}
+
+      {!cargando && !error && !decision && (
+        <p className="text-sm text-muted-foreground">{MSG_SIN_DECISION}</p>
+      )}
+
+      {!cargando && !error && decision && (
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Regla aplicada</span>
+            <p className="text-sm font-medium text-foreground">
+              {decision.reglaGanadora}
+            </p>
+            <p className="text-sm text-muted-foreground">{decision.razon}</p>
+          </div>
+
+          {(decision.plantilla ||
+            decision.workflow ||
+            decision.formulas.length > 0) && (
+            <>
+              <Separator />
+              <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                <DataRow label="Plantilla del informe">
+                  {decision.plantilla ?? "—"}
+                </DataRow>
+                <DataRow label="Flujo de trabajo">
+                  {decision.workflow ?? "—"}
+                </DataRow>
+                <DataRow label="Fórmulas de cálculo">
+                  {decision.formulas.length > 0
+                    ? `${decision.formulas.length} fórmula${decision.formulas.length === 1 ? "" : "s"}`
+                    : "—"}
+                </DataRow>
+              </div>
+            </>
+          )}
+
+          {decision.candidatasDescartadas.length > 0 && (
+            <>
+              <Separator />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Reglas candidatas descartadas
+                </span>
+                {decision.candidatasDescartadas.map((c) => (
+                  <div
+                    key={c.nombre}
+                    className="flex flex-wrap items-baseline gap-x-2 text-xs"
+                  >
+                    <span className="font-medium text-foreground">
+                      {c.nombre}
+                    </span>
+                    <span className="text-muted-foreground">· {c.motivo}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {decision.evaluadaEl && (
+            <p className="text-xs text-muted-foreground">
+              Evaluada el {decision.evaluadaEl}
+            </p>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
 function HistorialTab({
   eventos,
+  estadoHistorial,
   cronologia,
   tonoEtapaVigente,
   numeroEtapaVigente,
 }: {
-  eventos: EventoHistorial[]
+  eventos: ItemHistorial[]
+  estadoHistorial: EstadoHistorial
   cronologia: EstadoCronologia
   tonoEtapaVigente?: SlaTonoEtapa
   numeroEtapaVigente?: EtapaCronologia["numero"]
 }) {
+  const { cargando, error } = estadoHistorial
+
   return (
     <div className="flex flex-col gap-6">
       <CronologiaEtapasSection
@@ -1141,22 +1337,58 @@ function HistorialTab({
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Historial de eventos
         </h2>
-        <ol className="flex flex-col">
-          {eventos.map((ev, idx) => {
-            const Icon = historialIcons[ev.icono]
-            return (
-              <HistorialItem
-                key={ev.id}
-                icono={Icon}
-                titulo={ev.titulo}
-                pie={ev.hace}
-                last={idx === eventos.length - 1}
-              >
-                {ev.detalle && <DetalleCorreo detalle={ev.detalle} />}
-              </HistorialItem>
-            )
-          })}
-        </ol>
+
+        {cargando && eventos.length === 0 && (
+          <p className="text-sm text-muted-foreground">Cargando el historial…</p>
+        )}
+
+        {/* Un fallo de lectura no puede parecerse a "esta solicitud no tiene
+            eventos": son estados visualmente idénticos y operativamente
+            opuestos. Mismo criterio que la cronología de arriba. */}
+        {!cargando && error && (
+          <p className="text-sm text-muted-foreground">{MSG_ERROR_HISTORIAL}</p>
+        )}
+
+        {!cargando && !error && eventos.length === 0 && (
+          <p className="text-sm text-muted-foreground">{MSG_SIN_HISTORIAL}</p>
+        )}
+
+        {eventos.length > 0 && (
+          <ol className="flex flex-col">
+            {eventos.map((ev, idx) => {
+              const Icon = historialIcons[ev.icono]
+              return (
+                <HistorialItem
+                  key={ev.id}
+                  icono={Icon}
+                  titulo={ev.titulo}
+                  subtitulo={ev.autor}
+                  pie={ev.hace}
+                  aside={
+                    // La procedencia se marca sólo en las filas de A_Cambios:
+                    // son ediciones campo a campo y sin la marca se confunden
+                    // con hitos del ciclo de vida. Los eventos no la llevan
+                    // porque son el caso corriente y etiquetarlos todos sería
+                    // ruido.
+                    ev.origen === "cambio" ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        Edición
+                      </span>
+                    ) : undefined
+                  }
+                  last={idx === eventos.length - 1}
+                >
+                  {ev.detalle && (
+                    <DetalleCorreo
+                      detalle={ev.detalle}
+                      sustantivo={ev.origen === "cambio" ? "motivo" : "correo"}
+                    />
+                  )}
+                </HistorialItem>
+              )
+            })}
+          </ol>
+        )}
       </section>
     </div>
   )
@@ -1365,8 +1597,21 @@ function HistorialItem({
   )
 }
 
-/** Desplegable del cuerpo del correo. Era parte de `HistorialItem` (E-1). */
-function DetalleCorreo({ detalle }: { detalle: string }) {
+/**
+ * Desplegable del detalle de una fila del historial. Era parte de
+ * `HistorialItem` (E-1).
+ *
+ * `sustantivo` existe porque la fila ya no siempre despliega un correo: las
+ * filas de `A_Cambios` despliegan la razón del cambio, y "Ver correo" sobre una
+ * razón de edición es simplemente falso.
+ */
+function DetalleCorreo({
+  detalle,
+  sustantivo = "correo",
+}: {
+  detalle: string
+  sustantivo?: string
+}) {
   const [abierto, setAbierto] = React.useState(false)
   return (
     <>
@@ -1378,7 +1623,7 @@ function DetalleCorreo({ detalle }: { detalle: string }) {
         <ChevronDown
           className={cn("size-3.5 transition-transform", abierto && "rotate-180")}
         />
-        {abierto ? "Ocultar correo" : "Ver correo"}
+        {abierto ? `Ocultar ${sustantivo}` : `Ver ${sustantivo}`}
       </button>
       {abierto && (
         <pre className="mt-2 max-w-xl overflow-auto rounded-lg border border-border bg-muted/40 p-3 text-xs leading-relaxed whitespace-pre-wrap text-foreground">
@@ -1389,62 +1634,234 @@ function DetalleCorreo({ detalle }: { detalle: string }) {
   )
 }
 
-function AdjuntosTab({ solicitud: s }: { solicitud: Solicitud }) {
-  const versiones = mockVersionesInforme(s)
+/**
+ * Pestaña Adjuntos (§1.3.4). Sólo lectura: toda alta, reemplazo y baja vive en
+ * el botón "Documentos y Adjuntos" de la barra de acciones (§1.3.1).
+ *
+ * ## Por qué son dos secciones y no una agrupación
+ *
+ * §1.3.4 pide agrupar los archivos por versión del informe (RN-56). Eso no se
+ * puede hacer sobre `TX_Adjuntos`: **no tiene ningún campo de versión**, y no
+ * es un olvido de schema —sus filas son antecedentes de *entrada* (certificados,
+ * planos, escrituras) que no pertenecen a ninguna versión del informe—. Las
+ * versiones son las filas de `TX_DocumentosGenerados`, que escribe el pipeline
+ * PDF.
+ *
+ * Forzar una sola lista agrupada obligaría a inventar a qué versión pertenece
+ * cada adjunto. Se muestran separadas: cada una dice la verdad de su tabla, y
+ * la de versiones tiene estado vacío honesto mientras el pipeline no genere
+ * nada — que es el caso de casi toda la cartera.
+ */
+function AdjuntosTab({
+  solicitud: s,
+  adjuntos,
+  versiones,
+}: {
+  solicitud: Solicitud
+  adjuntos: EstadoAdjuntos
+  versiones: EstadoVersionesInforme
+}) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 p-3">
         <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
-          Vista de sólo lectura, agrupada por versión del informe. Para cargar
-          documentos usa <strong>Documentos y Adjuntos</strong> en la barra de
-          acciones.
+          Vista de sólo lectura. Para cargar o eliminar documentos usa{" "}
+          <strong>Documentos y Adjuntos</strong> en la barra de acciones.
         </p>
       </div>
 
-      {versiones.map((v) => (
-        <section
-          key={v.numero}
-          className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Badge className="bg-brand/10 text-brand">
-                Versión {v.numero}
-              </Badge>
-              <span className="text-sm font-medium text-foreground">
-                {v.valorUf}
-              </span>
-            </div>
-            <span className="text-xs text-muted-foreground">{v.fechaEnvio}</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Motivo del cambio: {v.motivoCambio}
-          </p>
-          <ul className="flex flex-col gap-2">
-            {v.archivos.map((a) => {
-              const Icon = a.esImagen ? ImageIcon : FileText
-              return (
-                <li
-                  key={a.id}
-                  className="flex items-center gap-3 rounded-lg border border-border bg-background p-3"
-                >
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                    <Icon className="size-4" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+      <DocumentosSolicitudSection estado={adjuntos} />
+      <Separator />
+      <VersionesInformeSection estado={versiones} codigoExt={s.codigoExt} />
+    </div>
+  )
+}
+
+/** Los antecedentes cargados para la solicitud (`TX_Adjuntos`). */
+function DocumentosSolicitudSection({ estado }: { estado: EstadoAdjuntos }) {
+  const { adjuntos, cargando, error } = estado
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        Documentos de la solicitud ({adjuntos.length})
+      </h2>
+
+      {cargando && (
+        <p className="text-sm text-muted-foreground">Cargando los documentos…</p>
+      )}
+
+      {!cargando && error && (
+        <p className="text-sm text-muted-foreground">{MSG_ERROR_ADJUNTOS}</p>
+      )}
+
+      {!cargando && !error && adjuntos.length === 0 && (
+        <p className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+          Todavía no hay documentos cargados para esta solicitud.
+        </p>
+      )}
+
+      {!cargando && !error && adjuntos.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {adjuntos.map((a) => {
+            const Icon = a.esImagen ? ImageIcon : FileText
+            return (
+              <li
+                key={a.id}
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Icon className="size-4" />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="truncate text-sm font-medium text-foreground">
                     {a.nombre}
                   </span>
-                  <Button variant="outline" size="sm">
+                  <span className="text-xs text-muted-foreground">
+                    {a.detalle}
+                  </span>
+                </span>
+                {/* `estado_extraccion` sólo se pinta cuando trae valor: hoy está
+                    vacío en todo adjunto nuevo porque AT-RF09-Trigger falla al
+                    disparar el webhook (CI-002). Pintar un "idle" que nadie
+                    escribió sería afirmar que el pipeline corrió. */}
+                {a.estadoExtraccion && (
+                  <Badge variant="secondary" className="shrink-0">
+                    {etiquetaExtraccion(a.estadoExtraccion)}
+                  </Badge>
+                )}
+                {/* Sin `url_dropbox` no hay a dónde ir: un botón que no navega
+                    es peor que la ausencia del botón. */}
+                {a.urlDropbox ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    // §4.4: `render` prop + `nativeButton={false}`, nunca
+                    // `asChild`. El `false` es obligatorio al renderizar algo
+                    // que no es un `<button>`: sin él, Base UI sigue tratando
+                    // al elemento como botón nativo.
+                    nativeButton={false}
+                    render={
+                      <a
+                        href={a.urlDropbox}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    }
+                  >
                     <Download data-icon="inline-start" />
-                    Descargar
+                    Abrir
                   </Button>
-                </li>
-              )
-            })}
-          </ul>
-        </section>
-      ))}
-    </div>
+                ) : (
+                  <Badge variant="secondary" className="shrink-0">
+                    Sin enlace
+                  </Badge>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+/** Los PDF emitidos por el pipeline (`TX_DocumentosGenerados` · RN-56). */
+function VersionesInformeSection({
+  estado,
+  codigoExt,
+}: {
+  estado: EstadoVersionesInforme
+  codigoExt: string
+}) {
+  const { versiones, cargando, error } = estado
+
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        Versiones del informe
+      </h2>
+
+      {cargando && (
+        <p className="text-sm text-muted-foreground">Cargando las versiones…</p>
+      )}
+
+      {!cargando && error && (
+        <p className="text-sm text-muted-foreground">{MSG_ERROR_VERSIONES}</p>
+      )}
+
+      {!cargando && !error && versiones.length === 0 && (
+        <p className="rounded-lg border border-dashed border-border bg-card p-4 text-sm text-muted-foreground">
+          {MSG_SIN_VERSIONES}
+        </p>
+      )}
+
+      {!cargando && !error && versiones.length > 0 && (
+        <ul className="flex flex-col gap-2">
+          {versiones.map((v) => (
+            <li
+              key={v.id}
+              className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-brand/10 text-brand">
+                    Versión {v.numero || "—"}
+                  </Badge>
+                  {v.vigente && (
+                    <Badge variant="secondary">Versión vigente</Badge>
+                  )}
+                </div>
+                {v.generadoEl && (
+                  <span className="text-xs text-muted-foreground">
+                    {v.generadoEl}
+                  </span>
+                )}
+              </div>
+
+              {v.motivoCambio && (
+                <p className="text-xs text-muted-foreground">
+                  Motivo del cambio: {v.motivoCambio}
+                </p>
+              )}
+
+              <div className="flex items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <FileText className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                  Informe {codigoExt} · v{v.numero || "—"}
+                  {v.paginas ? ` · ${v.paginas} págs.` : ""}
+                </span>
+                {v.urlPdf ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    nativeButton={false}
+                    render={
+                      <a
+                        href={v.urlPdf}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      />
+                    }
+                  >
+                    <Download data-icon="inline-start" />
+                    Abrir PDF
+                  </Button>
+                ) : (
+                  <Badge variant="secondary" className="shrink-0">
+                    Sin enlace
+                  </Badge>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }

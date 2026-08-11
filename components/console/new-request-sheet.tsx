@@ -56,6 +56,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   FileUploadZone,
   type ArchivoSubido,
 } from "@/components/console/file-upload-zone"
@@ -329,6 +334,21 @@ function Collapsible({
 }
 
 /** Radio en formato de tarjetas seleccionables. */
+/**
+ * Tarjetas de radio del wizard.
+ *
+ * `disabled` + `motivoDeshabilitado` existen para el modo "En base a documentos
+ * adjuntos" de la Fase 1 (§1.5.0): la opción se muestra pero no se puede
+ * elegir mientras RF-09 no esté provisionado. Se deshabilita, no se oculta,
+ * porque el modo está especificado y volverá; esconderlo haría que la pantalla
+ * contradijera al spec en vez de informar de una limitación temporal.
+ *
+ * El `<button disabled>` no emite eventos de puntero, así que el `Tooltip` no
+ * dispararía nunca colgado del propio botón. Por eso el trigger es el `<span>`
+ * envolvente —mismo patrón que `AssignPrimaryButton` en `solicitud-detail.tsx`,
+ * donde el botón deshabilitado lleva además `pointer-events-none` para que el
+ * hover lo capture el contenedor.
+ */
 function RadioCards({
   value,
   onChange,
@@ -336,22 +356,34 @@ function RadioCards({
 }: {
   value: string
   onChange: (v: string) => void
-  options: { value: string; label: string; description?: string }[]
+  options: {
+    value: string
+    label: string
+    description?: string
+    disabled?: boolean
+    motivoDeshabilitado?: string
+  }[]
 }) {
   return (
     <div className="flex flex-col gap-2">
       {options.map((opt) => {
         const selected = value === opt.value
-        return (
+        const tarjeta = (
           <button
-            key={opt.value}
             type="button"
-            onClick={() => onChange(opt.value)}
+            disabled={opt.disabled}
+            aria-disabled={opt.disabled || undefined}
+            onClick={() => {
+              if (opt.disabled) return
+              onChange(opt.value)
+            }}
             className={cn(
-              "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+              "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors",
               selected
                 ? "border-brand bg-brand/5"
                 : "border-border hover:bg-muted/50",
+              opt.disabled &&
+                "pointer-events-none border-border bg-muted/30 opacity-60 hover:bg-muted/30",
             )}
           >
             <span
@@ -363,7 +395,12 @@ function RadioCards({
               {selected && <span className="size-2 rounded-full bg-brand" />}
             </span>
             <span className="flex flex-col gap-0.5">
-              <span className="text-sm font-medium text-foreground">
+              <span
+                className={cn(
+                  "text-sm font-medium",
+                  opt.disabled ? "text-muted-foreground" : "text-foreground",
+                )}
+              >
                 {opt.label}
               </span>
               {opt.description && (
@@ -373,6 +410,21 @@ function RadioCards({
               )}
             </span>
           </button>
+        )
+
+        if (!opt.disabled) {
+          return <React.Fragment key={opt.value}>{tarjeta}</React.Fragment>
+        }
+
+        return (
+          <Tooltip key={opt.value}>
+            <TooltipTrigger
+              render={<span className="block w-full">{tarjeta}</span>}
+            />
+            <TooltipContent>
+              {opt.motivoDeshabilitado ?? "No disponible en esta versión"}
+            </TooltipContent>
+          </Tooltip>
         )
       })}
     </div>
@@ -804,7 +856,19 @@ function UnidadCard({
 
 // ── Componente principal ─────────────────────────────────────────────────
 
-export function NewRequestSheet() {
+export function NewRequestSheet({
+  onCreada,
+}: {
+  /**
+   * Se invoca tras un alta confirmada por el servidor, con lo que SC01 devuelve.
+   *
+   * `solicitudId` llega `null` cuando SC01 respondió sin el record ID —escenario
+   * degradado o desactualizado—. La solicitud existe igual, así que el llamador
+   * debe refrescar la lista de todos modos; lo único que no puede hacer es
+   * seleccionarla.
+   */
+  onCreada?: (solicitudId: string | null, codigoExt: string | null) => void
+} = {}) {
   const [open, setOpen] = React.useState(false)
   const [phase, setPhase] = React.useState<1 | 2 | 3>(1)
   const [modo, setModo] = React.useState<Modo>("")
@@ -1084,6 +1148,16 @@ export function NewRequestSheet() {
     )
     resetAll()
     setOpen(false)
+
+    // Tarea 1 · el alta ya no termina en el toast. La lista del panel izquierdo
+    // la sirve un Server Component, así que sin este aviso la solicitud recién
+    // creada no aparecía hasta recargar la página a mano — y el detalle seguía
+    // mostrando la que estuviera abierta antes.
+    //
+    // Va después de cerrar el sheet, no antes: el llamador dispara un
+    // `router.refresh()` y conviene que el sheet ya no esté montado cuando el
+    // árbol se vuelva a renderizar.
+    onCreada?.(body.solicitud_id ?? null, body.codigo_ext ?? null)
   }
 
   function onInvalid(formErrors: typeof errors) {
@@ -1165,6 +1239,13 @@ export function NewRequestSheet() {
                     label: "En base a documentos adjuntos",
                     description:
                       "Sube los documentos y prellenaremos el formulario con los datos detectados.",
+                    // §1.5.0 · deshabilitado en esta versión: el modo depende
+                    // de la extracción con Claude API (RF-09), cuyo escenario
+                    // Make no está provisionado (CI-002 abierta). El código
+                    // del modo se conserva completo; sólo se bloquea la
+                    // entrada. Se reactiva cuando RF-09 quede en verde.
+                    disabled: true,
+                    motivoDeshabilitado: "No disponible en esta versión",
                   },
                   {
                     value: "manual",
