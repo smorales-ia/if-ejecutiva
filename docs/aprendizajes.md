@@ -23,6 +23,15 @@ Lo que sigue vigente como regla vive abajo, destilado.
 
 ## Estado de tareas
 
+- 🔴 **2026-08-11 — TANDA F BLOQUEADA · decisión arquitectónica pendiente antes de arrancar: patrón de disparo de `AT08_Alertas_SLA`.** Dos opciones detectadas el 11-ago-2026:
+  - **(A) Fila observada en `TX_Notificaciones`** — patrón del script existente `docs/_artefactos/airtable/AT08_Alertas_SLA.js` (702 líneas, commit `bd5768d`). Evita el problema del secreto HMAC en Airtable Automations pero acopla a polling en Make.
+  - **(B) Webhook firmado con HMAC-SHA256** — patrón del plan v1.12 · F-1, consistente con SC01/SC05/SC-Edicion. Obliga a decidir dónde vive el secreto HMAC, ya que Airtable Automations **no lee env vars**.
+
+  **Tensión no resuelta por §9.6:** `CLAUDE.md` prohíbe tokens hardcodeados o en tablas visibles. **Sergio decide con Héctor/Óscar antes de arrancar Tanda F. M-15 no se aprueba hasta que este punto quede resuelto.**
+
+  *Contexto adicional levantado el mismo día, para quien retome:* el script existente diverge del F-1 del plan v1.12 en cuatro puntos, no sólo en el patrón de disparo. **No usa `clave_notif`**, así que hoy no puede pasar el criterio de M-18 ("una segunda corrida no genera un segundo correo"); **recalcula el semáforo por su cuenta** en vez de leer `sla_semaforo_etapa`, que es la segunda fuente de verdad que RO-05 prohíbe y que las Tandas C/D evitaron a propósito; nombra `SC13` y nunca `SC-SLA-Alertas` (RO-14); y su nombre de archivo usa `_` donde el plan pide `AT08-AlertasSLA.js`. Cualquiera de las dos opciones exige reescritura parcial: (A) no es "usar el script tal cual".
+
+- **2026-08-11 — M-14 HECHO.** `SC01 v1.1` + `SC-Asignar v2.1` + `SC-Edicion v3.5` reimportados **sobre los escenarios existentes** (RO-10 respetado: sin dos versiones activas del mismo escenario). Los 6 campos SLA del payload verificados en el diseñador de SC-Asignar. Sin incidentes, por eso no tiene entrada de bitácora propia.
 - **2026-07-22** — IF-02 **P0–P9 completadas (código)**: build + tsc verdes. Pendiente la **tanda externa** (provisionar Make SC01/SC-Asignar/SC-Edicion, env vars Railway, push, smoke test end-to-end incl. correo SC13) y la **deuda diferida** (eslint, `router.refresh` tras asignar, swap picker mock→candidatos, redirect `/`→`/consola`, campo `fecha_asignacion` D-08) — todo en `docs/_notas/checklist-P9-manual.md`. No hay P10.
 - **2026-07-08** — Pausada "Implementar endpoint real de Make y refresco de lista" (Paso 4B Fase 2): pausado para migrar `TX_Solicitudes.banco` a Link → M_Bancos, decisión de panel 2026-07-08.
 - **2026-07-09** — "Mi cartera resuelve clerk_user_id → recordId" cerrada: Sergio autorizó poblar `AUTH_Usuarios.clerk_user_id` y asignar 2 solicitudes de prueba (`VP-2026-0004`, `VP-2026-0028`) a `ejecutiva_asignada` para validar en vivo. **Pendiente:** decidir si esas 2 solicitudes de prueba deben revertirse a `ejecutiva_asignada` vacío una vez validado en el navegador, o si se dejan como está.
