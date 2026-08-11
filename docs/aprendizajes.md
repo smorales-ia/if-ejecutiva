@@ -716,9 +716,9 @@ Dos detalles que costaron un intento cada uno: `tsc` emite `error TS2688: Cannot
 
 ---
 
-### 2026-08-10 (e) — Tanda D: la lista compartida entre servidor y cliente, y la vista que quedó saturada
+### 2026-08-10 (e) — Tanda D: la lista compartida entre servidor y cliente, la vista que quedó saturada y la tercera copia que no llegó a existir
 
-**Contexto:** Tanda D de §9.6.2 — píldora de etapa en `SLABadge` (D-1), su render en `FilaSolicitud` (D-2) y el selector `?sla_etapa=` con el contador de la unión (D-3).
+**Contexto:** Tanda D de §9.6.2 completa — píldora de etapa en `SLABadge` con unión discriminada (D-1), su render en `FilaSolicitud` (D-2), el selector `?sla_etapa=` con el contador de la unión (D-3) y la píldora en la cabecera del detalle (D-4). Se sumó, pedido por Sergio en el mismo lote, la apertura automática del panel de filtros.
 
 **Inconveniente 1 · una lista cerrada que dos capas necesitan, y sólo una puede importarla.** El selector de la bandeja tenía que ofrecer los valores válidos de `?sla_etapa=`, que la Tanda C había declarado en `lib/solicitudes.ts` (`SLA_ETAPA_FILTROS_VALIDOS`). Pero `solicitud-list.tsx` es `"use client"`, y `lib/solicitudes.ts` importa `lib/airtable-client.ts`: **importar el valor —no el tipo— habría arrastrado el cliente de Airtable al bundle del navegador**. Hasta ahora el componente importaba de ese módulo sólo `type Vista`, que TypeScript borra en compilación, así que el problema nunca se había manifestado.
 
@@ -732,6 +732,30 @@ Dos detalles que costaron un intento cada uno: `tsc` emite `error TS2688: Cannot
 
 **Solución aplicada:** ninguna en código — se reporta y la decisión es de negocio (confirmado por Sergio el 10-ago-2026: **no se toca el filtro**). **No se tocó el filtro para disimularlo**, que era la salida tentadora y la equivocada: bajar el umbral o excluir lo antiguo desde la UI sería inventar una regla de negocio en la capa que tiene prohibido decidir.
 
-**Se autocorrige con datos vivos post-M-14, pero sólo por un lado y conviene ser exacto.** Una vez reimportados SC01 y SC-Asignar, toda solicitud nueva arranca su reloj en el momento real del hito (§5.2.2) y entra a la bandeja en verde, así que el flujo entrante deja de contribuir al rojo. Lo que **no** se corrige solo son las **30 filas históricas que quedaron en etapa 1**: nadie cierra su e1 salvo una asignación, de modo que seguirán en rojo mientras sigan en `creada`. La proporción mejora conforme la cartera rote —no porque el dato viejo cambie, sino porque deja de ser mayoría—. Si hiciera falta antes, la palanca correcta no es el filtro sino los datos: cerrar o cancelar lo que ya no está vivo. Medirlo de nuevo con la consulta de tres líneas de abajo es lo que dirá cuándo la pestaña volvió a ser útil.
+**Se autocorrige con datos vivos post-M-14, pero sólo por un lado y conviene ser exacto.** Una vez reimportados SC01 y SC-Asignar, toda solicitud nueva arranca su reloj en el momento real del hito (§5.2.2) y entra a la bandeja en verde, así que el flujo entrante deja de contribuir al rojo. Lo que **no** se corrige solo son las **30 filas históricas que quedaron en etapa 1**: nadie cierra su e1 salvo una asignación, de modo que seguirán en rojo mientras sigan en `creada`. La proporción mejora conforme la cartera rote —no porque el dato viejo cambie, sino porque deja de ser mayoría—. Si hiciera falta antes, la palanca correcta no es el filtro sino los datos: cerrar o cancelar lo que ya no está vivo. Volver a correr la medición de abajo es lo que dirá cuándo la pestaña recuperó su utilidad.
 
-**Prevención futura:** **un backfill retroactivo de un reloj operacional satura toda vista construida sobre ese reloj, y hay que medirlo en el mismo lote en que se backfillea, no descubrirlo en pantalla.** La comprobación es una consulta de tres líneas —contar la vista antes, contar el término nuevo, contar la unión— y distingue "el filtro funciona" de "el filtro funciona y sigue siendo útil". Son dos preguntas distintas y sólo la primera la contesta un test.
+**La medición, para repetirla tal cual.** Son los tres conteos que dieron 7 / 38 / 38:
+
+```bash
+set -a; . ./.env.local; set +a
+q() { curl -s -G -H "Authorization: Bearer $AIRTABLE_TOKEN" \
+  --data-urlencode "filterByFormula=$1" --data-urlencode "fields[]=codigo_ext" \
+  "https://api.airtable.com/v0/app9G7lLkIV3CpeLa/tblaHTyMHYfmy7Fg6" \
+  | python3 -c "import sys,json; print(len(json.load(sys.stdin)['records']))"; }
+
+q 'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0)'   # agregado
+q 'OR({sla_semaforo_etapa}="ambar",{sla_semaforo_etapa}="rojo")'              # etapa
+q 'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0,{sla_semaforo_etapa}="ambar",{sla_semaforo_etapa}="rojo")'  # unión = la vista
+```
+
+**Prevención futura:** **un backfill retroactivo de un reloj operacional satura toda vista construida sobre ese reloj, y hay que medirlo en el mismo lote en que se backfillea, no descubrirlo en pantalla.** La comprobación son los tres conteos de arriba, y distingue "el filtro funciona" de "el filtro funciona y sigue siendo útil". Son dos preguntas distintas y sólo la primera la contesta un test.
+
+**Inconveniente 3 · el auto-expand del panel de filtros iba a ser la tercera copia de la misma lista.** Sergio pidió que el panel se abriera solo cuando hubiera filtros activos —una línea— porque un deep link como `?vista=sla_riesgo&sla_etapa=rojo` llegaba mostrando una lista recortada sin ninguna señal visible de qué la estaba recortando. Al escribirla apareció que las claves de filtro ya estaban enumeradas **dos veces** en `solicitud-list.tsx`: en `filtrosActivos` y en `limpiarFiltros`. El auto-expand era la tercera.
+
+**Causa raíz:** las tres listas se escriben en momentos distintos y ninguna falla si otra se queda corta. El síntoma del drift es silencioso y de la peor especie: un filtro aplicado que el botón "Limpiar filtros" **no limpia**, o que no cuenta como activo y deja el panel cerrado. Nada revienta; la pantalla simplemente miente. Ya había pasado a medias en esta misma tanda — `sla_etapa` hubo que agregarlo a mano a las dos listas existentes, y olvidarse de una habría sido invisible.
+
+**Solución aplicada:** `CLAVES_FILTRO` como constante de módulo, consumida por los tres (`filtrosActivos` con `.some()`, `limpiarFiltros` con `Object.fromEntries(...map(k => [k, null]))`, y el inicializador del `useState`). Es más que la línea pedida, y se avisó como tal antes de darlo por cerrado.
+
+Dos detalles de implementación que no son cosméticos. El estado usa **inicializador perezoso** (`useState(() => …)`), **no** un `useEffect`: con efecto, cerrar el panel a mano teniendo filtros puestos lo reabriría en el render siguiente, y el usuario perdería la pelea contra su propia UI. Y `vista`, `orden`, `page` y `solicitud` **no** entran en la lista: son estado de navegación, no filtros; incluirlos habría dejado el panel abierto siempre, que es lo mismo que no tener la función.
+
+**Prevención futura:** **cuando una constante se enumera por segunda vez en el mismo archivo, extraerla ahí, no la tercera.** La regla barata para detectarlo sin pensar: si agregar un elemento obliga a tocar dos sitios y olvidarse de uno no rompe nada, ya es una fuente duplicada aunque todavía no haya divergido (RO-05). Y el corolario de esta tanda: la lista quedó sin test porque vive en un componente `"use client"` y el repo no tiene runner de DOM — la única defensa es que sea una sola, así que la extracción no es higiene opcional sino lo que sustituye al test que no se puede escribir.
