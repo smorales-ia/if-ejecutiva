@@ -306,5 +306,27 @@ agrupadas.
 
 - **Es doc-vs-código y por eso entra acá, no en `_ambiguedades.md`.** `CLAUDE.md` §*Cosas que Claude Code SÍ debe hacer* nombra a `docs/schema-airtable.md` como la fuente de la que se derivan los tipos; el código de producción ya referencia 21 campos que esa fuente no lista. No es una discrepancia entre dos documentos.
 - **La Tanda C no quedó bloqueada por esto y por una razón concreta:** los FIELD_IDs se tomaron de `FIELD_IDS_SLA` (`lib/sla-etapas.ts`), que la Tanda B había fijado desde el pase MCP, y la verificación V1 los confirmó uno a uno contra el schema vivo. La deuda es de legibilidad y de siguiente-sesión, no de corrección.
-- **Verificación V3 pendiente, y no es parte de esta entrada.** Al 10-ago-2026 las 39 filas de `TX_Solicitudes` devuelven `sla_semaforo_etapa = "sin_dato"` y ninguna tiene `sla_etapa_actual` poblado, porque el **backfill A-5 tampoco corrió**. Eso confirma un literal del contrato de M-13 —`sin_dato`, en minúscula y sin adornos— y deja los otros tres (`verde`/`ambar`/`rojo`) para el E2E de la Tanda G. Si al observarlos apareciera cualquier otra cadena, es **RO-13** y se registra como entrada propia.
+- **Verificación V3: tres de los cuatro literales ya observados en vivo, y no es parte de esta entrada.** Antes del backfill, las 39 filas devolvían `sla_semaforo_etapa = "sin_dato"` con `sla_etapa_actual` vacío. Tras ejecutar **A-5** el 10-ago-2026, el conjunto observado sobre las mismas 39 filas es `['rojo', 'verde']` — 38 y 1 respectivamente. Suman `sin_dato`, `rojo` y `verde`: tres de los cuatro literales del contrato de M-13, todos en minúscula y sin adornos. Falta **`ambar`**, que no aparece por causa aritmética y no por defecto de la fórmula —requiere `NOW()` entre `sla_etapa_alerta_ts` y `sla_etapa_vence_ts`, ventana de 1 h en e1 y de 2 h en e2 sobre una cartera cuyos vencimientos son todos pasados salvo uno—, y queda para el E2E de la Tanda G. Si al observarlo apareciera cualquier otra cadena, es **RO-13** y se registra como entrada propia.
 - Relación con **CI-005**: esta entrada no la cierra ni la afecta. CI-005 es que el reloj mide desde la visita; ésta es que el schema nuevo no está documentado.
+
+---
+
+## CI-009 · `fecha_asignacion_ts` huérfano en VP-2026-0043: timestamp de asignación sin estado que lo respalde
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-009 |
+| **Archivo:línea** | Airtable `TX_Solicitudes` · registro `recga8JAig4wiyFwb` (`VP-2026-0043`) · campo `fecha_asignacion_ts` (`fldf8BS8nv2vtOmu0`) vs `app/api/solicitudes/[id]/asignar/route.ts` (guard 409) |
+| **Síntoma** | `VP-2026-0043` tiene `fecha_asignacion_ts = 2026-07-25T04:00:00.000Z` y, al mismo tiempo, `estado = creada`, `tasador` vacío, `visador` vacío y `fecha_visita_programada` vacía. Es la **única** fila de las 39 con ese campo poblado —las 9 solicitudes realmente asignadas usan el `fecha_asignacion` deprecado (§21.4-d) y tienen el `_ts` vacío—. Cualquier lógica que infiera "fue asignada" desde `fecha_asignacion_ts` la clasifica mal: el backfill A-5 leído al pie de la letra la habría movido a etapa 2 y habría dejado en etapa 1 a las 9 asignadas de verdad. |
+| **Causa** | No determinada con evidencia. La hipótesis compatible con las fechas es una prueba parcial de `SC-Asignar` o de `SC-Edicion` entre el 24 y el 25-jul-2026 que escribió el timestamp sin completar la transición de estado —el escenario escribe `estado`, `tasador` y `fecha_asignacion` en un solo update, así que un update parcial deja exactamente esta huella—. No hay registro en `LogEscenarios` que lo confirme, y por eso se registra como divergencia observada, no como causa establecida. |
+| **Resolución** | Decidir cuál de las dos cosas es verdad y dejar la fila consistente: (a) si la solicitud nunca se asignó —lo que el resto de sus campos indica—, **vaciar `fecha_asignacion_ts`**; o (b) si sí se asignó, completar `tasador`, `visador`, `fecha_visita_programada` y `estado = asignada`, y re-correr `scripts/backfill-sla-a5.ts --force` sobre esa fila para que cierre e1. **La opción (a) es la que el dato respalda.** Revisar además `A_Eventos` de esa solicitud antes de decidir: si hay evento de asignación, la lectura cambia. |
+| **Dueño** | Sergio (decisión de dato) · Claude Code (ejecución del PATCH) |
+| **Fecha objetivo** | Condicional a la **Tanda G de §9.6.2** (QA end-to-end), en su paso G-1 de preparación del juego de datos: es el punto en que la cartera tiene que estar limpia para que los nueve casos de §9.6.3 sean legibles. |
+| **Estado** | abierta |
+| **Origen** | Ejecución de **A-5** (backfill SLA) el 10-ago-2026, al contrastar `estado` contra `fecha_asignacion_ts` y `fecha_asignacion` sobre las 39 filas. |
+
+**Notas:**
+
+- **El backfill A-5 no la tocó, y es deliberado.** La decisión de Sergio del 10-ago-2026 fijó que sólo cierra e1 una solicitud en `estado = asignada`. `VP-2026-0043` quedó con `sla_e1_inicio_ts = fecha_solicitud` y etapa 1 abierta, como cualquier otra `creada`. El `_ts` huérfano sigue exactamente donde estaba: esta entrada existe para que no se pierda, no para justificar haberlo pisado.
+- **No es CI-005 ni la afecta.** CI-005 es que el reloj mide desde la visita; ésta es una fila con dos campos que se contradicen.
+- Relación con el **guard 409** de `asignar/route.ts`: el guard mira `tasador`, no `fecha_asignacion_ts`, así que esta fila **sí** aceptaría hoy una asignación por la UI. No hay bug de bloqueo; hay un dato sucio.
