@@ -213,6 +213,29 @@ Lo que sigue vigente como regla vive abajo, destilado.
   §4.4 pide `render` prop en vez de `asChild`; lo que no estaba escrito es que
   Base UI sigue tratando el elemento como botón nativo salvo que se le diga lo
   contrario. El tipo lo admite sin quejarse.
+- **RO-24 · Un bump normativo distingue punteros de historia, y el changelog
+  va al final.** Los `grep` de un bump devuelven dos clases mezcladas:
+  **punteros vivos** (rutas de archivo, cabeceras de fuentes canónicas, citas
+  "Spec vX §Y" en código y CI abiertas) que **se actualizan**, y **afirmaciones
+  históricas** ("Desde vX…", "§Y nueva en vX", changelogs anteriores,
+  `docs/_archivo/`, esta bitácora) que **quedan intactas** — subirles el número
+  convierte un registro en una afirmación falsa. El caso mixto se **reescribe**,
+  no se renumera. Y el orden es: integrar el cuerpo primero, redactar el
+  changelog después leyendo lo integrado; al revés se anuncian cambios que no
+  existen.
+- **RO-25 · Antes de asignar un correlativo, leer todos los existentes.**
+  `grep -n '^- \*\*RO-' docs/aprendizajes.md | tail -3` y su equivalente para
+  CI · RF · RN · SC · AT. Leer "las primeras N líneas" del archivo no basta: la
+  sección puede continuar más abajo, que es como nacieron dos RO-17. Un
+  correlativo duplicado no se arregla después sin romper punteros.
+- **RO-26 · Un snapshot de schema se levanta de la base, nunca de un documento
+  de diseño.** `docs/schema-airtable.md` es un pase contra Airtable
+  (`GET /v0/meta/bases/{baseId}/tables`), no una transcripción de la Capa de
+  Datos. Documentar de memoria o desde el diseño es lo que produjo CI-010 y
+  CI-011 —campos inventados y un Link que no existe—, y el fallo resultante es
+  silencioso: un filtro sobre un campo inexistente devuelve cero filas sin
+  error. Caso particular de la regla que comparten RO-13 y el fixture del wire:
+  derivar de la fuente de verdad, no de un documento que habla sobre ella.
 
 ## Bitácora reciente
 
@@ -963,3 +986,135 @@ components/` daba cero) y el tipo lo admite sin quejarse.
 `Suspense` o Next fuerza render dinámico de **toda la ruta** que lo monte. El patrón ya estaba en
 `console-shell.tsx`; se repitió al extraer `NavPrincipal` y `BuscadorSolicitudes` del header, que
 queda como server shell.
+
+---
+
+### 2026-08-11 (e) — Fase 3: bump normativo, correlativos y el hábito de documentar de memoria
+
+Entrada de **patrones**. Tres de estos se proponen como reglas permanentes
+(**RO-24**, **RO-25**, **RO-26**) y esperan aprobación explícita por RO-03; los
+demás se quedan acá.
+
+**1 · Un bump de spec tiene dos clases de referencia y se tratan al revés.**
+`grep` devuelve las dos mezcladas y hay que separarlas a mano antes de tocar
+nada:
+
+- **Punteros vivos** —rutas de archivo, cabeceras de "fuentes canónicas", citas
+  del tipo "Spec vX §Y" en código y en CI abiertas— **se actualizan**. Si no,
+  apuntan a un archivo que ya no existe.
+- **Afirmaciones históricas** —"Desde v1.9.7…", "§5.2 (nueva en v1.9.7)", las
+  filas del changelog anterior, todo `docs/_archivo/` y `docs/aprendizajes.md`—
+  **quedan intactas**. Subirles el número convierte un registro en una
+  afirmación falsa.
+
+El caso mixto existe y no se resuelve con `sed`: una frase que decía "no están
+definidos en la spec v1.9.7" pasó a ser falsa al escribir §1.0 en v1.9.8, así
+que había que **reescribirla**, no renumerarla. Y otra que decía "no se
+re-verificaron contra v1.9.7" se amplió a "ni contra v1.9.8", porque seguía
+siendo cierta y además seguía siendo deuda. → propuesta **RO-24**.
+
+**2 · El changelog anuncia lo que ya está en el cuerpo, nunca al revés.** El
+encargo de esta fase pedía "una línea de changelog"; cumplirlo al pie habría
+producido un changelog que anuncia siete cambios de §1 que el cuerpo no tenía.
+El orden correcto es integrar primero y redactar la tabla de cambios después,
+leyendo lo integrado. → parte de **RO-24**.
+
+**3 · Antes de asignar un correlativo, leer todos los existentes.** Asigné
+RO-17..RO-21 sobre RO-17 y RO-18 que ya existían, porque en la lectura inicial
+abrí las primeras 140 líneas del archivo y la sección de reglas seguía más
+abajo. El coste de evitarlo es un comando:
+
+```bash
+grep -n '^- \*\*RO-' docs/aprendizajes.md | tail -3
+```
+
+Aplica igual a CI, RF, RN, SC y AT, donde además rige la regla de oro de no
+renumerar: un correlativo duplicado no se puede arreglar después sin romper
+punteros. → propuesta **RO-25**.
+
+**4 · Un snapshot de schema se levanta de la base, nunca de un documento de
+diseño.** Es la causa raíz de CI-010 y CI-011: `docs/schema-airtable.md` §10
+describía `A_Cambios` con un `solicitud` (Link) y un `cambio_id` (PK) que **no
+existen**, porque se escribió desde la Capa de Datos v2.6.5 en vez de desde un
+pase contra Airtable. Cuesta un minuto comprobarlo:
+
+```bash
+curl -s -H "Authorization: Bearer $AIRTABLE_TOKEN" \
+  "https://api.airtable.com/v0/meta/bases/$AIRTABLE_BASE_ID/tables"
+```
+
+→ propuesta **RO-26**.
+
+**5 · Es la tercera vez que aparece el mismo meta-patrón, y conviene nombrarlo.**
+RO-13 dice filtrar por el formato que **emite** la fórmula, no por el literal
+humano. El fixture de un parser se copia del **wire**, no del docblock
+(2026-08-11 b). Y ahora: el schema se levanta de la **base**, no del documento
+de diseño. Las tres son la misma regla —*derivar de la fuente de verdad, no de
+un documento que habla sobre ella*— y las tres se descubrieron por separado
+pagando el mismo precio. Ante cualquier artefacto derivado (filtro, fixture,
+tipo, snapshot), la pregunta es de dónde salió el dato con el que se escribió.
+
+**6 · Un contrato repetido en tres sitios se corrige en los tres.** Pasar
+`A_Cambios` de "sin uso" a "read" tocaba la tabla de contratos de `CLAUDE.md`,
+la línea de **Entradas** y las advertencias por CI. Corregir sólo la fila —que
+era lo pedido— habría dejado el mismo documento diciendo que las entradas son
+cinco tablas y la tabla de contratos diciendo que son ocho. Es el corolario de
+**RO-05** para prosa: cuando la fuente única no es posible porque el dato vive
+en un documento narrativo, la obligación pasa a ser encontrar todas sus
+apariciones antes de tocar una.
+
+**7 · `mv` y `git mv` producen la misma historia.** Git detecta el rename por
+similitud de contenido al commitear, así que un `mv` de toda la vida deja el
+mismo resultado que `git mv` y **no requiere reversión ni comando compensatorio**.
+Importa porque la regla del repo prohíbe ejecutar git desde Claude Code y el
+procedimiento de bump de `CLAUDE.md` está redactado con `git mv`: la vía
+correcta es `mv`, y no hay nada que arreglar después.
+
+---
+
+### 2026-08-12 — Manual de pruebas v2 en PDF (guía para la Ejecutiva)
+
+**Contexto:** generación de `docs/_md/Manual_Usuario_Prueba1_v2.pdf` — reescritura del
+manual de prueba como guía de casos (15 CP) con las imágenes del PDF original.
+
+**Inconveniente 1 · No había forma de instalar paquetes Python.** El sistema trae Python
+3.14.4 sin `pip`, sin `ensurepip`, sin `venv` utilizable y sin `uv`/`pipx`; `sudo` pide
+contraseña interactiva.
+**Causa raíz:** distro Debian con PEP 668 (`externally-managed-environment`) y el paquete
+`python3-pip` no instalado.
+**Solución aplicada:** `curl bootstrap.pypa.io/get-pip.py` y
+`python3 get-pip.py --user --break-system-packages`, luego
+`python3 -m pip install --user --break-system-packages pymupdf reportlab`. Todo queda en
+`~/.local/lib/python3.14/site-packages`, sin tocar el Python del sistema. Nota: los
+ejecutables caen en `~/.local/bin`, que no está en el PATH — invocar siempre con
+`python3 -m`.
+**Prevención futura:** en esta máquina, cualquier tarea que necesite una librería Python
+parte por esos dos comandos; no perder tiempo probando `venv` ni `pip3`.
+
+**Inconveniente 2 · El índice del PDF quedó desfasado una página.** Las entradas del
+índice apuntaban a la página anterior a la del caso, a partir del sexto caso.
+**Causa raíz:** el ancla (`bookmarkPage`) se emitía como flowable de altura cero *antes*
+del `KeepTogether` de la cabecera del caso. Cuando el grupo no cabía y saltaba de página,
+el ancla se quedaba dibujada al final de la página anterior y registraba ese número.
+**Solución aplicada:** mover el `Anchor` **dentro** del `KeepTogether`, como primer
+elemento del grupo (`build_manual_v2.py`, función `bloque_caso`). El número del índice se
+resuelve en una primera pasada a un buffer en memoria y se escribe en la segunda.
+**Prevención futura:** en reportlab, un ancla vive donde está el contenido que nombra; si
+el contenido está en un `KeepTogether`, el ancla también.
+
+**Inconveniente 3 · Media página en blanco cada vez que un caso traía captura.** Con una
+página por caso y la figura al final, las cuatro figuras dejaban páginas casi vacías.
+**Causa raíz:** las figuras a ancho de caja (174 mm → 98 mm de alto) no caben en el
+remanente de una página ya ocupada por los cinco bloques, y una tabla con imagen no se
+puede partir.
+**Solución aplicada:** figura a 148 mm justo bajo la banda del caso (el lector ve primero
+la pantalla que va a probar) y casos que fluyen uno tras otro en vez de una página por
+caso. 26 → 21 páginas sin quitar contenido.
+**Prevención futura:** en documentos con capturas anchas, decidir primero el ancho de
+figura y después el ritmo de página; forzar salto por sección es lo que genera el blanco.
+
+**Hallazgo de producto (no es un bug de esta sesión).** `components/console/app-header.tsx:41`
+pinta un `Avatar` con las iniciales fijas `"ME"`: no hay `UserButton` de Clerk ni ninguna
+vía de cerrar sesión desde la UI. El caso CP-15 del manual se redactó contra esa realidad
+—verifica que `/consola` en incógnito redirige al login— y la ausencia del botón se
+declara como limitación conocida para que la Ejecutiva no la reporte como falla.

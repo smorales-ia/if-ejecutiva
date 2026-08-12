@@ -896,13 +896,6 @@ Consolida el registro completo de la solicitud. Los bloques son:
                       llamada, con rol, nombre, teléfono,
                       email y estado de cada contacto
 
-  Coordinación        Resultado del último intento        IF-03 (§2.3) ·
-                      registrado en                       sólo lectura
-                      TX_CoordinacionVisita: estado
-                      (confirmada o rechazada), fecha de
-                      visita propuesta, motivo del
-                      rechazo y número de intento
-
   Datos SII           Destino, códigos SII (comuna,       §4 Lectura de
                       manzana, predio), ubicación urbana  Documentos (Claude
                       o rural, superficie de terreno,     API)
@@ -940,13 +933,12 @@ provienen de la base interna del SII. Tercera: el bloque Vendedor se
 muestra tanto en Nuevo como en Usado; lo que cambia es el tipo de
 persona, jurídica en Nuevo y natural en Usado.
 
-Sobre el bloque Coordinación (nuevo en v1.9.4). Muestra el resultado del
-último intento, no el historial completo —la sucesión de intentos vive
-en la pestaña Historial—. Es de sólo lectura: la Ejecutiva no confirma
-ni rechaza coordinaciones desde IF-02; esa acción es exclusiva del
-tasador en IF-03 (§2.3 · RF-TAS-05). No se construye vista dedicada
-nueva. Cuando el bloque muestra estado rechazada, se habilita la
-excepción acotada a RN-59 sobre Contactos de visita descrita en §1.4.
+Retiro del bloque Coordinación (v1.9.9). El bloque existió entre v1.9.4 y
+v1.9.8 y mostraba el último intento registrado en TX_CoordinacionVisita.
+Se retira con el resto de la coordinación por sistema: la coordinación de
+la visita queda como gestión manual del tasador y no se registra de forma
+estructurada (CI-012). El reloj de la etapa 2 de §5.2.4 sigue midiéndola
+como actividad del negocio; lo que desaparece es su captura en pantalla.
 
 ### **1.3.3 Pestaña Historial**
 
@@ -955,34 +947,20 @@ cambios auditados de A_Cambios, e incorpora: el email de asignación
 enviado al tasador (asunto, destinatario y fecha, expandible al cuerpo
 completo), la confirmación de asignación con su timestamp y autor, las
 ediciones registradas mientras la solicitud estuvo en estado creada
-(RN-59), los eventos de coordinación de la visita, y las cargas y
-descargas de documentos registradas en TX_Adjuntos. No existe email de
-reasignación --- v1.9 no tiene flujo de reasignación formal (§1.6).
+(RN-59), y las cargas y descargas de documentos registradas en
+TX_Adjuntos. No existe email de reasignación --- v1.9 no tiene flujo de
+reasignación formal (§1.6).
 
-Eventos de coordinación (nuevos en v1.9.4). Cada fila de
-TX_CoordinacionVisita se lista como un evento del timeline, en orden
-cronológico junto al resto: coordinación confirmada —con la fecha de
-visita propuesta— o coordinación rechazada —con el motivo obligatorio
-que dio el tasador—, en ambos casos con el autor (tasador identificado
-por autor_clerk_id), el timestamp de servidor (fecha_respuesta) y el
-número de intento. Un segundo intento no reemplaza al primero: ambos
-quedan visibles, que es lo que permite reconstruir por qué una solicitud
-estuvo detenida. Se listan también las ediciones de contactos de visita
-hechas bajo la excepción acotada a RN-59, que llegan al timeline por la
-vía habitual de A_Cambios (§1.4).
-
-Alcance implementado en v1.9.8. El timeline se cablea contra A_Eventos y
-A_Cambios reales; las dos tablas se referencian de forma distinta y
-ambas hacen falta: A_Eventos por el campo Link —que dentro de una
-fórmula se evalúa contra el código de la solicitud, no contra el record
-ID— y A_Cambios por su par registro_id + tabla_origen, porque esa tabla
-audita varias entidades y no tiene Link a la solicitud. Tres contenidos
+Alcance implementado (v1.9.8, revisado en v1.9.9). El timeline se cablea
+contra A_Eventos y A_Cambios reales; las dos tablas se referencian de
+forma distinta y ambas hacen falta: A_Eventos por el campo Link —que
+dentro de una fórmula se evalúa contra el código de la solicitud, no
+contra el record ID— y A_Cambios por su par registro_id + tabla_origen,
+porque esa tabla
+audita varias entidades y no tiene Link a la solicitud. Dos contenidos
 que esta sección enumera **quedan fuera por falta de origen de datos, no
 por decisión de alcance**:
 
-- **Eventos de coordinación**: dependen de TX_CoordinacionVisita, que no
-  existe en la base (§2.12 la declara como tabla nueva; registrada como
-  CI-012 y como DEP-EXT:A-09 en el Blueprint y en Arquitectura).
 - **Descargas de documentos**: no se registran en ninguna tabla. Las
   cargas sí llegan al timeline como eventos de A_Eventos.
 - **Autor del evento**: A_Eventos.actor_nombre está vacío en el 100% de
@@ -1040,26 +1018,19 @@ por sí solo la transición de estado: la transición sólo ocurre al
 confirmar explícitamente "Asignar Tasador" (§1.6). Cuando el estado deja
 de ser creada y la solicitud tiene tasador asignado, todos los datos
 quedan en modo consulta (RN-59) — no existe ningún flujo de
-reasignación ni edición posterior, salvo la excepción acotada que
-describe el párrafo siguiente; ambas condiciones (estado ≠ creada Y
+reasignación ni edición posterior; ambas condiciones (estado ≠ creada Y
 tasador asignado) deben cumplirse para bloquear, no una sola.
 
-**Excepción acotada a RN-59 (nueva en v1.9.4).** En estado asignada, y
-sólo mientras coordinacion_vigente = rechazada, TX_ContactosVisita
-vuelve a ser editable desde IF-02. La excepción existe para un único
-propósito operativo: cuando el tasador devuelve la coordinación porque
-no logró contactar a nadie, la Ejecutiva necesita corregir el teléfono o
-agregar un contacto para habilitar el segundo intento; sin esa edición
-la solicitud queda detenida. El alcance es estrictamente el bloque
-Contactos de visita —rol, nombre, teléfono, email, estado y prioridad de
-llamada—. Cliente, propiedad, vendedor, unidades, RUT y datos
-financieros siguen bloqueados sin excepción, y el bloqueo se aplica
-server-side, no sólo en la UI. La edición queda auditada en A_Cambios
-con before/after, autor y timestamp, igual que cualquier otra, y su
-efecto es reabrir la pantalla de coordinación para el tasador
-(RF-TAS-04). En cuanto se registra un intento nuevo, coordinacion_vigente
-deja de valer rechazada y el bloque vuelve a modo consulta. Ver §2.3 y
-§2.5 para el flujo completo desde IF-03.
+**Retiro de la excepción acotada a RN-59 (v1.9.9).** Entre v1.9.4 y
+v1.9.8, TX_ContactosVisita volvía a ser editable en estado asignada
+mientras coordinacion_vigente = rechazada, para que la Ejecutiva pudiera
+corregir un teléfono y habilitar el segundo intento de coordinación. La
+excepción **se retira**: su única condición de activación era un campo
+derivado de TX_CoordinacionVisita, que deja de existir. RN-59 vuelve a
+ser incondicional — fuera de estado creada con tasador asignado, no hay
+ninguna vía de edición desde IF-02. Si el tasador no logra contactar a
+nadie, lo resuelve por el canal manual, que es donde vive la coordinación
+desde esta versión (CI-012).
 
 Esta regla sustituye a la de v1.8.2, que bloqueaba sólo los campos
 críticos (cliente, propiedad, RUT) en estados posteriores a creada o
@@ -1094,12 +1065,12 @@ hay acceso directo a "Reasignar Tasador" porque ese botón no existe.
                       campos son editables desde "Editar solicitud" —
                       incluido el tasador ya fijado— y cada cambio se audita
                       en A_Cambios y en el historial ("Datos de la solicitud
-                      modificados"). **Excepción acotada (v1.9.4):** cuando
-                      el estado es asignada y coordinacion_vigente =
-                      rechazada, el sistema rehabilita la edición del bloque
-                      Contactos de visita (TX_ContactosVisita) y sólo de ese
-                      bloque; el resto del formulario permanece en modo
-                      consulta. La excepción se evalúa server-side.
+                      modificados"). La excepción acotada que rigió entre
+                      v1.9.4 y v1.9.8 sobre TX_ContactosVisita queda
+                      retirada en v1.9.9: dependía de
+                      coordinacion_vigente, campo que desaparece con la
+                      coordinación por sistema (CI-012). RN-59 no admite
+                      hoy ninguna excepción.
 
   **Postcondición**   El modo consulta (solo lectura) se activa únicamente
                       cuando **ambas** condiciones se cumplen a la vez:
@@ -1108,26 +1079,20 @@ hay acceso directo a "Reasignar Tasador" porque ese botón no existe.
                       editable aunque su estado ya no sea creada, y una
                       solicitud con tasador pero todavía en creada sigue
                       siendo editable. No existe ninguna vía de reasignación
-                      ni edición posterior al modo consulta, con la única
-                      excepción de TX_ContactosVisita bajo la condición
-                      anterior. Editar un contacto bajo la excepción no
-                      cambia el estado backend —la solicitud sigue
-                      asignada—, queda auditado en A_Cambios y reabre la
-                      pantalla de coordinación del tasador (RF-TAS-04). Al
-                      registrarse un intento nuevo, coordinacion_vigente
-                      deja de valer rechazada y el bloque vuelve a modo
-                      consulta. La excepción nunca alcanza a cliente,
-                      propiedad, vendedor, unidades, RUT ni datos
-                      financieros.
+                      ni edición posterior al modo consulta, y desde
+                      v1.9.9 tampoco excepción alguna: el bloqueo alcanza
+                      a todos los bloques del formulario, contactos de
+                      visita incluidos.
 
   **Trazabilidad**    Definición del cliente en el levantamiento operativo
                       v1.9. Sustituye a la regla de bloqueo por campos
                       críticos vigente hasta v1.8.2 y a la versión previa de
                       v1.9 que ataba el bloqueo solo a la confirmación de
-                      asignación. La excepción acotada se incorpora en
-                      v1.9.4 por §2.5 y §2.3 (Decisión S-6 del ADR de
-                      IF-Tasador); RN-59 no se renumera ni se sustituye por
-                      una regla nueva. Ver §1.3.1, §1.4, §1.6, §2.3 y §2.5.
+                      asignación. La excepción acotada incorporada en
+                      v1.9.4 se retira en v1.9.9 al salir del alcance la
+                      coordinación por sistema (CI-012); RN-59 no se
+                      renumera ni se sustituye por una regla nueva. Ver
+                      §1.3.1, §1.4 y §1.6.
   ---------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
