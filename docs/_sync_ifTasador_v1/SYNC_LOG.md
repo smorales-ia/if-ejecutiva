@@ -43,7 +43,7 @@ cierre del lote 7.
 | **4** | Blueprint v2.10 + Arquitectura v2.9 · puntos 4.1–4.6 | 🟡 **PARCIAL** · 25-jul-2026 — 4.1, 4.2, 4.4, 4.5, 4.6 completos; **4.3 sólo en su mitad**: la máquina de estados sí, la narrativa de ejemplo **no requiere cambio** (su vocabulario de estados ya es el oficial; sus únicos defectos son de numeración `SC`, fuera de alcance) | `a08bd20` |
 | **5** | Operativos + Motor · puntos 5.1–5.5 | 🟡 **PARCIAL** · 25-jul-2026 — 5.1–5.5 completos; **4 ítems diferidos**: SC13 acotado a IF-02 y `SC15` en Origen de Datos (`DEP-EXT:A-10`), 3 campos de `TX_Solicitudes` en `CLAUDE.md` y lectura de `TX_CoordinacionVisita` en operativos (`DEP-EXT:A-09`). `CLAUDE.md` y Origen de Datos **no se abrieron** | `38f275d` |
 | **6** | Citación de identificadores `RF-TAS-XX` inline | ⏸ **PROPUESTO · NO AUTORIZADO** — sigue esperando la decisión 3.1 (H-2) de `RESUME.md`. El lote 7 **no lo absorbe ni lo sustituye** | — |
-| **7** | Sync RF-TAS de la UI Tasador contra `Imagenes_IF_Tasador_v4.pdf` · bump v1.9.8 → v1.9.9 | ✅ **COMPLETADO** · 13-ago-2026 — 12 RF-TAS nuevos, 10 modificados, 0 eliminados. **RF-TAS-04 y RF-TAS-05 emitidos bloqueados por CI-012.** 6 ambigüedades y 9 inconsistencias nuevas registradas | contenido `pendiente-single-commit` · bump `pendiente-single-commit` · bitácora `pendiente-single-commit` |
+| **7** | Sync RF-TAS de la UI Tasador contra `Imagenes_IF_Tasador_v4.pdf` · bump v1.9.8 → v1.9.9 | ✅ **COMPLETADO** · 13-ago-2026 — 12 RF-TAS nuevos, 10 modificados, 0 eliminados. **RF-TAS-04 y RF-TAS-05 emitidos bloqueados por CI-012.** 6 ambigüedades y 9 inconsistencias nuevas registradas | contenido `7727c20` · bump `7727c20` · bitácora `7727c20` |
 
 ### Nota sobre el orden de lotes 1 y 2
 
@@ -91,7 +91,7 @@ identificadores renumerados.
 
 ### Archivos tocados, agrupados por commit
 
-**Commit 1 — `docs(spec): sync IF-Tasador v1.9.9 con RF-TAS-11..22` · `pendiente-single-commit`**
+**Commit 1 — `docs(spec): sync IF-Tasador v1.9.9 con RF-TAS-11..22` · `7727c20`**
 
 | Archivo | Qué cambia |
 |---|---|
@@ -104,7 +104,7 @@ identificadores renumerados.
 > commit 1 escribe o corrige, de modo que separarlas exigiría staging por línea sobre celdas
 > de la misma tabla. Va entero al commit 1. Por eso el commit 2 son **12** archivos y no 13.
 
-**Commit 2 — `chore(version): bump referencias v1.9.8 → v1.9.9 en repo` · `pendiente-single-commit`**
+**Commit 2 — `chore(version): bump referencias v1.9.8 → v1.9.9 en repo` · `7727c20`**
 
 | Archivo | Refs |
 |---|:--:|
@@ -121,7 +121,7 @@ identificadores renumerados.
 | `lib/sla-etapas.ts` | 1 |
 | `lib/sla-habil.ts` | 1 |
 
-**Commit 3 — `docs(sync): cierra bitácora IF-Tasador v1.9.9 con shas` · `pendiente-single-commit`**
+**Commit 3 — `docs(sync): cierra bitácora IF-Tasador v1.9.9 con shas` · `7727c20`**
 
 | Archivo | Qué cambia |
 |---|---|
@@ -212,12 +212,12 @@ hace falta de nuevo si CI-012 se cierra reinstaurando la coordinación.
 | `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md` | C | 4 | 25-jul-2026 | `a08bd20` | máquina de estados §2.11 · 7 pantallas IF-03 · D-B · P-3 · **DEP-EXT:A-09 ×1** (L1280 `TX_CoordinacionVisita`) | EA | ✓ |
 | `docs/diseno.md` | F | 5 | 25-jul-2026 | `38f275d` | vocabulario §2.11 · `devuelta` DEPRECATED · RN-59 excepción acotada · RF-TAS-04 (citada) | UX + PM | ✓ |
 | `docs/_md/VProperty_Motor_Calculo_AT01_AT10_v2_6.md` | F | 5 | 25-jul-2026 | `38f275d` | `devuelta` DEPRECATED · canal único correo (§1.7) · **en sitio sin bump + changelog al pie (§3 del plan)** | EA + DE | ✓ |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` (renombrado desde `…_v1_9_8.md`) | A | 7 | 13-ago-2026 | `pendiente-single-commit` | RF-TAS-11..22 (nuevos) · RF-TAS-01..10 y RF-12 (modificados) · RN-54 · RN-59 (§13) · glosario §14 · CI-012 declarada en §2.3 | PM + EA + UX + QA | ✓ |
-| `docs/CODE_INCONSISTENCIES.md` | H | 7 | 13-ago-2026 | `pendiente-single-commit` | CI-013..CI-021 · rutas de CI-003, CI-007 y CI-012 reapuntadas | PM + EA + QA | ✓ |
-| `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` | H | 7 | 13-ago-2026 | `pendiente-single-commit` | A-12..A-17 | PM + EA + UX | ✓ |
-| `CLAUDE.md` · `docs/_md/plan-ejecucion-if02-v1_9.md` · `docs/diseno.md` · `docs/construccion.md` · `docs/schema-airtable.md` · `README.md` | F/H | 7 | 13-ago-2026 | `pendiente-single-commit` | puntero normativo v1.9.8 → v1.9.9 (30 refs) | QA | ✓ |
-| `components/console/nav-principal.tsx` · `lib/sla-cronologia.ts` · `lib/sla-etapas.ts` · `lib/sla-habil.ts` · `docs/_artefactos/airtable/AT08_Alertas_SLA.js` · `docs/_artefactos/manual_imgs/build_manual_v2.py` | — | 7 | 13-ago-2026 | `pendiente-single-commit` | puntero normativo en comentario de cabecera (6 refs) · **desviación C-10** | QA | ✓ |
-| `docs/_sync_ifTasador_v1/SYNC_LOG.md` · `docs/_sync_ifTasador_v1/RESUME.md` | — | 7 | 13-ago-2026 | `pendiente-single-commit` | cierre de bitácora del lote 7 | QA | ✓ |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` (renombrado desde `…_v1_9_8.md`) | A | 7 | 13-ago-2026 | `7727c20` | RF-TAS-11..22 (nuevos) · RF-TAS-01..10 y RF-12 (modificados) · RN-54 · RN-59 (§13) · glosario §14 · CI-012 declarada en §2.3 | PM + EA + UX + QA | ✓ |
+| `docs/CODE_INCONSISTENCIES.md` | H | 7 | 13-ago-2026 | `7727c20` | CI-013..CI-021 · rutas de CI-003, CI-007 y CI-012 reapuntadas | PM + EA + QA | ✓ |
+| `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` | H | 7 | 13-ago-2026 | `7727c20` | A-12..A-17 | PM + EA + UX | ✓ |
+| `CLAUDE.md` · `docs/_md/plan-ejecucion-if02-v1_9.md` · `docs/diseno.md` · `docs/construccion.md` · `docs/schema-airtable.md` · `README.md` | F/H | 7 | 13-ago-2026 | `7727c20` | puntero normativo v1.9.8 → v1.9.9 (30 refs) | QA | ✓ |
+| `components/console/nav-principal.tsx` · `lib/sla-cronologia.ts` · `lib/sla-etapas.ts` · `lib/sla-habil.ts` · `docs/_artefactos/airtable/AT08_Alertas_SLA.js` · `docs/_artefactos/manual_imgs/build_manual_v2.py` | — | 7 | 13-ago-2026 | `7727c20` | puntero normativo en comentario de cabecera (6 refs) · **desviación C-10** | QA | ✓ |
+| `docs/_sync_ifTasador_v1/SYNC_LOG.md` · `docs/_sync_ifTasador_v1/RESUME.md` | — | 7 | 13-ago-2026 | `7727c20` | cierre de bitácora del lote 7 | QA | ✓ |
 
 **Corrección de punteros del checklist en el lote 5.** 5.5 aplicado en `docs/diseno.md:287`
 (enunciado normativo de la excepción) y `docs/diseno.md:608` (REGLA C remite a ella); el
