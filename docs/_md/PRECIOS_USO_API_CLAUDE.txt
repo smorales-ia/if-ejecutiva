@@ -1,0 +1,506 @@
+---
+title: Precios
+url: https://platform.claude.com/docs/es/about-claude/pricing
+description: Conoce la estructura de precios de Anthropic para modelos y funcionalidades
+---
+
+Esta página proporciona información detallada sobre los precios de los modelos y funcionalidades de Anthropic. Todos los precios están en USD.
+
+Para obtener la información de precios más actualizada, visita [claude.com/pricing](https://claude.com/pricing).
+
+## Precios de los modelos
+
+La siguiente tabla muestra los precios de todos los modelos de Claude:
+
+| Modelo                                                                                                                                | Tokens de entrada base | Escrituras en caché de 5 min | Escrituras en caché de 1 h | Aciertos y actualizaciones de caché | Tokens de salida |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------- | -------------------------- | ----------------------------------- | ---------------- |
+| Claude Fable 5                                                                                                                        | $10 / MTok             | $12.50 / MTok                | $20 / MTok                 | $1 / MTok                           | $50 / MTok       |
+| Claude Mythos 5 ([disponibilidad limitada](https://anthropic.com/glasswing))                                                          | $10 / MTok             | $12.50 / MTok                | $20 / MTok                 | $1 / MTok                           | $50 / MTok       |
+| Claude Opus 5                                                                                                                         | $5 / MTok              | $6.25 / MTok                 | $10 / MTok                 | $0.50 / MTok                        | $25 / MTok       |
+| Claude Opus 4.8                                                                                                                       | $5 / MTok              | $6.25 / MTok                 | $10 / MTok                 | $0.50 / MTok                        | $25 / MTok       |
+| Claude Opus 4.7                                                                                                                       | $5 / MTok              | $6.25 / MTok                 | $10 / MTok                 | $0.50 / MTok                        | $25 / MTok       |
+| Claude Opus 4.6                                                                                                                       | $5 / MTok              | $6.25 / MTok                 | $10 / MTok                 | $0.50 / MTok                        | $25 / MTok       |
+| Claude Opus 4.5                                                                                                                       | $5 / MTok              | $6.25 / MTok                 | $10 / MTok                 | $0.50 / MTok                        | $25 / MTok       |
+| Claude Opus 4.1 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))  | $15 / MTok             | $18.75 / MTok                | $30 / MTok                 | $1.50 / MTok                        | $75 / MTok       |
+| Claude Opus 4 ([retirado, excepto en Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))              | $15 / MTok             | $18.75 / MTok                | $30 / MTok                 | $1.50 / MTok                        | $75 / MTok       |
+| Claude Sonnet 5                                                                                                                       | $2 / MTok              | $2.50 / MTok                 | $4 / MTok                  | $0.20 / MTok                        | $10 / MTok       |
+| Claude Sonnet 4.6                                                                                                                     | $3 / MTok              | $3.75 / MTok                 | $6 / MTok                  | $0.30 / MTok                        | $15 / MTok       |
+| Claude Sonnet 4.5                                                                                                                     | $3 / MTok              | $3.75 / MTok                 | $6 / MTok                  | $0.30 / MTok                        | $15 / MTok       |
+| Claude Sonnet 4 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))  | $3 / MTok              | $3.75 / MTok                 | $6 / MTok                  | $0.30 / MTok                        | $15 / MTok       |
+| Claude Haiku 4.5                                                                                                                      | $1 / MTok              | $1.25 / MTok                 | $2 / MTok                  | $0.10 / MTok                        | $5 / MTok        |
+| Claude Haiku 3.5 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations)) | $0.80 / MTok           | $1 / MTok                    | $1.60 / MTok               | $0.08 / MTok                        | $4 / MTok        |
+
+<Note id="claude-sonnet-5-introductory-pricing">
+  El precio de $2/$10 por millón de tokens de entrada/salida para Claude Sonnet 5, anunciado en el lanzamiento como precio introductorio hasta el 31 de agosto de 2026, es ahora el precio estándar. El aumento previamente programado a $3/$15 por millón de tokens de entrada/salida el 1 de septiembre de 2026 no ocurrirá.
+</Note>
+
+<Note>
+  MTok = Millón de tokens. La columna "Base Input Tokens" muestra el precio estándar de entrada, las columnas "5m Cache Writes", "1h Cache Writes" y "Cache Hits & Refreshes" son específicas del [almacenamiento en caché de prompts](https://platform.claude.com/docs/es/about-claude/pricing#prompt-caching), y "Output Tokens" muestra el precio de salida. Consulta [precios del almacenamiento en caché de prompts](https://platform.claude.com/docs/es/about-claude/pricing#prompt-caching) para obtener una explicación de las columnas de caché y los multiplicadores de precios.
+</Note>
+
+<Note>
+  Los modelos Claude 4.7 y posteriores, así como Claude Mythos Preview, usan un tokenizador más reciente que contribuye a su rendimiento mejorado en una amplia gama de tareas. Este tokenizador produce aproximadamente un 30% más de tokens para el mismo texto. El aumento exacto depende del contenido y la forma de la carga de trabajo. Claude Sonnet 4.6 y los modelos anteriores usan el tokenizador anterior.
+</Note>
+
+Para los precios de Claude Platform on AWS, consulta [Precios de Claude Platform on AWS](https://platform.claude.com/docs/es/about-claude/pricing#claude-platform-on-aws-pricing).
+
+## Precios de plataformas en la nube
+
+Esta sección cubre las plataformas en la nube operadas por socios, donde el proveedor de la nube te factura. Para las plataformas en la nube operadas por Anthropic que se facturan a través de un marketplace, consulta [Precios de Claude Platform on AWS](https://platform.claude.com/docs/es/about-claude/pricing#claude-platform-on-aws-pricing) y [Precios de Claude en Microsoft Foundry](https://platform.claude.com/docs/es/about-claude/pricing#claude-in-microsoft-foundry-pricing).
+
+Los modelos de Claude están disponibles en [Amazon Bedrock](https://platform.claude.com/docs/es/build-with-claude/claude-in-amazon-bedrock) y [Google Cloud](https://platform.claude.com/docs/es/build-with-claude/claude-on-vertex-ai). Para los precios oficiales, visita:
+
+* [Precios de Amazon Bedrock](https://aws.amazon.com/bedrock/pricing/)
+* [Precios de Google Cloud](https://cloud.google.com/vertex-ai/generative-ai/pricing#claude-models)
+
+<Note>
+  **Precios de endpoints regionales y multirregionales para los modelos Claude 4.5 y posteriores**
+
+  A partir de Claude Sonnet 4.5, Haiku 4.5 y Opus 4.5:
+
+  * **Bedrock** ofrece dos tipos de endpoints: endpoints globales (enrutamiento dinámico para máxima disponibilidad) y endpoints regionales (enrutamiento de datos garantizado a través de regiones geográficas específicas).
+  * **Google Cloud** ofrece tres tipos de endpoints: endpoints globales, endpoints multirregionales (enrutamiento dinámico dentro de un área geográfica) y endpoints regionales.
+
+  Los endpoints regionales y multirregionales incluyen un recargo del 10% sobre los endpoints globales. La API de Claude (de primera parte) es global de forma predeterminada; para opciones de residencia de datos de primera parte y precios, consulta [Precios de residencia de datos](https://platform.claude.com/docs/es/about-claude/pricing#data-residency-pricing).
+
+  **Alcance:** Esta estructura de precios se aplica a Claude Sonnet 4.5, Haiku 4.5, Opus 4.5 y todos los modelos futuros. Los modelos anteriores (Claude Opus 4.1 y versiones previas) conservan sus precios existentes.
+
+  Para detalles de implementación y ejemplos de código:
+
+  * [Endpoints globales vs. regionales de Amazon Bedrock](https://platform.claude.com/docs/es/build-with-claude/claude-in-amazon-bedrock#regions) para Opus 4.7, Haiku 4.5 y modelos posteriores, o [la integración heredada](https://platform.claude.com/docs/es/build-with-claude/claude-on-amazon-bedrock-legacy#global-vs-regional-endpoints) para todos los demás modelos en Bedrock
+  * [Endpoints globales, multirregionales y regionales de Google Cloud](https://platform.claude.com/docs/es/build-with-claude/claude-on-vertex-ai#global-multi-region-and-regional-endpoints)
+</Note>
+
+## Precios de Claude Platform on AWS
+
+[Claude Platform on AWS](https://platform.claude.com/docs/es/build-with-claude/claude-platform-on-aws) factura a través de AWS Marketplace usando Claude Consumption Units (CCUs). Anthropic calcula tu uso de tokens en USD según las tarifas estándar por modelo y por funcionalidad, aplica cualquier descuento negociado, convierte el resultado a CCUs a $0.01 por CCU y reporta la cantidad de CCUs a AWS Marketplace cada hora. Tu factura de AWS muestra una sola línea de CCU.
+
+| Concepto                    | Detalles                                                                                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unidad de facturación**   | Claude Consumption Unit (CCU)                                                                                                                                                                                                                           |
+| **Precio de CCU**           | $0.01 por CCU (fijo; los descuentos se aplican en la conversión de tokens a CCU, no al precio de CCU)                                                                                                                                                   |
+| **Conversión**              | Uso de tokens calculado en USD según las tarifas estándar por modelo y por funcionalidad (igual que los [precios de la API de Claude](https://platform.claude.com/docs/es/about-claude/pricing#model-pricing)), luego convertido a CCUs a $0.01 por CCU |
+| **Cadencia de facturación** | Medición por hora a AWS Marketplace; facturas mensuales                                                                                                                                                                                                 |
+| **Modelo de pago**          | Solo pago posterior (postpago); sin créditos prepagados                                                                                                                                                                                                 |
+| **Descuentos**              | Aplicados como menos CCUs medidas                                                                                                                                                                                                                       |
+| **Impuestos**               | Medición antes de impuestos; AWS Marketplace gestiona los impuestos                                                                                                                                                                                     |
+| **Visibilidad de costos**   | Desglose en tiempo real en Claude Console (acceso a través de la consola de AWS); AWS Cost Explorer muestra CCU agregadas                                                                                                                               |
+
+<Note>
+  **Claude Consumption Units.** Si el Cliente accede a los Servicios a través de ciertas Plataformas de Marketplace (p. ej., Claude Platform on AWS), el uso se facturará en Claude Consumption Units ("CCU") en lugar de por MTok. Una CCU es una unidad de medida utilizada únicamente para la facturación de la Plataforma de Marketplace. Cien (100) CCU representan $1.00 USD de tarifas adeudadas por los Servicios, calculadas a los precios aplicables en [claude.com/pricing#api](https://claude.com/pricing#api), después de la aplicación de cualquier descuento.
+</Note>
+
+### Geografía de inferencia
+
+Para los modelos Claude 4.6 y posteriores, usar `inference_geo: "us"` aplica un multiplicador de precios de 1.1x. `inference_geo: "global"` (predeterminado) usa precios estándar. Consulta [Residencia de datos](https://platform.claude.com/docs/es/manage-claude/data-residency) para más detalles.
+
+### Ofertas privadas
+
+Cuando te registras en la página del servicio **Claude Platform on AWS** de la consola de AWS, la consola de AWS busca cualquier oferta privada asociada con tu cuenta y te solicita que la aceptes en AWS Marketplace. Contacta a tu representante de cuenta de Anthropic para conocer los términos de la oferta privada.
+
+<Note>
+  Si tienes una oferta privada existente de Amazon Bedrock, contacta a tu representante de cuenta de Anthropic o AWS antes de comenzar con Claude Platform on AWS para asegurarte de que tus descuentos se apliquen correctamente. Los descuentos no se pueden aplicar retroactivamente al uso incurrido antes de que se acepte tu oferta privada.
+</Note>
+
+## Precios de Claude en Microsoft Foundry
+
+[Claude en Microsoft Foundry](https://platform.claude.com/docs/es/build-with-claude/claude-in-microsoft-foundry) factura a través de Azure Marketplace usando Claude Consumption Units (CCUs). Anthropic calcula tu uso de tokens en USD según las tarifas estándar por modelo y por funcionalidad, aplica cualquier descuento negociado, convierte el resultado a CCUs a $0.01 por CCU y reporta la cantidad de CCUs a Azure Marketplace cada hora. Tu factura de Azure muestra una sola línea de CCU.
+
+| Concepto                    | Detalles                                                                                                                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Unidad de facturación**   | Claude Consumption Unit (CCU)                                                                                                                                                                                                                           |
+| **Precio de CCU**           | $0.01 por CCU (fijo; los descuentos se aplican en la conversión de tokens a CCU, no al precio de CCU)                                                                                                                                                   |
+| **Conversión**              | Uso de tokens calculado en USD según las tarifas estándar por modelo y por funcionalidad (igual que los [precios de la API de Claude](https://platform.claude.com/docs/es/about-claude/pricing#model-pricing)), luego convertido a CCUs a $0.01 por CCU |
+| **Cadencia de facturación** | Medición por hora a Azure Marketplace; facturas mensuales                                                                                                                                                                                               |
+| **Modelo de pago**          | Solo pago posterior (postpago); sin créditos prepagados                                                                                                                                                                                                 |
+| **Descuentos**              | Aplicados como menos CCUs medidas                                                                                                                                                                                                                       |
+| **Impuestos**               | Medición antes de impuestos; Azure Marketplace gestiona los impuestos                                                                                                                                                                                   |
+| **Visibilidad de costos**   | Azure Cost Management muestra CCU agregadas                                                                                                                                                                                                             |
+
+<Note>
+  **Claude Consumption Units.** Si el Cliente accede a los Servicios a través de ciertas Plataformas de Marketplace (p. ej., Claude Platform on AWS, Claude en Microsoft Foundry), el uso se facturará en Claude Consumption Units ("CCU") en lugar de por MTok. Una CCU es una unidad de medida utilizada únicamente para la facturación de la Plataforma de Marketplace. Cien (100) CCU representan $1.00 USD de tarifas adeudadas por los Servicios, calculadas a los precios aplicables en [claude.com/pricing#api](https://claude.com/pricing#api), después de la aplicación de cualquier descuento.
+</Note>
+
+### Geografía de inferencia
+
+Las implementaciones alojadas en Azure pueden usar el tipo de implementación US Data Zone Standard, que mantiene la inferencia dentro de los Estados Unidos. Esto es equivalente a `inference_geo: "us"` en la API de Claude y aplica el mismo multiplicador de precios de 1.1x. Consulta [Residencia de datos](https://platform.claude.com/docs/es/manage-claude/data-residency) para más detalles.
+
+## Precios específicos por funcionalidad
+
+### Almacenamiento en caché de prompts
+
+El "prompt caching" (almacenamiento en caché de prompts) reduce los costos y la latencia al reutilizar porciones previamente procesadas de tu prompt en múltiples llamadas a la API. En lugar de reprocesar la misma indicación del sistema extensa, documento o historial de conversación en cada solicitud, la API lee desde la caché a una fracción del precio estándar de entrada.
+
+Hay dos formas de habilitar el almacenamiento en caché de prompts:
+
+* **Caché automática:** Agrega un único campo `cache_control` en el nivel superior de tu solicitud. El sistema gestiona automáticamente los puntos de interrupción de caché a medida que las conversaciones crecen. Este es el punto de partida recomendado para la mayoría de los casos de uso.
+* **Puntos de interrupción de caché explícitos:** Coloca `cache_control` directamente en bloques de contenido individuales para un control detallado sobre exactamente qué se almacena en caché.
+
+El almacenamiento en caché de prompts usa los siguientes multiplicadores de precios en relación con las tarifas base de tokens de entrada:
+
+| Operación de caché              | Multiplicador                    | Duración                                   |
+| ------------------------------- | -------------------------------- | ------------------------------------------ |
+| Escritura en caché de 5 minutos | 1.25x del precio base de entrada | Caché válida por 5 minutos                 |
+| Escritura en caché de 1 hora    | 2x del precio base de entrada    | Caché válida por 1 hora                    |
+| Lectura de caché (acierto)      | 0.1x del precio base de entrada  | Misma duración que la escritura precedente |
+
+Los tokens de escritura en caché se cobran cuando el contenido se almacena por primera vez. Los tokens de lectura de caché se cobran cuando una solicitud posterior recupera el contenido almacenado en caché. Un acierto de caché cuesta el 10% del precio estándar de entrada, lo que significa que el almacenamiento en caché se amortiza después de una lectura de caché para la duración de 5 minutos (escritura de 1.25x), o después de dos lecturas de caché para la duración de 1 hora (escritura de 2x).
+
+Estos multiplicadores se acumulan con otros modificadores de precios, incluido el descuento de la Batch API y la residencia de datos.
+
+Para detalles de implementación, modelos compatibles y ejemplos de código, consulta [Almacenamiento en caché de prompts](https://platform.claude.com/docs/es/build-with-claude/prompt-caching).
+
+### Precios de residencia de datos
+
+Para los modelos Claude 4.6 y posteriores, especificar inferencia solo en EE. UU. a través del parámetro `inference_geo` incurre en un multiplicador de 1.1x en todas las categorías de precios de tokens, incluidos tokens de entrada, tokens de salida, escrituras en caché y lecturas de caché. El enrutamiento global (el predeterminado) usa precios estándar.
+
+Esto se aplica a la API de Claude (de primera parte) y a Claude Platform on AWS. En Claude en Microsoft Foundry, el mismo multiplicador de 1.1x se aplica a las implementaciones que usan el tipo de implementación US Data Zone Standard (consulta [Geografía de inferencia](https://platform.claude.com/docs/es/about-claude/pricing#foundry-inference-geography)). Las plataformas operadas por socios (Bedrock y Google Cloud) tienen precios regionales independientes. Consulta [Bedrock](https://aws.amazon.com/bedrock/pricing/) y [Google Cloud](https://cloud.google.com/vertex-ai/generative-ai/pricing#claude-models) para más detalles. Los modelos anteriores no admiten el parámetro `inference_geo` y siempre usan precios estándar; las solicitudes que incluyen el parámetro en estos modelos devuelven un error 400.
+
+Para más información, consulta [Residencia de datos](https://platform.claude.com/docs/es/manage-claude/data-residency).
+
+### Precios del modo rápido
+
+El [modo rápido](https://platform.claude.com/docs/es/build-with-claude/fast-mode), en vista previa de investigación, proporciona una salida significativamente más rápida para Claude Opus 5 y Claude Opus 4.8 a precios premium. Los precios del modo rápido se aplican en toda la ventana de contexto, incluidas las solicitudes de más de 200k tokens de entrada. El modo rápido está disponible solo en la API de Claude (de primera parte); no está disponible en Claude Platform on AWS ni en plataformas en la nube operadas por socios.
+
+| Modelo                          | Entrada    | Salida     |
+| ------------------------------- | ---------- | ---------- |
+| Claude Opus 5 / Claude Opus 4.8 | $10 / MTok | $50 / MTok |
+
+El modo rápido no está disponible en Claude Opus 4.7 (las solicitudes con `speed: "fast"` devuelven un error) ni en Claude Opus 4.6 (las solicitudes se ejecutan a velocidad estándar y se facturan a tarifas estándar). Consulta [Modo rápido](https://platform.claude.com/docs/es/build-with-claude/fast-mode#supported-models).
+
+Los precios del modo rápido se acumulan con otros modificadores de precios:
+
+* Los [multiplicadores de almacenamiento en caché de prompts](https://platform.claude.com/docs/es/about-claude/pricing#prompt-caching) se aplican sobre los precios del modo rápido
+* Los multiplicadores de [residencia de datos](https://platform.claude.com/docs/es/manage-claude/data-residency) se aplican sobre los precios del modo rápido
+
+El modo rápido no está disponible con la [Batch API](https://platform.claude.com/docs/es/about-claude/pricing#batch-processing).
+
+Para más información, consulta [Modo rápido](https://platform.claude.com/docs/es/build-with-claude/fast-mode).
+
+### Procesamiento por lotes
+
+La Batch API permite el procesamiento asíncrono de grandes volúmenes de solicitudes con un descuento del 50% tanto en tokens de entrada como de salida.
+
+| Modelo                                                                                                                                | Entrada por lote | Salida por lote |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ---------------- | --------------- |
+| Claude Fable 5                                                                                                                        | $5 / MTok        | $25 / MTok      |
+| Claude Mythos 5 ([disponibilidad limitada](https://anthropic.com/glasswing))                                                          | $5 / MTok        | $25 / MTok      |
+| Claude Opus 5                                                                                                                         | $2.50 / MTok     | $12.50 / MTok   |
+| Claude Opus 4.8                                                                                                                       | $2.50 / MTok     | $12.50 / MTok   |
+| Claude Opus 4.7                                                                                                                       | $2.50 / MTok     | $12.50 / MTok   |
+| Claude Opus 4.6                                                                                                                       | $2.50 / MTok     | $12.50 / MTok   |
+| Claude Opus 4.5                                                                                                                       | $2.50 / MTok     | $12.50 / MTok   |
+| Claude Opus 4.1 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))  | $7.50 / MTok     | $37.50 / MTok   |
+| Claude Opus 4 ([retirado, excepto en Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))              | $7.50 / MTok     | $37.50 / MTok   |
+| Claude Sonnet 5                                                                                                                       | $1 / MTok        | $5 / MTok       |
+| Claude Sonnet 4.6                                                                                                                     | $1.50 / MTok     | $7.50 / MTok    |
+| Claude Sonnet 4.5                                                                                                                     | $1.50 / MTok     | $7.50 / MTok    |
+| Claude Sonnet 4 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))  | $1.50 / MTok     | $7.50 / MTok    |
+| Claude Haiku 4.5                                                                                                                      | $0.50 / MTok     | $2.50 / MTok    |
+| Claude Haiku 3.5 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations)) | $0.40 / MTok     | $2 / MTok       |
+
+Para más información sobre el procesamiento por lotes, consulta [Procesamiento por lotes](https://platform.claude.com/docs/es/build-with-claude/batch-processing).
+
+### Precios de contexto largo
+
+Los modelos Claude 4.6 y posteriores, así como [Claude Mythos Preview](https://anthropic.com/glasswing), incluyen la [ventana de contexto de 1M de tokens](https://platform.claude.com/docs/es/build-with-claude/context-windows) completa a precios estándar. (Una solicitud de 900k tokens se factura a la misma tarifa por token que una solicitud de 9k tokens). Los descuentos de almacenamiento en caché de prompts y procesamiento por lotes se aplican a tarifas estándar en toda la ventana de contexto.
+
+### Precios del uso de herramientas
+
+Las solicitudes de uso de herramientas se cobran en función de:
+
+1. El número total de tokens de entrada enviados al modelo (incluidos los del parámetro `tools`)
+2. El número de tokens de salida generados
+3. Para las herramientas del lado del servidor, precios adicionales basados en el uso (por ejemplo, la búsqueda web cobra por cada búsqueda realizada)
+
+Las herramientas del lado del cliente tienen el mismo precio que cualquier otra solicitud a la API de Claude, aunque las herramientas del lado del servidor pueden generar cargos adicionales según su uso específico.
+
+Los tokens adicionales del uso de herramientas provienen de:
+
+* El parámetro `tools` en las solicitudes a la API (nombres, descripciones y esquemas de las herramientas)
+* Bloques de contenido `tool_use` en las solicitudes y respuestas de la API
+* Bloques de contenido `tool_result` en las solicitudes a la API
+
+Cuando usas `tools`, la API también incluye automáticamente una indicación del sistema especial para el modelo que habilita el uso de herramientas. El número de tokens de uso de herramientas requeridos para cada modelo se indica en la siguiente tabla (sin incluir los tokens adicionales mencionados anteriormente). Ten en cuenta que la tabla asume que se proporciona al menos 1 herramienta. Si no se proporcionan `tools`, entonces una elección de herramienta de `none` usa 0 tokens adicionales de indicación del sistema.
+
+| Modelo                                                                                                                                | Elección de herramienta        | Recuento de tokens de la indicación del sistema para uso de herramientas |
+| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------ |
+| Claude Opus 5                                                                                                                         | `auto`, `none`***`any`, `tool` | 286 tokens***406 tokens                                                  |
+| Claude Opus 4.8                                                                                                                       | `auto`, `none`***`any`, `tool` | 290 tokens***410 tokens                                                  |
+| Claude Opus 4.7                                                                                                                       | `auto`, `none`***`any`, `tool` | 675 tokens***804 tokens                                                  |
+| Claude Opus 4.6                                                                                                                       | `auto`, `none`***`any`, `tool` | 497 tokens***589 tokens                                                  |
+| Claude Opus 4.5                                                                                                                       | `auto`, `none`***`any`, `tool` | 496 tokens***588 tokens                                                  |
+| Claude Opus 4.1 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))  | `auto`, `none`***`any`, `tool` | 313 tokens***315 tokens                                                  |
+| Claude Opus 4 ([retirado, excepto en Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))              | `auto`, `none`***`any`, `tool` | 313 tokens***315 tokens                                                  |
+| Claude Sonnet 5                                                                                                                       | `auto`, `none`***`any`, `tool` | 354 tokens***474 tokens                                                  |
+| Claude Sonnet 4.6                                                                                                                     | `auto`, `none`***`any`, `tool` | 497 tokens***589 tokens                                                  |
+| Claude Sonnet 4.5                                                                                                                     | `auto`, `none`***`any`, `tool` | 496 tokens***588 tokens                                                  |
+| Claude Sonnet 4 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations))  | `auto`, `none`***`any`, `tool` | 313 tokens***315 tokens                                                  |
+| Claude Haiku 4.5                                                                                                                      | `auto`, `none`***`any`, `tool` | 496 tokens***588 tokens                                                  |
+| Claude Haiku 3.5 ([retirado, excepto en Bedrock y Google Cloud](https://platform.claude.com/docs/es/about-claude/model-deprecations)) | `auto`, `none`***`any`, `tool` | 264 tokens***355 tokens                                                  |
+
+Estos recuentos de tokens se suman a tus tokens normales de entrada y salida para calcular el costo total de una solicitud.
+
+Para los precios actuales por modelo, consulta la sección de [precios de los modelos](https://platform.claude.com/docs/es/about-claude/pricing#model-pricing).
+
+Para más información sobre la implementación del uso de herramientas y las mejores prácticas, consulta [Uso de herramientas](https://platform.claude.com/docs/es/agents-and-tools/tool-use/overview).
+
+### Precios de herramientas específicas
+
+#### Herramienta Bash
+
+La definición de la herramienta bash agrega los siguientes tokens de entrada a tu solicitud. Esto es adicional a la [indicación del sistema de uso de herramientas](https://platform.claude.com/docs/es/agents-and-tools/tool-use/overview#pricing) por modelo que se aplica siempre que haya alguna herramienta presente.
+
+| Modelo                                           | Tokens de entrada adicionales |
+| ------------------------------------------------ | ----------------------------- |
+| Claude Opus 5, Claude Opus 4.8 y Claude Opus 4.7 | 325 tokens                    |
+| Claude Opus 4.6, Claude Sonnet 4.6 y anteriores  | 244 tokens                    |
+
+Los tokens adicionales son consumidos por:
+
+* Salidas de comandos (stdout/stderr)
+* Mensajes de error
+* Contenidos de archivos grandes
+
+Consulta [precios del uso de herramientas](https://platform.claude.com/docs/es/about-claude/pricing#tool-use-pricing) para obtener detalles completos de precios.
+
+#### Herramienta de ejecución de código
+
+**La ejecución de código es gratuita cuando se usa con búsqueda web o recuperación web.** Cuando `web_search_20260209` (o posterior) o `web_fetch_20260209` (o posterior) se incluye en tu solicitud de API, no hay cargos adicionales por las llamadas a la herramienta de ejecución de código más allá de los costos estándar de tokens de entrada y salida.
+
+Cuando se usa sin estas herramientas, la ejecución de código se factura por tiempo de ejecución, el cual se registra por separado del uso de tokens:
+
+* El tiempo de ejecución tiene un mínimo de 5 minutos
+* Cada organización recibe **1,550 horas gratuitas** de uso por mes
+* El uso adicional más allá de las 1,550 horas se factura a **$0.05 USD por hora, por contenedor**
+* Si se incluyen archivos en la solicitud, el tiempo de ejecución se factura incluso si la herramienta no es llamada, porque los archivos se precargan en el contenedor
+
+El uso de la ejecución de código se registra en la respuesta:
+
+```json
+{
+  "usage": {
+    "input_tokens": 105,
+    "output_tokens": 239,
+    "server_tool_use": {
+      "code_execution_requests": 1
+    }
+  }
+}
+```
+
+#### Herramienta de editor de texto
+
+La herramienta de editor de texto utiliza la misma estructura de precios que otras herramientas usadas con Claude. Sigue el precio estándar de tokens de entrada y salida según el modelo de Claude que estés usando.
+
+Además de los tokens base, se necesitan los siguientes tokens de entrada adicionales para la herramienta de editor de texto:
+
+| Herramienta                         | Tokens de entrada adicionales |
+| ----------------------------------- | ----------------------------- |
+| `text_editor_20250429` (Claude 4.x) | 700 tokens                    |
+
+Consulta [precios del uso de herramientas](https://platform.claude.com/docs/es/about-claude/pricing#tool-use-pricing) para obtener detalles completos de precios.
+
+#### Herramienta de búsqueda web
+
+El uso de la búsqueda web se cobra además del uso de tokens:
+
+```json
+{
+  "usage": {
+    "input_tokens": 105,
+    "output_tokens": 6039,
+    "cache_read_input_tokens": 7123,
+    "cache_creation_input_tokens": 7345,
+    "server_tool_use": {
+      "web_search_requests": 1
+    }
+  }
+}
+```
+
+La búsqueda web está disponible en la API de Claude por **$10 por cada 1,000 búsquedas**, más los costos estándar de tokens por el contenido generado a partir de las búsquedas. Los resultados de búsqueda web obtenidos a lo largo de una conversación se cuentan como tokens de entrada, tanto en las iteraciones de búsqueda ejecutadas durante un solo turno como en los turnos posteriores de la conversación.
+
+Cada búsqueda web cuenta como un uso, independientemente del número de resultados devueltos. Si ocurre un error durante la búsqueda web, esta no se facturará.
+
+#### Herramienta de obtención web
+
+El uso de web fetch **no tiene cargos adicionales** más allá de los costos estándar de tokens:
+
+```json
+{
+  "usage": {
+    "input_tokens": 25039,
+    "output_tokens": 931,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "server_tool_use": {
+      "web_fetch_requests": 1
+    }
+  }
+}
+```
+
+La herramienta web fetch está disponible en la API de Claude **sin costo adicional**. Solo pagas los costos estándar de tokens por el contenido obtenido que pasa a formar parte del contexto de tu conversación.
+
+Para protegerte contra la obtención inadvertida de contenido de gran tamaño que consumiría una cantidad excesiva de tokens, usa el parámetro `max_content_tokens` para establecer límites apropiados según tu caso de uso y consideraciones de presupuesto.
+
+Ejemplo de uso de tokens para contenido típico:
+
+* Página web promedio (10 kB): \~2,500 tokens
+* Página de documentación grande (100 kB): \~25,000 tokens
+* PDF de artículo de investigación (500 kB): \~125,000 tokens
+
+#### Herramienta de uso de computadora
+
+El uso de computadora sigue los [precios estándar de uso de herramientas](https://platform.claude.com/docs/es/agents-and-tools/tool-use/overview#pricing). Al usar la herramienta de uso de computadora:
+
+**Sobrecarga de la indicación del sistema:** La beta de uso de computadora agrega 466–499 tokens a la indicación del sistema
+
+**Uso de tokens de la herramienta de uso de computadora:**
+
+| Modelo             | Tokens de entrada por definición de herramienta |
+| ------------------ | ----------------------------------------------- |
+| Modelos Claude 4.x | 735 tokens                                      |
+
+**Consumo adicional de tokens:**
+
+* Imágenes de capturas de pantalla (consulta los [precios de Vision](https://platform.claude.com/docs/es/build-with-claude/vision))
+* Resultados de la ejecución de herramientas devueltos a Claude
+
+<Note>
+  Si también estás usando las herramientas de bash o editor de texto junto con el uso de computadora, esas herramientas tienen sus propios costos de tokens como se documenta en sus respectivas páginas.
+</Note>
+
+## Precios de Claude Managed Agents
+
+[Claude Managed Agents](https://platform.claude.com/docs/es/managed-agents/overview) se factura en dos dimensiones: tokens y tiempo de ejecución de sesión.
+
+### Tokens
+
+Todos los tokens consumidos por una sesión de Claude Managed Agents se facturan a las tarifas mostradas en [Precios de los modelos](https://platform.claude.com/docs/es/about-claude/pricing#model-pricing). Los multiplicadores de [almacenamiento en caché de prompts](https://platform.claude.com/docs/es/about-claude/pricing#prompt-caching) se aplican de forma idéntica. La búsqueda web activada dentro de una sesión incurre en el cargo estándar de $10 por cada 1,000 búsquedas. En [Claude Platform on AWS](https://platform.claude.com/docs/es/about-claude/pricing#claude-platform-on-aws-pricing), los cargos de tokens y tiempo de ejecución de sesión se convierten a Claude Consumption Units a la tarifa estándar. Los precios premium del [modo rápido](https://platform.claude.com/docs/es/about-claude/pricing#fast-mode-pricing) se aplican cuando el `model.speed` de un agente está configurado en `"fast"`.
+
+El [multiplicador de residencia de datos](https://platform.claude.com/docs/es/about-claude/pricing#data-residency-pricing) también se aplica: cuando el `model.inference_geo` de un agente está fijado en `"us"`, los tokens consumidos por las sesiones que ejecutan ese agente se facturan a 1.1x las tarifas estándar, el mismo multiplicador que se aplica a la inferencia solo en EE. UU. en la Messages API.
+
+Los siguientes modificadores de la Messages API **no** se aplican a las sesiones de Claude Managed Agents:
+
+| Modificador                                                                                                          | Por qué no se aplica                                               |
+| -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| [Descuento de Batch API](https://platform.claude.com/docs/es/about-claude/pricing#batch-processing)                  | Las sesiones son con estado e interactivas. No hay modo por lotes. |
+| [Precios de plataformas en la nube](https://platform.claude.com/docs/es/about-claude/pricing#cloud-platform-pricing) | No disponible en plataformas en la nube operadas por socios.       |
+
+### Tiempo de ejecución de sesión
+
+| SKU                           | Tarifa                   | Medición                      |
+| ----------------------------- | ------------------------ | ----------------------------- |
+| Tiempo de ejecución de sesión | $0.08 por hora de sesión | Duración del estado `running` |
+
+El tiempo de ejecución se mide al milisegundo y se acumula solo mientras el estado de la sesión es `running`. El tiempo transcurrido en `idle` (esperando tu próximo mensaje o una confirmación de herramienta), `rescheduling` o `terminated` no cuenta para el tiempo de ejecución.
+
+<Note>
+  El tiempo de ejecución de sesión reemplaza el modelo de facturación por hora de contenedor de [ejecución de código](https://platform.claude.com/docs/es/about-claude/pricing#code-execution-tool) cuando se usa Claude Managed Agents. No se te factura por separado por horas de contenedor además del tiempo de ejecución de sesión.
+</Note>
+
+### Ejemplo práctico
+
+Una sesión de programación de una hora usando Claude Opus 5 que consume 50,000 tokens de entrada y 15,000 tokens de salida:
+
+| Concepto                      | Cálculo                  | Costo      |
+| ----------------------------- | ------------------------ | ---------- |
+| Tokens de entrada             | 50,000 × $5 / 1,000,000  | $0.25      |
+| Tokens de salida              | 15,000 × $25 / 1,000,000 | $0.375     |
+| Tiempo de ejecución de sesión | 1.0 hora × $0.08         | $0.08      |
+| **Total**                     |                          | **$0.705** |
+
+Si el almacenamiento en caché de prompts está activo y 40,000 de los tokens de entrada son lecturas de caché:
+
+| Concepto                      | Cálculo                       | Costo      |
+| ----------------------------- | ----------------------------- | ---------- |
+| Tokens de entrada sin caché   | 10,000 × $5 / 1,000,000       | $0.05      |
+| Tokens de lectura de caché    | 40,000 × $5 × 0.1 / 1,000,000 | $0.02      |
+| Tokens de salida              | 15,000 × $25 / 1,000,000      | $0.375     |
+| Tiempo de ejecución de sesión | 1.0 hora × $0.08              | $0.08      |
+| **Total**                     |                               | **$0.525** |
+
+<Note>
+  Cálculo de ejemplo para procesar 10,000 tickets de soporte:
+
+  * Promedio de \~3,700 tokens por conversación
+  * Usando Claude Haiku 4.5 a $1/MTok de entrada, $5/MTok de salida
+  * Costo total: \~$37.00 por cada 10,000 tickets
+</Note>
+
+Para un recorrido detallado de este cálculo, consulta la [guía de agente de soporte al cliente](https://platform.claude.com/docs/es/about-claude/use-case-guides/customer-support-chat).
+
+## Consideraciones adicionales de precios
+
+### Estrategias de optimización de costos
+
+Al construir agentes con Claude:
+
+1. **Usa modelos apropiados:** Elige Haiku para tareas simples, Sonnet para la mayoría de las cargas de trabajo de producción y Opus para el razonamiento más complejo
+2. **Implementa el almacenamiento en caché de prompts:** Reduce costos para contexto repetido
+3. **Agrupa operaciones por lotes:** Usa la Batch API para tareas que no son sensibles al tiempo
+4. **Monitorea patrones de uso:** Rastrea el consumo de tokens para identificar oportunidades de optimización
+
+<Tip>
+  Para aplicaciones de agentes de alto volumen, contacta al [equipo de ventas empresariales](https://claude.com/contact-sales) para acuerdos de precios personalizados.
+</Tip>
+
+### Límites de velocidad
+
+Los límites de velocidad varían según el nivel de uso y afectan cuántas solicitudes puedes hacer:
+
+* **Nivel Start:** Límites de nivel de entrada para comenzar
+* **Nivel Build:** Límites aumentados para aplicaciones en crecimiento
+* **Nivel Scale:** Los límites estándar más altos para cargas de trabajo de producción
+
+Para información detallada sobre límites de velocidad, consulta [Límites de velocidad](https://platform.claude.com/docs/es/api/rate-limits).
+
+Para límites más allá del nivel Scale o acuerdos de precios personalizados, [contacta al equipo de ventas](https://claude.com/contact-sales).
+
+### Descuentos por volumen
+
+Los descuentos por volumen pueden estar disponibles para usuarios de alto volumen. Estos se negocian caso por caso.
+
+* Los niveles de uso estándar usan los precios mostrados en [Precios de los modelos](https://platform.claude.com/docs/es/about-claude/pricing#model-pricing)
+* Los clientes empresariales pueden [contactar a ventas](mailto:sales@anthropic.com) para precios personalizados
+* Pueden estar disponibles descuentos académicos y de investigación
+
+### Precios empresariales
+
+Para clientes empresariales con necesidades específicas:
+
+* Límites de velocidad personalizados
+* Descuentos por volumen
+* Soporte dedicado
+* Términos personalizados
+
+Contacta al equipo de ventas en [sales@anthropic.com](mailto:sales@anthropic.com) o a través de [Claude Console](https://platform.claude.com/settings/limits) para discutir opciones de precios empresariales.
+
+## Facturación y pago
+
+* La facturación se basa en el uso mensual real
+* Todos los pagos son en USD
+* Opciones de tarjeta de crédito y facturación disponibles
+* Seguimiento de uso disponible en [Claude Console](https://platform.claude.com/)
+
+## Preguntas frecuentes
+
+**¿Cómo se calcula el uso de tokens?**
+
+Los tokens son fragmentos de texto que los modelos procesan. Como estimación aproximada, 1 token equivale aproximadamente a 4 caracteres o 0.75 palabras en inglés. El recuento exacto varía según el idioma y el tipo de contenido.
+
+**¿Hay niveles gratuitos o pruebas?**
+
+Los nuevos usuarios reciben una pequeña cantidad de créditos gratuitos para probar la API. [Contacta a ventas](mailto:sales@anthropic.com) para obtener información sobre pruebas extendidas para evaluación empresarial.
+
+**¿Cómo se acumulan los descuentos?**
+
+Los descuentos de la Batch API y del almacenamiento en caché de prompts se pueden combinar. Por ejemplo, usar ambas funcionalidades juntas proporciona ahorros de costos significativos en comparación con las llamadas estándar a la API. Consulta [precios del almacenamiento en caché de prompts](https://platform.claude.com/docs/es/about-claude/pricing#prompt-caching) para ver cómo interactúan los multiplicadores.
+
+**¿Qué métodos de pago se aceptan?**
+
+Se aceptan las principales tarjetas de crédito para cuentas estándar. Los clientes empresariales pueden organizar facturación y otros métodos de pago.
+
+Para preguntas adicionales sobre precios, contacta a [support@anthropic.com](mailto:support@anthropic.com).
