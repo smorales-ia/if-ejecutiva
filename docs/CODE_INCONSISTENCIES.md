@@ -30,6 +30,21 @@ decisión se revisita antes de asimilarla a `_ambiguedades.md`.** Dos entradas d
 caso aislado y `_ambiguedades.md` está pensado para preguntas abiertas, no para tareas
 agrupadas.
 
+### Precisión de alcance (13-ago-2026 · CI-013 a CI-021)
+
+Las entradas CI-013 a CI-021 comparan §2 del spec contra
+`docs/_md/Imagenes_IF_Tasador_v4.pdf`. **No son doc-vs-doc**: ese PDF documenta el prototipo
+IF-Tasador realmente construido —sus páginas 1 a 16 son la auditoría del código v0, con
+`package.json`, árbol de rutas y componentes leídos— y desde v1.9.9 es la fuente de verdad
+visual de IF-03. La divergencia que registran es, por tanto, documento ↔ código, que es
+justamente el alcance de este archivo.
+
+**Excepción declarada a la regla 1.** Estas nueve entradas ingresan con **Dueño y Fecha
+objetivo en blanco**, por instrucción explícita del usuario en la sesión del 13-ago-2026: los
+completará él al priorizar la tanda de IF-03. Se deja constancia porque la regla 1 exige lo
+contrario y el registro no debe normalizar la excepción: **cualquier entrada posterior vuelve
+a exigir ambos campos.**
+
 ## Reglas del registro
 
 1. **Sin Dueño y sin Fecha objetivo no entra ninguna entrada.** Una divergencia sin
@@ -190,7 +205,7 @@ agrupadas.
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-004 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md` §8 (nota de diseño) y §8.2 (campo `dropbox_path`) · afecta a la futura implementación del path de §8.1 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §8 (nota de diseño) y §8.2 (campo `dropbox_path`) · afecta a la futura implementación del path de §8.1 |
 | **Síntoma** | El segmento `{Unidad}` del path Dropbox deriva de `TX_Unidades.subtipo` (`fldNU8ee30AvvRWHZ`, singleSelect editable). Si la Ejecutiva corrige el subtipo de una unidad después de haber subido adjuntos —algo permitido mientras la solicitud está en estado `creada`, RN-59—, el binario **no se mueve** y `TX_Adjuntos.dropbox_path` deja de coincidir con el estado vigente de la unidad. La divergencia es silenciosa: no hay error, no hay aviso, y el archivo sigue descargándose bien. Aparece sólo en la auditoría de path de RF-51, como un archivo en una carpeta que no corresponde a ninguna unidad actual de la solicitud. |
 | **Causa** | Hasta v1.9.5 los cuatro segmentos del path derivaban de datos inmutables una vez creada la solicitud (cliente, año, código). El nivel Unidad introducido en v1.9.6 es el primer segmento que depende de un campo editable. Se decidió declarar `dropbox_path` como snapshot inmutable en vez de reubicar el binario: mover el archivo invalidaría el `url_dropbox` ya persistido y ya entregado en la UI y en los correos, y exigiría un módulo Dropbox de movimiento no probado en la instancia Make del proyecto —el mismo tipo de apuesta que causó E-026 y el incidente de `dropbox:deleteAFile` de Tanda 3. |
 | **Resolución** | Opciones, a decidir cuando se implemente el path de §8.1 (CI-003): (a) dejarlo como está y que la auditoría de RF-51 tolere el caso, tratando el path como histórico; (b) añadir a la auditoría un reporte de divergencias path↔subtipo que la Ejecutiva pueda revisar, sin mover nada; (c) bloquear la edición de `subtipo` una vez que la unidad tiene adjuntos, empujando la corrección a borrar y recrear el adjunto; (d) implementar la reubicación real, previa verificación de que existe un módulo Dropbox de movimiento en la instancia —exportar un escenario-probe antes de escribir el blueprint. |
@@ -271,7 +286,7 @@ agrupadas.
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-007 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md` (8 apariciones, incluidas §5.2, §5.2.1 y el glosario) vs `docs/schema-airtable.md:51` |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` (8 apariciones, incluidas §5.2, §5.2.1 y el glosario) vs `docs/schema-airtable.md:51` |
 | **Síntoma** | Quien lea la spec y vaya a Airtable a buscar `H_Feriados` no la encuentra. La tabla real es **`C_Feriados`** (`tblJVh2kPd4uMgxpb`), poblada y bien estructurada (`fecha`, `es_irrenunciable`, `activo`, `anno`). El `Blueprint de Interfaces v2.10` arrastra el mismo nombre incorrecto. |
 | **Causa** | El nombre `H_Feriados` viene del diseño de la Capa de Datos, que la ubicaba en el dominio histórico `H_`. Al crearse en la base real quedó en el dominio de configuración `C_`, que es donde corresponde por naturaleza —es un catálogo paramétrico, no un histórico—, y la spec nunca se actualizó. |
 | **Resolución** | Corregir la **spec** en el próximo bump: `H_Feriados` → `C_Feriados` en las 8 apariciones. **Gana la tabla real**, porque renombrarla en Airtable rompería la implementación y además el nombre real es el correcto por dominio. No se toca la spec en esta tanda por decisión explícita: un rename de 8 puntos en el documento normativo merece su propio bump con changelog, no un parche dentro de una auditoría. |
@@ -382,10 +397,10 @@ agrupadas.
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-012 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md` §1.3.2 (bloque *Coordinación*), §1.3.3 (eventos de coordinación), §2.3 (RF-TAS-05), §2.11, §2.12 (declaración de la tabla) y §5.2 · vs base `app9G7lLkIV3CpeLa`, cuyo listado de **68 tablas no la contiene** |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §1.3.2 (bloque *Coordinación*), §1.3.3 (eventos de coordinación), §2.3 (RF-TAS-05), §2.11, §2.12 (declaración de la tabla) y §5.2 · vs base `app9G7lLkIV3CpeLa`, cuyo listado de **68 tablas no la contiene** |
 | **Síntoma** | La spec describe la coordinación de visita como funcionalidad existente en cinco secciones, con criterios de aceptación verificables ("cada acción crea exactamente una fila en `TX_CoordinacionVisita`"), y §1.3.2/§1.3.3 encargan a IF-02 **leerla** en las pestañas Datos e Historial. La tabla no existe. Consecuencia concreta y ya materializada: el timeline de §1.3.3 se entregó en la Fase 2 **sin los eventos de coordinación**, y el bloque *Coordinación* de §1.3.2 no se puede construir. No es un fallo de implementación: no hay origen de datos. |
 | **Causa** | La tabla se declaró en la spec v1.9.3 §2.12 como parte del alcance de IF-03 (Interfaz Tasador) y su creación en Airtable quedó pendiente. Está registrada como dependencia externa **DEP-EXT:A-09** en `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md:1280` y en `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md:2560`, ambas con la marca *"pendiente creación Airtable · no verificada 2026-07-25"*. El sync de IF-Tasador ya lo había detectado (`docs/_sync_ifTasador_v1/00_inventario.md:259`). Lo que esta entrada agrega es que **la deuda ya tiene consecuencia observable en IF-02**, no sólo en IF-03. |
-| **Resolución** | **Decisión de negocio, no técnica.** Dos caminos excluyentes: <br>**(a) Crear la tabla** con los 11 campos de §2.12 y el campo derivado `coordinacion_vigente`, más los 3 campos nuevos de `TX_Solicitudes` que §2.12 asocia. Habilita §2.3 (IF-03) y desbloquea los dos bloques de IF-02. Es la opción coherente con lo que la spec ya promete. <br>**(b) Retirar la coordinación de la spec** hasta que IF-03 entre en construcción, marcando §2.3, §2.11 y §2.12 como diferidos con identificador FUT propio y **quitando de §1.3.2/§1.3.3 el encargo a IF-02**, que hoy pide leer algo inexistente. <br>Mientras no se decida, §1.3.3 de v1.9.8 ya declara explícitamente que los eventos de coordinación quedan fuera *por falta de origen de datos*, para que la omisión no se lea como bug. |
+| **Resolución** | **Decisión de negocio, no técnica.** Dos caminos excluyentes: <br>**(a) Crear la tabla** con los 11 campos de §2.12 y el campo derivado `coordinacion_vigente`, más los 3 campos nuevos de `TX_Solicitudes` que §2.12 asocia. Habilita §2.3 (IF-03) y desbloquea los dos bloques de IF-02. Es la opción coherente con lo que la spec ya promete. <br>**(b) Retirar la coordinación de la spec** hasta que IF-03 entre en construcción, marcando §2.3, §2.11 y §2.12 como diferidos con identificador FUT propio y **quitando de §1.3.2/§1.3.3 el encargo a IF-02**, que hoy pide leer algo inexistente. <br>Mientras no se decida, §1.3.3 de v1.9.9 ya declara explícitamente que los eventos de coordinación quedan fuera *por falta de origen de datos*, para que la omisión no se lea como bug. |
 | **Dueño** | Sergio (decisión) · Héctor/Óscar (validación de negocio) · Claude Code (ejecución de la opción elegida) |
 | **Fecha objetivo** | **Condicional a la apertura de la tanda de IF-03**, que es cuando la tabla pasa de deuda documental a bloqueante. Si IF-03 se pospone más allá del cierre de CU-002, se ejecuta la opción (b) para que la spec deje de prometer lo que no hay. |
 | **Estado** | abierta |
@@ -397,3 +412,192 @@ agrupadas.
 - **Es doc-vs-base, y es la tercera del mismo tipo tras CI-007** (`H_Feriados` vs `C_Feriados`). RO-15 fija el criterio para ese caso —gana la base real, se corrige el documento—, pero **aquí no aplica sin más**: en CI-007 la tabla existía con otro nombre, y acá no existe en absoluto. Por eso la resolución es una decisión de negocio y no un rename.
 - Relación con **CI-010** y **CI-011**: las tres salieron de la misma tanda y las tres son sobre el mismo hueco —qué dice la documentación que hay contra qué hay—, pero sólo ésta requiere decidir algo antes de poder actuar.
 - **Pendiente decisión de negocio (Héctor + Óscar). Consulta enviada 2026-08-11.**
+
+---
+
+## CI-013 · "Continuar" en la lectura de datos: el spec deja avanzar, el diseño bloquea
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-013 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.7 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 21 (Pantalla 4, partes 1 y 2) |
+| **Síntoma** | Hasta v1.9.8, §2.7 decía que el botón "Continuar" *"avanza a §2.8 sin esperar a que SC07 termine; los datos leídos se irán poblando en el formulario según lleguen"*. El diseño v4 muestra el botón **deshabilitado** mientras el stepper no llega a "Datos listos", y habilitado sólo en la segunda variante. Construir según el texto anterior produce un formulario que se repuebla bajo el cursor mientras el tasador escribe, con riesgo de sobrescribir lo que acaba de teclear. |
+| **Causa** | El texto de v1.9.3 optimizaba el tiempo de espera y no consideró la colisión entre la escritura del tasador y la llegada asincrónica de los datos extraídos. El diseño v4 resuelve la colisión por la vía simple: no dejar entrar al formulario hasta que la lectura termine. |
+| **Resolución** | Ya aplicada en la documentación: §2.7 de v1.9.9 fija el bloqueo y lo formaliza en **RF-TAS-15**. Queda pendiente que el código de IF-03 lo respete cuando se construya, junto con la regla de que "Volver" no cancela el proceso en background. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), Pantalla 4. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- El diseño v4 muestra además un tiempo estimado ("15 segundos") que es del prototipo, no un compromiso: no se especificó como valor normativo.
+
+---
+
+## CI-014 · El formulario de captura tiene ocho secciones, no siete
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-014 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.8 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 22 (Pantalla 5, partes 1 y 2) |
+| **Síntoma** | §2.8 declaraba *"siete secciones colapsables alineadas con Origen de Datos del Informe v1.1 §3.3"*. El diseño v4 presenta **ocho**: A Visita, B Datos de la propiedad, C Cuadro de valoración, D Comparables, E Niveles · Terminaciones · Comodidades, F Documentos legales, G Overrides (CU-007), H Rentabilidad (opcional). Quien construya contando siete dejará una fuera, y la candidata natural a caerse es G (Overrides), que es la que materializa la Capacidad C-7. |
+| **Causa** | El conteo de siete viene del contrato de Origen de Datos del Informe §3.3, que agrupa los overrides dentro de otra sección. El diseño los separa para que el tasador declare el ajuste manual con su motivo en un bloque propio. |
+| **Resolución** | Ya aplicada en la documentación: §2.8 de v1.9.9 enumera las ocho secciones en tabla y las formaliza en **RF-TAS-16**. Queda pendiente verificar si el contrato de Origen de Datos del Informe v1.1 §3.3 necesita alinearse, lo que **no se hizo** en esta versión por estar fuera del alcance autorizado. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), Pantalla 5. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- La verificación pendiente contra `VProperty_Origen_Datos_Informe_v1.1.md` es la parte accionable de esta entrada: si ese documento sigue diciendo siete, la contradicción se traslada, no se resuelve.
+
+---
+
+## CI-015 · El contador "N de 3 usados" sigue renderizado en el formulario del tasador
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-015 |
+| **Archivo:línea** | `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 13 y 22 (`components/tasacion-form.tsx`, `IntentosIndicator`, `MAX_INTENTOS = 3` en `use-estado-tasador`) · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2 (decisión capital 1) y §2.13 |
+| **Síntoma** | El prototipo IF-Tasador renderiza en la cabecera del formulario un indicador de tres puntos con el texto "0 de 3 usados", y el hook conserva la constante que lo alimenta. La decisión capital 1 de §2 retiró el ciclo de devolución estructurado, *"el contador de tres re-visitas y la alerta de último intento"*. El tasador ve un contador de intentos que ya no gobierna nada, y que sugiere un límite de reenvíos inexistente. |
+| **Causa** | Traza legacy del modelo anterior a v1.9. La propia auditoría del PDF (p. 13) la identifica como deuda técnica visible, junto con la lógica muerta del hook (`confirmar`, `rechazar`, `intentosRestantes`, `bloqueado`, estado `PENDIENTE_VISADOR`) que `InformePreview` ya no consume. |
+| **Resolución** | Eliminar del código de IF-03 el componente `IntentosIndicator`, su render en el formulario y la constante `MAX_INTENTOS`, junto con las ramas del hook que nadie consume. **No requiere decisión**: la spec ya dice qué debe pasar. Documentado en §2.13 de v1.9.9. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), auditoría del PDF pp. 12-13 y Pantalla 5. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- Es la única de las nueve entradas donde **el diseño está equivocado y el spec tiene razón**: se corrige el código, no el documento. Por eso §2 no especificó el contador.
+- La misma auditoría reporta un segundo residuo del mismo origen: el texto *"Prellenado por IA … (SC07)"* en `seccion-documentos.tsx`, que incumple la política transversal de no mencionar el medio técnico en la UI. Se elimina en la misma pasada.
+
+---
+
+## CI-016 · "Descargar PDF" admite un respaldo de impresión sin la plantilla del cliente
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-016 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.10 (footer de acciones) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 27, punto 2 |
+| **Síntoma** | Hasta v1.9.8, §2.10 permitía que "Descargar PDF" cayera en `window.print()` con estilos `@media print` cuando la solicitud estaba en `calculada` sin PDF depositado. El diseño v4 exige que *"se deberá imprimir con la plantilla asignada a esta solicitud y ser generada por Carbone"*. El respaldo produce un documento con el maquetado del navegador y **sin la plantilla del cliente institucional**, que es precisamente lo que el motor de reglas resuelve por solicitud. Un documento así puede salir de la organización pareciendo un informe de tasación. |
+| **Causa** | El respaldo se introdujo para que la vista previa fuera útil antes de que el pipeline PDF depositara el archivo. Resolvía un problema de disponibilidad creando uno de identidad del documento. |
+| **Resolución** | Ya aplicada en la documentación: §2.10 de v1.9.9 retira el respaldo y **RF-TAS-21** fija que la descarga siempre proviene de Carbone con la plantilla asignada, informando la espera cuando el PDF aún no está. Queda pendiente alinear §7 (Impresión del Informe de Tasación), **que no se tocó** por estar fuera del alcance autorizado de la sesión. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), Pantalla 7. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **La parte pendiente está fuera de §2**: §7 debe confirmar que expone la generación por solicitud a demanda del tasador, y no sólo como paso del pipeline disparado por `estado = calculada`. Hasta verificarlo, RF-TAS-21 describe un comportamiento cuyo proveedor no está confirmado.
+
+---
+
+## CI-017 · El acuse de envío al visador: redirección automática contra pantalla con acción
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-017 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.10 (acción Confirmar) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 29-30 |
+| **Síntoma** | §2.10 decía que al confirmar *"la pantalla muestra un mensaje de agradecimiento antes de redirigir a Pantalla 1"*, y el prototipo lo implementa con un temporizador de 2,5 s. El diseño v4 muestra dos pasos distintos: un diálogo de confirmación previo ("¿Enviar este informe al visador?") y, tras el envío, una pantalla de acuse con un botón "Volver al inicio". La redirección automática puede robar el foco mientras el tasador lee el acuse, y el diálogo previo no estaba especificado en absoluto. |
+| **Causa** | La versión anterior describía el desenlace del envío pero no su confirmación, y resolvía el acuse como transición en vez de como pantalla. El envío al visador es irreversible desde IF-03 y merecía confirmación explícita. |
+| **Resolución** | Ya aplicada en la documentación: §2.10 de v1.9.9 especifica el diálogo y el acuse, y **RF-TAS-22** fija que no hay redirección por temporizador y que un doble toque produce una sola transición. Pendiente en el código de IF-03, donde hoy vive el temporizador. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), Pantalla 7. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+
+---
+
+## CI-018 · Contenido de la card de la cola: el spec pide versión, el diseño pide Rol SII, producto y teléfono
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-018 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.1 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17 |
+| **Síntoma** | §2.1 declaraba que la card muestra *"código VP-AAAA-NNNN, EstadoBadge con color por estado, dirección, cliente y versión"*. El diseño v4 muestra código, badge de **SLA** con horas, comuna · tipo de propiedad, dirección, **Rol SII**, cliente · **producto**, **teléfono accionable** y fecha de visita; y **no** muestra versión del informe. Además, el badge no es de estado sino de SLA: construir según el texto anterior deja al tasador sin el dato que le dice qué hacer primero. |
+| **Causa** | El texto de v1.9.3 describía la card en abstracto, antes de que existiera un diseño que resolviera qué necesita el tasador en la calle. La versión del informe es relevante en el preview (§2.10) y no en la cola. |
+| **Resolución** | Ya aplicada en la documentación: §2.1 de v1.9.9 enumera el contenido real y lo formaliza en **RF-TAS-11**, junto con la llamada a la acción contextual de tres variantes que el texto anterior tampoco recogía. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), Pantalla 1. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- El teléfono como enlace accionable no es cosmético: la etapa 2 de §5.2.4 mide 4 h desde la asignación hasta el primer contacto, y la card es el punto desde donde se hace la llamada.
+
+---
+
+## CI-019 · Chips de la cola: el spec declara cuatro, el diseño tiene tres
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-019 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.1 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17 |
+| **Síntoma** | §2.1 enumeraba cuatro filtros: "Hoy", "Por coordinar", "Toda mi cola" y "SLA en riesgo". El diseño v4 muestra tres: **Todas** (por defecto), **Hoy** y **Por coordinar**. El chip "SLA en riesgo" no existe, y "Toda mi cola" aparece rotulado "Todas". |
+| **Causa** | "SLA en riesgo" se heredó de la bandeja de la Ejecutiva (§1.1), donde tiene sentido porque la vista abarca la operación completa. En la cola del tasador —cinco o seis solicitudes— el estado del SLA viaja en cada card y una vista aparte no agrega información. |
+| **Resolución** | Ya aplicada en la documentación: §2.1 de v1.9.9 declara los tres chips y RF-TAS-01 los fija. **El chip "Hoy" queda condicionado a A-12**, que define qué entra en la agenda del día. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), Pantalla 1. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- El rótulo también cambia: "Toda mi cola" → "Todas". Es el chip por defecto, no una vista adicional.
+
+---
+
+## CI-020 · El detalle de solicitud de §2.4 y dos rutas de §2.13 no existen en el diseño
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-020 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.4 y §2.13 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 11-12 (árbol de rutas del App Router) y pp. 17-30 |
+| **Síntoma** | §2.4 describía una pantalla "Detalle de Solicitud" con botón "Iniciar captura" y §2.13 listaba ocho rutas, entre ellas `[id]/` como detalle, `[id]/captura/` para el formulario y `[id]/calculo/` para el progreso. El diseño v4 no tiene pantalla de detalle: `[id]/` **es** el formulario de captura, el progreso vive en `[id]/estado/` y las rutas `captura/` y `calculo/` no existen. Quien planifique la construcción sobre §2.13 provisiona dos rutas de más y busca una pantalla que nadie diseñó. |
+| **Causa** | §2.4 y la lista de rutas se redactaron en v1.9.3 desde el ADR, antes de que existiera el prototipo. El detalle intermedio quedó absorbido: sus contenidos se repartieron entre la pantalla de coordinación, la sección F del formulario y el sheet "Ver expediente". |
+| **Resolución** | Ya aplicada en la documentación: §2.4 de v1.9.9 declara que la pantalla no existe y explica dónde quedó cada contenido; §2.13 corrige el árbol a siete rutas. El gate de coordinación, que era lo único funcional que §2.4 aportaba, se conserva en la llamada a la acción de la card (RF-TAS-11). |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), inventario de rutas y recorrido de pantallas. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- Conviene revisar si `VProperty_Blueprint_Interfaces_v2_10.md` replica el árbol de ocho rutas; **no se verificó** en esta sesión por estar fuera del alcance autorizado.
+
+---
+
+## CI-021 · El SLA del tasador se deriva del plazo agregado en días, no del plazo por etapa
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-021 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §2.2 y §2.12 (campo `horas_restantes`) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17, punto 1.1, y §5.2.4 (RF-53) del propio spec |
+| **Síntoma** | Hasta v1.9.8, RF-TAS-02 calculaba las horas restantes del tasador como `(sla_aplicable * 24) - horas_desde_solicitud`, es decir, convirtiendo a horas el **plazo agregado en días** del semáforo de bandeja. El diseño v4 pide *"usar el RF de Control de SLA del Proyecto, reutilizar dicha funcionalidad según corresponda al tasador"*, que para el tasador es el **plazo por etapa en horas hábiles** de §5.2.4: etapa 2 (coordinación, 4 h / 6 h) y etapa 5 (visita y envío, 24 h / 48 h). Las dos lecturas dan números distintos: la derivación anterior ignora la ventana hábil, los feriados y la etapa en curso, de modo que la card puede decir "12h restantes" un viernes a las 17:00 cuando quedan 2 h hábiles. |
+| **Causa** | §5.2 y RF-53 se incorporaron en v1.9.7, después de que §2.1 y §2.2 se redactaran en v1.9.3. La fórmula `horas_restantes` es anterior al reloj por etapa y nunca se reconcilió con él. |
+| **Resolución** | Aplicada parcialmente: §2.2 de v1.9.9 ancla el semáforo del tasador a RF-53 · §5.2.4, RF-TAS-02 se reescribe en esos términos y §2.12 retira el campo `horas_restantes`. **Falta la contraparte**: §5.2.4 y RF-53 deben exponer el plazo por etapa de forma consumible por IF-03 —hoy la matriz es normativa pero no declara el contrato de lectura—, y §5.2 no se tocó por estar fuera del alcance autorizado. Relacionada con **CI-005**, que ya registra que el reloj del SLA no está implementado. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | abierta |
+| **Origen** | Actualización de §2 contra el diseño v4 (13-ago-2026), Pantalla 1, punto 1.1. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **No es independiente de CI-005.** Aquélla dice que el reloj arranca donde no debe; ésta, que IF-03 lee el reloj equivocado. Cerrar CI-021 sin cerrar CI-005 daría al tasador una cifra correcta en su forma y errada en su origen.

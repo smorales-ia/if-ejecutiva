@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.8** — sucede a `VProperty_Especificacion_Proyecto_v1_9_7.md`, que queda marcado SUPERSEDED.
+> **v1.9.9** — sucede a `VProperty_Especificacion_Proyecto_v1_9_8.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,23 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.7 · 07-ago-2026 · Incorpora los SLA
+  **Versión**         1.9.9 · 13-ago-2026 · Actualiza §2 (Interfaz
+                      Tasador) contra el diseño de referencia
+                      `Imagenes_IF_Tasador_v4.pdf`, que pasa a ser la
+                      fuente de verdad visual de IF-03 y sucede a
+                      `Imagenes_IF_Tasador_v3.docx`. Agrega RF-TAS-11 a
+                      RF-TAS-22 y modifica RF-TAS-01 a RF-TAS-10 y RF-12.
+                      Toca §2 completa, §13 (RN-54) y §14. Registra las
+                      inconsistencias CI-013 a CI-021 en
+                      `docs/CODE_INCONSISTENCIES.md` y las ambigüedades
+                      A-12 a A-17 en
+                      `docs/_sync_ifTasador_v1/gap/_ambiguedades.md`.
+                      Deja declarada la inconsistencia entre §1 y §2
+                      sobre la coordinación de visita (CI-012), que no se
+                      resuelve en esta versión. Sucede a 1.9.8, que queda
+                      SUPERSEDED.
+
+                      1.9.7 · 07-ago-2026 · Incorpora los SLA
                       operacionales del negocio como sección normativa
                       transversal (§5.2, RF-53): horario hábil de
                       aplicación, definición operativa de la recepción del
@@ -582,6 +598,84 @@ al repositorio —**RO-19** a **RO-23** en `docs/aprendizajes.md`—, sobre
 separación cliente/servidor en módulos que leen Airtable, verificación de
 campos Link poblados antes de filtrar, y reconciliación de UI optimista.
 No son normativas de producto y por eso viven allí y no acá.
+
+### **Cambios v1.9.8 → v1.9.9**
+
+Esta versión no altera el modelo de datos, el motor de cálculo ni el SLA:
+documenta la **Interfaz Tasador tal como quedó diseñada** en el insumo
+`Imagenes_IF_Tasador_v4.pdf`, que sucede a `Imagenes_IF_Tasador_v3.docx`
+como fuente de verdad visual de IF-03. Todo el cambio funcional se
+concentra en §2; §13 y §14 se tocan sólo para no quedar desalineados con
+lo que §2 agrega.
+
+  -------------------------------------------------------------------------
+  **Aspecto**         **v1.9.8 (anterior)**      **v1.9.9 (actual)**
+  ------------------- -------------------------- --------------------------
+  Fuente visual de    `Imagenes_IF_Tasador_v3.-   `Imagenes_IF_Tasador_v4.-
+  IF-03               docx`, ausente del repo     pdf`, presente en
+                      (A-02).                     `docs/_md/`. Sustituye a
+                                                  la anterior en §2 y en la
+                                                  tabla de trazabilidad.
+
+  Cola del tasador    Cuatro chips y card con     §2.1. Tres chips (Todas ·
+                      "código, estado,            Hoy · Por coordinar),
+                      dirección, cliente y        card con Rol SII,
+                      versión".                   producto y teléfono
+                                                  accionable, y CTA
+                                                  contextual de tres
+                                                  variantes (RF-TAS-11).
+
+  SLA del tasador     Fórmula propia sobre el     §2.2. Se alimenta del
+                      plazo agregado en días.     control de SLA del
+                                                  proyecto (RF-53 · §5.2.4),
+                                                  etapas 2 y 5, que son las
+                                                  del tasador. Divergencia
+                                                  registrada como CI-021.
+
+  Coordinación de     Dos botones directos, sin   §2.3. Registro del
+  visita              catálogo de motivos.        resultado del contacto en
+                                                  dos pasos, con catálogo
+                                                  cerrado de motivos y
+                                                  detalle mínimo
+                                                  (RF-TAS-12), y contenido
+                                                  mínimo de los correos a
+                                                  la ejecutiva (RF-TAS-13).
+
+  Formulario de       Siete secciones; sin fecha  §2.8. Ocho secciones A--H
+  captura             real de visita.             (RF-TAS-16) y fecha real
+                                                  de visita obligatoria
+                                                  frente a la planificada
+                                                  pre-llenada (RF-TAS-17).
+
+  Preview del         Prosa, con fallback         §2.10. Ocho bloques
+  informe             `window.print()` para el    numerados (RF-TAS-20),
+                      PDF.                        descarga siempre por
+                                                  Carbone con la plantilla
+                                                  asignada (RF-TAS-21) y
+                                                  acuse de envío explícito
+                                                  (RF-TAS-22).
+
+  Identificadores     RF-TAS-01 a RF-TAS-10.      Se agregan RF-TAS-11 a
+                                                  RF-TAS-22. Cero RF, RN o
+                                                  D globales nuevos; nada se
+                                                  renumera.
+  -------------------------------------------------------------------------
+
+Divergencias registradas, no resueltas. El contraste entre §2 y el diseño
+v4 levantó nueve inconsistencias, abiertas como **CI-013** a **CI-021** en
+`docs/CODE_INCONSISTENCIES.md`, y seis ambigüedades que exigen decisión de
+negocio, abiertas como **A-12** a **A-17** en
+`docs/_sync_ifTasador_v1/gap/_ambiguedades.md`. Los RF que dependen de
+ellas se emiten marcados como pendientes, nunca resueltos por criterio
+propio.
+
+Inconsistencia declarada entre §1 y §2. §1.3.2, §1.3.3, §1.4 y RN-59
+retiraron en esta misma versión la coordinación por sistema, apoyadas en
+CI-012 (`TX_CoordinacionVisita` no existe en la base). §2.3 la conserva
+porque el diseño v4 la exige y porque su retiro es una decisión de negocio
+todavía abierta. La contradicción **queda declarada en §2.3**, no
+disimulada: se resuelve cuando se cierre CI-012, en un sentido o en el
+otro.
 
 ### **Nivel de detalle**
 
@@ -2112,11 +2206,11 @@ la que se calculan (§5.2.1): lo que sigue diferido es su parametrización
 en C_SLA y los campos de timestamp por etapa que la sostienen, no su
 definición.
 
-# VProperty · IF-03 Interfaz Tasador · Requerimientos Funcionales de UI v1.0
+# VProperty · IF-03 Interfaz Tasador · Requerimientos Funcionales de UI v2.0
 
-**Fecha** — 25-jul-2026
+**Fecha** — 13-ago-2026 *(v1.0 · 25-jul-2026)*
 **Alcance** — Release v1.9 · IF-03 Tasador
-**Origen** — Consolidación del `VProperty_ADR_IF_Tasador_v3_v2.md` reorganizada por requerimientos funcionales, siguiendo el patrón de presentación de la §1 (Interfaz Ejecutiva) del `VProperty_Especificacion_Proyecto_v1_9_2.md`.
+**Origen** — Consolidación del `VProperty_ADR_IF_Tasador_v3_v2.md` reorganizada por requerimientos funcionales, siguiendo el patrón de presentación de la §1 (Interfaz Ejecutiva) del `VProperty_Especificacion_Proyecto_v1_9_2.md`. Desde v2.0, la **fuente de verdad visual** es `docs/_md/Imagenes_IF_Tasador_v4.pdf`: donde el texto de esta sección contradiga al diseño v4, manda el diseño y la divergencia queda registrada como CI en `docs/CODE_INCONSISTENCIES.md`.
 **Estado** — Fuente única para el próximo prompt de v0.dev y para las tareas de schema, Make y frontend de IF-03.
 **Equipo redactor** — Product Manager · UX/UI Lead · Enterprise Architect · Frontend Lead · Data Engineer
 
@@ -2124,7 +2218,7 @@ definición.
 
 # 2. Interfaz Tasador
 
-App móvil (PWA) para que el tasador coordine la visita, documente la captura en terreno y confirme el envío del informe generado. Materializa la Capacidad C-3 (captura de visita en terreno) y parte de la Capacidad C-7 (overrides al motor de cálculo). Corresponde a IF-03 del Blueprint de Interfaces (Tipo A · Next.js · Clerk · mobile-first, PWA). La descripción funcional que sigue refleja las siete pantallas del insumo `Imagenes_IF_Tasador_v3.docx`; no se transcriben imágenes en el cuerpo del texto: sólo se especifica el comportamiento que reflejan.
+App móvil (PWA) para que el tasador coordine la visita, documente la captura en terreno y confirme el envío del informe generado. Materializa la Capacidad C-3 (captura de visita en terreno) y parte de la Capacidad C-7 (overrides al motor de cálculo). Corresponde a IF-03 del Blueprint de Interfaces (Tipo A · Next.js · Clerk · mobile-first, PWA). La descripción funcional que sigue refleja las siete pantallas del insumo `Imagenes_IF_Tasador_v4.pdf`, que desde v1.9.9 sucede a `Imagenes_IF_Tasador_v3.docx` como fuente de verdad visual; no se transcriben imágenes en el cuerpo del texto: sólo se especifica el comportamiento que reflejan.
 
 **Contexto operacional.** El tasador nunca accede a Airtable directamente; toda operación transacciona vía API Route con validación server-side. Diseño mobile-first tolerante a conectividad intermitente.
 
@@ -2143,17 +2237,21 @@ App móvil (PWA) para que el tasador coordine la visita, documente la captura en
 
 ## 2.1 Vista de sus solicitudes (Pantalla 1 · Inicio del Tasador)
 
-Cola personal filtrada por `clerk_user_id`: solicitudes asignadas al tasador en `TX_Solicitudes.tasador` con estado en `{asignada, visitada, calculada}`. Header sticky con logo VPROPERTY y avatar del usuario, chips horizontales de filtro y cards de tasación (TasacionCard) que muestran código VP-AAAA-NNNN, EstadoBadge con color por estado, dirección, cliente y versión.
+Cola personal filtrada por `clerk_user_id`: solicitudes asignadas al tasador en `TX_Solicitudes.tasador` con estado en `{asignada, visitada, calculada}`. Header sticky con logo VPROPERTY y nombre + avatar del usuario. Bajo el header, el título **"Mis tasaciones"** con el contador **"N en curso"**, la fila de chips de filtro y las cards de tasación (TasacionCard).
 
-**Chips de filtro de la cola:**
+**Chips de filtro de la cola.** Son **tres**, mutuamente excluyentes, y el primero está activo por defecto:
 
-- **Hoy** — solicitudes cuya `fecha_asignacion` esté dentro de las últimas 24 horas. Alineado con RN-53 (política interna de 4 h para el primer contacto).
-- **Por coordinar** — solicitudes con `coordinacion_vigente` en `null` y `now() - fecha_asignacion < 4h`. El reloj de esta categoría se **detiene** cuando `coordinacion_vigente = rechazada` (el tasador hizo su parte y la solicitud queda esperando a la ejecutiva).
-- **Toda mi cola** · **SLA en riesgo** — filtros conmutables tradicionales.
+- **Todas** — la cola completa del tasador. Es el chip por defecto.
+- **Hoy** — la agenda del día: lo que el tasador debe resolver en la jornada en curso. Su composición exacta está pendiente de definición (**A-12**) y hasta cerrarla no se implementa.
+- **Por coordinar** — solicitudes sin coordinación vigente, en estado `asignada` y con `now() - fecha_asignacion < 4h`, ordenadas por menor tiempo restante. El reloj de esta categoría se **detiene** cuando la coordinación queda rechazada (el tasador hizo su parte y la solicitud queda esperando a la ejecutiva), y la solicitud sale del chip.
 
-**Representación del SLA en la card.** Semáforo verde/ámbar/rojo del §2.2 combinado con etiqueta numérica en horas restantes (ejemplo: "🟢 12h restantes", "🟡 3h restantes", "🔴 vencido"). La aritmética no cambia (RN-04); sólo cambia la fórmula de despliegue.
+El chip "SLA en riesgo" que enumeraban las versiones anteriores **no existe** en el diseño v4: el estado del SLA viaja en la propia card y no necesita una vista aparte (CI-019).
 
-**Card cuando la coordinación fue rechazada.** Muestra el badge **"Esperando contacto de ejecutiva"**, permanece visible en la cola general para que el tasador no la pierda de vista, y sale del chip "Por coordinar".
+**Contenido de la card.** Cada card muestra, en este orden: código VP-AAAA-NNNN; badge de SLA con punto de color y etiqueta —"En plazo · 20h", "Por vencer · 5h", "Por coordinar · 3h", "Vencido"—; comuna · tipo de propiedad; dirección; Rol SII cuando la solicitud lo tiene; cliente institucional · producto; teléfono del contacto de prioridad 1 como enlace accionable (`tel:`); y fecha de visita cuando ya está coordinada. La card **no** muestra la versión del informe, que en esta pantalla no aporta decisión (CI-018).
+
+**Llamada a la acción contextual.** La card cierra con un único botón, cuyo rótulo y estilo dependen de la situación de la solicitud: **"Coordinar visita"** en color de acento mientras falte coordinación; **"Abrir tasación"** en color primario una vez coordinada; y **"Ver coordinación"** deshabilitado, acompañado del badge **"Esperando contacto de ejecutiva"**, cuando la coordinación fue devuelta y la ejecutiva aún no actualiza los contactos. En este último caso la solicitud permanece visible en "Todas" para que el tasador no la pierda de vista.
+
+**Representación del SLA.** El semáforo verde/ámbar/rojo y las horas restantes se toman del control de SLA del proyecto (§2.2), no de una aritmética propia de esta pantalla.
 
 Cualquier intento de acceso a solicitudes ajenas devuelve 403 (validación server-side, no cliente).
 
@@ -2162,110 +2260,236 @@ Cualquier intento de acceso a solicitudes ajenas devuelve 403 (validación serve
 | **Descripción** | El tasador inicia sesión con Clerk (Google o email) y accede únicamente a las solicitudes asignadas a su `clerk_user_id` en `TX_Solicitudes.tasador`. Cualquier intento de acceso a otra solicitud devuelve 403. |
 | **Criterio de aceptación** | Pruebas con dos tasadores distintos confirman que ninguno puede listar ni abrir solicitudes ajenas. La validación se hace server-side en la API Route, no en el cliente. |
 
-| **RF-TAS-01** | **Filtros de cola: Hoy y Por coordinar** |
+| **RF-TAS-01** | **Filtros de cola: Todas, Hoy y Por coordinar** |
 |---|---|
-| **Descripción** | El sistema muestra los chips "Hoy" (solicitudes con `fecha_asignacion` dentro de las últimas 24 h) y "Por coordinar" (`coordinacion_vigente` null y `now() - fecha_asignacion < 4h`). El reloj de "Por coordinar" se detiene si `coordinacion_vigente = rechazada` y la solicitud sale del chip. |
-| **Criterio de aceptación** | Una solicitud asignada hace 23 h aparece en "Hoy"; a las 25 h, no. Una solicitud con coordinación rechazada muestra el badge "Esperando contacto de ejecutiva" y desaparece del chip "Por coordinar" sin afectar su presencia en "Toda mi cola". |
+| **Descripción** | El sistema muestra tres chips mutuamente excluyentes: "Todas" (cola completa, activo por defecto), "Hoy" (agenda del día · **pendiente de A-12**, no se implementa hasta cerrarla) y "Por coordinar" (sin coordinación vigente, estado `asignada` y `now() - fecha_asignacion < 4h`, ordenadas por menor tiempo restante). El reloj de "Por coordinar" se detiene si la coordinación queda rechazada y la solicitud sale del chip. No existe chip "SLA en riesgo". |
+| **Criterio de aceptación** | Los tres chips filtran la misma cola sin recargar la ruta y el chip activo se refleja en la URL, de modo que volver desde el detalle lo reactiva. Una solicitud con coordinación rechazada desaparece del chip "Por coordinar" sin afectar su presencia en "Todas". El chip "Hoy" no se libera a producción mientras A-12 siga abierta. |
 
-| **RF-TAS-02** | **SLA con semáforo y horas restantes** |
+| **RF-TAS-02** | **SLA de la cola alimentado por el control de SLA del proyecto** |
 |---|---|
-| **Descripción** | Cada card muestra el semáforo verde/ámbar/rojo transversal (RN-04) más una etiqueta numérica con las horas restantes calculada como `horas_restantes = (sla_aplicable * 24) - horas_desde_solicitud`, redondeado. |
-| **Criterio de aceptación** | El campo formula `horas_restantes` está expuesto por la vista Airtable del tasador y el API Route lo entrega junto al color del semáforo. Sin cambio en `C_SLA` ni en RN-04. |
+| **Descripción** | El badge de SLA de cada card se alimenta del control de SLA del proyecto (RF-53 · §5.2.4), tomando las etapas cuyo responsable es el tasador —etapa 2 "Coordinación de visita" y etapa 5 "Visita y envío de informe"—, y no de una aritmética propia de IF-03. Muestra el color del semáforo verde/ámbar/rojo y una etiqueta con el tiempo restante en horas: "En plazo · Xh", "Por vencer · Xh", "Por coordinar · Xh" o "Vencido". |
+| **Criterio de aceptación** | El color y las horas que muestra la card coinciden con los que el control de SLA calcula para la etapa vigente de esa solicitud, sobre la ventana hábil de §5.2.1. IF-03 no define umbrales propios ni recalcula el plazo: los consume. |
+
+| **RF-TAS-11** | **Contenido y llamada a la acción de la card de la cola** |
+|---|---|
+| **Descripción** | Cada card muestra código VP-AAAA-NNNN, badge de SLA (RF-TAS-02), comuna · tipo de propiedad, dirección, Rol SII cuando existe, cliente institucional · producto, teléfono del contacto de prioridad 1 como enlace accionable y fecha de visita cuando ya está coordinada. Cierra con un único botón contextual: "Coordinar visita" (acento) si falta coordinación, "Abrir tasación" (primario) si ya está coordinada, o "Ver coordinación" deshabilitado con badge "Esperando contacto de ejecutiva" si la coordinación fue devuelta y los contactos no se han actualizado. |
+| **Criterio de aceptación** | Las tres variantes del botón son excluyentes: ninguna card presenta dos a la vez. Pulsar el teléfono abre el marcador del dispositivo sin salir de la aplicación. Una solicitud sin Rol SII o sin fecha de visita omite esa línea en vez de mostrarla vacía. |
 
 ---
 
 ## 2.2 Vista de SLA por Solicitud
 
-Mismo semáforo verde/ámbar/rojo que la Ejecutiva (RN-04, `C_SLA` con feriados chilenos `H_Feriados`), calculado por rollup Airtable y expuesto vía API Route. La aritmética del SLA se especifica una sola vez, en §5 Parametrización de Reglas de Negocio del spec del proyecto. La adición de horas restantes se rige por RF-TAS-02.
+El tasador **reutiliza el control de SLA del proyecto**; IF-03 no define un reloj propio. La aritmética del SLA se especifica una sola vez, en §5 Parametrización de Reglas de Negocio, y allí conviven dos lecturas: el plazo **agregado** por par (cliente, tipo de informe) en días (RN-04 · `C_SLA`), y el plazo **por etapa** del workflow en horas hábiles (RF-53 · §5.2.4), que es el que gobierna el trabajo del tasador.
+
+De las siete etapas de §5.2.4, dos tienen al tasador como responsable y son las que alimentan su bandeja: la **etapa 2** (Coordinación de visita · 4 h ideal, 6 h máximo, alineada con RN-53) y la **etapa 5** (Visita y envío de informe · 24 h ideal, 48 h máximo). El semáforo y las horas restantes que muestra la card (RF-TAS-02) se leen de la etapa vigente, sobre la ventana hábil de §5.2.1 y excluyendo feriados.
+
+Hasta v1.9.8 esta sección derivaba las horas restantes del plazo agregado en días, con una fórmula propia (`horas_restantes`). Esa derivación **se retira**: mezclaba las dos lecturas de §5.2 y producía un número que ningún otro punto del sistema podía reproducir. La divergencia entre lo que este documento pedía y lo que el control de SLA calcula queda registrada como **CI-021**.
 
 ---
 
 ## 2.3 Coordinar visita (Pantalla 2 · nueva en v1.9)
 
-Antes de iniciar la captura, el tasador ve una **pantalla resumen** con los datos que el correo de asignación entrega hoy (§1.6.3 del spec): cabecera de la solicitud, propiedad, personas de contacto ordenadas por prioridad y adjuntos como enlaces Dropbox. La pantalla ofrece dos acciones diferenciadas por color:
+> ⚠ **Inconsistencia declarada con §1 — ver CI-012.** §1.3.2, §1.3.3, §1.4 y RN-59 retiran en v1.9.9 la coordinación por sistema y la devuelven al canal manual, apoyadas en que `TX_CoordinacionVisita` no existe en la base. Esta sección la conserva porque el diseño v4 la especifica como Pantalla 2 y exige, en su punto 4, que la ejecutiva vea las respuestas del tasador en su UI. Las dos posiciones no se pueden sostener a la vez y **el documento no las reconcilia en esta versión**: la resolución es la decisión de negocio abierta de CI-012 (Héctor/Óscar, consulta enviada el 11-ago-2026). Mientras siga abierta, §2.3 describe el diseño aprobado y §1 describe lo construible; RF-TAS-04 y RF-TAS-05 quedan marcados como pendientes.
 
-- **Confirmar coordinación** (verde) — requiere `fecha_visita_propuesta` obligatoria y una nota opcional del tasador.
-- **Devolver a ejecutiva** (rojo) — requiere motivo obligatorio.
+Antes de iniciar la captura, el tasador ve una **pantalla resumen** con los datos que el correo de asignación entrega hoy (§1.6.3 del spec), organizados en cuatro bloques colapsables:
 
-Cada acción persiste una fila en `TX_CoordinacionVisita` (§2.12) y dispara SC13 con una plantilla dedicada, dentro del mismo hilo `email_thread_id` de la solicitud (RN-52). La coordinación **no cambia el estado backend**: la solicitud permanece `asignada` antes, durante y después de la coordinación. Sólo cambia de estado al presionarse "Calcular Tasación" (§2.7).
+  ---------------------------------------------------------------------------
+  **Bloque**          **Contenido**
+  ------------------- -------------------------------------------------------
+  Encabezado          Empresa (cliente institucional), fecha de solicitud y
+                      código VP-AAAA-NNNN, este último con acción de copiar
+                      al portapapeles
+
+  Propiedad           Marca Nuevo/Usado, dirección, comuna, valor estimado y
+                      tabla de unidades con su N°, dirección, Rol SII y
+                      superficie en m²
+
+  Personas            Vendedor con su RUT y los contactos de visita
+                      ordenados por prioridad —cada uno con su número de
+                      orden, nombre, rol, teléfono y email—, más las
+                      observaciones de la solicitud
+
+  Adjuntos            Los cargados en TX_Adjuntos, con nombre y tamaño,
+                      como enlace a Dropbox
+  ---------------------------------------------------------------------------
+
+Bajo los bloques, la pantalla abre el registro **Resultado del contacto**, encabezado por la instrucción de llamar al contacto de prioridad 1 nombrándolo. El registro es en dos pasos y no en dos botones sueltos: el tasador **elige primero un desenlace** y sólo entonces se le piden los datos de ese desenlace. Mientras no haya elegido, el botón de envío permanece deshabilitado con el rótulo "Selecciona un resultado".
+
+- **Contacto exitoso · Coordiné la fecha de visita** — despliega "Fecha planificada de visita" (obligatoria) y "Nota de la coordinación" (opcional). Confirma con el botón **"Confirmar coordinación"**.
+- **No pude contactar · Devolver a la ejecutiva** — despliega "Motivo" (obligatorio, catálogo cerrado) y "Detalle" (obligatorio, mínimo 20 caracteres, con contador visible). Confirma con el botón **"Devolver a ejecutiva"**, en color destructivo.
+
+Cada acción persiste una fila en `TX_CoordinacionVisita` (§2.12) y dispara SC13 con una plantilla dedicada, dentro del mismo hilo `email_thread_id` de la solicitud (RN-52). La coordinación **no cambia el estado backend**: la solicitud permanece `asignada` antes, durante y después de la coordinación. Sólo cambia de estado al presionarse "Calcular Tasación" (§2.8).
 
 **Segundo intento de coordinación (Decisión S-6 del ADR).** Al devolver a ejecutiva, la solicitud sale del chip "Por coordinar", el reloj SLA de 4 h se detiene y la card muestra el badge "Esperando contacto de ejecutiva". Cuando la ejecutiva edita los contactos de visita (excepción acotada a RN-59), la Pantalla 2 se reabre para el tasador con Confirmar / Devolver disponibles de nuevo; el nuevo intento se registra como fila con `intento_numero += 1`.
 
 **Visibilidad para la ejecutiva.** El resultado del último intento se muestra en la pestaña **Datos** del expediente de IF-02 (dentro del bloque *Contactos de visita* o en un sub-bloque *Coordinación*) y como evento en la pestaña **Historial**. No se construye vista dedicada nueva; se reutilizan las pestañas existentes. La ejecutiva **lee**, no edita coordinación.
 
-| **RF-TAS-03** | **Pantalla resumen de coordinación** |
+| **RF-TAS-03** | **Pantalla resumen de coordinación y registro del resultado** |
 |---|---|
-| **Descripción** | Antes de iniciar captura, el tasador ve una pantalla resumen (ruta `app/tasaciones/[id]/coordinar/`) con datos del correo de asignación (§1.6.3) y dos acciones: Confirmar coordinación (con `fecha_visita_propuesta` obligatoria) y Devolver a ejecutiva (con motivo obligatorio). Cada acción persiste una fila en `TX_CoordinacionVisita` y dispara SC13 con plantilla dedicada. |
-| **Criterio de aceptación** | Cada acción crea exactamente una fila en `TX_CoordinacionVisita` con el estado correcto (`confirmada` / `rechazada`), autor `clerk_user_id`, `fecha_respuesta` en hora de servidor y `email_enviado_status = pendiente`. La ejecutiva recibe el correo dentro del mismo `email_thread_id` de la solicitud. |
+| **Descripción** | Antes de iniciar captura, el tasador ve una pantalla resumen (ruta `app/tasaciones/[id]/coordinar/`) con los cuatro bloques colapsables Encabezado, Propiedad, Personas y Adjuntos, alimentados por los mismos datos del correo de asignación (§1.6.3), y con el código VP copiable al portapapeles. Bajo ellos registra el resultado del contacto en dos pasos: elegir desenlace y completar sus datos. El botón de envío permanece deshabilitado con el rótulo "Selecciona un resultado" mientras no haya desenlace elegido. Cada confirmación persiste una fila en `TX_CoordinacionVisita` y dispara SC13 con plantilla dedicada. |
+| **Criterio de aceptación** | Cada acción crea exactamente una fila en `TX_CoordinacionVisita` con el estado correcto (`confirmada` / `rechazada`), autor `clerk_user_id`, `fecha_respuesta` en hora de servidor y `email_enviado_status = pendiente`. La ejecutiva recibe el correo dentro del mismo `email_thread_id` de la solicitud. La tabla de unidades muestra un Rol SII por unidad, no uno por solicitud. |
 
-| **RF-TAS-04** | **Reapertura para segundo intento tras rechazo** |
+| **RF-TAS-12** | **Catálogo de motivos de contacto no logrado y detalle mínimo** |
 |---|---|
-| **Descripción** | Cuando `coordinacion_vigente = rechazada`, la pantalla resumen queda cerrada para el tasador. Al editar la ejecutiva un contacto de visita (excepción acotada a RN-59), la pantalla se reabre con Confirmar / Devolver disponibles; la nueva fila se registra con `intento_numero += 1`. |
-| **Criterio de aceptación** | Un segundo intento genera una segunda fila en `TX_CoordinacionVisita` con `intento_numero = 2`. Mientras la coordinación esté rechazada, el estado backend de la solicitud permanece `asignada` y no se puede iniciar captura. |
+| **Descripción** | El desenlace "No pude contactar" exige un motivo tomado de un catálogo cerrado —`Teléfono no contesta`, `Teléfono equivocado`, `Cliente rechaza visita`, `Otro`— y un detalle en texto libre de al menos 20 caracteres, con contador visible del avance. El desenlace "Contacto exitoso" exige fecha planificada de visita y admite una nota opcional. Si el catálogo debe ser paramétrico en Airtable o fijo en la aplicación está pendiente de definición (**A-17**). |
+| **Criterio de aceptación** | El botón "Devolver a ejecutiva" permanece deshabilitado mientras falte el motivo o el detalle no alcance los 20 caracteres, y el contador refleja el largo real en cada pulsación. El motivo persistido en `TX_CoordinacionVisita.motivo` es uno de los cuatro valores del catálogo; ningún texto libre entra en ese campo. |
 
-| **RF-TAS-05** | **Visibilidad de coordinación para la ejecutiva (IF-02)** |
+| **RF-TAS-13** | **Contenido mínimo de los correos de coordinación a la ejecutiva** |
 |---|---|
-| **Descripción** | La pestaña Datos del expediente de IF-02 (§1.3.2) muestra el resultado del último intento de coordinación (lectura de `TX_CoordinacionVisita`), y la pestaña Historial (§1.3.3) lo lista como evento. No hay UI de escritura desde IF-02. |
-| **Criterio de aceptación** | Un cambio en `TX_CoordinacionVisita` se refleja en las pestañas Datos e Historial de IF-02 con latencia menor a un minuto. La ejecutiva no puede editar el resultado de coordinación desde IF-02. |
+| **Descripción** | Al confirmar la coordinación, SC13 envía a la ejecutiva un correo con la fecha de visita acordada y la nota del tasador si la escribió. Al devolver a la ejecutiva, envía un correo con el motivo del catálogo y el detalle escrito. Ambos identifican la solicitud por su código VP-AAAA-NNNN y la propiedad por su dirección, y viajan dentro del hilo `email_thread_id` de la solicitud (RN-52). |
+| **Criterio de aceptación** | Los dos correos se emiten con las plantillas `email_coordinacion_confirmada` y `email_coordinacion_rechazada` de `C_Plantillas`, ninguna de las cuales se envía con un campo obligatorio vacío. La ejecutiva puede identificar solicitud y propiedad sin abrir el sistema. |
+
+| **RF-TAS-04** | **Reapertura para segundo intento tras rechazo** *(pendiente de resolución de CI-012 · decisión de negocio Héctor/Óscar, 11-ago-2026)* |
+|---|---|
+| **Descripción** | **Pendiente de resolución de CI-012 (decisión de negocio Héctor/Óscar, 11-ago-2026).** Cuando la coordinación vigente está rechazada, la pantalla resumen queda cerrada para el tasador. Al editar la ejecutiva un contacto de visita, la pantalla se reabre con ambos desenlaces disponibles; la nueva fila se registra con `intento_numero += 1`. La vía de edición que lo habilita fue retirada de §1.4 y RN-59 en v1.9.9, de modo que este requisito no es implementable mientras CI-012 siga abierta. |
+| **Criterio de aceptación** | Un segundo intento genera una segunda fila en `TX_CoordinacionVisita` con `intento_numero = 2`. Mientras la coordinación esté rechazada, el estado backend de la solicitud permanece `asignada` y no se puede iniciar captura. No se libera a producción antes del cierre de CI-012. |
+
+| **RF-TAS-05** | **Visibilidad de coordinación para la ejecutiva (IF-02)** *(pendiente de resolución de CI-012 · decisión de negocio Héctor/Óscar, 11-ago-2026)* |
+|---|---|
+| **Descripción** | **Pendiente de resolución de CI-012 (decisión de negocio Héctor/Óscar, 11-ago-2026).** El diseño v4 exige, en su punto 4, que la ejecutiva vea en su UI tanto las confirmaciones como las devoluciones del tasador. La realización prevista era la pestaña Datos del expediente de IF-02 (§1.3.2) para el último intento y la pestaña Historial (§1.3.3) como evento, sin UI de escritura. Ambos encargos fueron retirados de §1 en v1.9.9 por falta de origen de datos, de modo que hoy el requisito no tiene destino construible. |
+| **Criterio de aceptación** | Un cambio en `TX_CoordinacionVisita` se refleja en las pestañas Datos e Historial de IF-02 con latencia menor a un minuto. La ejecutiva no puede editar el resultado de coordinación desde IF-02. No se libera a producción antes del cierre de CI-012. |
 
 ---
 
 ## 2.4 Detalle de Solicitud
 
-Pantalla resumen de la solicitud con datos del cliente y propiedad, decisión del motor de reglas (plantilla y workflow que corresponden), adjuntos iniciales (visor PDF y miniaturas de imágenes desde Dropbox), documentos legales ya procesados (con atributos extraídos por Claude API, ver §4 del spec), agenda de visita y notas del ejecutivo. Botón principal: **Iniciar captura** → abre la vista de §2.6. La entrada a esta pantalla queda gateada por el resultado de la coordinación (§2.3): si la coordinación no está confirmada, el botón "Iniciar captura" está deshabilitado.
+**No existe como pantalla propia.** Hasta v1.9.8 esta sección describía un detalle intermedio con un botón "Iniciar captura" que abría el organizador de fotos. El diseño v4 no lo tiene: el recorrido va de la cola (§2.1) a la coordinación (§2.3) y de ahí directamente al organizador de fotos (§2.6), y la ruta `app/tasaciones/[id]/` renderiza el **formulario de captura** de §2.8, no un detalle. La divergencia queda registrada como **CI-020**.
+
+Los contenidos que esta sección enumeraba no se pierden, sino que se reparten donde el diseño los ubica: los datos de cliente, propiedad, contactos y adjuntos viven en la pantalla de coordinación (§2.3); los documentos legales ya procesados, en la sección F del formulario (§2.8); y los adjuntos de la solicitud son consultables desde el preview del informe con "Ver expediente" (§2.10 · RF-TAS-10).
+
+**Gate de coordinación.** Lo que sí se conserva es la precedencia: mientras la coordinación no esté confirmada, el tasador no entra a la captura. El gate ya no vive en un botón "Iniciar captura", sino en la llamada a la acción de la card (RF-TAS-11), que ofrece "Coordinar visita" en lugar de "Abrir tasación".
 
 ---
 
 ## 2.5 Modificación de detalles
 
-El tasador puede editar sólo los campos designados como suyos (siete secciones de acordeón detalladas en §2.7). No puede modificar cliente, propiedad, propietario, RUT ni datos financieros de la solicitud original —esos campos son exclusivos de la Ejecutiva o del solicitante externo (IF-01). Cualquier edición fuera del alcance permitido es bloqueada server-side con tooltip explicativo.
+El tasador puede editar sólo los campos designados como suyos (ocho secciones de acordeón detalladas en §2.8). No puede modificar cliente, propiedad, propietario, RUT ni datos financieros de la solicitud original —esos campos son exclusivos de la Ejecutiva o del solicitante externo (IF-01). Cualquier edición fuera del alcance permitido es bloqueada server-side con tooltip explicativo.
 
-**Excepción acotada a RN-59.** En estado `asignada` y sólo cuando `coordinacion_vigente = rechazada`, `TX_ContactosVisita` es editable desde IF-02. La excepción cubre exclusivamente contactos de visita —nunca cliente, propiedad, RUT ni datos financieros—. La edición queda auditada en `A_Cambios` y habilita la reapertura descrita en RF-TAS-04.
+**Excepción acotada a RN-59 — retirada de §1, conservada aquí como dependencia pendiente.** El segundo intento de coordinación de §2.3 se apoyaba en que `TX_ContactosVisita` fuera editable desde IF-02 en estado `asignada` mientras la coordinación estuviera rechazada, cubriendo exclusivamente contactos de visita y nunca cliente, propiedad, RUT ni datos financieros, con auditoría en `A_Cambios`. **§1.4 y RN-59 retiran esa excepción en v1.9.9** al salir de alcance la coordinación por sistema. Se deja constancia aquí porque RF-TAS-04 depende de ella: si CI-012 se cierra reinstaurando la coordinación, la excepción vuelve a hacer falta y hay que reponerla en §1.4 y RN-59 de forma explícita. Ver la nota de inconsistencia declarada al inicio de §2.3.
 
 ---
 
 ## 2.6 Ingreso de fotos (Pantalla 3)
 
-Categorías predefinidas con límites dinámicos (mínimo/máximo) ligados a los dormitorios, baños y estacionamientos declarados en la sección Datos de la propiedad. Cada categoría muestra un contador en vivo (ej. 3/3 ✓) y el header agrega el total consolidado de fotos capturadas. El tasador puede crear categorías personalizadas con nombre y mínimo propios.
+Categorías predefinidas con mínimos ligados a los dormitorios, baños y estacionamientos declarados en la sección Datos de la propiedad. Cada categoría muestra un contador en vivo (ej. 3/3 ✓) y el header agrega el total consolidado en la forma **"N fotos · N docs"**. Bajo la cabecera de la propiedad —comuna · tipo y dirección— la pantalla recuerda que cada foto se asocia a una categoría y que los mínimos siguen lo declarado. El pie ofrece "Volver" y "Continuar con datos de la visita".
+
+**Catálogo de categorías del diseño v4:**
+
+  ---------------------------------------------------------------------------
+  **Categoría**            **Mínimo**   **Origen del mínimo**
+  ------------------------ ------------ -------------------------------------
+  Ofertas / Comparables    3            Fijo. Coincide con el mínimo de
+                                        comparables que exige RF-12
+
+  Habitaciones             2            Dormitorios declarados
+
+  Baños                    2            Baños declarados
+
+  Estacionamientos         1            Estacionamientos declarados
+
+  Mapa de Ubicación        1            Fijo
+
+  Fachada / Exterior       1            Fijo
+
+  Cocina                   1            Fijo
+
+  Living / Comedor         1            Fijo
+  ---------------------------------------------------------------------------
+
+Los mínimos de Habitaciones, Baños y Estacionamientos que muestra el diseño (2 · 2 · 1) corresponden a la propiedad de ejemplo. Si esas tres categorías conservan el mínimo dinámico que esta sección declara, o si el diseño los fija, está pendiente de definición (**A-16**).
+
+Además del catálogo, el tasador puede crear **categorías personalizadas** escribiendo un nombre y pulsando "Crear categoría". El diseño v4 no pide mínimo para ellas.
 
 **Cambios respecto de la v1.8.2 del spec:**
 
-- La categoría **"Documentos"** del organizador de fotos se **elimina**. En su lugar, un botón abre el sheet documental de la ejecutiva (componente **FileUploadZone**, §1.5.1.2 del spec) reutilizado tal cual, sin librerías nuevas.
+- La categoría **"Documentos"** del organizador de fotos se **elimina**. En su lugar, un botón **"Cargar documentos de la propiedad"**, ubicado sobre el listado de categorías, abre el **sheet documental de la ejecutiva** reutilizado tal cual: el mismo checklist de documentos requeridos de §1.5.1.1 —con su entidad emisora, su vigencia por defecto, su marca de "No incluido" y su contador "N/N con archivo"— sobre la misma zona de carga **FileUploadZone** de §1.5.1.2, sin librerías nuevas. Al reutilizarlo hereda también el invariante de único archivo por tipo y sus tres comportamientos de subida (alta, reutilización y reemplazo con confirmación explícita).
 - El sheet documental **filtra** el listado de documentos por el nuevo campo `tipo_propiedad` de `D_TipoDocumento` (dominio `{nuevo, usado, ambos}`, ver §2.12), según si la solicitud es Nueva o Usada. **No** se usa la columna `cuándo`, que carga semántica de fase (`Reproceso`, `Cliente tipo 2`) y condición (`Depto con gas`) ortogonal al tipo de propiedad.
 
 Guardado en Dropbox por API Route con retry offline (cola local IndexedDB) en `{Unidad}/{seccion}/` —el subnivel de sección vive **dentro** de la carpeta de la unidad, no en un árbol `/captura/` paralelo—, con la estructura de carpetas definida en §8 del spec. Las tomas que no pertenecen a una unidad habitable en particular (fachada, áreas comunes) van a la unidad `edificacion` u `oo_cc` según corresponda; cuál de las dos es criterio del tasador en terreno. El campo `TX_Adjuntos.seccion` se sigue escribiendo aunque la sección ya aparezca en el path: es lo que permite filtrar por sección en Airtable sin parsear el string.
 
 | **RF-TAS-06** | **Organizador de fotos sin categoría Documentos** |
 |---|---|
-| **Descripción** | La categoría "Documentos" del organizador de fotos se elimina. Un botón dedicado abre el sheet documental de la ejecutiva (FileUploadZone) filtrado por `tipo_propiedad` según si la solicitud es Nueva o Usada. |
-| **Criterio de aceptación** | El sheet abierto desde IF-03 lista únicamente documentos cuyo `tipo_propiedad` coincida con el de la solicitud o sea `ambos`. Los documentos con `cuándo = Reproceso`, `Cliente tipo 2` o `Depto con gas` no se filtran incorrectamente. |
+| **Descripción** | La categoría "Documentos" del organizador de fotos se elimina. El botón "Cargar documentos de la propiedad" abre el mismo sheet documental que usa la ejecutiva —checklist de §1.5.1.1 sobre FileUploadZone de §1.5.1.2, con su contador de completitud y su invariante de único archivo por tipo—, filtrado por `tipo_propiedad` según si la solicitud es Nueva o Usada. No se genera un componente propio de IF-03. |
+| **Criterio de aceptación** | El sheet abierto desde IF-03 lista únicamente documentos cuyo `tipo_propiedad` coincida con el de la solicitud o sea `ambos`, y es el mismo componente que abre IF-02: un cambio en el checklist de la ejecutiva se refleja en el del tasador sin tocar código de IF-03. Los documentos con `cuándo = Reproceso`, `Cliente tipo 2` o `Depto con gas` no se filtran incorrectamente. |
+
+| **RF-TAS-14** | **Catálogo de categorías de fotos con mínimos y contadores** |
+|---|---|
+| **Descripción** | El organizador presenta las ocho categorías del catálogo —Ofertas / Comparables, Habitaciones, Baños, Estacionamientos, Mapa de Ubicación, Fachada / Exterior, Cocina y Living / Comedor— cada una con su contador "X/N", su acción "Agregar a {categoría}" y una marca visible mientras el mínimo no se cumple. El header agrega el total en la forma "N fotos · N docs". El tasador puede crear categorías personalizadas indicando un nombre. El carácter fijo o dinámico de los mínimos de Habitaciones, Baños y Estacionamientos está pendiente de definición (**A-16**). |
+| **Criterio de aceptación** | El contador de cada categoría y el total del header se actualizan en la misma interacción en que se agrega o elimina una foto. Una categoría personalizada aparece en el listado inmediatamente después de crearse y admite fotos sin exigir mínimo. |
 
 ---
 
 ## 2.7 Avance lectura de datos (Pantalla 4)
 
-Muestra el progreso asincrónico de la extracción SC07 (Claude API) sobre los documentos subidos en §2.6. Reglas transversales:
+Muestra el progreso asincrónico de la extracción SC07 sobre los documentos subidos en §2.6, con un **stepper de tres pasos**: *Archivos listos → Procesando archivos → Datos listos*. Reglas transversales:
 
-- **Sin lenguaje de IA** en la UI: el tasador ve "Lectura de datos" y no "IA extrayendo…" o similar. Política transversal del proyecto.
-- **Botón "Volver"** cancela la vista de progreso y regresa a Fotos (SC07 sigue en background; no se cancela desde la UI).
-- **Botón "Continuar"** avanza a §2.8 sin esperar a que SC07 termine; los datos leídos se irán poblando en el formulario según lleguen.
+- **Sin lenguaje de IA** en la UI: el tasador ve "Leyendo datos de la visita" y "Procesando archivos de la visita…", nunca una mención al medio técnico con que se resuelve. Política transversal del proyecto.
+- **Mientras procesa**, la pantalla muestra el indicador de actividad, el stepper con el paso en curso resaltado, un tiempo estimado y una barra de avance.
+- **Al terminar**, el título cambia a "Datos listos" con el mensaje "Los datos están listos para completar el formulario" y el stepper queda íntegramente completo.
+- **Botón "Continuar con datos de la visita"** — deshabilitado mientras el stepper no llegue a "Datos listos"; a partir de ahí abre §2.8. Hasta v1.9.8 esta sección permitía continuar sin esperar; el diseño v4 lo bloquea, y la divergencia queda registrada como **CI-013**.
+- **Botón "Volver"** — regresa a Fotos en cualquier momento. SC07 sigue en background y no se cancela desde la UI.
 - Los datos extraídos se pueblan según `D_TipoDocumentoAtributo` (comportamiento vigente en §4 del spec).
+
+| **RF-TAS-15** | **Progreso de lectura con stepper y continuación bloqueada** |
+|---|---|
+| **Descripción** | La pantalla de avance muestra un stepper de tres pasos (Archivos listos · Procesando archivos · Datos listos) con tiempo estimado y barra de avance mientras procesa, y el mensaje "Datos listos" al completarse. El botón "Continuar con datos de la visita" permanece deshabilitado hasta que el tercer paso se complete; "Volver" está disponible en todo momento y no cancela el proceso en background. Ningún texto de esta pantalla menciona el medio técnico de la extracción. |
+| **Criterio de aceptación** | Con la extracción en curso, el botón de continuar no es accionable ni por teclado ni por doble toque. Al completarse el tercer paso queda habilitado sin recargar la pantalla. Pulsar "Volver" y regresar encuentra el progreso donde estaba, no reiniciado. |
 
 ---
 
 ## 2.8 Ingreso de datos (Pantalla 5)
 
-Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formulario en acordeón, Blueprint §5.4). Siete secciones colapsables alineadas con Origen de Datos del Informe v1.1 §3.3 *(la cita decía v1.0 hasta v1.9.3; el repositorio tiene v1.1 y el contrato de §3.3 se verificó intacto — mismas siete secciones, sin categoría "Documentos" en fotos, campos de comparables coincidentes)*. Los datos ya persistidos en `TX_DatosTasacion` y tablas hijas se **precargan** al abrir la pantalla.
+Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formulario en acordeón, Blueprint §5.4). Los datos ya persistidos en `TX_DatosTasacion` y tablas hijas se **precargan** al abrir la pantalla.
+
+**Cabecera de la pantalla.** Muestra el código VP-AAAA-NNNN, el porcentaje de completitud del formulario con su barra de avance, un bloque con comuna · tipo, dirección y cliente institucional, y un acceso directo "N fotos ingresadas · Editar fotos" que devuelve a §2.6 sin perder lo capturado. Bajo la cabecera, una alerta ámbar enumera cuántos datos obligatorios faltan, y el pie repite el primero de ellos junto al recuento de los restantes, de modo que el tasador conoce su deuda desde cualquier punto del scroll.
+
+**Las ocho secciones colapsables (A–H).** Hasta v1.9.8 esta sección declaraba siete, alineadas con Origen de Datos del Informe v1.1 §3.3. El diseño v4 presenta ocho, separando los overrides del resto; la divergencia queda registrada como **CI-014**:
+
+  ---------------------------------------------------------------------------
+  **Sección**                              **Contenido**
+  ---------------------------------------- ----------------------------------
+  A · Visita                               Fecha planificada de visita, fecha
+                                           real de visita y observaciones del
+                                           tasador
+
+  B · Datos de la propiedad                Superficies, año, materialidad,
+                                           calidad, estado de conservación y
+                                           recintos
+
+  C · Cuadro de valoración                 Ítems con sus m² y su aporte a
+                                           garantía, con contador de ítems
+
+  D · Comparables                          Grilla de comparables con su
+                                           contador "N/3"
+
+  E · Niveles · Terminaciones ·            Características constructivas,
+  Comodidades                              terminaciones por recinto y
+                                           amenities
+
+  F · Documentos legales                   Antecedentes legales con lo
+                                           extraído de los documentos
+                                           cargados
+
+  G · Overrides (CU-007)                   Ajustes manuales del tasador sobre
+                                           el resultado del motor, con su
+                                           motivo
+
+  H · Rentabilidad (opcional)              Cap rate y datos de renta; no
+                                           bloquea el cálculo
+  ---------------------------------------------------------------------------
 
 **Reglas de captura:**
 
 - Separación estricta fotos ↔ datos: la pantalla de datos no recibe fotos; sólo campos estructurados.
+- **Fecha real de visita.** La sección A distingue dos fechas que hasta v1.9.8 el documento trataba como una sola: la **planificada**, que llega pre-llenada desde la coordinación (§2.3) con el badge "Pre-llenado · editable", y la **real**, que el tasador registra en terreno y es **obligatoria**. Las visitas se reprograman en terreno con frecuencia, y el informe debe declarar cuándo ocurrió la visita, no cuándo se pensó hacerla.
 - Campos obligatorios para el motor marcados con asterisco (*); su ausencia bloquea "Calcular Tasación".
-- Al presionar "Calcular Tasación" con datos faltantes, el sistema muestra una alerta enumerada (destructiva) que lista exactamente qué falta y lleva al primer campo faltante.
+- Al presionar "Calcular Tasación" con datos faltantes, el sistema muestra una alerta enumerada (destructiva) que lista exactamente qué falta y lleva al primer campo faltante. La misma validación y el mismo salto aplican a cualquier acción que abra el informe.
 - **Autosave y cálculo por composición** (no hay AlertDialog dual): el autosave localStorage cada 30 s cumple la función de "solo guardar" sin cambio de estado, y "Calcular Tasación" cumple la función de "guardar y calcular".
 - El botón **"Calcular Tasación"** queda **bloqueado** en Pantalla 5 mientras el estado backend sea `visitada` o `calculada`, con tooltip "Cálculo en curso". La comprobación se hace por polling sobre el estado backend (mitigación R-1 del ADR).
 
 **Layout de la categoría D.Comparables (Decisión §8.1 del ADR).**
+
+> ⚠ **Modo de la sección D pendiente de definición (A-13).** El diseño v4 anota que esta categoría *"debe ser cambiado su diseño, por sólo mostrar datos, antes leídos"*, es decir, que la grilla pase a sólo lectura sobre comparables ya obtenidos. Lo que no dice es de dónde salen: si de la extracción documental, de un catálogo de ofertas o del motor. Mientras no se responda, **la captura manual descrita abajo sigue vigente** y RF-12 conserva su validación de mínimo 3. La resolución de A-13 decide si el bloque siguiente se conserva o se sustituye por una grilla de sólo lectura.
 
 - Grilla tabular densa, no formulario acordeón. Una fila por comparable (3 a 10), columnas por atributo.
 - Header fijo y scroll horizontal en móvil, con la primera columna (N° / dirección) sticky.
@@ -2276,68 +2500,106 @@ Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formul
 
 **Valores por defecto (Decisión §8.4 del ADR).** Los factores de homogeneización (`factor_sup`, `factor_edad`, `factor_distancia`) y los coeficientes por defecto de la tabla de referencia se **precargan** con badge "Pre-llenado · editable" (§2.5 del spec). Los defaults viven en la capa de configuración (`C_VariablesCliente` / tabla de factores según §5.4 del spec) y el API Route los expone. No se hardcodean en el frontend.
 
-| **RF-12** | **Mínimo de comparables antes de calcular** *(preservado del spec)* |
+**Defaults de características constructivas y terminaciones (v1.9.9).** El diseño v4 incorpora un segundo conjunto de valores por defecto, que alimenta la sección E y el cuadro de características constructivas del informe: materialidad y estado de los elementos fundamentales —estructura soportante, divisiones interiores, entrepisos, cubierta, revestimiento exterior, cierros exteriores, obras complementarias y construcción anexa—, de los elementos "otros" —aire acondicionado, calefacción, clóset mural, muebles de cocina, sanitarios, grifería, puerta principal y ventanas— y de las terminaciones por recinto —estar, dormitorios, espacios de circulación, cocina y baños, cada uno con tipo de pavimento, material o marca, revestimiento de muros, terminación de cielo, iluminación y estado—. Se precargan con el mismo badge "Pre-llenado · editable" y el tasador los sobrescribe donde la propiedad difiera, que es el caso minoritario. **Dónde viven estos defaults está pendiente de definición (A-14):** no hay tabla de configuración que hoy los albergue, y RF-TAS-08 prohíbe hardcodearlos.
+
+| **RF-12** | **Mínimo de comparables antes de calcular** *(preservado del spec · alcance condicionado por A-13)* |
 |---|---|
-| **Descripción** | El botón "Calcular Tasación" se habilita únicamente cuando la grilla de comparables contiene al menos 3 filas válidas y todos los campos obligatorios están completos. |
+| **Descripción** | El botón "Calcular Tasación" se habilita únicamente cuando la grilla de comparables contiene al menos 3 filas válidas y todos los campos obligatorios están completos. Si A-13 resuelve que la sección D pasa a sólo lectura sobre comparables ya obtenidos, la validación se conserva pero deja de recaer sobre la captura del tasador y pasa a recaer sobre el origen que los provea. |
 | **Criterio de aceptación** | Con menos de 3 comparables, el botón permanece deshabilitado con tooltip explicativo. Al presionarlo con datos faltantes, se muestra la alerta enumerada y el foco salta al primer campo faltante. |
+
+| **RF-TAS-16** | **Formulario de ocho secciones con progreso y resumen de faltantes** |
+|---|---|
+| **Descripción** | El formulario presenta ocho secciones colapsables (A · Visita, B · Datos de la propiedad, C · Cuadro de valoración, D · Comparables, E · Niveles · Terminaciones · Comodidades, F · Documentos legales, G · Overrides (CU-007), H · Rentabilidad (opcional)). La cabecera muestra el porcentaje de completitud con su barra, el resumen de la propiedad y el acceso "N fotos ingresadas · Editar fotos"; una alerta ámbar declara cuántos obligatorios faltan y el pie repite el primero con el recuento de los restantes. Las secciones C y D exponen su contador propio ("N items", "N/3"). |
+| **Criterio de aceptación** | El porcentaje y el recuento de faltantes se recalculan en la misma interacción en que se completa un campo, sin recargar. Volver desde "Editar fotos" recupera el formulario con lo escrito, no en blanco. La sección H no incide en el porcentaje de obligatorios. |
+
+| **RF-TAS-17** | **Fecha real de visita obligatoria frente a la planificada** |
+|---|---|
+| **Descripción** | La sección A distingue "Fecha planificada de visita", precargada desde la coordinación (§2.3) con badge "Pre-llenado · editable", de "Fecha real de visita", que el tasador registra en terreno y es obligatoria para calcular. Ambas se persisten por separado y el informe declara la real. |
+| **Criterio de aceptación** | Una solicitud cuya visita se reprogramó en terreno conserva las dos fechas distintas y el informe muestra la real. La ausencia de fecha real cuenta entre los obligatorios faltantes y bloquea "Calcular Tasación". |
+
+| **RF-TAS-18** | **Validación de obligatorios del motor con salto al primer faltante** |
+|---|---|
+| **Descripción** | Todo dato que consume el motor de cálculo se marca con asterisco. Al pulsar "Calcular Tasación" —o cualquier acción que abra el informe— con obligatorios pendientes, el sistema enumera exactamente cuáles faltan y desplaza el foco al primero de la lista, abriendo la sección que lo contiene si estaba colapsada. El botón permanece deshabilitado mientras falte alguno. |
+| **Criterio de aceptación** | El listado de faltantes nombra los campos por su rótulo visible, no por su nombre de base. El foco aterriza en el primer campo faltante en orden de aparición, con su sección desplegada. Ninguna de las dos acciones permite avanzar con obligatorios pendientes. |
 
 | **RF-TAS-07** | **Bloqueo de "Calcular Tasación" durante cálculo en curso** |
 |---|---|
 | **Descripción** | Mientras el estado backend sea `visitada` o `calculada`, el botón "Calcular Tasación" queda bloqueado con tooltip "Cálculo en curso". La comprobación se hace por polling sobre el estado backend. |
 | **Criterio de aceptación** | Un doble tap del tasador durante `EN_CALCULO` no produce doble ejecución de AT03. Un retorno a Pantalla 5 durante `EN_CALCULO` encuentra el botón bloqueado. |
 
-| **RF-TAS-08** | **Valores por defecto parametrizados** |
+| **RF-TAS-08** | **Valores por defecto parametrizados** *(alcance de los defaults constructivos pendiente de A-14)* |
 |---|---|
-| **Descripción** | Los factores de homogeneización y los coeficientes por defecto se precargan desde la capa de configuración vía API Route, no desde constantes del frontend. Los campos precargados muestran badge "Pre-llenado · editable" y el tasador puede sobrescribirlos. |
-| **Criterio de aceptación** | Un cambio en `C_VariablesCliente` (o tabla de factores equivalente) se refleja en la próxima carga de Pantalla 5 sin deploy. |
+| **Descripción** | Los factores de homogeneización, los coeficientes por defecto y los valores por defecto de características constructivas y terminaciones se precargan desde la capa de configuración vía API Route, no desde constantes del frontend. Los campos precargados muestran badge "Pre-llenado · editable" y el tasador puede sobrescribirlos. La tabla de configuración que albergará los defaults constructivos está **pendiente de definición (A-14)**; hasta cerrarla ese subconjunto no se implementa. |
+| **Criterio de aceptación** | Un cambio en `C_VariablesCliente` (o tabla de factores equivalente) se refleja en la próxima carga de Pantalla 5 sin deploy. Ningún valor por defecto vive en el código de IF-03, ni siquiera de forma transitoria. |
 
 ---
 
 ## 2.9 Avance cálculo tasación (Pantalla 6)
 
-Muestra el cálculo en curso mientras el estado transita de `visitada` a `calculada` (dispara SC08 → AT03). Reglas:
+Muestra el cálculo en curso mientras el estado transita de `visitada` a `calculada` (dispara SC08 → AT03), con un **stepper de tres pasos**: *Datos listos → Calculando tasación → Informe listo*. Reglas:
 
 - **Skeletons con animación pulse** durante `EN_CALCULO` (§2.5.4 del spec).
-- **Sin lenguaje de IA**: el motor es AT03 (DAG determinista), no LLM.
-- **"Continuar a vista previa"** queda deshabilitado hasta que el estado transite a `INFORME_DISPONIBLE`.
+- **Sin lenguaje de IA**: ningún texto de la pantalla menciona el medio técnico del cálculo. El motor es AT03, un DAG determinista.
+- **Al completarse**, el título pasa a "Informe listo" con el mensaje "Tu informe está listo para revisión" y el stepper queda íntegramente completo.
+- **"Continuar a vista previa"** queda deshabilitado hasta que el estado transite a `INFORME_DISPONIBLE`; es la acción primaria de la pantalla.
 - **"Volver atrás"** sólo permite regresar a Pantalla 5 en modo consulta; AT03 sigue corriendo y no se cancela desde la UI.
 - El botón "Calcular Tasación" de Pantalla 5 queda bloqueado durante toda esta pantalla (RF-TAS-07).
+
+| **RF-TAS-19** | **Progreso de cálculo con stepper y avance a vista previa** |
+|---|---|
+| **Descripción** | La pantalla de cálculo muestra un stepper de tres pasos (Datos listos · Calculando tasación · Informe listo) y ofrece exactamente dos acciones: "Continuar a vista previa", deshabilitada hasta que el tercer paso se complete, y "Volver atrás", que devuelve al formulario en modo consulta sin cancelar el cálculo. Ningún texto de la pantalla menciona el medio técnico con que se calcula. |
+| **Criterio de aceptación** | El stepper avanza siguiendo el estado backend, no un temporizador local: una recarga durante el cálculo recupera el paso real. "Continuar a vista previa" no es accionable antes de `INFORME_DISPONIBLE`. |
 
 ---
 
 ## 2.10 Preview del informe (Pantalla 7 · Muestra tasación)
 
-Ruta `/tasaciones/[id]/informe`. Preview con los datos reales capturados renderizando las 8 secciones canónicas del informe. Cuando el estado local es `EN_CALCULO`, la vista muestra skeletons; en cuanto transita a `INFORME_DISPONIBLE`, aparecen los datos definitivos. Se destaca el valor de tasación (usa el override manual del tasador si existe, o el valor de referencia del motor) y el cap rate calculado.
+Ruta `/tasaciones/[id]/informe`. Preview con los datos reales capturados renderizando las 8 secciones canónicas del informe. La cabecera fija muestra el rótulo "INFORME DE TASACIÓN" con el código VP-AAAA-NNNN y la **versión del informe** (`v1`, `v2`, …). Cuando el estado local es `EN_CALCULO`, la vista muestra skeletons; en cuanto transita a `INFORME_DISPONIBLE`, aparecen los datos definitivos. Se destaca el valor de tasación (usa el override manual del tasador si existe, o el valor de referencia del motor) y el cap rate calculado.
 
-**Orden canónico para lectura móvil (Decisión §8.2 del ADR).** Optimizado para columna única:
+**Orden canónico para lectura móvil (Decisión §8.2 del ADR).** Optimizado para columna única. Cada bloque se presenta **numerado y rotulado** en el orden que sigue, de modo que el tasador pueda referirse a uno por su número al hablar con el visador:
 
-1. **Cabecera** — código VP-AAAA-NNNN, cliente institucional, dirección, comuna, tipo de propiedad (Nuevo/Usado), fecha.
+1. **Cabecera** — marca Nuevo/Usado, código VP-AAAA-NNNN, cliente institucional, dirección, comuna y fecha de visita.
 2. **Valor de tasación destacado** — monto en UF en tipografía grande, con cap rate calculado inmediatamente debajo.
-3. **Antecedentes de la propiedad** — superficies (terreno, construida, terraza), año, materialidad, calidad y estado de conservación, dormitorios y baños.
+3. **Antecedentes de la propiedad** — superficies (terreno, construida, primer piso), año de construcción, materialidad, calidad de construcción, estado de conservación, dormitorios, baños y estacionamientos.
 4. **Datos SII / avalúo** — códigos SII, avalúo fiscal por unidad y total, contribución.
-5. **Cuadro de valoración** — resumen de ítems (edificación, terreno, OO.CC., etc.) con sus m² y aporte a garantía.
-6. **Comparables** — con la grilla de §2.8.
-7. **Registro fotográfico** — miniaturas por categoría con sus conteos reales.
-8. **Observaciones y overrides** — ajustes manuales del tasador con su motivo.
+5. **Cuadro de valoración** — resumen de ítems (edificación, terreno, OO.CC., etc.) con sus m² y su aporte a garantía.
+6. **Comparables** — con la grilla de §2.8 y el promedio homogeneizado UF/m².
+7. **Registro fotográfico** — total de fotografías y conteo real por categoría.
+8. **Observaciones y overrides** — ajustes manuales del tasador con su motivo; con estado vacío explícito cuando no hay ninguno.
 
-Se permite optimizar la distribución (colapsar secciones densas en acordeones) siempre que se preserve este orden de lectura.
+Se permite optimizar la distribución (colapsar secciones densas en acordeones) siempre que se preserven este orden de lectura y la numeración visible.
 
-**Footer de acciones:**
+**Footer de acciones.** Cuatro acciones fijas al pie, visibles desde cualquier punto del scroll:
 
-- **Descargar PDF** — muestra el PDF Carbone si existe (`pdf_listo`); si aún no (`calculada` sin PDF depositado), usa `window.print()` con estilos `@media print`.
-- **Ver expediente** — modal/sheet lateral, **no ruta nueva**. Reutiliza el visor de adjuntos de sólo lectura ya especificado para la Ejecutiva (§1.3.4 del spec) y el Visador (§3.5.3 del spec): listado de archivos de `TX_Adjuntos` vinculados a la solicitud, con visor embebido (PDF) o miniatura (imagen) y descarga del original desde Dropbox. No permite alta ni baja de archivos.
-- **Confirmar** (verde) — al confirmar envío: la solicitud transita a `visitada` (y luego automáticamente a `calculada → pdf_listo`), sale del filtro `{asignada, visitada, calculada}` al llegar a `pdf_listo`, y la pantalla muestra un mensaje de agradecimiento antes de redirigir a Pantalla 1.
-- **Rechazar** (rojo) — semántica: "no envío este informe, sigo en borrador". Requiere motivo (≥ 20 caracteres). Al confirmarse: (a) persiste la observación en `TX_Solicitudes.observacion_rechazo_tasador`; (b) muestra el mensaje *"Tu observación quedó registrada. Para resolver este informe, comunícate con el visador por los canales habituales."*; (c) **no cambia el estado** ni notifica in-app al visador.
+- **Descargar PDF** — genera el informe con **Carbone**, usando la plantilla que el motor de reglas asignó a esa solicitud (§7). No hay impresión alternativa: hasta v1.9.8 esta sección admitía `window.print()` como respaldo cuando el PDF aún no estaba depositado, lo que producía un documento sin la plantilla del cliente. La divergencia queda registrada como **CI-016**.
+- **Ver expediente** — modal/sheet lateral, **no ruta nueva**. Reutiliza el visor de adjuntos de sólo lectura ya especificado para la Ejecutiva (§1.3.4 del spec) y el Visador (§3.5.3 del spec): se titula "Expediente · VP-AAAA-NNNN", declara el número de archivos y su condición de sólo lectura, y lista los adjuntos de `TX_Adjuntos` vinculados con su nombre, tamaño y acción de descarga desde Dropbox. No permite alta ni baja de archivos.
+- **Rechazar** (rojo) — semántica: "no envío este informe, sigo en borrador". Abre el diálogo **"Rechazar borrador"**, que explica que el informe quedará como borrador hasta resolverlo con el visador y que la observación queda registrada, y pide bajo el rótulo "¿Qué necesitas resolver?" un texto de al menos 20 caracteres con contador visible. Se confirma con "Guardar observación" o se descarta con "Cancelar". Al confirmarse: (a) persiste la observación en `TX_Solicitudes.observacion_rechazo_tasador`; (b) muestra el mensaje que dirige al tasador a comunicarse con el visador; (c) **no cambia el estado**.
+- **Confirmar** (verde) — abre el diálogo **"¿Enviar este informe al visador?"**, que advierte que una vez enviado el informe pasará a revisión del visador y dejará de aparecer en la lista de tasaciones, con las acciones "Cancelar" y "Enviar informe". Al confirmarse, la solicitud transita a `visitada` (y luego automáticamente a `calculada → pdf_listo`), sale del filtro `{asignada, visitada, calculada}` al llegar a `pdf_listo`, y la aplicación muestra una **pantalla de acuse** —"Informe enviado", con el mensaje de que el visador lo revisará y ya no aparecerá en su lista— cuya única acción es "Volver al inicio". No hay redirección automática: el acuse espera al tasador (CI-017).
 
-| **RF-TAS-09** | **Rechazo del informe con observación persistida y mensaje al tasador** |
+| **RF-TAS-09** | **Rechazo del informe con observación persistida y mensaje al tasador** *(canal de aviso al visador pendiente de A-15)* |
 |---|---|
-| **Descripción** | El botón Rechazar del footer del preview persiste la observación del tasador en `TX_Solicitudes.observacion_rechazo_tasador` (texto largo, ≥ 20 caracteres) y muestra un mensaje que lo dirige al visador por canal habitual. No cambia el estado backend ni notifica in-app al visador. |
-| **Criterio de aceptación** | La observación queda disponible en la pestaña Historial de IF-04 para que el visador la lea por su canal. No se crea evento de devolución in-app en `A_Eventos`. |
+| **Descripción** | El botón Rechazar del footer del preview abre el diálogo "Rechazar borrador", que declara que el informe queda como borrador hasta resolverlo con el visador, pide bajo el rótulo "¿Qué necesitas resolver?" un texto de al menos 20 caracteres con contador visible, y se confirma con "Guardar observación". Al confirmar, persiste la observación en `TX_Solicitudes.observacion_rechazo_tasador` y muestra un mensaje que dirige al tasador al visador. No cambia el estado backend. **Si además se emite un aviso al visador está pendiente de definición (A-15):** el diseño v4 anuncia al tasador que se le hará saber al visador, y esta sección declara que no hay notificación in-app. |
+| **Criterio de aceptación** | El botón "Guardar observación" permanece deshabilitado hasta los 20 caracteres y el contador refleja el largo real. La observación queda disponible en la pestaña Historial de IF-04 para que el visador la lea. El estado backend de la solicitud es el mismo antes y después del rechazo. |
 
 | **RF-TAS-10** | **"Ver expediente" como modal reutilizado** |
 |---|---|
-| **Descripción** | El botón "Ver expediente" del preview abre un modal/sheet lateral que reutiliza el visor de adjuntos de sólo lectura ya especificado para IF-02 y IF-04, con listado de `TX_Adjuntos` vinculados y visor/descarga desde Dropbox. No es una ruta nueva. |
-| **Criterio de aceptación** | El modal no requiere librerías nuevas y no permite alta ni baja de archivos. |
+| **Descripción** | El botón "Ver expediente" del preview abre un modal/sheet lateral que reutiliza el visor de adjuntos de sólo lectura ya especificado para IF-02 y IF-04. Se titula "Expediente · VP-AAAA-NNNN", declara el número de archivos y su condición de sólo lectura, y lista los adjuntos de `TX_Adjuntos` vinculados con nombre, tamaño y acción de descarga desde Dropbox. No es una ruta nueva. |
+| **Criterio de aceptación** | El modal no requiere librerías nuevas y no ofrece ninguna acción de alta, reemplazo ni baja de archivos. Cerrarlo devuelve el preview en la misma posición de scroll. |
+
+| **RF-TAS-20** | **Informe en ocho bloques numerados con versión visible** |
+|---|---|
+| **Descripción** | El preview renderiza los ocho bloques canónicos numerados y rotulados en el orden de §2.10, en columna única, con skeletons mientras el estado sea `EN_CALCULO`. La cabecera fija muestra el rótulo "INFORME DE TASACIÓN", el código VP-AAAA-NNNN y la versión del informe. Los bloques sin contenido muestran estado vacío explícito en vez de omitirse. |
+| **Criterio de aceptación** | Los ocho bloques aparecen siempre en el mismo orden y con el mismo número, colapsados o no. Un informe sin observaciones ni overrides muestra el bloque 8 con su texto de estado vacío. La versión de la cabecera coincide con la del registro de `TX_DocumentosGenerados` vigente para esa solicitud. |
+
+| **RF-TAS-21** | **Descarga del informe con la plantilla Carbone asignada** |
+|---|---|
+| **Descripción** | "Descargar PDF" genera el informe con Carbone usando la plantilla que el motor de reglas resolvió para esa solicitud (§7), sin ruta alternativa de impresión. Si el PDF todavía no está disponible, la acción informa la espera en vez de producir un documento sin plantilla. |
+| **Criterio de aceptación** | El documento descargado desde IF-03 es idéntico al que entrega el pipeline PDF para esa solicitud y versión. En ningún estado la aplicación produce un PDF que no provenga de Carbone. |
+
+| **RF-TAS-22** | **Confirmación de envío al visador y acuse explícito** |
+|---|---|
+| **Descripción** | "Confirmar" abre el diálogo "¿Enviar este informe al visador?", que advierte que el informe pasará a revisión y dejará de aparecer en la lista de tasaciones, con las acciones "Cancelar" y "Enviar informe". Confirmado el envío, la solicitud transita a `visitada` y la aplicación muestra una pantalla de acuse "Informe enviado" cuya única acción es "Volver al inicio". No hay redirección automática por temporizador. |
+| **Criterio de aceptación** | Cancelar el diálogo deja la solicitud sin cambio de estado. Confirmarlo produce exactamente una transición, aunque el tasador pulse dos veces. El acuse permanece hasta que el tasador pulse "Volver al inicio", y al hacerlo la solicitud ya no figura en su cola. |
 
 | **RF-17** | **Rol del visador en la aprobación** *(preservado del spec, con efecto acotado en IF-03)* |
 |---|---|
@@ -2403,7 +2665,9 @@ Estados de excepción: `cancelada`, `requiere_atencion`. **El estado `devuelta` 
 | `id` | PK auto | Identificador único |
 | `solicitud_id` | FK → `TX_Solicitudes` | Solicitud a la que pertenece el intento |
 | `estado_coordinacion` | singleSelect | Enum: `confirmada`, `rechazada` |
-| `motivo` | Texto largo | Obligatorio si `rechazada`; opcional si `confirmada` |
+| `motivo` | singleSelect | Obligatorio si `rechazada`, vacío si `confirmada`. Catálogo cerrado: `Teléfono no contesta`, `Teléfono equivocado`, `Cliente rechaza visita`, `Otro` (RF-TAS-12 · paramétrico o fijo pendiente de A-17) |
+| `detalle` | Texto largo | Obligatorio si `rechazada`, mínimo 20 caracteres. Es el texto libre que acompaña al motivo |
+| `nota` | Texto largo | Opcional si `confirmada`. Nota de la coordinación escrita por el tasador |
 | `fecha_visita_propuesta` | Date | Obligatorio si `confirmada` |
 | `fecha_respuesta` | Timestamp | Momento de la acción del tasador (hora de servidor) |
 | `autor_clerk_id` | Texto | `clerk_user_id` del tasador que realizó la acción |
@@ -2416,9 +2680,13 @@ Constraint blanda de unicidad `(solicitud_id, fecha_respuesta_truncada_al_minuto
 
 **Campos nuevos en `TX_Solicitudes`:**
 
-- `coordinacion_vigente` (formula) = `LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`, o null si no hay intentos. Alimenta el chip "Por coordinar", el badge "Esperando contacto de ejecutiva" y la excepción de RN-59.
+- `coordinacion_vigente` (formula) = `LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`, o null si no hay intentos. Alimenta el chip "Por coordinar" y el badge "Esperando contacto de ejecutiva". La excepción de RN-59 que también dependía de este campo fue retirada en §1.4 (ver §2.5).
 - `observacion_rechazo_tasador` (texto largo, nullable) — observación persistida por RF-TAS-09.
-- `horas_restantes` (formula) = `(sla_aplicable * 24) - horas_desde_solicitud`, redondeado. Alimenta RF-TAS-02.
+- `fecha_real_visita` (date) — fecha en que la visita efectivamente ocurrió, distinta de la planificada en la coordinación. Obligatoria para calcular y es la que declara el informe (RF-TAS-17).
+
+**Campo retirado en v1.9.9.** `horas_restantes`, declarado entre v1.9.4 y v1.9.8 como `(sla_aplicable * 24) - horas_desde_solicitud`, **no se crea**. Derivaba horas del plazo agregado en días y producía una cifra que ningún otro punto del sistema reproduce; el badge de la card se alimenta del control de SLA por etapa (§2.2 · RF-TAS-02 · CI-021).
+
+**Origen de los defaults constructivos.** RF-TAS-08 exige que los valores por defecto de características constructivas y terminaciones vivan en la capa de configuración. Ninguna tabla actual los alberga y esta versión **no inventa una**: el destino queda pendiente de definición (**A-14**).
 
 **Deprecación en `TX_Solicitudes.estado`:** el valor `devuelta` se conserva en el enum para compatibilidad con solicitudes históricas pero no admite nuevas transiciones. Script one-off de migración transiciona las `devuelta` existentes a `asignada` con evento en `A_Eventos` (mitigación R-3).
 
@@ -2432,18 +2700,21 @@ Constraint blanda de unicidad `(solicitud_id, fecha_respuesta_truncada_al_minuto
 
 Rutas del repositorio v0 de IF-03:
 
-- `app/tasaciones/` — cola personal (Pantalla 1).
-- `app/tasaciones/[id]/coordinar/` — **nueva** (Pantalla 2, §2.3).
-- `app/tasaciones/[id]/` — detalle (Pantalla 2 pre-existente / §2.4).
+- `app/tasaciones/` — cola personal (Pantalla 1, §2.1).
+- `app/tasaciones/[id]/coordinar/` — coordinación (Pantalla 2, §2.3).
 - `app/tasaciones/[id]/fotos/` — organizador (Pantalla 3, §2.6).
-- `app/tasaciones/[id]/lectura/` — progreso SC07 (Pantalla 4, §2.7).
-- `app/tasaciones/[id]/captura/` — formulario acordeón (Pantalla 5, §2.8).
-- `app/tasaciones/[id]/calculo/` — progreso AT03 (Pantalla 6, §2.9).
+- `app/tasaciones/[id]/lectura/` — progreso de lectura (Pantalla 4, §2.7).
+- `app/tasaciones/[id]/` — formulario acordeón (Pantalla 5, §2.8).
+- `app/tasaciones/[id]/estado/` — progreso de cálculo (Pantalla 6, §2.9).
 - `app/tasaciones/[id]/informe/` — preview (Pantalla 7, §2.10).
+
+Son **siete rutas, no ocho**. Hasta v1.9.8 esta lista declaraba `[id]/` como detalle de solicitud y añadía `[id]/captura/` y `[id]/calculo/`; en el diseño v4 la raíz del identificador **es** el formulario de captura y el progreso de cálculo vive en `[id]/estado/`. La divergencia queda registrada como **CI-020**.
 
 **Componentes reutilizados sin regeneración:** TasacionCard, EstadoBadge, SLABadge, FileUploadZone (sheet documental), visor de adjuntos de IF-02/IF-04 (para "Ver expediente"). Sin librerías nuevas.
 
 **Hook `use-estado-tasador`:** se elimina la coletilla "y el control de 3 intentos". El polling sobre el estado backend gobierna el bloqueo de "Calcular Tasación" (RF-TAS-07).
+
+**Traza legacy del contador de intentos.** La maqueta de referencia todavía renderiza en la cabecera del formulario un indicador "N de 3 usados" y conserva la constante que lo alimenta. Es residuo del ciclo de devolución que la decisión capital 1 de §2 retiró: **no se especifica y debe eliminarse del código**, junto con la lógica del hook que ya nadie consume. Registrado como **CI-015**.
 
 **Stack — punto abierto P-3 (versión de Next.js).** El spec §1.8 y RT-01 fijan Next.js 14; §2.7 y §3.7 miden Next.js 16 en los repos reales. Recomendación del equipo: adoptar la realidad medida (16) y actualizar el blueprint y RT-01. Requiere sign-off de PM + Enterprise Architect + Frontend Lead antes de cerrar el DoD.
 
@@ -2481,7 +2752,20 @@ La cadena vigente es v1.9.2 → v1.9.3 `[SUPERSEDED]` → **v1.9.4**.
 
 ## 2.15 Puntos abiertos y riesgos
 
-Los riesgos R-1, R-2 y R-3 del ADR se cerraron como requisitos firmes (RF-TAS-07 y schema §2.12). Quedan abiertos:
+Los riesgos R-1, R-2 y R-3 del ADR se cerraron como requisitos firmes (RF-TAS-07 y schema §2.12).
+
+**Ambigüedades abiertas por el diseño v4 (v1.9.9).** Seis puntos del diseño no pueden especificarse sin decisión de negocio. Se registran en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md`, que es su archivo canónico, y se listan aquí sólo como índice de lo que bloquea a esta sección:
+
+| ID | Punto | Bloquea |
+|---|---|---|
+| **A-12** | Composición del chip "Hoy": qué debe hacer el tasador en el día | RF-TAS-01 |
+| **A-13** | Origen de los comparables si la sección D pasa a sólo lectura | RF-12 · §2.8 |
+| **A-14** | Tabla de configuración donde viven los defaults constructivos | RF-TAS-08 · §2.12 |
+| **A-15** | Si el rechazo del informe emite o no un aviso al visador | RF-TAS-09 |
+| **A-16** | Si los mínimos de fotos de Habitaciones, Baños y Estacionamientos son fijos o dinámicos | RF-TAS-14 |
+| **A-17** | Si el catálogo de motivos de contacto no logrado es paramétrico o fijo | RF-TAS-12 |
+
+Y siguen abiertos los puntos previos:
 
 - **P-3 · Versión de Next.js.** Requiere sign-off de PM + Enterprise Architect + Frontend Lead. Ver §2.13.
 - **P-4 · Poblado de `tipo_propiedad` para valores de fase.** El mapeo de `Reproceso`, `Cliente tipo 2`, `Depto con gas` y `---` a `tipo_propiedad = ambos` es asunción del equipo. Validar con la ejecutiva si algún documento de reproceso o condicional aplica sólo a Nuevo o sólo a Usado. Impacto bajo.
@@ -2509,9 +2793,12 @@ Los riesgos R-1, R-2 y R-3 del ADR se cerraron como requisitos firmes (RF-TAS-07
 | `VProperty_ADR_IF_Tasador_v3_v2.md` | Fuente de todas las decisiones consolidadas aquí (C-1, C-2, C-3, S-1 a S-8, especificaciones UX §8) |
 | `VProperty_Especificacion_Proyecto_v1_9_2.md` | Baseline técnico y patrón de presentación de RF (§1 Interfaz Ejecutiva) |
 | `VProperty_Maquina_Estados.html` | Fuente única de la máquina de estados |
-| `Imagenes_IF_Tasador_v3.docx` | Origen de las siete pantallas y layouts de referencia |
+| `Imagenes_IF_Tasador_v4.pdf` | **Fuente de verdad visual** de las siete pantallas desde v1.9.9. Sucede a `Imagenes_IF_Tasador_v3.docx` |
+| `Imagenes_IF_Tasador_v3.docx` | Origen de las siete pantallas en v1.9.3--v1.9.8. Superado por el v4; ausente del repositorio (A-02) |
 
 **Cambios respecto del ADR v2.** Este documento reorganiza el contenido del ADR sin agregar decisiones nuevas: mismas decisiones, presentadas como requerimientos funcionales por pantalla, con formato de tabla RF/Descripción/Criterio de aceptación consistente con la §1 (Interfaz Ejecutiva) del spec del proyecto.
+
+**Cambios en v1.9.9.** La sección se contrasta contra `Imagenes_IF_Tasador_v4.pdf` y se alinea con él. Se agregan RF-TAS-11 a RF-TAS-22 y se modifican RF-TAS-01 a RF-TAS-10 y RF-12. Las divergencias entre lo que este documento pedía y lo que el diseño resuelve quedan registradas como CI-013 a CI-021 en `docs/CODE_INCONSISTENCIES.md`; los puntos que exigen decisión de negocio, como A-12 a A-17 en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md`. Ningún RF se resuelve por criterio propio: los que dependen de una ambigüedad abierta se emiten marcados como pendientes.
 
 # **3. Interfaz Visador**
 
@@ -6049,8 +6336,8 @@ cuando la regla afecta transversalmente varias interfaces.
   RN-53    Las 4 h de primer contacto son política §1.9, §1.9.1,
            interna configurable (nueva v1.9)       §5.2.4
 
-  RN-54    El reloj del SLA se detiene con la      §1.9.1, §5.2.1
-           solicitud bloqueada por contacto no
+  RN-54    El reloj del SLA se detiene con la      §1.9.1, §2.3,
+           solicitud bloqueada por contacto no     §5.2.1
            logrado (nueva v1.9, diferida)
 
   RN-55    El reproceso tiene SLA propio: mañana → §1.9.1, §5.2.5
@@ -6168,7 +6455,10 @@ Se enuncian así:
 - RN-54 · El reloj del SLA se detiene mientras la solicitud está
   bloqueada por contacto no logrado. Es una pausa por estado y es
   excepcional; no debe confundirse con la pausa por calendario de §5.2.1,
-  que aplica a toda solicitud fuera de la ventana hábil.
+  que aplica a toda solicitud fuera de la ventana hábil. El catálogo de
+  motivos con que el tasador declara el contacto no logrado se especifica
+  en §2.3 (RF-TAS-12); la marca de bloqueo y la pausa automática del reloj
+  siguen diferidas.
 - RN-55 · El reproceso tiene SLA propio: lo que llega en la mañana se
   entrega al mediodía; lo que llega al mediodía, en la tarde. Desde v1.9.7
   queda enunciada con sus cortes horarios completos y su matriz R1–R3 en
@@ -6180,12 +6470,13 @@ Se enuncian así:
   con el envío del informe al cliente, no con su recepción.
 - RN-58 · El sello verde no aplica a casas ni a departamentos full
   eléctricos; en esos casos se registra "no aplica" y no se deja vacío.
-- RN-59 · Enunciada con precondición, acción y postcondición en §1.4,
-  con la excepción acotada de v1.9.4: TX_ContactosVisita es editable en
-  estado asignada exclusivamente cuando coordinacion_vigente = rechazada,
-  para habilitar el segundo intento de coordinación (§2.3, §2.5). La
-  excepción cubre sólo contactos de visita; cliente, propiedad, RUT y
-  datos financieros siguen bloqueados.
+- RN-59 · Enunciada con precondición, acción y postcondición en §1.4.
+  La excepción acotada que rigió entre v1.9.4 y v1.9.8 —TX_ContactosVisita
+  editable en estado asignada mientras la coordinación estuviera
+  rechazada— **queda retirada en v1.9.9** al salir de alcance la
+  coordinación por sistema (CI-012): RN-59 no admite hoy ninguna
+  excepción. §2.5 deja constancia de la dependencia, porque RF-TAS-04 la
+  necesita si CI-012 se cierra reinstaurando la coordinación.
 
 Tres de estas reglas —RN-54, RN-55 y RN-57— describen comportamiento que
 v1.9 no implementa. Se declaran igualmente para que la versión que
@@ -6272,6 +6563,14 @@ con adiciones marcadas v1.3, v1.6 y v1.9.
 
   Cuadre m²              Validación que verifica que la suma de superficies de los ítems edificación
                          coincide con la superficie construida total declarada (RN-21).
+
+  Fecha planificada      Fecha que el tasador acuerda con el contacto de visita al coordinar
+  de visita (v1.9.9)     (§2.3). Llega pre-llenada al formulario de captura y es editable.
+
+  Fecha real de          Fecha en que la visita efectivamente ocurrió, registrada por el tasador en
+  visita (v1.9.9)        terreno (§2.8 · RF-TAS-17). Es obligatoria para calcular y es la que declara
+                         el informe. Se reprograma con frecuencia respecto de la planificada, por lo
+                         que las dos se persisten por separado y no deben usarse indistintamente.
 
   Cuadro de valoración   Tabla de ítems (edificación, terreno, OO.CC., piscina, terraza, bodega,
                          estacionamiento) que componen el valor comercial. Persiste en

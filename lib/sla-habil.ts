@@ -1,5 +1,5 @@
 /**
- * Aritmética del calendario hábil de VProperty (Spec v1.9.8 §5.2.1).
+ * Aritmética del calendario hábil de VProperty (Spec v1.9.9 §5.2.1).
  *
  * Módulo **puro**: sin I/O, sin Airtable, sin fetch. Los feriados llegan como
  * `Set<'YYYY-MM-DD'>` desde `lib/feriados.ts`, que es quien habla con la base.

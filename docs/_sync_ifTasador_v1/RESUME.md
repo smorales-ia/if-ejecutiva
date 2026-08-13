@@ -1,9 +1,15 @@
 # Punto de retoma · sync IF-Tasador v1.9.3
 
 > Documento de handoff. Escrito el 25-jul-2026 al pausar la sesión.
-> **Actualizado el 25-jul-2026 al cierre del lote 2.**
+> **Actualizado el 13-ago-2026 al cierre del lote 7.**
 > Está dirigido a una sesión futura de Claude Code **sin memoria de la conversación original**.
 > Léelo completo antes de ejecutar cualquier cosa.
+
+> ⚠ **Lee primero el estado canónico al final del archivo** —
+> *«Estado canónico · cierre del lote 7 · 13-ago-2026»*. Es el más reciente y **manda sobre
+> las cifras de las secciones anteriores**, que quedan como registro de su fecha. En
+> particular: el documento normativo ya no es v1.9.3 ni v1.9.4, sino **v1.9.9**, y la regla de
+> oro sobre RN-59 con excepción acotada **ya no está vigente**.
 
 ---
 
@@ -427,3 +433,125 @@ Bloqueos externos vigentes: **A-09** (crear `TX_CoordinacionVisita`), **A-10** (
 `tipo_propiedad`). **A-11** abierta, no bloqueante. **CI-001** abierta, fecha condicional.
 
 **Mañana se retoma por 3.1 (H-2).**
+
+---
+
+# Estado canónico · cierre del lote 7 · 13-ago-2026
+
+> **Esta sección manda sobre todo lo anterior del archivo.** Lo de arriba se conserva íntegro
+> como registro de su fecha, pero sus cifras y su documento normativo quedaron superados.
+
+## 1. Documento normativo vigente
+
+**`docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md`.** Renombrado desde `…_v1_9_8.md`
+con `git mv` en este lote. Toda referencia viva del repositorio apunta ya a v1.9.9; las que
+quedan en v1.9.8 son huella histórica deliberada (bitácoras, changelog interno del spec,
+`docs/_notas/`, construcciones «hasta v1.9.8»).
+
+La cadena completa es v1.9.3 → v1.9.4 → … → v1.9.8 → **v1.9.9**. La versión del archivo y la
+del cuerpo coinciden. ⚠ La celda "Versión" de portada **nunca tuvo entrada para 1.9.8**: salta
+de 1.9.9 a 1.9.7. Es una omisión anterior a este lote y **se decidió no inventarla**.
+
+## 2. Qué dejó hecho el lote 7
+
+Sync de los RF de la UI Tasador (§2) contra `docs/_md/Imagenes_IF_Tasador_v4.pdf`, que sucede
+a `Imagenes_IF_Tasador_v3.docx` como fuente de verdad visual de IF-03 y **sí está en el repo**
+—a diferencia del v3, que motivó A-02—.
+
+| Movimiento | Cantidad | Identificadores |
+|---|:--:|---|
+| RF-TAS agregados | **12** | RF-TAS-11 a RF-TAS-22 |
+| RF-TAS/RF modificados | **10** | RF-TAS-01 · 02 · 03 · 04 · 05 · 06 · 08 · 09 · 10 · RF-12 |
+| Eliminados | **0** | — |
+
+Secciones tocadas: **§2 completa** (2, 2.1 a 2.10, 2.12, 2.13, 2.15 y trazabilidad), **§13**
+(RN-54 y RN-59) y **§14** (dos entradas de glosario: fecha planificada y fecha real de visita).
+**No se tocaron** §1.3.2, §1.3.3, §1.4, RN-59 (ficha de §1.4), §1.9.1, §5.2.4/RF-53 ni §7.
+
+Detalle por commit, ambigüedades e inconsistencias: `SYNC_LOG.md`, bloque *Lote 7*.
+
+## 3. RF-TAS-04 y RF-TAS-05 · bloqueados por CI-012
+
+El lote se ejecutó bajo la **opción B**: §2 se alinea con el diseño v4, §1 conserva el retiro
+de la coordinación por sistema que introdujo v1.9.9. Los dos documentos se contradicen y la
+contradicción **está declarada, no disimulada**:
+
+- §2.3 abre con la nota `⚠ Inconsistencia declarada con §1 — ver CI-012`.
+- RF-TAS-04 y RF-TAS-05 llevan en su descripción *"Pendiente de resolución de CI-012 (decisión
+  de negocio Héctor/Óscar, 11-ago-2026)"* y no se liberan a producción antes de ese cierre.
+- §2.5 registra que la excepción acotada a RN-59, retirada de §1.4, **hace falta de nuevo** si
+  CI-012 se cierra reinstaurando la coordinación.
+
+⚠ **Consecuencia sobre las reglas de oro de este archivo:** la regla *"RN-59 con excepción
+acotada"* de la §«Reglas de oro (recordatorio)» **ya no está vigente**. RN-59 no admite hoy
+ninguna excepción. No la restaures sin cerrar CI-012 primero.
+
+## 4. Ambigüedades abiertas
+
+Fichas en `gap/_ambiguedades.md`. Las seis del lote 7 son nuevas; las anteriores siguen como
+estaban.
+
+| ID | Punto | Bloquea | Impacto |
+|---|---|---|---|
+| **A-12** | Composición del chip "Hoy" de la cola | RF-TAS-01 | alto |
+| **A-13** | Origen de los comparables en modo sólo lectura | RF-12 · §2.8 | alto |
+| **A-14** | Dónde viven los defaults constructivos | RF-TAS-08 · §2.12 | medio |
+| **A-15** | Si el rechazo del informe avisa al visador | RF-TAS-09 | medio |
+| **A-16** | Mínimos de fotos: fijos o dinámicos | RF-TAS-14 | medio |
+| **A-17** | Catálogo de motivos: paramétrico o fijo | RF-TAS-12 | bajo |
+| A-09 | `TX_CoordinacionVisita` no existe en Airtable | lote 3 (i) · CI-012 | bloqueante |
+| A-10 | Numeración `SC` (con la ampliación `SC03`) | lote 1 | bloqueante |
+| A-11 | Leyenda de estados del Motor v2.6 | — | bajo |
+| P-3 · P-4 · P-5 | Next.js · poblado de `tipo_propiedad` · género del dominio | RF-TAS-06 (P-5) | var. |
+
+## 5. Inconsistencias abiertas
+
+**CI-013 a CI-021**, fichas en `docs/CODE_INCONSISTENCIES.md`, todas con **Dueño y Fecha
+objetivo en blanco** (excepción declarada C-12, las llena el usuario). Siguen abiertas además
+CI-001 a CI-012.
+
+**Cuatro tienen parte fuera del alcance del lote, anotada en su ficha y sin verificar:**
+
+| ID | Qué falta verificar | Dónde |
+|---|---|---|
+| **CI-014** | Si sigue declarando siete secciones del formulario | `VProperty_Origen_Datos_Informe_v1.1.md` §3.3 |
+| **CI-016** | Si expone la generación Carbone por solicitud a demanda del tasador | spec §7 |
+| **CI-020** | Si replica el árbol de ocho rutas de IF-03 | `VProperty_Blueprint_Interfaces_v2_10.md` |
+| **CI-021** | Si declara el contrato de lectura del SLA por etapa consumible por IF-03 | spec §5.2.4 · RF-53 |
+
+Ninguna es un olvido: §5.2.4/RF-53 y §7 no estaban autorizados, y los otros dos quedaron fuera
+del alcance del lote (RO-03).
+
+**CI-015 es la única del lote donde el diseño está equivocado y el spec tiene razón**: el
+prototipo aún renderiza el contador "N de 3 usados" que §2 retiró. Se corrige el código, no el
+documento.
+
+## 6. Pendientes ordenados
+
+- **P-1 · Cerrar CI-012.** Decisión de negocio de Héctor y Óscar, consulta enviada el
+  11-ago-2026. Es el pendiente de mayor alcance: desbloquea RF-TAS-04 y RF-TAS-05, decide si
+  §1 recupera la coordinación y si la excepción a RN-59 vuelve, y arrastra a A-09. **Mientras
+  siga abierto, el spec se contradice consigo mismo de forma declarada.**
+- **P-2 · Asignar Dueño y Fecha objetivo a CI-013…CI-021.** Trabajo del usuario. Sin ellos las
+  nueve fichas incumplen la regla 1 de su propio registro.
+- **P-3 · Resolver A-12 y A-13.** Las dos de impacto alto del lote 7. A-12 bloquea un chip ya
+  diseñado; A-13 decide de dónde sale el insumo principal del método comparativo.
+- **P-4 · Verificar las cuatro partes fuera de alcance de CI-014, CI-016, CI-020 y CI-021.**
+  Requiere autorización para abrir §5.2.4, §7, el Blueprint y Origen de Datos.
+- **P-5 · Limpiar el código de IF-03 según CI-015.** No requiere decisión: eliminar
+  `IntentosIndicator`, `MAX_INTENTOS`, las ramas muertas del hook y el texto *"Prellenado por
+  IA … (SC07)"* de `seccion-documentos.tsx`, que incumple la política transversal.
+- **P-6 · Decisión 3.1 (H-2) y lote 6.** Siguen exactamente donde quedaron el 26-jul-2026. El
+  lote 7 **no los tocó ni los absorbió**.
+- **P-7 · A-09, A-10 y P-5(dominio).** Bloqueos externos de la Fase 3 original, sin cambios.
+
+## 7. Cómo retomar tras el lote 7
+
+1. Leer esta sección; después, si hace falta contexto de la Fase 3, el resto del archivo.
+2. Confirmar en `SYNC_LOG.md` que los tres marcadores `<sha …>` del lote 7 fueron sustituidos
+   por shas reales. Si siguen como marcadores, los commits aún no se hicieron.
+3. Verificar que `git status` esté limpio.
+4. Preguntar al humano por **P-1** antes que por nada más: casi todo lo demás cuelga de ahí.
+5. **No reinstaurar la excepción a RN-59 ni la coordinación en §1** sin el cierre de CI-012.
+6. **No renumerar** ningún RF-TAS: van del 01 al 22, sin huecos, y la regla de oro sigue
+   siendo cero renumeración de identificadores históricos.

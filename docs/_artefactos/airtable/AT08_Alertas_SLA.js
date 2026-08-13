@@ -5,7 +5,7 @@
  *
  * PROPÓSITO
  *   Recorre una vez al día la cartera viva de TX_Solicitudes, calcula los DOS
- *   semáforos que conviven en la Spec v1.9.8 §5.2 y deja constancia de los que
+ *   semáforos que conviven en la Spec v1.9.9 §5.2 y deja constancia de los que
  *   caen fuera de verde:
  *     · Agregado (RF-08 · RN-04) — días hábiles desde el hito de §5.2.2 contra
  *       los umbrales de C_SLA.

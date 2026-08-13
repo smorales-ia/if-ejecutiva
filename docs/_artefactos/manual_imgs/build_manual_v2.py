@@ -1282,7 +1282,7 @@ def build_story():
         f"VProperty · Consola Ejecutiva Comercial (IF-02 · CU-002) · Guía de pruebas {VERSION} · "
         f"{FECHA}. Este documento reemplaza al manual de prueba anterior y conserva sus "
         f"imágenes. Las funcionalidades descritas corresponden a la especificación del "
-        f"proyecto v1.9.8.", S_MUTED))
+        f"proyecto v1.9.9.", S_MUTED))
     return s
 
 

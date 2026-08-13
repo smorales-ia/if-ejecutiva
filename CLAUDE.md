@@ -26,7 +26,7 @@ Este repo implementa **IF-02**: la consola diaria de la Ejecutiva Comercial de V
 > **Antes de proponer cualquier comando de terminal, lee `docs/aprendizajes.md`.**
 
 1. Lee `docs/diseno.md`, `docs/construccion.md` y `docs/schema-airtable.md` al inicio de la sesión.
-   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md`.
+   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md`.
 2. Implementa **una RF por sesión**. Nunca "construir toda la consola" de golpe.
 3. Después de cada RF: `pnpm build` debe salir limpio antes del commit.
 4. Haz push; Railway redespliega automáticamente.
@@ -74,7 +74,7 @@ asignación que falle sin causa aparente.
 
 Principio rector: **la UI muestra y captura; nunca decide**. Toda regla de negocio vive en Airtable (AT01/AT08 · `C_ReglasNegocio`) o en los escenarios Make.
 
-**SLA operacional (Spec v1.9.8 §5.2 · RF-53).** El reloj del servicio se especifica en una
+**SLA operacional (Spec v1.9.9 §5.2 · RF-53).** El reloj del servicio se especifica en una
 sola sección y es §5.2. Dos niveles que conviven: el **plazo agregado** por par (cliente,
 tipo_informe) en días, que alimenta el semáforo de bandeja (`C_SLA` · RN-04), y el **plazo
 por etapa** del workflow en horas hábiles (siete etapas, §5.2.4). El cómputo corre de lunes
@@ -408,7 +408,7 @@ docs/
 ├─ aprendizajes.md                     (bitácora de sesión · sólo append)
 ├─ CODE_INCONSISTENCIES.md             (deuda detectada en código)
 ├─ _md/                               (fuentes canónicas en MD — no editar)
-│  ├─ VProperty_Especificacion_Proyecto_v1_9_8.md   ← FUENTE NORMATIVA
+│  ├─ VProperty_Especificacion_Proyecto_v1_9_9.md   ← FUENTE NORMATIVA
 │  ├─ VProperty_Blueprint_Interfaces_v2_10.md
 │  ├─ Arquitectura_Enterprise_VProperty_v2_9.md
 │  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md
@@ -431,7 +431,7 @@ sólo-append de ese archivo.
 ## Fuente única de especificación
 
 El único documento normativo del producto es
-`docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md`.
+`docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md`.
 La versión del archivo y la versión interna del cuerpo deben coincidir
 SIEMPRE.
 
@@ -440,7 +440,7 @@ Cuando se bumpea la versión normativa:
 1. Se actualiza la versión en el cuerpo del documento y se agrega entrada
    al historial de cambios.
 2. Se renombra el archivo con `git mv` al nuevo número (por ejemplo
-   v1_9_8 → v1_9_9).
+   v1_9_9 → v1_9_10).
 3. Se buscan todas las referencias al nombre anterior en el repositorio
    (`grep -rn`) y se actualizan en el mismo commit, excepto en documentos
    de archivo que tengan contexto histórico claro.
@@ -537,7 +537,7 @@ app/
 - Poner el token Airtable/Make/Dropbox en el cliente (`NEXT_PUBLIC_*`).
 - Invocar el MCP Airtable desde código productivo compilado.
 - Escribir a Airtable durante la ejecución de tests contra la base productiva.
-- Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.8 §1.6 · D-01).
+- Reasignar visador desde la UI de la Ejecutiva (Spec v1.9.9 §1.6 · D-01).
 - Invocar AT02 ni escribir un campo trigger de AT02 desde IF-02 — no hay asignación
   automática (REGLA A · D-15). La asignación es manual y única.
 - Emitir mensajes de error técnicos al usuario — siempre humano.
@@ -562,7 +562,7 @@ app/
 
 ## Referencias rápidas
 
-- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_8.md`
+- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md`
 - Diseño funcional: `docs/diseno.md`
 - Guía de construcción: `docs/construccion.md`
 - Schema Airtable: `docs/schema-airtable.md`

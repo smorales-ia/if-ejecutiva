@@ -357,3 +357,146 @@ corrección cuando A-10 abra el Motor.
 Ese registro está declarado para divergencias entre documentos canónicos y **código de
 producción**, y exige Dueño y Fecha objetivo por su regla 1. A-11 es doc-contra-doc y no
 tiene dueño asignable. Ver la nota de decisión pospuesta al pie de `CODE_INCONSISTENCIES.md`.
+
+---
+
+# Ambigüedades del diseño IF-Tasador v4 (13-ago-2026)
+
+Las seis entradas siguientes salieron de contrastar §2 del spec contra
+`docs/_md/Imagenes_IF_Tasador_v4.pdf`, que desde v1.9.9 es la fuente de verdad visual de
+IF-03. Todas cumplen el mismo criterio que las anteriores: **el diseño muestra algo que no
+se puede especificar sin una decisión de negocio**, de modo que el RF correspondiente se
+emitió marcado como pendiente en vez de resolverse por criterio propio.
+
+Las divergencias que **sí** tienen resolución evidente —donde basta con que el documento se
+alinee con el diseño— no están acá: se registraron como CI-013 a CI-021 en
+`docs/CODE_INCONSISTENCIES.md`.
+
+---
+
+## A-12 · Composición del chip "Hoy" de la cola del tasador
+
+**Estado** — abierta · **bloquea RF-TAS-01** · impacto alto.
+
+El diseño v4 (p. 17, punto 1.2) pide que *"el Tab Hoy debe mostrar al tasador lo que debe
+hacer en dicho día"*. No dice qué entra en esa definición.
+
+§2.1 lo definía hasta v1.9.8 como *"solicitudes cuya `fecha_asignacion` esté dentro de las
+últimas 24 horas"*, que **no es** la agenda del día: una solicitud asignada ayer a las 18:00
+aparece hoy sin que haya nada que hacer con ella, y una visita agendada para hoy sobre una
+solicitud asignada la semana pasada no aparece.
+
+**Candidatos que el negocio debe arbitrar**, no excluyentes entre sí:
+
+- Visitas cuya `fecha_planificada_visita` cae hoy.
+- Coordinaciones cuyo plazo de 4 h (etapa 2 de §5.2.4 · RN-53) vence hoy.
+- Informes cuyo plazo de envío (etapa 5) vence hoy.
+
+**No se decide aquí.** Elegir el conjunto es definir qué significa "la jornada del tasador",
+que es una afirmación sobre la operación y no sobre la interfaz. Hasta que se cierre, el chip
+no se libera a producción (RF-TAS-01).
+
+---
+
+## A-13 · Origen de los comparables si la sección D pasa a sólo lectura
+
+**Estado** — abierta · **bloquea RF-12 y §2.8** · impacto alto.
+
+El diseño v4 (p. 23, punto 6.1) anota sobre la categoría D.Comparables: *"esta categoría debe
+ser cambiado su diseño, por sólo mostrar datos, antes leídos"*.
+
+Eso contradice el resto de §2.8, que especifica una grilla de captura con botón "Agregar
+comparable", eliminación por fila y validación de mínimo 3 antes de habilitar el cálculo
+(RF-12). Si el tasador deja de capturarlos, **alguien tiene que proveerlos** y el diseño no
+dice quién:
+
+| Origen posible | Consecuencia |
+|---|---|
+| Extracción documental (§4) | Exige que los comparables lleguen en algún documento cargado; hoy `D_TipoDocumentoAtributo` no los contempla |
+| Catálogo de ofertas | Exige una fuente de ofertas de mercado que el sistema no tiene |
+| Motor de cálculo | Invertiría la dependencia: hoy los comparables **alimentan** el cálculo, no salen de él |
+
+**No se resuelve aquí.** Tampoco es sólo una decisión de UI: cambia de dónde viene el insumo
+principal del método comparativo. Mientras siga abierta, §2.8 conserva la captura manual y
+RF-12 su validación, con la nota de que ambas quedan condicionadas.
+
+---
+
+## A-14 · Tabla de configuración donde viven los defaults constructivos
+
+**Estado** — abierta · **bloquea el subconjunto constructivo de RF-TAS-08** · impacto medio.
+
+El diseño v4 (p. 24, punto 13) adjunta una tabla de *características constructivas
+principales* —materialidad, calidad y estado de estructura soportante, divisiones interiores,
+entrepisos, cubierta, revestimientos, cierros, obras complementarias, aire acondicionado,
+calefacción, clóset mural, muebles de cocina, sanitarios, grifería, puerta principal,
+ventanas y terminaciones por recinto— y pide que *"estos valores se deben mostrar por defecto,
+donde corresponda"*.
+
+RF-TAS-08 prohíbe hardcodear valores por defecto en el frontend y exige que vivan en la capa
+de configuración expuesta por API Route. **Ninguna tabla actual los alberga**:
+`C_VariablesCliente` guarda variables por cliente y la tabla de factores guarda coeficientes
+de homogeneización; estos son defaults de dominio constructivo, que no dependen del cliente.
+
+**No se resuelve aquí.** Crear una tabla nueva en Airtable requiere aprobación explícita, y
+decidir si los defaults son globales, por tipo de propiedad o por comuna es una definición de
+negocio. Hasta cerrarla, el subconjunto constructivo de RF-TAS-08 no se implementa.
+
+---
+
+## A-15 · Si el rechazo del informe emite un aviso al visador
+
+**Estado** — abierta · **afecta a RF-TAS-09** · impacto medio.
+
+Contradicción literal entre las dos fuentes:
+
+| Fuente | Qué dice |
+|---|---|
+| Diseño v4, p. 28, punto 1 | *"guarda la observación del rechazo **y le avisa que se lo hará saber al visador**"* |
+| §2.10 y RF-TAS-09 | *"**no** cambia el estado ni notifica in-app al visador"*; el tasador debe comunicarse por el canal habitual |
+
+Las dos no pueden ser ciertas a la vez. O bien el sistema emite un aviso —y entonces hay que
+decidir su canal, su plantilla y si genera evento en `A_Eventos`—, o bien el mensaje que hoy
+ve el tasador **le promete algo que el sistema no hace**, que es el modo de fallo peor de los
+dos: el tasador se queda esperando una gestión que nadie ejecuta.
+
+**No se resuelve aquí.** El texto del diálogo es consecuencia de la decisión, no al revés.
+
+---
+
+## A-16 · Mínimos de fotos: fijos del diseño o dinámicos según lo declarado
+
+**Estado** — abierta · **afecta a RF-TAS-14** · impacto medio.
+
+§2.6 declara que los mínimos de las categorías de fotos están *"ligados a los dormitorios,
+baños y estacionamientos declarados en la sección Datos de la propiedad"*. El diseño v4
+(p. 20) muestra Habitaciones 0/2, Baños 0/2 y Estacionamientos 0/1.
+
+No es determinable desde el diseño si esas cifras son **los valores de la propiedad de
+ejemplo** —un departamento de 2 dormitorios, 2 baños y 1 estacionamiento, que es exactamente
+lo que muestra la cabecera— o **mínimos fijos** que sustituyen la regla dinámica.
+
+La diferencia es operativa: con mínimos fijos, una casa de 5 dormitorios se daría por completa
+con 2 fotos de habitaciones.
+
+**Lectura del equipo, no decisión.** La coincidencia con los datos de la propiedad de ejemplo
+sugiere que la regla dinámica sigue vigente y que el diseño simplemente la está mostrando en
+acción. Se registra igualmente porque confirmarlo es barato y equivocarse degrada la evidencia
+en terreno.
+
+---
+
+## A-17 · Catálogo de motivos de contacto no logrado: paramétrico o fijo
+
+**Estado** — abierta · **afecta a RF-TAS-12** · impacto bajo.
+
+El diseño v4 (p. 19) muestra el desplegable de Motivo con cuatro valores: `Teléfono no
+contesta`, `Teléfono equivocado`, `Cliente rechaza visita`, `Otro`. §5.2.4 (etapa 3) los
+menciona como *"y demás motivos del catálogo"*, sin declarar dónde vive ese catálogo.
+
+Si es paramétrico en Airtable, agregar un motivo es alta sin deploy (RN-31) y `motivo` debe
+ser un enlace o un singleSelect mantenido; si es fijo, vive en el enum de
+`TX_CoordinacionVisita.motivo` y cambiarlo exige tocar el schema.
+
+**Impacto bajo** —los cuatro valores cubren el caso operativo conocido— pero determina el tipo
+del campo en §2.12, así que conviene cerrarlo antes de crear la tabla, no después.

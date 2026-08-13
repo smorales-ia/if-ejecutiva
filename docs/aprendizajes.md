@@ -215,14 +215,27 @@ Lo que sigue vigente como regla vive abajo, destilado.
   contrario. El tipo lo admite sin quejarse.
 - **RO-24 · Un bump normativo distingue punteros de historia, y el changelog
   va al final.** Los `grep` de un bump devuelven dos clases mezcladas:
-  **punteros vivos** (rutas de archivo, cabeceras de fuentes canónicas, citas
-  "Spec vX §Y" en código y CI abiertas) que **se actualizan**, y **afirmaciones
-  históricas** ("Desde vX…", "§Y nueva en vX", changelogs anteriores,
-  `docs/_archivo/`, esta bitácora) que **quedan intactas** — subirles el número
-  convierte un registro en una afirmación falsa. El caso mixto se **reescribe**,
-  no se renumera. Y el orden es: integrar el cuerpo primero, redactar el
-  changelog después leyendo lo integrado; al revés se anuncian cambios que no
-  existen.
+  **punteros vivos**, que **se actualizan** —rutas de archivo, cabeceras de
+  fuentes canónicas, citas "Spec vX §Y" en planes vigentes y en CI abiertas, y
+  los **comentarios de cabecera de `.ts` · `.tsx` · `.js` · `.py`** que citan el
+  documento normativo: tras un `git mv` apuntan a un archivo inexistente—, y
+  **afirmaciones históricas**, que **quedan intactas** —"Desde vX…", "§Y nueva
+  en vX", la línea `SUPERSEDED` de cabecera, las filas del changelog interno
+  (`Cambios vX → vY`, `vX (anterior)`), toda construcción del tipo "hasta vX.Y"
+  o "entre vX.Y y vX.Z", `docs/_archivo/`, `docs/_notas/` y esta bitácora—:
+  subirles el número convierte un registro en una afirmación falsa. El caso
+  mixto se **reescribe**, no se renumera.
+  Tocar código para actualizar un puntero es **cambio de comentario, no de
+  comportamiento**, y por eso no viola la regla de "sólo documentación" de una
+  tanda documental; pero se declara como desviación en la bitácora del lote
+  (patrón C-10 del `SYNC_LOG`), nunca en silencio.
+  El bump cierra con un `grep` que debe salir sin punteros vivos:
+  ```bash
+  grep -rn "v1_9_8\|v1\.9\.8" --exclude-dir=node_modules --exclude-dir=.git . \
+    | grep -v "aprendizajes.md\|docs/_notas/\|docs/_archivo/"
+  ```
+  Y el orden es: integrar el cuerpo primero, redactar el changelog después
+  leyendo lo integrado; al revés se anuncian cambios que no existen.
 - **RO-25 · Antes de asignar un correlativo, leer todos los existentes.**
   `grep -n '^- \*\*RO-' docs/aprendizajes.md | tail -3` y su equivalente para
   CI · RF · RN · SC · AT. Leer "las primeras N líneas" del archivo no basta: la
@@ -236,6 +249,26 @@ Lo que sigue vigente como regla vive abajo, destilado.
   silencioso: un filtro sobre un campo inexistente devuelve cero filas sin
   error. Caso particular de la regla que comparten RO-13 y el fixture del wire:
   derivar de la fuente de verdad, no de un documento que habla sobre ella.
+- **RO-27 · Un diseño externo que contradice al spec manda sólo en su propia
+  sección.** Cuando la fuente de verdad visual contradice a una sección que el
+  equipo ya editó por decisión propia, alinear **únicamente** la sección local y
+  **declarar la contradicción in situ**: nota visible al inicio de esa sección
+  con puntero a la CI que gobierna la decisión de negocio, RF afectados marcados
+  como pendientes de esa CI **en su descripción** —no al pie— y con el criterio
+  de aceptación fijando que no se liberan antes del cierre, más el registro de
+  qué habría que reponer si la CI cierra en el otro sentido. **No propagar la
+  corrección a otras secciones sin autorización explícita**: hacerlo ejecuta por
+  la puerta de atrás una decisión de negocio que no es del ejecutor. Un
+  documento que se contradice de forma declarada es auditable; uno reconciliado
+  a la fuerza esconde qué se decidió y quién lo decidió.
+- **RO-28 · Un PDF entregado como "diseño" puede traer una auditoría de código
+  dentro.** Antes de tratar cualquier parte como fuente, **inventariar el
+  archivo por páginas** y separar las dos naturalezas en el reporte. Sólo la
+  parte de diseño es fuente de verdad visual; la de auditoría sirve como
+  **evidencia de código** para fichas CI, nunca como requisito. Tomar el archivo
+  entero canoniza como especificación lo que la propia auditoría marca como
+  deuda —el caso que lo motivó: un contador de intentos que el spec ya había
+  retirado (CI-015)—.
 
 ## Bitácora reciente
 
@@ -1118,3 +1151,115 @@ pinta un `Avatar` con las iniciales fijas `"ME"`: no hay `UserButton` de Clerk n
 vía de cerrar sesión desde la UI. El caso CP-15 del manual se redactó contra esa realidad
 —verifica que `/consola` en incógnito redirige al login— y la ausencia del botón se
 declara como limitación conocida para que la Ejecutiva no la reporte como falla.
+
+### 2026-08-12 — Simulación de costos de la API de Claude (dos hallazgos sobre RF-09)
+
+**Contexto:** informe de costos para el cliente (`docs/_md/SimulacionCostos_Uso_ApiClaude.pdf`),
+modelando el consumo de la API en la extracción documental de RF-09.
+
+**Hallazgo 1 · El descuento por caché de prompts no se activaría con el bloque actual.**
+El almacenamiento en caché sólo opera sobre prefijos que superan un mínimo por modelo:
+**1.024 tokens en `claude-sonnet-5`** (4.096 en `claude-haiku-4-5`). El prompt de sistema de
+la extracción es más corto, así que hoy se pagaría a precio de entrada completo y sin aviso
+—no hay error, simplemente `cache_creation_input_tokens` queda en 0—. La corrección es
+incorporar el catálogo de atributos a extraer al bloque fijo para superar el mínimo.
+Impacto medido en el escenario de 400 tasaciones/mes: US$ 3,94 mensuales.
+**Prevención futura:** al diseñar cualquier prompt que se repita, verificar el mínimo del
+modelo antes de asumir el ahorro, y comprobar `cache_read_input_tokens` en runtime.
+
+**Hallazgo 2 · `claude-sonnet-5` razona por omisión, y eso se paga como salida.**
+A diferencia de los modelos anteriores de la línea Sonnet, omitir el parámetro `thinking`
+en Sonnet 5 **activa** el razonamiento adaptativo. El blueprint de
+`SC-RF09-ExtraccionClaude` envía `{"model":"claude-sonnet-5","max_tokens":4096}` sin ese
+parámetro: para una extracción estructurada eso alarga la respuesta sin mejorar el
+resultado, y la salida cuesta cinco veces más que la entrada. Además `max_tokens` acota
+razonamiento **y** respuesta juntos, así que 4.096 puede truncar.
+Impacto estimado si no se corrige: +49 % sobre el costo mensual (US$ 28,35 → US$ 42,25).
+**Prevención futura:** en llamadas de extracción fijar `thinking: {"type":"disabled"}` con
+esfuerzo bajo, y revisar este parámetro en cada cambio de modelo.
+
+**Nota metodológica:** los precios del informe salen exclusivamente de
+`docs/_md/PRECIOS_USO_API_CLAUDE.txt`; el generador calcula el modelo de costos en Python
+para que los cruces (mensual × 12 = anual, por-tasación × volumen = mensual) sean exactos
+por construcción y no cifras escritas a mano.
+
+---
+
+### 2026-08-13 — Lote 7: sync de §2 (UI Tasador) contra un diseño externo, y bump v1.9.8 → v1.9.9
+
+Entrada de **patrones**. Dos quedaron como reglas permanentes (**RO-27**, **RO-28**) y una
+como enmienda a **RO-24**; las tres **vigentes desde 13-ago-2026**, aprobadas por RO-03 e
+integradas en «Reglas operativas aprendidas».
+
+**1 · Un diseño externo que contradice al spec manda sólo en su propia sección.**
+El diseño v4 exige la coordinación de visita (§2.3); §1.3.2, §1.3.3, §1.4 y RN-59 la habían
+retirado por decisión propia en la misma versión, apoyadas en CI-012. Corregir §1 «para que
+cuadre» habría ejecutado por la puerta de atrás una decisión de negocio abierta —crear
+`TX_CoordinacionVisita`— que no es del ejecutor. El procedimiento aplicado:
+
+- Alinear **sólo** la sección local con el diseño.
+- Declarar la contradicción **in situ**, con nota visible al inicio de la sección y puntero
+  a la CI que gobierna la decisión (`⚠ Inconsistencia declarada con §1 — ver CI-012`).
+- Marcar los RF afectados como pendientes de esa CI **en su descripción**, no en una nota al
+  pie, y fijar en su criterio de aceptación que no se liberan antes del cierre.
+- Registrar en la sección local qué haría falta reponer si la CI cierra en el otro sentido
+  (acá: la excepción acotada a RN-59, retirada de §1.4).
+
+Un documento que se contradice de forma **declarada** es auditable; uno reconciliado a la
+fuerza esconde qué decisión se tomó y quién la tomó. → **RO-27**, vigente desde 13-ago-2026.
+
+**2 · Un PDF entregado como «diseño» puede traer una auditoría de código dentro.**
+`Imagenes_IF_Tasador_v4.pdf` tiene 30 páginas: pp. 1–16 son un prompt de auditoría y su
+respuesta sobre el repo v0 —`package.json`, árbol de rutas, componentes—, y pp. 17–30 son la
+sección `3-PANTALLAS`, que es lo único que especifica diseño. Tratar el archivo entero como
+fuente de verdad visual habría canonizado como requisito lo que la propia auditoría marca
+como deuda: el contador «N de 3 usados» que §2 ya había retirado (CI-015). Separar las dos
+partes en el inventario **antes** de tratar cualquiera como fuente, y anotar en el reporte qué
+páginas son cuáles. La parte de auditoría sirve como **evidencia de código** para fichas CI;
+sólo la parte de diseño es fuente de verdad visual. → **RO-28**, vigente desde 13-ago-2026.
+
+**3 · Enmienda a RO-24: dos clases de referencia que el enunciado no nombraba.**
+RO-24 ya separa punteros vivos de afirmaciones históricas y se aplicó sin fricción a las 36
+referencias del bump. Faltaban dos casos que aparecieron acá:
+
+- **Punteros vivos en código.** Los comentarios de cabecera que citan «Spec vX §Y» en
+  `.ts`/`.tsx`/`.js`/`.py` **se actualizan**: tras un `git mv` apuntan a un archivo
+  inexistente. Son cambio de comentario, no de comportamiento, y por eso no violan la regla
+  de «sólo documentación» — pero se declaran como desviación en la bitácora del lote (C-10).
+- **Huellas históricas adicionales.** La línea `SUPERSEDED` de la cabecera, las filas del
+  changelog interno (`Cambios vX → vY`, `vX (anterior)`) y toda construcción del tipo
+  «hasta vX.Y», «entre vX.Y y vX.Z» **quedan intactas**: son enunciados sobre el pasado y
+  subirles el número los vuelve falsos.
+
+Comando de cierre del bump, que debe salir sin punteros vivos:
+
+```bash
+grep -rn "v1_9_8\|v1\.9\.8" --exclude-dir=node_modules --exclude-dir=.git . \
+  | grep -v "aprendizajes.md\|docs/_notas/\|docs/_archivo/"
+```
+
+→ **enmienda a RO-24, vigente desde 13-ago-2026**, sin correlativo nuevo: crear uno
+duplicaría una regla viva, que es justo el fallo que RO-25 previene.
+
+**Nota de correlativos.** Verificado con `grep -n '^- \*\*RO-' docs/aprendizajes.md | tail -3`
+antes de asignar: último vivo **RO-26**. Igual verificación para CI (último **CI-012** → se
+usó CI-013…CI-021) y para A-XX en `gap/_ambiguedades.md` (último **A-11** → A-12…A-17).
+RO-25 aplicada, sin incidentes.
+
+**Desviación C-13 · el lote se consolida en un único commit.** El cierre planificaba tres
+commits secuenciados —contenido, bump y bitácora—, y el `SYNC_LOG` quedó redactado con esa
+granularidad y tres marcadores `<sha …>` distintos. El usuario decidió consolidar los 17
+archivos en **un solo commit**. Consecuencias asumidas, todas registradas:
+
+- Los 12 marcadores pasan al placeholder único `pendiente-single-commit`; el sha real se
+  escribe en una edición posterior al push, que produce un archivo modificado más y se
+  commitea en la tanda siguiente, **no en ésta**.
+- La agrupación por commit de los tres bloques del `SYNC_LOG` **se conserva como agrupación
+  lógica**: sigue diciendo qué cambia junto con qué, aunque el historial de git no lo separe.
+- Precedente ya existente en este mismo registro: los lotes 2 y 3 compartieron el commit
+  `ae5202e` con la bitácora. La regla de oro "un commit por lote" cede ante la decisión del
+  usuario y **la trazabilidad se sostiene por el `SYNC_LOG`, no por el historial de git**.
+
+Lo que no se hace: dejar el placeholder sin fecha de reemplazo. Un marcador que nadie sustituye
+convierte la bitácora en un registro que apunta a nada, y es el modo de fallo que C-13 asume
+explícitamente en vez de descubrirlo meses después.
