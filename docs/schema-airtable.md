@@ -1233,3 +1233,115 @@ a duplicar datos reportando éxito. La solución de fondo es la deuda **V-5** (m
 Make que piden `organizationId` fallan con `IM002 Insufficient rights` usando ese valor.
 Hoy no rompe nada —ningún Route Handler llama a la API de administración de Make, sólo a los
 webhooks— pero cualquier código futuro que la consulte va a fallar por esto.
+
+---
+
+## 26. IF-03 · Tasador — delta de schema P0.5-TAS (17-ago-2026)
+
+> **Tanda:** P0.5-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.0.md` §1.5.
+> **Vía de ejecución:** Airtable **Meta API REST** con `AIRTABLE_TOKEN` (scope `schema.bases:write`
+> confirmado en runtime). **No se usó el MCP** — no está autenticado en la sesión y la preferencia
+> operativa del proyecto es schema desde `docs/` + REST server-side.
+> **Verificación:** diff completo del schema antes/después del POST. **Exactamente 1 cambio**;
+> `TX_Solicitudes` pasó de 156 a 157 campos.
+
+### 26.1 Campo creado — el único
+
+| Tabla | Campo | FIELD_ID | Tipo | Uso |
+|---|---|---|---|---|
+| `TX_Solicitudes` | `observacion_rechazo_tasador` | **`fldAccib5yNYaOmJc`** | `multilineText` | RF-TAS-09 · observación del tasador al rechazar el informe. Nullable. La escribe el Route Handler de IF-03; **IF-02 no la toca**. |
+
+### 26.2 Campos que el plan pedía crear y **NO** se crearon
+
+| Campo del plan §1.5.1 | Motivo |
+|---|---|
+| `TX_CoordinacionVisita` (tabla · 13 campos) | **CI-012 cerrado por decisión de negocio (17-ago-2026): no se crea.** La coordinación de visitas se hace por teléfono, fuera del sistema. |
+| `coordinacion_vigente` (formula) | Sólo tenía sentido leyendo `TX_CoordinacionVisita`. Cae con CI-012. |
+| `fecha_real_visita` (date) | ⚠ **Ya existe con otro nombre** — ver §26.3. Crearlo habría duplicado el dato. |
+| `horas_restantes` | Retirado en v1.9.9 (CI-021). Confirmado ausente en la base. |
+| `email_coordinacion_confirmada` / `_rechazada` (plantillas) | Correos de coordinación. Caen con CI-012. La divergencia `C_Plantillas` vs `C_NotificacionesConfig` **queda sin resolver** — no la forzó ninguna necesidad de esta tanda. |
+
+### 26.3 ⚠ `fecha_real_visita` ya existe como `fecha_visita` — override al plan
+
+El plan §1.5.1 declara `fecha_real_visita` como alta nueva. **Lo es sólo de nombre.** El dato ya
+está en la base y en producción:
+
+| Evidencia | Dónde |
+|---|---|
+| `fecha_visita` documentado como *"Fecha real de la visita"* | `docs/schema-airtable.md:166` |
+| IF-02 lo mapea a un campo llamado literalmente `fechaVisitaReal` | `lib/solicitudes.ts:802` |
+| Fórmula viva `dias_desde_visita` | `DATETIME_DIFF(TODAY(), {fldpTBzjfbAw5FSYI}, 'days')` |
+| Fórmula viva `fecha_limite_entrega` | `DATEADD({fldpTBzjfbAw5FSYI}, 2, 'days')` |
+| 5 blueprints de Make lo mapean | SC01 · SC-Asignar · SC-Edicion · SC05 · SC-RF09 |
+
+**Decisión (Sergio, 17-ago-2026): IF-03 reutiliza `fecha_visita`.** Crear un campo paralelo habría
+dejado las dos fórmulas y el mapper de IF-02 leyendo el viejo mientras IF-03 escribía el nuevo —
+dos fuentes de verdad para el mismo dato, que es lo que **RO-05** prohíbe.
+
+**Realización de la Regla T-B (§0.3 del plan) — no requiere ningún campo nuevo:**
+
+| Regla T-B | Campo real | FIELD_ID | Tipo | Quién lo escribe |
+|---|---|---|---|---|
+| Fecha **planificada** de visita | `fecha_visita_programada` | `fldPUFd9YuQdkcrOI` | `date` (`local`/`l`) | La Ejecutiva desde IF-02 |
+| Fecha **real** de visita | `fecha_visita` | `fldpTBzjfbAw5FSYI` | `date` (`iso`/`YYYY-MM-DD`) | El Tasador desde IF-03 |
+
+⚠ **Deuda de nombre.** El campo real se llama `fecha_visita` a secas, y la Regla T-B declara que un
+identificador `fechaVisita` sin calificar «es un bug». La regla apunta al **código de IF-03**, no al
+schema de Airtable, así que no hay violación: pero al tipar el dominio en P1-TAS, el identificador
+TS debe ser `fechaVisitaReal` (como ya hace `lib/solicitudes.ts:802`), **nunca** `fechaVisita`.
+
+⚠ **Nota de tipo.** Los campos `date` de Airtable **no admiten `timeZone`** — sólo los `dateTime`.
+El plan §1.5.1 pedía `timeZone = America/Santiago` para `fecha_real_visita`; es inaplicable a un
+`date` y el punto queda sin efecto. Los dos campos de arriba difieren en `dateFormat`
+(`iso` vs `local`); se dejan como están porque cambiarlo tocaría un campo de IF-02 (R5).
+
+### 26.4 Verificaciones sin escritura
+
+**`D_TipoDocumento.tipo_propiedad` — preexistente, NO re-creado.**
+
+| | |
+|---|---|
+| FIELD_ID | `fldIfdcjsr8KeNRCx` |
+| Tipo | `singleSelect` |
+| Dominio real | **`nueva` · `usada` · `ambas`** (femenino) |
+
+⚠ **Punto abierto P-5 confirmado contra la base real.** El dominio está en **femenino**, mientras
+`TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`) está en **masculino**
+(`nuevo` · `usado`). **Con estos dominios la comparación literal de RF-TAS-06 nunca coincide y el
+sheet documental sale vacío.** No se renombró ni alineó nada: es trabajo en Airtable con sign-off de
+negocio. P5-TAS aplica el paliativo de normalización server-side en `lib/tasador/tipo-propiedad.ts`.
+
+**Tablas de captura e hijas — verificadas, ninguna creada.**
+
+| Tabla | TABLE_ID | Estado |
+|---|---|---|
+| `TX_DatosTasacion` | `tblMoK3mFuwN8Yr1A` | ✅ existe |
+| `TX_Comparables` | `tbllbTuhb0waWIbRo` | ✅ existe |
+| `TX_ItemsCuadroValoracion` | `tblCxnMtOETK2ulD0` | ✅ existe |
+| `TX_Unidades` | `tbl2QDLvJDyy3Rg2I` | ✅ existe |
+| `TX_ContactosVisita` | `tblW3SSbKo6vRjwBJ` | ✅ existe — el plan lo daba como *«verificar en la tanda»* |
+| `TX_Adjuntos` | `tblur71x1oItbmKZc` | ✅ existe |
+| `A_Cambios` | `tbl6Yd0c7MRqNeC0x` | ✅ existe |
+| `C_SLA` | `tblsPZokEK5aoinTn` | ✅ existe |
+| `C_SLA_Etapas` | `tbl05zu5RLhH3u6pl` | ✅ existe |
+| `TX_ObrasComplementarias` | `tblQ1fXM06bzSQ84w` | ✅ existe |
+| `TX_Ampliaciones` | `tblpAtUq4p6o1vofo` | ✅ existe |
+| `TX_HabitacionesPorNivel` | `tblBITpPb8WuqsatM` | ✅ existe |
+| `TX_TerminacionesPorRecinto` | `tbleQ7pcLxYx9NbCi` | ✅ existe |
+| `TX_DocumentosLegales` | `tbl7qIg5x4Y0tOiLk` | ✅ existe |
+| **`TX_Amenities`** | — | ❌ **NO EXISTE** — hallazgo |
+
+⚠ **`TX_Amenities` no existe en la base.** §2.16 de la spec la nombra entre las tablas hijas de
+captura. **No se creó** — CLAUDE.md exige aprobación explícita para tablas nuevas, y el plan §1.5.1
+manda reportar sin crear. La sección E del formulario (`seccion-edificacion.tsx`) consume un tipo
+`Comodidades`; **P7-TAS debe resolver dónde persiste** antes de dar la sección por cerrada.
+
+La base tiene **67 tablas** al 17-ago-2026.
+
+### 26.5 Efecto del cierre de CI-012 sobre el schema documentado
+
+`TX_CoordinacionVisita` **no existe y no se creará**. Toda referencia a la coordinación por sistema
+en §2.12 de la spec y en §1.5 del plan de IF-03 queda **desalineada** y debe retirarse en el próximo
+bump normativo. En particular: `fecha_visita_propuesta`, `estado_coordinacion`, `motivo`,
+`email_thread_id`, `email_enviado_status`, `intento_numero` y la constraint blanda de unicidad
+`(solicitud, fecha_respuesta)` **no tienen realización en la base** y no la tendrán.
