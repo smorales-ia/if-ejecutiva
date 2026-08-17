@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getTasacion } from "@/lib/tasaciones"
-import { CoordinarVisita } from "@/components/coordinar-visita"
+import { CoordinarVisita } from "@/components/tasador/coordinar-visita"
 
 export default async function CoordinarPage({
   params,

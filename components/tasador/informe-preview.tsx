@@ -21,9 +21,9 @@ import {
 } from "@/lib/tasaciones"
 import { readPayload } from "@/lib/tasador-store"
 import { useEstadoTasador } from "@/hooks/use-estado-tasador"
-import type { SetForm } from "@/components/form-sections/seccion-propiedad"
-import { SeccionComparables } from "@/components/form-sections/seccion-comparables"
-import { ExpedienteSheet } from "@/components/expediente-sheet"
+import type { SetForm } from "@/components/tasador/form-sections/seccion-propiedad"
+import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
+import { ExpedienteSheet } from "@/components/tasador/expediente-sheet"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import {

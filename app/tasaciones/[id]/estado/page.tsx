@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getTasacion } from "@/lib/tasaciones"
-import { EstadoProcesando } from "@/components/estado-procesando"
+import { EstadoProcesando } from "@/components/tasador/estado-procesando"
 
 export default async function EstadoPage({
   params,

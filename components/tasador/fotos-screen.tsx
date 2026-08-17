@@ -19,8 +19,8 @@ import {
   evaluarCategorias,
   evaluarCustom,
   type FotosPorCategoria,
-} from "@/components/fotos-categorizadas"
-import { SheetDocumentos, type DocsPorTipo } from "@/components/sheet-documentos"
+} from "@/components/tasador/fotos-categorizadas"
+import { SheetDocumentos, type DocsPorTipo } from "@/components/tasador/sheet-documentos"
 
 const FOTO_IDS = CATEGORIAS_FOTO.map((c) => c.id)
 

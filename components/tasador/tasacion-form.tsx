@@ -24,21 +24,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { IntentosIndicator } from "@/components/intentos-indicator"
-import { Section, TextField, FormModoConsultaContext } from "@/components/form-sections/fields"
-import { SeccionPropiedad, type SetForm } from "@/components/form-sections/seccion-propiedad"
-import { SeccionValoracion } from "@/components/form-sections/seccion-valoracion"
+import { IntentosIndicator } from "@/components/tasador/intentos-indicator"
+import { Section, TextField, FormModoConsultaContext } from "@/components/tasador/form-sections/fields"
+import { SeccionPropiedad, type SetForm } from "@/components/tasador/form-sections/seccion-propiedad"
+import { SeccionValoracion } from "@/components/tasador/form-sections/seccion-valoracion"
 import {
   SeccionComparables,
   ComparablesBadge,
-} from "@/components/form-sections/seccion-comparables"
-import { SeccionEdificacion } from "@/components/form-sections/seccion-edificacion"
-import { SeccionDocumentos } from "@/components/form-sections/seccion-documentos"
+} from "@/components/tasador/form-sections/seccion-comparables"
+import { SeccionEdificacion } from "@/components/tasador/form-sections/seccion-edificacion"
+import { SeccionDocumentos } from "@/components/tasador/form-sections/seccion-documentos"
 import {
   SeccionOverrides,
   hayOverride,
   overridesValidos,
-} from "@/components/form-sections/seccion-overrides"
+} from "@/components/tasador/form-sections/seccion-overrides"
 
 type Seccion = "A" | "B" | "C" | "D" | "F" | "G"
 type Faltante = { label: string; seccion: Seccion }

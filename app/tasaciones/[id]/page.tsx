@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getTasacion } from "@/lib/tasaciones"
-import { TasacionForm } from "@/components/tasacion-form"
+import { TasacionForm } from "@/components/tasador/tasacion-form"
 
 export default async function TasacionDetailPage({
   params,

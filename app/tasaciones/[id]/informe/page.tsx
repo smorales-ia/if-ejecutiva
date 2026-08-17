@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getTasacion } from "@/lib/tasaciones"
-import { InformePreview } from "@/components/informe-preview"
+import { InformePreview } from "@/components/tasador/informe-preview"
 
 export default async function InformePage({
   params,

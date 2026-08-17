@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { getTasacion } from "@/lib/tasaciones"
-import { FotosScreen } from "@/components/fotos-screen"
+import { FotosScreen } from "@/components/tasador/fotos-screen"
 
 export default async function FotosPage({
   params,

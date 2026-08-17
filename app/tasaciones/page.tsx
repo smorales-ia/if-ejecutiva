@@ -3,8 +3,8 @@
 import { Suspense, useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { AppHeader } from "@/components/app-header"
-import { TasacionCard } from "@/components/tasacion-card"
+import { AppHeader } from "@/components/tasador/app-header"
+import { TasacionCard } from "@/components/tasador/tasacion-card"
 import { TASACIONES, type Tasacion } from "@/lib/tasaciones"
 
 type Filtro = "todas" | "hoy" | "por_coordinar"

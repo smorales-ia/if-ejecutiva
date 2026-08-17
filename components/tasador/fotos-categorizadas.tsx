@@ -10,7 +10,7 @@ import {
   type FotoCategoriaCustom,
 } from "@/lib/tasaciones"
 import { Button } from "@/components/ui/button"
-import { FotoCategoriaCreator } from "@/components/foto-categoria-creator"
+import { FotoCategoriaCreator } from "@/components/tasador/foto-categoria-creator"
 
 export type FotosPorCategoria = Record<CategoriaFotoId, number[]>
 

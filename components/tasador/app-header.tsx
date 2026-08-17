@@ -1,4 +1,4 @@
-import { VPropertyLogo } from "@/components/vproperty-logo"
+import { VPropertyLogo } from "@/components/tasador/vproperty-logo"
 
 export function AppHeader({ userName = "Roberto Pérez" }: { userName?: string }) {
   const initials = userName
