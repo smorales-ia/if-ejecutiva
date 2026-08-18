@@ -721,3 +721,276 @@ lo que conviene recordar cuando P7-TAS cablee esa sección.
 - **Los tres factores sí existen con esos nombres literales, pero en el lugar equivocado para este uso.** `TX_Comparables` tiene `factor_sup` (`fld3vdKQhI2Xz8HFj`), `factor_edad` (`fldPW58uWlf4XUjru`) y `factor_distancia` (`fldRE21D6h2WyAhKD`). Son el **destino** de la captura por comparable, no la fuente de los defaults. Confundirlos haría que la ruta devolviera lo que el tasador acaba de escribir en vez de la configuración.
 - **Las dos candidatas se solapan.** `C_FactoresHomogeneizacion` está dedicada al caso y discrimina por `tipo_factor` (`Superficie`/`Edad`/`Distancia`), pero no tiene vigencia temporal ni scoping por cliente. `C_Factores` sí los tiene y su `tipo_factor` incluye `Homogeneizacion`, pero es de propósito general. **La elección se hace leyendo filas, no comparando conceptos** — es RO-21 (verificar población, no existencia).
 - **Ambos dominios `tipo_factor` están sucios**: `C_Factores.tipo_factor` incluye el literal `tipo_factor` como opción, y mezcla `Remate`/`Liquidacion` (capitalizados) con `multiplicador`/`coeficiente`/`divisor` (minúsculas). Es el mismo patrón de suciedad que se registró en los `singleSelect` de `TX_DatosTasacion` y `TX_ItemsCuadroValoracion`.
+
+---
+
+## CI-023 · El mapeo de `InformeData` sobre `TX_DatosTasacion` no cierra: 26 campos sin columna destino, `dfl2` no escribible y cuatro pares de homónimos
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-023 |
+| **Archivo:línea** | `lib/tasaciones.ts:323` (`InformeData`, 68 campos) · `docs/_md/VProperty_Origen_Datos_Informe_v1.1.md` §3.3 (tabla *Campo del informe → Campo en TX_DatosTasacion*, líneas 492-548) · vs base `app9G7lLkIV3CpeLa`, schema levantado vía Meta API el **18-ago-2026** |
+| **Síntoma** | `PATCH /api/tasaciones/[id]/datos` (RF-TAS-16 · RF-TAS-17) debe persistir las secciones A-H sobre `TX_DatosTasacion` (83 campos) más cuatro tablas hijas. Al contrastar los 68 campos de `InformeData` contra el schema real aparecen **tres clases de fallo distintas**: (1) **26 campos no tienen columna destino en ninguna de las seis tablas**; (2) **`dfl2` existe pero es una fórmula** —escribirla devuelve 422—; (3) **cuatro pares de homónimos**, de los cuales los tres de la sección H tienen el campo de nombre obvio equivocado y el correcto es el que ningún documento nombra. La documentación no permite detectar ninguno de los tres: §3.3 nombra campos que no existen y omite los que sí. |
+| **Causa** | `InformeData` se derivó del formulario v0 (`components/tasador/tasacion-form.tsx`), que es una maqueta de UI diseñada sin contraste contra la base. `TX_DatosTasacion` creció por acumulación —bloque SII de §20.6, campos del motor AT03, campos de la extracción RF-09— sin un pase de consolidación, de lo que quedan pares como `anio_construccion`/`anno_construccion` conviviendo. `VProperty_Origen_Datos_Informe_v1.1.md` §3.3 es un documento de **diseño de origen de datos**, no un snapshot de schema, y nunca se verificó contra la base. Es el mismo patrón que P1-TAS encontró en los catálogos de `OPCIONES` (8 de 9 mal por derivarlos de documentación). |
+| **Resolución** | ⚠ **PARCIAL — la ruta se construye sobre el subconjunto verificado; la decisión de modelado se difiere a P7-TAS.** <br>**(a) Hecho en P2-TAS.A:** `PATCH /datos` persiste **únicamente los 39 campos escalares con destino verificado** más las 4 colecciones hijas. Los 26 huérfanos se listan de forma explícita en el docblock de `app/api/tasaciones/[id]/datos/route.ts` y abajo en esta ficha. La ruta **no los acepta en silencio**: lo que no tiene dónde guardarse, no se guarda y queda declarado. <br>**(b) Diferido a P7-TAS**, que es la tanda dueña del formulario de 8 secciones: decidir si los 26 huérfanos se crean como campos en Airtable (requiere aprobación explícita de Sergio · `CLAUDE.md`), si se retiran de `InformeData` por no ser datos que el negocio necesite persistir, o si se consolidan en los `multilineText` que ya existen (`elementos_interiores`, `espacios_comunes`, `notas_campo`). **Precedente exacto:** P1-TAS dejó `Comodidades` sin tabla destino con esta misma forma de cierre. <br>**(c) Documental, próximo bump:** corregir la tabla §3.3 de `VProperty_Origen_Datos_Informe_v1.1.md`. **No se tocó el documento en esta tanda.** |
+| **Dueño** | Claude Code (ruta + esta ficha, **hecho**) · **P7-TAS** (destino de los 20 huérfanos) · **Sergio** (si la resolución exige crear campos) |
+| **Fecha objetivo** | (a) cerrada 18-ago-2026 · (b) **P7-TAS** · (c) próximo bump de `VProperty_Origen_Datos_Informe_v1.1.md` |
+| **Estado** | **abierta** · parcialmente resuelta · **no bloquea P2-TAS.A** |
+| **Origen** | P2-TAS.A (18-ago-2026), al retomar la tanda para escribir `GET · PATCH /datos` — primer contraste real de `InformeData` contra el schema de las seis tablas. |
+
+### 1 · Los 26 campos sin columna destino
+
+> **⚠ Sobre el número.** Son **26 identificadores**. El conteo original de esta ficha decía
+> **20**; eran **24** antes de las dos altas del 18-ago (`Recinto.estado`,
+> `ItemValoracion.origenSuperficie`). La diferencia de 4 respecto de la lista textual viene de la
+> fila `selloSec`, que agrupa **3** identificadores —`selloSec`, `selloSecId`,
+> `selloSecVencimiento`— en una sola línea de la tabla por compactación visual.
+> **Contar filas ≠ contar identificadores: verificar antes de citar el número.**
+> La tabla de abajo tiene **24 filas** y **26 identificadores**.
+
+Ninguno existe en `TX_DatosTasacion`, `TX_DocumentosLegales`, `TX_ItemsCuadroValoracion`, `TX_Ampliaciones`, `TX_HabitacionesPorNivel` ni `TX_TerminacionesPorRecinto`.
+
+| Sección | Campo de `InformeData` | Nota |
+|---|---|---|
+| B | `piso` | §3.3 lo nombra `piso`. Existe `pisos` (`fldoWw7njKadV01hy`), que es **otra cosa**: el conteo de pisos de la propiedad, no el piso en que está el departamento. |
+| B | `subterraneos` | Existe `sup_subterraneo` (`fldBEeJqpiq7Zb1Vq`), que es **superficie**, no conteo. |
+| B | `edificioNombre` | §3.3 lo nombra `edificio`. |
+| B | `condominioNombre` | §3.3 lo nombra `condominio`. |
+| B | `mediosBanos` | §3.3 lo nombra `medios_banos`. |
+| B | `banoServicio` | §3.3 lo nombra `bano_servicio`. |
+| E | `estructuraSoportante` | El dominio de `TX_TerminacionesPorRecinto.categoria` no tiene valor para esto. |
+| E | `divisionesInteriores` | ídem |
+| E | `entrepisos` | ídem |
+| E | `cubierta` | ídem |
+| E | `revestimientoExterior` | ídem |
+| E | `cierrosExteriores` | ídem |
+| E | `Recinto.material` | El recinto sólo tiene tres categorías con destino (ver §3). |
+| E | `Recinto.iluminacion` | ídem |
+| E | `Recinto.estado` | ⚠ **añadido el 18-ago.** El v0 lo llena con `OPCIONES.estadoConservacion` (`Bueno · Regular · Malo…`) y el único destino plausible, `calidad`, tiene dominio `Alto · Medio · Basico`. Son **ajenos**: escribirlo crearía "Bueno" como opción nueva por `typecast`. Se deja sin escribir. |
+| E | `Ampliacion.nPe` | `TX_Ampliaciones` tiene 6 campos y ninguno recibe el n° de permiso. |
+| C | `ItemValoracion.origenSuperficie` | ⚠ **añadido el 18-ago.** `TX_ItemsCuadroValoracion` no tiene columna de origen de la superficie. El dominio `origen_superficie` existe **en `TX_Unidades`** (`fldbDPpHhkuWjOTvQ`), otra tabla y otro nivel de granularidad. P1-TAS ya lo había anotado en §2.bis.2 del snapshot y no se cruzó con esta tabla hasta hoy. `origen_dato` (`tasador · claude · cliente`) **no** sirve: es la procedencia de la fila, no la del dato de superficie. |
+| F | `vendedor` | Existen `vendedor_*` en `TX_Solicitudes`, pero son el vendedor de la **operación**, no el de la escritura. No se reutilizan sin decisión de negocio. |
+| F | `comprador` | |
+| F | `notaria` | `TX_DocumentosLegales.tipo_documento` tiene la opción `Notaria`, pero no hay campo para el nombre. |
+| F | `repertorio` | |
+| F | `selloSec` · `selloSecId` · `selloSecVencimiento` | Los tres. `VProperty_Origen_Datos_Informe_v1.1.md:349` los da por existentes en `TX_DatosTasacion`. |
+| F | `afectoExpropiacion` | Existe `n_cert_no_expropiacion` (el número del certificado), no el booleano. |
+| H | `valorReferenciaClp` | **Es el denominador del cap rate** (`informe-preview.tsx:141`). Sin él, el cap rate de la sección H no se puede recomputar server-side. |
+
+> Se suman los **14 booleanos de `Comodidades`**, que P1-TAS ya declaró sin tabla destino en el docblock de `lib/tasaciones.ts:283`. No se recuentan acá; misma resolución y misma tanda (P7-TAS).
+
+### 2 · `dfl2` es una fórmula, no un campo escribible
+
+`TX_DatosTasacion.dfl2` (`fldtyMwl3SZwTRN4h`) es de tipo `formula`:
+
+```
+IF({fldhsMeHuyoUMnvqq} < 140, 'SI', 'NO')     ← {sup_construida_total}
+```
+
+`InformeData.dfl2` es `boolean` y el formulario v0 lo presenta como un control editable. **Son incompatibles**: un PATCH contra esa columna devuelve 422. Además la semántica difiere — la fórmula deriva DFL-2 de la superficie construida total (< 140 m²), mientras el v0 deja que el tasador lo declare.
+
+`sup_construida_total` es a su vez fórmula sobre `sup_construida_piso1` + `sup_construida_piso2`, **no** sobre `sup_construccion_m2`. Escribir la superficie en el campo que §3.3 nombra (`sup_construida` → real `sup_construccion_m2`) **no mueve `dfl2`**.
+
+→ `/datos` **no escribe `dfl2`** y lo devuelve en el GET como valor derivado de sólo lectura. Que el formulario deje de ofrecerlo como editable es tarea de **P7-TAS**.
+
+### 3 · `Recinto` es ancho; `TX_TerminacionesPorRecinto` es largo
+
+`Recinto` (`lib/tasaciones.ts:270`) tiene 7 atributos en un objeto. La tabla real modela **una fila por (recinto, categoría)**, con `categoria` en dominio cerrado `Pisos · Muros · Cielos · Puertas · Ventanas · Cocina · Banos`.
+
+**Un recinto no es una fila: son tres.** Mapeo adoptado en P2-TAS.A:
+
+| Atributo de `Recinto` | Fila generada | Campo |
+|---|---|---|
+| `pavimento` | `categoria = Pisos` | `descripcion` |
+| `revestimientoMuros` | `categoria = Muros` | `descripcion` |
+| `terminacionCielo` | `categoria = Cielos` | `descripcion` |
+| `estado` | las tres | `calidad` (`Alto · Medio · Basico`) |
+| `nombre` | las tres | `nombre` |
+| `material` · `iluminacion` | — | **huérfanos** (ver §1) |
+
+No se amplía el dominio de `categoria`: es cambio de schema y `typecast: true` crearía opciones nuevas ante cualquier error de literal.
+
+### 4 · Los homónimos de la sección H — el campo obvio es el equivocado
+
+`TX_DatosTasacion` tiene **cinco** campos plausibles para dos datos:
+
+```
+arriendo_bruto_clp           fldeh1z0DzuQSMtEY  currency
+arriendo_bruto_mensual_clp   fld1On072zTAfIJbh  number
+arriendo_mensual             fldZYdbx65RphuCWk  number   ← el correcto
+gasto_anual_clp              fldWOyIJ9etc3DCBl  currency
+gasto_anual                  fldl7MLJVn74uRfQh  number   ← el correcto
+```
+
+La fórmula `ingreso_liquido_anual` (`fldRXnym7cmurpEyL`) es:
+
+```
+{fldZYdbx65RphuCWk} * 12 - {fldl7MLJVn74uRfQh}     ← {arriendo_mensual} * 12 - {gasto_anual}
+```
+
+Usa **los campos sin sufijo `_clp`**. Escribir en `arriendo_bruto_clp` / `gasto_anual_clp` —los de nombre obvio, y los únicos que se parecen a los identificadores `arriendoBrutoClp` / `gastoAnualClp` del v0— **dejaría `ingreso_liquido_anual` en cero de forma permanente y silenciosa**, sin error de escritura.
+
+La correspondencia se confirma por aritmética, no por nombre: `components/tasador/informe-preview.tsx:140` calcula
+
+```js
+const netoAnual = arriendoMensual * 12 - gastoAnual
+```
+
+que es **la misma expresión** que la fórmula de Airtable, y el label del formulario (`tasacion-form.tsx:381`) dice literalmente *"Arriendo bruto **mensual** (CLP)"*. → destino: `arriendo_mensual` + `gasto_anual`.
+
+Mismo patrón que §2.bis.3 del snapshot de P2-TAS (`Comparable.fuente` → `tipo_referencia`): **el literal del v0 coincide con el campo equivocado.**
+
+### 5 · Divergencias de nombre entre §3.3 y el schema real
+
+Para el próximo bump de `VProperty_Origen_Datos_Informe_v1.1.md`. **El documento no se tocó en esta tanda.**
+
+| §3.3 dice | Schema real | |
+|---|---|---|
+| `sup_terreno` | `sup_terreno_m2` `fld2s1wiRstEiMBY8` | renombrar |
+| `sup_construida` | `sup_construccion_m2` `fldYC1GUSW6xWVscq` | renombrar |
+| `anio_construccion` | **conviven** `anio_construccion` `fldzhntDWwfcy5jwP` y `anno_construccion` `fldcfbrSEFvvWYslL` | ⚠ homónimo · `/datos` escribe el primero |
+| `sup_primer_piso_m2` | ✅ existe · ⚠ convive con `sup_construida_piso1` `fldzY9k38HePg7YKa` | homónimo |
+| `servidumbre_m2` | ✅ existe · ⚠ convive con `sup_servidumbre` `fldwiF0X5Tx2gIbyf` | homónimo |
+| `piso` · `subterraneos` · `edificio` · `condominio` · `medios_banos` · `bano_servicio` | **no existen** | ver §1 |
+| `dfl2` | existe, pero es **fórmula** | ver §2 |
+| `permiso_edif_num legacy` | `permiso_edif_num` `fldOlvStur9oNVO3V` existe en `TX_DatosTasacion`; el campo vivo es `TX_DocumentosLegales.permiso_edificacion_numero` | §3.3 ya lo marca *legacy* — acierta |
+| `orientacion` | ✅ existe · ⚠ es **`singleSelect`**, y `InformeData.orientacion` es `string[]` | ver nota |
+
+**Nota sobre `orientacion`.** El v0 permite multiselección (`orientacion: string[]`, 8 puntos cardinales) y la columna admite **un solo valor**. `/datos` persiste el primero y **no** convierte el campo a multiselect por su cuenta. Que el formulario ofrezca N y la base guarde 1 es pérdida de dato silenciosa: **P7-TAS** decide si el control pasa a selección única o si el campo migra a `multipleSelects`.
+
+### Notas
+
+- **La ficha nace parcialmente resuelta a propósito.** Bloquear `/datos` por los 20 huérfanos habría dejado la tanda en 10/11 rutas por campos que en su mayoría son de secciones que **P7-TAS** todavía no construyó. Lo que no puede pasar —y esta ficha lo impide— es que se den por persistidos.
+- **El conteo de `InformeData` es 68 campos y el de destinos verificados 39.** La diferencia no son 29 huérfanos: 4 son colecciones hijas (`items`, `comparables`, `ampliaciones`, `niveles`, `recintos`), `comparables` tiene ruta propia (`/comparables`) y no lo toca `/datos`, y 3 son de fotos/documentos (`fotosPredefinidas`, `categoriasCustom`, `documentosCargados`), que persisten por `/fotos` y por el pipeline de adjuntos.
+- **Tres tablas hijas tienen un campo `clave_*` de tipo texto** (`clave_ampliacion`, `clave_habitacion`, `clave_terminacion`) que no está documentado en ninguna parte y que parece ser la clave natural de deduplicación del pipeline AT03. `/datos` la escribe con el patrón `{codigo_solicitud}-{discriminador}` para no dejarla vacía; **si AT03 espera otro formato, el upsert de esas tablas se duplicará**. Verificar en P7-TAS o cuando AT03 se toque.
+- **`TX_DatosTasacion` tiene dos campos de superficie construida que no se solapan por nombre pero sí por significado**: `sup_construccion_m2` (el que recibe la captura) y `sup_construida_total` (fórmula sobre `sup_construida_piso1` + `sup_construida_piso2`). La segunda alimenta `dfl2` y `coef_ocupacion_suelo`. **Escribir sólo la primera deja las dos fórmulas derivadas sin insumo.** Es una inconsistencia del modelo, no del código, y se registra acá para que P7-TAS decida si la captura debe alimentar `sup_construida_piso1`/`piso2` en vez de —o además de— `sup_construccion_m2`.
+
+---
+
+## CI-024 · `TX_DocumentosGenerados`: Link `solicitud` huérfano + `clave_natural` en un namespace ajeno al de `TX_Solicitudes`
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-024 |
+| **Archivo:línea** | `docs/schema-airtable.md` §1 (`TX_DocumentosGenerados` · `tbl5sYnGPZXgYCBSY`, documentada como *"No usada en IF-02"* y sin tabla de campos) · `docs/_md/plan_ejecucion_UItasador_v1.0.md` §10.1 (cabecera del preview: *"la versión del informe debe coincidir con la del registro vigente de `TX_DocumentosGenerados` para esa solicitud"*) · vs base `app9G7lLkIV3CpeLa`, verificada vía **MCP** el 18-ago-2026 |
+| **Síntoma** | `GET /api/tasaciones/[id]/informe` (RF-TAS-20) debe mostrar en la cabecera la **versión vigente del informe**, que sólo vive en esta tabla. **No hay forma de asociar sus filas a una solicitud.** La tabla tiene 1 sola fila y su Link `solicitud` (`fldLGIn2LYIFA5MEe`) está **vacío**; su primary field `clave_natural` vale `METLIFE-6283\|doc\|preliminar\|v1`, y ese `METLIFE-6283` **no corresponde a ningún identificador de `TX_Solicitudes`**: los 43 registros usan `codigo_solicitud` y `codigo_ext` con formato `VP-2026-NNNN`. Ni el Link ni el código permiten el join. A eso se suma que la tabla arrastra **cuatro pares de campos homónimos** de dos generaciones distintas, y cuál está poblado no sigue ningún patrón (ver §2). |
+| **Causa** | La tabla la escribe el pipeline PDF (E1/E2/E3 · Carbone), que es anterior a IF-03 y ajeno a él. La fila existente es de **carga de demostración** (`createdTime` 01-jun-2026, `clave_natural` con el nombre del cliente en vez del código de solicitud), no producto del pipeline en régimen. Los cuatro pares de homónimos son sedimento de dos iteraciones del diseño de la tabla que nunca se consolidaron, el mismo patrón de acumulación que **CI-023** documenta para `TX_DatosTasacion`. |
+| **Resolución** | ⚠ **PARCIAL — la ruta se construye contra el contrato correcto y degrada de forma explícita.** <br>**(a) Hecho en P2-TAS.A:** `/informe` busca la versión vigente **por el Link `solicitud`**, que es el contrato correcto y el que el pipeline debe poblar. Si no hay fila, devuelve **`versionVigente: null`** y el preview usa su estado vacío, que ya está especificado: §10.1 del plan manda estado vacío explícito en bloques sin contenido y **CI-016** fija que si el PDF no está depositado se informa la espera. **Los otros 7 bloques no se degradan**: no dependen de esta tabla. <br>**(b) Descartado explícitamente:** parsear `clave_natural` para inferir la solicitud. Sería derivar un contrato de **una fila de demostración**; un acierto casual hoy se rompe cuando el pipeline escriba la segunda, y un match falso mostraría al tasador la versión de **otro** informe, que es peor que no mostrar ninguna. <br>**(c) Pendiente, fuera del repo:** que el pipeline PDF **pueble el Link `solicitud`** al depositar cada documento. Sin eso, la cabecera del preview nunca mostrará versión, por correcta que sea la ruta. |
+| **Dueño** | Claude Code (ruta + ficha, **hecho**) · **dueño del pipeline E1/E2/E3** (poblar el Link) · **P9-TAS** (verificar la cabecera con datos reales) |
+| **Fecha objetivo** | (a) cerrada 18-ago-2026 · (c) sin fecha — depende del pipeline PDF, que no es territorio de IF-03 |
+| **Estado** | **abierta** · parcialmente resuelta · **no bloquea P2-TAS.A** · **sí bloquea el criterio de cabecera de P9-TAS** |
+| **Origen** | P2-TAS.A (18-ago-2026), checkpoint previo a escribir `/informe`: verificar por MCP cuál de los campos homónimos está vivo antes de leer uno u otro. |
+
+### 1 · El precedente: es el mismo antipatrón de CI-010
+
+**CI-010** registró que `A_DecisionesMotor` tiene el Link `solicitud` **vacío en todas las filas** y que hay que casar por `solicitud_codigo`. Es la misma familia de fallo —una tabla escrita por un proceso backend que no puebla su FK— con **un agravante**: en `A_DecisionesMotor` el código de respaldo existe y sirve; acá el identificador de `clave_natural` pertenece a otro espacio de nombres y **no hay respaldo que usar**.
+
+Que el mismo defecto aparezca en dos tablas distintas, ambas escritas por automatizaciones y no por la UI, sugiere que la revisión pertinente no es tabla por tabla: **conviene auditar el poblamiento del Link `solicitud` en todas las tablas que escriben Make y las Automations**, no sólo en las dos ya detectadas.
+
+### 2 · Los cuatro pares de homónimos, y cuál está vivo
+
+Verificado sobre la única fila existente (MCP, 18-ago-2026). **No hay una generación ganadora**: en unos pares está poblado el nombre más específico y en otros el más genérico, así que la elección es campo por campo y no se puede deducir por criterio.
+
+| Concepto | ✅ Vivo | ❌ Vacío |
+|---|---|---|
+| Versión | **`version_doc`** `fldMl20ZMCCI7lJ3K` = `1` | `version` `fldvElTOE6S6ARVR7` |
+| URL del PDF | **`url_pdf`** `fldL1jl0ecsThRrQY` | `url_dropbox` `fldGVz9QhnGohAFu2` |
+| Vigencia | **`es_vigente`** `fldNCU6m00S1p9hv8` = `true` | `estado` `fldXi1pqaUB6stvQq` · `status_envio_cliente` `fld1FusQWgVUQt8nQ` |
+| Fecha de generación | **`generado_en`** `fldoACWHnSpoIBH6N` | `fecha_generacion` `fldPZ9bPnSrLKKDze` |
+
+`lib/tasador/field-ids.ts` · `FIELD_IDS_DOCUMENTOS_GENERADOS` conserva **ambos** miembros de cada par con el comentario de cuál se lee y por qué, para que nadie repita la verificación ni elija el vacío por parecer el nombre correcto.
+
+### 3 · La evidencia es una sola fila
+
+⚠ **Salvedad metodológica.** La tabla tiene **un** registro, y de demostración. Que `url_dropbox` esté vacío en esa fila **no demuestra** que el pipeline nunca lo escriba: demuestra que no lo escribió ahí. La conclusión de §2 es la mejor disponible y es mucho mejor que elegir por intuición, pero **se revisa en cuanto exista una fila producida por el pipeline en régimen**, que es lo que P9-TAS tendrá delante.
+
+Por eso la ruta lee la pareja viva **con caída a la vacía** (`version_doc ?? version`, `url_pdf ?? url_dropbox`): si mañana el pipeline puebla la otra, el preview sigue funcionando en vez de mostrar un hueco. La caída no es indecisión — es la forma de que una conclusión sacada de n=1 no se vuelva un fallo cuando n crezca.
+
+---
+
+## CI-025 · `schema-airtable.md` §20.6 declara 11 campos SII creados; 9 no existen en Airtable — y §21 afirma una verificación MCP que para este bloque es falsa
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-025 |
+| **Archivo:línea** | `docs/schema-airtable.md` §20.6 (*«`TX_DatosTasacion` — bloque SII (11 campos nuevos)»*, líneas 791-805) y §21 (*«Verificación MCP del schema v1.9»*, línea 813 y ss.) · vs base `app9G7lLkIV3CpeLa`, schema completo de las **67 tablas** levantado el 18-ago-2026 |
+| **Síntoma** | §20.6 documenta once campos del bloque SII de `TX_DatosTasacion` como existentes. **Nueve no existen en ninguna tabla de la base**, no sólo en `TX_DatosTasacion`: `cod_sii_comuna`, `cod_sii_manzana`, `cod_sii_predio`, `ubicacion_urbano_rural`, `avaluo_fiscal_total_uf`, `cg`, `ociv`, `oc`, `g`. Sólo sobreviven **`avaluo_exento`** (`fld1Rl4AYBwic2VN3`) y **`contribucion_anual`** (`fldiIzlfnMnZCyixS`). Impacto directo: el **bloque 4 del preview del informe** (RF-TAS-20 · §10.1 del plan) pide *«códigos SII, avalúo fiscal por unidad y total, contribución»* y **el sub-bloque de códigos SII no tiene origen de datos**. |
+| **Causa** | §20.6 pertenece a la tanda del 22-jul-2026, que documentó *schema de soporte a la maqueta v1.9* mezclando **lo que existía** con **lo que había que crear**, sin marcar cuál era cuál. Los nombres `cg`, `ociv`, `oc`, `g` —abreviaturas de una ficha SII, sin descripción ni tipo justificado— sugieren que el bloque se transcribió de un documento de origen de datos y no de la base. Es la misma raíz que **CI-023**: documentación derivada de un diseño y no de un snapshot, dada después por verificada. |
+| **Resolución** | ⚠ **DIFERIDA — no la resuelve P2-TAS.** <br>**(a) Hecho en P2-TAS.A:** `GET /informe` construye el bloque 4 con los tres sub-bloques que **sí** tienen origen —avalúo por unidad (`TX_Unidades.avaluo_uf`), avalúo total (`TX_DatosTasacion.avaluo_total` y la fórmula `avaluo_fiscal_uf`) y contribución (`contribucion_anual`)— y devuelve los **códigos SII vacíos**, que el preview renderiza como estado vacío explícito según §10.1. El bloque no se omite ni se rellena. <br>**(b) Diferido al dueño del bloque SII:** decidir entre **corregir §20.6** —si los campos nunca debieron crearse, el defecto es documental y la spec del informe debe dejar de pedir códigos SII— o **crearlos en Airtable**, que exige aprobación explícita de Sergio (`CLAUDE.md`) y define de dónde se pueblan: el SII no es una fuente que IF-03 consulte. <br>**(c) Auditoría, ver §2:** el problema no es sólo la ausencia de nueve campos. |
+| **Dueño** | Claude Code (ruta + ficha, **hecho**) · **dueño del bloque SII / Héctor** (decidir (b)) · **P9-TAS** (verificar el bloque 4 con la resolución tomada) |
+| **Fecha objetivo** | (a) cerrada 18-ago-2026 · (b) y (c) sin fecha — decisión de negocio y auditoría documental |
+| **Estado** | **abierta** · **no bloquea P2-TAS.A** · degrada un sub-bloque de P9-TAS |
+| **Origen** | P2-TAS.A (18-ago-2026), al reunir los orígenes de los 8 bloques del preview antes de escribir `/informe`. |
+
+### 1 · El detalle de los once
+
+| Campo de §20.6 | Estado real |
+|---|---|
+| `cod_sii_comuna` · `cod_sii_manzana` · `cod_sii_predio` | ❌ no existen en ninguna de las 67 tablas |
+| `ubicacion_urbano_rural` | ❌ |
+| `avaluo_fiscal_total_uf` | ❌ — existe `avaluo_fiscal_uf`, pero es una **fórmula** distinta (`fld6QuRMbKH3jdAy9`), no el campo declarado |
+| `cg` · `ociv` · `oc` · `g` | ❌ los cuatro |
+| `avaluo_exento` | ✅ `fld1Rl4AYBwic2VN3` (currency) |
+| `contribucion_anual` | ✅ `fldiIzlfnMnZCyixS` (currency) |
+
+Lo que la tabla **sí** tiene y §20.6 no menciona: `avaluo_total`, `avaluo_total_raw`, `avaluo_no_registra`, `deuda_contrib`, `avaluo_fiscal_texto`, `avaluo_fiscal_clp`, `avaluo_fiscal_uf`, `calidad_sii`, `destino_sii`. Es decir, **el bloque SII real existe pero con otros nombres y otra forma** que la documentada. No es que falte el bloque: es que §20.6 describe uno que no se construyó.
+
+### 2 · El meta-hallazgo: §21 declara una verificación que no cubrió esto
+
+§21 se titula *«Verificación MCP del schema v1.9 y cierre de `TX_DocumentosLegales`»* y abre afirmando: *«auditoría vía `list_tables_for_base` + `get_table_schema` de todo lo que §20 marcaba como pendiente de creación. **Resultado: el schema v1.9 ya está creado en la base real**»*.
+
+**Para el bloque SII de §20.6 esa afirmación es falsa**, y no por un campo suelto: nueve de once. §21 sí verificó de verdad otras partes —`TX_ContactosVisita`, `M_TiposDeBien`, los 9 campos de `TX_DocumentosLegales`, los 5 conflictos de §21.4—, y todo eso se confirmó hoy. El defecto es de **alcance de la auditoría**, no de su método: se verificó tabla por tabla lo que la sesión tenía entre manos y se redactó una conclusión global.
+
+Esto importa más que los nueve campos, porque **`docs/schema-airtable.md` es la fuente que las tandas consultan en vez de la base**. Una sección que dice «verificado» y no lo está es peor que una que no dice nada: apaga la consulta que habría detectado el problema. Es exactamente lo que ocurrió en P1-TAS con los catálogos de `OPCIONES` (8 de 9 mal) y hoy con `Origen_Datos_Informe` §3.3 (**CI-023**).
+
+**Consecuencia operativa, ya recogida como RO-26** (*«un snapshot de schema se levanta de la base, nunca de un documento»*): la regla existe y es correcta; lo que falta es que **una afirmación de verificación declare su alcance**. Una auditoría que no enumera qué verificó no permite distinguir «lo miré y está» de «no llegué a mirarlo», y las dos se leen igual seis semanas después.
+
+### 3 · Por qué la ruta no rellena el hueco
+
+Habría sido fácil derivar los códigos SII del `rol_sii` de la solicitud, que existe y tiene el formato `manzana-predio`. **No se hace.** Partir un rol para inventar tres campos que el negocio no definió es fabricar un dato con apariencia de oficial en un documento que sale de la organización. Si el informe debe mostrar códigos SII, alguien tiene que decidir de dónde se obtienen — y esa es la resolución **(b)**, no una decisión de esta ruta.
+
+---
+
+## CI-026 · `auth-guard`: el cuerpo es idéntico pero el status distingue existencia (403 ajena vs 404 inexistente) — el docblock declara completa una mitigación que es parcial
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-026 |
+| **Archivo:línea** | `lib/tasador/auth-guard.ts:23-26` (docblock *«Qué NO filtra»*) · `:55` (id con forma inválida → 404) · `:83` (registro inexistente → 404) · `:96` (solicitud ajena → **403**) |
+| **Síntoma** | El guard de RF-09 responde a sus tres modos de fallo con **el mismo cuerpo** —`{"error":"No encontramos esta solicitud entre las tuyas."}`— pero con **dos códigos de estado distintos**: `403` cuando la solicitud existe y pertenece a otro tasador, `404` cuando no existe o el id tiene forma inválida. Un tercero autenticado como tasador puede por tanto **distinguir una solicitud existente de una inexistente** probando ids y mirando sólo el status, que es exactamente la inferencia que la mitigación busca impedir. El docblock del módulo la declara resuelta: *«Ante una solicitud ajena se devuelve **403 con un cuerpo idéntico al de una solicitud inexistente**. Distinguir "no existe" de "no es tuya" le confirmaría a un tercero que el código existe, que es la fuga que RF-09 quiere evitar»* — el texto es correcto sobre el cuerpo y **omite que el status hace justo esa distinción**. |
+| **Causa** | La mitigación se diseñó pensando en el **contenido** de la respuesta —no filtrar el código, el nombre del dueño ni el motivo— y ahí es correcta y está probada. El código de estado se eligió por corrección semántica HTTP, tratando cada rama por lo que es (403 = existe y no te corresponde; 404 = no hay recurso), sin advertir que esa misma corrección semántica es el canal lateral. Es el patrón clásico: dos decisiones defendibles por separado que juntas abren lo que cada una creía cerrar. |
+| **Resolución** | ⚠ **NO SE RESUELVE EN P2-TAS.A — es decisión de producto.** <br>**(a) Hecho:** documentar el comportamiento real donde se ve. `app/api/tasaciones/[id]/datos/route.test.ts` recorre los tres modos afirmando el status de cada uno y comparando los tres cuerpos entre sí; el docblock de ese archivo declara la limitación en un bloque `⚠`. <br>**(b) Las dos opciones, para quien decida:** <br>**Opción 1 — uniformar a 404.** El guard devuelve `404` también para la solicitud ajena y la fuga se cierra del todo. Costo: cambia el contrato de respuesta de **las once rutas** de IF-03 a la vez; un cliente que hoy distinga 403 de 404 deja de poder hacerlo, y el log pierde la señal de «intento de acceso a solicitud ajena», que hoy se emite en `:93` como `console.warn` y es la que detectaría un abuso. Mitigable manteniendo el log y cambiando sólo el status. <br>**Opción 2 — corregir el docblock.** Se acepta la distinción por status como riesgo residual y el docblock deja de afirmar que la mitigación es total. Costo: la fuga queda abierta; se justifica sólo si el modelo de amenaza descarta al tasador autenticado como atacante. <br>**No se elige desde una tanda de construcción, y menos desde un test.** |
+| **Dueño** | **Héctor** + dueño de seguridad · Claude Code documenta y ejecuta lo que se decida |
+| **Fecha objetivo** | Sin fecha · **antes de P11-TAS**, que es donde el guard cambia su fuente de identidad a Clerk y sería el momento natural de tocar los status sin un cambio aislado |
+| **Estado** | **abierta** · **no bloquea P2-TAS.A** · el comportamiento está probado y documentado |
+| **Origen** | P2-TAS.A (18-ago-2026), al escribir el test del guard 403: la aserción «los tres modos devuelven lo mismo» pasó para el cuerpo y **no** pudo escribirse para el status. |
+
+### 1 · Qué permite exactamente
+
+Un tasador con sesión válida —o cualquiera que consiga una— puede **enumerar qué códigos de solicitud existen** en la base, sin acceder a ninguno:
+
+```
+GET /api/tasaciones/recXXXXXXXXXXXXXX/datos
+  → 403  ⇒ la solicitud EXISTE y es de otro tasador
+  → 404  ⇒ no existe (o el id no tiene forma de recordId)
+```
+
+Lo que **no** permite: leer ningún dato de la solicitud ajena. El cuerpo es idéntico, no nombra el código ni al dueño, y ninguna de las once rutas ejecuta una sola lectura de Airtable tras un guard fallido — las dos cosas están probadas.
+
+El impacto real depende de qué valga saber que un recordId existe. En una base donde los ids son opacos y no secuenciales, enumerar por fuerza bruta es caro; la fuga es más relevante si un tercero **ya tiene** un id concreto y quiere confirmarlo.
+
+### 2 · La evidencia ya está escrita
+
+`app/api/tasaciones/[id]/datos/route.test.ts` (20 tests) es la prueba viva:
+
+- La constante `MODOS` fija los tres modos **con su status real** (403/404/404). Si alguien uniforma a 404, esos casos fallan y obligan a leer esta ficha antes de seguir.
+- Los tests «devuelve el MISMO cuerpo en los tres modos» comparan los cuerpos **entre sí**, no contra un literal, de modo que el candado sobre el contenido sobrevive a un cambio de redacción del mensaje.
+- No existe —y no debe inventarse— un test que afirme que los status coinciden: hoy no coinciden, y un test que lo pretendiera fallaría describiendo el sistema como debería ser en vez de como es.
+
+### 3 · Por qué se registra en vez de arreglarse
+
+Los tres motivos, en orden de peso:
+
+1. **Contradice un docblock que afirma lo contrario.** Una mitigación documentada como completa apaga la revisión que la habría detectado — el mismo mecanismo que **CI-025** documenta para §21 del schema. Dejarlo sólo en un comentario de test sería enterrar la contradicción donde nadie la busca.
+2. **Uniformar cambia el contrato de once rutas de una vez.** Eso es un cambio de superficie de API, no un ajuste local, y el consumidor —la UI de P3-TAS en adelante— todavía no está escrito. Conviene decidirlo antes de que haya clientes que dependan de la distinción, pero decidirlo **alguien con el modelo de amenaza**, no la tanda que encontró el detalle.
+3. **La evidencia es de hoy y se pierde.** Los 39 tests de esta tanda demuestran el comportamiento ahora; sin ficha, dentro de tres meses hay que redescubrirlo desde cero — y la próxima vez puede que nadie escriba el test que lo revela.

@@ -284,6 +284,75 @@ Lo que sigue vigente como regla vive abajo, destilado.
   retira en el próximo bump normativo. **No volver a preguntarlo**: quien
   encuentre una referencia viva a la coordinación por sistema la trata como
   documentación pendiente de retirar, no como requisito.
+- **RO-30 · El acceso a Airtable desde una sesión de Claude Code va por MCP; el
+  de producción va por `AIRTABLE_TOKEN`.** Son dos caminos distintos para dos
+  consumidores distintos, y confundirlos es el error que la regla previene.
+  **Diseño y verificación** (auditar schema, listar campos con FIELD_IDs reales,
+  buscar registros de referencia, validar contratos antes de escribir tipos o
+  Route Handlers): **MCP es el camino por defecto**; `curl` a la REST API queda
+  como recurso sólo cuando el MCP no cubre el caso, y entonces se declara por
+  qué. **Producción** (Route Handlers compilados corriendo en Railway): **sigue
+  siendo `AIRTABLE_TOKEN` server-side, sin excepción**. El MCP vive en la sesión
+  del cliente, no en el runtime de Next.js: no es una preferencia sino una
+  imposibilidad técnica, y una ruta que lo intentara no arrancaría. Vigente
+  desde el 18-ago-2026, sesión P2-TAS.A (Sergio autorizó y autenticó la conexión
+  MCP en esa sesión). Supersede la práctica anterior de levantar el schema por
+  `curl`, que es como se bajaron los snapshots de P1-TAS y del arranque de
+  P2-TAS.
+- **RO-31 · Borrado vs desligado en el sync de tablas hijas: la pertenencia
+  manda sobre la reversibilidad.** Cuando un Route Handler sincroniza filas
+  hijas contra un payload —el patrón «llegan N filas, en la base hay M»—, la
+  elección entre `DELETE` real y vaciar el Link se decide por **de quién es el
+  dato**, no por cuál operación es más fácil de deshacer. Si la fila pertenece
+  en exclusiva al registro padre (`TX_Ampliaciones`, `TX_HabitacionesPorNivel`,
+  `TX_TerminacionesPorRecinto`, `TX_ItemsCuadroValoracion`), la baja es
+  **borrado**: una fila huérfana sería basura permanente que el consumidor de
+  aguas abajo —AT03— leería como dato vigente. Si la fila alimenta algo que
+  excede a ese padre, la baja es **desligado**: es el caso de `TX_Comparables`,
+  cuyo `aporta_a_historico` sirve al histórico de mercado de *otras*
+  tasaciones, y borrarla destruiría un dato ajeno. Las dos operaciones conviven
+  en IF-03 a propósito y el contraste se documenta en el docblock de cada ruta.
+  **Corolario sobre la clave de sync:** nunca se usa el `id` que manda el
+  cliente. El v0 emite identificadores locales y efímeros (`it-new-1`,
+  `amp-3`, `rc-2`) que no son record ids de Airtable; la clave es determinista y
+  se deriva server-side (`clave_ampliacion`, `clave_habitacion`,
+  `clave_terminacion`, `clave_natural`). Vigente desde el 18-ago-2026, sesión
+  P2-TAS.A.
+- **RO-32 · La auditoría de una colección hija se registra contra la tabla
+  padre, con el nombre de la colección en `campo_modificado`.** `A_Cambios.
+  tabla_origen` es un `singleSelect` de **dominio cerrado** —`M_Clientes ·
+  M_Tasadores · M_Visadores · M_Comunas · C_ReglasNegocio · C_Formulas ·
+  C_Factores · TX_Solicitudes · TX_DatosTasacion · Otro`— y no contiene ninguna
+  de las tablas hijas de captura (`TX_Ampliaciones`, `TX_HabitacionesPorNivel`,
+  `TX_TerminacionesPorRecinto`, `TX_ItemsCuadroValoracion`, `TX_Comparables`,
+  `TX_DocumentosLegales`). Escribir ahí el nombre literal de la hija **no
+  fallaría**: `typecast: true` crearía la opción y el dominio quedaría
+  contaminado en silencio, rompiendo además el filtro del timeline de IF-02, que
+  lee por ese campo. La forma correcta es `tabla_origen = TX_Solicitudes` y
+  `campo_modificado = <nombre de la colección>` (`comparables`, `ampliaciones`,
+  `recintos`, `niveles`, `items`), que es lo que ya hacía
+  `app/api/tasaciones/[id]/comparables/route.ts` desde P2-TAS. La regla
+  generaliza ese precedente y lo vuelve obligatorio. Corolario: **antes de
+  escribir un `singleSelect`, verificar el dominio real**; el `typecast` que
+  evita un error de escritura es el mismo que convierte una errata en una
+  opción nueva. Vigente desde el 18-ago-2026, sesión P2-TAS.A.
+- **RO-33 · Cuando un criterio de aceptación cambia de conteo por decisiones
+  legítimas, la cadena de decisiones se escribe al lado del conteo final.** Un
+  criterio que dice «las 15 rutas existen» y una tanda que entrega 11 se leen,
+  seis semanas después, como un incumplimiento — aunque cada baja tenga causa
+  registrada en otro archivo. La causa dispersa no protege: nadie reconstruye
+  tres decisiones de tres documentos distintos para validar un número. El
+  cierre de P2-TAS.A escribe la cadena completa en el propio snapshot
+  (15 → 13 por RO-29 · 13 → 12 por A-18 · 12 filas → 11 archivos porque tres
+  rutas agrupan varios métodos), y **al lado del conteo**, no en una nota al
+  pie. Corolario del mismo problema, aprendido caro en la misma sesión:
+  **un conteo debe declarar qué cuenta.** CI-023 nació diciendo «20 campos»
+  contando **filas** de una tabla en la que una fila agrupaba tres
+  identificadores; el número real era 26. Cualquier ficha que cite una cifra
+  indica si cuenta filas de documentación o entradas reales del código o del
+  schema, y cuando dos artefactos citan el mismo concepto con números
+  distintos, la discrepancia se **explica en el sitio** en vez de igualarse.
+  Vigente desde el 18-ago-2026, sesión P2-TAS.A.
 
 ## Bitácora reciente
 
@@ -1278,3 +1347,31 @@ archivos en **un solo commit**. Consecuencias asumidas, todas registradas:
 Lo que no se hace: dejar el placeholder sin fecha de reemplazo. Un marcador que nadie sustituye
 convierte la bitácora en un registro que apunta a nada, y es el modo de fallo que C-13 asume
 explícitamente en vez de descubrirlo meses después.
+
+### 2026-08-18 — P2-TAS.A retomada: el mapeo de captura contra el schema real
+
+**Contexto:** retomar P2-TAS.A desde `docs/_notas/snapshot-P2-TAS-A-en-curso.md` para escribir las 2 rutas que faltaban (`/datos` e `/informe`) y los 3 tests. La sesión arrancó bajando el schema de las 6 tablas de captura, que el repo no documentaba.
+
+**Inconveniente:** `lib/airtable-client.ts` no exporta `deleteRecord`, y el sync destructivo de las 4 tablas hijas de `/datos` (RO-31) lo necesita. Sus helpers `request` y `postRequest` son privados, así que tampoco se podía componer desde fuera.
+
+**Causa raíz:** el cliente REST de IF-02 se construyó para el perfil de uso de IF-02 —leer cartera, actualizar campos derivados del motor de SLA— y ahí nunca hizo falta borrar: las bajas de IF-02 pasan por Make (`SC-Adjuntos-Delete`), no por el cliente. IF-03 es el primer consumidor que borra directo contra la API REST.
+
+**Solución aplicada:** se creó `lib/tasador/airtable-writes.ts` con un único export `deleteRecords()`, en territorio IF-03, importando `AirtableError` de `lib/airtable-client.ts` y replicando sus convenciones (`API_BASE`, reintento 3× en 429/5xx, `typecast`). **No se editó `lib/airtable-client.ts`**, que es territorio IF-02 y lo prohíbe R5.
+
+**Prevención futura:** **revisión de OV-8** (`docs/_notas/inventario-tasador.md`). OV-8 declaró innecesario el envoltorio `lib/tasador/airtable-writes.ts` que el plan §0.4·nota 3 proponía, con el fundamento de que `createRecord` y `listRecords` **ya existían** — y en eso acierta. El matiz es que **evaluó sólo las dos funciones que el plan nombraba**: `deleteRecord` no estaba en esa lista y no existe. OV-8 sigue vigente para create/list; la excepción es el DELETE, y por eso el envoltorio se creó igual. Regla que se generaliza: un override que declara innecesario un módulo debe enumerar **qué** funciones verificó, porque «el módulo no hace falta» y «las dos funciones que miré ya estaban» no son la misma afirmación.
+
+**Inconveniente (2):** `CLAUDE.md` declaraba *«tests unitarios (vitest cuando esté)»* y por esa línea se llegó a evaluar diferir los 3 tests de la tanda a una tanda propia, por creer que montar el runner tocaba `package.json` — territorio IF-02 vedado por R5.
+
+**Causa raíz:** la frase se escribió cuando era cierta y nadie la actualizó al agregar vitest en `1bf7c67` ("Tanda B: motor SLA … + vitest config · 186/186 tests"). La documentación propia envejeció sin aviso.
+
+**Solución aplicada:** diagnóstico antes de asumir. Resultado: **vitest 4.1.10 instalado**, `vitest.config.mts` con el alias `@/` ya resuelto, 10 archivos y 286 tests verdes, y dos precedentes de test de Route Handler. Cero dependencias que instalar. Se corrigió la línea del `CLAUDE.md`.
+
+**Prevención futura:** verificar antes de asumir la documentación, **incluida la propia**. Es el mismo mecanismo de CI-025, donde §21 del schema declara una verificación que no cubrió lo que dice cubrir: una doc que miente no es neutra — apaga la comprobación que habría detectado el problema. Registrado además como observación ajena: `"test:e2e": "playwright test"` es un **script huérfano** (sin `playwright.config.*` ni el paquete); no se tocó, por R5 y por alcance.
+
+**Inconveniente (3):** dos patrones de test que parecían equivalentes a su versión ingenua y no lo son.
+
+**Causa raíz:** una aserción puede pasar por la razón equivocada. (a) Un test del 409 que sólo comprueba «estado `visitada` → 409» prueba la condición, no el escenario: pasa igual aunque la primera llamada haya escrito dos veces. (b) Un test que afirma «tras un 403 no se llamó a nada» lo satisface una ruta rota que nunca llama a nada.
+
+**Solución aplicada:** (a) el test de `/calcular` **ejecuta la secuencia real** del doble tap —200 y transición, el guard pasa a leer `visitada`, 409— y afirma el **efecto acumulado**: `updateRecord` una sola vez. Eso es lo que garantiza que AT03 se dispare una vez. (b) el test del guard cierra con dos **controles negativos**: con el guard en verde, el GET sí lee y el PATCH sí escribe.
+
+**Prevención futura:** para transiciones irreversibles, el test recorre la secuencia y afirma el número de escrituras, no el status de cada paso. Y **todo test cuya aserción principal sea una ausencia necesita un caso gemelo que demuestre la presencia**.

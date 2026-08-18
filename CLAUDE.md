@@ -146,13 +146,16 @@ está implementado todavía** — ver CI-005 en `docs/CODE_INCONSISTENCIES.md`.
 ### Uso del MCP Airtable
 
 - El asistente (Claude en `claude.ai` / Claude Code) tiene una **conexión MCP
-  activa** a la base `app9G7lLkIV3CpeLa`. Se usa **exclusivamente en la fase de
-  diseño/verificación**: auditar schema, listar tablas y campos con IDs reales,
-  buscar registros de referencia, y validar contratos antes de escribir tipos TS
-  o Route Handlers.
-- **MCP NO reemplaza el runtime**. En producción, la app usa siempre el token
-  `AIRTABLE_TOKEN` desde el servidor. Nunca invocar el MCP desde código
-  compilado ni desde componentes cliente.
+  activa** a la base `app9G7lLkIV3CpeLa`. Es el **camino por defecto** para la
+  fase de diseño/verificación: auditar schema, listar tablas y campos con IDs
+  reales, buscar registros de referencia, y validar contratos antes de escribir
+  tipos TS o Route Handlers. **`curl` a la REST API queda como recurso de
+  respaldo**, sólo para lo que el MCP no cubra, y declarando el motivo (RO-30).
+- **MCP NO reemplaza el runtime.** En producción la app usa siempre el token
+  `AIRTABLE_TOKEN` desde el servidor. Esto no es una preferencia: el MCP vive en
+  la sesión del cliente y no existe dentro del proceso de Next.js en Railway.
+  Nunca invocar el MCP desde código compilado ni desde componentes cliente, ni
+  proponerlo como vía de acceso de la app (RO-30).
 - Alcance conocido del MCP:
   - ✅ Puede: leer schema (`list_tables_for_base`, `get_table_schema`), buscar
     registros (`search_records`), listar comentarios.
@@ -362,9 +365,23 @@ pnpm start                 # arrancar producción
 pnpm lint                  # ESLint
 pnpm typecheck             # tsc --noEmit
 pnpm format                # prettier --write
-pnpm test                  # tests unitarios (vitest cuando esté)
-pnpm test:e2e              # tests end-to-end contra sandbox
+pnpm test                  # tests unitarios · vitest 4.1.10 (instalado y verde)
+pnpm test:e2e              # ⚠ script huérfano: no hay playwright.config ni el paquete
 ```
+
+### Testing — estado real (verificado 18-ago-2026)
+
+- **`vitest` 4.1.10** en `devDependencies`, con **`vitest.config.mts`** en la raíz. Su única razón
+  de existir es el alias `@/` de `tsconfig.json`: sin él, cualquier test que alcance un módulo que
+  importe con `@/lib/...` falla al resolver.
+- **Los tests van co-ubicados** junto al código (`lib/sla-etapas.test.ts`,
+  `app/api/solicitudes/[id]/asignar/route.test.ts`). No hay `tests/` ni `__tests__/`, y no se
+  crean: la convención del repo es la co-ubicación, sin excepciones.
+- **Referencia para un test de Route Handler**: `app/api/solicitudes/[id]/asignar/route.test.ts`
+  (IF-02) y `app/api/tasaciones/[id]/datos/route.test.ts` (IF-03). El patrón es `vi.mock` a nivel
+  de módulo con `importOriginal` para conservar lo real, un helper `llamar()` que fabrica el
+  `Request` y el `params: Promise.resolve({ id })`, e import estático del handler.
+- **No se agregan dependencias de testing.** Todo lo necesario ya está.
 
 Reglas de dependencias:
 

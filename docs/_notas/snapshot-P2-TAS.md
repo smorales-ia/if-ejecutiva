@@ -229,18 +229,134 @@ capitalización normal, con el `v` fijado a mano y no derivado.
 3. **`derivarCambios()` sólo emite lo que cambió de verdad.** Auditar un campo reenviado igual
    llena `A_Cambios` de ruido y hace ilegible el timeline de §1.3.3.
 
-### 3.2 · Rutas — pendientes
+### 3.2 · Las 11 rutas — completas
 
-*(se completa al cierre de P2-TAS.A)*
+```
+app/api/tasaciones/route.ts                      GET          cola personal
+app/api/tasaciones/[id]/route.ts                 GET          detalle
+app/api/tasaciones/[id]/estado/route.ts          GET          polling de estado
+app/api/tasaciones/[id]/calcular/route.ts        POST         asignada → visitada
+app/api/tasaciones/[id]/rechazo/route.ts         POST         observacion_rechazo_tasador
+app/api/tasaciones/[id]/expediente/route.ts      GET          adjuntos sólo lectura
+app/api/tasaciones/[id]/lectura/route.ts         GET          avance de extracción
+app/api/tasaciones/[id]/comparables/route.ts     GET·POST·DELETE
+app/api/tasaciones/[id]/fotos/route.ts           GET·POST
+app/api/tasaciones/[id]/datos/route.ts           GET·PATCH    ← 18-ago · 8 tablas
+app/api/tasaciones/[id]/informe/route.ts         GET          ← 18-ago · 8 bloques
+```
+
+Seis capas compartidas (era cinco; el DELETE agregó una):
+
+```
+lib/tasador/auth-guard.ts        capas 1+2 · identidad y RF-09
+lib/tasador/auditoria.ts         capa 4 · A_Cambios contra el schema REAL
+lib/tasador/mensajes.ts          literales §6.1 en un solo archivo
+lib/tasador/respuestas.ts        ok() · error() · desdeGuard() · desdeExcepcion()
+lib/tasador/validators/index.ts  capa 3 · Zod + parsearCuerpo() + CAMPOS_SIN_DESTINO
+lib/tasador/airtable-writes.ts   deleteRecords() ← 18-ago · revisión de OV-8
+```
+
+### 3.3 · Los tres tests — 39 casos, no 3
+
+```
+app/api/tasaciones/[id]/calcular/route.test.ts   10 casos
+app/api/tasaciones/[id]/rechazo/route.test.ts     9 casos
+app/api/tasaciones/[id]/datos/route.test.ts      20 casos
+```
+
+**Suite completa: 325 verdes en 13 archivos** (286 previos + 39). Ninguno de los 286 anteriores
+se movió.
+
+Cada archivo cubre el caso que el plan pedía **más los flancos que ese caso deja abiertos**:
+
+| Archivo | Lo pedido | Lo que se agregó y por qué |
+|---|---|---|
+| `/calcular` | el 409 | Cada rechazo afirma que `updateRecord` **no** se llamó — un 409 que igual escribió es un 409 inútil y el status no lo delata. Y el **doble tap real**: primera llamada transiciona, el guard relee `visitada`, segunda da 409, y al final hay **una** escritura. Es la garantía de que AT03 corre una vez. |
+| `/rechazo` | los 20 caracteres | Los bordes se afirman con `toHaveLength` contra `MIN_CARACTERES_OBSERVACION`, así que cambiar el mínimo falla diciendo la verdad. El `.trim()` tiene caso propio: 19 caracteres entre espacios miden 25 en bruto y sin el recorte pasarían. Y una sección **«lo que la ruta NO hace»** que afirma que `estado` no aparece en el update y que hay una sola escritura (A-15). |
+| `/datos` | el guard 403 | Los tres modos de fallo × GET y PATCH. La aserción central: ante un guard fallido, `deleteRecords`, `updateRecord`, `createRecord`, `listRecords` y `getRecord` tienen **cero** llamadas. Más dos **controles negativos**, sin los cuales todo lo anterior pasaría trivialmente si la ruta estuviera rota. |
+
+### 3.4 · El criterio de §3.3 dice «15 rutas». Son 11, y la cadena es ésta
+
+**No es incumplimiento. Es alcance recortado por tres decisiones legítimas, cada una con causa
+registrada.** La cadena se escribe acá porque sin ella el conteo final parece un déficit:
+
+| | De | A | Causa |
+|---|---|---|---|
+| 1 | 15 | **13** | **RO-29** · la coordinación no se soporta por sistema. Caen `GET` y `POST /coordinacion`; `TX_CoordinacionVisita` no existe ni existirá. Cierra CI-012 en negativo. |
+| 2 | 13 | **12** | **A-18** · ninguna tabla de la base puede servir un factor de homogeneización hoy (`valor_referencia` vacío en las 15 filas de `C_FactoresHomogeneizacion`). `GET /config/defaults` no se construye porque **devolvería `null`**, y suplirlo con constantes es lo que RF-TAS-08 prohíbe. |
+| 3 | 12 filas | **11 archivos** | Aritmética, no recorte: la tabla de §3.1 cuenta **una fila por método** y tres rutas agrupan varios (`/comparables` GET·POST·DELETE, `/datos` GET·PATCH, `/fotos` GET·POST). |
+
+Con el recorte 1 cae también su test (la unicidad blanda del POST de coordinación), y por eso los
+tests del plan son **3** y no 4.
+
+---
 
 ## 4 · Estado del build
 
-*(pendiente — se completa al cierre de la tanda)*
+| | Al abrir la tanda | Al cerrar |
+|---|---|---|
+| `pnpm tsc --noEmit` | 🔴 41 → 42 errores | 🔴 **42 errores** — sin movimiento |
+| Errores en lo escrito en P2-TAS.A | — | **0** ✓ |
+| `pnpm test` | 286 verdes | ✅ **325 verdes** (13 archivos) |
+| `pnpm build` | 🔴 `Module not found` | 🔴 igual — **esperado**, cierra en P2-TAS.B |
 
-## 5 · Criterios de aceptación
+Los 42 son deuda ya inventariada y ninguno es de esta tanda: 13 del huérfano
+`coordinar-visita.tsx`, ~20 de los módulos de P2-TAS.B (`lib/tasador-store`, `use-estado-tasador`,
+`factores-default`), 5 de OV-10, 2 del `Select` de `@base-ui`, 1 del residuo CI-015, y 1 el
+`tipoZona` retirado a propósito en P1-TAS.
 
-*(pendiente — se completa al cierre de la tanda)*
+**El verde del build sigue diferido a P2-TAS.B por OV-7.** Es lo esperado y no bloquea el cierre.
 
-## 6 · Qué falta
+---
 
-*(pendiente — se completa al cierre de la tanda)*
+## 5 · Criterios de aceptación de §3.3
+
+| Criterio | Estado |
+|---|---|
+| Las 15 rutas existen bajo `app/api/tasaciones/**` | ✅ **como 11** — cadena en §3.4 |
+| Cero Make (`grep -rniE "make\|postToMake\|MAKE_WEBHOOK\|X-VP-Signature"`) | ✅ sin coincidencias |
+| Las cuatro capas en orden en toda ruta | ✅ toda ruta importa `auth-guard`; las de mutación, un validador Zod |
+| GET a solicitud ajena → 403 sin filtrar | ✅ **probado** · 20 casos en `datos/route.test.ts` |
+| Dos POST a `/coordinacion` → 1 fila y un 409 | ⛔ **N/A** — cae con RO-29 |
+| `POST /calcular` sobre `visitada` → 409 sin escribir | ✅ **probado** · 4 casos |
+| `POST /rechazo` deja `estado` idéntico | ✅ **probado** · 3 casos |
+| Toda mutación deja fila en `A_Cambios` con `tabla_origen` + `registro_id` | ✅ · las colecciones hijas contra la solicitud, por **RO-32** |
+| SLA desde `lib/sla-etapas.ts`, sin literales de plazo | ✅ |
+| `package.json` sin dependencias nuevas | ✅ **cero** — vitest ya estaba |
+| `pnpm tsc`, `pnpm build` y `pnpm test` verdes | ⚠ **test sí; tsc y build no** — OV-7, diferido a P2-TAS.B |
+| `git status` sin cambios en `app/api/solicitudes/**`, `components/console/**`, `app/(ejecutiva)/**` | ✅ verificado |
+| Archivo de aprendizajes creado | ✅ `docs/_archivo/aprendizajes-20260818-1550-P2-TAS.md` |
+
+---
+
+## 6 · Qué falta, y para quién
+
+### 6.1 · Inmediato — P2-TAS.B
+
+Capa cliente: las 8 funciones de `lib/tasaciones.ts`, `lib/tasador-store.ts`,
+`use-estado-tasador` y `factores-default`. **Cierra el build verde de OV-7.**
+
+⚠ `factores-default` depende de **A-18**, que sigue bloqueante: no hay valor por defecto que
+precargar. Ver **OV-6** — el nombre del módulo sugiere lo que RF-TAS-08 prohíbe.
+
+### 6.2 · Deuda que esta tanda deja escrita
+
+| Ficha | Qué queda | Para quién |
+|---|---|---|
+| **CI-023** | **24 campos de `InformeData` sin columna destino.** Decidir si se crean en Airtable, se retiran del tipo, o se consolidan en los `multilineText` existentes | **P7-TAS** |
+| **CI-023 · Notas** | El formato de `clave_*` (`{codigo}-{discriminador}`) es **tentativo**: si AT03 espera otro, el upsert de las 4 hijas duplicará filas | **P7-TAS** o quien toque AT03 |
+| **CI-024** | El pipeline PDF debe poblar el Link `solicitud` de `TX_DocumentosGenerados`, o la cabecera del preview nunca mostrará versión | dueño de E1/E2/E3 · verifica **P9-TAS** |
+| **CI-025** | Los 9 campos SII inexistentes: corregir `schema-airtable.md` §20.6 o crearlos. **Y auditar el alcance de §21**, que declara una verificación que no los cubrió | dueño del bloque SII · **Héctor** |
+| **CI-026** | Uniformar el status del guard a 404, o corregir el docblock que declara la mitigación completa | **Héctor** + seguridad · natural en **P11-TAS** |
+| **A-18** | Sigue **bloqueante**. Ninguna tabla puede servir un factor de homogeneización | Héctor y Óscar |
+| **OV-13** | `coordinar-visita.tsx` sigue huérfano y aporta 13 de los 42 errores. Con RO-29, ese archivo no tiene destino | decisión de Sergio |
+
+### 6.3 · Lo que NO queda pendiente, y conviene que se sepa
+
+- **Los FIELD_IDs de las 6 tablas de captura ya están levantados** y viven en `field-ids.ts`. No
+  hay que volver a consultarlos.
+- **`deleteRecords` existe** en `lib/tasador/airtable-writes.ts`. La próxima tanda que necesite
+  borrar no tiene que resolver de nuevo el roce con R5.
+- **vitest está instalado y configurado.** El `CLAUDE.md` decía «cuando esté» y era falso; se
+  corrigió en esta tanda. Hay tres precedentes de test de Route Handler en IF-03 además de los dos
+  de IF-02.
