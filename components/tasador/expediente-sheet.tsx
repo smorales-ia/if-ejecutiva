@@ -8,7 +8,7 @@ import {
   type Tasacion,
   type InformeData,
 } from "@/lib/tasaciones"
-import { tipoDocumentoLabel } from "@/lib/tipos-documento"
+import { useTiposDocumento } from "@/lib/use-tipos-documento"
 import {
   Sheet,
   SheetContent,
@@ -60,18 +60,33 @@ export function ExpedienteSheet({
     return [...predefinidas, ...custom].filter((g) => g.fotos.length > 0)
   }, [payload])
 
+  /*
+   * OV-10 · `tipoDocumentoLabel()` **no existe** en `lib/tipos-documento.ts`;
+   * el v0 lo importaba de un módulo que nunca lo exportó. Se resuelve del lado
+   * del Tasador con el catálogo que ya sirve el API, en vez de agregarle un
+   * export a IF-02 (prohibido por R5 sin autorización).
+   *
+   * Mientras el catálogo carga —o si falla— se muestra el código crudo: es
+   * feo pero identifica el documento, que es lo que la pantalla necesita.
+   */
+  const { tipos } = useTiposDocumento()
+  const etiquetaPorCodigo = useMemo(
+    () => new Map(tipos.map((t) => [t.codigo, t.nombre])),
+    [tipos],
+  )
+
   // Documentos cargados por tipo (ids de placeholder).
   const gruposDoc = useMemo(() => {
     return Object.entries(payload.documentosCargados ?? {})
       .filter(([, ids]) => ids.length > 0)
       .map(([tipo, ids]) => ({
-        label: tipoDocumentoLabel(tipo),
+        label: etiquetaPorCodigo.get(tipo) ?? tipo,
         archivos: ids.map((id, i) => ({
           id,
           nombre: `${tipo}_${i + 1}.pdf`,
         })),
       }))
-  }, [payload])
+  }, [payload, etiquetaPorCodigo])
 
   // Adjuntos de la solicitud (Dropbox) entregados por la ejecutiva.
   const adjuntos = tasacion.adjuntosDropbox ?? []

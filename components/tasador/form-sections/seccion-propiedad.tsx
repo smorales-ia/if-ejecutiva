@@ -219,11 +219,23 @@ export function SeccionPropiedad({
         onChange={(v) => set("velocidadVenta", v)}
         opciones={OPCIONES.velocidadVenta}
       />
-      <SelectField
+      {/*
+        Campo de texto, no select. P1-TAS **retiró `OPCIONES.tipoZona` a
+        propósito** —dejando este archivo roto— porque el catálogo del v0 estaba
+        mal planteado de raíz: `TX_DatosTasacion` no tiene un `singleSelect` de
+        zona, tiene un Link a `M_Zonificacion` y, aparte, un
+        `tipo_zona_descripcion` de texto libre. Un select hardcodeado habría
+        escrito valores inventados en un Link.
+
+        Se cablea contra el texto libre porque es lo que
+        `PATCH /api/tasaciones/[id]/datos` persiste hoy (`tipo_zona_descripcion`,
+        `fldbrYbbvJThBaGwC`). **P7-TAS decide** si la sección pasa al Link y, en
+        ese caso, sirve el catálogo por una ruta.
+      */}
+      <TextField
         label="Tipo de zona"
         value={form.tipoZona}
         onChange={(v) => set("tipoZona", v)}
-        opciones={OPCIONES.tipoZona}
       />
     </div>
   )

@@ -994,3 +994,174 @@ Los tres motivos, en orden de peso:
 1. **Contradice un docblock que afirma lo contrario.** Una mitigación documentada como completa apaga la revisión que la habría detectado — el mismo mecanismo que **CI-025** documenta para §21 del schema. Dejarlo sólo en un comentario de test sería enterrar la contradicción donde nadie la busca.
 2. **Uniformar cambia el contrato de once rutas de una vez.** Eso es un cambio de superficie de API, no un ajuste local, y el consumidor —la UI de P3-TAS en adelante— todavía no está escrito. Conviene decidirlo antes de que haya clientes que dependan de la distinción, pero decidirlo **alguien con el modelo de amenaza**, no la tanda que encontró el detalle.
 3. **La evidencia es de hoy y se pierde.** Los 39 tests de esta tanda demuestran el comportamiento ahora; sin ficha, dentro de tres meses hay que redescubrirlo desde cero — y la próxima vez puede que nadie escriba el test que lo revela.
+
+---
+
+> ## Entradas CI-027 a CI-035 · tanda P2-TAS.B (18-ago-2026)
+>
+> Las nueve nacen de la misma tanda: la capa cliente de IF-03 y el cierre del build verde
+> (OV-7). **Cinco se anticiparon en el diseño del diff** y cuatro aparecieron **escribiendo el
+> código**, que es donde el contraste v0 ↔ backend real se vuelve verificable. Tres de esas
+> cuatro (CI-032, CI-033, CI-035) son defectos de comportamiento que ningún test del repo
+> habría revelado, porque no hay test que cubra el v0.
+>
+> **Dueño y Fecha objetivo van en blanco en las nueve** — excepción declarada **C-12**, las
+> llena el usuario. Imputarlos desde la tanda generaría compromisos que nadie acordó y que por
+> tanto nadie revisa; en blanco fuerzan el pase explícito cuando corresponda.
+
+## CI-027 · `coordinar-visita.tsx` y su ruta se borran por RO-29: el árbol queda en 6 rutas de UI contra las 7 que declara CI-020
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-027 |
+| **Archivo:línea** | `components/tasador/coordinar-visita.tsx` (512 líneas · **borrado**) · `app/tasaciones/[id]/coordinar/page.tsx` (**borrado**) · contraste con `docs/CODE_INCONSISTENCIES.md` · CI-020 |
+| **Síntoma** | El árbol de rutas de UI de IF-03 tiene **6 páginas**, no 7: `/tasaciones`, `/tasaciones/[id]`, `…/estado`, `…/fotos`, `…/informe`, `…/lectura`. CI-020 documenta **siete rutas** como el árbol correcto, cifra tomada del diseño v4 y del prototipo v0. Un lector que verifique el conteo contra CI-020 encontrará una ruta de menos y puede concluir que falta construirla. |
+| **Causa** | **RO-29** (17-ago-2026) cerró CI-012 en sentido negativo: la coordinación de visitas —ejecutiva ↔ tasador y tasador ↔ visador— **no se soporta por sistema**, es manejo telefónico fuera de plataforma, y `TX_CoordinacionVisita` no existe ni se creará. Los dos archivos implementaban RF-TAS-04 y RF-TAS-05, que quedaron sin objeto: `coordinar-visita.tsx` importaba `confirmarCoordinacion`, `devolverCoordinacion` y `MOTIVOS_DEVOLUCION`, tres símbolos que P1-TAS **deliberadamente no tipó** por la misma decisión. El archivo aportaba **13 de los 42 errores** de `tsc` y no tenía destino posible. |
+| **Resolución** | ✅ **EJECUTADA (18-ago-2026).** Los dos archivos se borraron con autorización explícita de Sergio. `git` conserva la historia; no se dejaron `.bak` ni exclusiones de `tsconfig`, que habrían dejado 512 líneas muertas y una exclusión que alguien tendría que recordar. <br>**Lo que queda por hacer es documental, no de código:** actualizar CI-020 y el Blueprint para que el árbol declarado sea de **6 rutas**, citando RO-29 como la causa. Mientras no se haga, la discrepancia de conteo es real y esta ficha es lo único que la explica. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · sólo por la parte documental · el código ya está en su estado final |
+| **Origen** | P2-TAS.B (18-ago-2026), al mapear los 42 errores de `tsc` a sus causas: 14 de ellos colgaban de dos archivos sin destino. |
+
+**Por qué no es un incumplimiento.** El criterio de aceptación de CI-020 se escribió antes de
+RO-29. Una decisión de producto posterior redujo el alcance, y el árbol de 6 rutas es el
+**resultado correcto** de aplicarla. Registrar la diferencia es lo que impide que la próxima
+tanda «arregle» el conteo reconstruyendo una pantalla que el negocio descartó.
+
+---
+
+## CI-028 · `marcarPdfListo` no tiene ruta backend: el envío del informe al visador no existe como escritura
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-028 |
+| **Archivo:línea** | `lib/tasaciones.ts` · `marcarPdfListo()` (**stub declarado**) · `components/tasador/informe-preview.tsx:170` (llamador) · contraste con `app/api/tasaciones/**` (11 rutas) y con el plan §3.1 (tabla de 15 filas) |
+| **Síntoma** | La Pantalla 7 tiene un botón que envía el informe y avanza a una pantalla de agradecimiento. **Ninguna ruta de IF-03 escribe esa transición.** P2-TAS.A construyó once rutas y ninguna toca el estado en ese sentido; el plan §3.1, que enumera quince, **tampoco la lista**. El v0 lo resolvía mutando un array en memoria, así que el hueco no se veía. |
+| **Causa** | El set de rutas del plan se derivó de las pantallas de lectura y de las mutaciones evidentes (`/calcular`, `/rechazo`, `/coordinacion`, `/fotos`, `/datos`). La transición de **envío** del informe quedó fuera: en la máquina de estados oficial, `calculada → pdf_listo` la escribe el **pipeline PDF** (E1/E2/E3), no el tasador, y esa lectura hizo que pareciera cubierta. Pero el botón de §7.5 es una acción del tasador y necesita persistir algo — como mínimo, la marca de que el tasador dio el informe por bueno. **Qué escribe exactamente, y sobre qué campo, no está definido en ningún documento.** |
+| **Resolución** | ⚠ **NO SE RESUELVE EN P2-TAS.B — falta la definición, no el código.** <br>**(a) Hecho:** `marcarPdfListo(id)` existe con la firma que el llamador espera, **no persiste nada**, y emite un `console.warn` que nombra el hueco y remite a esta ficha. El docblock lo declara stub en su primera línea. <br>**(b) Por qué stub y no una ruta inventada:** cablear contra un endpoint adivinado habría sido peor que no cablear — el botón diría «enviado» y el informe se quedaría donde está, que es exactamente el verde falso que esta tanda rechazó en el hallazgo del ensanchado de proyecciones. <br>**(c) Lo que hay que decidir antes de escribir la ruta:** qué campo se escribe, si hay transición de estado o sólo una marca de conformidad del tasador, y si el visador recibe aviso (ligado a **A-15**, hoy resuelta en negativo para el rechazo). |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · **no bloquea P2-TAS.B** · el comportamiento visible es idéntico al del v0 |
+| **Origen** | P2-TAS.B (18-ago-2026), al cablear las funciones del v0 contra las rutas reales: nueve encontraron destino y ésta no. |
+
+---
+
+## CI-029 · `TipoDocumento.obligatorio` no existe en Airtable ni tiene equivalente conceptual para el Tasador
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-029 |
+| **Archivo:línea** | `components/tasador/sheet-documentos.tsx` (antes `:54`, `:147-148`) · `lib/tipos-documento.ts:76-85` (interface `TipoDocumento`) · `docs/schema-airtable.md:311` (`requerido_por_ejecutiva`) |
+| **Síntoma** | El sheet documental del tasador partía el checklist en dos grupos, **«Obligatorios»** y **«Opcionales»**, leyendo `d.obligatorio` de cada tipo de documento. **Ese campo no existe**: ni en la interface `TipoDocumento` de `lib/tipos-documento.ts`, ni en la tabla `D_TipoDocumento` de Airtable. El v0 compilaba contra un tipo imaginario. |
+| **Causa** | Dos capas de error superpuestas. La primera es del v0: inventó el campo junto con `documentosPara()`, una función que tampoco existe. La segunda es más sutil — **el concepto no está definido para este actor**. `D_TipoDocumento` sí tiene `requerido_por_ejecutiva` (`fldhKxTGC76faGGv3`, checkbox), pero es el checklist **de la Ejecutiva** al dar de alta la solicitud, no el del Tasador en terreno: son dos momentos, dos actores y dos conjuntos de documentos. Usarlo habría mezclado los dominios y producido un «obligatorio» que nadie declaró como tal para el tasador. |
+| **Resolución** | ✅ **RESUELTA EN NEGATIVO (18-ago-2026), por instrucción explícita de Sergio.** <br>**(a) Hecho:** el sheet muestra **una sola lista**, sin la etiqueta Obligatorio/Opcional. En su lugar, cada fila muestra `entidad_emisora`, que sí es un dato real del catálogo. El filtro por condición de la propiedad se conserva y ahora pasa por `documentoAplicaA()` de `lib/tasador/tipo-propiedad.ts` (P-5), que ya existía. <br>**(b) Lo que NO se hizo, y por qué:** no se agregó `obligatorio` a `lib/tipos-documento.ts`. Ese archivo es territorio de **IF-02** y R5 prohíbe editarlo sin autorización; Sergio la denegó con el fundamento correcto — forzar `requerido_por_ejecutiva` mezcla dominios, e inventar el campo repite el error de clase **A-18** (fabricar un dato que el negocio no definió). <br>**(c) Lo que queda por decidir:** si el modelo necesita un `requerido_por_tasador` en `D_TipoDocumento`, o si prescinde de la distinción. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · el código está en un estado correcto y honesto; falta la decisión de modelo |
+| **Origen** | P2-TAS.B (18-ago-2026), al resolver OV-10: el `tipoDocumentoLabel` ausente destapó que el archivo importaba **tres** símbolos inexistentes, no uno. |
+
+---
+
+## CI-030 · Enmienda a OV-4: `getTasacion` no podía vivir en `lib/tasaciones.ts` sin filtrar `AIRTABLE_TOKEN` al bundle cliente
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-030 |
+| **Archivo:línea** | `lib/tasador/lectura-tasacion.ts` (**nuevo**) · `lib/tasaciones.ts:15-28` (docblock enmendado) · `app/tasaciones/[id]/*/page.tsx` (5 imports reescritos) · contraste con **OV-4** en `docs/_notas/inventario-tasador.md` |
+| **Síntoma** | OV-4 fijó `@/lib/tasaciones` como hogar único de todo lo que el v0 importaba desde esa ruta, incluida `getTasacion()`. Aplicado al pie de la letra, eso obligaba a poner una lectura de Airtable —con `AIRTABLE_TOKEN` y el cliente REST— dentro de un módulo que **importan componentes cliente** (`OPCIONES`, `CATEGORIAS_FOTO` y los tipos se usan en `"use client"`). El resultado habría sido el token y el cliente HTTP en el bundle del navegador. |
+| **Causa** | OV-4 se decidió en **P1-TAS**, una tanda que sólo escribía tipos. En ese contexto la regla era correcta y sin efectos secundarios: los tipos se borran en compilación y no llegan al bundle. La regla **no contempló módulos server-only** porque todavía no existía ninguno. Es una regla buena aplicada fuera del dominio en que se formuló, no una regla equivocada. |
+| **Resolución** | ✅ **EJECUTADA (18-ago-2026), con aprobación explícita de Sergio.** <br>**(a) Alcance conservado de OV-4:** `lib/tasaciones.ts` sigue siendo el hogar único de **tipos y catálogos**, y ahora también de las funciones cliente que no tocan Airtable (`resolverLimite`, `resolverInforme`, `marcarVisitada`, `guardarObservacionRechazo`, `marcarPdfListo`). <br>**(b) Lo que se movió:** `getTasacion` → `leerTasacion()` en `lib/tasador/lectura-tasacion.ts`, junto con `leerCola()` y el mapper `proyectarTasacion()`. Los 5 Server Components reescribieron su import. <br>**(c) Beneficio no buscado:** el mapper quedó compartido con `GET /api/tasaciones` y `GET /api/tasaciones/[id]`, de modo que la pantalla y el API **no pueden divergir**: es el mismo mapeo o ninguno. <br>**(d) Regla derivada:** en `lib/tasaciones.ts` sólo entra lo que un componente cliente pueda importar sin riesgo. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **cerrada** (18-ago-2026) |
+| **Origen** | P2-TAS.B (18-ago-2026), al descubrir que ninguna de las dos rutas GET servía la forma `Tasacion` y había que decidir dónde vivía la lectura. |
+
+---
+
+## CI-031 · A-18 deja de bloquear el frente cliente: `factores-default` se construye como módulo de forma pura, sin precargar
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-031 |
+| **Archivo:línea** | `lib/tasador/factores-default.ts` (**nuevo**) · `components/tasador/form-sections/seccion-comparables.tsx:21` (import reubicado) · contraste con **A-18** en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md:506` |
+| **Síntoma** | A-18 se venía tratando como bloqueante de **todo** lo relacionado con factores de homogeneización, incluida la existencia del módulo. Consecuencia: `seccion-comparables.tsx` importaba un archivo inexistente, y ese único import mantuvo **`pnpm build` en rojo** —con la pantalla del informe sin compilar— después de haberse resuelto los otros 41 errores de `tsc`. |
+| **Causa** | Se confundieron dos cosas distintas bajo una sola ficha. A-18 bloquea **precargar valores**: ninguna tabla de configuración puede servir hoy un factor por defecto (`C_FactoresHomogeneizacion.valor_referencia` vacío en las 15 filas; `C_Factores` es otra cosa; `C_VariablesCliente` vacía), y elegir uno es decisión de negocio. Pero **la forma no depende de esa respuesta**: los tres factores son campos que **teclea el tasador**, y la aritmética de homogeneización está definida desde siempre. |
+| **Resolución** | ✅ **EJECUTADA (18-ago-2026), con fundamento aprobado por Sergio.** <br>**(a) Hecho:** `nuevoComparable()` devuelve un comparable con `factorSup`, `factorEdad` y `factorDistancia` en `""`; `ufHomogeneizada(c)` calcula `totalUf × factorSup × factorEdad × factorDistancia` sobre lo tecleado y devuelve `null` si falta cualquiera. **Cero valores numéricos por defecto, cero lectura de configuración, cero red.** <br>**(b) A-18 queda intacta:** sigue abierta para la precarga desde `GET /api/tasaciones/config/defaults`, que entra en **P7-TAS** cuando Héctor y Óscar respondan. Cuando llegue, rellena esos tres campos antes de pintarlos y **este módulo no cambia**. <br>**(c) Efecto colateral:** cerró **OV-7** — primer `pnpm build` verde desde que el código v0 entró al repo. <br>**(d) Deuda menor · OV-6:** el nombre `factores-default` sugiere lo que RF-TAS-08 prohíbe y **miente sobre el contenido**: acá no hay ningún default. Se conservó por ser la ruta que el v0 importa. Renombrarlo es gratis si P7-TAS toca el archivo. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **cerrada** en lo que toca al frente cliente · **A-18 sigue abierta** para la precarga |
+| **Origen** | P2-TAS.B (18-ago-2026): el build rojo con un solo error obligó a separar qué parte de A-18 bloqueaba de verdad. |
+
+---
+
+## CI-032 · El v0 disparaba **dos** `POST /calcular` por cada envío: el segundo se comía el 409 de RF-TAS-07 sin visibilidad
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-032 |
+| **Archivo:línea** | `components/tasador/tasacion-form.tsx` · `handleCalcular()` (antes `:167-170`) · `app/api/tasaciones/[id]/calcular/route.ts` (guard 409) |
+| **Síntoma** | El handler del botón «Calcular Tasación» llamaba en secuencia `marcarVisitada(tasacion.id)` **y** `enviarParaCalculo()`, y navegaba de inmediato. Cableadas contra el backend real, **las dos golpean `POST /api/tasaciones/[id]/calcular`**: la primera ejecutaba la transición `asignada → visitada` y la segunda recibía el **409** del guard de RF-TAS-07. Ninguna de las dos tenía `await` ni manejo de error, y la navegación ocurría pase lo que pase, así que **el 409 se descartaba en silencio**. |
+| **Causa** | En el v0 eran dos operaciones distintas sobre un store en memoria: `marcarVisitada` mutaba el estado local y `enviarParaCalculo` simulaba el envío. Ninguna hacía red. Al cablear ambas contra el backend, se convirtieron en **la misma escritura llamada dos veces** — una colisión que no existía en el original y que sólo aparece al sustituir el store por rutas reales. Es **clase A-15**: un defecto que nace del cambio de sustrato, no del código en sí. |
+| **Resolución** | ✅ **CORREGIDA (18-ago-2026).** <br>**(a)** Queda **una sola llamada**, la del hook (`enviarParaCalculo()`), que además refresca el estado que sondea la pantalla de avance. `marcarVisitada` se retiró del handler; la función sigue exportada porque es el cableado correcto de `POST /calcular` para otros llamadores. <br>**(b)** El handler pasó a `async` con `await`: **no navega si la escritura falla**, y muestra el literal humano que devuelve la ruta. <br>**(c)** Regla D completa: `calculando` bloquea el re-click, el botón entra en su estado `blocked` —que ya renderizaba spinner y «Cálculo en curso»— y el reset va en `finally`, no en `catch`. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **cerrada** (18-ago-2026) |
+| **Origen** | P2-TAS.B (18-ago-2026), al reemplazar las funciones del store del v0 por llamadas a rutas: las dos del handler resolvieron al mismo endpoint. |
+
+**Por qué ningún test lo habría cazado.** No existe cobertura del v0 —ni la habrá: es código
+que las tandas de UI reescriben—, y los tests de `calcular/route.test.ts` prueban el
+**servidor**, donde el comportamiento es correcto: el 409 se emite y sólo hay una escritura.
+El defecto vivía enteramente en el cliente, en el hueco entre dos funciones que nadie había
+mirado juntas. Se encuentra leyendo, no ejecutando.
+
+---
+
+## CI-033 · `estado-procesando` disparaba la transición irreversible desde un efecto de montaje: un F5 bastaba para lanzar AT03
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-033 |
+| **Archivo:línea** | `components/tasador/estado-procesando.tsx` · `useEffect` de arranque (antes `:73-76`) · `app/tasaciones/[id]/estado/page.tsx` (ruta que lo monta) |
+| **Síntoma** | El componente ejecutaba `if (esCalculo && estado === "BORRADOR") enviarParaCalculo()` dentro de un `useEffect` **sin más condición que el montaje**. Contra el backend real, eso convierte cualquier llegada a `/tasaciones/[id]/estado` con la solicitud todavía en `asignada` —un refresco de página, el botón atrás, un enlace compartido, una URL pegada— en la transición `asignada → visitada`, que **dispara AT03 aguas abajo y no se deshace desde la UI**. |
+| **Causa** | El v0 lo puso a propósito, para cubrir el caso de recargar la URL directamente y que la simulación no se quedara congelada. Contra un store en memoria era inocuo: sólo cambiaba una variable local. La peligrosidad aparece al sustituir el store por una escritura real e irreversible, sin que el código que la dispara cambie ni una línea. Mismo mecanismo que **CI-032**. |
+| **Resolución** | ✅ **CORREGIDA (18-ago-2026).** El efecto se eliminó. Quien ordena la transición es **el botón «Calcular Tasación» del formulario**, que la dispara con las once validaciones de sección ya hechas. Quien caiga en esta pantalla sin haber pasado por el botón ve el stepper en su fase inicial y no avanza — que es la lectura correcta de la realidad: no hay ningún cálculo corriendo. El razonamiento quedó escrito en el sitio, en un bloque `⚠`, para que nadie lo «arregle» reponiéndolo. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **cerrada** (18-ago-2026) |
+| **Origen** | P2-TAS.B (18-ago-2026), al remapear los literales de estado del v0 (`BORRADOR`, `EN_CALCULO`, `INFORME_DISPONIBLE`, `APROBADO`) a los del backend real. |
+
+**Regla que deja.** Un efecto de montaje no puede ser el disparador de una escritura
+irreversible. El montaje no expresa intención del usuario: ocurre por navegación, por
+recarga, por hidratación y por remontajes de React que el código no controla.
+
+---
+
+## CI-034 · `server-only` no está en `package.json`: la frontera cliente/servidor de dos módulos es convención, no cinturón
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-034 |
+| **Archivo:línea** | `lib/tasador/lectura-tasacion.ts` (docblock, bloque `⚠`) · `lib/solicitudes.ts` (IF-02, mismo caso) · `package.json` (sin la dependencia) · `pnpm-lock.yaml:2314` (presente como transitiva de Next) |
+| **Síntoma** | Dos módulos que leen Airtable con `AIRTABLE_TOKEN` —`lib/tasador/lectura-tasacion.ts` en IF-03 y `lib/solicitudes.ts` en IF-02— **no declaran `import 'server-only'`**. Nada impide mecánicamente que un componente cliente los importe; lo único que lo evita es la convención y el hecho de que arrastrarían `lib/airtable-client` al bundle. |
+| **Causa** | `server-only` aparece en el lockfile **sólo como dependencia transitiva de Next.js**, no en `package.json`. Importarlo desde código propio habría agregado una dependencia directa no declarada, contra el criterio de **cero dependencias nuevas** que P2-TAS.A y P2-TAS.B mantuvieron. Se optó por la consistencia con el precedente de IF-02, que lleva meses en producción con la misma garantía por convención. |
+| **Resolución** | ⚠ **NO SE RESUELVE EN P2-TAS.B — requiere tocar `package.json`.** <br>**(a) Hecho:** el docblock de `lectura-tasacion.ts` declara explícitamente que la separación es por convención y no por `server-only`, y señala que si la dependencia entra al proyecto, ese archivo es el primero que debería usarla. <br>**(b) Lo que hay que evaluar:** agregar `server-only` como dependencia directa y envolver **ambos** módulos. Es barato y convierte un error silencioso de seguridad en un error de compilación. <br>**(c) Riesgo real hoy:** bajo pero no nulo. Un `import` desde un componente `"use client"` rompería el build igualmente al arrastrar el cliente REST — pero con un mensaje que no nombra el problema, y un desarrollador apurado podría «resolverlo» moviendo código en la dirección equivocada. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · **no bloquea** · afecta a IF-02 e IF-03 por igual |
+| **Origen** | P2-TAS.B (18-ago-2026), al escribir `lectura-tasacion.ts`: el `import 'server-only'` se escribió, se verificó contra `package.json` y se retiró. |
+
+---
+
+## CI-035 · `datosEjecutiva.contactoTelefono` sale de `vendedor_telefono`, no de `TX_ContactosVisita`
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-035 |
+| **Archivo:línea** | `lib/tasador/lectura-tasacion.ts` · `proyectarTasacion()`, bloque `datosEjecutiva` · consumidor en `components/tasador/tasacion-card.tsx:46` (`tel:` href) y `:91` |
+| **Síntoma** | La card de la cola muestra un teléfono de contacto con enlace `tel:` — el dato operativo más importante de la pantalla ahora que **RO-29** dejó la coordinación en manos del teléfono. Ese número se toma de `TX_Solicitudes.vendedor_telefono`, **no** de `TX_ContactosVisita`, que es la tabla dedicada a los contactos de visita y tiene varios por solicitud con su campo `ordenPrioridad`. |
+| **Causa** | Decisión de coste tomada al escribir el mapper: `TX_ContactosVisita` es una tabla hija y resolverla por cada fila de la cola serían **N lecturas adicionales** en la pantalla que más se abre del flujo. `vendedor_telefono` vive en la misma fila de `TX_Solicitudes` que el resto de la proyección y no cuesta ninguna lectura extra. Es una aproximación razonable —el vendedor suele ser quien abre la puerta— pero **es una aproximación**, y no está respaldada por ningún RF. |
+| **Resolución** | ⚠ **ASUNCIÓN DECLARADA — la verifica P3-TAS.** <br>**(a) Hecho:** la elección está escrita en el sitio, en el docblock del bloque `datosEjecutiva`, nombrando la alternativa y el motivo del descarte. <br>**(b) Lo que hay que verificar:** si algún RF-TAS exige el contacto **prioritario** de `TX_ContactosVisita` en la card. Si lo exige, hay dos salidas: una lectura agregada de la tabla hija filtrada por las solicitudes de la cola —una sola llamada, no N—, o exponer el contacto prioritario como campo derivado en `TX_Solicitudes`. <br>**(c) Nota de alcance:** IF-02 ya hidrata esta tabla con `hydrateContactos` de `lib/contactos-visita.ts`; hay precedente reutilizable si la verificación obliga a cambiar. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · el valor mostrado es plausible y puede no ser el correcto |
+| **Origen** | P2-TAS.B (18-ago-2026), al ensanchar la proyección: `datosEjecutiva` es no-opcional en `Tasacion` y ninguna ruta lo servía. |

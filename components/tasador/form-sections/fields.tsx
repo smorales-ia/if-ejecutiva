@@ -208,7 +208,13 @@ export function SelectField({
       <Label htmlFor={id} className="text-sm font-medium">
         {label}
       </Label>
-      <Select value={value} onValueChange={onChange}>
+      {/*
+        `@base-ui` tipa el handler como `(value: string | null, …) => void`: el
+        `null` es su forma de decir «se deseleccionó». Los consumidores de este
+        campo trabajan con `string`, así que la conversión se hace una vez acá y
+        no en cada uno de los ~40 `SelectField` del formulario.
+      */}
+      <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
         <SelectTrigger id={id} className="min-h-12 w-full text-base">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

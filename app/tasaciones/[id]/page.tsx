@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
-import { getTasacion } from "@/lib/tasaciones"
+import { leerTasacion } from "@/lib/tasador/lectura-tasacion"
 import { TasacionForm } from "@/components/tasador/tasacion-form"
 
 export default async function TasacionDetailPage({
@@ -9,7 +9,7 @@ export default async function TasacionDetailPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const tasacion = getTasacion(id)
+  const tasacion = await leerTasacion(id)
   if (!tasacion) notFound()
 
   return (

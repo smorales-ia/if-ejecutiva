@@ -12,11 +12,20 @@
  * bajo `app/tasaciones/**` y `components/tasador/**`, no del plan ni de la
  * spec. Los FIELD_IDs de Airtable viven en `lib/tasador/field-ids.ts`.
  *
- * Este módulo es **sólo tipos y catálogos**. Las ocho funciones que el v0
- * importa desde aquí (`getTasacion`, `marcarVisitada`, `marcarPdfListo`,
- * `guardarObservacionRechazo`, `resolverInforme`, `resolverLimite`, y el mock
- * `TASACIONES`) son territorio de **P2-TAS**: nacen contra Route Handlers, no
- * como mocks en memoria.
+ * ⚠ **Enmienda a OV-4 (P2-TAS.B · 18-ago-2026).** OV-4 fijó esta ruta para los
+ * **tipos y catálogos**, y ese sigue siendo su alcance. Pero el archivo lo
+ * importan componentes cliente, así que **nada que lea Airtable puede vivir
+ * acá**: arrastraría `AIRTABLE_TOKEN` y el cliente REST al bundle del
+ * navegador. Las lecturas contra la base —`leerTasacion`, `leerCola`, y el
+ * mapper que comparten con los Route Handlers— viven en
+ * `lib/tasador/lectura-tasacion.ts`, que es server-only.
+ *
+ * De las funciones que el v0 importaba desde aquí, P2-TAS.B dejó las que un
+ * componente cliente puede ejecutar sin riesgo: `resolverLimite` y
+ * `resolverInforme` (puras), `marcarVisitada` y `guardarObservacionRechazo`
+ * (`fetch` a las rutas de IF-03) y `marcarPdfListo` (**stub declarado**: no
+ * existe ruta backend para esa transición). `getTasacion` se renombró a
+ * `leerTasacion` al mudarse; el mock `TASACIONES` se sustituyó por `leerCola`.
  */
 
 import type { ContactoVisita } from './console-data'
@@ -671,3 +680,295 @@ export const OPCIONES = Object.freeze({
     { v: 'no_aplica', l: 'No aplica' },
   ]) as readonly Opcion[],
 })
+
+/* -------------------------------------------------------------------------
+ * Capa cliente · P2-TAS.B
+ *
+ * Lo que sigue es lo único de este archivo que **hace** algo en runtime; el
+ * resto son tipos y catálogos. Todo lo de acá tiene que poder importarse desde
+ * un componente cliente, así que **nada toca Airtable**: las lecturas contra la
+ * base viven en `lib/tasador/lectura-tasacion.ts` (server-only por convención).
+ * Ver la enmienda a OV-4 en el docblock de ese archivo.
+ * ---------------------------------------------------------------------- */
+
+/** Forma del sobre que devuelven todas las rutas de IF-03 (`lib/tasador/respuestas.ts`). */
+interface SobreApi<T> {
+  data?: T
+  error?: string
+}
+
+/**
+ * Literal genérico de fallo (§6.5 · Blueprint). Se usa cuando la respuesta no
+ * trae `error` propio: el usuario nunca ve un error técnico.
+ */
+const ERROR_GENERICO =
+  'No pudimos completar la acción. Intenta nuevamente en unos segundos.'
+
+/**
+ * Llama una ruta de IF-03 y desenvuelve `{ data }`.
+ *
+ * Lanza `Error` con el literal humano que trajo la respuesta. Los llamadores
+ * son componentes cliente que ya tienen que cerrar el ciclo de la Regla D
+ * (spinner → resultado), así que reciben algo que pueden mostrar tal cual.
+ */
+async function llamarApi<T>(url: string, init?: RequestInit): Promise<T> {
+  let respuesta: Response
+  try {
+    respuesta = await fetch(url, { credentials: 'same-origin', ...init })
+  } catch (err) {
+    // Caída de red: no hay cuerpo que leer.
+    console.error('[tasaciones] fallo de red', url, err)
+    throw new Error(ERROR_GENERICO)
+  }
+
+  let sobre: SobreApi<T> = {}
+  try {
+    sobre = (await respuesta.json()) as SobreApi<T>
+  } catch {
+    // Respuesta sin JSON (502 de un proxy, HTML de error). Se ignora el cuerpo.
+  }
+
+  if (!respuesta.ok) {
+    console.error('[tasaciones]', url, respuesta.status, sobre.error)
+    throw new Error(sobre.error || ERROR_GENERICO)
+  }
+
+  return sobre.data as T
+}
+
+/**
+ * Traduce el límite de una categoría de fotos a un número concreto.
+ *
+ * Es el **único punto de traducción** de `LimiteFoto` (A-16): si el negocio
+ * decide que los mínimos son fijos y no dinámicos, se cambia acá y ninguna
+ * pantalla se entera. `null` significa «sin límite», no cero.
+ */
+export function resolverLimite(
+  limite: LimiteFoto,
+  declarados: { dorm: number; banos: number; estac: number },
+): number | null {
+  if (limite === null) return null
+  if (typeof limite === 'number') return limite
+
+  switch (limite) {
+    case 'dorm':
+      return declarados.dorm
+    case 'banos':
+      return declarados.banos
+    case 'estac':
+      return declarados.estac
+  }
+}
+
+/** Conteo de recintos de un nivel, todo en cero. */
+function nivelVacio(): NivelHabitaciones {
+  return {
+    living: 0,
+    estar: 0,
+    cocina: 0,
+    comedor: 0,
+    dormitoriosSimples: 0,
+    suites: 0,
+    banos: 0,
+    walkIn: 0,
+    escritorio: 0,
+    loggia: 0,
+  }
+}
+
+function comodidadesVacias(): Comodidades {
+  return {
+    gimnasio: false,
+    piscina: false,
+    sauna: false,
+    quincho: false,
+    calefaccion: false,
+    aireAcondicionado: false,
+    alarma: false,
+    aspiracionCentral: false,
+    climatizacion: false,
+    purificador: false,
+    corrientesDebiles: false,
+    jardinConformado: false,
+    bodegaExtra: false,
+    estacionamientoVisitas: false,
+  }
+}
+
+function fotosVacias(): Record<CategoriaFotoId, number[]> {
+  return Object.fromEntries(
+    CATEGORIAS_FOTO.map((c) => [c.id, [] as number[]]),
+  ) as Record<CategoriaFotoId, number[]>
+}
+
+/**
+ * Formulario de captura en blanco, con lo poco que se puede pre-llenar desde
+ * la solicitud.
+ *
+ * Es el punto de partida cuando **no** hay borrador local ni datos guardados.
+ * Lo único que hereda de la solicitud es la fecha planificada de visita: los
+ * demás campos de `Tasacion` (comuna, dirección, cliente) describen la
+ * solicitud, no la propiedad medida en terreno, y pre-llenarlos acá los
+ * duplicaría en dos formas que después divergen.
+ *
+ * ⚠ **Regla T-B.** `fechaPlanificadaVisita` se hereda; `fechaVisitaReal` nace
+ * vacía **siempre**. Copiar una en otra es exactamente el colapso de campos que
+ * la regla prohíbe: la planificada la puso la Ejecutiva, la real la registra el
+ * tasador en terreno, y confundirlas falsea el cumplimiento de la visita.
+ */
+export function resolverInforme(tasacion: Tasacion): InformeData {
+  return {
+    /* A · Visita */
+    fechaPlanificadaVisita: tasacion.visita,
+    fechaVisitaReal: '',
+    observacionesTasador: '',
+
+    /* B · Datos de la propiedad */
+    supTerreno: '',
+    supConstruida: '',
+    supPrimerPiso: '',
+    anioConstruccion: '',
+    estadoConservacion: '',
+    agrupacionPropiedad: '',
+    materialPredominante: '',
+    calidadConstruccion: 0,
+    piso: '',
+    pisosPropiedad: '',
+    subterraneos: '',
+    edificioNombre: '',
+    condominioNombre: '',
+    orientacion: [],
+    numAscensores: '',
+    dormitorios: '',
+    banos: '',
+    mediosBanos: '',
+    banoServicio: '',
+    estacionamientos: '',
+    rolesEstacionamientos: '',
+    bodegas: '',
+    rolesBodegas: '',
+    servidumbreM2: '',
+    dfl2: false,
+    velocidadVenta: '',
+    tipoZona: '',
+
+    /* C · Cuadro de valoración */
+    items: [],
+
+    /* D · Comparables */
+    comparables: [],
+
+    /* E · Niveles · Terminaciones · Comodidades */
+    ampliaciones: [],
+    niveles: {
+      subterraneo: nivelVacio(),
+      n1: nivelVacio(),
+      n2: nivelVacio(),
+      n3: nivelVacio(),
+    },
+    recintos: [],
+    estructuraSoportante: '',
+    divisionesInteriores: '',
+    entrepisos: '',
+    cubierta: '',
+    revestimientoExterior: '',
+    cierrosExteriores: '',
+    comodidades: comodidadesVacias(),
+    ventanas: [],
+    sanitarios: '',
+    griferia: '',
+    mueblesCocina: '',
+    puertaPrincipal: '',
+    closetMural: false,
+    proteccionesRejas: false,
+
+    /* F · Documentos legales */
+    cbrFoja: '',
+    cbrNumero: '',
+    cbrAnio: '',
+    vendedor: tasacion.vendedor?.nombre ?? '',
+    comprador: '',
+    notaria: '',
+    repertorio: '',
+    nPermisoEdificacion: '',
+    fechaPermisoEdif: '',
+    nRecepcionFinal: '',
+    fechaRecepcionFinal: '',
+    selloSec: '',
+    selloSecId: '',
+    selloSecVencimiento: '',
+    afectoExpropiacion: false,
+    nCertificadoNoExpropiacion: '',
+    coordenadasLat: '',
+    coordenadasLng: '',
+
+    /* G · Overrides */
+    tasaCapRateOverride: '',
+    vidaUtilOverride: '',
+    valorSugeridoOverride: '',
+    motivoOverride: '',
+
+    /* H · Rentabilidad */
+    arriendoBrutoClp: '',
+    gastoAnualClp: '',
+    valorReferenciaClp: '',
+
+    /* Fotos y documentos */
+    fotosPredefinidas: fotosVacias(),
+    categoriasCustom: [],
+    documentosCargados: {},
+  }
+}
+
+/**
+ * Transición `asignada → visitada` — el botón «Calcular Tasación» (RF-TAS-22).
+ *
+ * Es la mutación irreversible del flujo del tasador: dispara AT03 aguas abajo y
+ * no se deshace desde la UI. El 409 por estado ya avanzado lo resuelve la ruta,
+ * no el cliente: dos pestañas abiertas no pueden dispararla dos veces.
+ */
+export async function marcarVisitada(id: string): Promise<void> {
+  await llamarApi<{ id: string; estado: string }>(
+    `/api/tasaciones/${id}/calcular`,
+    { method: 'POST' },
+  )
+}
+
+/**
+ * Persiste la observación de rechazo del informe (RF-TAS-09).
+ *
+ * **No cambia el estado** y **no avisa al visador** (A-15): las dos cosas las
+ * garantiza la ruta. Acá se documentan porque son lo que un lector esperaría
+ * que pasara y no pasa.
+ */
+export async function guardarObservacionRechazo(
+  id: string,
+  observacion: string,
+): Promise<void> {
+  await llamarApi<{ id: string }>(`/api/tasaciones/${id}/rechazo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ observacion }),
+  })
+}
+
+/**
+ * ⚠ **STUB DECLARADO — no persiste nada.** El envío del informe al visador no
+ * tiene ruta backend.
+ *
+ * P2-TAS.A construyó once rutas y **ninguna escribe esta transición**; el plan
+ * §3.1 tampoco la lista. El v0 la resolvía mutando un array en memoria. Dejarla
+ * cableada contra una ruta inventada habría sido peor que no cablearla: el
+ * botón diría «enviado» y el informe se quedaría donde está.
+ *
+ * Hasta que la ruta exista, la pantalla avanza a su confirmación —el
+ * comportamiento visible no cambia respecto del v0— y el gap queda en consola y
+ * en su ficha CI. **La ruta se diseña fuera de P2-TAS.B.**
+ */
+export function marcarPdfListo(id: string): void {
+  console.warn(
+    `[tasaciones] marcarPdfListo(${id}) es un stub: no existe ruta backend para ` +
+      'la transición de envío del informe. El estado de la solicitud NO cambió. ' +
+      'Ver la ficha CI de P2-TAS.B.',
+  )
+}

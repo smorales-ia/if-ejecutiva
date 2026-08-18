@@ -13,9 +13,9 @@ import {
   ImageIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { type Tasacion, type InformeData, marcarVisitada } from "@/lib/tasaciones"
-import { useEstadoTasador } from "@/hooks/use-estado-tasador"
-import { readPayload, writePayload } from "@/lib/tasador-store"
+import { type Tasacion, type InformeData, resolverInforme } from "@/lib/tasaciones"
+import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
+import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
@@ -24,7 +24,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { IntentosIndicator } from "@/components/tasador/intentos-indicator"
 import { Section, TextField, FormModoConsultaContext } from "@/components/tasador/form-sections/fields"
 import { SeccionPropiedad, type SetForm } from "@/components/tasador/form-sections/seccion-propiedad"
 import { SeccionValoracion } from "@/components/tasador/form-sections/seccion-valoracion"
@@ -48,10 +47,15 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
   const searchParams = useSearchParams()
   const consulta = searchParams.get("modo") === "consulta"
 
-  const { intentosEnvio, enviarParaCalculo } = useEstadoTasador(tasacion.id)
+  /* El sondeo va apagado: esta pantalla no espera un cambio de estado, sólo
+     necesita disparar la transición. La de avance (P8-TAS) sí lo enciende. */
+  const { enviarParaCalculo } = useEstadoTasador(tasacion.id, false)
   const d = tasacion.datos
 
-  const [form, setForm] = useState<InformeData>(() => readPayload(tasacion.id))
+  const [form, setForm] = useState<InformeData>(
+    () => readPayload(tasacion.id) ?? resolverInforme(tasacion),
+  )
+  const [calculando, setCalculando] = useState(false)
 
   // Estado blocked (§5.5): el workflow ya pasó a visitada/calculada.
   const bloqueadoCalculo =
@@ -155,8 +159,8 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
     }, 140)
   }
 
-  const handleCalcular = () => {
-    if (consulta || bloqueadoCalculo) return
+  const handleCalcular = async () => {
+    if (consulta || bloqueadoCalculo || calculando) return
     if (!puedeCalcular) {
       toast.error(`Faltan ${faltantes.length} datos para calcular`, {
         description: faltantes.map((f) => `• ${f.label}`).join("\n"),
@@ -164,10 +168,31 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
       scrollAFaltante()
       return
     }
-    writePayload(tasacion.id, form)
-    marcarVisitada(tasacion.id) // asignada → visitada (mock SC06 → SC08)
-    enviarParaCalculo()
-    router.push(`/tasaciones/${tasacion.id}/estado`)
+
+    /*
+     * El v0 llamaba `marcarVisitada()` **y** `enviarParaCalculo()`. Contra el
+     * backend real las dos golpean `POST /calcular`: la primera haría la
+     * transición y la segunda recibiría el 409 del guard de RF-TAS-07. Queda
+     * una sola, la del hook, que además refresca el estado que sondea la
+     * pantalla de avance.
+     */
+    setCalculando(true)
+    try {
+      writePayload(tasacion.id, form)
+      await enviarParaCalculo()
+      router.push(`/tasaciones/${tasacion.id}/estado`)
+    } catch (err) {
+      // No se navega: la solicitud sigue donde estaba y el borrador está a salvo.
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "No pudimos completar la acción. Intenta nuevamente en unos segundos.",
+      )
+    } finally {
+      // Obligatorio en `finally` (Regla D): en `catch` un fallo fuera de él
+      // dejaría el botón muerto por el resto de la sesión.
+      setCalculando(false)
+    }
   }
 
   const setOpen = (s: Seccion) => (v: boolean) =>
@@ -189,7 +214,6 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
               <span className="text-base font-semibold text-foreground">
                 {tasacion.codigo}
               </span>
-              <IntentosIndicator intentos={intentosEnvio} />
             </div>
           </div>
           <span className="pr-1 pt-1 text-base font-semibold text-vp-primary">
@@ -413,8 +437,14 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
             Volver a fotos
           </Link>
           <BotonCalcular
+            /*
+             * `calculando` entra por "blocked", que ya es exactamente el estado
+             * que pide la Regla D: botón inerte, spinner visible y el literal
+             * "Cálculo en curso". Un cuarto estado habría duplicado ese render
+             * para decir lo mismo.
+             */
             estado={
-              consulta || bloqueadoCalculo
+              consulta || bloqueadoCalculo || calculando
                 ? "blocked"
                 : puedeCalcular
                   ? "enabled"

@@ -4,7 +4,16 @@ import { useState } from "react"
 import { Plus, Trash2, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { InformeData, Comparable } from "@/lib/tasaciones"
-import { nuevoComparable, ufHomogeneizada } from "@/lib/factores-default"
+/*
+ * A-18 sigue abierta, pero **no bloquea la forma**: este módulo no precarga
+ * ningún factor. Un comparable nuevo nace con los tres en blanco y la
+ * homogeneización calcula sobre lo tecleado. La precarga desde
+ * `/config/defaults` entra en P7-TAS cuando Héctor y Óscar respondan.
+ *
+ * Vive en `lib/tasador/` y no en `lib/` raíz —donde lo buscaba el v0— por R5:
+ * el territorio de escritura de IF-03. Mismo criterio que OV-9.
+ */
+import { nuevoComparable, ufHomogeneizada } from "@/lib/tasador/factores-default"
 import type { SetForm } from "./seccion-propiedad"
 
 const MAX_COMPARABLES = 10

@@ -353,6 +353,60 @@ Lo que sigue vigente como regla vive abajo, destilado.
   schema, y cuando dos artefactos citan el mismo concepto con números
   distintos, la discrepancia se **explica en el sitio** en vez de igualarse.
   Vigente desde el 18-ago-2026, sesión P2-TAS.A.
+- **RO-34 · Ausencia ≠ neutro.** Un campo que el usuario no tecleó se representa
+  como `""` o `null`, **nunca como su valor neutro** —`1` en un factor
+  multiplicativo, `0` en una suma—. El neutro es matemáticamente inocuo y por
+  eso resulta tentador, pero en pantalla es **indistinguible de una decisión
+  explícita del usuario**: un factor en `1` dice «esto ya está revisado y lo
+  dejé neutro», y un campo vacío dice «esto falta». La diferencia importa en un
+  informe que después firma alguien. El daño mayor es aguas abajo: un valor
+  derivado que trata la ausencia como neutro **entra en los agregados** como si
+  fuera un dato completo, y el sesgo se vuelve invisible — un comparable sin
+  homogeneizar promediado junto a los homogeneizados no se distingue de los
+  demás. Aplicado dos veces en `lib/tasador/factores-default.ts`
+  (P2-TAS.B): los tres factores nacen en `""` y no en `1`, y
+  `ufHomogeneizada()` devuelve `null` —no el producto parcial— si falta
+  cualquiera de ellos, de modo que la fila queda **fuera** del promedio en vez
+  de contaminarlo. Corolario que la regla **no** invalida: **un `0` tecleado sí
+  se respeta**. Es una decisión del usuario, no una ausencia, y anular el
+  producto es exactamente lo que pidió. La regla distingue *no hay dato* de
+  *el dato es cero*, que es la distinción que el neutro borra.
+  Vigente desde el 18-ago-2026, sesión P2-TAS.B.
+- **RO-35 · Ningún efecto de montaje dispara una escritura irreversible.** Toda
+  transición de estado que el negocio considere irreversible —AT01, AT02, AT03 y
+  los análogos que aparezcan— se dispara **sólo por acción explícita del
+  usuario**: el click de un botón, con sus validaciones previas ya hechas.
+  **Nunca desde un `useEffect` al montar, nunca por navegación, nunca por
+  refresco.** El fundamento es que el montaje **no expresa intención**: ocurre
+  por navegación, por recarga, por hidratación y por remontajes de React que el
+  código no controla, y ninguno de esos eventos significa que alguien haya
+  decidido nada. Precedente: **CI-033**. `estado-procesando.tsx` lanzaba el
+  cálculo desde un efecto de montaje si la solicitud seguía en `asignada` —
+  inocuo contra el store en memoria del v0, donde sólo cambiaba una variable
+  local, y peligroso contra Airtable, donde **un F5 o un enlace compartido
+  habría disparado AT03 de forma invisible** y sin vuelta atrás desde la UI.
+  Corolario para revisiones: cuando un efecto de montaje llama a algo que
+  escribe, la pregunta no es si hoy la condición se cumple pocas veces, sino
+  **qué pasa la vez que se cumple sin que nadie lo haya pedido**.
+  Vigente desde el 18-ago-2026, sesión P2-TAS.B.
+
+### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
+
+**OV-4 preserva la ruta de import del v0 para tipos y constantes; no cierra la
+puerta a módulos server-only nuevos** cuando aparece un concern de bundle o de
+seguridad. El override se decidió en P1-TAS, una tanda que sólo escribía tipos
+—que se borran en compilación y no llegan al bundle—, así que la cuestión no se
+planteó.
+
+Precedente que la fija: `lib/tasador/lectura-tasacion.ts` vive fuera de
+`lib/tasaciones.ts` porque este último **lo importan componentes cliente**, y
+meterle una lectura de Airtable habría arrastrado `AIRTABLE_TOKEN` y el cliente
+REST al bundle del navegador. La regla derivada es la que quedó escrita en el
+docblock del propio archivo: *en `lib/tasaciones.ts` sólo entra lo que un
+componente cliente pueda importar sin riesgo*.
+
+OV-4 conserva su redacción original en `docs/_notas/inventario-tasador.md`; el
+detalle completo del razonamiento vive en la ficha **CI-030**.
 
 ## Bitácora reciente
 

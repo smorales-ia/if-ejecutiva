@@ -16,11 +16,12 @@ import {
   CATEGORIAS_FOTO,
   marcarPdfListo,
   guardarObservacionRechazo,
+  resolverInforme,
   type Tasacion,
   type InformeData,
 } from "@/lib/tasaciones"
-import { readPayload } from "@/lib/tasador-store"
-import { useEstadoTasador } from "@/hooks/use-estado-tasador"
+import { readPayload } from "@/lib/tasador/tasador-store"
+import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import type { SetForm } from "@/components/tasador/form-sections/seccion-propiedad"
 import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
 import { ExpedienteSheet } from "@/components/tasador/expediente-sheet"
@@ -120,15 +121,29 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
   const [enviado, setEnviado] = useState(false)
   const [obs, setObs] = useState("")
 
-  // Solo se bloquea mientras el cálculo sigue corriendo (§7.2). Al llegar a esta
-  // pantalla el informe ya está disponible para revisar, salvo que el store esté
-  // explícitamente en EN_CALCULO.
-  const enCalculo = estado === "EN_CALCULO"
+  /*
+   * Solo se bloquea mientras el cálculo sigue corriendo (§7.2). Al llegar a esta
+   * pantalla el informe ya está disponible para revisar.
+   *
+   * El v0 comparaba `estado === "EN_CALCULO"`, un literal de su store en
+   * memoria que no existe en el backend: la máquina de estados real usa
+   * `visitada · calculada · pdf_listo` (§0.4 · nota 6). Quien decide es
+   * `informeDisponible`, que la ruta `/estado` deriva del estado real. Mientras
+   * la primera lectura está en vuelo (`estado === null`) **no** se bloquea:
+   * asumir cálculo en curso mostraría un spinner en la pantalla de un informe
+   * que ya está listo.
+   */
+  const enCalculo = estado !== null && !estado.informeDisponible
   const disponible = !enCalculo
   const listo = !enCalculo
   const obsValida = obs.trim().length >= MIN_OBS
 
-  const d: InformeData = readPayload(tasacion.id)
+  /*
+   * Sin borrador local no hay nada que previsualizar todavía: se cae al
+   * formulario en blanco en vez de reventar. El preview con datos del servidor
+   * es de P9-TAS, que lo lee de `GET /api/tasaciones/[id]/informe`.
+   */
+  const d: InformeData = readPayload(tasacion.id) ?? resolverInforme(tasacion)
   const esNuevo = tasacion.tipoPropiedad === "nuevo"
 
   /* Valor de tasación (UF) y cap rate */

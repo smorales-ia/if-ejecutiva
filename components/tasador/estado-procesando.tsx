@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { useEstadoTasador } from "@/hooks/use-estado-tasador"
+import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 
 type Fase = 0 | 1 | 2 // 0: procesando, 1: casi listo, 2: completado
 type Variante = "lectura" | "calculo"
@@ -67,12 +67,22 @@ export function EstadoProcesando({
   const copy = COPY[variante]
   const esCalculo = variante === "calculo"
 
-  const { estado, enviarParaCalculo } = useEstadoTasador(id)
+  /* Ésta es la pantalla de espera: el sondeo va encendido. */
+  const { estado } = useEstadoTasador(id)
 
-  // En modo cálculo, si llegamos en BORRADOR (p. ej. recarga directa), lanzamos el cálculo.
-  useEffect(() => {
-    if (esCalculo && estado === "BORRADOR") enviarParaCalculo()
-  }, [esCalculo, estado, enviarParaCalculo])
+  /*
+   * ⚠ **El v0 disparaba el cálculo desde acá** si llegaba en `BORRADOR`, para
+   * cubrir una recarga directa de la URL. Contra el backend real eso convierte
+   * un refresco de página —o un enlace compartido, o el botón atrás— en la
+   * transición `asignada → visitada`, que dispara AT03 y no se deshace desde la
+   * UI. Un efecto de montaje no puede ser el disparador de una escritura
+   * irreversible: quien la ordena es el botón «Calcular Tasación» del
+   * formulario, con la validación de las once secciones ya hecha.
+   *
+   * Quien caiga acá sin haber pasado por el botón ve el stepper en su fase
+   * inicial y no avanza, que es la lectura correcta de la realidad: no hay
+   * ningún cálculo corriendo.
+   */
 
   // Fase local para la simulación visual (lectura) y como respaldo del stepper.
   const [fase, setFase] = useState<Fase>(0)
@@ -85,15 +95,21 @@ export function EstadoProcesando({
     }
   }, [])
 
-  // El cálculo se considera completo solo cuando el store llega a INFORME_DISPONIBLE/APROBADO.
-  const calculoListo = estado === "INFORME_DISPONIBLE" || estado === "APROBADO"
+  /*
+   * Los literales del v0 (`INFORME_DISPONIBLE`, `APROBADO`, `EN_CALCULO`) eran
+   * de su store en memoria y no existen en la máquina de estados real. El
+   * backend responde con los derivados que la ruta `/estado` calcula sobre
+   * `visitada · calculada · pdf_listo`.
+   */
+  const calculoListo = estado?.informeDisponible ?? false
+  const enCalculo = (estado?.bloqueadoParaEdicion ?? false) && !calculoListo
   const completado = esCalculo ? calculoListo : fase === 2
 
   // Fase efectiva mostrada en el stepper/subtítulo.
   const faseEfectiva: Fase = esCalculo
     ? calculoListo
       ? 2
-      : estado === "EN_CALCULO"
+      : enCalculo
         ? 1
         : 0
     : fase

@@ -12,7 +12,7 @@ import {
   type InformeData,
   type FotoCategoriaCustom,
 } from "@/lib/tasaciones"
-import { readPayload, writePayload } from "@/lib/tasador-store"
+import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
 import { Button } from "@/components/ui/button"
 import {
   FotosCategorizadas,

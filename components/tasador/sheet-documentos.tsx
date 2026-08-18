@@ -4,7 +4,11 @@ import { useMemo } from "react"
 import type { Dispatch, SetStateAction } from "react"
 import { FileText, Upload, X, Check, Paperclip } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { documentosPara, type TipoDocumento } from "@/lib/tipos-documento"
+import { useTiposDocumento, type TipoDocumento } from "@/lib/use-tipos-documento"
+import {
+  desdeTipoPropiedadNuevoUsado,
+  documentoAplicaA,
+} from "@/lib/tasador/tipo-propiedad"
 import {
   Sheet,
   SheetContent,
@@ -50,9 +54,17 @@ function FileUploadZone({
           />
           <div className="flex flex-col">
             <span className="text-sm font-medium text-foreground">{doc.nombre}</span>
-            <span className="text-xs text-vp-text-secondary">
-              {doc.obligatorio ? "Obligatorio" : "Opcional"}
-            </span>
+            {/*
+              El v0 mostraba acá "Obligatorio" / "Opcional". **Ese campo no
+              existe**: `D_TipoDocumento` no tiene `obligatorio`, y lo más
+              parecido —`requerido_por_ejecutiva`— es del checklist de la
+              Ejecutiva, no del Tasador. Inventar la distinción habría sido
+              mezclar dos dominios; se muestra el emisor, que sí es un dato
+              real del catálogo. Ver la ficha CI abierta en P2-TAS.B.
+            */}
+            {doc.entidad_emisora && (
+              <span className="text-xs text-vp-text-secondary">{doc.entidad_emisora}</span>
+            )}
           </div>
         </div>
         {cargado && (
@@ -143,9 +155,23 @@ export function SheetDocumentos({
   docs: DocsPorTipo
   setDocs: Dispatch<SetStateAction<DocsPorTipo>>
 }) {
-  const aplicables = useMemo(() => documentosPara(tipoPropiedad), [tipoPropiedad])
-  const obligatorios = aplicables.filter((d) => d.obligatorio)
-  const opcionales = aplicables.filter((d) => !d.obligatorio)
+  /*
+   * El catálogo viene del API (`/api/tipos-documento`), no de un enum en el
+   * cliente: es la misma lectura que usa la consola de la Ejecutiva, así que
+   * los dos checklists no pueden divergir.
+   */
+  const { tipos, cargando, error } = useTiposDocumento()
+
+  /*
+   * P-5 · el filtro cruza dos dominios con géneros distintos
+   * (`nuevo · usado` en `TX_Solicitudes` contra `nueva · usada · ambas` en
+   * `D_TipoDocumento`). La traducción vive en un solo módulo; acá no se
+   * compara ningún literal a mano.
+   */
+  const aplicables = useMemo(() => {
+    const condicion = desdeTipoPropiedadNuevoUsado(tipoPropiedad)
+    return tipos.filter((d) => documentoAplicaA(d.tipo_propiedad, condicion))
+  }, [tipos, tipoPropiedad])
 
   // Mock: la carga agrega un archivo placeholder al tipo indicado.
   const addArchivo = (id: string) =>
@@ -178,20 +204,36 @@ export function SheetDocumentos({
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="flex flex-col gap-5">
-            <Grupo
-              titulo="Obligatorios"
-              docs={obligatorios}
-              value={docs}
-              onAdd={addArchivo}
-              onRemove={remove}
-            />
-            <Grupo
-              titulo="Opcionales"
-              docs={opcionales}
-              value={docs}
-              onAdd={addArchivo}
-              onRemove={remove}
-            />
+            {/*
+              Cargando, error y catálogo vacío se dicen distinto a propósito: un
+              checklist en blanco sin aviso se lee como «esta propiedad no
+              requiere documentos», que es la conclusión equivocada.
+            */}
+            {cargando && (
+              <p className="py-6 text-center text-sm text-vp-text-secondary">
+                Cargando documentos…
+              </p>
+            )}
+            {!cargando && error && (
+              <p className="py-6 text-center text-sm text-vp-danger">
+                No pudimos cargar la lista de documentos. Intenta nuevamente en unos
+                segundos.
+              </p>
+            )}
+            {!cargando && !error && aplicables.length === 0 && (
+              <p className="py-6 text-center text-sm text-vp-text-secondary">
+                No hay documentos declarados para esta propiedad.
+              </p>
+            )}
+            {!cargando && !error && aplicables.length > 0 && (
+              <Grupo
+                titulo="Documentos"
+                docs={aplicables}
+                value={docs}
+                onAdd={addArchivo}
+                onRemove={remove}
+              />
+            )}
           </div>
         </div>
       </SheetContent>

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { getTasacion } from "@/lib/tasaciones"
+import { leerTasacion } from "@/lib/tasador/lectura-tasacion"
 import { FotosScreen } from "@/components/tasador/fotos-screen"
 
 export default async function FotosPage({
@@ -8,7 +8,7 @@ export default async function FotosPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const tasacion = getTasacion(id)
+  const tasacion = await leerTasacion(id)
   if (!tasacion) notFound()
 
   return <FotosScreen tasacion={tasacion} />
