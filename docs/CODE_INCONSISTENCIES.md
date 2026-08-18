@@ -386,6 +386,9 @@ a exigir ambos campos.**
 
 **Notas:**
 
+- ⚠ **Corrección a esta misma ficha (P2-TAS · 17-ago-2026): el campo vacío se llama `actor`, no `autor`.** El punto (e) de la resolución dice *«`autor` (singleLineText) está vacío en 9/9»*. El schema real levantado vía Meta API no tiene ningún campo `autor`: tiene **`actor`** (`fldoKSd32QvApyPsL`, singleLineText). El fondo del punto (e) se mantiene —ese campo está vacío y el autor real vive en `modificado_por_email`—, pero el nombre estaba mal. Quien buscara `autor` en la tabla no lo encontraría y podría concluir que la ficha está obsoleta.
+- **FIELD_IDs de `A_Cambios`, levantados en P2-TAS** (la ficha los daba por indocumentados). Quedan en `lib/tasador/field-ids.ts` → `FIELD_IDS_CAMBIOS`: `tabla_origen` `fldqRCXSY692mzaT4` · `registro_id` `fldRdyudnUcjSf1Zf` · `registro_nombre` `fldB3GDfua7fnXbXT` · `campo_modificado` `fldbpKuwR2RfbT41G` · `valor_anterior` `fldxCiiMpGSsTyNka` · `valor_nuevo` `fld4d9hQefakIQpJ3` · `modificado_por_email` `fldTUGG0jtsO47m1a` · `razon_cambio` `fldDlPfFZa1dtA2Xv` · `timestamp` `fldCyzAD9TPrEWr2x` · `clave_natural` `fldu2GzWggt47BHHq` · `clave_cambio` `fldc1jSmrfC2T7pjF` · `record_id` `fldZF76ENhWO3c0Uu` · `actor` `fldoKSd32QvApyPsL` · `motivo` `fldXgaWArd0HXI9nO`. Son **14 campos**, que coincide con el conteo de la resolución.
+- **`tabla_origen` es un `singleSelect` con dominio cerrado**, dato que la ficha no registraba: `M_Clientes · M_Tasadores · M_Visadores · M_Comunas · C_ReglasNegocio · C_Formulas · C_Factores · TX_Solicitudes · TX_DatosTasacion · Otro`. Importa para quien escriba: un valor fuera de esa lista **se crearía solo** por `typecast: true` y rompería en silencio el filtro del timeline. IF-03 escribe `TX_Solicitudes` y `TX_DatosTasacion`, ambos en el dominio.
 - **Es la instancia más cara de RO-20** ("un campo Link puede existir y estar vacío, y eso rompe el filtro igual que E-076"), con el agravante de que acá el Link **ni siquiera existe** y el documento afirma que sí.
 - **`CLAUDE.md` lista `A_Cambios` como "Sin uso en IF-02"**, y eso deja de ser cierto desde la Fase 2: la pestaña Historial la **lee** (nunca la escribe). La línea del inventario de `CLAUDE.md` debería decir "Read timeline (§1.3.3) · nunca write". Se anota acá para no perderlo; el cambio en `CLAUDE.md` es de una línea.
 - No confundir con **CI-010**: aquélla es una tabla sin documentar, ésta es una tabla documentada **mal**. La segunda es peor, porque una omisión obliga a ir a buscar y una afirmación falsa no.
@@ -400,10 +403,10 @@ a exigir ambos campos.**
 | **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` §1.3.2 (bloque *Coordinación*), §1.3.3 (eventos de coordinación), §2.3 (RF-TAS-05), §2.11, §2.12 (declaración de la tabla) y §5.2 · vs base `app9G7lLkIV3CpeLa`, cuyo listado de **68 tablas no la contiene** |
 | **Síntoma** | La spec describe la coordinación de visita como funcionalidad existente en cinco secciones, con criterios de aceptación verificables ("cada acción crea exactamente una fila en `TX_CoordinacionVisita`"), y §1.3.2/§1.3.3 encargan a IF-02 **leerla** en las pestañas Datos e Historial. La tabla no existe. Consecuencia concreta y ya materializada: el timeline de §1.3.3 se entregó en la Fase 2 **sin los eventos de coordinación**, y el bloque *Coordinación* de §1.3.2 no se puede construir. No es un fallo de implementación: no hay origen de datos. |
 | **Causa** | La tabla se declaró en la spec v1.9.3 §2.12 como parte del alcance de IF-03 (Interfaz Tasador) y su creación en Airtable quedó pendiente. Está registrada como dependencia externa **DEP-EXT:A-09** en `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md:1280` y en `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md:2560`, ambas con la marca *"pendiente creación Airtable · no verificada 2026-07-25"*. El sync de IF-Tasador ya lo había detectado (`docs/_sync_ifTasador_v1/00_inventario.md:259`). Lo que esta entrada agrega es que **la deuda ya tiene consecuencia observable en IF-02**, no sólo en IF-03. |
-| **Resolución** | **Decisión de negocio, no técnica.** Dos caminos excluyentes: <br>**(a) Crear la tabla** con los 11 campos de §2.12 y el campo derivado `coordinacion_vigente`, más los 3 campos nuevos de `TX_Solicitudes` que §2.12 asocia. Habilita §2.3 (IF-03) y desbloquea los dos bloques de IF-02. Es la opción coherente con lo que la spec ya promete. <br>**(b) Retirar la coordinación de la spec** hasta que IF-03 entre en construcción, marcando §2.3, §2.11 y §2.12 como diferidos con identificador FUT propio y **quitando de §1.3.2/§1.3.3 el encargo a IF-02**, que hoy pide leer algo inexistente. <br>Mientras no se decida, §1.3.3 de v1.9.9 ya declara explícitamente que los eventos de coordinación quedan fuera *por falta de origen de datos*, para que la omisión no se lea como bug. |
-| **Dueño** | Sergio (decisión) · Héctor/Óscar (validación de negocio) · Claude Code (ejecución de la opción elegida) |
-| **Fecha objetivo** | **Condicional a la apertura de la tanda de IF-03**, que es cuando la tabla pasa de deuda documental a bloqueante. Si IF-03 se pospone más allá del cierre de CU-002, se ejecuta la opción (b) para que la spec deje de prometer lo que no hay. |
-| **Estado** | abierta |
+| **Resolución** | ✅ **CERRADA POR DECISIÓN DE PRODUCTO — opción (b), ampliada.** Sergio, 17-ago-2026: **la coordinación de visitas no se soporta por sistema. Es manejo manual fuera de plataforma, en los dos tramos: ejecutiva ↔ tasador y tasador ↔ visador.** `TX_CoordinacionVisita` **no existe y no existirá**. La decisión es canónica y no se vuelve a consultar: quedó como **RO-29** en `docs/aprendizajes.md`. <br>Alcance ejecutado a la fecha de cierre: **P0.5-TAS** no creó la tabla ni `coordinacion_vigente` ni las dos plantillas de correo (`docs/schema-airtable.md` §26.2 y §26.5); **P1-TAS** no tipó `CoordinacionVisita`, `MotivoNoContacto`, `MOTIVOS_DEVOLUCION`, `intento_numero` ni `AccionCard`; **P2-TAS** no construye las rutas `GET`/`POST /api/tasaciones/[id]/coordinacion`, y su set de rutas baja de **15 a 13**. <br>Pendiente de ejecución, no de decisión: **retirar de la spec** §2.3 (RF-TAS-04, RF-TAS-05), §2.11, §2.12 y el encargo a IF-02 de §1.3.2/§1.3.3, más **reescribir la Regla T-A** de `docs/_md/plan_ejecucion_UItasador_v1.0.md` §0.3, que colapsa de tres variantes de botón a una sola («Abrir tasación») y pierde el gate de coordinación. Todo eso va en el **próximo bump normativo**. |
+| **Dueño** | Sergio (decisión, **tomada**) · Claude Code (retirada de la spec en el próximo bump) |
+| **Fecha objetivo** | Decisión: **cerrada 17-ago-2026**. Retirada documental: **condicional al próximo bump normativo** de `VProperty_Especificacion_Proyecto_v1_9_9.md`. |
+| **Estado** | **cerrada** (17-ago-2026) · quedan tareas documentales derivadas, no decisiones |
 | **Origen** | Fase 2 del cableado del Detalle de Solicitud (11-ago-2026), Tarea 3 — al enumerar qué contenidos de §1.3.3 tenían origen de datos y cuáles no. |
 
 **Notas:**
@@ -411,7 +414,10 @@ a exigir ambos campos.**
 - **No es un hallazgo nuevo, es una escalada.** DEP-EXT:A-09 ya la marcaba desde el 25-jul-2026. Entra como CI porque cambió de naturaleza: era "una tabla de IF-03 que falta" y ahora es "una sección de IF-02 que no se puede construir".
 - **Es doc-vs-base, y es la tercera del mismo tipo tras CI-007** (`H_Feriados` vs `C_Feriados`). RO-15 fija el criterio para ese caso —gana la base real, se corrige el documento—, pero **aquí no aplica sin más**: en CI-007 la tabla existía con otro nombre, y acá no existe en absoluto. Por eso la resolución es una decisión de negocio y no un rename.
 - Relación con **CI-010** y **CI-011**: las tres salieron de la misma tanda y las tres son sobre el mismo hueco —qué dice la documentación que hay contra qué hay—, pero sólo ésta requiere decidir algo antes de poder actuar.
-- **Pendiente decisión de negocio (Héctor + Óscar). Consulta enviada 2026-08-11.**
+- ~~**Pendiente decisión de negocio (Héctor + Óscar). Consulta enviada 2026-08-11.**~~ → **Resuelta el 17-ago-2026 por Sergio**, sin esperar la consulta: la coordinación se hace por teléfono y no entra al sistema.
+- **Se cerró en sentido negativo, que es el caso que la opción (b) no cubría del todo.** (b) hablaba de *diferir* la coordinación «hasta que IF-03 entre en construcción»; la decisión real es más fuerte —no se difiere, se retira— y además **amplía el alcance al tramo tasador ↔ visador**, que ninguna de las dos opciones contemplaba.
+- **Es la primera CI que cierra por decisión de producto y no por corrección técnica.** No hubo nada que arreglar: lo que faltaba era saber si la funcionalidad se quería. Por eso la resolución no lista un cambio de código sino una lista de retiradas documentales.
+- **RO-29 es la forma vinculante de esta entrada.** Quien encuentre una referencia viva a la coordinación por sistema —en la spec, en el plan de IF-03 o en el código v0— la trata como documentación pendiente de retirar, **no** como requisito, y no vuelve a abrir la pregunta.
 
 ---
 
@@ -601,3 +607,117 @@ a exigir ambos campos.**
 
 - Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
 - **No es independiente de CI-005.** Aquélla dice que el reloj arranca donde no debe; ésta, que IF-03 lee el reloj equivocado. Cerrar CI-021 sin cerrar CI-005 daría al tasador una cifra correcta en su forma y errada en su origen.
+
+---
+
+## CI-022 · Dos tablas de factores de cálculo existen en la base y no están en ningún documento
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-022 |
+| **Archivo:línea** | `docs/schema-airtable.md` §1 (*Dominio C_ · Configuración*, líneas 37-58) y `docs/_md/plan_ejecucion_UItasador_v1.0.md` §3.1 (ruta `GET /api/tasaciones/config/defaults`) · vs base `app9G7lLkIV3CpeLa`, verificada vía Meta API el 17-ago-2026 |
+| **Síntoma** | La base tiene **`C_FactoresHomogeneizacion`** (`tblep24N9gPMrDPIN`, 8 campos) y **`C_Factores`** (`tblNHze3ZZYJblJ7S`, 14 campos). Ninguna de las dos aparece en el inventario de tablas de `docs/schema-airtable.md`, ni en el plan de IF-03, ni en la spec. Lo que ambos documentos nombran como origen de los factores de homogeneización es **`C_VariablesCliente`** (`tblgrY8j4ugFzS7v9`), que es una tabla **clave-valor genérica** —`clave · valor · tipo · activa · cliente · valor_defecto · descripcion`— sin ninguna columna de factores. Consecuencia concreta: **`GET /api/tasaciones/config/defaults` (RF-TAS-08) no se puede construir desde la documentación**. Quien la escriba siguiendo el plan leerá `C_VariablesCliente` buscando `factor_sup`, `factor_edad` y `factor_distancia`, que ahí no existen como campos. |
+| **Causa** | La spec §2.8 dice que los defaults viven en *"`C_VariablesCliente` / tabla de factores según §5.4"*. La disyunción quedó sin resolver y `docs/schema-airtable.md` sólo documentó la primera rama. Las dos tablas de factores se crearon en la base en algún momento del diseño del motor AT01-AT10 y nunca entraron al snapshot de schema, que se ha ido ampliando por secciones (§13, §18, §20, §21, §26) sin un pase completo sobre el dominio `C_`. |
+| **Resolución** | ✅ **CERRADA (17-ago-2026) — la parte documental se ejecutó; la decisión de negocio se escaló a A-18.** <br>**(a) Hecho:** las tres tablas quedan documentadas abajo con campos, tipos y FIELD_IDs, levantados vía Meta API. No hay que volver a consultarlos. <br>**(b) Ejecutado y resuelto en negativo:** se leyeron las filas de las tres. `C_FactoresHomogeneizacion` es la canónica por descarte —única con filas de homogeneización— pero **no puede servir un valor por defecto**: `valor_referencia` está vacío en las 15. `C_Factores` está poblada y sana pero es **otra cosa** (coeficientes del motor de valoración). `C_VariablesCliente` está vacía a efectos prácticos. <br>**(c) Escalado:** lo que queda no es documentación ni código sino **carga de configuración con criterio de negocio**, y vive en **`docs/_sync_ifTasador_v1/gap/_ambiguedades.md` · A-18** (dueños: Héctor y Óscar). Corregir el plan §3.1 y la spec §2.8 para que nombren la tabla elegida es tarea del próximo bump normativo, **una vez A-18 responda cuál es**. |
+| **Dueño** | Claude Code (documentación, **hecha**) · **Héctor y Óscar** vía A-18 (elección de tabla y carga de valores) |
+| **Fecha objetivo** | Documentación: **cerrada 17-ago-2026**. Lo demás: **condicional al cierre de A-18**. |
+| **Estado** | **cerrada** (17-ago-2026) · el bloqueo vivo es **A-18**, no esta ficha |
+| **Origen** | P2-TAS (17-ago-2026), checkpoint previo a escribir `/config/defaults` — al verificar contra la base que `C_VariablesCliente` tuviera los tres factores que RF-TAS-08 necesita. |
+
+**Schema levantado (Meta API · 17-ago-2026), para no repetir la consulta:**
+
+```
+C_FactoresHomogeneizacion  tblep24N9gPMrDPIN  · 8 campos
+  nombre             fldzko4wz50kL0uaz  singleLineText
+  tipo_factor        fld1TUQWaBEtRkuuM  singleSelect [Superficie · Edad · Distancia · Calidad · Orientacion · Piso · Otro · Antiguedad]
+  valor_referencia   fldeae8y0DQNCo6zq  number (prec 4)
+  formula_ajuste     fldW9CTk2vbsIOzev  multilineText
+  activo             fldiqi4RJFfS0VKoM  checkbox
+  valor_min          fld1RUQ0vH7WDqJAz  number (prec 2)
+  valor_max          fldo2wdHPSqRDIbsB  number (prec 2)
+  tipo_propiedad     fld8fnatg0g6zRpIB  multipleRecordLinks → M_TiposPropiedad
+
+C_Factores  tblNHze3ZZYJblJ7S  · 14 campos
+  nombre                   fld1lWCuWI0kdu4Iu  singleLineText
+  codigo                   fldr00goDhop70yVq  singleLineText
+  valor                    fldmU2J73AbFszxFh  number (prec 4)
+  unidad                   fldMG5Xr5yLpZGGx5  singleSelect [porcentaje · multiplicador · valor_absoluto_uf · factor · unidad]
+  tipo_factor              fldsVYUuiwNXwme8V  singleSelect [Remate · Liquidacion · Seguro · Garantia · Cap_Rate · Depreciacion · Homogeneizacion · multiplicador · coeficiente · divisor · tipo_factor]
+  vigente_desde            fldZdeB8Q2XtMz6Jx  date
+  vigente_hasta            fld0PcTd6MXM4y1Sn  date
+  activo                   fldSHaJJnZEkEDvV9  checkbox
+  notas                    fldCYuieFtJlMAyFc  multilineText
+  aplica_a_clientes        flduH0FMhZb2RijDl  multipleRecordLinks → M_Clientes
+  aplica_a_tipo_propiedad  flds1vLbkW6qWEc1d  multipleRecordLinks → M_TiposPropiedad
+  aplica_a_tipo_informe    fldgX2U5wXQUAzjUi  multipleRecordLinks → M_TiposInforme
+  C_ReglasNegocio          fldVBdZgfLqaw8rjt  multipleRecordLinks → C_ReglasNegocio
+  ultima_modificacion      fldsUTs6QG8KKjfIj  lastModifiedTime
+
+C_VariablesCliente  tblgrY8j4ugFzS7v9  · 7 campos  (la que nombran los documentos)
+  clave          fldAF23Q8UBQy0pSl  singleLineText   ← primary
+  valor          fldgxSaxWfMVLM6aL  multilineText
+  tipo           fldajarV6bDNxlgTP  singleSelect [texto · numero · url · json · booleano]
+  activa         fldIYwn7YfJXlQGmI  checkbox
+  cliente        fldokbmHzawVgIgG9  multipleRecordLinks → M_Clientes
+  valor_defecto  fldgCSxTNQfcHPclA  singleLineText
+  descripcion    fldN8tHbsM9phsoE6  multilineText
+```
+
+**Lectura de filas (17-ago-2026) — el desempate empírico, RO-21:**
+
+| Tabla | Filtro | Filas |
+|---|---|---|
+| `C_FactoresHomogeneizacion` | todas | **15** |
+| `C_Factores` | `{tipo_factor}='Homogeneizacion'` | **0** |
+| `C_Factores` | **sin filtro** | **27** — ninguna de homogeneización (ver abajo) |
+| `C_VariablesCliente` | `LEFT({clave},7)='factor_'` | **0** |
+| `C_VariablesCliente` | **sin filtro** | **1** — `Vars_METLIFE_default`, con `valor` vacío |
+
+**`C_Factores` está poblada, sana y es otra cosa.** Sus 27 filas son los coeficientes del **motor
+de valoración**, no factores de homogeneización:
+
+```
+Cap_Rate       CAP_DEFAULT 0.045 · CAP_LEASING 0.06
+Remate         nueve tramos por antigüedad: REMATE_1_2 0.75 … REMATE_MAS24 0.5
+Seguro         SEGURO_1_0 1 · SEGURO_0_8 0.8
+Garantia       GARANTIA_0_8 0.8
+multiplicador  FACTOR_REMATE_HIPOTECARIO 0.65 · FACTOR_SEGURO_INCENDIO 0.825 ·
+               FACTOR_LIQUIDACION 0.55 · FACTOR_GARANTIA 0.8
+coeficiente    COEF_TIPO_CASA 1
+divisor        TIPO_CAMBIO_USD 950
+(7 filas más sin `tipo_factor`, cuatro de ellas inactivas)
+```
+
+**Cero filas `Superficie`, `Edad`, `Antiguedad` o `Distancia`.** Descartada como fuente de
+RF-TAS-08 — aunque es claramente la fuente de los overrides de la sección G (cap rate, vida útil),
+lo que conviene recordar cuando P7-TAS cablee esa sección.
+
+`C_FactoresHomogeneizacion` es **la única poblada**, y por tanto la canónica por descarte. Pero sus
+15 filas son **dos generaciones inconsistentes** y ninguna sirve para precargar:
+
+```
+10 filas prefijo "FH-"  (FH-Superficie-M · FH-Estado-Bueno · FH-Antiguedad-16-30 …)
+   tipo_factor VACÍO · valor_referencia VACÍO · valor_min/max VACÍOS
+   → sólo tienen `nombre` y `activo`. Son cáscaras.
+
+ 5 filas prefijo "FH_"  (FH_Antiguedad_Menor/Mayor · FH_Distancia_Cercana/Lejana · FH_Superficie_Similar)
+   tipo_factor poblado (Antiguedad · Distancia · Superficie)
+   valor_min/valor_max poblados (0.85–1 · 0.9–1 · 0.85–0.95 · 1–1.15 · 0.95–1.05)
+   valor_referencia VACÍO
+```
+
+**Cuatro obstáculos concretos para RF-TAS-08:**
+
+1. **`valor_referencia` está vacío en las 15 filas.** Es el único campo que podría llevar el valor por defecto. Sin él no hay nada que precargar, con o sin ruta.
+2. Las 5 filas útiles declaran **rangos de validación**, no valores. Un rango `0.85–1` no precarga un campo; a lo sumo lo valida.
+3. **El dominio no casa con RF-TAS-08.** El requisito pide `factor_sup`, `factor_edad` y `factor_distancia`. Las filas usan `Superficie`, `Antiguedad` y `Distancia` — y el `singleSelect` ofrece `Edad` **y** `Antiguedad` como opciones distintas, sin ninguna fila `Edad`. Mapear `factor_edad` → `Antiguedad` es plausible pero es una decisión de negocio, no una lectura.
+4. `formula_ajuste` está vacío en las 15, así que tampoco hay una expresión de la que derivar el valor.
+
+**Notas:**
+
+- **No es doc-vs-doc: es documento contra base.** El plan y la spec afirman un origen de datos que no puede servir el dato. Mismo tipo que **CI-011** (`A_Cambios` documentada con campos que no existen), invertido: allí el documento inventaba campos, acá omite tablas enteras.
+- **La entrada cambió de naturaleza al leer las filas.** Nació como «dos tablas sin documentar» —un problema de documentación— y al verificar población resultó ser **«la tabla correcta está a medio poblar»**, que es un problema de datos. Documentar las tablas (resolución **(a)**) sigue siendo válido y barato; **no desbloquea RF-TAS-08**.
+- **Lo que falta es carga de configuración con criterio de negocio, no código.** Alguien tiene que decidir qué valor por defecto lleva cada factor y escribirlo en `valor_referencia`, más resolver `Edad` vs `Antiguedad` y qué hacer con las 10 cáscaras `FH-`. Hasta entonces, cualquier ruta que se construya devolverá vacío — que es exactamente lo que RF-TAS-08 prohíbe suplir con constantes en el frontend.
+- **Los tres factores sí existen con esos nombres literales, pero en el lugar equivocado para este uso.** `TX_Comparables` tiene `factor_sup` (`fld3vdKQhI2Xz8HFj`), `factor_edad` (`fldPW58uWlf4XUjru`) y `factor_distancia` (`fldRE21D6h2WyAhKD`). Son el **destino** de la captura por comparable, no la fuente de los defaults. Confundirlos haría que la ruta devolviera lo que el tasador acaba de escribir en vez de la configuración.
+- **Las dos candidatas se solapan.** `C_FactoresHomogeneizacion` está dedicada al caso y discrimina por `tipo_factor` (`Superficie`/`Edad`/`Distancia`), pero no tiene vigencia temporal ni scoping por cliente. `C_Factores` sí los tiene y su `tipo_factor` incluye `Homogeneizacion`, pero es de propósito general. **La elección se hace leyendo filas, no comparando conceptos** — es RO-21 (verificar población, no existencia).
+- **Ambos dominios `tipo_factor` están sucios**: `C_Factores.tipo_factor` incluye el literal `tipo_factor` como opción, y mezcla `Remate`/`Liquidacion` (capitalizados) con `multiplicador`/`coeficiente`/`divisor` (minúsculas). Es el mismo patrón de suciedad que se registró en los `singleSelect` de `TX_DatosTasacion` y `TX_ItemsCuadroValoracion`.

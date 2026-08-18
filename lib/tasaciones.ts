@@ -209,6 +209,21 @@ export interface Comparable {
   supConstruida: string
   totalUf: string
   anio: string
+  /**
+   * ⚠ **Homónimo peligroso — verificado en P2-TAS.** Este campo persiste en
+   * `TX_Comparables.tipo_referencia` (`fldB920e8jIKgbERM`, singleSelect
+   * `Oferta · CBR`), **no** en `TX_Comparables.fuente`.
+   *
+   * `fuente` existe en esa tabla (`fldNYh1KpD3oO0Gmz`) con un dominio distinto y
+   * ajeno: `tasador · portal_toc · historico_sistema · cliente · Portal
+   * Inmobiliario · Yapo · Toctoc · Ofert. · CBR.` — de dónde salió el dato, no
+   * qué clase de referencia es. Escribir `'oferta'` en `fuente` no fallaría:
+   * `typecast: true` crearía la opción y ensuciaría el dominio en silencio.
+   *
+   * El nombre del identificador se conserva porque el v0 lo usa en 6 sitios;
+   * el mapeo al FIELD_ID correcto vive en la ruta `/comparables`. Caso de
+   * §22 del schema: mismo literal, dos significados.
+   */
   fuente: 'oferta' | 'cbr'
   factorSup: string
   factorEdad: string
@@ -486,92 +501,161 @@ export const RECINTOS_SUGERIDOS: readonly string[] = Object.freeze([
 /**
  * Dominios de los selects del formulario.
  *
- * `estadoConservacion` reproduce el dominio real de
- * `TX_Solicitudes.estado_conservacion` (`flde0ExWfB1dhkp4t`, singleSelect),
- * verificado en `docs/schema-airtable.md` §21.2.
+ * ## Verificados contra la base real (P2-TAS · 17-ago-2026)
  *
- * ⚠ Los demás dominios provienen del diseño v0: `docs/schema-airtable.md` no
- * documenta los campos de `TX_ItemsCuadroValoracion` (`tblCxnMtOETK2ulD0`) ni
- * de `TX_Comparables` (`tbllbTuhb0waWIbRo`) a nivel de campo. **P2-TAS debe
- * contrastarlos contra la base antes de escribir**; en particular
- * `origenSuperficie`, cuyo homónimo en `TX_Unidades` usa otras etiquetas
- * (`plano`, `certificado_avaluo`, `medicion_tasador`…).
+ * P1-TAS los escribió desde el diseño v0 y dejó anotado que había que
+ * contrastarlos. Se contrastaron contra el schema vivo por Meta API y **casi
+ * todos estaban mal** — no era sólo `origenSuperficie`. El valor `v` de cada
+ * opción es ahora **el literal exacto del `singleSelect` de Airtable**, porque
+ * es lo que viaja en el body de la escritura.
+ *
+ * | Catálogo | Campo real | Tabla |
+ * |---|---|---|
+ * | `agrupacion` | `agrupacion_propiedad` (`fld8ZGFpcrCuvc8gQ`) | `TX_DatosTasacion` |
+ * | `estadoConservacion` | `estado_conservacion` (`fldhX4EAdJzJ32slY`) | `TX_DatosTasacion` |
+ * | `material` | `material_predominante` (`fldtJbujGC89f5lFZ`) | `TX_DatosTasacion` |
+ * | `velocidadVenta` | `velocidad_venta_estimada` (`fld1eyMr1XT04YgyH`) | `TX_DatosTasacion` |
+ * | `orientaciones` | `orientacion` (`fldiuCRWaoknLq9Kz`) | `TX_DatosTasacion` |
+ * | `subtipoItem` | `subtipo` (`flddcT2wvPX38pHrE`) | `TX_ItemsCuadroValoracion` |
+ * | `tipoItem` | `tipo_item` (`fld5HVdWpMY0jWqkx`) | `TX_ItemsCuadroValoracion` |
+ * | `situacionMunicipal` | `situacion_municipal` (`flds7AFUnTJkeUIER`) | `TX_ItemsCuadroValoracion` |
+ * | `estadoItem` | `flag_estado` (`fldMsoEuBe5IN5y1S`) | `TX_ItemsCuadroValoracion` |
+ * | `materialItem` | `material` (`fldAJmNknr5HImlXr`) | `TX_ItemsCuadroValoracion` |
+ * | `tipoReferencia` | `tipo_referencia` (`fldB920e8jIKgbERM`) | `TX_Comparables` |
+ *
+ * ⚠ **`estadoConservacion` no era el de `TX_Solicitudes`.** P1-TAS lo derivó de
+ * `TX_Solicitudes.estado_conservacion` (`flde0ExWfB1dhkp4t`), que tiene otro
+ * dominio. El campo que llena este formulario vive en `TX_DatosTasacion`.
+ *
+ * ## Dos catálogos del v0 que estaban mal planteados
+ *
+ * - **`tipoZona` — RETIRADO. No es un select: es un Link.** `TX_DatosTasacion`
+ *   linkea a `M_Zonificacion` (`tipo_zona`: `Urbano · Rural · Mixto · Urbana`).
+ *   Un catálogo hardcodeado acá sería incorrecto de raíz, no sólo incompleto:
+ *   hay que **leer la tabla**. Existe además `tipo_zona_descripcion`
+ *   (`fldbrYbbvJThBaGwC`, singleLineText) para el texto libre. **P7-TAS decide**
+ *   cuál de los dos usa; si necesita el catálogo, va por una ruta que lo sirva.
+ *   Retirarlo rompe `seccion-propiedad.tsx:225` **a propósito**: es preferible
+ *   un error de compilación a un select que escribe en un Link.
+ * - **`origenSuperficie`** — no existe en `TX_ItemsCuadroValoracion`; vive en
+ *   `TX_Unidades` (`fldbDPpHhkuWjOTvQ`). Se conserva **con el dominio real de
+ *   esa tabla**, porque el ítem tiene Link `unidad` y lo natural es que lo
+ *   herede. P7-TAS confirma el cableado.
+ *
+ * ⚠ **Los dominios reales traen duplicados por mayúsculas y acentos**
+ * (`Edificio`/`EDIFICIO`, `Hormigon armado`/`HORMIGON ARMADO`/`Hormigon Armado`,
+ * `Albanileria`/`ALBAÑILERIA LADRILLO`/`ALBAÑILERÍA LADRILLO`). Es suciedad de
+ * datos de la base, no variantes con significado. Se expone **una sola** de cada
+ * grupo, en capitalización normal. Escribir cualquiera de las otras es válido
+ * para Airtable y ensuciaría más — por eso el `v` no se deriva, se fija.
  */
 export const OPCIONES = Object.freeze({
   estadoConservacion: Object.freeze([
-    { v: 'nuevo', l: 'Nuevo' },
-    { v: 'sin_uso', l: 'Sin uso' },
-    { v: 'bueno', l: 'Bueno' },
-    { v: 'normal', l: 'Normal' },
-    { v: 'malo', l: 'Malo' },
-    { v: 'deficiente', l: 'Deficiente' },
+    { v: 'Bueno', l: 'Bueno' },
+    { v: 'Muy Bueno', l: 'Muy bueno' },
+    { v: 'Regular', l: 'Regular' },
+    { v: 'Malo', l: 'Malo' },
+    { v: 'Muy malo', l: 'Muy malo' },
+    { v: 'NUEVO - S/USO', l: 'Nuevo · sin uso' },
   ]) as readonly Opcion[],
 
   agrupacion: Object.freeze([
-    { v: 'aislada', l: 'Aislada' },
-    { v: 'pareada', l: 'Pareada' },
-    { v: 'continua', l: 'Continua' },
+    { v: 'Aislada', l: 'Aislada' },
+    { v: 'Pareada', l: 'Pareada' },
+    { v: 'Continua', l: 'Continua' },
+    { v: 'Edificio', l: 'Edificio' },
+    { v: 'Condominio', l: 'Condominio' },
+    { v: 'POBLACIÓN', l: 'Población' },
   ]) as readonly Opcion[],
 
   material: Object.freeze([
-    { v: 'albanileria', l: 'Albañilería' },
-    { v: 'hormigon', l: 'Hormigón armado' },
-    { v: 'madera', l: 'Madera' },
-    { v: 'metalcon', l: 'Metalcon' },
-    { v: 'mixto', l: 'Mixto' },
+    { v: 'Hormigon armado', l: 'Hormigón armado' },
+    { v: 'Albanileria', l: 'Albañilería' },
+    { v: 'Acero', l: 'Acero' },
+    { v: 'Madera', l: 'Madera' },
+    { v: 'Mixto', l: 'Mixto' },
   ]) as readonly Opcion[],
 
   velocidadVenta: Object.freeze([
-    { v: 'rapida', l: 'Rápida' },
-    { v: 'normal', l: 'Normal' },
-    { v: 'lenta', l: 'Lenta' },
-  ]) as readonly Opcion[],
-
-  tipoZona: Object.freeze([
-    { v: 'residencial', l: 'Residencial' },
-    { v: 'comercial', l: 'Comercial' },
-    { v: 'industrial', l: 'Industrial' },
-    { v: 'mixta', l: 'Mixta' },
-    { v: 'agricola', l: 'Agrícola' },
+    { v: '1 a 2 meses', l: '1 a 2 meses' },
+    { v: '2 a 4 meses', l: '2 a 4 meses' },
+    { v: '4 a 6 meses', l: '4 a 6 meses' },
+    { v: '6 a 8 meses', l: '6 a 8 meses' },
+    { v: '8 a 10 meses', l: '8 a 10 meses' },
+    { v: '10 a 12 meses', l: '10 a 12 meses' },
+    { v: '12 a 18 meses', l: '12 a 18 meses' },
+    { v: '18 a 24 meses', l: '18 a 24 meses' },
+    { v: 'mas de 24 meses', l: 'Más de 24 meses' },
   ]) as readonly Opcion[],
 
   subtipoItem: Object.freeze([
-    { v: 'edificacion', l: 'Edificación' },
-    { v: 'terreno', l: 'Terreno' },
-    { v: 'terraza', l: 'Terraza' },
-    { v: 'estacionamiento', l: 'Estacionamiento' },
-    { v: 'bodega', l: 'Bodega' },
-    { v: 'obra_complementaria', l: 'Obra complementaria' },
+    { v: 'Edificacion', l: 'Edificación' },
+    { v: 'Terreno', l: 'Terreno' },
+    { v: 'OOCC', l: 'Obras complementarias' },
+    { v: 'Piscina', l: 'Piscina' },
+    { v: 'Terraza', l: 'Terraza' },
+    { v: 'Bodega', l: 'Bodega' },
+    { v: 'Estac U/Goce', l: 'Estacionamiento uso y goce' },
+    { v: 'Estac Descubierto', l: 'Estacionamiento descubierto' },
+    { v: 'S/Reg No Regularizable', l: 'Sin regularizar · no regularizable' },
   ]) as readonly Opcion[],
 
   tipoItem: Object.freeze([
-    { v: 'ha-muni', l: 'Habitable municipal' },
-    { v: 'ha-no-muni', l: 'Habitable no municipal' },
-    { v: 'no-ha-muni', l: 'No habitable municipal' },
-    { v: 'no-ha-no-muni', l: 'No habitable no municipal' },
+    { v: 'Edificacion', l: 'Edificación' },
+    { v: 'Terreno', l: 'Terreno' },
+    { v: 'OO.CC.', l: 'Obras complementarias' },
+    { v: 'Piscina', l: 'Piscina' },
+    { v: 'Estac. U/Goce', l: 'Estacionamiento uso y goce' },
+    { v: 'Estac. Desc', l: 'Estacionamiento descubierto' },
+    { v: 'Bodega', l: 'Bodega' },
+    { v: 'Terraza', l: 'Terraza' },
+    { v: 'Subterraneo', l: 'Subterráneo' },
+    { v: 'Otro', l: 'Otro' },
   ]) as readonly Opcion[],
 
   situacionMunicipal: Object.freeze([
-    { v: 'regularizado', l: 'Regularizado' },
-    { v: 'regularizable', l: 'Regularizable' },
-    { v: 'no-regularizable', l: 'No regularizable' },
+    { v: 'Regularizado', l: 'Regularizado' },
+    { v: 'S/Reg Regularizable', l: 'Sin regularizar · regularizable' },
+    { v: 'S/Reg No Regularizable', l: 'Sin regularizar · no regularizable' },
+    { v: 'No Aplica', l: 'No aplica' },
   ]) as readonly Opcion[],
 
+  /** `flag_estado` del ítem. **Distinto** del `estadoConservacion` del inmueble. */
+  estadoItem: Object.freeze([
+    { v: 'Bueno', l: 'Bueno' },
+    { v: 'Regular', l: 'Regular' },
+    { v: 'Malo', l: 'Malo' },
+  ]) as readonly Opcion[],
+
+  materialItem: Object.freeze([
+    { v: 'Hormigon armado', l: 'Hormigón armado' },
+    { v: 'Albanileria', l: 'Albañilería' },
+    { v: 'Acero', l: 'Acero' },
+    { v: 'Madera', l: 'Madera' },
+    { v: 'Mixto', l: 'Mixto' },
+  ]) as readonly Opcion[],
+
+  /** `TX_Comparables.tipo_referencia`. Ver la nota de `Comparable.fuente`. */
+  tipoReferencia: Object.freeze([
+    { v: 'Oferta', l: 'Oferta' },
+    { v: 'CBR', l: 'CBR' },
+  ]) as readonly Opcion[],
+
+  /**
+   * Dominio real de `TX_Unidades.origen_superficie` (`fldbDPpHhkuWjOTvQ`).
+   * El ítem no tiene campo propio: lo hereda de su unidad. Ver el docblock.
+   */
   origenSuperficie: Object.freeze([
-    { v: 'plano-municipal', l: 'Plano municipal' },
-    { v: 'certificado-avaluo', l: 'Certificado de avalúo' },
-    { v: 'medicion-tasador', l: 'Medición del tasador' },
-    { v: 'base-interna-sii', l: 'Base interna SII' },
-  ]) as readonly Opcion[],
-
-  selloSec: Object.freeze([
-    { v: 'vigente', l: 'Vigente' },
-    { v: 'vencido', l: 'Vencido' },
-    { v: 'no_aplica', l: 'No aplica' },
+    { v: 'carta_ficha_inmobiliaria', l: 'Carta o ficha inmobiliaria' },
+    { v: 'plano', l: 'Plano' },
+    { v: 'base_interna_sii', l: 'Base interna SII' },
+    { v: 'certificado_avaluo', l: 'Certificado de avalúo' },
+    { v: 'medicion_tasador', l: 'Medición del tasador' },
   ]) as readonly Opcion[],
 
   orientaciones: Object.freeze(['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO']) as readonly string[],
 
+  /** ⚠ Sin verificar: su destino en la sección E no está cableado. P7-TAS. */
   ventanas: Object.freeze([
     'Termopanel',
     'Vidrio simple',
@@ -579,4 +663,11 @@ export const OPCIONES = Object.freeze({
     'Marco de PVC',
     'Marco de madera',
   ]) as readonly string[],
+
+  /** ⚠ Sin verificar: destino en `TX_DocumentosLegales`, no cableado. P7-TAS. */
+  selloSec: Object.freeze([
+    { v: 'vigente', l: 'Vigente' },
+    { v: 'vencido', l: 'Vencido' },
+    { v: 'no_aplica', l: 'No aplica' },
+  ]) as readonly Opcion[],
 })

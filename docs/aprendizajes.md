@@ -269,6 +269,21 @@ Lo que sigue vigente como regla vive abajo, destilado.
   entero canoniza como especificación lo que la propia auditoría marca como
   deuda —el caso que lo motivó: un contador de intentos que el spec ya había
   retirado (CI-015)—.
+- **RO-29 · La coordinación de visitas no se soporta por sistema: es manejo
+  manual fuera de plataforma.** Decisión de producto de Sergio (17-ago-2026),
+  **canónica y cerrada**. Aplica a los dos tramos: ejecutiva ↔ tasador y
+  tasador ↔ visador. **`TX_CoordinacionVisita` no existe y no existirá**, y con
+  ella caen `estado_coordinacion`, `motivo`, `intento_numero`,
+  `fecha_visita_propuesta`, `email_thread_id` y `email_enviado_status` como
+  entidades de coordinación. Consecuencias vinculantes: no se tipan esas
+  entidades, no se construyen las rutas `/api/tasaciones/[id]/coordinacion`, no
+  se emiten los correos de coordinación, y la Regla T-A del plan de IF-03
+  colapsa de tres variantes de botón a una sola («Abrir tasación»), sin gate de
+  coordinación. **Cierra CI-012 en sentido negativo.** Todo lo que la spec §2.3
+  y §2.12 describen sobre coordinación por sistema queda desalineado y se
+  retira en el próximo bump normativo. **No volver a preguntarlo**: quien
+  encuentre una referencia viva a la coordinación por sistema la trata como
+  documentación pendiente de retirar, no como requisito.
 
 ## Bitácora reciente
 

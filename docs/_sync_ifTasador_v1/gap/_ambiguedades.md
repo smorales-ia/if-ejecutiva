@@ -500,3 +500,55 @@ ser un enlace o un singleSelect mantenido; si es fijo, vive en el enum de
 
 **Impacto bajo** —los cuatro valores cubren el caso operativo conocido— pero determina el tipo
 del campo en §2.12, así que conviene cerrarlo antes de crear la tabla, no después.
+
+---
+
+## A-18 · **BLOQUEANTE** · Ninguna tabla de configuración puede servir hoy un factor de homogeneización
+
+**Estado** — abierta · **bloquea RF-TAS-08 y `GET /api/tasaciones/config/defaults`** · impacto alto.
+**Dueños: Héctor y Óscar** (decisión de negocio, no de esquema).
+
+RF-TAS-08 exige que los factores de homogeneización (`factor_sup`, `factor_edad`,
+`factor_distancia`) se precarguen desde la capa de configuración vía API Route, y prohíbe
+hardcodearlos *"ni siquiera de forma transitoria"*. Su criterio de aceptación es que **un cambio en
+la configuración se refleje en la próxima carga sin deploy**.
+
+Las tres tablas candidatas se leyeron contra la base el 17-ago-2026 (P2-TAS). **Ninguna puede
+servir un valor por defecto hoy:**
+
+| Tabla | Filas | Veredicto |
+|---|---|---|
+| `C_FactoresHomogeneizacion` (`tblep24N9gPMrDPIN`) | 15 | Es la **estructuralmente correcta** —única con `tipo_factor`, rangos y scoping por `tipo_propiedad`— pero **`valor_referencia` está vacío en las 15**. 10 filas (prefijo `FH-`) son cáscaras sin ningún campo poblado salvo `nombre` y `activo`; las otras 5 (prefijo `FH_`) sólo traen `valor_min`/`valor_max`, que son **rangos de validación, no valores por defecto** |
+| `C_Factores` (`tblNHze3ZZYJblJ7S`) | 27 | Poblada y sana, pero **es otra cosa**: son los coeficientes del motor de valoración (`Cap_Rate` 0.045 · `Remate` en nueve tramos · `Seguro` · `Garantia` · `multiplicador` · `divisor`). **Cero filas de homogeneización**: ninguna es `Superficie`, `Edad`, `Antiguedad` ni `Distancia` |
+| `C_VariablesCliente` (`tblgrY8j4ugFzS7v9`) | 1 | `Vars_METLIFE_default`, con sólo `clave` y `cliente` poblados y `valor` vacío. Es además una tabla clave-valor genérica, sin columnas de factores. **Es la que nombran la spec §2.8 y el plan §3.1** |
+
+**Las cuatro preguntas que hay que responder:**
+
+1. **¿Quién decide el valor por defecto de cada factor, y cuál es?** Hoy no existe en ninguna parte.
+   Sin él no hay precarga posible, con o sin ruta.
+2. **`Edad` o `Antiguedad`.** El `singleSelect` de `C_FactoresHomogeneizacion.tipo_factor` ofrece
+   **las dos como opciones distintas**, y las filas pobladas usan `Antiguedad`. RF-TAS-08 habla de
+   `factor_edad`. Mapear una a otra es una decisión, no una lectura.
+3. **Las 10 cáscaras `FH-`: ¿se completan o se borran?** Conviven con 5 filas `FH_` de otra
+   generación. Dos convenciones de nombre y dos grados de completitud en la misma tabla.
+4. **¿`C_FactoresHomogeneizacion` es la canónica, o hay que consolidar con `C_Factores`?** La
+   segunda tiene vigencia temporal (`vigente_desde`/`vigente_hasta`) y scoping por cliente, tipo de
+   informe y tipo de propiedad; la primera no. Si los factores de homogeneización deben variar por
+   cliente o en el tiempo, la canónica es la segunda y hay que poblarla.
+
+**No se resuelve aquí, y no se puede rodear.** Construir la ruta contra la tabla actual devolvería
+`valorReferencia: null` para los tres factores: la UI no precargaría nada y el criterio de
+aceptación —*"un cambio se refleja sin deploy"*— sería inverificable, porque no hay dato que
+cambiar. Y suplirlo con constantes en el frontend es exactamente lo que RF-TAS-08 prohíbe.
+
+**Consecuencia sobre el plan:** `GET /api/tasaciones/config/defaults` **no se construye en
+P2-TAS**. El set de rutas de la tanda baja de 13 filas a **12** (de 12 archivos `route.ts` a 11).
+Se retoma cuando A-18 cierre, previsiblemente en P7-TAS, que es la consumidora.
+
+**Relación con A-14.** A-14 es la misma pregunta para los defaults **constructivos** (sección E del
+formulario) y también está abierta. **Son distintas y conviene no fundirlas**: A-14 no tiene tabla
+destino en absoluto, mientras que A-18 sí la tiene y lo que le falta son datos. Pero si el negocio
+decide crear una tabla de defaults, la respuesta a las dos puede salir del mismo movimiento.
+
+**Registro asociado:** **CI-022** documenta las dos tablas sin documentar que salieron de esta
+verificación, y se cierra apuntando a esta ambigüedad como resolución.

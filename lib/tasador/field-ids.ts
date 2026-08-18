@@ -111,6 +111,21 @@ export const FIELD_IDS_SOLICITUD = Object.freeze({
   vendedorRut: 'fldrITDFkbk95Da00',
   vendedorEmail: 'flduBKof3x45EpTNW',
   vendedorTelefono: 'flduslI2FNAdcPchK',
+
+  /**
+   * Resueltos en P2-TAS contra la Meta API (17-ago-2026). `docs/schema-airtable.md`
+   * §2 los documenta con `—`; estos IDs son los reales de la base.
+   */
+  /** `tasador` · Link → M_Tasadores. **Es el campo del guard de autorización (RF-09).** */
+  tasador: 'fldlgriK1jP5906wE',
+  direccion: 'fldKP0yxwQkSdrFuZ',
+  rolSii: 'fldznAL2SuCpfUUtg',
+  comuna: 'fldJTjjzCPBHMOWZv',
+  producto: 'fldp64U99lsLf7HlV',
+  tipoInforme: 'fldJO4JtsDEeMmjdi',
+  pdfFinalUrl: 'fldASzRV9aQNFExpY',
+  clienteFinalNombre: 'fld7jxcbmMYz6kmbj',
+  clienteFinalRut: 'fldwNEPL8fXkWwUBd',
 } as const)
 
 /* -------------------------------------------------------------------------
@@ -136,6 +151,40 @@ export const FIELD_IDS_TIPO_DOCUMENTO = Object.freeze({
   condicionPropiedadAplicable: 'fldIfdcjsr8KeNRCx',
 } as const)
 
+/**
+ * `A_Cambios` (`tbl6Yd0c7MRqNeC0x`) — levantados en P2-TAS vía Meta API.
+ *
+ * ⚠ **CI-011 documenta esta tabla mal y además se equivoca en un nombre**: dice
+ * que el campo vacío se llama `autor`; el real es **`actor`**. Los dos campos
+ * que CI-011 marca como inservibles —`actor` y `motivo`— existen, y los que de
+ * verdad se usan son `modificado_por_email` y `razon_cambio`.
+ *
+ * `tabla_origen` es un `singleSelect` con dominio cerrado: `M_Clientes ·
+ * M_Tasadores · M_Visadores · M_Comunas · C_ReglasNegocio · C_Formulas ·
+ * C_Factores · TX_Solicitudes · TX_DatosTasacion · Otro`. Escribir un valor
+ * fuera de esa lista lo **crearía** por `typecast: true` y rompería en silencio
+ * el filtro del timeline de IF-02.
+ */
+export const FIELD_IDS_CAMBIOS = Object.freeze({
+  tablaOrigen: 'fldqRCXSY692mzaT4',
+  registroId: 'fldRdyudnUcjSf1Zf',
+  registroNombre: 'fldB3GDfua7fnXbXT',
+  campoModificado: 'fldbpKuwR2RfbT41G',
+  valorAnterior: 'fldxCiiMpGSsTyNka',
+  valorNuevo: 'fld4d9hQefakIQpJ3',
+  /** El autor real. **No** `actor`, que existe y está vacío. */
+  modificadoPorEmail: 'fldTUGG0jtsO47m1a',
+  /** El motivo real. **No** `motivo`, que existe y está vacío. */
+  razonCambio: 'fldDlPfFZa1dtA2Xv',
+  timestamp: 'fldCyzAD9TPrEWr2x',
+} as const)
+
+/** Valores válidos de `A_Cambios.tabla_origen` que IF-03 usa. */
+export const TABLA_ORIGEN = Object.freeze({
+  solicitudes: 'TX_Solicitudes',
+  datosTasacion: 'TX_DatosTasacion',
+} as const)
+
 export const FIELD_IDS_ADJUNTOS = Object.freeze({
   /** `estado_extraccion` · alimenta el pipeline RF-09. */
   estadoExtraccion: 'fld54epvDJ7YdJIYD',
@@ -148,23 +197,13 @@ export const FIELD_IDS_ADJUNTOS = Object.freeze({
  * ---------------------------------------------------------------------- */
 
 /**
- * Campos que IF-03 necesita y cuyo FIELD_ID **no está documentado**:
- * `docs/schema-airtable.md` §2 los lista con `—`.
+ * ✅ **Cerrado en P2-TAS (17-ago-2026).** Los 9 campos que P1-TAS dejó sin
+ * FIELD_ID —porque `docs/schema-airtable.md` §2 los documenta con `—`— se
+ * resolvieron contra la Meta API de Airtable y viven arriba, en
+ * `FIELD_IDS_SOLICITUD`. Ninguno se inventó.
  *
- * No se inventa ninguno. **P2-TAS los resuelve** contra el schema real (Meta
- * API REST, no MCP) antes de la primera lectura o escritura, y actualiza tanto
- * este módulo como el §2 del schema doc en el mismo movimiento.
- *
- * Mientras tanto, referenciarlos por nombre de datos es aceptable **sólo** si
- * el nombre no es homónimo en la base (§22.4).
+ * Se conserva la constante vacía a propósito: es el marcador de que la deuda
+ * existió y se cerró. Si vuelve a aparecer un campo sin ID documentado, entra
+ * acá y **no** se referencia por nombre hasta resolverlo.
  */
-export const FIELD_IDS_PENDIENTES: readonly string[] = Object.freeze([
-  'direccion',
-  'rol_sii',
-  'comuna',
-  'producto',
-  'tasador',
-  'pdf_final_url',
-  'cliente_final_nombre',
-  'cliente_final_rut',
-])
+export const FIELD_IDS_PENDIENTES: readonly string[] = Object.freeze([])
