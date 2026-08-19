@@ -41,11 +41,15 @@ import type { SlaTonoEtapa } from '@/lib/console-data'
 import { obtenerMatrizEtapas } from '@/lib/sla-etapas'
 import { etiquetaEtapa, nombresDeEtapas } from '@/lib/solicitudes'
 import {
+  direccionUnidad,
   SIN_FECHA_VISITA,
+  type AdjuntoDropbox,
+  type ContactoVisita,
   type DatoPrellenado,
   type EstadoBackend,
   type SlaEtapaSolicitud,
   type Tasacion,
+  type UnidadSii,
 } from '@/lib/tasaciones'
 import { autorizarSolicitud, type SolicitudFields } from './auth-guard'
 import { telefonosPrioritarios } from './contactos-cola'
@@ -382,6 +386,174 @@ export function proyectarTasacion(
  * traduce a `notFound()` y así **no** distingue una de otra, que es la misma
  * garantía que da el guard en las rutas HTTP.
  */
+/* -------------------------------------------------------------------------
+ * Detalle de la solicitud · sólo Pantalla 2 (§2.3)
+ *
+ * Las tres lecturas de abajo alimentan los bloques Propiedad, Personas y
+ * Adjuntos de la pantalla de coordinación. **No entran en `proyectarTasacion`**
+ * y por tanto **no las paga `leerCola()`**: son tres requests más por
+ * solicitud, y la cola es la pantalla que más se abre del flujo. Multiplicarlas
+ * por cada card sería exactamente el coste que `contactos-cola.ts` evitó al
+ * resolver toda la cola en una sola lectura.
+ *
+ * Las tres degradan a lista vacía ante un fallo, nunca a excepción: la pantalla
+ * de coordinación sigue siendo usable —el tasador tiene que poder registrar el
+ * resultado del llamado— aunque no se haya podido pintar un bloque de resumen.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Filtro por el lookup `solicitud_record_id`, con el recordId delimitado por
+ * comas a ambos lados.
+ *
+ * Es el patrón de `telefonosPrioritarios`: el **Link** se evalúa contra el
+ * primary field de la tabla destino, no contra el recordId (lección E-018), así
+ * que se filtra por el lookup. Las comas evitan el match parcial el día que dos
+ * identificadores compartan prefijo.
+ */
+function filtroPorSolicitud(solicitudId: string): string {
+  return `FIND(",${solicitudId},", "," & ARRAYJOIN({solicitud_record_id}, ",") & ",") > 0`
+}
+
+interface UnidadFields {
+  subtipo?: string
+  rol_sii?: string
+  sup_m2?: number
+  numero_unidad?: string
+  orden?: number
+}
+
+/**
+ * Unidades tasables de la solicitud, ordenadas por `orden` (§2.3).
+ *
+ * El criterio de aceptación de RF-TAS-03 es explícito: *"la tabla de unidades
+ * muestra un Rol SII por unidad, no uno por solicitud"*. Antes de P4-TAS la
+ * pantalla caía a `datosEjecutiva.rolSii`, que es uno solo.
+ *
+ * `direccion` **se deriva**, no se lee: `TX_Unidades` no tiene ese campo.
+ */
+async function leerUnidades(solicitudId: string): Promise<UnidadSii[]> {
+  let registros
+  try {
+    registros = await listRecords<UnidadFields>(TABLE_IDS.unidades, {
+      fields: ['subtipo', 'rol_sii', 'sup_m2', 'numero_unidad', 'orden'],
+      filterByFormula: filtroPorSolicitud(solicitudId),
+    })
+  } catch (err) {
+    console.error('[leerUnidades] no se pudo leer TX_Unidades', solicitudId, err)
+    return []
+  }
+
+  return registros
+    .slice()
+    .sort((a, b) => (a.fields.orden ?? Infinity) - (b.fields.orden ?? Infinity))
+    .map(({ fields }) => ({
+      numero: (fields.numero_unidad ?? '').trim(),
+      rolSii: (fields.rol_sii ?? '').trim(),
+      superficieM2: typeof fields.sup_m2 === 'number' ? fields.sup_m2 : 0,
+      direccion: direccionUnidad(fields.subtipo, fields.numero_unidad),
+    }))
+}
+
+interface ContactoDetalleFields {
+  nombre?: string
+  rol?: string
+  telefono?: string
+  email?: string
+  estado_contacto?: string
+  orden_prioridad?: number
+}
+
+/**
+ * Contactos de visita de la solicitud, ordenados por `orden_prioridad`.
+ *
+ * ⚠ **No es lo mismo que `telefonosPrioritarios`** y por eso no lo reutiliza:
+ * aquélla resuelve **un teléfono** para toda una cola y descarta los contactos
+ * marcados `telefono_erroneo`. Acá hace falta la **lista completa** —nombre,
+ * rol, teléfono y email de cada uno—, y un contacto con teléfono erróneo
+ * **sigue mostrándose**: es justamente al que el tasador no debe llamar, y
+ * ocultarlo le haría buscarlo. La card de la cola y esta pantalla responden dos
+ * preguntas distintas sobre la misma tabla.
+ */
+async function leerContactos(solicitudId: string): Promise<ContactoVisita[]> {
+  let registros
+  try {
+    registros = await listRecords<ContactoDetalleFields>(TABLE_IDS.contactosVisita, {
+      fields: ['nombre', 'rol', 'telefono', 'email', 'estado_contacto', 'orden_prioridad'],
+      filterByFormula: filtroPorSolicitud(solicitudId),
+    })
+  } catch (err) {
+    console.error('[leerContactos] no se pudo leer TX_ContactosVisita', solicitudId, err)
+    return []
+  }
+
+  return registros
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.fields.orden_prioridad ?? Infinity) - (b.fields.orden_prioridad ?? Infinity)
+    )
+    .map(({ id, fields }) => ({
+      id,
+      nombre: (fields.nombre ?? '').trim(),
+      rol: (fields.rol ?? '').trim(),
+      telefono: (fields.telefono ?? '').trim(),
+      email: (fields.email ?? '').trim(),
+      estado: (fields.estado_contacto ?? '').trim(),
+      ordenPrioridad:
+        typeof fields.orden_prioridad === 'number' ? fields.orden_prioridad : undefined,
+    }))
+}
+
+interface AdjuntoFields {
+  nombre_archivo?: string
+  url_dropbox?: string
+  tamanio_kb?: number
+}
+
+/**
+ * Adjuntos de la solicitud, por recordId.
+ *
+ * ⚠ **No usa `solicitud_record_id`: `TX_Adjuntos` no tiene ese lookup.** En su
+ * lugar recibe los recordIds del Link `TX_Adjuntos` de la propia solicitud —que
+ * el guard ya leyó— y filtra por `RECORD_ID()`. Es exacto y no depende del
+ * primary field, que es la trampa de E-018. La alternativa sería crear el
+ * lookup en Airtable; no se hizo porque esta vía no lo necesita.
+ */
+async function leerAdjuntos(adjuntoIds: readonly string[]): Promise<AdjuntoDropbox[]> {
+  const ids = [...new Set(adjuntoIds)].filter((id) => id.startsWith('rec'))
+  if (ids.length === 0) return []
+
+  let registros
+  try {
+    registros = await listRecords<AdjuntoFields>(TABLE_IDS.adjuntos, {
+      fields: ['nombre_archivo', 'url_dropbox', 'tamanio_kb'],
+      filterByFormula: `OR(${ids.map((id) => `RECORD_ID()="${id}"`).join(', ')})`,
+    })
+  } catch (err) {
+    console.error('[leerAdjuntos] no se pudo leer TX_Adjuntos', err)
+    return []
+  }
+
+  return registros
+    .filter(({ fields }) => (fields.nombre_archivo ?? '').trim() !== '')
+    .map(({ fields }) => ({
+      nombre: (fields.nombre_archivo ?? '').trim(),
+      url: (fields.url_dropbox ?? '').trim(),
+      /**
+       * `tamanio_kb` está en **kilobytes** y `AdjuntoDropbox.sizeBytes` en
+       * bytes. La conversión va acá y no en la vista: el tipo dice `Bytes` y
+       * tiene que ser cierto.
+       */
+      sizeBytes:
+        typeof fields.tamanio_kb === 'number' ? Math.round(fields.tamanio_kb * 1024) : 0,
+    }))
+}
+
+/** recordIds del Link `TX_Adjuntos` de la solicitud, si vinieron en la lectura. */
+function idsDeLink(valor: unknown): string[] {
+  return Array.isArray(valor) ? valor.filter((v): v is string => typeof v === 'string') : []
+}
+
 export async function leerTasacion(id: string): Promise<Tasacion | null> {
   const guard = await autorizarSolicitud(id)
   if (!guard.ok) {
@@ -391,17 +563,28 @@ export async function leerTasacion(id: string): Promise<Tasacion | null> {
     return null
   }
 
-  const [maestros, telefonos] = await Promise.all([
+  const [maestros, telefonos, unidades, contactos, adjuntosDropbox] = await Promise.all([
     leerMaestros(),
     telefonosPrioritarios([guard.solicitudId]),
+    leerUnidades(guard.solicitudId),
+    leerContactos(guard.solicitudId),
+    leerAdjuntos(idsDeLink(guard.fields['TX_Adjuntos'])),
   ])
 
-  return proyectarTasacion(
+  const tasacion = proyectarTasacion(
     guard.solicitudId,
     guard.fields,
     maestros,
     telefonos.get(guard.solicitudId) ?? null
   )
+
+  /**
+   * El detalle se añade **sobre** la proyección compartida en vez de dentro de
+   * ella: `leerCola()` usa la misma `proyectarTasacion` y no debe pagar estas
+   * tres lecturas. Las claves ausentes quedan como arrays vacíos, que es lo que
+   * la pantalla ya sabe renderizar.
+   */
+  return { ...tasacion, unidades, contactos, adjuntosDropbox }
 }
 
 /**

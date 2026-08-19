@@ -131,6 +131,71 @@ export interface UnidadSii {
   numero: string
   rolSii: string
   superficieM2: number
+  /**
+   * Etiqueta corta de la unidad para la columna «Dirección» de la tabla de
+   * §2.3 — ej. `Dep. 803`, `Estac. 45`.
+   *
+   * ⚠ **No es un campo de Airtable.** `TX_Unidades` no tiene dirección: se
+   * **deriva** de `subtipo` + `numero_unidad` con {@link direccionUnidad}.
+   * Decisión de Héctor del 19-ago-2026, opción (a) de las tres que planteó el
+   * Bloque 3 de P4-TAS. `undefined` cuando la unidad no tiene ni subtipo ni
+   * número, que es el único caso en que no hay nada que mostrar.
+   */
+  direccion?: string
+}
+
+/**
+ * Abreviaturas de `TX_Unidades.subtipo` para la etiqueta de unidad.
+ *
+ * **Sólo se abrevia lo que es largo y no ambiguo.** Los seis subtipos que
+ * faltan —`Casa`, `Terreno`, `Local`, `Terraza`, `Piscina`, `OO.CC.`— se
+ * muestran completos a propósito:
+ *
+ * - `Casa`, `Local`, `Piscina` y `OO.CC.` ya son cortos; abreviarlos no gana
+ *   nada y añade una forma más que aprender.
+ * - **`Terreno` y `Terraza` no se abrevian porque colisionarían.** Las dos
+ *   dan `Terr.`, y una etiqueta que no distingue el terreno de la terraza es
+ *   peor que una etiqueta larga: el tasador tiene que saber a qué unidad
+ *   entra.
+ *
+ * El dominio completo son los 11 valores del `singleSelect`
+ * (`fldNU8ee30AvvRWHZ`), leídos de la base el 19-ago-2026.
+ */
+const ABREVIATURAS_SUBTIPO: Readonly<Record<string, string>> = Object.freeze({
+  Departamento: 'Dep.',
+  Estacionamiento: 'Estac.',
+  Bodega: 'Bod.',
+  Servidumbre: 'Serv.',
+  Edificacion: 'Edif.',
+})
+
+/**
+ * Deriva la etiqueta corta de una unidad — **función pura**.
+ *
+ * Un subtipo que no esté en el mapa **cae al subtipo completo**, nunca a vacío
+ * ni a error: si alguien agrega un valor al `singleSelect` desde Airtable, la
+ * columna sigue mostrando algo legible sin necesidad de deploy. Es el mismo
+ * criterio que A-17 aplica al catálogo de motivos.
+ *
+ * @example direccionUnidad('Departamento', '803')     // 'Dep. 803'
+ * @example direccionUnidad('Estacionamiento', '45')   // 'Estac. 45'
+ * @example direccionUnidad('Terraza', '2')            // 'Terraza 2'
+ * @example direccionUnidad('Loteo Nuevo', '7')        // 'Loteo Nuevo 7'
+ * @example direccionUnidad('Casa', '')                // 'Casa'
+ * @example direccionUnidad('', '')                    // undefined
+ */
+export function direccionUnidad(
+  subtipo: string | undefined,
+  numeroUnidad: string | undefined,
+): string | undefined {
+  const tipo = (subtipo ?? '').trim()
+  const numero = (numeroUnidad ?? '').trim()
+
+  if (tipo === '' && numero === '') return undefined
+  if (tipo === '') return numero
+
+  const etiqueta = ABREVIATURAS_SUBTIPO[tipo] ?? tipo
+  return numero === '' ? etiqueta : `${etiqueta} ${numero}`
 }
 
 /** Adjunto de la solicitud alojado en Dropbox, entregado por la Ejecutiva. */
