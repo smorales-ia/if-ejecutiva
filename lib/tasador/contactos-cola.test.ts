@@ -9,9 +9,9 @@ import { TX_CONTACTOS_VISITA, telefonosPrioritarios } from './contactos-cola'
  *
  * ## Por qué esta lectura merece tests propios
  *
- * Es el dato más importante de la Pantalla 1 desde que **RO-29** dejó la
- * coordinación en manos del teléfono, y llega por un camino con tres formas de
- * fallar en silencio: el lookup puede venir como array o como texto, la
+ * Es el dato operativo más importante de la Pantalla 1 —el tasador llama a ese
+ * número antes de poder registrar nada— y llega por un camino con tres formas
+ * de fallar en silencio: el lookup puede venir como array o como texto, la
  * prioridad puede faltar, y el contacto puede estar marcado como erróneo. Los
  * tres casos devuelven un teléfono plausible si nadie los mira — y un teléfono
  * plausible bajo un `href="tel:"` es una llamada perdida, no un error visible.

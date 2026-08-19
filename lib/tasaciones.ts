@@ -70,9 +70,18 @@ export type EstadoBackend =
  *    `sla_etapa_actual`, `sla_semaforo_etapa`, `sla_etapa_alerta_ts` y
  *    `sla_etapa_vence_ts`. Esta forma es la que consume `SLABadge`, que R7
  *    obliga a importar de `components/console/status-badges.tsx`.
- * 3. **`por_coordinar` quedó sin objeto** con RO-29: la coordinación no se
- *    soporta por sistema. El chip homónimo sobrevive con otra definición —
- *    etapa 2 abierta, ver `lib/tasador/cola-filtros.ts`— pero no como color.
+ * 3. **`por_coordinar` no es un color, es un filtro.** Mezclaba dos ejes en
+ *    una sola unión: el semáforo dice *cuánto queda*, y coordinar o no es
+ *    *qué toca hacer*. El chip homónimo de la cola sigue existiendo —ver
+ *    `lib/tasador/cola-filtros.ts`— pero como predicado sobre la solicitud,
+ *    no como valor del semáforo, que se alimenta de la etapa del motor.
+ *
+ * ⚠ El punto 3 citaba **RO-29** hasta el 19-ago-2026 —*"la coordinación no se
+ * soporta por sistema"*— como razón de que `por_coordinar` no tuviera objeto.
+ * **RO-29 fue anulada** ese mismo día por la revisión de Héctor del diseño v4:
+ * la coordinación sí va por sistema y `TX_CoordinacionVisita` existe. La
+ * conclusión no cambia —`por_coordinar` sigue sin ser un color— pero el
+ * argumento sí, y por eso se reescribió.
  *
  * Mismo criterio que `ContactoVisita`: es la misma fila de Airtable y el mismo
  * concepto que ya tipa IF-02. Duplicarlo habría dejado dos formas para un dato.

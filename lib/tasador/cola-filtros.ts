@@ -74,22 +74,30 @@ export function enColaVisible(t: Pick<Tasacion, 'estado'>): boolean {
 }
 
 /**
- * "Por coordinar" — **redefinido por RO-29** (decisión de Sergio · 19-ago-2026).
+ * "Por coordinar" — **`asignada` con la etapa 2 abierta**.
  *
- * La definición original (§4.1) era *sin coordinación vigente, `asignada`, y
- * `now() - fecha_asignacion < 4h`*. Dejó de ser computable: la coordinación no
- * se soporta por sistema y `TX_CoordinacionVisita` no existe.
+ * La definición de §4.1 es *sin coordinación vigente, `asignada`, y
+ * `now() - fecha_asignacion < 4h`*. Este predicado la aproxima por la etapa:
+ * la etapa 2 de §5.2.4 es justamente la del primer contacto (RN-53), la abre el
+ * motor al asignar y se cierra cuando el resultado del llamado se registra.
+ * Cero aritmética de horas acá: pregunta por la etapa, no por el reloj.
  *
- * La definición vigente es **`asignada` con la etapa 2 abierta**. Dice lo
- * mismo en el vocabulario que sí tiene respaldo: la etapa 2 de §5.2.4 es
- * justamente la del primer contacto (RN-53), la abre el motor al asignar y se
- * cierra cuando el contacto se registra. Cero aritmética de horas acá: el chip
- * pregunta por la etapa, no por el reloj.
+ * ⚠ **Esta aproximación se adoptó porque la definición literal no era
+ * computable, y hoy sí lo es.** Se escribió bajo **RO-29** —*"la coordinación
+ * no se soporta por sistema, `TX_CoordinacionVisita` no existe"*—, regla
+ * **anulada el 19-ago-2026** por la revisión de Héctor del diseño v4. Desde
+ * P4-TAS la tabla existe y `TX_Solicitudes.coordinacion_vigente`
+ * (`fldI4Dv0jpRQvbdHl`) da el dato directo que §4.1 pide.
  *
- * ⚠ Mientras nadie escriba `sla_e2_fin_ts` —pendiente con Héctor—, una
- * solicitud `asignada` no sale nunca de este chip. Es un hueco del backend, no
- * de este predicado: fabricar acá una salida por tiempo sería reintroducir el
- * umbral que se acaba de quitar.
+ * ⚠ La nota anterior advertía que *"mientras nadie escriba `sla_e2_fin_ts` una
+ * solicitud `asignada` no sale nunca de este chip"*. **Eso dejó de ser cierto**:
+ * el handler de `POST /api/tasaciones/[id]/coordinacion` cierra e2 y e3 en el
+ * mismo evento (Q5), así que hoy la solicitud sale del chip al registrar el
+ * resultado — en las dos ramas.
+ *
+ * **La lógica NO se cambió en P4-TAS**, a propósito: tocar el predicado es
+ * trabajo de Pantalla 1, no de la limpieza de RO-29. La revisión de si debe
+ * pasar a consultar `coordinacion_vigente` está en **CI-045**.
  */
 export function esPorCoordinar(t: Pick<Tasacion, 'estado' | 'slaEtapa'>): boolean {
   return t.estado === 'asignada' && t.slaEtapa?.numero === 2

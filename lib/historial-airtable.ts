@@ -163,10 +163,18 @@ export async function fetchCambiosPorSolicitud(
  * tendría forma de saber que le falta la mitad de la secuencia.
  *
  * Fuera de alcance, y documentado para que no se busque: los **eventos de
- * coordinación de la visita** que §1.3.3 describe requieren
- * `TX_CoordinacionVisita`, que no existe en la base; y las **descargas** de
- * documentos no se registran en ninguna tabla (`A_Accesos` existe pero nadie la
- * escribe). Ninguno de los dos es una omisión de este módulo.
+ * coordinación de la visita** que §1.3.3 describe **no se leen todavía**, y las
+ * **descargas** de documentos no se registran en ninguna tabla (`A_Accesos`
+ * existe pero nadie la escribe). Ninguno de los dos es una omisión de este
+ * módulo.
+ *
+ * ⚠ El motivo de lo primero **cambió el 19-ago-2026** y conviene no repetir el
+ * diagnóstico viejo: hasta esa fecha era que `TX_CoordinacionVisita` **no
+ * existía en la base**. Ya existe (`tblBwMErRxo57ML2r`, creada en P4-TAS al
+ * cerrarse CI-012 en sentido positivo). Lo que falta ahora es **construir la
+ * lectura**, que es **RF-TAS-05** y es tanda propia: toca superficie de IF-02
+ * —esta pestaña y el bloque *Coordinación* de §1.3.2— y quedó fuera de P4-TAS,
+ * que era Pantalla 2 del tasador.
  */
 export async function fetchHistorialSolicitud(
   solicitudId: string,

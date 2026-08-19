@@ -107,7 +107,7 @@ describe('enColaVisible', () => {
   })
 })
 
-describe('esPorCoordinar · redefinido por RO-29', () => {
+describe('esPorCoordinar · asignada con la etapa 2 abierta (ver CI-045)', () => {
   it('es asignada con la etapa 2 abierta', () => {
     expect(esPorCoordinar(tasacion('a', 'asignada', {}))).toBe(true)
   })

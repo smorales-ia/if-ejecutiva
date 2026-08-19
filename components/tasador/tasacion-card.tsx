@@ -8,14 +8,27 @@ import { SIN_FECHA_VISITA, type Tasacion } from "@/lib/tasaciones"
 /**
  * Card de la cola personal · RF-TAS-11 · CI-018.
  *
- * ## Regla T-A, colapsada a un botón (P3-TAS.A · decisión de Sergio 19-ago-2026)
+ * ## Regla T-A · la card sigue con **un** botón, y eso hoy es una divergencia
  *
- * §0.3 fijaba tres variantes excluyentes —"Coordinar visita", "Abrir tasación",
- * "Ver coordinación" deshabilitado—, y el gate entre ellas era el estado de la
- * coordinación. **RO-29** dejó ese gate sin objeto: la coordinación no se
- * soporta por sistema. Queda **una** variante, "Abrir tasación", para
- * `asignada · visitada · calculada`, y por eso no se tipó `AccionCard`: una
- * unión discriminada de una sola variante no discrimina nada.
+ * §0.3 fija tres variantes excluyentes —"Coordinar visita", "Abrir tasación" y
+ * "Ver coordinación" deshabilitado con badge "Esperando contacto de
+ * ejecutiva"—, y el gate entre ellas es el estado de la coordinación.
+ *
+ * P3-TAS.A las colapsó a **una** —"Abrir tasación" para
+ * `asignada · visitada · calculada`— porque **RO-29** había dejado el gate sin
+ * objeto: la coordinación no se soportaba por sistema y no había dato con que
+ * discriminar. Por eso tampoco se tipó `AccionCard`.
+ *
+ * ⚠ **RO-29 fue anulada el 19-ago-2026** y las dos piezas que faltaban ya
+ * existen: `TX_Solicitudes.coordinacion_vigente` (`fldI4Dv0jpRQvbdHl`) y
+ * `resolverAccionCard()` en `lib/tasaciones.ts`, que devuelve las tres
+ * variantes. **Este componente todavía no las usa**, así que el botón enlaza
+ * incondicionalmente a la captura y **el gate de coordinación no existe en la
+ * UI**: una solicitud sin coordinar deja entrar al formulario igual.
+ *
+ * **La lógica NO se cambió en P4-TAS**, a propósito: cablear
+ * `resolverAccionCard()` acá es trabajo de Pantalla 1 y no de la limpieza de
+ * RO-29. La ficha con el alcance y el impacto es **CI-046**.
  *
  * ## Lo que la card no hace
  *

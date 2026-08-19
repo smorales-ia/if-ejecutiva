@@ -1478,3 +1478,50 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 - **El test de la ventana congela el reloj** (`vi.setSystemTime`), y es la única forma de que sea determinista. Un test que dependiera del reloj real fallaría de forma intermitente en CI, que es peor que no tenerlo.
 - Relación con **CI-042**: las dos salieron del mismo bloque y las dos son *dependencias del entorno que el código no puede verificar* — allá la unidad de un campo, acá la atomicidad del motor. Ninguna es un defecto activo; ambas son supuestos que conviene tener escritos.
 
+---
+
+## CI-045 · El chip "Por coordinar" sigue infiriendo la coordinación desde la etapa de SLA, teniendo el dato directo
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-045 |
+| **Archivo:línea** | `lib/tasador/cola-filtros.ts` → `esPorCoordinar()` · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md` §4.1 y **RF-TAS-01** |
+| **Contexto** | §4.1 define el chip como *"solicitudes **sin coordinación vigente**, en estado `asignada` y con `now() - fecha_asignacion < 4h`"*. Bajo **RO-29** esa definición no era computable —no existía `TX_CoordinacionVisita`— y P3-TAS.A la aproximó por la etapa del motor: `estado === 'asignada' && slaEtapa?.numero === 2`. La etapa 2 de §5.2.4 es la del primer contacto (RN-53), así que la aproximación era razonable. **RO-29 fue anulada el 19-ago-2026** y P4-TAS creó `TX_Solicitudes.coordinacion_vigente` (`fldI4Dv0jpRQvbdHl`): el dato que §4.1 pide existe y no se está usando. |
+| **Síntoma** | El predicado **depende del motor de SLA para responder una pregunta que no es de SLA**. `proyectarSlaEtapa()` devuelve `undefined` cuando el motor no resuelve etapa para la solicitud —y el propio módulo declara que eso es *"un resultado legítimo y no un error"*—. En ese caso `slaEtapa?.numero === 2` es `false` y **la solicitud no aparece en el chip aunque no tenga ninguna coordinación registrada**. Son precisamente las solicitudes peor instrumentadas las que desaparecen de la lista que existe para no perderlas de vista. |
+| **Causa** | La aproximación se adoptó por falta de dato, no por preferencia de diseño, y **nadie la revisó cuando el dato apareció**. Es la deuda típica de un rodeo que sobrevive a su motivo: el comentario del predicado citaba RO-29 como justificación y RO-29 ya no existe. |
+| **Impacto** | **Medio.** No hay pérdida de datos ni escritura incorrecta: es un filtro de lectura. Pero el chip es el mecanismo que RF-TAS-01 da al tasador para saber **qué le toca hacer ahora**, y hoy responde a "¿en qué etapa te tiene el motor?" en vez de a "¿coordinaste o no?". Las dos preguntas coinciden mientras el motor esté sano; divergen exactamente cuando no lo está. <br>Nota adicional: la ventana de **4 h** de §4.1 **no la implementa ninguna de las dos versiones** —ni la actual ni la original—. Es una divergencia preexistente y no la introduce esta ficha, pero conviene resolverla en el mismo movimiento. |
+| **Mitigación pendiente** | Cambiar el discriminante a **`coordinacion_vigente == null && estado === 'asignada'`**, que es la definición literal de §4.1, y **conservar el orden actual** por `sla_etapa_vence_ts` ascendente, que sí es una pregunta de SLA y está bien resuelta. Requiere antes que `proyectarTasacion()` **pueble `coordinacionVigente`**, que hoy no lo hace (ver **CI-046**, que comparte esa precondición). Decidir aparte si la ventana de 4 h entra: la definición sin ella es más simple y no deja solicitudes fuera. <br>**Comprobación de equivalencia antes de cambiar**: hoy una solicitud sale del chip al cerrarse e2, y el handler de coordinación cierra e2 en **las dos ramas**, así que confirmada y devuelta salen igual. Con el discriminante nuevo también salen las dos, porque `coordinacion_vigente` queda seteado en ambas. El comportamiento observable no cambia en el camino feliz; lo que cambia es que deja de depender del motor. |
+| **Dueño** | Sergio (priorización) · Claude Code (implementación en la tanda de Pantalla 1) |
+| **Fecha objetivo** | **Condicional a la tanda de Pantalla 1.** No es bloqueante: el chip funciona mientras el motor de SLA funcione. |
+| **Estado** | abierta |
+| **Origen** | Bloque 6 de **P4-TAS** (19-ago-2026), auditoría explícita de las lógicas que RO-29 había condicionado. **La lógica no se tocó**: corregir comentarios y cambiar predicados son dos trabajos distintos. |
+
+**Notas:**
+
+- **El predicado no está mal escrito: está resolviendo el problema de ayer.** Quien lo lea sin contexto va a pensar que la etapa 2 es la definición canónica, porque el comentario ya no cita RO-29. Esta ficha es la que dice que hay una definición mejor disponible.
+- **No fusionar con CI-046 aunque compartan precondición.** Las dos necesitan que la proyección pueble `coordinacionVigente`, pero una es un filtro de lista y la otra es un gate de navegación con consecuencia funcional. Fusionarlas haría que la más barata arrastre a la más cara.
+
+---
+
+## CI-046 · El gate de coordinación no existe en la UI: la card entra a la captura sin coordinar
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-046 |
+| **Archivo:línea** | `components/tasador/tasacion-card.tsx` → el `Button` final, `render={<Link href={\`/tasaciones/${tasacion.id}\`} />}` · vs spec §2.4 (*Gate de coordinación*) y **RF-TAS-11** |
+| **Contexto** | §2.4 es explícito sobre dónde vive el gate: *"mientras la coordinación no esté confirmada, el tasador no entra a la captura. El gate ya no vive en un botón «Iniciar captura», sino en **la llamada a la acción de la card** (RF-TAS-11), que ofrece «Coordinar visita» en lugar de «Abrir tasación»"*. P3-TAS.A colapsó las tres variantes a una bajo **RO-29**, que dejó el gate sin dato con que discriminar. RO-29 fue anulada el 19-ago-2026 y P4-TAS repuso las dos piezas: `TX_Solicitudes.coordinacion_vigente` y `resolverAccionCard()` en `lib/tasaciones.ts`. |
+| **Síntoma** | La card enlaza **incondicionalmente** a `/tasaciones/{id}`, de modo que **el gate de §2.4 no existe en la interfaz**. Tres consecuencias observables: <br>**(1)** Una solicitud sin coordinar deja entrar al formulario de captura igual que una coordinada. <br>**(2)** La sección A del formulario espera *"Fecha planificada de visita · Pre-llenado · editable"* desde la coordinación (§2.8 · RF-TAS-17); si nunca se coordinó, **no hay qué pre-llenar** y el tasador lo completa a mano sin saber que se saltó un paso. <br>**(3)** Una solicitud devuelta a la ejecutiva **no se distingue de una coordinable**: falta la variante deshabilitada con el badge *"Esperando contacto de ejecutiva"*, así que el tasador vuelve a entrar a una solicitud que está esperando a otra persona. |
+| **Causa** | Dos piezas construidas y **ninguna cableada**. `resolverAccionCard()` existe desde el Bloque 2 de P4-TAS y **no tiene ningún consumidor**; `Tasacion.coordinacionVigente` existe en el tipo y **`proyectarTasacion()` no lo puebla** — se añadió el campo pero no su lectura. Con la proyección vacía, `resolverAccionCard()` devolvería siempre la variante `coordinar` aunque se cableara hoy, que es el peor de los dos errores posibles: parecería funcionar. |
+| **Impacto** | **Alto, y es el más funcional de los tres hallazgos de este bloque.** Los otros dos son de comentario o de filtro; éste **permite saltarse una etapa del flujo**. Además realimenta el SLA: si el tasador nunca pasa por Pantalla 2, nadie cierra e2 ni e3, la solicitud se queda con la etapa 2 abierta y su semáforo termina en rojo sin que haya habido incumplimiento real — que es exactamente el problema que Q5 vino a cerrar. |
+| **Mitigación pendiente** | **Dos pasos, en este orden y no al revés:** <br>**(1) Poblar `coordinacionVigente` en `proyectarTasacion()`** (`lib/tasador/lectura-tasacion.ts`), leyendo `coordinacion_vigente` de `TX_Solicitudes`. Es un campo más en la proyección compartida, así que lo pagan `leerCola()` y `leerTasacion()` por igual — y aquí **sí corresponde** que lo pague la cola, porque es la cola la que lo necesita. <br>**(2) Cablear `resolverAccionCard(tasacion)`** en `tasacion-card.tsx` y renderizar las tres variantes: `coordinar` (acento, a `/tasaciones/{id}/coordinar`), `abrir` (primario, a `/tasaciones/{id}`) y `esperando_ejecutiva` (deshabilitado, con el badge). Los rótulos son literales §6 y no admiten variación. <br>**Test obligatorio**: que una solicitud sin `coordinacionVigente` **no** enlace a la captura. Sin ese test, el gate puede volver a perderse en el próximo refactor sin que nada falle. |
+| **Dueño** | Sergio (priorización) · Claude Code (implementación en la tanda de Pantalla 1) |
+| **Fecha objetivo** | **Primera tanda de Pantalla 1.** Es la de mayor prioridad de las dos fichas de este bloque. |
+| **Estado** | abierta |
+| **Origen** | Bloque 6 de **P4-TAS** (19-ago-2026), auditoría explícita de las lógicas que RO-29 había condicionado. **La lógica no se tocó**: cablear la card es trabajo de Pantalla 1, no de la limpieza de RO-29. |
+
+**Notas:**
+
+- **`resolverAccionCard()` sin consumidores es la señal.** Una función exportada, documentada y testeable que nadie llama es exactamente la forma que toma una pieza construida a mitad de camino. Si esta ficha se cerrara sin cablearla, habría que borrarla.
+- **El orden de los dos pasos importa.** Cablear la card antes de poblar la proyección da una card que muestra "Coordinar visita" en todas las solicitudes, incluidas las ya coordinadas — un gate que bloquea a todo el mundo es peor que ningún gate, porque parece intencional.
+- Relación con **CI-045**: comparten el paso (1). Si se hacen en la misma tanda, la proyección se puebla una vez y las dos fichas cierran con ella. Se dejan separadas porque sus impactos no son comparables.
+

@@ -20,8 +20,16 @@
  * tiene contacto de prioridad 1 con teléfono, así que la card renderizaba un
  * `href="tel:"` vacío teniendo el número en la base.
  *
- * Ahora que RO-29 dejó la coordinación en manos del teléfono, ése es el dato
- * más importante de la pantalla. Sale de la tabla que lo modela.
+ * El teléfono es el dato operativo más importante de la card: el tasador
+ * **llama** al contacto de prioridad 1 y sólo después registra el resultado en
+ * la Pantalla 2. Que la coordinación se registre en el sistema no cambia eso —
+ * cambia dónde queda constancia del desenlace, no cómo se hace el contacto—.
+ * Sale de la tabla que lo modela.
+ *
+ * ⚠ Este párrafo justificaba el teléfono con **RO-29** —*"la coordinación
+ * queda en manos del teléfono, fuera del sistema"*— hasta el 19-ago-2026.
+ * **RO-29 fue anulada**: la coordinación sí va por sistema desde P4-TAS. El
+ * teléfono sigue siendo el dato importante, por la razón de arriba.
  *
  * ## Contrato
  *
