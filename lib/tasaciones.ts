@@ -132,14 +132,30 @@ export interface UnidadSii {
   rolSii: string
   superficieM2: number
   /**
-   * Etiqueta corta de la unidad para la columna «Dirección» de la tabla de
-   * §2.3 — ej. `Dep. 803`, `Estac. 45`.
+   * **CAMPO DERIVADO — no existe en Airtable.** Etiqueta corta de la unidad
+   * para la columna «Dirección» de la tabla de §2.3 — ej. `Dep. 803`,
+   * `Estac. 45`.
    *
-   * ⚠ **No es un campo de Airtable.** `TX_Unidades` no tiene dirección: se
-   * **deriva** de `subtipo` + `numero_unidad` con {@link direccionUnidad}.
+   * ⚠ `TX_Unidades` **no tiene ningún campo de dirección**. Este valor se
+   * calcula con {@link direccionUnidad} a partir de `subtipo` +
+   * `numero_unidad`, en `leerUnidades()` (`lib/tasador/lectura-tasacion.ts`).
    * Decisión de Héctor del 19-ago-2026, opción (a) de las tres que planteó el
-   * Bloque 3 de P4-TAS. `undefined` cuando la unidad no tiene ni subtipo ni
-   * número, que es el único caso en que no hay nada que mostrar.
+   * Bloque 3 de P4-TAS.
+   *
+   * Tres consecuencias que conviene no descubrir por las malas:
+   *
+   * 1. **Es de presentación, no de persistencia.** Nunca se escribe de vuelta
+   *    a Airtable, y ninguna escritura debe tomarlo como origen: el dato real
+   *    son los dos campos de los que sale.
+   * 2. **Si el texto se ve mal, el bug no está acá.** Está en el mapa de
+   *    abreviaturas de {@link direccionUnidad} o en los datos de
+   *    `TX_Unidades`. Parchearlo en la vista deja dos verdades.
+   * 3. **No es filtrable ni ordenable en Airtable**, porque allá no existe.
+   *    Cualquier `filterByFormula` sobre «dirección de unidad» es imposible
+   *    tal cual y hay que expresarlo sobre `subtipo` y `numero_unidad`.
+   *
+   * `undefined` cuando la unidad no tiene ni subtipo ni número — el único caso
+   * en que no hay nada que mostrar.
    */
   direccion?: string
 }
@@ -1184,6 +1200,58 @@ export async function cargarMotivosDevolucion(): Promise<MotivoNoContacto[]> {
   return llamarApi<MotivoNoContacto[]>(
     '/api/tasaciones/config/motivos-devolucion',
   )
+}
+
+/**
+ * Registra una coordinación confirmada (RF-TAS-03 · punto 2 de Pantalla 2).
+ *
+ * Persiste una fila en `TX_CoordinacionVisita` con `estado_coordinacion =
+ * confirmada` y deja `email_enviado_status = pendiente`: **el correo a la
+ * ejecutiva lo manda SC13 después**, no esta llamada. Por eso el toast del
+ * llamador no dice que se notificó por email — todavía no ocurrió.
+ *
+ * **No cambia el estado backend.** La solicitud sigue `asignada` antes y
+ * después; sólo sale de ahí al presionar «Calcular Tasación» (§2.3).
+ *
+ * El ordinal del intento y `coordinacion_vigente` los escribe la ruta, no
+ * Airtable: ninguno de los dos es fórmula (`docs/schema-airtable.md` §26.6).
+ */
+export async function confirmarCoordinacion(
+  id: string,
+  fechaVisita: string,
+  nota?: string,
+): Promise<void> {
+  await llamarApi<{ id: string }>(`/api/tasaciones/${id}/coordinacion`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resultado: 'confirmada', fechaVisita, nota }),
+  })
+}
+
+/**
+ * Devuelve la coordinación a la ejecutiva (RF-TAS-12 · punto 3 de Pantalla 2).
+ *
+ * `motivo` es uno de los valores del catálogo servido por
+ * {@link cargarMotivosDevolucion}; `detalle` exige **20 caracteres mínimos**, y
+ * la validación se repite server-side: el mínimo del cliente es feedback, no
+ * garantía.
+ *
+ * ⚠ **No viajan `fechaVisita` ni `nota`.** El punto 3 del diseño v4 pide el
+ * correo *"con la fecha de la visita y la nota que haya escrito"*, pero esa
+ * rama de la pantalla no captura ninguna de las dos —si no se pudo contactar,
+ * no hay fecha que informar—. Es la **lectura conservadora de A-20**, pendiente
+ * de confirmación de Héctor.
+ */
+export async function devolverCoordinacion(
+  id: string,
+  motivo: MotivoNoContacto,
+  detalle: string,
+): Promise<void> {
+  await llamarApi<{ id: string }>(`/api/tasaciones/${id}/coordinacion`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ resultado: 'rechazada', motivo, detalle }),
+  })
 }
 
 /**

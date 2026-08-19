@@ -1407,3 +1407,49 @@ recarga, por hidratación y por remontajes de React que el código no controla.
   tiene **67** al 19-ago-2026). No se abre entrada propia: es un dato de contexto dentro de una
   ficha ya cerrada, y queda anotado en `docs/schema-airtable.md` §26.6.
 
+---
+
+## CI-042 · `AdjuntoDropbox.sizeBytes` asume que `TX_Adjuntos.tamanio_kb` sigue en kilobytes
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-042 |
+| **Archivo:línea** | `lib/tasador/lectura-tasacion.ts` → `leerAdjuntos()`, la conversión `fields.tamanio_kb * 1024` · vs base `app9G7lLkIV3CpeLa`, `TX_Adjuntos.tamanio_kb` (`number`) |
+| **Síntoma** | El tipo `AdjuntoDropbox.sizeBytes` promete **bytes** y el campo de Airtable se llama `tamanio_kb`, así que el lector multiplica por 1024. La unidad **vive en el nombre del campo, no en su tipo**: Airtable guarda un `number` pelado y no hay nada que impida que alguien cambie el escenario que lo puebla para que escriba bytes, o que empiece a poblarlo un origen distinto con otra unidad. Si eso pasa, la conversión **duplica en silencio**: un PDF de 128 KB se renderiza como `128.0 MB` en el bloque Adjuntos de Pantalla 2. Nada falla, nada se loguea, y el número es plausible a primera vista. |
+| **Causa** | Es una **dependencia de unidad no verificable en runtime**. El nombre `tamanio_kb` es la única declaración de que el valor está en KB, y los nombres de campo de Airtable no son un contrato: se renombran desde la UI sin que ningún consumidor se entere. El repo ya tiene el precedente inverso en `sucursal_originadora `, cuyo espacio final obligó a referenciar por FIELD_ID. Acá el riesgo no es el nombre sino **la semántica que el nombre transporta**. |
+| **Impacto** | **Bajo hoy, silencioso siempre.** Sólo afecta a la etiqueta de tamaño de un adjunto en la pantalla de coordinación — no entra en el motor de cálculo, no viaja en ningún correo y no se persiste. Lo que lo hace digno de ficha no es la magnitud sino el **modo de fallo**: un error de factor 1024 en una cifra de tamaño no dispara ninguna alarma y puede vivir meses. |
+| **Mitigación pendiente** | Tres opciones, de menor a mayor coste: **(a)** un guard de rango en `leerAdjuntos()` que loguee cuando `tamanio_kb` supere un umbral absurdo para un KB —digamos 10⁷, que serían 10 GB— y que es la señal de que el campo cambió de unidad; **(b)** renombrar el consumo a un helper `kbABytes()` con su test, para que la unidad tenga un solo punto de traducción y quede cubierta; **(c)** normalizar el schema para que el campo declare su unidad en la `description` de Airtable, que es donde un editor la vería antes de cambiarla. **Recomendada: (a) + (c)**, que no tocan el contrato y cubren el caso real. |
+| **Dueño** | Claude Code (implementación) · Sergio (decisión de cuál de las tres) |
+| **Fecha objetivo** | **Condicional a la primera tanda que vuelva a tocar `leerAdjuntos()`**, o a P10-TAS si ninguna lo hace antes. No es bloqueante de P4-TAS. |
+| **Estado** | abierta |
+| **Origen** | Bloque 3a de **P4-TAS** (19-ago-2026), al proyectar `adjuntosDropbox` y descubrir que el tipo dice bytes y la base dice KB. |
+
+**Notas:**
+
+- **No es un bug: hoy la conversión es correcta.** La ficha registra una dependencia frágil, no un defecto activo. Cerrarla sin implementar nada sería perder la única constancia de por qué hay un `* 1024` en el lector.
+- **La conversión está deliberadamente en el lector y no en la vista.** Si estuviera en el componente, el tipo `sizeBytes` sería mentira para todos los demás consumidores. Moverla "para simplificar" reintroduce el problema en peor lugar.
+- Relación con **CI-001**: aquélla es sobre referenciar campos por nombre cuando el nombre puede colisionar; ésta es sobre **confiar en el nombre para saber la unidad**. Son la misma familia —el nombre de un campo de Airtable no es un contrato— con dos consecuencias distintas.
+
+---
+
+## CI-043 · RF-TAS-04 queda sin construir: `contactosEditadosPorEjecutiva` no tiene campo en Airtable
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-043 |
+| **Archivo:línea** | `components/tasador/coordinar-visita.tsx`, comentario del banner de reapertura retirado · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md` §2.3 (**RF-TAS-04**) y §1.4 (excepción acotada a RN-59) |
+| **Síntoma** | **RF-TAS-04 quedó desbloqueado en la spec v1.9.10 y no se construye en P4-TAS.** La spec describe la reapertura del segundo intento: cuando la coordinación está `rechazada` y la ejecutiva corrige los contactos de visita, la Pantalla 2 vuelve a abrirse para el tasador con ambos desenlaces disponibles, y el nuevo intento se registra con `intento_numero = 2`. El componente v0 lo implementaba con un banner condicionado a `tasacion.coordinacionVigente === "rechazada" && tasacion.contactosEditadosPorEjecutiva === true`. **El segundo discriminante no existe**: no hay campo en `TX_Solicitudes`, ni en `TX_ContactosVisita`, ni forma de derivarlo de lo que hay. |
+| **Causa** | `coordinacionVigente` sí volvió en P4-TAS —es `fldI4Dv0jpRQvbdHl`, creado en el Bloque 1— pero `contactosEditadosPorEjecutiva` **nunca tuvo respaldo en la base**: en el v0 era un booleano del array en memoria. Reponerlo exige decidir **qué cuenta como "la ejecutiva editó los contactos"**: cualquier escritura sobre `TX_ContactosVisita` posterior a la devolución, sólo las de ciertos campos, o un acto explícito de la ejecutiva. `TX_ContactosVisita` tiene `ultima_modificacion` (`lastModifiedTime`), que permitiría compararla contra `fecha_respuesta` del último intento — pero eso es una **regla de negocio nueva**, no una lectura. |
+| **Impacto** | **Acotado y declarado.** Pantalla 2 funciona completa en su camino principal: los cuatro bloques de resumen, los dos desenlaces, los correos y la visibilidad para la ejecutiva. Lo que falta es el **segundo intento**. Consecuencia operativa concreta: si el tasador devuelve a la ejecutiva y ésta corrige el teléfono, **hoy no hay forma de que la pantalla se reabra desde el sistema** — se resuelve fuera, como antes. No hay pérdida de datos ni estado inconsistente: la fila `rechazada` queda registrada y la ejecutiva la ve. |
+| **Mitigación pendiente** | Tanda propia, posterior a P4-TAS. Requiere, en orden: **(1)** decidir la regla de "contactos editados" —candidata barata: `ultima_modificacion` de algún contacto > `fecha_respuesta` del último intento, que no necesita campo nuevo—; **(2)** exponerla en la proyección de `leerTasacion()`; **(3)** reponer el banner y habilitar los desenlaces; **(4)** verificar que el `intento_numero` que escribe el handler llega a 2. El punto (1) es de negocio y conviene llevarlo a Héctor junto con **A-20** y **A-21**, que son de la misma pantalla. |
+| **Dueño** | Sergio (decisión de la regla) · Claude Code (construcción) |
+| **Fecha objetivo** | **Condicional a la decisión del punto (1).** No se agenda antes: construirlo con una regla inventada daría un banner que aparece cuando no debe. |
+| **Estado** | abierta |
+| **Origen** | Bloque 3b de **P4-TAS** (19-ago-2026), al recuperar `coordinar-visita.tsx` de `890bffa^` y encontrar que el banner dependía de un campo sin origen. |
+
+**Notas:**
+
+- **Es deuda diferida por decisión explícita, no un olvido.** Sergio decidió el 19-ago-2026 no reponer `contactosEditadosPorEjecutiva`: sin discriminante real el banner mentiría la mitad de las veces, y un aviso falso de "puedes intentar de nuevo" es peor que no tenerlo. El componente lleva el comentario en el sitio donde estaba el banner, para que el próximo que lo lea no crea que se perdió al recuperar el archivo.
+- **RF-TAS-05 sí se construye**, aunque salió del mismo desbloqueo: sólo necesita que la fila exista, y existe. Las dos RF se desbloquearon juntas y **no avanzan al mismo ritmo**; conviene no tratarlas como un paquete.
+- **La excepción acotada a RN-59 quedó repuesta en la spec §1.4 y no tiene consumidor todavía.** Es correcto —la spec describe lo que el sistema debe permitir, y P4-TAS no construye la parte de IF-02 que la ejerce— pero alguien que audite §1.4 contra el código no va a encontrar nada. Esta ficha es la explicación.
+
