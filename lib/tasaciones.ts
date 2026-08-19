@@ -28,7 +28,7 @@
  * `leerTasacion` al mudarse; el mock `TASACIONES` se sustituyó por `leerCola`.
  */
 
-import type { ContactoVisita } from './console-data'
+import type { ContactoVisita, SlaEtapaSolicitud } from './console-data'
 
 /* -------------------------------------------------------------------------
  * Estado y semáforo
@@ -55,18 +55,29 @@ export type EstadoBackend =
   | 'requiere_atencion'
 
 /**
- * Semáforo que muestra la card de la cola.
+ * Semáforo que muestra la card de la cola — **es el de IF-02, no uno propio**.
  *
- * ⚠ El valor lo produce el motor de SLA por etapa (`lib/sla-etapas.ts`), que
- * IF-03 consume server-side. **IF-03 no calcula SLA** (CI-021): este tipo es
- * el resultado que le llega, no una fórmula propia.
+ * P3-TAS.A retiró el `SlaStatus` de cuatro valores que traía el v0
+ * (`en_plazo · por_vencer · vencido · por_coordinar`) y lo sustituyó por este
+ * reexport. Tres razones, en orden de peso:
  *
- * ⚠ `por_coordinar` queda **en retirada**: con CI-012 cerrado en sentido
- * negativo la coordinación ocurre por teléfono, fuera del sistema. Se conserva
- * mientras `tasacion-card.tsx` lo indexe en su `Record<SlaStatus, …>`; P3-TAS
- * lo elimina junto con el chip homónimo.
+ * 1. **Nadie lo producía.** `proyectarTasacion()` nunca seteaba `slaStatus` ni
+ *    `horasRestantes`, así que la card caía a `?? 'en_plazo'` y `?? 0` y
+ *    pintaba **"En plazo · 0h"** en todas las filas, con la cartera entera en
+ *    `sla_semaforo_etapa = "rojo"`. Un verde que la base no respalda es
+ *    exactamente lo que §9.6 prohíbe.
+ * 2. **CI-021 manda el reloj por etapa**, y el motor ya lo materializa en
+ *    `sla_etapa_actual`, `sla_semaforo_etapa`, `sla_etapa_alerta_ts` y
+ *    `sla_etapa_vence_ts`. Esta forma es la que consume `SLABadge`, que R7
+ *    obliga a importar de `components/console/status-badges.tsx`.
+ * 3. **`por_coordinar` quedó sin objeto** con RO-29: la coordinación no se
+ *    soporta por sistema. El chip homónimo sobrevive con otra definición —
+ *    etapa 2 abierta, ver `lib/tasador/cola-filtros.ts`— pero no como color.
+ *
+ * Mismo criterio que `ContactoVisita`: es la misma fila de Airtable y el mismo
+ * concepto que ya tipa IF-02. Duplicarlo habría dejado dos formas para un dato.
  */
-export type SlaStatus = 'en_plazo' | 'por_vencer' | 'vencido' | 'por_coordinar'
+export type { SlaEtapaSolicitud } from './console-data'
 
 /** Paleta del badge de estado (`components/tasador/estado-badge.tsx`). */
 export type EstadoColor = 'verde' | 'ambar' | 'rojo' | 'azul' | 'naranja'
@@ -82,6 +93,18 @@ export type EstadoColor = 'verde' | 'ambar' | 'rojo' | 'azul' | 'naranja'
  * los tres orígenes que la UI distingue hoy.
  */
 export type FuenteDato = 'solicitud' | 'documentos' | 'visita'
+
+/**
+ * Literal de `Tasacion.visita` cuando la solicitud no tiene
+ * `fecha_visita_programada`.
+ *
+ * Es una constante y no una cadena suelta porque la card **omite la línea** de
+ * visita en ese caso (§4.1 · punto 8: *«sólo cuando ya está coordinada»*), y
+ * comparar contra un literal repetido a mano es la forma de que un día la línea
+ * muestre "Visita: Por agendar" en producción. Mismo literal que IF-02
+ * (`lib/solicitudes.ts:734`).
+ */
+export const SIN_FECHA_VISITA = 'Por agendar'
 
 /** Valor de un campo que llega pre-llenado desde la solicitud. */
 export interface DatoPrellenado {
@@ -119,7 +142,17 @@ export interface AdjuntoDropbox {
 
 /** Datos que la Ejecutiva dejó cargados en la solicitud. */
 export interface DatosEjecutiva {
-  contactoTelefono: string
+  /**
+   * Teléfono del contacto de **prioridad 1** de `TX_ContactosVisita`
+   * (§4.1 · punto 7), resuelto por `lib/tasador/contactos-cola.ts`.
+   *
+   * `null` cuando la solicitud no tiene ningún contacto con teléfono usable: la
+   * card **omite la línea** en vez de renderizar un `tel:` vacío, que es lo que
+   * hacía antes de P3-TAS.A. No hay respaldo a `vendedor_telefono` (CI-035):
+   * mezclar dos orígenes en silencio esconde el hueco de datos en vez de
+   * mostrarlo.
+   */
+  contactoTelefono: string | null
   rolSii: string
 }
 
@@ -154,9 +187,15 @@ export interface Tasacion {
   }
   datosEjecutiva: DatosEjecutiva
 
-  /** Semáforo y reloj que produce el motor de SLA por etapa. Nunca se recalcula acá. */
-  slaStatus?: SlaStatus
-  horasRestantes?: number
+  /**
+   * Semáforo y reloj que produce el motor de SLA por etapa (`lib/sla-etapas.ts`
+   * + la fórmula `sla_semaforo_etapa`). **Nunca se recalcula acá** — CI-021.
+   *
+   * Ausente cuando el motor no resolvió etapa para la solicitud, que es un
+   * resultado legítimo y no un error: en v1.9 sólo e1 y e2 tienen escritor. La
+   * card lo traduce a "sin píldora", igual que la bandeja de IF-02.
+   */
+  slaEtapa?: SlaEtapaSolicitud
 
   /** `fecha_asignacion_ts` en ISO. Alimenta los filtros de la cola. */
   fechaAsignacion?: string
@@ -169,24 +208,23 @@ export interface Tasacion {
   unidades?: UnidadSii[]
   vendedor?: { nombre: string; rut: string }
   adjuntosDropbox?: AdjuntoDropbox[]
-
-  /**
-   * ⚠ **Campos en retirada — CI-012 cerrado (17-ago-2026).** La coordinación
-   * de visitas se hace por teléfono, fuera del sistema: `TX_CoordinacionVisita`
-   * no existe y no se creará (schema §26.5).
-   *
-   * Se conservan porque `app/tasaciones/page.tsx` y `tasacion-card.tsx` los
-   * leen hoy, y quitarlos ahora fabricaría errores de compilación en archivos
-   * que **P3-TAS reescribe de todos modos** al colapsar la Regla T-A a un solo
-   * botón. Ninguna entidad de coordinación se tipa: no hay `CoordinacionVisita`,
-   * ni `MotivoNoContacto`, ni `MOTIVOS_DEVOLUCION`, ni `intentoNumero`.
-   *
-   * P3-TAS los elimina.
-   */
-  coordinacionVigente?: 'confirmada' | 'rechazada' | null
-  /** @deprecated Ver `coordinacionVigente`. Se elimina en P3-TAS. */
-  contactosEditadosPorEjecutiva?: boolean
 }
+
+/*
+ * ⚠ **`coordinacionVigente` y `contactosEditadosPorEjecutiva` se eliminaron en
+ * P3-TAS.A** (19-ago-2026). Eran los dos últimos residuos de la coordinación
+ * por sistema, que **RO-29** cerró en negativo: `TX_CoordinacionVisita` no
+ * existe ni existirá, así que el mapper los proyectaba en `null` fijo y la card
+ * derivaba de ese `null` sus tres variantes de botón.
+ *
+ * Con ellos cae la Regla T-A en su forma de tres variantes: el botón único es
+ * **"Abrir tasación"** para `asignada · visitada · calculada` (decisión de
+ * Sergio · 19-ago-2026). No se tipó `AccionCard`: una unión discriminada de una
+ * sola variante no discrimina nada.
+ *
+ * Si algún día vuelve la coordinación por sistema, esto se retipa desde la
+ * tabla que la soporte — no desde estos campos.
+ */
 
 /* -------------------------------------------------------------------------
  * Formulario de captura · secciones A–H (§2.8)

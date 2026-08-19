@@ -390,6 +390,23 @@ Lo que sigue vigente como regla vive abajo, destilado.
   **qué pasa la vez que se cumple sin que nadie lo haya pedido**.
   Vigente desde el 18-ago-2026, sesión P2-TAS.B.
 
+- **RO-36 · Un día del calendario no es un instante: se ancla al mediodía local.**
+  Los campos `date` de Airtable —sin hora— llegan como `"2026-08-18"`, y
+  `new Date("2026-08-18")` los interpreta como **medianoche UTC**. Formateados
+  en cualquier huso al oeste de Greenwich —el de Chile entre ellos— retroceden
+  al día anterior. La regla: cuando el dato es una **fecha de calendario**
+  (visita, vencimiento, plazo), se parsea anclando a `T12:00:00` **sin `Z`**,
+  que deja el día a salvo entre −12 y +12; cuando el dato es un **instante**
+  (`sla_etapa_vence_ts`, `fecha_asignacion_ts`, todo lo que termina en `_ts`),
+  se lee tal cual, porque ahí la hora es el dato. Precedente doble: `parseDate`
+  de `lib/solicitudes.ts` ya lo resolvía así en IF-02 desde hace meses, y
+  `fechaVisible` de `lib/tasador/lectura-tasacion.ts` repitió el error en IF-03
+  hasta P3-TAS.B. Corolario de método: **el bug no se ve leyendo el código, se
+  ve mirando un dato conocido en pantalla** — apareció al sembrar una visita el
+  18 y verla renderizada el 17, y ningún test previo lo habría cazado porque
+  todos los fixtures anteriores usaban fechas con hora.
+  Vigente desde el 19-ago-2026, sesión P3-TAS.B.
+
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 
 **OV-4 preserva la ruta de import del v0 para tipos y constantes; no cierra la
@@ -1429,3 +1446,46 @@ explícitamente en vez de descubrirlo meses después.
 **Solución aplicada:** (a) el test de `/calcular` **ejecuta la secuencia real** del doble tap —200 y transición, el guard pasa a leer `visitada`, 409— y afirma el **efecto acumulado**: `updateRecord` una sola vez. Eso es lo que garantiza que AT03 se dispare una vez. (b) el test del guard cierra con dos **controles negativos**: con el guard en verde, el GET sí lee y el PATCH sí escribe.
 
 **Prevención futura:** para transiciones irreversibles, el test recorre la secuencia y afirma el número de escrituras, no el status de cada paso. Y **todo test cuya aserción principal sea una ausencia necesita un caso gemelo que demuestre la presencia**.
+
+### 2026-08-19 — P3-TAS: la Pantalla 1 contra datos reales
+
+**Contexto:** tanda P3-TAS (.A capa de datos, .B pantalla) sobre `feat/tasador-ui`. Cola personal
+del tasador: chips, card, semáforo de SLA y contacto telefónico.
+
+**Inconveniente:** la card pintaba **"En plazo · 0h" en todas las filas**, con la cartera entera
+emitiendo `sla_semaforo_etapa = "rojo"`.
+**Causa raíz:** `Tasacion.slaStatus` y `horasRestantes` eran opcionales y **ninguna capa los
+poblaba**; la card caía a `?? "en_plazo"` y `?? 0`. El tipo venía del v0, donde el store en memoria
+los traía cargados a mano, y al cablear contra Airtable nadie ocupó el hueco. Compilaba, así que
+nada lo señaló.
+**Solución aplicada:** se retiró el `SlaStatus` propio y se reexportó `SlaEtapaSolicitud` de IF-02;
+`proyectarSlaEtapa()` en `lib/tasador/lectura-tasacion.ts` lo arma desde `sla_etapa_actual`,
+`sla_semaforo_etapa`, `sla_etapa_alerta_ts` y `sla_etapa_vence_ts`, y la card usa el `SLABadge`
+importado de `components/console/status-badges.tsx` (R7). Sin `slaEtapa` no se pinta píldora.
+**Prevención futura:** un campo opcional que nadie escribe **y** un `??` en el consumidor son, en
+conjunto, un valor inventado con apariencia de dato. Cuando el `??` aporta un valor de negocio —un
+color, un plazo, un estado— la pregunta a hacerse es quién lo escribe, no si compila.
+
+**Inconveniente:** la visita sembrada el **18-08** se mostraba **17-08** en la card.
+**Causa raíz:** `fecha_visita_programada` es un campo `date` de Airtable y llega sin hora;
+`new Date("2026-08-18")` es medianoche **UTC** y al formatear en huso chileno retrocede un día.
+**Solución aplicada:** `fechaVisible()` ancla a `T12:00:00` local, igual que `parseDate` de
+`lib/solicitudes.ts:419` en IF-02. Cuatro casos nuevos en `lib/tasador/lectura-tasacion.test.ts`,
+incluido el primero de mes, donde el error salta de mes además de día. Auditados los otros tres
+`new Date(...)` de IF-03: los dos restantes leen instantes `_ts` con hora real y están bien.
+**Prevención futura:** **RO-36**. Y el hallazgo de método: apareció al mirar un dato *conocido* en
+pantalla, no leyendo código. Los fixtures previos usaban fechas con hora y por eso ningún test lo
+cazó.
+
+**Inconveniente:** no se pudo hacer la verificación visual de §4.2 paso 8 de la forma prevista.
+**Causa raíz:** `middleware.ts` protege todo salvo `/sign-in` y `/api/health` con `auth.protect()`
+de Clerk, así que `/tasaciones` responde **404** a cualquier petición sin sesión. IF-03 usa
+`mockUserTasador` para la identidad (R2) pero **igual vive detrás del Clerk de IF-02**.
+**Solución aplicada:** verificación equivalente sin navegador, con dos scripts en el scratchpad
+—fuera del repo— corridos con `vitest --config` y un symlink a `node_modules`: uno ejecuta
+`leerCola()` contra Airtable real y vuelca la proyección; otro renderiza las `TasacionCard` con
+`renderToStaticMarkup` y vuelca el HTML, del que se extraen textos y `href`. Así se comprobaron los
+ocho elementos de §4.1, su orden, las tres omisiones y el `tel:`. **La comprobación de píxeles a
+375×812 sigue pendiente y es de Sergio.**
+**Prevención futura:** anotar en el plan que toda pantalla de IF-03 necesita sesión Clerk para
+abrirse, y que P11-TAS tiene que reconciliar el guard de Clerk con la identidad mock.

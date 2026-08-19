@@ -37,9 +37,18 @@
 
 import { listRecords } from '@/lib/airtable-client'
 import { fetchCatalogos } from '@/lib/catalogos'
-import { etapaVigente } from '@/lib/sla-etapas'
-import type { DatoPrellenado, EstadoBackend, Tasacion } from '@/lib/tasaciones'
+import type { SlaTonoEtapa } from '@/lib/console-data'
+import { obtenerMatrizEtapas } from '@/lib/sla-etapas'
+import { etiquetaEtapa, nombresDeEtapas } from '@/lib/solicitudes'
+import {
+  SIN_FECHA_VISITA,
+  type DatoPrellenado,
+  type EstadoBackend,
+  type SlaEtapaSolicitud,
+  type Tasacion,
+} from '@/lib/tasaciones'
 import { autorizarSolicitud, type SolicitudFields } from './auth-guard'
+import { telefonosPrioritarios } from './contactos-cola'
 import { TABLE_IDS } from './field-ids'
 import { getUsuarioTasador, mockTasadorConfigurado } from './mock-user'
 
@@ -97,6 +106,14 @@ export interface MaestrosTasacion {
   clientes: Map<string, string>
   productos: Map<string, string>
   tiposPropiedad: Map<string, string>
+  /**
+   * Rótulos de §5.2.4 por número de etapa, leídos de `C_SLA_Etapas`.
+   *
+   * **Ningún nombre de etapa se escribe en el repo** (RO-05): la píldora de la
+   * card y la de la bandeja de IF-02 rotulan el mismo dato con el mismo texto
+   * porque salen de la misma tabla. Vacío → `Etapa {n}`, que es feo y honesto.
+   */
+  nombresEtapa: ReadonlyMap<number, string>
 }
 
 function aMapa(opciones: { id: string; nombre: string }[]): Map<string, string> {
@@ -112,7 +129,7 @@ function aMapa(opciones: { id: string; nombre: string }[]): Map<string, string> 
  * campo sale como `—` y el resto de la tasación sigue siendo legible.
  */
 export async function leerMaestros(): Promise<MaestrosTasacion> {
-  const [comunas, catalogos] = await Promise.all([
+  const [comunas, catalogos, nombresEtapa] = await Promise.all([
     mapaComunas().catch((err) => {
       console.error('[lectura-tasacion] no se pudo leer M_Comunas', err)
       return new Map<string, string>()
@@ -121,6 +138,12 @@ export async function leerMaestros(): Promise<MaestrosTasacion> {
       console.error('[lectura-tasacion] no se pudieron leer los catálogos', err)
       return null
     }),
+    obtenerMatrizEtapas()
+      .then(nombresDeEtapas)
+      .catch((err) => {
+        console.warn('[lectura-tasacion] C_SLA_Etapas ilegible; etapa sin rótulo', err)
+        return new Map<number, string>()
+      }),
   ])
 
   return {
@@ -128,6 +151,7 @@ export async function leerMaestros(): Promise<MaestrosTasacion> {
     clientes: catalogos ? aMapa(catalogos.clientes) : new Map(),
     productos: catalogos ? aMapa(catalogos.productos) : new Map(),
     tiposPropiedad: catalogos ? aMapa(catalogos.tiposPropiedad) : new Map(),
+    nombresEtapa,
   }
 }
 
@@ -161,12 +185,28 @@ function texto(valor: unknown, porDefecto = VACIO): string {
 /**
  * Fecha para mostrar, en formato chileno. Devuelve el literal de §6 cuando no
  * hay fecha — la ausencia de visita agendada es un estado normal, no un error.
+ *
+ * ## Por qué el mediodía y no la medianoche
+ *
+ * `fecha_visita_programada` es un campo `date` de Airtable: llega como
+ * `"2026-08-18"`, sin hora. `new Date("2026-08-18")` lo interpreta como
+ * **medianoche UTC**, y al formatearlo en un huso al oeste de Greenwich —el de
+ * Chile, sin ir más lejos— retrocede al día anterior: la visita del 18 se
+ * mostraba **17-08-2026**. Es un bug de los que no se ven en el código sino en
+ * la pantalla, y en esta pantalla manda al tasador a la propiedad el día
+ * equivocado.
+ *
+ * Anclar a las 12:00 **locales** (sin `Z`) deja el día a salvo de cualquier
+ * huso entre −12 y +12. Es la misma solución que `parseDate` de
+ * `lib/solicitudes.ts:419` en IF-02, que resolvió lo mismo antes: se copia el
+ * criterio, no se inventa otro.
  */
-function fechaVisible(valor: unknown, sinFecha = 'Por agendar'): string {
+function fechaVisible(valor: unknown, sinFecha: string = SIN_FECHA_VISITA): string {
   const crudo = typeof valor === 'string' ? valor.trim() : ''
   if (!crudo) return sinFecha
 
-  const fecha = new Date(crudo)
+  const soloFecha = /^\d{4}-\d{2}-\d{2}/.exec(crudo)
+  const fecha = soloFecha ? new Date(`${soloFecha[0]}T12:00:00`) : new Date(crudo)
   if (Number.isNaN(fecha.getTime())) return sinFecha
 
   return fecha.toLocaleDateString('es-CL', {
@@ -176,9 +216,86 @@ function fechaVisible(valor: unknown, sinFecha = 'Por agendar'): string {
   })
 }
 
+/** Sólo para el test del desfase de huso. No tiene otros consumidores. */
+export const _fechaVisible = fechaVisible
+
 /** Envuelve un valor ya resuelto como dato pre-llenado desde la solicitud. */
 function desdeSolicitud(valor: string): DatoPrellenado {
   return { valor: valor === VACIO ? '' : valor, fuente: 'solicitud' }
+}
+
+/* -------------------------------------------------------------------------
+ * Reloj por etapa (RF-53 · CI-021)
+ * ---------------------------------------------------------------------- */
+
+const TONOS_ETAPA: readonly SlaTonoEtapa[] = ['verde', 'ambar', 'rojo', 'sin_dato']
+
+/**
+ * Lee el tono **tal cual** lo emitió la fórmula `sla_semaforo_etapa`
+ * (`fldB6gJ3clZUPgaZk`), por igualdad literal contra los cuatro valores del
+ * contrato. No normaliza, no baja a minúsculas y **no recalcula**: si la
+ * fórmula emitiera otra cosa, lo correcto es que se note como `sin_dato` y no
+ * que el mapper lo disimule. Recalcular el tono acá sería la segunda fuente de
+ * verdad que RO-05 prohíbe.
+ *
+ * Es el mismo criterio de `lib/solicitudes.ts` (RO-13 · §9.6-R5). Se reescribe
+ * en vez de importarse porque allá es privado y la autorización R5-E de esta
+ * tanda alcanzó a una sola función; el tipo `SlaTonoEtapa` es compartido, así
+ * que una divergencia de dominio la caza `tsc`.
+ */
+function tonoDeFormula(valor: unknown): SlaTonoEtapa {
+  const v = typeof valor === 'string' ? valor.trim() : ''
+  return (TONOS_ETAPA as readonly string[]).includes(v) ? (v as SlaTonoEtapa) : 'sin_dato'
+}
+
+/** Instante ISO del formato JSON de Airtable. Cualquier otra cosa es `null`. */
+function instante(valor: unknown): Date | null {
+  if (typeof valor !== 'string' || valor.trim() === '') return null
+  const d = new Date(valor)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function esNumeroEtapa(n: unknown): n is SlaEtapaSolicitud['numero'] {
+  return typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= 7
+}
+
+/**
+ * Proyecta el reloj por etapa de una solicitud. **Pura y sin aritmética de
+ * plazos**: los catorce umbrales viven en `C_SLA_Etapas` y el motor ya los
+ * materializó en `sla_etapa_alerta_ts` y `sla_etapa_vence_ts`; acá sólo se
+ * formatea la distancia a un instante ya calculado.
+ *
+ * Devuelve `undefined` —y no un objeto neutro— cuando `sla_etapa_actual` está
+ * vacío. La señal de "hay dato de etapa" es ese campo, no el semáforo: sin él
+ * la card no pinta píldora, que es distinto de pintarla gris. Es la misma regla
+ * que la bandeja de IF-02, y la razón por la que la cartera de v1.9 —donde sólo
+ * e1 y e2 tienen escritor— no muestra verdes que la base no respalda.
+ *
+ * Cuando **sí** hay etapa pero sus umbrales no están materializados, el tono
+ * viaja como `sin_dato`: «estoy en la etapa 3 y no sé su plazo» es información
+ * distinta de «no sé nada de esta solicitud».
+ *
+ * @param ahora Inyectable para que el test no dependa del reloj de pared.
+ */
+export function proyectarSlaEtapa(
+  f: SolicitudFields,
+  nombresEtapa: ReadonlyMap<number, string>,
+  ahora: Date = new Date()
+): SlaEtapaSolicitud | undefined {
+  const numero = f['sla_etapa_actual']
+  if (!esNumeroEtapa(numero)) return undefined
+
+  const alerta = instante(f['sla_etapa_alerta_ts'])
+  const vence = instante(f['sla_etapa_vence_ts'])
+
+  return {
+    numero,
+    nombre: nombresEtapa.get(numero) ?? `Etapa ${numero}`,
+    tono: tonoDeFormula(f['sla_semaforo_etapa']),
+    etiqueta: etiquetaEtapa(vence, ahora),
+    alertaTs: alerta ? alerta.toISOString() : null,
+    venceTs: vence ? vence.toISOString() : null,
+  }
 }
 
 /**
@@ -190,7 +307,8 @@ function desdeSolicitud(valor: string): DatoPrellenado {
 export function proyectarTasacion(
   id: string,
   f: SolicitudFields,
-  maestros: MaestrosTasacion
+  maestros: MaestrosTasacion,
+  contactoTelefono: string | null = null
 ): Tasacion {
   const comuna = nombreDeLink(f['comuna'], maestros.comunas)
   const tipo = nombreDeLink(f['tipo_propiedad'], maestros.tiposPropiedad)
@@ -233,18 +351,16 @@ export function proyectarTasacion(
     },
     datosEjecutiva: {
       /**
-       * ⚠ **Asunción declarada.** Sale de `vendedor_telefono` de
-       * `TX_Solicitudes`, no de `TX_ContactosVisita`. Con RO-29 la coordinación
-       * es telefónica y fuera del sistema, así que este número es el dato
-       * operativo de la card — pero la tabla dedicada de contactos existe y
-       * tiene varios por solicitud con su `ordenPrioridad`. Leerla por cada
-       * card serían N lecturas extra en la cola. **P3-TAS decide** si la card
-       * muestra el contacto prioritario real; hasta entonces, éste.
+       * ✅ **CI-035 cerrada en P3-TAS.A.** Es el contacto de prioridad 1 de
+       * `TX_ContactosVisita`, resuelto por `telefonosPrioritarios()` en **una**
+       * lectura para toda la cola gracias al lookup `solicitud_record_id`. Ya
+       * no es `vendedor_telefono`, que era una aproximación sin respaldo en
+       * ningún RF y que en el único caso real de la cola venía vacío.
        */
-      contactoTelefono: texto(f['vendedor_telefono'], ''),
+      contactoTelefono,
       rolSii,
     },
-    horasRestantes: undefined,
+    slaEtapa: proyectarSlaEtapa(f, maestros.nombresEtapa),
     fechaAsignacion: typeof f['fecha_asignacion_ts'] === 'string' ? f['fecha_asignacion_ts'] : undefined,
     fechaSolicitud: typeof f['fecha_solicitud'] === 'string' ? f['fecha_solicitud'] : undefined,
     proyecto: texto(f['proyecto_condominio'], ''),
@@ -256,13 +372,6 @@ export function proyectarTasacion(
       nombre: texto(f['vendedor_razon_social_o_nombre'], ''),
       rut: texto(f['vendedor_rut'], ''),
     },
-    /**
-     * ⚠ En retirada — CI-012 cerrado por RO-29. Queda en `null` porque la
-     * coordinación no se soporta por sistema: no hay tabla de la que leerlo.
-     * `app/tasaciones/page.tsx` y `tasacion-card.tsx` todavía lo indexan;
-     * P3-TAS lo elimina del tipo y de sus consumidores.
-     */
-    coordinacionVigente: null,
   }
 }
 
@@ -282,18 +391,17 @@ export async function leerTasacion(id: string): Promise<Tasacion | null> {
     return null
   }
 
-  const maestros = await leerMaestros()
-  return proyectarTasacion(guard.solicitudId, guard.fields, maestros)
-}
+  const [maestros, telefonos] = await Promise.all([
+    leerMaestros(),
+    telefonosPrioritarios([guard.solicitudId]),
+  ])
 
-/** Una tasación de la cola, con la etapa de SLA que resolvió el motor. */
-export interface TasacionEnCola extends Tasacion {
-  /**
-   * Etapa vigente según `lib/sla-etapas.ts`. `null` = el motor no pudo
-   * resolverla y la UI pinta el badge neutro (CI-021). **IF-03 no calcula
-   * plazos**: acá no hay aritmética de horas.
-   */
-  slaEtapa: ReturnType<typeof etapaVigente>
+  return proyectarTasacion(
+    guard.solicitudId,
+    guard.fields,
+    maestros,
+    telefonos.get(guard.solicitudId) ?? null
+  )
 }
 
 /**
@@ -307,7 +415,7 @@ export interface TasacionEnCola extends Tasacion {
  * es un estado que la pantalla ya sabe renderizar; una excepción acá tumbaría
  * el Server Component entero.
  */
-export async function leerCola(): Promise<TasacionEnCola[]> {
+export async function leerCola(): Promise<Tasacion[]> {
   const usuario = getUsuarioTasador()
 
   if (!mockTasadorConfigurado()) {
@@ -329,12 +437,17 @@ export async function leerCola(): Promise<TasacionEnCola[]> {
     leerMaestros(),
   ])
 
-  return registros
-    .filter(
-      (r) => Array.isArray(r.fields.tasador) && r.fields.tasador.includes(usuario.recordId)
-    )
-    .map((r) => ({
-      ...proyectarTasacion(r.id, r.fields, maestros),
-      slaEtapa: etapaVigente(r.fields),
-    }))
+  const mias = registros.filter(
+    (r) => Array.isArray(r.fields.tasador) && r.fields.tasador.includes(usuario.recordId)
+  )
+
+  /**
+   * Una sola lectura de `TX_ContactosVisita` para toda la cola, después de
+   * filtrar por pertenencia: no se piden los contactos de solicitudes ajenas.
+   */
+  const telefonos = await telefonosPrioritarios(mias.map((r) => r.id))
+
+  return mias.map((r) =>
+    proyectarTasacion(r.id, r.fields, maestros, telefonos.get(r.id) ?? null)
+  )
 }

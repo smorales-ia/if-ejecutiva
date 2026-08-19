@@ -14,8 +14,13 @@
  *
  * El semáforo lo produce `lib/sla-etapas.ts` sobre la ventana hábil. **IF-03 no
  * hace aritmética de plazos**: no hay ningún literal de horas en este archivo.
- * Si el motor no puede resolver una solicitud, la card recibe `slaEtapa: null` y
- * la UI la pinta neutra — nunca un número inventado.
+ *
+ * Desde **P3-TAS.A** el cuerpo trae `slaEtapa` en la forma `SlaEtapaSolicitud`
+ * de IF-02 —número, nombre de `C_SLA_Etapas`, tono de la fórmula y los dos
+ * instantes ya materializados—, que es lo que consume `SLABadge`. Antes era
+ * sólo el número de etapa, y la card no tenía con qué pintar: caía a un
+ * "En plazo · 0h" que ningún campo respaldaba. Si el motor no resuelve etapa, la
+ * clave viaja **ausente** y la UI no pinta píldora — nunca un número inventado.
  *
  * ## Proyección compartida — ensanchada en P2-TAS.B
  *

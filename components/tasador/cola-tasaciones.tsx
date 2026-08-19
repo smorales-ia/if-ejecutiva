@@ -8,102 +8,88 @@
  * necesitan estado y `useSearchParams`. Un archivo es cliente o servidor, no
  * los dos, así que la parte interactiva vive acá y recibe la lista ya resuelta.
  *
- * ⚠ **El contenido es el del v0, deliberadamente sin rediseñar.** P3-TAS es la
- * tanda dueña de esta pantalla y le quedan pendientes que esta tanda **no**
- * toca: el chip "Hoy" como stub deshabilitado (A-12), el colapso de la Regla
- * T-A a un solo botón, la eliminación del chip "Por coordinar" y de
- * `coordinacionVigente` del tipo (RO-29). Adelantar cualquiera de esas
- * decisiones acá sería tomarlas sin el contexto de su tanda.
+ * **P3-TAS.A** le sacó las decisiones: el filtrado vive en
+ * `lib/tasador/cola-filtros.ts`, que es puro y testeable. Acá quedaban dos
+ * ventanas de horas escritas a mano —una para "Hoy" y otra para "Por
+ * coordinar"— que §4.3 prohíbe expresamente, y que además implementaban una
+ * agenda del día que **A-12 declara sin definir**. El detalle de qué medía cada
+ * una está en el docblock de `cola-filtros.ts`.
+ *
+ * **P3-TAS.B** le sacó el render de los chips (`chips-cola.tsx`) y le puso la
+ * sincronía con la URL. Lo que queda acá es el armazón: cabecera, título,
+ * contador y lista.
+ *
+ * ## Por qué el chip vive en el estado Y en la URL
+ *
+ * El estado local es el que manda para pintar: el filtro se aplica sobre la
+ * lista que ya está en memoria, así que cambiar de chip es instantáneo y **no
+ * recarga la ruta** (§4.1). La URL se escribe después, con `router.replace`
+ * —no `push`: el chip no es un paso de navegación y no debería llenar el
+ * historial de "atrás"—, y sirve para una sola cosa: que volver desde una
+ * pantalla interior reactive el chip con el que se salió.
+ *
+ * Leer la URL como única fuente habría hecho que cada click esperara al
+ * servidor antes de repintar, y en la pantalla que más se abre del flujo eso se
+ * nota.
  */
 
-import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { useCallback, useEffect, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { AppHeader } from "@/components/tasador/app-header"
+import { ChipsCola } from "@/components/tasador/chips-cola"
 import { TasacionCard } from "@/components/tasador/tasacion-card"
+import {
+  CHIP_POR_DEFECTO,
+  enColaVisible,
+  esChipActivo,
+  filtrarCola,
+  type ChipActivo,
+} from "@/lib/tasador/cola-filtros"
 import type { Tasacion } from "@/lib/tasaciones"
 
-type Filtro = "todas" | "hoy" | "por_coordinar"
-
-const FILTROS: { key: Filtro; label: string }[] = [
-  { key: "todas", label: "Todas" },
-  { key: "hoy", label: "Hoy" },
-  { key: "por_coordinar", label: "Por coordinar" },
-]
-
-/** Cola visible del tasador: solo asignada / visitada / calculada (nunca pdf_listo). */
-function enColaVisible(t: Tasacion) {
-  return t.estado === "asignada" || t.estado === "visitada" || t.estado === "calculada"
-}
-
-function horasDesde(iso?: string): number {
-  if (!iso) return Number.POSITIVE_INFINITY
-  return (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60)
-}
-
-function coincide(t: Tasacion, filtro: Filtro) {
-  if (!enColaVisible(t)) return false
-  if (filtro === "todas") return true
-  if (filtro === "hoy") return horasDesde(t.fechaAsignacion) < 24
-  // por_coordinar: sin coordinación vigente, asignada y dentro de la ventana de 4 h
-  return (
-    t.coordinacionVigente == null &&
-    t.estado === "asignada" &&
-    horasDesde(t.fechaAsignacion) < 4
-  )
-}
-
-export function ColaTasaciones({ tasaciones: todas }: { tasaciones: Tasacion[] }) {
+export function ColaTasaciones({
+  tasaciones: todas,
+  nombreTasador,
+}: {
+  tasaciones: Tasacion[]
+  nombreTasador: string
+}) {
+  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const [filtro, setFiltro] = useState<Filtro>("todas")
+  const [chip, setChip] = useState<ChipActivo>(CHIP_POR_DEFECTO)
 
-  // Permite volver con un tab activo (ej. tras devolver: ?tab=devueltas)
+  // Volver desde una pantalla interior reactiva el chip que traía la URL.
   useEffect(() => {
-    const tab = searchParams.get("tab") as Filtro | null
-    if (tab && FILTROS.some((f) => f.key === tab)) setFiltro(tab)
+    const desdeUrl = searchParams.get("chip")
+    if (esChipActivo(desdeUrl)) setChip(desdeUrl)
   }, [searchParams])
 
-  let tasaciones = todas.filter((t) => coincide(t, filtro))
-  // En "Por coordinar", ordenar por menor tiempo restante primero.
-  if (filtro === "por_coordinar") {
-    tasaciones = [...tasaciones].sort(
-      (a, b) => (a.horasRestantes ?? Infinity) - (b.horasRestantes ?? Infinity),
-    )
-  }
+  const seleccionar = useCallback(
+    (nuevo: ChipActivo) => {
+      setChip(nuevo)
+
+      // El chip por defecto no ensucia la URL: `/tasaciones` y
+      // `/tasaciones?chip=todas` son la misma pantalla.
+      const query = nuevo === CHIP_POR_DEFECTO ? "" : `?chip=${nuevo}`
+      router.replace(`${pathname}${query}`, { scroll: false })
+    },
+    [pathname, router],
+  )
+
+  const tasaciones = filtrarCola(todas, chip)
   const enCurso = todas.filter(enColaVisible).length
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-2xl bg-background">
-      <AppHeader />
+      <AppHeader userName={nombreTasador} />
 
       <main className="px-4 pb-12 pt-5">
         <h1 className="text-2xl font-bold text-foreground">Mis tasaciones</h1>
         <p className="mt-1 text-base text-vp-text-secondary">{enCurso} en curso</p>
 
-        {/* Filtros */}
-        <div className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1">
-          {FILTROS.map((f) => {
-            const active = filtro === f.key
-            return (
-              <button
-                key={f.key}
-                type="button"
-                onClick={() => setFiltro(f.key)}
-                aria-pressed={active}
-                className={cn(
-                  "min-h-12 shrink-0 rounded-lg border px-4 text-base font-medium transition-all duration-200",
-                  active
-                    ? "border-vp-primary bg-vp-primary text-white"
-                    : "border-border bg-background text-foreground hover:bg-vp-surface",
-                )}
-              >
-                {f.label}
-              </button>
-            )
-          })}
-        </div>
+        <ChipsCola activo={chip} onSeleccionar={seleccionar} />
 
-        {/* Lista */}
         <div className="mt-5 flex flex-col gap-4">
           {tasaciones.map((t) => (
             <TasacionCard key={t.id} tasacion={t} />

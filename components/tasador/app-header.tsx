@@ -1,6 +1,17 @@
 import { VPropertyLogo } from "@/components/tasador/vproperty-logo"
 
-export function AppHeader({ userName = "Roberto Pérez" }: { userName?: string }) {
+/**
+ * Cabecera sticky de IF-03 · logo + identidad de la sesión.
+ *
+ * `userName` es **obligatorio y sin valor por defecto**. Hasta P3-TAS.B el
+ * componente traía `= "Roberto Pérez"` escrito a mano: un nombre que no es el
+ * de nadie, en la única parte de la pantalla que le dice al tasador de quién es
+ * la sesión que está mirando. Un default plausible es peor que ninguno —nadie
+ * lo nota hasta que alguien confía en él—, así que ahora el nombre lo resuelve
+ * `nombreVisibleTasador()` desde `M_Tasadores` y quien monte la cabecera sin
+ * pasarlo no compila.
+ */
+export function AppHeader({ userName }: { userName: string }) {
   const initials = userName
     .split(" ")
     .map((n) => n[0])

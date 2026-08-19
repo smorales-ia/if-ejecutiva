@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { ColaTasaciones } from "@/components/tasador/cola-tasaciones"
 import { leerCola } from "@/lib/tasador/lectura-tasacion"
+import { nombreVisibleTasador } from "@/lib/tasador/mock-user"
 
 /**
  * Pantalla 1 · cola personal del tasador (RF-TAS-01 · RF-TAS-02).
@@ -11,14 +12,20 @@ import { leerCola } from "@/lib/tasador/lectura-tasacion"
  * extra que supondría que el cliente llamara a `GET /api/tasaciones` para
  * pintar la primera vez.
  *
+ * Las dos lecturas van en paralelo: el nombre de la cabecera no debe retrasar
+ * la cola, que es el contenido real de la pantalla.
+ *
  * El `Suspense` envuelve al hijo porque usa `useSearchParams`.
  */
 export default async function TasacionesPage() {
-  const tasaciones = await leerCola()
+  const [tasaciones, nombreTasador] = await Promise.all([
+    leerCola(),
+    nombreVisibleTasador(),
+  ])
 
   return (
     <Suspense fallback={null}>
-      <ColaTasaciones tasaciones={tasaciones} />
+      <ColaTasaciones tasaciones={tasaciones} nombreTasador={nombreTasador} />
     </Suspense>
   )
 }

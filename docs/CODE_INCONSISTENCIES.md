@@ -1160,8 +1160,30 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 | **Archivo:línea** | `lib/tasador/lectura-tasacion.ts` · `proyectarTasacion()`, bloque `datosEjecutiva` · consumidor en `components/tasador/tasacion-card.tsx:46` (`tel:` href) y `:91` |
 | **Síntoma** | La card de la cola muestra un teléfono de contacto con enlace `tel:` — el dato operativo más importante de la pantalla ahora que **RO-29** dejó la coordinación en manos del teléfono. Ese número se toma de `TX_Solicitudes.vendedor_telefono`, **no** de `TX_ContactosVisita`, que es la tabla dedicada a los contactos de visita y tiene varios por solicitud con su campo `ordenPrioridad`. |
 | **Causa** | Decisión de coste tomada al escribir el mapper: `TX_ContactosVisita` es una tabla hija y resolverla por cada fila de la cola serían **N lecturas adicionales** en la pantalla que más se abre del flujo. `vendedor_telefono` vive en la misma fila de `TX_Solicitudes` que el resto de la proyección y no cuesta ninguna lectura extra. Es una aproximación razonable —el vendedor suele ser quien abre la puerta— pero **es una aproximación**, y no está respaldada por ningún RF. |
-| **Resolución** | ⚠ **ASUNCIÓN DECLARADA — la verifica P3-TAS.** <br>**(a) Hecho:** la elección está escrita en el sitio, en el docblock del bloque `datosEjecutiva`, nombrando la alternativa y el motivo del descarte. <br>**(b) Lo que hay que verificar:** si algún RF-TAS exige el contacto **prioritario** de `TX_ContactosVisita` en la card. Si lo exige, hay dos salidas: una lectura agregada de la tabla hija filtrada por las solicitudes de la cola —una sola llamada, no N—, o exponer el contacto prioritario como campo derivado en `TX_Solicitudes`. <br>**(c) Nota de alcance:** IF-02 ya hidrata esta tabla con `hydrateContactos` de `lib/contactos-visita.ts`; hay precedente reutilizable si la verificación obliga a cambiar. |
+| **Resolución** | ✅ **CERRADA en P3-TAS.A (19-ago-2026).** La card muestra el contacto de **prioridad 1 de `TX_ContactosVisita`**, resuelto por `lib/tasador/contactos-cola.ts` en **una sola lectura para toda la cola** —el objetivo de coste que motivó el descarte original— gracias al lookup `solicitud_record_id` (`fldYNKk5cyfWLxwqD`), que expone el recordId de la solicitud como texto y evita casar por `codigo_solicitud`. <br>**Lo que decidió la ficha no fue un RF sino un dato:** la única solicitud de la cola del tasador mock (VP-2026-0058) **no tiene `vendedor_telefono`** y **sí** tiene contacto de prioridad 1 con teléfono, así que la aproximación estaba renderizando `href="tel:"` vacío en el 100 % de la cola real. <br>**Dos reglas que la implementación fija:** (1) **sin respaldo a `vendedor_telefono`** — mezclar dos orígenes en silencio esconde el hueco de datos, y la card sabe omitir la línea cuando no hay teléfono (§4.1); (2) se **descarta** el contacto con `estado_contacto = telefono_erroneo` y se cae al siguiente por prioridad — es el estado que ese campo existe para registrar, y ponerlo bajo un enlace `tel:` es mandar al tasador a una llamada perdida. <br>14 casos en `lib/tasador/contactos-cola.test.ts`, más verificación end-to-end contra la base real. |
 | **Dueño** |  |
 | **Fecha objetivo** |  |
-| **Estado** | **abierta** · el valor mostrado es plausible y puede no ser el correcto |
+| **Estado** | **cerrada** · 19-ago-2026 · P3-TAS.A |
 | **Origen** | P2-TAS.B (18-ago-2026), al ensanchar la proyección: `datosEjecutiva` es no-opcional en `Tasacion` y ninguna ruta lo servía. |
+
+---
+
+## CI-036 · Las pantallas de IF-03 exigen sesión Clerk mientras su identidad es un mock
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-036 |
+| **Archivo:línea** | `middleware.ts:3-9` (`createRouteMatcher(['/sign-in(.*)', '/api/health'])` + `auth.protect()`) · contraste con `lib/tasador/mock-user.ts` y la Regla **R2** del plan |
+| **Síntoma** | Toda ruta de IF-03 —`/tasaciones`, sus seis pantallas y sus once rutas de API— queda detrás del `auth.protect()` de Clerk, que responde **404** a cualquier petición sin sesión. A la vez, **la identidad del tasador no sale de Clerk sino de `TASADOR_MOCK_RECORD_ID`** (R2, hasta P11-TAS). Conviven entonces dos identidades sin relación: la de Clerk decide *si se entra*, y la del mock decide *qué se ve*. Cualquiera que entre con una sesión válida de la Ejecutiva ve la cola del tasador del `.env`. |
+| **Causa** | El middleware se escribió para IF-02, donde Clerk **es** la identidad, y su matcher cubre todo el árbol por diseño (`/((?!_next\|…).*)`). IF-03 se montó dentro del mismo proyecto Next y heredó la protección sin que nadie decidiera qué debía significar allí. R2 difirió la autenticación a P11-TAS pensando en el guard de pertenencia (RF-09), no en el middleware. |
+| **Efecto observado** | **P3-TAS.B no pudo hacer la verificación visual de §4.2 paso 8 por el camino previsto**: `curl http://localhost:3000/tasaciones` devuelve 404 sin sesión. Se sustituyó por render server-side de las cards con `renderToStaticMarkup` sobre datos reales, que cubre markup y contenido pero **no** píxeles ni layout. Toda verificación visual de IF-03 depende hoy de que una persona abra el navegador con sesión iniciada. |
+| **Resolución** | ⚠ **ABIERTA — es decisión de producto, no de código.** Lo que hay que decidir en **P11-TAS**: (a) si el tasador se autentica con Clerk como la Ejecutiva y `clerk_user_id` casa contra `M_Tasadores` —el destino natural, y lo que R2 anticipa—; (b) qué pasa mientras tanto con la doble identidad, que hoy no está declarada en ningún sitio salvo esta ficha; y (c) si conviene una ruta de previsualización exenta para verificación visual en desarrollo, o si eso abre un agujero que no vale la comodidad. **No se tocó `middleware.ts`**: es archivo de IF-02 y R5 lo deja fuera del territorio de estas tandas. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · no bloquea ninguna tanda de UI · bloquea la verificación visual desatendida |
+| **Origen** | P3-TAS.B (19-ago-2026), al intentar abrir `/tasaciones` para la verificación a 375×812. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- El 404 —y no un redirect a `/sign-in`— es el comportamiento de `auth.protect()` para peticiones no interactivas. Conviene saberlo antes de perseguir una ruta que "no existe": existe y compila; lo que falta es la sesión.

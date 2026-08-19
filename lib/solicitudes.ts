@@ -610,7 +610,7 @@ function instanteDePartes(
  *
  * Sin `venceTs` no se fabrica nada: el texto lo dice y la UI no pinta color.
  */
-function etiquetaEtapa(vence: Date | null, ahora: Date): string {
+export function etiquetaEtapa(vence: Date | null, ahora: Date): string {
   if (!vence) return 'Sin datos de etapa'
   const minutos = (vence.getTime() - ahora.getTime()) / 60_000
   if (minutos >= 0) return `Vence en ${duracionCorta(minutos)}`
