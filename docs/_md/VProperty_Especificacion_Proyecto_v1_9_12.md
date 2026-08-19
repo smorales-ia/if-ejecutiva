@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.10** — sucede a `VProperty_Especificacion_Proyecto_v1_9_9.md`, que queda marcado SUPERSEDED.
+> **v1.9.12** — sucede a `VProperty_Especificacion_Proyecto_v1_9_11.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,21 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.10 · 19-ago-2026 · Reversión de RO-29 por
+  **Versión**         1.9.12 · 19-ago-2026 · §2.12 · el campo primario de
+                      `TX_CoordinacionVisita` pasa de `autoNumber` a
+                      `singleLineText` escrito por el Route Handler:
+                      `autoNumber` no está soportado por las tools MCP y no
+                      se crean campos desde la UI de Airtable. Completa los
+                      tres cambios de tipo de §2.12. Sucede a 1.9.11, que
+                      queda SUPERSEDED.
+
+                      1.9.11 · 19-ago-2026 · §2.12 · `intento_numero` y
+                      `coordinacion_vigente` pasan de formula a number y
+                      singleSelect escritos por el Route Handler: las
+                      fórmulas declaradas no son implementables en Airtable.
+                      Sucede a 1.9.10, que queda SUPERSEDED.
+
+                      1.9.10 · 19-ago-2026 · Reversión de RO-29 por
                       revisión Héctor diseño v4. CI-012 cerrada en sentido
                       opuesto. Coordinación por sistema reinstaurada en
                       §1.3.2, §1.3.3, §1.4, RN-59. RF-TAS-04 y RF-TAS-05
@@ -2697,7 +2711,7 @@ Estados de excepción: `cancelada`, `requiere_atencion`. **El estado `devuelta` 
 
 | Campo | Tipo | Descripción |
 |---|---|---|
-| `id` | PK auto | Identificador único |
+| `coordinacion_key` | singleLineText (**campo primario**) | Clave legible del intento, con el formato `VP-2026-0530 · intento 1`. **La escribe el Route Handler en el insert** (cambio de tipo en v1.9.12): §2.12 la declaraba como `id` PK `autoNumber`, tipo que **no está soportado por las tools MCP** de creación de schema —ni `create_table` ni `create_field`— y la regla operativa del proyecto prohíbe crear campos desde la UI de Airtable. Un primario `singleLineText` sigue además el patrón de la casa (`TX_ContactosVisita` usa `nombre`) y deja la grilla legible para la ejecutiva, que es quien consulta esta tabla. Ver `docs/schema-airtable.md` §26.6 |
 | `solicitud_id` | FK → `TX_Solicitudes` | Solicitud a la que pertenece el intento |
 | `estado_coordinacion` | singleSelect | Enum: `confirmada`, `rechazada` |
 | `motivo` | singleSelect | Obligatorio si `rechazada`, vacío si `confirmada`. Catálogo cerrado: `Teléfono no contesta`, `Teléfono equivocado`, `Cliente rechaza visita`, `Otro` (RF-TAS-12 · paramétrico o fijo pendiente de A-17) |
@@ -2709,13 +2723,13 @@ Estados de excepción: `cancelada`, `requiere_atencion`. **El estado `devuelta` 
 | `email_thread_id` | Texto (lookup) | Traído por lookup desde `TX_Solicitudes` (preserva RN-52) |
 | `email_enviado_at` | Timestamp | Momento en que SC13 envió el correo (nullable) |
 | `email_enviado_status` | singleSelect | `pendiente`, `enviado`, `error` |
-| `intento_numero` | Number (formula) | `1 + COUNT(intentos previos del mismo solicitud_id)` |
+| `intento_numero` | Number (precision 0) | Ordinal del intento. **Lo escribe el Route Handler en el insert, no es fórmula** (cambio de tipo en v1.9.11): una fórmula de Airtable sólo evalúa sobre su propio registro y no puede contar hermanos por Link, y la base no tiene ningún `rollup`. Ver `docs/schema-airtable.md` §26.6 |
 
 Constraint blanda de unicidad `(solicitud_id, fecha_respuesta_truncada_al_minuto)` para evitar doble disparo por doble tap (mitigación R-2).
 
 **Campos nuevos en `TX_Solicitudes`:**
 
-- `coordinacion_vigente` (formula) = `LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`, o null si no hay intentos. Alimenta el chip "Por coordinar", el badge "Esperando contacto de ejecutiva" y la excepción acotada a RN-59, repuesta en §1.4 en v1.9.10 (ver §2.5).
+- `coordinacion_vigente` (**singleSelect**: `confirmada` · `rechazada`; vacío si no hay intentos) = estado del último intento registrado. **Lo escribe el Route Handler de coordinación en la misma operación que inserta la fila, no es fórmula** (cambio de tipo en v1.9.11): Airtable no tiene `LAST(... ORDER BY ...)`, y la alternativa por `rollup` con `MAX()` sobre una clave concatenada se descartó por diseño. Ver `docs/schema-airtable.md` §26.6. Alimenta el chip "Por coordinar", el badge "Esperando contacto de ejecutiva" y la excepción acotada a RN-59, repuesta en §1.4 en v1.9.10 (ver §2.5).
 - `observacion_rechazo_tasador` (texto largo, nullable) — observación persistida por RF-TAS-09.
 - `fecha_real_visita` (date) — fecha en que la visita efectivamente ocurrió, distinta de la planificada en la coordinación. Obligatoria para calcular y es la que declara el informe (RF-TAS-17).
 

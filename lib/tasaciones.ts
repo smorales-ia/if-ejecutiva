@@ -208,23 +208,160 @@ export interface Tasacion {
   unidades?: UnidadSii[]
   vendedor?: { nombre: string; rut: string }
   adjuntosDropbox?: AdjuntoDropbox[]
+
+  /**
+   * Desenlace del último intento de coordinación, o `null` si no hubo ninguno
+   * (`TX_Solicitudes.coordinacion_vigente` · `fldI4Dv0jpRQvbdHl`).
+   *
+   * **Repuesto en P4-TAS** tras el cierre positivo de CI-012. Es el
+   * discriminante del que `AccionCard` deriva sus tres variantes, y la
+   * condición de activación de la excepción acotada a RN-59 (spec §1.4).
+   *
+   * ⚠ En Airtable **no es fórmula**: lo escribe el Route Handler de
+   * coordinación en la misma operación que inserta la fila. No se recalcula
+   * acá ni se deriva de `intentos` — ver `docs/schema-airtable.md` §26.6.
+   */
+  coordinacionVigente?: EstadoCoordinacion | null
 }
 
-/*
- * ⚠ **`coordinacionVigente` y `contactosEditadosPorEjecutiva` se eliminaron en
- * P3-TAS.A** (19-ago-2026). Eran los dos últimos residuos de la coordinación
- * por sistema, que **RO-29** cerró en negativo: `TX_CoordinacionVisita` no
- * existe ni existirá, así que el mapper los proyectaba en `null` fijo y la card
- * derivaba de ese `null` sus tres variantes de botón.
+/* -------------------------------------------------------------------------
+ * Coordinación de visita · Pantalla 2 (§2.3)
  *
- * Con ellos cae la Regla T-A en su forma de tres variantes: el botón único es
- * **"Abrir tasación"** para `asignada · visitada · calculada` (decisión de
- * Sergio · 19-ago-2026). No se tipó `AccionCard`: una unión discriminada de una
- * sola variante no discrimina nada.
+ * Repuesta en **P4-TAS** (19-ago-2026). `RO-29` había cerrado CI-012 en
+ * negativo y P3-TAS.A retiró `coordinacionVigente` junto con las tres variantes
+ * de la Regla T-A. La revisión de Héctor del diseño v4 —Pantalla 2, puntos 1 a
+ * 4— revirtió esa decisión: **RO-29 quedó anulada** y `TX_CoordinacionVisita`
+ * existe desde el 19-ago-2026 (`tblBwMErRxo57ML2r`).
+ * ---------------------------------------------------------------------- */
+
+/** Desenlace de un intento de coordinación (`estado_coordinacion`). */
+export type EstadoCoordinacion = 'confirmada' | 'rechazada'
+
+/**
+ * Motivo por el que el tasador no pudo coordinar la visita.
  *
- * Si algún día vuelve la coordinación por sistema, esto se retipa desde la
- * tabla que la soporte — no desde estos campos.
+ * ⚠ **Es `string`, y no una unión de los cuatro literales del diseño, a
+ * propósito.** El dominio lo posee Airtable —el `singleSelect`
+ * `TX_CoordinacionVisita.motivo` (`fld0rkrlg9Xo0fFVm`)—, no este archivo. Ese
+ * es el criterio de aceptación de **A-17**: agregar un motivo desde Airtable
+ * tiene que llegar a la UI **sin deploy**. Una unión cerrada acá volvería a
+ * atar el catálogo al build, que es exactamente lo que A-17 prohíbe.
+ *
+ * El alias existe igual porque nombra el rol del dato: un `string` suelto en
+ * una firma no dice qué se espera. Para obtener los valores válidos en runtime,
+ * usar {@link cargarMotivosDevolucion}.
+ *
+ * ⚠ Ver también **A-21**: dos de los cuatro motivos duplican valores de
+ * `TX_ContactosVisita.estado_contacto`. Si esa ambigüedad cierra unificando los
+ * catálogos, este alias es el punto donde se nota.
  */
+export type MotivoNoContacto = string
+
+/**
+ * Un intento de coordinación — una fila de `TX_CoordinacionVisita`
+ * (`tblBwMErRxo57ML2r`).
+ *
+ * Los campos opcionales lo son **por rama, no por descuido**: `fechaVisita` y
+ * `nota` sólo existen cuando el desenlace es `confirmada`; `motivo` y `detalle`
+ * sólo cuando es `rechazada`. El tipo no puede expresarlo sin partirse en dos,
+ * y partirlo obligaría a discriminar en cada lectura para mostrar una lista.
+ */
+export interface CoordinacionVisita {
+  /** recordId de la fila en `TX_CoordinacionVisita`. */
+  id: string
+  /** recordId de la solicitud (`solicitud_record_id`, leído de `[0]`). */
+  solicitudId: string
+  estado: EstadoCoordinacion
+  /**
+   * Ordinal del intento (`intento_numero` · `fldNj1SdLE6pyWvfx`).
+   *
+   * ⚠ **Lo escribe el Route Handler, no Airtable.** §2.12 lo declaraba como
+   * fórmula `1 + COUNT(intentos previos)`, que no es implementable: una
+   * fórmula de Airtable no ve registros hermanos por Link. El servidor cuenta
+   * los intentos previos en el insert. RF-TAS-04 espera `2` en el segundo.
+   */
+  intentoNumero: number
+  /** Hora de servidor de la acción del tasador, en ISO. */
+  fechaRespuesta: string
+  /** Fecha planificada de visita. Sólo en la rama `confirmada`. */
+  fechaVisita?: string
+  /** Nota opcional del tasador. Sólo en la rama `confirmada`. */
+  nota?: string
+  /** Motivo del catálogo. Obligatorio en la rama `rechazada`. */
+  motivo?: MotivoNoContacto
+  /** Detalle libre, mínimo 20 caracteres. Obligatorio en la rama `rechazada`. */
+  detalle?: string
+}
+
+/**
+ * Llamada a la acción de la card de la cola (**RF-TAS-11** · Regla T-A).
+ *
+ * Vuelve a ser una unión de **tres** variantes: P3-TAS.A la había colapsado a
+ * un botón único al caer la coordinación por sistema. El discriminante es
+ * {@link Tasacion.coordinacionVigente}.
+ *
+ * Los rótulos son literales §6 y **no admiten variación**.
+ */
+export type AccionCard =
+  | {
+      /** Sin coordinación vigente: el tasador todavía no llamó. */
+      tipo: 'coordinar'
+      rotulo: 'Coordinar visita'
+      href: string
+      variante: 'acento'
+    }
+  | {
+      /** Coordinación confirmada: se entra a la captura. */
+      tipo: 'abrir'
+      rotulo: 'Abrir tasación'
+      href: string
+      variante: 'primario'
+    }
+  | {
+      /**
+       * Coordinación devuelta: la pelota está en la ejecutiva y el tasador no
+       * puede hacer nada hasta que corrija los contactos (RF-TAS-04). La card
+       * sigue visible en "Todas" para que no la pierda de vista.
+       */
+      tipo: 'esperando_ejecutiva'
+      rotulo: 'Ver coordinación'
+      deshabilitado: true
+      badge: 'Esperando contacto de ejecutiva'
+    }
+
+/**
+ * Deriva la llamada a la acción de la card desde el estado de coordinación.
+ *
+ * **Único punto de la Regla T-A.** La card no decide: lee lo que devuelve esta
+ * función. Si el gate cambia, cambia acá.
+ */
+export function resolverAccionCard(tasacion: Tasacion): AccionCard {
+  if (tasacion.coordinacionVigente === 'rechazada') {
+    return {
+      tipo: 'esperando_ejecutiva',
+      rotulo: 'Ver coordinación',
+      deshabilitado: true,
+      badge: 'Esperando contacto de ejecutiva',
+    }
+  }
+
+  if (tasacion.coordinacionVigente === 'confirmada') {
+    return {
+      tipo: 'abrir',
+      rotulo: 'Abrir tasación',
+      href: `/tasaciones/${tasacion.id}`,
+      variante: 'primario',
+    }
+  }
+
+  // `null` o `undefined`: no hay intentos registrados todavía.
+  return {
+    tipo: 'coordinar',
+    rotulo: 'Coordinar visita',
+    href: `/tasaciones/${tasacion.id}/coordinar`,
+    variante: 'acento',
+  }
+}
 
 /* -------------------------------------------------------------------------
  * Formulario de captura · secciones A–H (§2.8)
@@ -956,6 +1093,32 @@ export function resolverInforme(tasacion: Tasacion): InformeData {
     categoriasCustom: [],
     documentosCargados: {},
   }
+}
+
+/**
+ * Carga el catálogo de motivos de devolución **desde el schema de Airtable**.
+ *
+ * ⚠ **Esto sustituye a la constante `MOTIVOS_DEVOLUCION` que existía antes de
+ * RO-29, y la sustituye a propósito.** Aquel símbolo era un array literal en
+ * este archivo, y reponerlo tal cual habría incumplido el criterio de
+ * aceptación de **A-17**: *un cambio en el catálogo debe reflejarse en la
+ * próxima carga sin deploy*. Con la constante, agregar un motivo en Airtable no
+ * llegaba nunca a la UI.
+ *
+ * La ruta lee las `choices` del `singleSelect`
+ * `TX_CoordinacionVisita.motivo` (`fld0rkrlg9Xo0fFVm`) y devuelve sus `name` en
+ * el orden en que están definidas — que es el orden en que el diseño v4 los
+ * muestra en el desplegable (`p19_2.png`).
+ *
+ * El llamador es un componente cliente: cierra el ciclo de la Regla D como con
+ * cualquier otra llamada, y si falla muestra el literal humano que suba
+ * `llamarApi`. **No hay fallback a una lista local**: un fallback silencioso
+ * sería la constante de vuelta, con otro nombre.
+ */
+export async function cargarMotivosDevolucion(): Promise<MotivoNoContacto[]> {
+  return llamarApi<MotivoNoContacto[]>(
+    '/api/tasaciones/config/motivos-devolucion',
+  )
 }
 
 /**

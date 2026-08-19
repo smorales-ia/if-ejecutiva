@@ -1244,6 +1244,11 @@ webhooks— pero cualquier código futuro que la consulte va a fallar por esto.
 > operativa del proyecto es schema desde `docs/` + REST server-side.
 > **Verificación:** diff completo del schema antes/después del POST. **Exactamente 1 cambio**;
 > `TX_Solicitudes` pasó de 156 a 157 campos.
+>
+> ⚠ **El conteo de 157 dejó de aplicar el 19-ago-2026.** `TX_Solicitudes` tiene **159 campos**
+> desde P4-TAS: **+1** por el campo inverso que Airtable creó solo al enlazar
+> `TX_CoordinacionVisita`, y **+1** por `coordinacion_vigente`. Los dos son esperados, ninguno es
+> un error — ver §26.6. La cifra de arriba es correcta para P0.5-TAS y no se corrige.
 
 ### 26.1 Campo creado — el único
 
@@ -1255,11 +1260,11 @@ webhooks— pero cualquier código futuro que la consulte va a fallar por esto.
 
 | Campo del plan §1.5.1 | Motivo |
 |---|---|
-| `TX_CoordinacionVisita` (tabla · 13 campos) | **CI-012 cerrado por decisión de negocio (17-ago-2026): no se crea.** La coordinación de visitas se hace por teléfono, fuera del sistema. |
-| `coordinacion_vigente` (formula) | Sólo tenía sentido leyendo `TX_CoordinacionVisita`. Cae con CI-012. |
+| ~~`TX_CoordinacionVisita` (tabla · 13 campos)~~ | ~~CI-012 cerrado por decisión de negocio (17-ago-2026): no se crea.~~ → **REVERTIDO 19-ago-2026.** CI-012 se cerró en sentido opuesto y RO-29 quedó anulada. **La tabla se crea en P4-TAS** — ver §26.6. |
+| ~~`coordinacion_vigente` (formula)~~ | ~~Sólo tenía sentido leyendo `TX_CoordinacionVisita`. Cae con CI-012.~~ → **REVERTIDO 19-ago-2026.** Se crea en P4-TAS, pero **no como fórmula** — ver §26.6. |
 | `fecha_real_visita` (date) | ⚠ **Ya existe con otro nombre** — ver §26.3. Crearlo habría duplicado el dato. |
 | `horas_restantes` | Retirado en v1.9.9 (CI-021). Confirmado ausente en la base. |
-| `email_coordinacion_confirmada` / `_rechazada` (plantillas) | Correos de coordinación. Caen con CI-012. La divergencia `C_Plantillas` vs `C_NotificacionesConfig` **queda sin resolver** — no la forzó ninguna necesidad de esta tanda. |
+| ~~`email_coordinacion_confirmada` / `_rechazada` (plantillas)~~ | ~~Correos de coordinación. Caen con CI-012.~~ → **REVERTIDO 19-ago-2026.** Se reponen en P4-TAS. La divergencia `C_Plantillas` vs `C_NotificacionesConfig` **sigue sin resolver** y ahora sí la fuerza una necesidad: los puntos 2 y 3 de Pantalla 2 exigen los dos correos. |
 
 ### 26.3 ⚠ `fecha_real_visita` ya existe como `fecha_visita` — override al plan
 
@@ -1340,8 +1345,160 @@ La base tiene **67 tablas** al 17-ago-2026.
 
 ### 26.5 Efecto del cierre de CI-012 sobre el schema documentado
 
-`TX_CoordinacionVisita` **no existe y no se creará**. Toda referencia a la coordinación por sistema
-en §2.12 de la spec y en §1.5 del plan de IF-03 queda **desalineada** y debe retirarse en el próximo
-bump normativo. En particular: `fecha_visita_propuesta`, `estado_coordinacion`, `motivo`,
+> 🚫 **ESTA SUBSECCIÓN QUEDÓ INVERTIDA EL 19-ago-2026.** CI-012 se cerró en **sentido opuesto** por
+> la revisión de Héctor del diseño v4 (Pantalla 2, puntos 1-4) y **RO-29 quedó anulada**. Lo que
+> sigue describe el estado entre el 17 y el 19-ago-2026 y se conserva como registro. **El estado
+> vigente está en §26.6.**
+
+~~`TX_CoordinacionVisita` **no existe y no se creará**. Toda referencia a la coordinación por
+sistema en §2.12 de la spec y en §1.5 del plan de IF-03 queda **desalineada** y debe retirarse en el
+próximo bump normativo. En particular: `fecha_visita_propuesta`, `estado_coordinacion`, `motivo`,
 `email_thread_id`, `email_enviado_status`, `intento_numero` y la constraint blanda de unicidad
-`(solicitud, fecha_respuesta)` **no tienen realización en la base** y no la tendrán.
+`(solicitud, fecha_respuesta)` **no tienen realización en la base** y no la tendrán.~~
+
+---
+
+### 26.6 IF-03 · Tasador — delta de schema P4-TAS (19-ago-2026) · **coordinación repuesta**
+
+> **Tanda:** P4-TAS · Pantalla 2 · Coordinar visita.
+> **Causa:** cierre positivo de **CI-012** y anulación de **RO-29** (`docs/CODE_INCONSISTENCIES.md`).
+> **Vía de ejecución:** **MCP Airtable** (`create_table` / `create_field`), conforme a **RO-30**.
+> Sustituye a la vía REST de P0.5-TAS: la conexión MCP está autenticada desde el 18-ago-2026.
+
+#### Estado de la base al levantarla (19-ago-2026)
+
+- **67 tablas**, no 68. La ficha **CI-012** decía *"cuyo listado de 68 tablas no la contiene"*, cifra
+  tomada el 11-ago-2026. La base cambió entre medio. El fondo de la afirmación se mantiene —
+  `TX_CoordinacionVisita` no está— pero **el conteo de la ficha no es citable como dato actual**.
+- `observacion_rechazo_tasador` **ya existe** (`fldAccib5yNYaOmJc`), creado por P0.5-TAS y
+  registrado en §26.1. La spec §2.12 lo sigue declarando como campo **nuevo** por crear:
+  divergencia documental abierta como **CI-041**.
+- `coordinacion_vigente`, `intento_numero` y `fecha_real_visita` no existen. El tercero es el caso
+  de §26.3: el dato vive como `fecha_visita` y no debe duplicarse.
+
+#### Tabla creada — `TX_CoordinacionVisita` = `tblBwMErRxo57ML2r` (19-ago-2026)
+
+Creada con `create_table` del MCP. **12 campos**, no 13: los dos lookups van en llamadas aparte
+(`create_field` no puede referenciar un link que aún no existe) y `id` se materializa como
+`coordinacion_key`.
+
+| Campo | FIELD_ID | Tipo | Nota |
+|---|---|---|---|
+| `coordinacion_key` | `fldsYScri919sl2G7` | singleLineText | **primario** · lo escribe el handler |
+| `solicitud` | `fldO6qSVaZAWaozi1` | multipleRecordLinks → `tblaHTyMHYfmy7Fg6` | |
+| `estado_coordinacion` | `fldvnImj4jQttE2D9` | singleSelect | `confirmada` · `rechazada` |
+| `motivo` | `fld0rkrlg9Xo0fFVm` | singleSelect | 4 valores literales · A-17 · ver A-21 |
+| `detalle` | `fldcVwI3w0I8WsCrx` | multilineText | mín. 20 car. validado en el handler |
+| `nota` | `fldCIIUL8pd2wAPEE` | multilineText | |
+| `fecha_visita_propuesta` | `fldRAuqHnIGTG7eBC` | date | |
+| `fecha_respuesta` | `fldAIuBPGiZ5ZDssj` | dateTime | `America/Santiago` |
+| `autor_clerk_id` | `fldCKBfbZmctL9PKk` | singleLineText | |
+| `email_enviado_at` | `fldDqd4icRHPQExW7` | dateTime | nullable |
+| `email_enviado_status` | `fldyWwUXiDeGfGIIW` | singleSelect | `pendiente` · `enviado` · `error` |
+| `intento_numero` | `fldNj1SdLE6pyWvfx` | number (0) | lo escribe el handler |
+| `email_thread_id` | `fldZFVJzC1pwoaoxG` | multipleLookupValues | creado aparte · **devuelve array** |
+| `solicitud_record_id` | `fldCzrumbm9U135Zn` | multipleLookupValues | creado aparte · **devuelve array** · patrón de TX_ContactosVisita |
+
+**⚠ Los lookups devuelven array, no valor.** `email_thread_id` (`fldZFVJzC1pwoaoxG`) es de tipo
+`multipleLookupValues` con `result.type = singleLineText`: la API devuelve **`["<thread>"]`**, no
+`"<thread>"`, aunque el link apunte a una sola solicitud y el hilo sea uno solo. **El handler tiene
+que leer `[0]`.** Es el mismo patrón que `TX_ContactosVisita.solicitud_record_id`, y el modo de
+fallo si se ignora es silencioso: el correo saldría con un `email_thread_id` que es la
+representación en string de un array, rompiendo RN-52 sin que nada falle de forma visible.
+
+**⚠ Efecto colateral no declarado en el plan: `TX_Solicitudes` pasó de 157 a 158 campos.** Airtable
+crea automáticamente el campo inverso de todo Link, y lo bautizó **`TX_CoordinacionVisita`**
+(`fldrO6CYBgdycDJKi`, multipleRecordLinks). No se pidió y no se puede evitar: es como funciona el
+tipo Link. Importa por dos razones. Primera, cualquier verificación futura del tipo *"TX_Solicitudes
+tiene 157 campos"* —como la que usó P0.5-TAS en §26— **ya no cuadra**, y el campo de más no es un
+error. Segunda, su **nombre no sigue la convención** de la tabla, que es `snake_case`: se llama como
+la tabla enlazada. **Se renombra a `coordinaciones`** dentro de
+esta misma tanda, por decisión de Sergio del 19-ago-2026: es cosmético, pero mantener la convención
+evita que el siguiente que lea el schema tenga que preguntarse si el nombre significa algo.
+
+#### Campos nuevos en `TX_Solicitudes` (P4-TAS)
+
+| Campo | FIELD_ID | Tipo | Nota |
+|---|---|---|---|
+| `coordinacion_vigente` | `fldI4Dv0jpRQvbdHl` | singleSelect | `confirmada` · `rechazada` · **vacío = sin coordinación** · lo escribe el handler |
+| `coordinaciones` | `fldrO6CYBgdycDJKi` | multipleRecordLinks | campo inverso auto-creado · **renombrado de `TX_CoordinacionVisita` el 19-ago-2026** |
+
+**El dominio de `coordinacion_vigente` es de dos valores, no tres.** "Sin coordinación vigente" se
+representa como **vacío**, no como una opción `pendiente`, porque el chip "Por coordinar"
+(RF-TAS-01) filtra precisamente por ausencia. Agregar un tercer valor rompería ese filtro sin que
+ninguna validación lo detecte.
+
+#### Estado final del schema tras P4-TAS
+
+| Objeto | Antes | Después |
+|---|---|---|
+| Tablas en la base | 67 | **68** |
+| `TX_Solicitudes` · campos | 157 | **159** |
+| `TX_CoordinacionVisita` · campos | — | **14** |
+
+Verificado contra la base el 19-ago-2026, después de las cuatro operaciones.
+
+#### Dos campos se apartan del tipo declarado en §2.12 — y por qué
+
+**1 · `intento_numero`: `formula` → `number` (precision 0), escrito server-side.**
+§2.12 lo declaraba `Number (formula)` con la expresión
+`1 + COUNT(intentos previos del mismo solicitud_id)`. **No es implementable.** Una fórmula de
+Airtable evalúa **únicamente sobre su propio registro**: no puede contar registros hermanos
+filtrados por un campo Link. La vía habitual para rodearlo sería un `rollup`, y la base **no tiene
+un solo campo `rollup`** en sus 67 tablas — introducirlo aquí crearía un patrón sin precedente para
+resolver un ordinal que el servidor ya conoce.
+
+Lo escribe el Route Handler de coordinación en el insert, que de todos modos consulta los intentos
+previos para decidir si es primer o segundo intento. **El criterio de aceptación de RF-TAS-04
+—`intento_numero = 2` en el segundo intento— se verifica igual.** Cambio de tipo registrado en la
+spec **v1.9.11**.
+
+**2 · `coordinacion_vigente`: `formula` → `singleSelect`, escrito server-side.**
+§2.12 lo declaraba como fórmula
+`LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`. **Airtable no
+tiene `LAST(... ORDER BY ...)`**: no existe forma de pedir el valor del registro vinculado más
+reciente en una sola fórmula.
+
+Sí era técnicamente posible por `rollup` con `MAX()` sobre un campo concatenado
+`fecha|estado` y una fórmula que parte el string — el truco estándar. **Se descartó por diseño, no
+por imposibilidad**: obliga a un campo técnico que nadie más lee, estrena el primer `rollup` de la
+base, y deja el valor del que dependen la excepción acotada a RN-59 y el chip "Por coordinar" atado
+a un parseo de texto. Lo escribe el mismo handler que inserta la fila de coordinación, en la misma
+operación. Decisión de Sergio, 19-ago-2026. Cambio de tipo registrado en la spec **v1.9.11**.
+
+**3 · Campo primario: `id` `autoNumber` → `coordinacion_key` `singleLineText`, escrito server-side.**
+§2.12 declaraba el primario como `id` **PK auto**. **`autoNumber` no está disponible por
+herramienta**: no aparece en el enum de tipos de `create_table` ni en el de `create_field` del MCP
+de Airtable. La única vía sería crearlo a mano en la UI, y **la regla operativa del proyecto lo
+prohíbe** —todo cambio de schema va por herramienta, para que quede trazable y repetible—.
+
+Se descartó también dejar el primario en un campo ya previsto (`fecha_respuesta`, `dateTime`): un
+primario no único y poco legible degrada la grilla justo para quien más la consulta. `TX_Solicitudes`
+usa una fórmula como primario y `TX_ContactosVisita` un `singleLineText`; **la segunda es el patrón
+replicable acá**, porque las fórmulas tampoco se crean en `create_table`.
+
+`coordinacion_key` la escribe el Route Handler en el insert con el formato
+`VP-2026-0530 · intento 1` —código de la solicitud más el ordinal—, de modo que la fila se
+identifica de un vistazo sin abrir el registro. Decisión de Sergio, 19-ago-2026. Cambio de tipo
+registrado en la spec **v1.9.12**.
+
+#### Los tres cambios de tipo, en una tabla
+
+| §2.12 declaraba | Se crea como | Motivo raíz |
+|---|---|---|
+| `id` · PK `autoNumber` | `coordinacion_key` · `singleLineText` | `autoNumber` no existe en las tools MCP · no se crean campos por UI |
+| `intento_numero` · `formula` | `number` (precision 0) | Una fórmula no ve registros hermanos por Link · base sin `rollup` |
+| `coordinacion_vigente` · `formula` | `singleSelect` | Airtable no tiene `LAST(… ORDER BY …)` · vía `rollup` descartada por diseño |
+
+Los tres tienen la misma consecuencia práctica y conviene enunciarla junta: **son campos que
+escribe el servidor, no que calcula Airtable.** Quien audite la base no debe esperar que se
+actualicen solos, y quien toque el Route Handler de coordinación tiene que escribir los tres en la
+misma operación que inserta la fila. Si uno se olvida, la base queda internamente inconsistente sin
+que ninguna fórmula lo delate.
+
+#### Nota sobre `intento_numero` y la constraint de unicidad
+
+La constraint blanda `(solicitud, fecha_respuesta truncada al minuto)` de §2.12 **no tiene
+realización en el schema**: Airtable no soporta constraints de unicidad. Vive como guard en el
+Route Handler. Es la mitigación **R-2** (doble disparo por doble tap) y no debe darse por cubierta
+al leer el schema.

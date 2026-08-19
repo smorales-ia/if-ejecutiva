@@ -449,7 +449,7 @@ quedan en v1.9.8 son huella histórica deliberada (bitácoras, changelog interno
 `docs/_notas/`, construcciones «hasta v1.9.8»).
 
 > ⚠ **SUPERADO el 19-ago-2026.** El normativo vigente es
-> **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_10.md`**. El párrafo de arriba se
+> **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md`**. El párrafo de arriba se
 > conserva sin cambios porque describe lo que ocurrió **en este lote** (13-ago-2026) y
 > reescribirlo volvería falsa la frase «renombrado desde `…_v1_9_8.md`».
 

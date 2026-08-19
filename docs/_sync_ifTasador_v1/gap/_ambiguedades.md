@@ -635,3 +635,52 @@ Se registra en vez de decidirse, por §7 del prompt de sync.
 
 **Lectura conservadora aplicada en P4-TAS: correo de devolución = solo motivo + detalle.
 Pendiente confirmación de Héctor sobre inclusión de fecha de visita y nota.**
+
+---
+
+## A-21 · `motivo` de coordinación y `estado_contacto` describen el mismo dominio en dos tablas
+
+**Estado** — abierta · **afecta a RF-TAS-12** · impacto medio · dueño: **Héctor**.
+
+Al preparar la creación de `TX_CoordinacionVisita` (P4-TAS · 19-ago-2026) se levantó
+`TX_ContactosVisita` y apareció un campo que nadie había cruzado con el catálogo de motivos:
+
+| Tabla · campo | Valores reales en la base |
+|---|---|
+| `TX_ContactosVisita.estado_contacto` (`fldMerAz4OCNhwn4X`, singleSelect) | `valido` · `no_contesta` · `telefono_erroneo` |
+| `TX_CoordinacionVisita.motivo` (por crear · RF-TAS-12) | `Teléfono no contesta` · `Teléfono equivocado` · `Cliente rechaza visita` · `Otro` |
+
+**Dos de los cuatro motivos ya existen como estados de contacto**, con el mismo significado y otra
+convención de escritura: `no_contesta` ≡ *Teléfono no contesta*, `telefono_erroneo` ≡ *Teléfono
+equivocado*.
+
+**Por qué importa, y no es sólo estética.** El tasador, al devolver a ejecutiva, va a declarar un
+motivo que es **una afirmación sobre un contacto concreto** —el de prioridad 1 al que llamó—. Ese
+contacto tiene su propio campo para exactamente eso. Con las dos cosas separadas caben dos
+escenarios malos: que `estado_contacto` quede desactualizado mientras `motivo` dice la verdad, de
+modo que la ejecutiva corrige un teléfono que la base sigue dando por `valido`; o que alguien
+sincronice los dos a mano y el par se desalinee en la primera excepción.
+
+**Las tres salidas posibles**, todas legítimas y ninguna decidible desde el repositorio:
+
+1. **Se dejan separados** y se acepta la duplicación. `motivo` describe el intento de coordinación,
+   `estado_contacto` describe el contacto. Es defendible: son entidades distintas y un intento
+   fallido no siempre invalida el teléfono.
+2. **`motivo` se deriva de `estado_contacto`** y el catálogo de RF-TAS-12 se reduce a los valores
+   que no son sobre el teléfono (`Cliente rechaza visita`, `Otro`).
+3. **Se unifican** en un catálogo único, y el handler de coordinación escribe los dos campos en la
+   misma operación.
+
+**Impacto medio.** No bloquea la creación de la tabla: `motivo` se crea con los cuatro valores del
+diseño (decisión de Sergio del 19-ago-2026, A-17), y cualquiera de las tres salidas se puede
+aplicar después sin migrar datos, porque al cerrarse esta ambigüedad no habrá filas históricas.
+**Cerrarla antes de que P4-TAS entre a producción es gratis; después, no.**
+
+**Relación con A-17.** A-17 preguntaba **dónde vive** el catálogo de motivos y se cerró:
+`singleSelect`, servido desde el schema. A-21 pregunta **si ese catálogo debería existir**, dado que
+la mitad ya existe en otra tabla. Son distintas y la segunda no invalida la primera.
+
+**Origen.** Bloque 1 de P4-TAS (19-ago-2026), al levantar el patrón de tabla hija de
+`TX_ContactosVisita` para replicarlo. Registrada por instrucción de Sergio; **no se toca nada de
+`TX_ContactosVisita` en esta tanda.**
+
