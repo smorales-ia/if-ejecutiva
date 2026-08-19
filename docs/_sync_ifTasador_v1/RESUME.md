@@ -448,6 +448,11 @@ con `git mv` en este lote. Toda referencia viva del repositorio apunta ya a v1.9
 quedan en v1.9.8 son huella histórica deliberada (bitácoras, changelog interno del spec,
 `docs/_notas/`, construcciones «hasta v1.9.8»).
 
+> ⚠ **SUPERADO el 19-ago-2026.** El normativo vigente es
+> **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_10.md`**. El párrafo de arriba se
+> conserva sin cambios porque describe lo que ocurrió **en este lote** (13-ago-2026) y
+> reescribirlo volvería falsa la frase «renombrado desde `…_v1_9_8.md`».
+
 La cadena completa es v1.9.3 → v1.9.4 → … → v1.9.8 → **v1.9.9**. La versión del archivo y la
 del cuerpo coinciden. ⚠ La celda "Versión" de portada **nunca tuvo entrada para 1.9.8**: salta
 de 1.9.9 a 1.9.7. Es una omisión anterior a este lote y **se decidió no inventarla**.

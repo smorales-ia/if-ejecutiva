@@ -88,6 +88,14 @@ Los campos encontrados se documentan en `docs/schema-airtable.md` como parte del
 
 **Pendiente de ejecución — es tarea documental, ya no decisión:**
 
+> 🚫 **SIN OBJETO desde el 19-ago-2026.** Las cuatro filas de abajo derivaban de **RO-29**,
+> que quedó **anulada**: CI-012 se cerró en sentido opuesto por la revisión de Héctor del
+> diseño v4 (Pantalla 2, puntos 1-4). **No se retira nada.** RF-TAS-04 y RF-TAS-05 quedaron
+> **desbloqueados** en la spec v1.9.10, §1.3.2 y §1.3.3 recuperaron el encargo de leer la
+> coordinación, y P4-TAS **vuelve a la secuencia oficial** en lugar de retirarse de ella. La
+> tabla se conserva como registro de lo que se planificó el 18-ago-2026, no como trabajo
+> vigente. La ruta `…_v1_9_9.md` que cita también se deja intacta por lo mismo.
+
 | Qué | Dónde | Cuándo |
 |---|---|---|
 | Retirar RF-TAS-04 y RF-TAS-05, §2.11 y §2.12 | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_9.md` | Próximo bump normativo |

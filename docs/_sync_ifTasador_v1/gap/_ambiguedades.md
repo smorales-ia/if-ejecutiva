@@ -552,3 +552,86 @@ decide crear una tabla de defaults, la respuesta a las dos puede salir del mismo
 
 **Registro asociado:** **CI-022** documenta las dos tablas sin documentar que salieron de esta
 verificación, y se cierra apuntando a esta ambigüedad como resolución.
+
+
+---
+
+## A-19 · Pantalla 5 · anotación perdida entre puntos 10 y 12
+
+**Estado** — abierta · **impacto indeterminado — por definición** · dueño: **Héctor**.
+
+En `docs/_md/Imagenes_IF_Tasador_v4.pdf` **p. 23**, la numeración de las anotaciones de
+Pantalla 5 salta de **10** a **12**. **El punto 11 no existe en el archivo entregado.**
+
+No es una numeración caprichosa: en el layout del PDF hay un **hueco reservado de tres
+líneas vacías** entre el final del punto 10 (`y ≈ 480`) y el comienzo del punto 12
+(`y ≈ 559`), con el mismo patrón de espaciado que separa a los demás puntos de su imagen
+adjunta. Los puntos 6 y 13 usan exactamente ese patrón —texto, hueco, captura— y en ambos
+casos el hueco contiene una imagen. **En el punto 11 el hueco está vacío**: no hay texto ni
+imagen embebida (`get_images` devuelve una sola imagen en la página, y es la del punto 6).
+
+**Qué significa.** Lo más probable es que el punto 11 fuera una anotación con captura que se
+perdió al exportar el documento a PDF, o que Héctor la borrara dejando el espacio. No es
+determinable desde el archivo.
+
+**Por qué no se puede rodear.** Los puntos 9, 10 y 12 que lo rodean son los tres eslabones
+de la misma cadena —habilitación del botón "Calcular Tasación", validación de faltantes al
+presionarlo, y ejecución del escenario que cambia el estado a `visitada`—. Un punto 11
+entre ellos cae justo en el hueco funcional entre *validar* y *ejecutar*, que es donde
+vivirían una confirmación previa, un resumen de lo que se va a calcular, o el manejo del
+caso "faltan comparables". Inventar cuál de esas era, o darla por inexistente, son las dos
+formas de equivocarse.
+
+**Lo que hay que hacer:** pedirle a Héctor el punto 11 de Pantalla 5. Es una pregunta de una
+línea y no admite sustituto documental.
+
+**Mientras siga abierta.** No bloquea a P7-TAS: los puntos 7 a 10 y 12 son autosuficientes y
+se construyen. Lo que **no** se hace es declarar cerrada la revisión de Pantalla 5 ni marcar
+sus RF (RF-TAS-16, RF-TAS-18, RF-TAS-07) como "alineados con el diseño v4 en su totalidad",
+porque hay una anotación del cliente que nadie leyó.
+
+**Numeración.** Se asigna **A-19** y no A-18: **A-18 ya existe** y está viva (bloqueante de
+homogeneización, dueños Héctor y Óscar). Decisión de Sergio, 19-ago-2026.
+
+**Observación relacionada, que no es esta ambigüedad.** Pantalla 5 tampoco tiene texto para
+los puntos **1 a 5**, y Pantalla 7 no lo tiene para el punto **1**. Son un fenómeno distinto
+y no se registran como ambigüedad: esos números caen en páginas que sólo contienen las
+capturas "Parte 1" y "Parte 2" de la pantalla, sin hueco reservado en el layout, de modo que
+lo más razonable es que Héctor numerara las capturas y no anotaciones. El punto 11 es el
+único caso con **hueco vacío a mitad de página entre dos puntos con texto**.
+
+---
+
+## A-20 · La devolución a ejecutiva, ¿lleva fecha de visita en el correo?
+
+**Estado** — abierta · **afecta a RF-TAS-13** · impacto bajo · **propuesta de registro,
+pendiente de confirmación de Sergio**.
+
+Contradicción entre el texto y la imagen del **mismo** diseño v4:
+
+| Fuente | Qué dice |
+|---|---|
+| Diseño v4, p. 19, punto 3 (texto) | *"CUANDO DEVUELVE A EJECUTIVA, SE DEBE ENVIAR EMAIL CON MOTIVO Y DETALLE DE QUE NO SE PUDO CONTACTAR O COORDINAR VISITA, **CON LA FECHA DE LA VISITA** Y LA NOTA QUE HAYA ESCRITO"* |
+| Diseño v4, p. 19, imágenes (`p19_1.png`, `p19_2.png`) | La rama *No pude contactar* despliega **sólo** Motivo y Detalle. **No hay campo de fecha ni de nota** en esa rama: son de la rama *Contacto exitoso* (`p19_3.png`) |
+| §2.3 · RF-TAS-13 | *"Al devolver a la ejecutiva, envía un correo con el motivo del catálogo y el detalle escrito"* — sin fecha |
+
+Si el tasador no pudo contactar a nadie, **no hay fecha de visita que informar**: es
+precisamente lo que no consiguió. La lectura más plausible es que el punto 3 se redactó
+copiando el punto 2 y arrastró "CON LA FECHA DE LA VISITA Y LA NOTA" sin depurarlo.
+
+**No se resuelve aquí** porque la alternativa no es absurda: podría querer decir *la fecha
+que estaba planificada y ahora se cae*, dato que la ejecutiva sí tiene motivo para ver en el
+correo. Eso cambia el contenido de la plantilla `email_coordinacion_rechazada` y añade un
+campo a su payload.
+
+**Impacto bajo y acotado**: afecta al cuerpo de una plantilla de correo, no al modelo de
+datos ni a la UI. Se puede construir P4-TAS con la lectura conservadora (motivo + detalle,
+sin fecha, que es lo que la UI captura) y ajustar la plantilla después sin retrabajo.
+
+**Origen.** Paso 4 de la ingesta de anotaciones de Héctor sobre el diseño v4 (19-ago-2026).
+Se registra en vez de decidirse, por §7 del prompt de sync.
+
+**Decisión de Sergio, 19-ago-2026: la ambigüedad se mantiene abierta.** No se retira.
+
+**Lectura conservadora aplicada en P4-TAS: correo de devolución = solo motivo + detalle.
+Pendiente confirmación de Héctor sobre inclusión de fecha de visita y nota.**

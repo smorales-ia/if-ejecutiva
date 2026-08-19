@@ -269,8 +269,12 @@ Lo que sigue vigente como regla vive abajo, destilado.
   entero canoniza como especificación lo que la propia auditoría marca como
   deuda —el caso que lo motivó: un contador de intentos que el spec ya había
   retirado (CI-015)—.
-- **RO-29 · La coordinación de visitas no se soporta por sistema: es manejo
-  manual fuera de plataforma.** Decisión de producto de Sergio (17-ago-2026),
+- 🚫 **RO-29 · ANULADA el 19-ago-2026 — no aplicar.** La revisión de Héctor sobre el
+  diseño v4 (Pantalla 2, puntos 1-4) revierte esta decisión: la coordinación **sí** va
+  por sistema. Anulación registrada en `docs/CODE_INCONSISTENCIES.md` → CI-012. El texto
+  original se conserva abajo por la regla de sólo-append, **como historia, no como regla**.
+  ~~RO-29 · La coordinación de visitas no se soporta por sistema: es manejo
+  manual fuera de plataforma.~~ Decisión de producto de Sergio (17-ago-2026),
   **canónica y cerrada**. Aplica a los dos tramos: ejecutiva ↔ tasador y
   tasador ↔ visador. **`TX_CoordinacionVisita` no existe y no existirá**, y con
   ella caen `estado_coordinacion`, `motivo`, `intento_numero`,
@@ -1524,3 +1528,66 @@ diez días; lo que falta es el código que la use.
 la pregunta útil no es *«¿está definido?»* sino ***«¿quién lo escribe y cuándo?»***. Una matriz
 completa en Airtable y un motor con API pública dan la impresión de una funcionalidad terminada;
 `grep` de los llamadores dice la verdad en una línea.
+
+
+**Cierre parcial de Q5 (19-ago-2026), a la luz de la revisión de Héctor del diseño v4.**
+Cierre e2/e3 fusionado en un solo click ("Confirmar coordinación" o "Devolver a ejecutiva")
+según revisión del diseño v4, Pantalla 2. La etapa e3 (0.5h post-llamado) queda absorbida
+por e2 en la UX. El motor sigue con las 7 filas de `C_SLA_Etapas`, pero el escritor marca
+fin de e2 y fin de e3 en el mismo evento.
+
+Consecuencia para quien escriba el código: **no se busca una segunda interacción de UI que
+cierre e3.** No existe y no se va a diseñar — el "informe post-llamado" de 30 minutos es,
+en la interfaz real, el mismo formulario de Pantalla 2 que el tasador ya envió. El escritor
+de P4-TAS emite dos `marcarFinEtapa` consecutivos (e2 y e3) desde el handler de
+coordinación, y abre e4. Lo que **no** cierra esto es el resto de CI-037: las etapas 4, 5, 6
+y 7 siguen sin escritor.
+
+---
+
+### 2026-08-19 (c) — RO-29 anulada: CI-012 reabierta y cerrada en sentido opuesto
+
+RO-29 anulada · CI-012 reabierta y cerrada en sentido opuesto por revisión Héctor diseño v4
+Pantalla 2 puntos 1-4. Lección: antes de borrar código bajo un aprendizaje reciente, esperar
+confirmación del cliente.
+
+**Contexto:** ingesta de `docs/_md/Imagenes_IF_Tasador_v4.pdf` devuelto anotado por Héctor
+(pp. 17-30 · 7 pantallas · 22 imágenes extraídas a `docs/_md/img_hector_v4/`). Paso 2 de la
+tanda de reconciliación previa a P4-TAS.
+
+**Inconveniente:** los cuatro puntos de Pantalla 2 piden exactamente la funcionalidad que
+**RO-29** había retirado dos días antes. Para entonces ya se había ejecutado la retirada:
+`TX_CoordinacionVisita` no se creó (P0.5-TAS), los tipos `CoordinacionVisita`,
+`MotivoNoContacto`, `MOTIVOS_DEVOLUCION`, `intento_numero` y `AccionCard` no se escribieron
+(P1-TAS), y `coordinar-visita.tsx` con su `page.tsx` se **borraron** (CI-027, 18-ago-2026).
+
+**Causa raíz:** RO-29 se dictó el 17-ago-2026 como decisión de producto tomada **sin la
+revisión del cliente sobre el diseño**, y de forma deliberadamente irreversible —"canónica y
+no se vuelve a consultar", "no existe y no existirá"—. La consulta a Héctor/Óscar estaba
+enviada desde el 11-ago-2026 y sin responder; se decidió sin esperarla. La respuesta llegó
+el 19-ago-2026 y dice lo contrario. El error no fue decidir rápido: fue **ejecutar
+destructivamente** sobre una decisión cuya contraparte estaba pendiente de responder.
+
+**Solución aplicada:**
+- `docs/CODE_INCONSISTENCIES.md` → **CI-012** reabierta y cerrada en sentido positivo con
+  fecha 19-ago-2026, con la **cita literal** de los cuatro puntos de Pantalla 2 (pp. 18-19
+  del PDF) transcrita tal cual, erratas del original incluidas.
+- `docs/CODE_INCONSISTENCIES.md` → **nota de anulación de RO-29**, con justificación
+  ("revisión Héctor diseño v4 revierte la decisión") y la lista literal de lo que hay que
+  reponer: `TX_CoordinacionVisita` en el schema, los componentes borrados
+  (`coordinar-visita.tsx` + `confirmarCoordinacion`, `devolverCoordinacion`,
+  `MOTIVOS_DEVOLUCION`) y los tipos que P1-TAS omitió a propósito.
+- En este archivo, **RO-29 queda marcada 🚫 ANULADA** en su propio punto de la lista de
+  reglas destiladas. El texto original se conserva por la regla de sólo-append, pero
+  encabezado de forma que nadie lo lea como regla viva.
+- La **reposición no se ejecutó**: queda registrada como primera acción de **P4-TAS**.
+
+**Prevención futura:** **antes de borrar código bajo un aprendizaje reciente, esperar
+confirmación del cliente.** Una decisión de producto tomada internamente mientras una
+consulta al cliente sigue abierta es provisional, por muy fundada que esté, y **no habilita
+operaciones destructivas**. El código que iba a borrarse por RO-29 no molestaba a nadie
+salvo por 13 errores de `tsc`; dejarlo excluido dos días habría costado una línea de
+`tsconfig` y habría ahorrado la reposición completa que ahora paga P4-TAS. Regla operativa:
+si un aprendizaje tiene menos de una semana **y** existe una consulta abierta a la
+contraparte que podría revertirlo, se marca como **provisional** y sólo autoriza cambios
+reversibles.

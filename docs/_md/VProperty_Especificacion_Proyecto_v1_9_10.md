@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.9** — sucede a `VProperty_Especificacion_Proyecto_v1_9_8.md`, que queda marcado SUPERSEDED.
+> **v1.9.10** — sucede a `VProperty_Especificacion_Proyecto_v1_9_9.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,13 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.9 · 13-ago-2026 · Actualiza §2 (Interfaz
+  **Versión**         1.9.10 · 19-ago-2026 · Reversión de RO-29 por
+                      revisión Héctor diseño v4. CI-012 cerrada en sentido
+                      opuesto. Coordinación por sistema reinstaurada en
+                      §1.3.2, §1.3.3, §1.4, RN-59. RF-TAS-04 y RF-TAS-05
+                      desbloqueados. Sucede a 1.9.9, que queda SUPERSEDED.
+
+                      1.9.9 · 13-ago-2026 · Actualiza §2 (Interfaz
                       Tasador) contra el diseño de referencia
                       `Imagenes_IF_Tasador_v4.pdf`, que pasa a ser la
                       fuente de verdad visual de IF-03 y sucede a
@@ -669,13 +675,15 @@ negocio, abiertas como **A-12** a **A-17** en
 ellas se emiten marcados como pendientes, nunca resueltos por criterio
 propio.
 
-Inconsistencia declarada entre §1 y §2. §1.3.2, §1.3.3, §1.4 y RN-59
-retiraron en esta misma versión la coordinación por sistema, apoyadas en
-CI-012 (`TX_CoordinacionVisita` no existe en la base). §2.3 la conserva
-porque el diseño v4 la exige y porque su retiro es una decisión de negocio
-todavía abierta. La contradicción **queda declarada en §2.3**, no
-disimulada: se resuelve cuando se cierre CI-012, en un sentido o en el
-otro.
+Inconsistencia entre §1 y §2 — resuelta en v1.9.10. Entre v1.9.9 y esta
+versión, §1.3.2, §1.3.3, §1.4 y RN-59 retiraban la coordinación por
+sistema mientras §2.3 la conservaba, y el documento declaraba la
+contradicción en lugar de disimularla. **CI-012 se cerró el 19-ago-2026 en
+sentido positivo** —revisión de Héctor sobre el diseño v4, Pantalla 2,
+puntos 1 a 4— y con ella se reinstaura la coordinación por sistema en las
+cuatro secciones de §1. **El documento vuelve a ser consistente**: §1 y §2
+describen lo mismo, y RF-TAS-04 y RF-TAS-05 dejan de estar marcados como
+pendientes.
 
 ### **Nivel de detalle**
 
@@ -1027,12 +1035,18 @@ provienen de la base interna del SII. Tercera: el bloque Vendedor se
 muestra tanto en Nuevo como en Usado; lo que cambia es el tipo de
 persona, jurídica en Nuevo y natural en Usado.
 
-Retiro del bloque Coordinación (v1.9.9). El bloque existió entre v1.9.4 y
-v1.9.8 y mostraba el último intento registrado en TX_CoordinacionVisita.
-Se retira con el resto de la coordinación por sistema: la coordinación de
-la visita queda como gestión manual del tasador y no se registra de forma
-estructurada (CI-012). El reloj de la etapa 2 de §5.2.4 sigue midiéndola
-como actividad del negocio; lo que desaparece es su captura en pantalla.
+Bloque Coordinación — repuesto en v1.9.10. El bloque existió entre v1.9.4
+y v1.9.8, se retiró en v1.9.9 por CI-012 y **vuelve en v1.9.10**: el cierre
+de CI-012 del 19-ago-2026 reinstaura la coordinación por sistema. Muestra
+el **último intento registrado** en TX_CoordinacionVisita —desenlace
+(confirmada / rechazada), fecha de respuesta, fecha de visita acordada y
+nota, o motivo y detalle si fue devuelta— dentro del bloque Contactos de
+visita o como sub-bloque propio. Es la realización en la pestaña Datos de
+lo que el punto 4 de Pantalla 2 del diseño v4 exige: que la ejecutiva vea
+en su UI las respuestas del tasador. **La ejecutiva lee, no edita**: no hay
+control de escritura de coordinación en IF-02. El reloj de la etapa 2 de
+§5.2.4 sigue midiendo la actividad, y ahora además tiene quién lo cierre
+(§5.2.4 · RF-TAS-03).
 
 ### **1.3.3 Pestaña Historial**
 
@@ -1041,9 +1055,17 @@ cambios auditados de A_Cambios, e incorpora: el email de asignación
 enviado al tasador (asunto, destinatario y fecha, expandible al cuerpo
 completo), la confirmación de asignación con su timestamp y autor, las
 ediciones registradas mientras la solicitud estuvo en estado creada
-(RN-59), y las cargas y descargas de documentos registradas en
-TX_Adjuntos. No existe email de reasignación --- v1.9 no tiene flujo de
-reasignación formal (§1.6).
+(RN-59), **los eventos de coordinación de la visita** y las cargas y
+descargas de documentos registradas en TX_Adjuntos. No existe email de
+reasignación --- v1.9 no tiene flujo de reasignación formal (§1.6).
+
+Eventos de coordinación — repuestos en v1.9.10. Se retiraron en v1.9.9 por
+CI-012 y vuelven con su cierre positivo del 19-ago-2026. Cada fila de
+TX_CoordinacionVisita genera un evento en el timeline: coordinación
+confirmada (con la fecha de visita acordada y la nota del tasador) o
+devuelta a ejecutiva (con el motivo del catálogo y el detalle). Junto con
+el bloque de §1.3.2, son los dos puntos donde la ejecutiva ve las
+respuestas del tasador, según el punto 4 de Pantalla 2 del diseño v4.
 
 Alcance implementado (v1.9.8, revisado en v1.9.9). El timeline se cablea
 contra A_Eventos y A_Cambios reales; las dos tablas se referencian de
@@ -1115,16 +1137,19 @@ quedan en modo consulta (RN-59) — no existe ningún flujo de
 reasignación ni edición posterior; ambas condiciones (estado ≠ creada Y
 tasador asignado) deben cumplirse para bloquear, no una sola.
 
-**Retiro de la excepción acotada a RN-59 (v1.9.9).** Entre v1.9.4 y
-v1.9.8, TX_ContactosVisita volvía a ser editable en estado asignada
-mientras coordinacion_vigente = rechazada, para que la Ejecutiva pudiera
-corregir un teléfono y habilitar el segundo intento de coordinación. La
-excepción **se retira**: su única condición de activación era un campo
-derivado de TX_CoordinacionVisita, que deja de existir. RN-59 vuelve a
-ser incondicional — fuera de estado creada con tasador asignado, no hay
-ninguna vía de edición desde IF-02. Si el tasador no logra contactar a
-nadie, lo resuelve por el canal manual, que es donde vive la coordinación
-desde esta versión (CI-012).
+**Excepción acotada a RN-59 — repuesta en v1.9.10.** Rigió entre v1.9.4 y
+v1.9.8, se retiró en v1.9.9 al dar por fuera de alcance la coordinación por
+sistema, y **vuelve a estar vigente** con el cierre positivo de CI-012 del
+19-ago-2026. Su enunciado es el original, sin cambios: **TX_ContactosVisita
+es editable en estado asignada exclusivamente mientras
+coordinacion_vigente = rechazada**, para que la Ejecutiva pueda corregir un
+teléfono equivocado y habilitar el segundo intento de coordinación. La
+excepción cubre **sólo contactos de visita**: cliente, propiedad, RUT y
+datos financieros siguen bloqueados, y toda edición se audita en A_Cambios
+con before/after, autor y timestamp. Su condición de activación vuelve a
+existir porque vuelve a existir el campo que la deriva
+(coordinacion_vigente, sobre TX_CoordinacionVisita). Es la vía sin la cual
+RF-TAS-04 no es implementable.
 
 Esta regla sustituye a la de v1.8.2, que bloqueaba sólo los campos
 críticos (cliente, propiedad, RUT) en estados posteriores a creada o
@@ -1159,12 +1184,14 @@ hay acceso directo a "Reasignar Tasador" porque ese botón no existe.
                       campos son editables desde "Editar solicitud" —
                       incluido el tasador ya fijado— y cada cambio se audita
                       en A_Cambios y en el historial ("Datos de la solicitud
-                      modificados"). La excepción acotada que rigió entre
-                      v1.9.4 y v1.9.8 sobre TX_ContactosVisita queda
-                      retirada en v1.9.9: dependía de
-                      coordinacion_vigente, campo que desaparece con la
-                      coordinación por sistema (CI-012). RN-59 no admite
-                      hoy ninguna excepción.
+                      modificados"). **RN-59 admite una única excepción
+                      acotada, repuesta en v1.9.10**: TX_ContactosVisita
+                      es editable en estado asignada exclusivamente
+                      mientras coordinacion_vigente = rechazada, y sólo
+                      sobre contactos de visita. Rigió entre v1.9.4 y
+                      v1.9.8, se retiró en v1.9.9 y vuelve con el cierre
+                      positivo de CI-012 (19-ago-2026), que devuelve al
+                      modelo el campo del que depende.
 
   **Postcondición**   El modo consulta (solo lectura) se activa únicamente
                       cuando **ambas** condiciones se cumplen a la vez:
@@ -1173,20 +1200,26 @@ hay acceso directo a "Reasignar Tasador" porque ese botón no existe.
                       editable aunque su estado ya no sea creada, y una
                       solicitud con tasador pero todavía en creada sigue
                       siendo editable. No existe ninguna vía de reasignación
-                      ni edición posterior al modo consulta, y desde
-                      v1.9.9 tampoco excepción alguna: el bloqueo alcanza
-                      a todos los bloques del formulario, contactos de
-                      visita incluidos.
+                      ni edición posterior al modo consulta, **salvo
+                      la excepción acotada de contactos de visita**: el
+                      bloqueo alcanza a todos los bloques del formulario
+                      excepto TX_ContactosVisita cuando
+                      coordinacion_vigente = rechazada, caso en que esos
+                      contactos —y sólo ellos— vuelven a ser editables
+                      para habilitar el segundo intento (§2.3 ·
+                      RF-TAS-04).
 
   **Trazabilidad**    Definición del cliente en el levantamiento operativo
                       v1.9. Sustituye a la regla de bloqueo por campos
                       críticos vigente hasta v1.8.2 y a la versión previa de
                       v1.9 que ataba el bloqueo solo a la confirmación de
                       asignación. La excepción acotada incorporada en
-                      v1.9.4 se retira en v1.9.9 al salir del alcance la
-                      coordinación por sistema (CI-012); RN-59 no se
-                      renumera ni se sustituye por una regla nueva. Ver
-                      §1.3.1, §1.4 y §1.6.
+                      v1.9.4 se retiró en v1.9.9 y **se repone en
+                      v1.9.10** con el cierre positivo de CI-012
+                      (19-ago-2026 · revisión Héctor diseño v4, Pantalla 2
+                      puntos 1-4); RN-59 no se renumera ni se sustituye
+                      por una regla nueva en ninguno de los dos
+                      movimientos. Ver §1.3.1, §1.4 y §1.6.
   ---------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
@@ -2289,7 +2322,7 @@ Hasta v1.9.8 esta sección derivaba las horas restantes del plazo agregado en d�
 
 ## 2.3 Coordinar visita (Pantalla 2 · nueva en v1.9)
 
-> ⚠ **Inconsistencia declarada con §1 — ver CI-012.** §1.3.2, §1.3.3, §1.4 y RN-59 retiran en v1.9.9 la coordinación por sistema y la devuelven al canal manual, apoyadas en que `TX_CoordinacionVisita` no existe en la base. Esta sección la conserva porque el diseño v4 la especifica como Pantalla 2 y exige, en su punto 4, que la ejecutiva vea las respuestas del tasador en su UI. Las dos posiciones no se pueden sostener a la vez y **el documento no las reconcilia en esta versión**: la resolución es la decisión de negocio abierta de CI-012 (Héctor/Óscar, consulta enviada el 11-ago-2026). Mientras siga abierta, §2.3 describe el diseño aprobado y §1 describe lo construible; RF-TAS-04 y RF-TAS-05 quedan marcados como pendientes.
+> ✅ **Reconciliada con §1 en v1.9.10 — CI-012 cerrada.** La inconsistencia que v1.9.9 declaraba entre esta sección y §1 **queda resuelta**: el 19-ago-2026, la revisión de Héctor sobre el diseño v4 (Pantalla 2, puntos 1 a 4) cerró **CI-012 en sentido positivo** y **anuló RO-29**. La coordinación por sistema **se reinstaura** en §1.3.2, §1.3.3, §1.4 y RN-59, de modo que §1 y §2 describen ahora lo mismo. `TX_CoordinacionVisita` **se crea** — su ausencia en la base pasa de ser el argumento del retiro a ser trabajo pendiente de P4-TAS. **RF-TAS-04 y RF-TAS-05 dejan de estar marcados como pendientes.**
 
 Antes de iniciar la captura, el tasador ve una **pantalla resumen** con los datos que el correo de asignación entrega hoy (§1.6.3 del spec), organizados en cuatro bloques colapsables:
 
@@ -2339,15 +2372,17 @@ Cada acción persiste una fila en `TX_CoordinacionVisita` (§2.12) y dispara SC1
 | **Descripción** | Al confirmar la coordinación, SC13 envía a la ejecutiva un correo con la fecha de visita acordada y la nota del tasador si la escribió. Al devolver a la ejecutiva, envía un correo con el motivo del catálogo y el detalle escrito. Ambos identifican la solicitud por su código VP-AAAA-NNNN y la propiedad por su dirección, y viajan dentro del hilo `email_thread_id` de la solicitud (RN-52). |
 | **Criterio de aceptación** | Los dos correos se emiten con las plantillas `email_coordinacion_confirmada` y `email_coordinacion_rechazada` de `C_Plantillas`, ninguna de las cuales se envía con un campo obligatorio vacío. La ejecutiva puede identificar solicitud y propiedad sin abrir el sistema. |
 
-| **RF-TAS-04** | **Reapertura para segundo intento tras rechazo** *(pendiente de resolución de CI-012 · decisión de negocio Héctor/Óscar, 11-ago-2026)* |
+| **RF-TAS-04** | **Reapertura para segundo intento tras rechazo** |
 |---|---|
-| **Descripción** | **Pendiente de resolución de CI-012 (decisión de negocio Héctor/Óscar, 11-ago-2026).** Cuando la coordinación vigente está rechazada, la pantalla resumen queda cerrada para el tasador. Al editar la ejecutiva un contacto de visita, la pantalla se reabre con ambos desenlaces disponibles; la nueva fila se registra con `intento_numero += 1`. La vía de edición que lo habilita fue retirada de §1.4 y RN-59 en v1.9.9, de modo que este requisito no es implementable mientras CI-012 siga abierta. |
-| **Criterio de aceptación** | Un segundo intento genera una segunda fila en `TX_CoordinacionVisita` con `intento_numero = 2`. Mientras la coordinación esté rechazada, el estado backend de la solicitud permanece `asignada` y no se puede iniciar captura. No se libera a producción antes del cierre de CI-012. |
+| **Descripción** | Cuando la coordinación vigente está rechazada, la pantalla resumen queda cerrada para el tasador. Al editar la ejecutiva un contacto de visita, la pantalla se reabre con ambos desenlaces disponibles; la nueva fila se registra con `intento_numero += 1`. La vía de edición que lo habilita es la excepción acotada a RN-59, repuesta en §1.4 y RN-59 en v1.9.10. |
+| **Criterio de aceptación** | Un segundo intento genera una segunda fila en `TX_CoordinacionVisita` con `intento_numero = 2`. Mientras la coordinación esté rechazada, el estado backend de la solicitud permanece `asignada` y no se puede iniciar captura. |
+| **Desbloqueo** | Desbloqueado por revisión Héctor diseño v4 · Pantalla 2 puntos 1-4 · `docs/_md/Imagenes_IF_Tasador_v4.pdf` |
 
-| **RF-TAS-05** | **Visibilidad de coordinación para la ejecutiva (IF-02)** *(pendiente de resolución de CI-012 · decisión de negocio Héctor/Óscar, 11-ago-2026)* |
+| **RF-TAS-05** | **Visibilidad de coordinación para la ejecutiva (IF-02)** |
 |---|---|
-| **Descripción** | **Pendiente de resolución de CI-012 (decisión de negocio Héctor/Óscar, 11-ago-2026).** El diseño v4 exige, en su punto 4, que la ejecutiva vea en su UI tanto las confirmaciones como las devoluciones del tasador. La realización prevista era la pestaña Datos del expediente de IF-02 (§1.3.2) para el último intento y la pestaña Historial (§1.3.3) como evento, sin UI de escritura. Ambos encargos fueron retirados de §1 en v1.9.9 por falta de origen de datos, de modo que hoy el requisito no tiene destino construible. |
-| **Criterio de aceptación** | Un cambio en `TX_CoordinacionVisita` se refleja en las pestañas Datos e Historial de IF-02 con latencia menor a un minuto. La ejecutiva no puede editar el resultado de coordinación desde IF-02. No se libera a producción antes del cierre de CI-012. |
+| **Descripción** | El diseño v4 exige, en su punto 4, que la ejecutiva vea en su UI tanto las confirmaciones como las devoluciones del tasador. La realización es la pestaña Datos del expediente de IF-02 (§1.3.2) para el último intento y la pestaña Historial (§1.3.3) como evento, sin UI de escritura. Ambos encargos, retirados de §1 en v1.9.9, quedan repuestos en v1.9.10. |
+| **Criterio de aceptación** | Un cambio en `TX_CoordinacionVisita` se refleja en las pestañas Datos e Historial de IF-02 con latencia menor a un minuto. La ejecutiva no puede editar el resultado de coordinación desde IF-02. |
+| **Desbloqueo** | Desbloqueado por revisión Héctor diseño v4 · Pantalla 2 puntos 1-4 · `docs/_md/Imagenes_IF_Tasador_v4.pdf` |
 
 ---
 
@@ -2365,7 +2400,7 @@ Los contenidos que esta sección enumeraba no se pierden, sino que se reparten d
 
 El tasador puede editar sólo los campos designados como suyos (ocho secciones de acordeón detalladas en §2.8). No puede modificar cliente, propiedad, propietario, RUT ni datos financieros de la solicitud original —esos campos son exclusivos de la Ejecutiva o del solicitante externo (IF-01). Cualquier edición fuera del alcance permitido es bloqueada server-side con tooltip explicativo.
 
-**Excepción acotada a RN-59 — retirada de §1, conservada aquí como dependencia pendiente.** El segundo intento de coordinación de §2.3 se apoyaba en que `TX_ContactosVisita` fuera editable desde IF-02 en estado `asignada` mientras la coordinación estuviera rechazada, cubriendo exclusivamente contactos de visita y nunca cliente, propiedad, RUT ni datos financieros, con auditoría en `A_Cambios`. **§1.4 y RN-59 retiran esa excepción en v1.9.9** al salir de alcance la coordinación por sistema. Se deja constancia aquí porque RF-TAS-04 depende de ella: si CI-012 se cierra reinstaurando la coordinación, la excepción vuelve a hacer falta y hay que reponerla en §1.4 y RN-59 de forma explícita. Ver la nota de inconsistencia declarada al inicio de §2.3.
+**Excepción acotada a RN-59 — repuesta en §1.4 y RN-59 (v1.9.10).** El segundo intento de coordinación de §2.3 se apoya en que `TX_ContactosVisita` sea editable desde IF-02 en estado `asignada` mientras la coordinación esté rechazada, cubriendo exclusivamente contactos de visita y nunca cliente, propiedad, RUT ni datos financieros, con auditoría en `A_Cambios`. v1.9.9 retiró esa excepción al dar por fuera de alcance la coordinación por sistema; **el cierre positivo de CI-012 (19-ago-2026) la reinstaura**, y §1.4 y RN-59 la enuncian de nuevo de forma explícita. RF-TAS-04 vuelve a tener la vía de edición que necesita.
 
 ---
 
@@ -2680,7 +2715,7 @@ Constraint blanda de unicidad `(solicitud_id, fecha_respuesta_truncada_al_minuto
 
 **Campos nuevos en `TX_Solicitudes`:**
 
-- `coordinacion_vigente` (formula) = `LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`, o null si no hay intentos. Alimenta el chip "Por coordinar" y el badge "Esperando contacto de ejecutiva". La excepción de RN-59 que también dependía de este campo fue retirada en §1.4 (ver §2.5).
+- `coordinacion_vigente` (formula) = `LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`, o null si no hay intentos. Alimenta el chip "Por coordinar", el badge "Esperando contacto de ejecutiva" y la excepción acotada a RN-59, repuesta en §1.4 en v1.9.10 (ver §2.5).
 - `observacion_rechazo_tasador` (texto largo, nullable) — observación persistida por RF-TAS-09.
 - `fecha_real_visita` (date) — fecha en que la visita efectivamente ocurrió, distinta de la planificada en la coordinación. Obligatoria para calcular y es la que declara el informe (RF-TAS-17).
 
@@ -6471,12 +6506,12 @@ Se enuncian así:
 - RN-58 · El sello verde no aplica a casas ni a departamentos full
   eléctricos; en esos casos se registra "no aplica" y no se deja vacío.
 - RN-59 · Enunciada con precondición, acción y postcondición en §1.4.
-  La excepción acotada que rigió entre v1.9.4 y v1.9.8 —TX_ContactosVisita
-  editable en estado asignada mientras la coordinación estuviera
-  rechazada— **queda retirada en v1.9.9** al salir de alcance la
-  coordinación por sistema (CI-012): RN-59 no admite hoy ninguna
-  excepción. §2.5 deja constancia de la dependencia, porque RF-TAS-04 la
-  necesita si CI-012 se cierra reinstaurando la coordinación.
+  La excepción acotada —TX_ContactosVisita editable en estado asignada
+  mientras la coordinación esté rechazada— rigió entre v1.9.4 y v1.9.8,
+  se retiró en v1.9.9 y **queda repuesta en v1.9.10** con el cierre
+  positivo de CI-012 (19-ago-2026 · revisión Héctor diseño v4). RN-59
+  admite hoy esa única excepción, y sólo sobre contactos de visita.
+  RF-TAS-04 depende de ella y por eso vuelve a ser implementable.
 
 Tres de estas reglas —RN-54, RN-55 y RN-57— describen comportamiento que
 v1.9 no implementa. Se declaran igualmente para que la versión que
