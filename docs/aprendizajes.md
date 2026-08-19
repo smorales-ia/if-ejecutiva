@@ -410,6 +410,22 @@ Lo que sigue vigente como regla vive abajo, destilado.
   18 y verla renderizada el 17, y ningún test previo lo habría cazado porque
   todos los fixtures anteriores usaban fechas con hora.
   Vigente desde el 19-ago-2026, sesión P3-TAS.B.
+- **RO-37 · Una capacidad nueva de acceso a Airtable desde IF-03 no se agrega a
+  `lib/airtable-client.ts`.** Ese módulo es **superficie compartida con IF-02**
+  y lleva meses en producción (**R5**): ampliarlo por una necesidad de la
+  interfaz del tasador extiende el radio de impacto de la tanda a la consola de
+  la Ejecutiva sin que nada de IF-02 lo haya pedido. La capacidad **se aísla en
+  un módulo propio de `lib/tasador/`**, con caché TTL cuando el dato lo admita,
+  y **la promoción a `airtable-client.ts` queda diferida hasta que IF-02 la
+  necesite** — momento en que habrá dos consumidores reales y el cambio se
+  justifica solo. Caso que la origina: P4-TAS necesitó leer las `choices` de un
+  `singleSelect` para cumplir **A-17** (catálogo servido desde el schema, sin
+  deploy). Eso exige la **Meta API** (`/v0/meta/bases/...`), que ningún módulo
+  del repo consumía; se resolvió con `lib/tasador/schema-airtable.ts` y una
+  caché de 5 min, mismo patrón que `mapaComunas()`. Corolario práctico: cuando
+  la duda sea "¿esto va en el cliente compartido o en un módulo propio?", la
+  pregunta útil no es dónde queda más ordenado sino **quién más se rompe si me
+  equivoco**.
 
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 

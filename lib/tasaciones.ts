@@ -186,6 +186,61 @@ const ABREVIATURAS_SUBTIPO: Readonly<Record<string, string>> = Object.freeze({
 })
 
 /**
+ * Convierte una **fecha de calendario** (`YYYY-MM-DD`) en `Date`, anclada al
+ * mediodía local — **función pura** · **RO-36**.
+ *
+ * Los campos `date` de Airtable no llevan hora y llegan como `"2026-08-30"`.
+ * `new Date("2026-08-30")` los interpreta como **medianoche UTC**, y
+ * formateados en cualquier huso al oeste de Greenwich —Chile entre ellos—
+ * retroceden al día anterior. Anclar a `T12:00:00` **sin `Z`** deja el día a
+ * salvo entre −12 y +12.
+ *
+ * ⚠ **Sólo para fechas de calendario.** Los instantes —todo lo que termina en
+ * `_ts`: `fecha_asignacion_ts`, `sla_etapa_vence_ts`— se leen tal cual, porque
+ * ahí la hora **es** el dato y anclarla la destruiría.
+ *
+ * ⚠ **No se usa en el camino de escritura de la coordinación, y es
+ * deliberado.** El `<input type="date">` entrega `"2026-08-30"` y el campo
+ * `date` de Airtable acepta ese string tal cual: en la escritura **no se
+ * construye ningún `Date`**, así que no hay conversión de huso que pueda
+ * corromper el día. Esta función es para **validar** y para las lecturas. Quien
+ * agregue un `new Date(...)` en un handler de escritura de fechas está
+ * reintroduciendo el bug que RO-36 documenta.
+ *
+ * Devuelve `null` ante cualquier cosa que no sea una fecha de calendario
+ * válida, incluida una sintácticamente correcta pero inexistente como
+ * `2026-02-30`.
+ *
+ * @example fechaCalendarioADate('2026-08-30')      // Date · 30-ago 12:00 local
+ * @example fechaCalendarioADate('2026-02-30')      // null
+ * @example fechaCalendarioADate('30-08-2026')      // null
+ */
+export function fechaCalendarioADate(valor: string | undefined | null): Date | null {
+  if (typeof valor !== 'string') return null
+
+  const m = valor.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return null
+
+  const d = new Date(`${m[1]}-${m[2]}-${m[3]}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return null
+
+  /**
+   * `new Date("2026-02-30T12:00:00")` no falla: JavaScript desborda al 2 de
+   * marzo. Se comprueba que las tres partes sobrevivan al viaje de ida y
+   * vuelta, que es la única forma de rechazar un día que no existe.
+   */
+  if (
+    d.getFullYear() !== Number(m[1]) ||
+    d.getMonth() + 1 !== Number(m[2]) ||
+    d.getDate() !== Number(m[3])
+  ) {
+    return null
+  }
+
+  return d
+}
+
+/**
  * Deriva la etiqueta corta de una unidad — **función pura**.
  *
  * Un subtipo que no esté en el mapa **cae al subtipo completo**, nunca a vacío

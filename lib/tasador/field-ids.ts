@@ -27,6 +27,8 @@ export const TABLE_IDS = Object.freeze({
   itemsCuadroValoracion: 'tblCxnMtOETK2ulD0',
   unidades: 'tbl2QDLvJDyy3Rg2I',
   contactosVisita: 'tblW3SSbKo6vRjwBJ',
+  /** Intentos de coordinación de visita (P4-TAS · RF-TAS-03). */
+  coordinacionVisita: 'tblBwMErRxo57ML2r',
   ampliaciones: 'tblpAtUq4p6o1vofo',
   habitacionesPorNivel: 'tblBITpPb8WuqsatM',
   terminacionesPorRecinto: 'tbleQ7pcLxYx9NbCi',

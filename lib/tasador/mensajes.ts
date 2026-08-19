@@ -36,7 +36,36 @@ export const MENSAJES = Object.freeze({
 
   /** La observación de rechazo del informe (RF-TAS-09 · A-15). */
   observacionCorta: 'Describe con un poco más de detalle qué necesitas resolver.',
+
+  /** Detalle de la devolución a ejecutiva por debajo del mínimo (RF-TAS-12). */
+  detalleCorto:
+    'Describe con un poco más de detalle qué ocurrió, para que la ejecutiva pueda corregirlo.',
+
+  /**
+   * `motivo` fuera del catálogo (RF-TAS-12 · A-17).
+   *
+   * No enumera los valores válidos: el catálogo vive en Airtable y puede
+   * cambiar sin deploy, así que un literal que los listara envejecería mal.
+   */
+  motivoNoValido: 'Selecciona un motivo de la lista.',
+
+  /** Coordinar una solicitud que ya salió de `asignada` (§2.3). */
+  coordinacionNoAplica: 'Esta solicitud ya no está en coordinación de visita.',
+
+  /** No se pudo leer el catálogo de motivos desde la configuración (A-17). */
+  catalogoNoDisponible:
+    'No pudimos cargar los motivos. Intenta nuevamente en unos segundos.',
 } as const)
 
 /** Mínimo de caracteres de la observación de rechazo (RF-TAS-09) y del motivo de override. */
 export const MIN_CARACTERES_OBSERVACION = 20
+
+/**
+ * Mínimo de caracteres del detalle de la devolución (RF-TAS-12).
+ *
+ * Es el mismo número que {@link MIN_CARACTERES_OBSERVACION} y **son constantes
+ * distintas a propósito**: coinciden hoy porque el diseño v4 usa el mismo
+ * contador en las dos pantallas, no porque sean la misma regla. Si Héctor
+ * cambia una, no debe arrastrar la otra.
+ */
+export const MIN_CARACTERES_DETALLE = 20

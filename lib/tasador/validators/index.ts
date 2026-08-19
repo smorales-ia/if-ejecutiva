@@ -17,7 +17,7 @@
  */
 
 import { z } from 'zod'
-import { MENSAJES, MIN_CARACTERES_OBSERVACION } from '../mensajes'
+import { MENSAJES, MIN_CARACTERES_DETALLE, MIN_CARACTERES_OBSERVACION } from '../mensajes'
 
 /* -------------------------------------------------------------------------
  * Piezas reutilizables
@@ -65,6 +65,47 @@ export const rechazoSchema = z.object({
  * cuerpo con basura en vez de ignorarlo.
  */
 export const calcularSchema = z.object({}).strict()
+
+/**
+ * `POST /api/tasaciones/[id]/coordinacion` — RF-TAS-03 · RF-TAS-12 · RF-TAS-13.
+ *
+ * **Unión discriminada por `resultado`**, que es la misma forma que tiene
+ * `AccionCard` en el cliente. No es cosmética: las dos ramas tienen campos
+ * obligatorios distintos y mutuamente excluyentes, y un `z.object` plano con
+ * todo opcional aceptaría una confirmación sin fecha o una devolución sin
+ * motivo, que son exactamente los dos cuerpos que no deben entrar.
+ *
+ * ⚠ **`motivo` se valida acá sólo como cadena no vacía.** Su pertenencia al
+ * catálogo **no se comprueba en el schema**: el dominio vive en el
+ * `singleSelect` de Airtable y se lee en runtime (**A-17**). Codificar los
+ * cuatro valores en un `z.enum` volvería a atar el catálogo al build — lo que
+ * A-17 prohíbe— y el schema empezaría a rechazar motivos legítimos el día que
+ * alguien agregue el quinto. La comprobación real la hace la ruta.
+ *
+ * ⚠ **La rama `rechazada` no acepta `fechaVisita` ni `nota`.** El punto 3 del
+ * diseño v4 los menciona, pero esa rama de la pantalla no los captura — si no
+ * se pudo contactar, no hay fecha que informar. Es la lectura conservadora de
+ * **A-20**, y `.strict()` la hace explícita: un cuerpo que los mande se rechaza
+ * en vez de ignorarlos en silencio.
+ */
+export const coordinacionSchema = z.discriminatedUnion('resultado', [
+  z
+    .object({
+      resultado: z.literal('confirmada'),
+      fechaVisita: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, 'formato de fecha'),
+      nota: z.string().trim().optional(),
+    })
+    .strict(),
+  z
+    .object({
+      resultado: z.literal('rechazada'),
+      motivo: z.string().trim().min(1, MENSAJES.motivoNoValido),
+      detalle: z.string().trim().min(MIN_CARACTERES_DETALLE, MENSAJES.detalleCorto),
+    })
+    .strict(),
+])
 
 /** Un comparable de la grilla de la sección D (RF-12). */
 export const comparableSchema = z.object({
