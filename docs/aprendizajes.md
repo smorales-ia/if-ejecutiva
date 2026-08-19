@@ -1489,3 +1489,38 @@ ocho elementos de §4.1, su orden, las tres omisiones y el `tel:`. **La comproba
 375×812 sigue pendiente y es de Sergio.**
 **Prevención futura:** anotar en el plan que toda pantalla de IF-03 necesita sesión Clerk para
 abrirse, y que P11-TAS tiene que reconciliar el guard de Clerk con la identidad mock.
+
+### 2026-08-19 (b) — Q5 resuelta: quién cierra la etapa 2, y la etapa 3 que ya estaba especificada
+
+**Contexto:** cierre de P3-TAS. El chip "Por coordinar" quedó definido como `asignada` con la etapa 2
+abierta, y la tanda lo entregó con una deuda declarada: **nadie escribe `sla_e2_fin_ts`**, así que
+una solicitud asignada no sale nunca del chip y su semáforo termina en rojo. Se derivó a Héctor
+como **Q5**.
+
+**Respuesta oficial de Héctor (vía Sergio, 19-ago-2026) — Q5 CERRADA:**
+
+- **La etapa 2 la cierra el tasador**, registrando en el sistema el resultado del llamado: día y
+  hora de visita coordinada, o incidencia (no contesta, foro malo, etc.). No la cierra la Ejecutiva
+  ni una automatización de tiempo.
+- **SLA de la etapa 2: 4 h ideal / 6 h máximo.**
+- **El "informe post-llamado" es una etapa 3 propia, con SLA de 30 minutos**, y corre del tasador a
+  Control y Seguimiento inmediatamente después del llamado.
+
+**Hallazgo al verificar la respuesta:** las tres afirmaciones **ya estaban especificadas y
+configuradas** desde antes. `docs/_md/VProperty_SLA_Negocio_v1.1.md` está trackeado en el repo
+desde el commit `dfddb37` (07-ago-2026) y fue absorbido al normativo en el bump v1.9.7 (§5.2.4 ·
+RF-53 · D-16); `C_SLA_Etapas` (`tbl05zu5RLhH3u6pl`) tiene sus **7 filas completas** con los catorce
+umbrales exactos, incluida `e3 · Informe post-llamado · 0.5 / 0.5 · tasador`. Lo que Q5 aporta no es
+la definición sino **la confirmación del actor que cierra e2**, que la matriz no explicita.
+
+**Lo que Q5 deja al descubierto, y es lo que importa:** el problema nunca fue de configuración sino
+de **escritores**. En todo el repo hay **un solo punto** que mueve el reloj por etapa —
+`marcarFinEtapa(id, 1, …)` en `app/api/solicitudes/[id]/asignar/route.ts:132`, que cierra e1 y abre
+e2— más la apertura de e1 en el alta. **Las etapas 3, 4, 5, 6 y 7 no tienen escritor alguno**, y
+`pausar()` / `reanudar()` (RN-54) no tienen ningún llamador. La configuración estaba lista hace
+diez días; lo que falta es el código que la use.
+
+**Prevención futura:** cuando una regla de negocio llega con su tabla de configuración ya poblada,
+la pregunta útil no es *«¿está definido?»* sino ***«¿quién lo escribe y cuándo?»***. Una matriz
+completa en Airtable y un motor con API pública dan la impresión de una funcionalidad terminada;
+`grep` de los llamadores dice la verdad en una línea.

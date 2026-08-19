@@ -244,7 +244,7 @@ a exigir ambos campos.**
 | **Archivo:línea** | `TX_Solicitudes.semaforo_sla` (`fldW4oUq7LvQUZq7W`, fórmula Airtable) y `TX_Solicitudes.fecha_limite_entrega` (`fldoT1LOSgVRo32TC`) · consumidores en `lib/solicitudes.ts` y la vista "SLA en riesgo" |
 | **Síntoma** | La spec v1.9.8 §5.2.2 fija el inicio del SLA en la recepción del correo por Control y Seguimiento, y §5.2.4 define siete etapas medidas en horas hábiles. La base real mide otra cosa: `semaforo_sla` cuenta días desde `{fecha_visita}` y `fecha_limite_entrega = DATEADD({fecha_visita}, 2, 'days')`. Una solicitud puede estar semanas entre `creada` y visitada sin SLA que la mida, sin aparecer en "SLA en riesgo" y sin poder priorizarse por urgencia. |
 | **Causa** | El modelo implementado nunca se definió por escrito: se construyó midiendo la entrega del informe posterior a la visita, que era el tramo que la operación controlaba en planilla. §5.2 es la primera especificación formal del reloj completo, y llega después de la implementación. |
-| **Resolución** | Por etapas, ninguna trivial: (1) poblar `C_SLA` —hoy tiene una sola fila, `SLA_METLIFE_Refinanciamiento`, con los links `cliente`/`tipo_informe`/`tipo_propiedad` vacíos— y elegir entre las dos familias de campos duplicadas (`dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` vs `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido`), borrando la que no gane; (2) crear los timestamps de entrada y salida por etapa en `TX_Solicitudes`, que no existen; (3) implementar el cómputo sobre ventana hábil 9:00–18:00 L-V con feriados, que ninguna fórmula Airtable resuelve sola —`WORKDAY` opera en días, no en horas—; (4) decidir la UI de los dos semáforos convivientes (ver nota en `docs/diseno.md` §3). El paso (1) es prerrequisito de todo lo demás y es de negocio, no técnico. |
+| **Resolución** | Por etapas, ninguna trivial: (1) poblar `C_SLA` —hoy tiene una sola fila, `SLA_METLIFE_Refinanciamiento`, con los links `cliente`/`tipo_informe`/`tipo_propiedad` vacíos— y elegir entre las dos familias de campos duplicadas (`dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` vs `sla_dias`/`sla_dias_alerta`/`sla_dias_vencido`), borrando la que no gane; ~~(2) crear los timestamps de entrada y salida por etapa en `TX_Solicitudes`, que no existen~~; ~~(3) implementar el cómputo sobre ventana hábil 9:00–18:00 L-V con feriados, que ninguna fórmula Airtable resuelve sola —`WORKDAY` opera en días, no en horas—~~; (4) decidir la UI de los dos semáforos convivientes (ver nota en `docs/diseno.md` §3). El paso (1) es prerrequisito de todo lo demás y es de negocio, no técnico. <br><br>**⚠ ACTUALIZACIÓN 19-ago-2026 — los pasos (2) y (3) YA ESTÁN HECHOS.** Ver el bloque de revisión al final de esta ficha antes de planificar sobre ella. |
 | **Dueño** | Sergio (coordinación) · Héctor + Óscar para poblar `C_SLA` · Arquitecto de Datos para los timestamps por etapa |
 | **Fecha objetivo** | Sin fecha — depende de que se priorice el RF. Condición de arranque: `C_SLA` poblada con al menos los pares (cliente, tipo_informe) vigentes. |
 | **Estado** | abierta |
@@ -257,6 +257,26 @@ a exigir ambos campos.**
 - **El `#ERROR` en altas nuevas es un síntoma distinto y tiene arreglo propio.** `DATETIME_DIFF` sobre `{fecha_visita}` vacía da error, no cero. La fórmula de reemplazo está escrita y probada en `docs/_notas/20260729-fix-semaforo-sla.md`; requiere edición manual en la UI de Airtable porque el MCP no modifica fórmulas. Es cosmético y no bloquea esta entrada, pero conviene aplicarlo antes de tocar el modelo, para no mezclar dos cambios en la misma fórmula.
 - **Los literales del semáforo son una tercera cosa.** La fórmula emite `VENCIDO` / `EN RIESGO` / `OK` / `Entregado`, no los colores; `docs/construccion.md` §5 documentaba un filtro por igualdad contra `"rojo"`/`"ambar"` que devolvía cero filas y quedó corregido en esta tanda. El código ya buscaba por subcadena desde la Tanda D-01.
 - Relación con **CI-007**: el cómputo hábil de §5.2.1 depende de la tabla de feriados, cuyo nombre diverge entre spec y base real.
+
+### Revisión del 19-ago-2026 — qué de esta ficha quedó obsoleto
+
+Contraste del SLA v1.1 contra el schema real y el código. **Esta ficha describe el estado del
+08-ago-2026 y sobreestima lo que falta.** Quien planifique sobre ella sin leer esto provisiona
+trabajo ya hecho.
+
+| Paso original | Estado real al 19-ago-2026 |
+|---|---|
+| (1) Poblar `C_SLA` y elegir entre las dos familias de campos duplicadas | ⚠ **Sigue vigente, y es lo único de esta ficha que sigue siendo prerrequisito.** `C_SLA` pasó de 1 a **2 filas** (se sumó `SLA_DEFAULT_GLOBAL`), lo que evita el vacío pero no resuelve los pares (cliente, tipo_informe) reales. Las **dos familias de campos duplicadas siguen conviviendo** sin que se haya borrado ninguna. |
+| (2) «Crear los timestamps por etapa en `TX_Solicitudes`, **que no existen**» | ✅ **HECHO.** Existen los 14 (`sla_e1_inicio_ts` … `sla_e7_fin_ts`) más `sla_etapa_actual`, `sla_etapa_alerta_ts`, `sla_etapa_vence_ts`, `sla_recalculado_ts`, `sla_pausa_inicio_ts` y `sla_pausa_habil_min`, todos verificados por FIELD_ID en `lib/sla-etapas.ts` · `FIELD_IDS_SLA`. |
+| (3) «Implementar el cómputo sobre ventana hábil 9:00–18:00 L-V con feriados» | ✅ **HECHO.** `lib/sla-habil.ts:42-43` fija la ventana; los feriados salen de `C_Feriados` (`tblJVh2kPd4uMgxpb`, 18 filas que cubren 2026 y 2027), no de constantes. El motor `lib/sla-etapas.ts` materializa los umbrales con `sumarHorasHabiles`. |
+| (4) Decidir la UI de los dos semáforos convivientes | ⚠ **Sigue vigente.** Las dos píldoras conviven en la bandeja de IF-02 y desde P3-TAS también en la cola de IF-03, sin que ningún texto explique al usuario por qué una puede estar verde y la otra roja. |
+
+**Lo que la ficha no podía anticipar y hoy es el problema principal:** los timestamps existen y el
+motor sabe calcularlos, pero **casi nadie los escribe**. Ver **CI-037**, que mide ese hueco: cinco
+de las siete etapas no tienen escritor. La secuencia correcta de trabajo es (1) → CI-037 → (4);
+`C_SLA` sigue primero porque `resolverSlaDelPar` la necesita para el override de e7.
+
+**Estado de la ficha:** sigue **abierta**, con alcance reducido a los pasos (1) y (4).
 
 ---
 
@@ -1187,3 +1207,103 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 
 - Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
 - El 404 —y no un redirect a `/sign-in`— es el comportamiento de `auth.protect()` para peticiones no interactivas. Conviene saberlo antes de perseguir una ruta que "no existe": existe y compila; lo que falta es la sesión.
+
+---
+
+> ## Entradas CI-037 a CI-040 · contraste del SLA v1.1 contra el estado real (19-ago-2026)
+>
+> Las cuatro nacen de la misma revisión: contrastar `docs/_md/VProperty_SLA_Negocio_v1.1.md`
+> —ya absorbido al normativo en el bump v1.9.7 (§5.2.4 · RF-53 · D-16)— contra el schema real de
+> Airtable y el código. **No son requisitos nuevos**: el documento está trackeado desde el commit
+> `dfddb37` del 07-ago-2026 y su configuración vive en la base desde el 10-ago. Lo que estas
+> fichas miden es la **brecha de implementación**.
+>
+> El hallazgo transversal es que **el hueco no está en la configuración sino en los escritores**:
+> `C_SLA_Etapas` tiene sus siete filas exactas y el motor tiene API pública completa, pero casi
+> nadie lo llama.
+>
+> **Dueño y Fecha objetivo van en blanco en las cuatro** — excepción declarada **C-12**, las llena
+> el usuario.
+
+## CI-037 · Cinco de las siete etapas del SLA no tienen escritor
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-037 |
+| **Archivo:línea** | `app/api/solicitudes/[id]/asignar/route.ts:132` (**único** llamador de `marcarFinEtapa`) · `app/api/webhooks/crear-solicitud/route.ts:192` (`recalcularSla` en el alta) · contraste con `lib/sla-etapas.ts` (`marcarInicioEtapa`, `marcarFinEtapa`, `pausar`, `reanudar`) y con `C_SLA_Etapas` (`tbl05zu5RLhH3u6pl`, 7 filas) |
+| **Síntoma** | El reloj por etapa de §5.2.4 está **configurado y no corre**. En todo el repositorio hay **un solo punto** que mueve una etapa: `marcarFinEtapa(id, 1, …)` al asignar, que cierra e1 y abre e2. Nada cierra e2, y **nada abre ni cierra e3, e4, e5, e6 ni e7**. `pausar()` y `reanudar()` (RN-54) **no tienen ningún llamador**. Consecuencias observables hoy: (a) toda solicitud `asignada` queda en e2 para siempre y su semáforo termina en **rojo** —las 43 filas de `TX_Solicitudes` emiten `sla_semaforo_etapa` en rojo—; (b) el chip "Por coordinar" de IF-03, que se define por e2 abierta, **no se vacía nunca**; (c) la etapa 3 (`Informe post-llamado`, 30 min) está configurada pero **ninguna solicitud llega jamás a ella**; (d) los reportes de cumplimiento por etapa de §5 medirían una sola transición. |
+| **Causa** | El motor (`lib/sla-etapas.ts`) se construyó en la Tanda C como capa de servicio completa y correcta, con la matriz poblada en Airtable, pero **el cableado a las acciones del negocio se difirió**: cada etapa se cierra con un evento distinto —un click del tasador, un envío de correo, una aprobación del visador— y varios de esos eventos no existen todavía como funcionalidad (el registro del llamado, el envío del informe de CI-028, la interfaz de visado IF-04). Una matriz completa en Airtable más un motor con API pública dan la impresión de una funcionalidad terminada; el `grep` de los llamadores dice otra cosa. |
+| **Resolución** | ⚠ **ABIERTA — es trabajo de varias tandas, no un arreglo.** El reparto por dueño es: <br>**(a) e2-fin + e3 completa → IF-03.** Lo definió **Q5** (19-ago-2026): la cierra el tasador registrando el resultado del llamado (fecha/hora de visita coordinada o incidencia). Requiere pantalla, ruta y campos nuevos, y el **dominio de incidencias** está pendiente de Héctor. <br>**(b) e4 y e6 → IF-02.** Aviso de coordinación al cliente y disponibilidad para visado. Pendiente de Héctor si e4 la cierra un envío automático o un acuse manual. <br>**(c) e5-fin → IF-03**, atado a **CI-028**: el botón de envío del informe todavía no persiste nada. <br>**(d) e7 → IF-04**, que no existe como interfaz. <br>**(e) `pausar`/`reanudar`**: decidir si la pausa de RN-54 la dispara una acción explícita o el propio cómputo hábil. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · bloquea el reloj por etapa completo · **(a) y (b) esperan respuesta de Héctor** |
+| **Origen** | Contraste del SLA v1.1 contra el estado real (19-ago-2026), al verificar la respuesta de Q5. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **Lo que NO falta:** la configuración. `C_SLA_Etapas` tiene las 7 filas con los catorce umbrales exactos de §3.1 (e1 2/3 · e2 4/6 · e3 0.5/0.5 · e4 2/3 · e5 24/48 · e6 2/3 · e7 0.5/0.5), cada una con su actor responsable. La ventana hábil L–V 9:00–18:00 está en `lib/sla-habil.ts:42-43` y los feriados en `C_Feriados` (18 filas, 2026–2027). Quien planifique esta ficha **no necesita crear nada de eso**.
+- Relación con **CI-005**: aquella ficha describe el modelo de reloj y su desalineación de origen; ésta describe el hueco de ejecución que quedó después de construir el motor. No se solapan.
+
+---
+
+## CI-038 · El reproceso de §3.2 no existe en el modelo de datos
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-038 |
+| **Archivo:línea** | `docs/_md/VProperty_SLA_Negocio_v1.1.md` §3.2 y §6.5 · spec v1.9.9 §5.2.5 (RN-55) · contraste con `TX_Solicitudes` (probado vía API) y con el árbol de código completo |
+| **Síntoma** | El reproceso —informe ya entregado que el ejecutivo del cliente devuelve para modificar— tiene **matriz de SLA propia (R1, R2, R3)**, regla operativa *"reproceso limpio"* con cortes horarios, motivo tipificado, trazabilidad al informe original y alerta de fin de jornada. **Nada de eso existe.** La API responde `422 · Could not find a field with name or ID "es_reproceso", "motivo_reproceso", "reproceso_origen"`; `grep -rn "reproceso"` sobre `lib/`, `app/` y `components/` no devuelve ninguna coincidencia, y `docs/schema-airtable.md` tampoco lo menciona. No hay campos, ni tabla, ni estado, ni código. |
+| **Causa** | El reproceso entró en el insumo de negocio en la **v1.1** (07-ago-2026) como uno de sus cinco cambios declarados, y se absorbió al normativo como §5.2.5. La construcción del sistema venía —y sigue— enfocada en el flujo principal de solicitud nueva: IF-02 lo crea, IF-03 lo captura, el pipeline PDF lo entrega. El reproceso es un **segundo ciclo de vida sobre un informe ya entregado** y no se parece a ninguna transición del flujo principal, así que no cayó dentro del alcance de ningún CU en curso. |
+| **Resolución** | ⚠ **ABIERTA — bloqueada por decisiones de negocio, no por esfuerzo técnico.** Antes de tocar schema hay que responder: <br>**(a)** ¿Un reproceso es una **fila nueva** en `TX_Solicitudes` ligada a la original, o una **marca de estado** sobre la misma fila? La decisión determina si `A_Cambios` alcanza para la trazabilidad o hace falta un Link. <br>**(b)** ¿Cuáles son los **motivos tipificados**? El documento nombra tres ejemplos —permiso de recepción final, RUT/apellido del vendedor, certificado de profesión— más "aumento de valor", y declara que el más frecuente es el permiso de recepción final en viviendas usadas. Un `singleSelect` necesita el dominio cerrado. <br>**(c)** ¿Qué significa exactamente que *"los SLA de reproceso corren en paralelo a los del flujo principal"* (§4)? Si la solicitud original ya está cerrada, no hay reloj principal contra el cual correr en paralelo. <br>**(d)** La regla *"reproceso limpio"* tiene **cortes horarios propios** (18:00–19:00, 12:00–14:00, 14:00–15:00) que **no encajan en el modelo de horas hábiles** del motor: es una regla de despacho por franja del día, no un plazo en horas. Requiere un cómputo distinto del de `lib/sla-habil.ts`. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · sin soporte alguno · **esperando definiciones de Héctor** |
+| **Origen** | Contraste del SLA v1.1 contra el estado real (19-ago-2026). |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- El punto (d) es el que conviene no subestimar: todo el motor de SLA está construido sobre "sumar N horas hábiles a un instante", y la regla de reproceso está expresada como "lo que entra antes de las 14:00 sale en la tarde". Son dos aritméticas distintas y la segunda no se deriva de la primera.
+
+---
+
+## CI-039 · La etiqueta de la píldora de etapa ignora la ventana hábil
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-039 |
+| **Archivo:línea** | `lib/solicitudes.ts:613` (`etiquetaEtapa`) · consumidores: `components/console/status-badges.tsx` (`SLABadge`) en la bandeja y el detalle de IF-02, y `components/tasador/tasacion-card.tsx` en la cola de IF-03 desde P3-TAS.A |
+| **Síntoma** | La píldora dice *"Vence en 3h 40m"* o *"Vencida hace 6d 21h"* midiendo la distancia de **reloj de pared** entre `NOW()` y `sla_etapa_vence_ts`. §6.1 fija que el SLA **no corre** fuera de L–V 9:00–18:00 ni en feriados. Un viernes a las 17:00, una etapa a la que le quedan **4 horas hábiles** se rotula *"Vence en 40h"*; un lunes a las 9:00 esa misma etapa dice *"Vence en 4h"*. El número cambia sin que cambie el trabajo pendiente. |
+| **Causa** | La división de responsabilidades es correcta y el error está en el último tramo: el motor materializa `sla_etapa_vence_ts` **sí** aplicando horas hábiles (`sumarHorasHabiles` sobre `lib/sla-habil.ts`), de modo que el instante es exacto y **el tono verde/ámbar/rojo también lo es**. Lo que no aplica la ventana es la **resta final** que produce el texto, que es una diferencia de milisegundos entre dos instantes. El docblock de `etiquetaEtapa` lo declara explícitamente —*"no dice horas hábiles, dice cuánto falta para ese instante"*— así que fue una decisión consciente; lo que no se evaluó es cómo se lee esa cifra un viernes por la tarde. |
+| **Resolución** | ⚠ **ABIERTA.** Dos salidas, y la elección es de producto: <br>**(a)** Calcular la etiqueta en **horas hábiles** reutilizando `lib/sla-habil.ts`, que ya tiene la función inversa que hace falta. Es lo coherente con §6.1 y con lo que el usuario entiende por "me quedan 4 horas". <br>**(b)** Dejar el reloj de pared y **decir cuál es**, con un texto que no se pueda confundir (*"vence el lunes 09:00"* en vez de *"vence en 40h"*). <br>⚠ **El tono no se toca en ninguna de las dos**: es correcto hoy y recalcularlo en el cliente sería la segunda fuente de verdad que **RO-05** prohíbe. <br>**Nota de alcance:** el arreglo vive en `lib/solicitudes.ts`, territorio **IF-02**, y por **R5** no cabe en `feat/tasador-ui` aunque IF-03 sea uno de los dos consumidores. Necesita rama propia. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · no bloquea ninguna tanda · afecta a las dos interfaces a la vez |
+| **Origen** | Contraste del SLA v1.1 contra el estado real (19-ago-2026), al revisar §6.1 contra el texto que P3-TAS puso en la card del tasador. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- La ficha se abre **después** de que P3-TAS.A llevara esta píldora a la cola del tasador: hasta entonces el defecto sólo lo veía la Ejecutiva, y ahora lo ve también quien tiene el plazo más corto de la matriz (e2, 4 h / 6 h), que es justamente donde el desfase de un fin de semana más engaña.
+
+---
+
+## CI-040 · Perfil de entregable por cliente (§4.1) sin soporte verificado
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-040 |
+| **Archivo:línea** | `docs/_md/VProperty_SLA_Negocio_v1.1.md` §4.1 y §6.4 · contraste con `M_Clientes` (`tblpK7AcYBMH93apK`, 90 filas) |
+| **Síntoma** | §4.1 define **tres perfiles de entregable** y dice que el correo automático de cierre adjunta lo que corresponda al perfil del cliente: (1) **estándar** — PDF con carátula e informe; (2) **con resumen ejecutivo** — PDF **más un Excel** de resumen en formato único para todos los clientes de la categoría; (3) **Unidad de Vivienda Habitacional** — PDF con la hoja de resumen **embebida** antes de la carátula. No encontré en `M_Clientes` ningún campo que discrimine el perfil: la tabla tiene la plantilla `.docx` del informe, el tipo de producto, códigos y ratios, pero nada que diga qué se adjunta al correo. |
+| **Causa** | §4.1 entró con la **v1.1** del insumo (07-ago-2026) describiendo un comportamiento del **pipeline PDF** (E1/E2/E3), que es la parte del sistema que ni CU-002 ni CU-003 tocan y cuyo dueño es otro. La configuración por cliente que sí existe en `M_Clientes` —la plantilla `.docx`— resuelve **cómo se ve el informe**, no **qué se adjunta al correo**, y son dos ejes distintos que se pueden confundir a simple vista. |
+| **Resolución** | ⚠ **ABIERTA · hallazgo a confirmar, no defecto confirmado.** <br>**Lo verificado:** nueve nombres candidatos probados contra la API, los nueve con `422 · Could not find a field` — `perfil_entregable`, `tipo_entregable`, `entregable`, `genera_excel`, `resumen_ejecutivo`, `formato_salida`, `plantilla_excel`, `adjuntos_correo`, `config_entregable`. Más el muestreo de tres filas y la ausencia de toda mención en `docs/schema-airtable.md`. <br>**Lo NO verificado:** que no exista un campo con un nombre que no se me ocurrió, o que el perfil no viva **fuera** de `M_Clientes` — en el propio pipeline, en una tabla de configuración de correo, o codificado en los escenarios E1/E2/E3. <br>**Antes de crear nada, preguntar al dueño de E1/E2/E3** dónde vive hoy esa decisión: puede estar resuelta fuera del alcance de este repositorio, en cuyo caso la ficha se cierra documentando dónde. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **abierta** · a confirmar con el dueño del pipeline PDF antes de tratarlo como brecha |
+| **Origen** | Contraste del SLA v1.1 contra el estado real (19-ago-2026). |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- Esta ficha es deliberadamente la más débil de las cuatro en su evidencia, y se declara así para que nadie la use como base de un cambio de schema. Nueve nombres candidatos que fallan **no prueban ausencia**; prueban que el campo no se llama como uno esperaría.
