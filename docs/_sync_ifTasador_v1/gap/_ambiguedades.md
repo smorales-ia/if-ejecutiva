@@ -174,15 +174,42 @@ Acción prohibida: **cambiar RT-01**. Requiere sign-off de PM + Enterprise Archi
 
 ---
 
-## A-09 · **BLOQUEANTE** · `TX_CoordinacionVisita` no existe en Airtable
+## A-09 · `TX_CoordinacionVisita` no existe en Airtable — **CERRADA**
 
-**Estado** — **abierta · bloquea el lote 3.** Elevada a bloqueante el 25-jul-2026, con el
-mismo criterio aplicado a A-10 sobre el lote 1: *la resolución es trabajo fuera del repo y
-ningún archivo se modifica hasta que exista la decisión.*
+**Estado** — ✅ **cerrada el 21-ago-2026.** La tabla **existe** desde el 19-ago-2026:
+`TX_CoordinacionVisita` = `tblBwMErRxo57ML2r`, creada en **P4-TAS** al cerrarse **CI-012** en
+sentido positivo (revisión de Héctor sobre el diseño IF Tasador v4, Pantalla 2, puntos 1 a 4).
+Sus FIELD_IDs están documentados y en uso en `lib/tasador/field-ids.ts` ·
+`FIELD_IDS_COORDINACION_VISITA`, verificados contra el schema real. **Dejó de ser bloqueante**:
+el lote 3 ya no espera nada fuera del repo.
+
+**Consumo real, entregado en el Frente C (C1 → C4, cerrado el 21-ago-2026):**
+
+| Pieza | Archivo | Bloque |
+|---|---|---|
+| Reader server-side | `lib/coordinacion-airtable.ts` (`fetchCoordinacionSolicitud`) | C2·B1 |
+| Route Handler | `app/api/solicitudes/[id]/coordinacion/route.ts` (GET · `{ data: … }`) | C2·B1 + B1.5 |
+| Sección *Coordinación de la visita* en `DatosTab` | `lib/coordinacion.ts` + `lib/use-coordinacion-solicitud.ts` + `components/console/solicitud-detail.tsx` | C3·B1 |
+| Fusión en el timeline de `HistorialTab` | `lib/historial-airtable.ts` (`fetchCoordinacionParaHistorial`) | C4·B1 |
+
+**Verificado en producción** (Railway) con `VP-2026-0061`: la ejecutiva ve el desenlace y la
+fecha de visita en la pestaña Datos, y el intento como ítem del riel en la pestaña Historial.
+Trazabilidad completa en `docs/_notas/plan-frente-C.md` § *Cierre del frente*.
+
+> ⚠ **La premisa del enunciado original ya no se sostiene, y conviene no volver a citarla.**
+> Este archivo dijo dos cosas que hoy son falsas: que la tabla no existe —existe— y que por eso
+> «no hay TABLE_ID ni un solo FIELD_ID que documentar». Ambos existen y están en producción.
+> Quien encuentre esa afirmación citada desde otro documento (`00_inventario.md:259`, las marcas
+> **DEP-EXT:A-09** en `Arquitectura_Enterprise_VProperty_v2_9.md:1280` y en
+> `VProperty_Blueprint_Interfaces_v2_10.md:2560`) la trata como **superada**, no como estado
+> vigente. El recorrido completo de la decisión —negativa el 17-ago con RO-29, positiva el
+> 19-ago con RO-29 anulada— está en `docs/CODE_INCONSISTENCIES.md` · **CI-012**.
 
 > Nota de forma: hasta el 25-jul-2026 esta ficha existía **sin encabezado**, arrastrada al
 > final de A-10, de modo que su contenido se leía como parte de ella. Se le restituyó el
 > encabezado y se la reubicó entre A-08 y A-10.
+
+Enunciado original, conservado:
 
 ### Por qué bloquea el lote 3
 
@@ -225,6 +252,32 @@ campo fórmula + vista de control.
 §2.12 tal cual y se anota la nota de realización pendiente.
 
 **El lote 3 queda detenido.** No se modificó ningún archivo por su causa.
+
+#### Cómo se resolvieron esas realizaciones (21-ago-2026 · cierre)
+
+Los tres puntos que esta sección anticipó se decidieron al construir la tabla y sus consumidores,
+y **los tres cayeron del lado que la ficha temía**:
+
+- **`id` «PK auto»** → se usa el **`recordId`** de Airtable. No se creó ningún `autoNumber`: el
+  `rec…` ya es identidad estable y es lo que el reader proyecta como `IntentoCoordinacion.id`.
+- **`intento_numero`** → **la fórmula de §2.12 no es implementable, tal como esta ficha
+  anticipó.** El motivo exacto es el que ya estaba escrito arriba: una fórmula de Airtable **no
+  puede contar registros hermanos de la misma tabla filtrados por un link**, y sin ese conteo
+  `1 + COUNT(intentos previos)` no tiene forma de evaluarse. Se resolvió como **campo `number`
+  que escribe el Route Handler del tasador** (`app/api/tasaciones/[id]/coordinacion/route.ts`),
+  contando los intentos previos en el insert. Queda anotado en `lib/tasaciones.ts` ·
+  `CoordinacionVisita.intentoNumero`, con la advertencia de que lo escribe el servidor y no
+  Airtable.
+- **Constraint blanda de unicidad `(solicitud_id, fecha_respuesta truncada al minuto)`** → se
+  implementó **en el Route Handler**, y **no por truncación** sino como **ventana deslizante de
+  10 s**: truncar al minuto falla justo en el caso que dice cubrir —dos taps a las `10:00:59` y
+  `10:01:01` caen en buckets distintos y los dos pasarían—. Limitación conocida y documentada en
+  la ruta: la carrera residual entre la lectura de la ventana y el `createRecord` no se cierra
+  sin unicidad en el motor de datos.
+
+Es el mismo aprendizaje que **C1** registró desde el otro extremo: la vigencia de la coordinación
+tampoco era derivable en el schema (rollup no tiene `LAST`/`FIRST`) y se computa server-side. Ver
+`docs/aprendizajes.md` · entrada **2026-08-21**.
 
 ---
 
