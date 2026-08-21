@@ -1607,3 +1607,38 @@ salvo por 13 errores de `tsc`; dejarlo excluido dos días habría costado una l�
 si un aprendizaje tiene menos de una semana **y** existe una consulta abierta a la
 contraparte que podría revertirlo, se marca como **provisional** y sólo autoriza cambios
 reversibles.
+
+### 2026-08-21 — C1 · coordinacion_vigente no puede ser rollup; se computa server-side
+**Contexto:** Frente C · RF-TAS-05. C1 pretendía convertir `TX_Solicitudes.coordinacion_vigente`
+(hoy singleSelect escrito por la ruta del tasador) en un campo derivado que reflejara el desenlace
+de la última coordinación, para que IF-02 leyera una única fuente. La expresión de la spec §2.12 es
+`LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`.
+
+**Inconveniente:** Airtable **no puede expresar esa fórmula**. Dos límites técnicos aparecieron en la
+ejecución, uno detrás del otro:
+1. El MCP de Airtable **no expone `delete_field`** — no se puede borrar una columna por API; solo desde
+   la UI web. El "borrar y recrear" del plan no era ejecutable, así que se intentó rename + create.
+2. Al crear el rollup con agregación `LAST(values)`, Airtable devolvió `422: Unknown function names:
+   LAST`. Las funciones de agregación de rollup **no incluyen `LAST`/`FIRST` ni acceso posicional**. El
+   set válido es: SUM, MAX, MIN, AVERAGE, AND, OR, XOR, CONCATENATE, ARRAYJOIN, ARRAYUNIQUE,
+   ARRAYCOMPACT, COUNT/COUNTA/COUNTALL. Ninguna devuelve "el último appended". Tampoco hay formulas
+   cross-table. Así que "el estado de la coordinación más reciente" **no es derivable en el schema**.
+
+**Causa raíz:** la spec describió la vigencia como una fórmula `LAST(... ORDER BY ...)` que es sintaxis
+conceptual, no un mecanismo real de Airtable. Airtable no ordena dentro de un rollup ni indexa arrays.
+
+**Solución aplicada:** se descartó tocar el schema. Se revirtió el rename vía MCP
+(`coordinacion_vigente_legacy` → `coordinacion_vigente`, field_id `fldI4Dv0jpRQvbdHl` intacto, singleSelect
+con choices `confirmada`/`rechazada`) — la base quedó **idéntica al pre-C1**. La vigencia se computará
+**server-side en C2**: el Route Handler lee `TX_CoordinacionVisita` filtrando por solicitud y ordenando
+por `fecha_respuesta DESC`; el desenlace vigente es el `estado_coordinacion` de la fila más reciente (o
+`null` si no hay filas). El singleSelect `coordinacion_vigente` en `TX_Solicitudes` **no se toca ni se lee
+desde IF-02**: queda como redundancia inofensiva del lado tasador (que lo sigue escribiendo). No se
+modificó código, tests ni field-ids: `tsc` + `build` + `test` (415) siguen verdes. Plan de C2/C3/C4
+reescrito en `docs/_notas/plan-frente-C.md`.
+
+**Prevención futura:** cualquier "vigencia temporal" (último X, más reciente Y) **se computa server-side**
+en el Route Handler leyendo la tabla source ordenada por su campo temporal explícito — **no** se intenta
+derivar en el schema de Airtable. Y al planificar un cambio de schema, verificar primero que la operación
+existe en el MCP (`delete_field` **no** existe) y que la función pretendida es válida para el tipo de campo
+(rollup **no** tiene `LAST`), antes de comprometer un plan que las dé por hechas.
