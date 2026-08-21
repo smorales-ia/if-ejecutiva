@@ -23,6 +23,16 @@ Lo que sigue vigente como regla vive abajo, destilado.
 
 ## Estado de tareas
 
+- ✅ **2026-08-21 — FRENTE C CERRADO (C1 → C2 → C3 → C4) · RF-TAS-05 completo, en producción.**
+  La coordinación de visita que el tasador registra en `TX_CoordinacionVisita` ya es visible
+  para la Ejecutiva en las dos superficies que §1.3.2 y §1.3.3 piden: la sección *Coordinación
+  de la visita* de la pestaña Datos y el ítem del riel de la pestaña Historial. Mergeado a
+  `main`, deployado en Railway y **verificado visualmente en producción** con `VP-2026-0061`.
+  452 tests verdes, `tsc` limpio, `build` compila. Detalle de bloques, commits y dudas en
+  `docs/_notas/plan-frente-C.md`.
+
+  **Próximo trabajo: por definir.** No hay tanda abierta a continuación del Frente C.
+
 - 🔴 **2026-08-11 — TANDA F BLOQUEADA · decisión arquitectónica pendiente antes de arrancar: patrón de disparo de `AT08_Alertas_SLA`.** Dos opciones detectadas el 11-ago-2026:
   - **(A) Fila observada en `TX_Notificaciones`** — patrón del script existente `docs/_artefactos/airtable/AT08_Alertas_SLA.js` (702 líneas, commit `bd5768d`). Evita el problema del secreto HMAC en Airtable Automations pero acopla a polling en Make.
   - **(B) Webhook firmado con HMAC-SHA256** — patrón del plan v1.12 · F-1, consistente con SC01/SC05/SC-Edicion. Obliga a decidir dónde vive el secreto HMAC, ya que Airtable Automations **no lee env vars**.
@@ -426,6 +436,82 @@ Lo que sigue vigente como regla vive abajo, destilado.
   la duda sea "¿esto va en el cliente compartido o en un módulo propio?", la
   pregunta útil no es dónde queda más ordenado sino **quién más se rompe si me
   equivoco**.
+
+- **RO-38 · Los endpoints hermanos de un mismo dominio uniforman el shape de la
+  respuesta.** En `app/api/solicitudes/**` el contrato es `{ data: … }` y no el
+  payload al ras. No es estética: cada ruta tiene su hook cliente
+  (`use-historial-solicitud.ts`, `use-decision-motor.ts`, `use-cronologia-sla.ts`)
+  y todos desenvuelven igual, de modo que **el hook siguiente se escribe copiando
+  el anterior**. Una ruta que responde distinto obliga a leer su implementación
+  antes de consumirla, y esa lectura es justo la que no se hace cuando el patrón
+  parecía obvio. C2·B1 sirvió el payload al ras siguiendo su propuesta aprobada y
+  hubo que revertirlo en un bloque propio (**C2·B1.5**) antes de cablear la UI:
+  el coste de uniformar después es mayor que el de decidirlo al escribir la
+  primera línea. Corolario: al abrir una ruta nueva, mirar a sus hermanas de
+  carpeta **antes** de fijar el contrato, no después.
+  Vigente desde el 21-ago-2026, sesión Frente C · C2.
+
+- **RO-39 · Los tipos que cruzan la frontera server/cliente viven en un módulo
+  puro, sin un solo import de `airtable-client`.** Un tipo que el Route Handler y
+  un componente `"use client"` comparten no puede declararse en el módulo que
+  hace la lectura: aunque `import type` se borre en compilación, deja al
+  componente apuntando a un archivo que arrastra el cliente REST y la lectura de
+  `AIRTABLE_TOKEN`, y basta que alguien convierta ese `import type` en un import
+  de valor para que el token quede a un paso del bundle del navegador. El patrón
+  es **dos módulos**: uno puro con tipos, literales de pantalla y mapeo
+  (`lib/decision-motor.ts`, `lib/sla-cronologia.ts`, `lib/historial.ts`), y otro
+  con la lectura (`lib/decision-motor-airtable.ts`). Aplicado en **C3·B1**
+  separando `lib/coordinacion.ts` de `lib/coordinacion-airtable.ts`; los tipos se
+  re-exportan desde el módulo `-airtable` para no romper a los llamadores
+  server-side que ya los importaban de ahí. Corolario: si un tipo lo necesitan los
+  dos lados, **nace en el módulo puro**, no se muda después.
+  Vigente desde el 21-ago-2026, sesión Frente C · C3.
+
+- **RO-40 · Una fecha `date` de Airtable (`YYYY-MM-DD`) se parsea con regex,
+  nunca con `new Date()`.** `new Date("2026-08-25")` la interpreta como
+  medianoche **UTC**, que en Santiago (GMT−4/−3) es **el 24 a las 20:00**: la
+  fecha se muestra un día antes de la real, en silencio y sin error. En una fecha
+  de visita eso no es cosmético — manda al tasador el día equivocado. La regla
+  distingue dos cosas que el tipo `string` confunde: un **`dateTime`** es un
+  instante absoluto y se formatea con `timeZone: 'America/Santiago'`
+  (`partesEnSantiago`, `Intl.DateTimeFormat`); una **`date`** es una fecha de
+  calendario sin huso, y convertirla a instante es el error. Precedente:
+  `_fechaVisible` en `lib/tasador/lectura-tasacion.ts`, que ancla al mediodía
+  local por el mismo motivo (**RO-36**). Aplicado en **C3·B1** con
+  `fechaCalendarioVisible()`, que parte el string y no construye ningún `Date`, y
+  con un test que verifica que el 25 no se muestre como 24.
+  Vigente desde el 21-ago-2026, sesión Frente C · C3.
+
+- **RO-41 · En una lectura fundida de varias fuentes, un fallo parcial se
+  propaga; no degrada a lista vacía.** `fetchHistorialSolicitud` lee `A_Eventos`,
+  `A_Cambios` y `TX_CoordinacionVisita` en paralelo y funde los tres en un riel.
+  Si una falla, **falla la función entera**. La tentación es servir lo que sí se
+  leyó, y es exactamente lo que no hay que hacer: un timeline al que le falta un
+  tercio **se ve idéntico a uno completo**, y quien lo mira no tiene forma de
+  saber que le falta algo — mientras que un error visible se reintenta. El
+  corolario de diseño importa tanto como la regla: **un solo criterio de fallo
+  por función**. Tener una fuente que propaga y otra que degrada dentro del mismo
+  `Promise.all` significa que el criterio laxo terminará aplicándose por costumbre
+  a la fuente que no lo admitía. Consecuencia asumida al agregar la tercera
+  lectura en **C4·B1**: `TX_CoordinacionVisita` ilegible deja el timeline entero
+  en error, y hay un test que lo fija para que nadie lo "arregle" después.
+  Vigente desde el 21-ago-2026, sesión Frente C · C4.
+
+- **RO-42 · La redacción de un ítem del historial vive en el módulo del dominio,
+  no en el del historial.** Es **RO-05** aplicado a la capa de presentación: el
+  módulo del historial sabe *ordenar y pintar*; el del dominio sabe *qué significa
+  cada rama del dato*. `tituloDeCoordinacion()` y `detalleDeCoordinacion()` viven
+  en `lib/coordinacion.ts` y no en `lib/historial.ts`, porque ahí ya están las dos
+  ramas de una coordinación, el passthrough de `motivo` que **A-17** exige y el
+  formateo de fecha de **RO-40**. Duplicarlos del lado del historial crearía la
+  segunda fuente de verdad que RO-05 prohíbe: el día que cambie la redacción de
+  una rama cambiaría en un sitio y no en el otro, y nada lo notaría. Lo único que
+  el módulo del historial aprende es que existe un tercer origen — en **C4·B1**,
+  dos literales: `'coordinacion'` en `OrigenHistorial` y `'phone'` en
+  `IconoHistorial`. Corolario para estimar: agregar una fuente al riel es un
+  cambio de dos literales más un mapper en el dominio, no una reescritura del
+  timeline.
+  Vigente desde el 21-ago-2026, sesión Frente C · C4.
 
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 
@@ -1642,3 +1728,52 @@ en el Route Handler leyendo la tabla source ordenada por su campo temporal expl�
 derivar en el schema de Airtable. Y al planificar un cambio de schema, verificar primero que la operación
 existe en el MCP (`delete_field` **no** existe) y que la función pretendida es válida para el tipo de campo
 (rollup **no** tiene `LAST`), antes de comprometer un plan que las dé por hechas.
+
+### 2026-08-21 (b) — Cierre del Frente C: cuatro patrones que salieron de construir la misma lectura tres veces
+**Contexto:** Frente C completo (C1 → C2 B1+B1.5 → C3 B1 → C4 B1), RF-TAS-05. La coordinación
+que el tasador escribe en `TX_CoordinacionVisita` desde IF-03 tenía que llegar a dos superficies
+de IF-02: el bloque *Coordinación* de §1.3.2 (pestaña Datos) y el riel de §1.3.3 (pestaña
+Historial). Cerrado, mergeado, deployado y verificado en producción con `VP-2026-0061`.
+
+**Inconveniente:** cuatro cosas que no se sabían al empezar y que costaron un bloque extra o
+estuvieron a punto de costarlo.
+
+1. **El contrato de la respuesta se fijó mirando la propuesta y no a las rutas hermanas.** C2·B1
+   sirvió `{ coordinacionVigente, intentos }` al ras, tal como decía su propuesta aprobada,
+   mientras `eventos/`, `sla/` y `decision-motor/` responden `{ data: … }`. Se detectó al
+   escribir el docblock —no al escribir el código— y hubo que revertirlo en un bloque propio
+   (**C2·B1.5**) antes de que el hook de C3 se cableara contra el shape equivocado.
+2. **Los tipos del contrato nacieron en el módulo que lee Airtable.** `IntentoCoordinacion` y
+   `CoordinacionSolicitud` se declararon en `lib/coordinacion-airtable.ts`, que importa
+   `listRecords`. Cuando C3 necesitó consumirlos desde un componente `"use client"`, la opción
+   fácil era un `import type` —que se borra en compilación y habría funcionado— y la correcta
+   era mudarlos.
+3. **`new Date("2026-08-25")` muestra el 24.** Medianoche UTC es 20:00 del día anterior en
+   Santiago. Sobre una fecha de visita eso no es un detalle de formato: es mandar al tasador el
+   día equivocado, sin error y sin que ningún test genérico lo note.
+4. **Agregar una tercera fuente al riel puso en evidencia un criterio de fallo ambiguo.**
+   `fetchHistorialSolicitud` propagaba los fallos de sus dos lecturas; al sumar la tercera había
+   que decidir si la coordinación merecía trato distinto por ser "secundaria".
+
+**Causa raíz:** las cuatro son la misma clase de omisión — **decidir un contrato mirando el
+requisito y no el vecindario donde va a vivir**. El shape correcto estaba a un archivo de
+distancia; la separación server/cliente estaba documentada en `lib/decision-motor.ts`; el
+desfase de huso ya tenía precedente en `_fechaVisible` de IF-03; y el criterio de fallo estaba
+escrito en el propio docblock de la función que había que ampliar. Ninguna exigió investigación:
+exigían leer lo que ya estaba.
+
+**Solución aplicada:** se destilaron como **RO-38** (shape uniforme `{ data }` entre endpoints
+hermanos), **RO-39** (tipos compartidos server/cliente en módulo puro, sin `airtable-client`),
+**RO-40** (`date` puro se parsea con regex, nunca `new Date()`) y **RO-41** (fallo parcial de una
+lectura fundida se propaga, y un solo criterio de fallo por función). Se agregó además **RO-42**,
+que no salió de un error sino de una decisión que funcionó: la redacción del ítem del riel
+(`tituloDeCoordinacion`) vive en el módulo del dominio y no en el del historial, de modo que
+sumar una fuente al timeline cuesta dos literales y un mapper. Verificación final: 452 tests
+verdes (441 + 11), `tsc` limpio, `build` compila, deploy activo en Railway.
+
+**Prevención futura:** al abrir una ruta, un tipo compartido o una lectura fundida, **leer
+primero a sus hermanos de carpeta y el docblock de la función que se amplía**, y recién después
+fijar el contrato. Y una nota de método sobre el formato de trabajo: los cuatro hallazgos
+aparecieron en la fase de propuesta o al redactar el docblock, no ejecutando — el bloque de
+propuesta previa a cada tanda es lo que los cazó, y el único que se escapó (**RO-38**) fue el que
+la propuesta dio por sentado sin ir a mirar.
