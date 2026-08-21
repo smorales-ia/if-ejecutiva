@@ -1,6 +1,7 @@
 import { isValidRecordId, listRecords } from '@/lib/airtable-client'
+import type { CoordinacionSolicitud, IntentoCoordinacion } from '@/lib/coordinacion'
 import { FIELD_IDS_COORDINACION_VISITA, TABLE_IDS } from '@/lib/tasador/field-ids'
-import type { CoordinacionVisita, EstadoCoordinacion } from '@/lib/tasaciones'
+import type { EstadoCoordinacion } from '@/lib/tasaciones'
 
 /**
  * Lectura server-side de `TX_CoordinacionVisita` para IF-02 (**RF-TAS-05** ·
@@ -23,26 +24,17 @@ import type { CoordinacionVisita, EstadoCoordinacion } from '@/lib/tasaciones'
  */
 
 /**
- * Un intento tal como lo sirve IF-02.
+ * Los dos tipos del contrato **viven en `lib/coordinacion.ts`** desde C3, y se
+ * re-exportan acá para no romper a los llamadores server-side que ya los
+ * importaban desde este módulo (`route.ts`, `route.test.ts`).
  *
- * Es `CoordinacionVisita` de `lib/tasaciones.ts` con **un solo cambio**:
- * `estado` admite `null`. El tipo de P4-TAS describe lo que IF-03 *escribe* —y
- * IF-03 sólo escribe los dos literales del contrato—, mientras que acá se
- * describe lo que la base *devuelve*, que incluye el caso de un
- * `estado_coordinacion` fuera de dominio (una opción agregada a mano en la UI
- * de Airtable, una fila migrada). Ese caso no se descarta ni se disfraza de
- * desenlace: la fila viaja con `estado: null` y no fija `coordinacionVigente`.
+ * Se mudaron porque también los consume el bloque de la pestaña Datos, que es
+ * `"use client"`: dejarlos en este archivo obligaba al componente a importar —
+ * aunque fuera con `import type`— un módulo que hace
+ * `import { listRecords } from '@/lib/airtable-client'`. Es la misma separación
+ * que `lib/decision-motor.ts` frente a `lib/decision-motor-airtable.ts`.
  */
-export interface IntentoCoordinacion extends Omit<CoordinacionVisita, 'estado'> {
-  estado: EstadoCoordinacion | null
-}
-
-export interface CoordinacionSolicitud {
-  /** Desenlace del intento más reciente. `null` si no hay intentos (RO-34). */
-  coordinacionVigente: EstadoCoordinacion | null
-  /** Todos los intentos, del más reciente al más antiguo. */
-  intentos: IntentoCoordinacion[]
-}
+export type { CoordinacionSolicitud, IntentoCoordinacion } from '@/lib/coordinacion'
 
 const F = FIELD_IDS_COORDINACION_VISITA
 

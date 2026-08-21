@@ -92,6 +92,15 @@ import {
   type EstadoDecisionMotor,
 } from "@/lib/use-decision-motor"
 import {
+  MSG_ERROR_COORDINACION,
+  MSG_SIN_COORDINACION,
+  resumirCoordinacion,
+} from "@/lib/coordinacion"
+import {
+  useCoordinacionSolicitud,
+  type EstadoCoordinacionUI,
+} from "@/lib/use-coordinacion-solicitud"
+import {
   MSG_ERROR_HISTORIAL,
   MSG_SIN_HISTORIAL,
   type IconoHistorial,
@@ -223,6 +232,13 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   // pestaña es la que abre por defecto, así que diferirlo sólo agregaría un
   // salto visual. En la demo (`/`) el id no es un record id y no se dispara.
   const decisionMotor = useDecisionMotor(s.id, ES_RECORD_ID.test(s.id))
+
+  // Coordinación de la visita (RF-TAS-05 · §1.3.2). Se lee junto al resto del
+  // detalle y no al entrar a la pestaña Datos, por el mismo motivo que la
+  // decisión del motor: es la pestaña que abre por defecto. La fuente es
+  // `TX_CoordinacionVisita` vía el endpoint de C2, **no**
+  // `TX_Solicitudes.coordinacion_vigente`, que es redundancia del lado tasador.
+  const coordinacion = useCoordinacionSolicitud(s.id, ES_RECORD_ID.test(s.id))
 
   // Timeline de §1.3.3: A_Eventos + A_Cambios reales. Sustituye al mock
   // `HISTORIAL` de `lib/console-data.ts`, que pintaba siempre los mismos tres
@@ -558,6 +574,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
                 fechaAsignacion={fechaAsignacion}
                 soloLectura={soloLectura}
                 motor={decisionMotor}
+                coordinacion={coordinacion}
                 onVerEmail={() => setEmailOpen(true)}
                 onReenviar={reenviarCorreo}
               />
@@ -727,6 +744,7 @@ function DatosTab({
   fechaAsignacion,
   soloLectura,
   motor,
+  coordinacion,
   onVerEmail,
   onReenviar,
 }: {
@@ -737,6 +755,7 @@ function DatosTab({
   fechaAsignacion: string
   soloLectura: boolean
   motor: EstadoDecisionMotor
+  coordinacion: EstadoCoordinacionUI
   onVerEmail: () => void
   onReenviar: () => void
 }) {
@@ -1055,6 +1074,14 @@ function DatosTab({
 
       <Separator />
 
+      {/* Coordinación de la visita (RF-TAS-05 · §1.3.2). Va pegada a
+          "Asignación" a propósito: la coordinación es lo que ocurre justo
+          después de asignar, y acá queda junto al tasador y a la fecha de
+          asignación en vez de perdida entre los antecedentes legales. */}
+      <CoordinacionSection estado={coordinacion} />
+
+      <Separator />
+
       {/* Datos SII */}
       <section className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
@@ -1303,6 +1330,97 @@ function DecisionMotorSection({ estado }: { estado: EstadoDecisionMotor }) {
             <p className="text-xs text-muted-foreground">
               Evaluada el {decision.evaluadaEl}
             </p>
+          )}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function CoordinacionSection({ estado }: { estado: EstadoCoordinacionUI }) {
+  const { datos, cargando, error } = estado
+  const r = resumirCoordinacion(datos)
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+          Coordinación de la visita
+        </h2>
+        {!cargando && !error && (
+          <span
+            className={cn(
+              "inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-xs font-medium",
+              r.tonoClases,
+            )}
+          >
+            {r.etiqueta}
+          </span>
+        )}
+      </div>
+
+      {cargando && (
+        <p className="text-sm text-muted-foreground">
+          Cargando la coordinación de la visita…
+        </p>
+      )}
+
+      {/* Los tres desenlaces se pintan distinto (RO-34): "no pudimos leer" es un
+          fallo que se reintenta y "todavía no se coordinó" es el curso normal de
+          una solicitud recién asignada. Colapsarlos los volvería indistinguibles
+          siendo operativamente opuestos. */}
+      {!cargando && error && (
+        <p className="text-sm text-muted-foreground">{MSG_ERROR_COORDINACION}</p>
+      )}
+
+      {!cargando && !error && r.variante === "sin_coordinar" && (
+        <p className="text-sm text-muted-foreground">{MSG_SIN_COORDINACION}</p>
+      )}
+
+      {!cargando && !error && r.variante !== "sin_coordinar" && (
+        <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3">
+          <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            {/* La rama confirmada muestra la fecha propuesta; la rechazada, el
+                motivo. `resumirCoordinacion` ya dejó en "—" lo que no
+                corresponde a la rama, así que acá no se decide nada. */}
+            {r.variante === "confirmada" ? (
+              <DataRow label="Fecha de visita propuesta">{r.fechaVisita}</DataRow>
+            ) : (
+              /* `motivo` es passthrough desde el singleSelect de Airtable: no hay
+                 catálogo local que traducir (A-17), así que un motivo agregado
+                 hoy en la base llega a esta fila sin deploy. */
+              <DataRow label="Motivo">{r.motivo}</DataRow>
+            )}
+            <DataRow label="Respondida el">{r.fechaRespuesta}</DataRow>
+            <DataRow label="Intento">
+              {r.intentoNumero === null
+                ? "—"
+                : `N° ${r.intentoNumero}${
+                    r.totalIntentos > 1 ? ` · ${r.totalIntentos} intentos` : ""
+                  }`}
+            </DataRow>
+          </div>
+
+          {r.variante === "rechazada" && r.detalle !== "—" && (
+            <>
+              <Separator />
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Detalle</span>
+                <p className="text-sm leading-relaxed text-foreground">
+                  {r.detalle}
+                </p>
+              </div>
+            </>
+          )}
+
+          {r.variante === "confirmada" && r.nota !== "—" && (
+            <>
+              <Separator />
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground">Nota del tasador</span>
+                <p className="text-sm leading-relaxed text-foreground">{r.nota}</p>
+              </div>
+            </>
           )}
         </div>
       )}
