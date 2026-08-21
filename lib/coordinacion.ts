@@ -166,12 +166,12 @@ function instanteVisible(iso: string | undefined, ahora: Date = new Date()): str
  * una fecha de visita el error no es cosmético — manda al tasador el día
  * equivocado.
  */
-function fechaCalendarioVisible(valor: string | undefined): string {
+function fechaCalendarioVisible(valor: string | undefined): string | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(valor?.trim() ?? '')
-  if (!m) return VACIO
+  if (!m) return null
 
   const mes = Number(m[2])
-  if (mes < 1 || mes > 12) return VACIO
+  if (mes < 1 || mes > 12) return null
 
   return `${Number(m[3])} ${MESES_CORTOS[mes - 1]} ${m[1]}`
 }
@@ -219,10 +219,95 @@ export function resumirCoordinacion(
     // filtrar por variante evita que una fila mixta —de una migración, de una
     // edición a mano en Airtable— pinte las dos ramas a la vez.
     fechaVisita:
-      variante === 'confirmada' ? fechaCalendarioVisible(ultimo?.fechaVisita) : VACIO,
+      variante === 'confirmada'
+        ? (fechaCalendarioVisible(ultimo?.fechaVisita) ?? VACIO)
+        : VACIO,
     nota: variante === 'confirmada' ? textoVisible(ultimo?.nota) : VACIO,
     motivo: variante === 'rechazada' ? textoVisible(ultimo?.motivo) : VACIO,
     detalle: variante === 'rechazada' ? textoVisible(ultimo?.detalle) : VACIO,
     totalIntentos: datos?.intentos.length ?? 0,
   }
+}
+
+/* -------------------------------------------------------------------------
+ * Redacción del ítem del timeline (C4 · §1.3.3)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Primera línea del ítem de coordinación en el riel del Historial.
+ *
+ * ## Por qué la redacción vive acá y no en `lib/historial.ts`
+ *
+ * El conocimiento de qué es una coordinación —sus dos ramas, su `motivo`
+ * passthrough, su fecha de calendario que no admite `new Date()`— ya está en
+ * este módulo. Duplicarlo del lado del historial sería la segunda fuente de
+ * verdad que RO-05 prohíbe: el día que cambie la redacción de una rama,
+ * cambiaría en un sitio y no en el otro. `lib/historial.ts` sólo aprende que
+ * existe un tercer origen.
+ *
+ * ## Las tres ausencias no se colapsan (RO-34)
+ *
+ * - Confirmada **sin** `fecha_visita_propuesta` → `"Visita confirmada"` a secas.
+ *   No se inventa una fecha, y menos la de hoy: en el riel se leería como un
+ *   compromiso que nadie tomó.
+ * - Rechazada **sin** `motivo` → `"Coordinación rechazada"`. El desenlace se
+ *   conoce; la causa no, y no se rellena.
+ * - `estado: null` (fuera del dominio de Airtable) → título neutro que **no
+ *   afirma** ni confirmada ni rechazada. Es lo que el reader ya hace del otro
+ *   lado al no fijar `coordinacionVigente`.
+ *
+ * ## A-17
+ *
+ * `motivo` entra por concatenación directa, sin catálogo local ni traducción:
+ * un motivo agregado hoy desde la UI de Airtable aparece en el riel sin deploy.
+ */
+export function tituloDeCoordinacion(intento: IntentoCoordinacion): string {
+  const base = tituloBase(intento)
+
+  // El ordinal sólo aparece a partir del segundo intento: en una solicitud que
+  // se coordinó al primer llamado sería ruido, y en una con tres llamados sin
+  // él las filas se leen como duplicados en vez de como intentos distintos.
+  return intento.intentoNumero > 1 ? `${base} (intento ${intento.intentoNumero})` : base
+}
+
+function tituloBase(intento: IntentoCoordinacion): string {
+  if (intento.estado === 'confirmada') {
+    const fecha = fechaCalendarioVisible(intento.fechaVisita)
+    return fecha ? `Visita confirmada para el ${fecha}` : 'Visita confirmada'
+  }
+
+  if (intento.estado === 'rechazada') {
+    const motivo = intento.motivo?.trim()
+    return motivo ? `Coordinación rechazada · ${motivo}` : 'Coordinación rechazada'
+  }
+
+  return 'Intento de coordinación registrado'
+}
+
+/**
+ * Cuerpo expandible del ítem: el texto libre que dejó el tasador.
+ *
+ * Es `detalle` en la rama rechazada y `nota` en la confirmada — los dos campos
+ * son `multilineText` y sólo uno existe por rama. `undefined` cuando ninguno
+ * está poblado, para que el desplegable **no aparezca vacío**: un "Ver detalle"
+ * que abre en blanco es peor que no ofrecerlo.
+ *
+ * ⚠ El sustantivo con que se ofrece este texto lo elige el componente, y para
+ * la coordinación **no es "correo"**: es un llamado telefónico. Ver la tercera
+ * vía de `DetalleCorreo` en `solicitud-detail.tsx`.
+ */
+export function detalleDeCoordinacion(intento: IntentoCoordinacion): string | undefined {
+  // Con el estado fuera de dominio no se sabe qué rama es, así que se muestra
+  // el texto que exista en vez de descartarlo: la fila ya perdió su desenlace
+  // en el título, y tirar además lo único legible que trae sería perder dos
+  // veces el mismo dato.
+  const crudo =
+    intento.estado === 'rechazada'
+      ? intento.detalle
+      : intento.estado === 'confirmada'
+        ? intento.nota
+        : (intento.nota ?? intento.detalle)
+
+  const v = crudo?.trim()
+  return v ? v : undefined
 }

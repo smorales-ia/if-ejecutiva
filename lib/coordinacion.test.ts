@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  detalleDeCoordinacion,
   resumirCoordinacion,
+  tituloDeCoordinacion,
   type CoordinacionSolicitud,
   type IntentoCoordinacion,
 } from './coordinacion'
@@ -187,5 +189,72 @@ describe('conteo', () => {
 
     expect(r.totalIntentos).toBe(2)
     expect(r.intentoNumero).toBe(7)
+  })
+})
+
+/* -------------------------------------------------------------------------
+ * C4 · redacción del ítem del timeline
+ * ---------------------------------------------------------------------- */
+
+describe('tituloDeCoordinacion', () => {
+  // La rama confirmada nombra el compromiso: cuándo es la visita.
+  it('confirmada con fecha la nombra formateada', () => {
+    expect(tituloDeCoordinacion(intento({ fechaVisita: '2026-08-25' }))).toBe(
+      'Visita confirmada para el 25 ago 2026'
+    )
+  })
+
+  // Sin fecha se dice el desenlace y nada más: inventar una sería un compromiso
+  // que nadie tomó (RO-34).
+  it('confirmada sin fecha no inventa ninguna', () => {
+    expect(tituloDeCoordinacion(intento({ fechaVisita: undefined }))).toBe('Visita confirmada')
+  })
+
+  // A-17: el motivo entra por concatenación, sin catálogo local que traducir.
+  it('rechazada expone el motivo tal cual, incluso uno que el repo no conoce', () => {
+    const inventado = 'Motivo agregado hoy en Airtable'
+    expect(
+      tituloDeCoordinacion(intento({ estado: 'rechazada', motivo: inventado }))
+    ).toBe(`Coordinación rechazada · ${inventado}`)
+
+    // Sin motivo el desenlace se conoce y la causa no: no se rellena.
+    expect(tituloDeCoordinacion(intento({ estado: 'rechazada', motivo: undefined }))).toBe(
+      'Coordinación rechazada'
+    )
+  })
+
+  // Estado fuera de dominio: el título no puede afirmar un desenlace (RO-34).
+  it('estado null usa un título neutro que no afirma confirmada ni rechazada', () => {
+    const t = tituloDeCoordinacion(intento({ estado: null, fechaVisita: '2026-08-25' }))
+
+    expect(t).toBe('Intento de coordinación registrado')
+    expect(t).not.toContain('confirmada')
+    expect(t).not.toContain('rechazada')
+  })
+
+  // Sin el ordinal, tres llamados se leen como tres filas duplicadas.
+  it('a partir del segundo intento el título lo distingue', () => {
+    expect(tituloDeCoordinacion(intento({ intentoNumero: 1 }))).not.toContain('intento')
+    expect(tituloDeCoordinacion(intento({ intentoNumero: 2, fechaVisita: '2026-08-25' }))).toBe(
+      'Visita confirmada para el 25 ago 2026 (intento 2)'
+    )
+  })
+})
+
+describe('detalleDeCoordinacion', () => {
+  // Cada rama tiene su campo, y un desplegable vacío es peor que no ofrecerlo.
+  it('toma detalle en rechazada, nota en confirmada, y undefined si no hay texto', () => {
+    expect(
+      detalleDeCoordinacion(
+        intento({ estado: 'rechazada', detalle: 'Se llamó tres veces sin respuesta.' })
+      )
+    ).toBe('Se llamó tres veces sin respuesta.')
+
+    expect(detalleDeCoordinacion(intento({ nota: 'Disponible en la mañana.' }))).toBe(
+      'Disponible en la mañana.'
+    )
+
+    expect(detalleDeCoordinacion(intento({}))).toBeUndefined()
+    expect(detalleDeCoordinacion(intento({ nota: '   ' }))).toBeUndefined()
   })
 })

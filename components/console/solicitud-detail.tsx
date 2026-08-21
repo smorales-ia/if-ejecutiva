@@ -16,6 +16,7 @@ import {
   Info,
   Mail,
   Pencil,
+  PhoneCall,
   PlusCircle,
   RotateCcw,
   UserPlus,
@@ -134,6 +135,7 @@ const historialIcons: Record<
   mail: Mail,
   upload: Download,
   edit: Pencil,
+  phone: PhoneCall,
 }
 
 const SIN_TASADOR = "Sin asignar"
@@ -1483,14 +1485,19 @@ function HistorialTab({
                   subtitulo={ev.autor}
                   pie={ev.hace}
                   aside={
-                    // La procedencia se marca sólo en las filas de A_Cambios:
-                    // son ediciones campo a campo y sin la marca se confunden
-                    // con hitos del ciclo de vida. Los eventos no la llevan
-                    // porque son el caso corriente y etiquetarlos todos sería
-                    // ruido.
+                    // La procedencia se marca en las filas que no son hitos del
+                    // ciclo de vida: las de A_Cambios son ediciones campo a
+                    // campo y las de TX_CoordinacionVisita son llamados del
+                    // tasador. Sin la marca las tres se leen igual. Los eventos
+                    // no la llevan porque son el caso corriente y etiquetarlos
+                    // todos sería ruido.
                     ev.origen === "cambio" ? (
                       <span className="shrink-0 text-xs text-muted-foreground">
                         Edición
+                      </span>
+                    ) : ev.origen === "coordinacion" ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        Coordinación
                       </span>
                     ) : undefined
                   }
@@ -1499,7 +1506,18 @@ function HistorialTab({
                   {ev.detalle && (
                     <DetalleCorreo
                       detalle={ev.detalle}
-                      sustantivo={ev.origen === "cambio" ? "motivo" : "correo"}
+                      // Tres orígenes, tres sustantivos. La coordinación es un
+                      // llamado telefónico: ofrecer "Ver correo" sobre la nota
+                      // del tasador sería tan falso como ofrecerlo sobre una
+                      // razón de edición, que es justo el motivo por el que este
+                      // parámetro existe.
+                      sustantivo={
+                        ev.origen === "cambio"
+                          ? "motivo"
+                          : ev.origen === "coordinacion"
+                            ? "detalle"
+                            : "correo"
+                      }
                     />
                   )}
                 </HistorialItem>

@@ -1,4 +1,6 @@
 import { listRecords } from '@/lib/airtable-client'
+import { fetchCoordinacionSolicitud } from '@/lib/coordinacion-airtable'
+import { detalleDeCoordinacion, tituloDeCoordinacion } from '@/lib/coordinacion'
 import {
   fundirHistorial,
   iconoDeEvento,
@@ -155,35 +157,89 @@ export async function fetchCambiosPorSolicitud(
 }
 
 /**
- * Timeline completo de §1.3.3: eventos + cambios, en un solo riel cronológico.
+ * Intentos de coordinación de `TX_CoordinacionVisita` mapeados al riel (C4 ·
+ * **RF-TAS-05**).
  *
- * Las dos lecturas son independientes, así que corren en paralelo. Una lectura
+ * ⚠ **No lee Airtable por su cuenta**: delega entero en
+ * `fetchCoordinacionSolicitud` (C2), que ya resuelve el filtro por el lookup
+ * `solicitud_record_id`, el orden por `fecha_respuesta` y la proyección de los
+ * nueve campos. Acá sólo se traduce cada intento a `ItemHistorial`. Duplicar el
+ * `filterByFormula` de la tabla sería un segundo sitio donde el filtro se puede
+ * romper sin que nada lo note.
+ *
+ * Recibe el **record ID**, como `fetchCambiosPorSolicitud` y a diferencia de
+ * `fetchEventosPorSolicitud`, que necesita el código.
+ *
+ * ## Sin intentos no hay filas
+ *
+ * Cero intentos devuelve `[]` y el riel queda exactamente como estaba antes de
+ * C4. **No se agrega una fila "sin coordinar"** (RO-34): el timeline es la
+ * secuencia de lo que pasó, y "no pasó nada todavía" no es un hito. Eso ya lo
+ * dice la sección *Coordinación* de la pestaña Datos, que es donde corresponde.
+ *
+ * ## El autor no se muestra (§6.1)
+ *
+ * `TX_CoordinacionVisita.autor_clerk_id` trae el identificador crudo de Clerk
+ * (`user_3GBF4Jp…`), el mismo formato que `autorLegible()` descarta más arriba
+ * para `A_Eventos`. Resolverlo a nombre exige una lectura extra de
+ * `AUTH_Usuarios` por ítem; es la misma deuda ya documentada en este módulo, no
+ * una nueva.
+ */
+export async function fetchCoordinacionParaHistorial(
+  solicitudId: string
+): Promise<ItemHistorial[]> {
+  const { intentos } = await fetchCoordinacionSolicitud(solicitudId)
+
+  return intentos.map((intento) => ({
+    id: intento.id,
+    titulo: tituloDeCoordinacion(intento),
+    // Sin autor a propósito — ver el docblock.
+    timestamp: intento.fechaRespuesta,
+    hace: relativeTime(intento.fechaRespuesta),
+    origen: 'coordinacion' as const,
+    icono: 'phone' as const,
+    detalle: detalleDeCoordinacion(intento),
+  }))
+}
+
+/**
+ * Timeline completo de §1.3.3: eventos + cambios + coordinación, en un solo
+ * riel cronológico.
+ *
+ * Las tres lecturas son independientes, así que corren en paralelo. Una lectura
  * que falle **no** degrada a lista vacía: se propaga, porque un historial
  * incompleto que se ve completo es peor que un error visible — la Ejecutiva no
- * tendría forma de saber que le falta la mitad de la secuencia.
+ * tendría forma de saber que le falta un tercio de la secuencia.
  *
- * Fuera de alcance, y documentado para que no se busque: los **eventos de
- * coordinación de la visita** que §1.3.3 describe **no se leen todavía**, y las
+ * ⚠ **Consecuencia asumida desde C4**: `TX_CoordinacionVisita` ilegible deja el
+ * timeline **entero** en error, no sólo sus filas. Es deliberado y es el mismo
+ * criterio que ya regía para las otras dos; degradar sólo la coordinación
+ * crearía dos criterios de fallo dentro de la misma función, y el más laxo
+ * terminaría aplicándose por costumbre al que no debía.
+ *
+ * ## Historia de esta sección, para no repetir diagnósticos viejos
+ *
+ * Hasta el 19-ago-2026 la coordinación no se leía porque `TX_CoordinacionVisita`
+ * **no existía en la base**. Después existió (`tblBwMErRxo57ML2r`, creada en
+ * P4-TAS al cerrarse CI-012 en positivo) pero **faltaba construir la lectura**,
+ * que quedó fuera de P4-TAS por tocar superficie de IF-02. Esa lectura se
+ * construyó en **C2** (`lib/coordinacion-airtable.ts`) y **se funde acá desde
+ * C4**. Ninguna de las dos frases anteriores sigue vigente: si aparecen citadas
+ * en otro documento, están superadas.
+ *
+ * Lo que **sigue** fuera de alcance, y no es omisión de este módulo: las
  * **descargas** de documentos no se registran en ninguna tabla (`A_Accesos`
- * existe pero nadie la escribe). Ninguno de los dos es una omisión de este
- * módulo.
- *
- * ⚠ El motivo de lo primero **cambió el 19-ago-2026** y conviene no repetir el
- * diagnóstico viejo: hasta esa fecha era que `TX_CoordinacionVisita` **no
- * existía en la base**. Ya existe (`tblBwMErRxo57ML2r`, creada en P4-TAS al
- * cerrarse CI-012 en sentido positivo). Lo que falta ahora es **construir la
- * lectura**, que es **RF-TAS-05** y es tanda propia: toca superficie de IF-02
- * —esta pestaña y el bloque *Coordinación* de §1.3.2— y quedó fuera de P4-TAS,
- * que era Pantalla 2 del tasador.
+ * existe pero nadie la escribe).
  */
 export async function fetchHistorialSolicitud(
   solicitudId: string,
   codigoSolicitud: string
 ): Promise<ItemHistorial[]> {
-  const [eventos, cambios] = await Promise.all([
+  const [eventos, cambios, coordinacion] = await Promise.all([
     fetchEventosPorSolicitud(codigoSolicitud),
     fetchCambiosPorSolicitud(solicitudId),
+    fetchCoordinacionParaHistorial(solicitudId),
   ])
 
-  return fundirHistorial(eventos, cambios)
+  return fundirHistorial(eventos, cambios, coordinacion)
 }
