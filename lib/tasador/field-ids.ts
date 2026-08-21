@@ -211,6 +211,44 @@ export const FIELD_IDS_ADJUNTOS = Object.freeze({
   atributosObtenidos: 'fldeCH15RrL8f4TZk',
 } as const)
 
+/**
+ * `TX_CoordinacionVisita` (`tblBwMErRxo57ML2r`) — un intento de coordinación
+ * por fila (§2.3 · RF-TAS-03). La escribe IF-03 (`POST
+ * /api/tasaciones/[id]/coordinacion`); **IF-02 sólo lee** (RF-TAS-05 · C2).
+ *
+ * Verificados contra el schema real de la base el 21-ago-2026. Ninguno se
+ * inventó.
+ *
+ * ⚠ El filtro de lectura **no** es el Link `solicitud` sino el lookup
+ * `solicitud_record_id`: dentro de un `filterByFormula` un Link se evalúa
+ * contra el primary field de la tabla destino, nunca contra el record ID
+ * (E-076/E-077). El lookup sí devuelve `rec…`.
+ *
+ * No están acá `coordinacion_key`, `autor_clerk_id`, `email_*` ni
+ * `email_thread_id`: son del insert de IF-03 y del envío de SC13, y la lectura
+ * de IF-02 no los consume.
+ */
+export const FIELD_IDS_COORDINACION_VISITA = Object.freeze({
+  /** `estado_coordinacion` · singleSelect `confirmada · rechazada`. */
+  estadoCoordinacion: 'fldvnImj4jQttE2D9',
+  /** `solicitud` · Link → TX_Solicitudes. No sirve para filtrar por record ID. */
+  solicitud: 'fldO6qSVaZAWaozi1',
+  /** `solicitud_record_id` · lookup. **El campo del filtro.** */
+  solicitudRecordId: 'fldCzrumbm9U135Zn',
+  /** `intento_numero` · number. Lo escribe el Route Handler, no Airtable. */
+  intentoNumero: 'fldNj1SdLE6pyWvfx',
+  /** `fecha_respuesta` · dateTime. Clave de orden del riel de intentos. */
+  fechaRespuesta: 'fldAIuBPGiZ5ZDssj',
+  /** `fecha_visita_propuesta` · date. Sólo rama `confirmada`. */
+  fechaVisitaPropuesta: 'fldRAuqHnIGTG7eBC',
+  /** `nota` · multilineText. Opcional, sólo rama `confirmada`. */
+  nota: 'fldCIIUL8pd2wAPEE',
+  /** `motivo` · singleSelect. Sólo rama `rechazada`. Dominio de Airtable (A-17). */
+  motivo: 'fld0rkrlg9Xo0fFVm',
+  /** `detalle` · multilineText. Sólo rama `rechazada`. */
+  detalle: 'fldcVwI3w0I8WsCrx',
+} as const)
+
 /* -------------------------------------------------------------------------
  * Captura de la visita · las seis tablas de `/datos` e `/informe`
  * ---------------------------------------------------------------------- */
