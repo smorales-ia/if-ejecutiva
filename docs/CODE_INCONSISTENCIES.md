@@ -1493,8 +1493,9 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 | **Mitigación pendiente** | Cambiar el discriminante a **`coordinacion_vigente == null && estado === 'asignada'`**, que es la definición literal de §4.1, y **conservar el orden actual** por `sla_etapa_vence_ts` ascendente, que sí es una pregunta de SLA y está bien resuelta. Requiere antes que `proyectarTasacion()` **pueble `coordinacionVigente`**, que hoy no lo hace (ver **CI-046**, que comparte esa precondición). Decidir aparte si la ventana de 4 h entra: la definición sin ella es más simple y no deja solicitudes fuera. <br>**Comprobación de equivalencia antes de cambiar**: hoy una solicitud sale del chip al cerrarse e2, y el handler de coordinación cierra e2 en **las dos ramas**, así que confirmada y devuelta salen igual. Con el discriminante nuevo también salen las dos, porque `coordinacion_vigente` queda seteado en ambas. El comportamiento observable no cambia en el camino feliz; lo que cambia es que deja de depender del motor. |
 | **Dueño** | Sergio (priorización) · Claude Code (implementación en la tanda de Pantalla 1) |
 | **Fecha objetivo** | **Condicional a la tanda de Pantalla 1.** No es bloqueante: el chip funciona mientras el motor de SLA funcione. |
-| **Estado** | abierta |
-| **Origen** | Bloque 6 de **P4-TAS** (19-ago-2026), auditoría explícita de las lógicas que RO-29 había condicionado. **La lógica no se tocó**: corregir comentarios y cambiar predicados son dos trabajos distintos. |
+| **Resolución** | **Aplicada en el Bloque 3 del Frente A+B.** `esPorCoordinar()` (`lib/tasador/cola-filtros.ts`) pasó a filtrar por el dato directo: `estado === 'asignada' && coordinacionVigente == null`, en lugar de inferirlo desde `slaEtapa.numero === 2`. El orden por `sla_etapa_vence_ts` asc se conserva en `filtrarCola()`. La cota wall-clock de 4h que esta ficha mencionaba como pendiente se separó en **CI-048**, resuelta con la decisión **A-22** (se dropea de la pertenencia, se preserva en el orden). |
+| **Estado** | **aplicada.** |
+| **Origen** | Bloque 6 de **P4-TAS** (19-ago-2026), auditoría explícita de las lógicas que RO-29 había condicionado. **La lógica no se tocó** en P4-TAS: corregir comentarios y cambiar predicados son dos trabajos distintos. El predicado se cambió en el **Bloque 3 del Frente A+B**. |
 
 **Notas:**
 
@@ -1516,7 +1517,8 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 | **Mitigación pendiente** | **Dos pasos, en este orden y no al revés:** <br>**(1) Poblar `coordinacionVigente` en `proyectarTasacion()`** (`lib/tasador/lectura-tasacion.ts`), leyendo `coordinacion_vigente` de `TX_Solicitudes`. Es un campo más en la proyección compartida, así que lo pagan `leerCola()` y `leerTasacion()` por igual — y aquí **sí corresponde** que lo pague la cola, porque es la cola la que lo necesita. <br>**(2) Cablear `resolverAccionCard(tasacion)`** en `tasacion-card.tsx` y renderizar las tres variantes: `coordinar` (acento, a `/tasaciones/{id}/coordinar`), `abrir` (primario, a `/tasaciones/{id}`) y `esperando_ejecutiva` (deshabilitado, con el badge). Los rótulos son literales §6 y no admiten variación. <br>**Test obligatorio**: que una solicitud sin `coordinacionVigente` **no** enlace a la captura. Sin ese test, el gate puede volver a perderse en el próximo refactor sin que nada falle. |
 | **Dueño** | Sergio (priorización) · Claude Code (implementación en la tanda de Pantalla 1) |
 | **Fecha objetivo** | **Primera tanda de Pantalla 1.** Es la de mayor prioridad de las dos fichas de este bloque. |
-| **Estado** | abierta |
+| **Resolución** | **Aplicada en los Bloques 1 y 2 del Frente A+B.** Paso (1): `coordinacionVigente` se puebla en `proyectarTasacion()` (`lib/tasador/lectura-tasacion.ts`), leyendo `coordinacion_vigente` con normalización cerrada a los dos literales del contrato. Paso (2): el gate §2.4 se cableó en `components/tasador/tasacion-card.tsx` con `resolverAccionCard(tasacion)` renderizado por un `switch` exhaustivo (`default: never`) sobre las tres variantes T-A. Test del gate cubierto en `lib/tasaciones.test.ts` (una solicitud sin coordinación devuelve la variante `coordinar`, no `abrir`). |
+| **Estado** | **aplicada.** |
 | **Origen** | Bloque 6 de **P4-TAS** (19-ago-2026), auditoría explícita de las lógicas que RO-29 había condicionado. **La lógica no se tocó**: cablear la card es trabajo de Pantalla 1, no de la limpieza de RO-29. |
 
 **Notas:**
@@ -1524,4 +1526,50 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 - **`resolverAccionCard()` sin consumidores es la señal.** Una función exportada, documentada y testeable que nadie llama es exactamente la forma que toma una pieza construida a mitad de camino. Si esta ficha se cerrara sin cablearla, habría que borrarla.
 - **El orden de los dos pasos importa.** Cablear la card antes de poblar la proyección da una card que muestra "Coordinar visita" en todas las solicitudes, incluidas las ya coordinadas — un gate que bloquea a todo el mundo es peor que ningún gate, porque parece intencional.
 - Relación con **CI-045**: comparten el paso (1). Si se hacen en la misma tanda, la proyección se puebla una vez y las dos fichas cierran con ella. Se dejan separadas porque sus impactos no son comparables.
+
+---
+
+## CI-048 · Chip "Por coordinar" — la cota wall-clock de 4h de §2.1/RF-TAS-01 no es implementable en IF-03
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-048 |
+| **Archivo:línea** | `lib/tasador/cola-filtros.ts` → `esPorCoordinar()` · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md` §2.1, **RF-TAS-01**, §2.2 · relacionada con **CI-021** y **CI-045** |
+| **Contexto** | §2.1 / RF-TAS-01 define el chip "Por coordinar" como *"solicitudes **sin coordinación vigente**, en estado `asignada` y con `now() - fecha_asignacion < 4h`"*. Al cablear el chip contra `coordinacion_vigente` (cierre de CI-045), la parte de coordinación es directa —`estado === 'asignada' && coordinacionVigente == null`—; el problema es la **cota horaria de 4h**. |
+| **Síntoma** | La cota `now() - fecha_asignacion < 4h` **no es reproducible en IF-03**. El plazo real de la etapa 2 (§5.2.4) se mide en **horas hábiles** —lunes a viernes, 09:00–18:00, feriados excluidos, con pausa fuera de ventana (§5.2.1)—, no en horas de reloj. Restar `now() - fecha_asignacion` en el cliente daría un número **distinto** del que el motor calcula, y reintroduciría la aritmética de plazos que **CI-021 retiró a propósito** (el campo `horas_restantes` se eliminó por producir una cifra irreproducible). §2.2 declara que IF-03 **consume** el control de SLA, no lo recalcula. Además, una cota de pertenencia **esconde del chip las coordinaciones vencidas** (pasadas las 4h), que son precisamente las más urgentes de coordinar. |
+| **Causa** | La spec describe el chip con una resta de reloj que era natural cuando el SLA se pensaba en días agregados; el modelo por etapa en horas hábiles (RF-53) la volvió no computable del lado cliente sin duplicar el motor. La letra no tiene una realización alternativa fiel dentro de las reglas de IF-03. |
+| **Impacto** | **Bajo y acotado a la semántica de un filtro de lectura.** No hay pérdida de datos ni escritura. La divergencia es de pertenencia: una solicitud `asignada` sin coordinar aparece en el chip **por más vieja que sea**, en vez de caerse a las 4h. Es la lectura funcionalmente correcta (una coordinación vencida sigue pendiente de hacerse), pero difiere de la letra de §2.1. |
+| **Decisión (A-22 · aprobada)** | La cota de 4h se **dropea de la PERTENENCIA**. Membresía = `estado === 'asignada' && coordinacionVigente == null`. El *"menor tiempo restante"* de §2.1 se preserva en el **ORDEN**: `filtrarCola()` ordena "Por coordinar" por `sla_etapa_vence_ts` ascendente —el instante que el motor ya materializó— sin recalcular nada. No se implementa ninguna variante de ventana horaria en el cliente. |
+| **Referencias cruzadas** | spec §2.1 (definición del chip) · RF-TAS-01 · spec §2.2 (IF-03 consume el SLA, no lo recalcula) · **CI-021** (retiro de `horas_restantes` por el mismo motivo) · **CI-045** (cableado del chip a `coordinacion_vigente`, del que ésta es la sub-decisión de la cota) |
+| **Dueño** | Sergio (aprobó A-22) · Héctor (acuse formal pendiente) · Claude Code (implementación) |
+| **Estado** | **aplicada.** Implementada en el Bloque 3 del frente A+B (Pantalla 1). Pendiente **acuse formal de Héctor** — **no bloqueante**: la letra de §2.1 no tiene alternativa implementable dentro de CI-021/§2.2, así que la divergencia se sostiene sola. |
+| **Origen** | Frente A+B · Bloque 3 (cierre de CI-045). Registrada por instrucción explícita de Sergio como decisión con divergencia declarada, no como defecto a corregir. |
+
+**Notas:**
+
+- **La divergencia no es una omisión: es la única lectura fiel disponible.** Implementar la cota de 4h exigiría o bien recalcular horas hábiles en el cliente (viola CI-021 y §2.2) o bien esconder del chip las coordinaciones vencidas (viola el propósito de RF-TAS-01). Ninguna de las dos es mejor que dropearla.
+- **El "menor tiempo restante" sobrevive donde corresponde.** La urgencia se lee en el **orden** por `venceTs`, que sí es una pregunta de SLA y está bien resuelta por el motor. Lo que se retira es sólo la cota **binaria** de entrada/salida del chip.
+- **El candado está en `cola-filtros.test.ts`.** El caso "no aplica ninguna ventana de tiempo sobre la fecha de asignación" fija una `asignada` sin coordinar asignada hace un mes y exige que siga en el chip: si alguien reintroduce una ventana horaria, ese test se cae.
+
+---
+
+## CI-047 · El plan de ejecución menciona un flag `TASADOR_COORDINACION_ENABLED` que no existe
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-047 |
+| **Archivo:línea** | `docs/_md/plan_ejecucion_UItasador_v1.0.md` §5 (P4-TAS) · vs el árbol real de código |
+| **Contexto** | §5 del plan declara la Pantalla 2 (coordinar visita) como *"⛔ BLOQUEADA · pendiente decisión Héctor/Óscar"* y detalla que RF-TAS-03/12/13 *"se construyen detrás de un flag de entorno apagado (`TASADOR_COORDINACION_ENABLED=false`)"*, con el flag a apagarse en Railway en P12-TAS. |
+| **Síntoma** | **Ese flag nunca se creó.** No existe `TASADOR_COORDINACION_ENABLED` —ni ninguna variante— en el código: `grep` sobre `app/`, `lib/` y `components/` no lo encuentra. CI-012 se cerró en positivo el 19-ago-2026 (revisión de Héctor del diseño v4, que anuló RO-29), así que P4-TAS quedó **viva y sin gate**: la ruta `/tasaciones/[id]/coordinar` es alcanzable directamente. El código y el plan describen dos realidades distintas del mismo flujo. |
+| **Causa** | La compuerta de negocio de §5 se resolvió (CI-012 positiva) entre la redacción del plan y la ejecución de P4-TAS, y el plan —documento maestro— no se realineó con esa resolución. Es la desincronización típica entre un plan escrito por adelantado y el estado que la implementación alcanzó. |
+| **Impacto** | **Bajo · deuda documental.** No hay defecto de código: el flujo funciona como se espera tras CI-012 positiva. El riesgo es de lectura — quien retome guiándose por §5 puede buscar un flag que no está, o creer que la coordinación está bloqueada cuando está viva. |
+| **Decisión** | **Alinear el plan en la próxima edición de ese documento**: §5 debe reflejar que CI-012 se cerró en positivo, que no hay flag y que la Pantalla 2 quedó viva. **No se toca en esta tanda** — editar el plan es una operación deliberada, no un efecto colateral del frente A+B. |
+| **Referencias cruzadas** | plan §5 (P4-TAS) · **CI-012** (compuerta de negocio, cerrada positiva 19-ago-2026) · RO-29 (anulada la misma fecha) |
+| **Dueño** | Sergio (edita el plan cuando corresponda) |
+| **Estado** | **registrada, sin acción inmediata.** |
+| **Origen** | Frente A+B · verificación previa (el gate de la card rutea a `/coordinar`, lo que obligó a confirmar que la ruta no estuviera tras un flag). Registrada por instrucción explícita de Sergio. |
+
+**Notas:**
+
+- **La ficha existe para que nadie busque un flag fantasma.** El síntoma es silencioso: no hay error, sólo un documento que describe un gate que no se construyó. Sin esta entrada, el diagnóstico costaría un `grep` y un rato de confusión.
 

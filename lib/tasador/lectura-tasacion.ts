@@ -47,6 +47,7 @@ import {
   type ContactoVisita,
   type DatoPrellenado,
   type EstadoBackend,
+  type EstadoCoordinacion,
   type SlaEtapaSolicitud,
   type Tasacion,
   type UnidadSii,
@@ -223,6 +224,29 @@ function fechaVisible(valor: unknown, sinFecha: string = SIN_FECHA_VISITA): stri
 /** Sólo para el test del desfase de huso. No tiene otros consumidores. */
 export const _fechaVisible = fechaVisible
 
+/**
+ * Desenlace de la última coordinación (`TX_Solicitudes.coordinacion_vigente`,
+ * `fldI4Dv0jpRQvbdHl`). Es el discriminante de `AccionCard` (gate T-A · §2.4) y
+ * del chip "Por coordinar" (CI-045 · CI-048).
+ *
+ * ⚠ **No es fórmula**: lo escribe el Route Handler de coordinación en el mismo
+ * PATCH que cierra el intento (`coordinacion/route.ts`), con valores
+ * `confirmada`/`rechazada`/`""`. Acá **no se recalcula ni se deriva de los
+ * intentos** — sólo se normaliza lo que la base guardó.
+ *
+ * La normalización es **cerrada a propósito**: sólo los dos literales del
+ * contrato pasan; `""`, ausente o cualquier otra cosa → `null`. Igual criterio
+ * que `proyectarSlaEtapa` con el tono (RO-05 · RO-13): un valor fuera del
+ * contrato se trata como "no hay dato", no como un estado inventado que dejaría
+ * entrar a la captura una solicitud sin coordinar.
+ */
+function coordinacionVigente(valor: unknown): EstadoCoordinacion | null {
+  return valor === 'confirmada' || valor === 'rechazada' ? valor : null
+}
+
+/** Sólo para el test de normalización del gate. No tiene otros consumidores. */
+export const _coordinacionVigente = coordinacionVigente
+
 /** Envuelve un valor ya resuelto como dato pre-llenado desde la solicitud. */
 function desdeSolicitud(valor: string): DatoPrellenado {
   return { valor: valor === VACIO ? '' : valor, fuente: 'solicitud' }
@@ -376,6 +400,12 @@ export function proyectarTasacion(
       nombre: texto(f['vendedor_razon_social_o_nombre'], ''),
       rut: texto(f['vendedor_rut'], ''),
     },
+    /**
+     * Discriminante del gate de coordinación (Regla T-A · §2.4) y del chip
+     * "Por coordinar" (CI-045). `leerCola()` no restringe `fields`, así que el
+     * campo llega en `f` sin pedirlo aparte.
+     */
+    coordinacionVigente: coordinacionVigente(f['coordinacion_vigente']),
   }
 }
 

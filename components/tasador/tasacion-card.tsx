@@ -2,33 +2,36 @@ import Link from "next/link"
 import { ArrowRight, MapPin, CalendarDays, Phone, FileText } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { SLABadge } from "@/components/console/status-badges"
-import { SIN_FECHA_VISITA, type Tasacion } from "@/lib/tasaciones"
+import {
+  resolverAccionCard,
+  SIN_FECHA_VISITA,
+  type AccionCard,
+  type Tasacion,
+} from "@/lib/tasaciones"
 
 /**
  * Card de la cola personal · RF-TAS-11 · CI-018.
  *
- * ## Regla T-A · la card sigue con **un** botón, y eso hoy es una divergencia
+ * ## Regla T-A · el botón único contextual (gate §2.4)
  *
- * §0.3 fija tres variantes excluyentes —"Coordinar visita", "Abrir tasación" y
+ * §0.3 fija tres variantes excluyentes —"Abrir tasación", "Coordinar visita" y
  * "Ver coordinación" deshabilitado con badge "Esperando contacto de
  * ejecutiva"—, y el gate entre ellas es el estado de la coordinación.
  *
- * P3-TAS.A las colapsó a **una** —"Abrir tasación" para
- * `asignada · visitada · calculada`— porque **RO-29** había dejado el gate sin
- * objeto: la coordinación no se soportaba por sistema y no había dato con que
- * discriminar. Por eso tampoco se tipó `AccionCard`.
+ * La card **no decide**: llama a `resolverAccionCard()` (único punto de la
+ * Regla T-A, en `lib/tasaciones.ts`) y renderiza la variante que devuelve. El
+ * `switch` sobre `AccionCard` es **exhaustivo por tipo** —el `default: never`
+ * hace fallar `tsc` si el union crece sin cubrirse acá—, que es la garantía de
+ * que nunca aparezcan dos variantes ni falte una.
  *
- * ⚠ **RO-29 fue anulada el 19-ago-2026** y las dos piezas que faltaban ya
- * existen: `TX_Solicitudes.coordinacion_vigente` (`fldI4Dv0jpRQvbdHl`) y
- * `resolverAccionCard()` en `lib/tasaciones.ts`, que devuelve las tres
- * variantes. **Este componente todavía no las usa**, así que el botón enlaza
- * incondicionalmente a la captura y **el gate de coordinación no existe en la
- * UI**: una solicitud sin coordinar deja entrar al formulario igual.
- *
- * **La lógica NO se cambió en P4-TAS**, a propósito: cablear
- * `resolverAccionCard()` acá es trabajo de Pantalla 1 y no de la limpieza de
- * RO-29. La ficha con el alcance y el impacto es **CI-046**.
+ * P3-TAS.A había colapsado el botón a uno solo —"Abrir tasación" incondicional—
+ * porque **RO-29** dejó el gate sin objeto (la coordinación no se soportaba por
+ * sistema). **RO-29 fue anulada el 19-ago-2026** y P4-TAS repuso el dato
+ * (`coordinacion_vigente`, `fldI4Dv0jpRQvbdHl`) y `resolverAccionCard()`.
+ * Cablearlos acá es **CI-046**, y es lo que hace este bloque: sin el gate una
+ * solicitud sin coordinar entraba al formulario igual.
  *
  * ## Lo que la card no hace
  *
@@ -107,16 +110,60 @@ export function TasacionCard({ tasacion }: { tasacion: Tasacion }) {
           </p>
         )}
 
-        {/* Regla T-A · botón único, altura táctil ≥44 px (R9) */}
-        <Button
-          render={<Link href={`/tasaciones/${tasacion.id}`} />}
-          nativeButton={false}
-          className="mt-4 min-h-12 w-full bg-vp-primary text-base font-semibold text-white hover:bg-vp-primary-dark"
-        >
-          Abrir tasación
-          <ArrowRight className="h-4 w-4" />
-        </Button>
+        {/* Regla T-A · botón único contextual, altura táctil ≥44 px (R9) */}
+        <AccionCardBoton accion={resolverAccionCard(tasacion)} />
       </div>
     </Card>
   )
+}
+
+/**
+ * Renderiza **exactamente una** de las tres variantes de la Regla T-A.
+ *
+ * El `switch` es exhaustivo por construcción: el `default` asigna `accion` a
+ * `never`, así que agregar una variante a `AccionCard` sin darle un `case` acá
+ * es un error de compilación, no un fallo en runtime.
+ */
+function AccionCardBoton({ accion }: { accion: AccionCard }) {
+  switch (accion.tipo) {
+    case "abrir":
+      return (
+        <Button
+          render={<Link href={accion.href} />}
+          nativeButton={false}
+          className="mt-4 min-h-12 w-full bg-vp-primary text-base font-semibold text-white hover:bg-vp-primary-dark"
+        >
+          {accion.rotulo}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      )
+    case "coordinar":
+      // A-24: color de acento = naranja VProperty (--accent-orange · #f5a213).
+      return (
+        <Button
+          render={<Link href={accion.href} />}
+          nativeButton={false}
+          className="mt-4 min-h-12 w-full bg-accent-orange text-base font-semibold text-white hover:bg-accent-orange/90"
+        >
+          {accion.rotulo}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      )
+    case "esperando_ejecutiva":
+      // A-23: la salida de este estado (reabrir la coordinación) es IF-02, diferida en CI-043.
+      return (
+        <div className="mt-4 space-y-2">
+          <Button disabled variant="secondary" className="min-h-12 w-full text-base font-semibold">
+            {accion.rotulo}
+          </Button>
+          <Badge variant="secondary" className="h-auto w-full justify-center py-1.5 text-sm">
+            {accion.badge}
+          </Badge>
+        </div>
+      )
+    default: {
+      const _exhaustivo: never = accion
+      return _exhaustivo
+    }
+  }
 }

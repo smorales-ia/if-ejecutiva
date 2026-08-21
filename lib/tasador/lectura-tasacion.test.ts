@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { _fechaVisible, proyectarSlaEtapa } from './lectura-tasacion'
+import { _coordinacionVigente, _fechaVisible, proyectarSlaEtapa } from './lectura-tasacion'
 import type { SolicitudFields } from './auth-guard'
 import { SIN_FECHA_VISITA } from '@/lib/tasaciones'
 
@@ -145,6 +145,34 @@ describe('proyectarSlaEtapa · instantes', () => {
       alertaTs: '2026-08-19T13:00:00.000Z',
       venceTs: '2026-08-19T14:30:00.000Z',
     })
+  })
+})
+
+describe('coordinacionVigente · el discriminante del gate T-A (§2.4 · CI-045 · CI-048)', () => {
+  /**
+   * El campo no es fórmula: lo escribe el handler de coordinación con exactamente
+   * estos dos literales. Se afirman para que un cambio de contrato en el write
+   * path lo rompa acá y no en la UI.
+   */
+  it('deja pasar los dos literales del contrato', () => {
+    expect(_coordinacionVigente('confirmada')).toBe('confirmada')
+    expect(_coordinacionVigente('rechazada')).toBe('rechazada')
+  })
+
+  /**
+   * La afirmación central, igual que en `proyectarSlaEtapa`: **no fabrica**. Un
+   * `""` (sin coordinación aún), un campo ausente o cualquier valor fuera del
+   * contrato son `null` — nunca un estado inventado que dejaría entrar a la
+   * captura a una solicitud sin coordinar (el gate de §2.4).
+   */
+  it('todo lo demás es null, no un estado inventado', () => {
+    expect(_coordinacionVigente('')).toBeNull()
+    expect(_coordinacionVigente(undefined)).toBeNull()
+    expect(_coordinacionVigente(null)).toBeNull()
+    expect(_coordinacionVigente('CONFIRMADA')).toBeNull()
+    expect(_coordinacionVigente('devuelta')).toBeNull()
+    expect(_coordinacionVigente(1)).toBeNull()
+    expect(_coordinacionVigente(['confirmada'])).toBeNull()
   })
 })
 

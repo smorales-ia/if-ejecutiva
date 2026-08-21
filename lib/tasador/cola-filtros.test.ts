@@ -7,7 +7,12 @@ import {
   esPorCoordinar,
   filtrarCola,
 } from './cola-filtros'
-import type { EstadoBackend, SlaEtapaSolicitud, Tasacion } from '@/lib/tasaciones'
+import type {
+  EstadoBackend,
+  EstadoCoordinacion,
+  SlaEtapaSolicitud,
+  Tasacion,
+} from '@/lib/tasaciones'
 
 /**
  * P3-TAS.A · §4.2 paso 7 — chips de la cola (RF-TAS-01 · CI-019 · A-12).
@@ -38,17 +43,24 @@ const ETAPA_2: SlaEtapaSolicitud = {
   venceTs: '2026-08-19T14:00:00.000Z',
 }
 
-type TasacionDeCola = Pick<Tasacion, 'id' | 'estado' | 'slaEtapa'>
+type TasacionDeCola = Pick<Tasacion, 'id' | 'estado' | 'slaEtapa' | 'coordinacionVigente'>
 
+/**
+ * `coordinacionVigente` por defecto en `null` (sin coordinación aún): es el
+ * caso "por coordinar", el que los tests de orden por `venceTs` esperan de una
+ * fila `asignada`.
+ */
 function tasacion(
   id: string,
   estado: EstadoBackend,
-  slaEtapa?: Partial<SlaEtapaSolicitud>
+  slaEtapa?: Partial<SlaEtapaSolicitud>,
+  coordinacionVigente: EstadoCoordinacion | null = null
 ): TasacionDeCola {
   return {
     id,
     estado,
     slaEtapa: slaEtapa ? { ...ETAPA_2, ...slaEtapa } : undefined,
+    coordinacionVigente,
   }
 }
 
@@ -107,21 +119,35 @@ describe('enColaVisible', () => {
   })
 })
 
-describe('esPorCoordinar · asignada con la etapa 2 abierta (ver CI-045)', () => {
-  it('es asignada con la etapa 2 abierta', () => {
-    expect(esPorCoordinar(tasacion('a', 'asignada', {}))).toBe(true)
+describe('esPorCoordinar · asignada sin coordinación vigente (CI-045 · CI-048)', () => {
+  /**
+   * La membresía es por el dato directo, no por la etapa de SLA ni por una cota
+   * horaria. La cota `now() - fecha_asignacion < 4h` de §2.1 **no se implementa**
+   * (A-22 · CI-048): un `asignada` sin coordinación es "por coordinar" por más
+   * viejo que sea. Por eso ninguno de estos casos toca `slaEtapa` ni el reloj.
+   */
+  it('asignada + coordinacionVigente=null → true', () => {
+    expect(esPorCoordinar(tasacion('a', 'asignada', undefined, null))).toBe(true)
   })
 
-  it('no lo es una asignada en otra etapa', () => {
-    expect(esPorCoordinar(tasacion('a', 'asignada', { numero: 5 }))).toBe(false)
+  it('asignada + coordinacionVigente=undefined → true (== null cubre ambos)', () => {
+    expect(esPorCoordinar({ estado: 'asignada', coordinacionVigente: undefined })).toBe(true)
   })
 
-  it('no lo es una asignada sin etapa resuelta', () => {
-    expect(esPorCoordinar(tasacion('a', 'asignada'))).toBe(false)
+  it('asignada + coordinacionVigente=confirmada → false (ya pasó a la captura)', () => {
+    expect(esPorCoordinar(tasacion('a', 'asignada', undefined, 'confirmada'))).toBe(false)
   })
 
-  it('no lo es una visitada, aunque el motor la deje en etapa 2', () => {
-    expect(esPorCoordinar(tasacion('a', 'visitada', {}))).toBe(false)
+  it('asignada + coordinacionVigente=rechazada → false (espera a la ejecutiva)', () => {
+    expect(esPorCoordinar(tasacion('a', 'asignada', undefined, 'rechazada'))).toBe(false)
+  })
+
+  it('visitada + coordinacionVigente=null → false', () => {
+    expect(esPorCoordinar(tasacion('a', 'visitada', undefined, null))).toBe(false)
+  })
+
+  it('calculada + coordinacionVigente=null → false', () => {
+    expect(esPorCoordinar(tasacion('a', 'calculada', undefined, null))).toBe(false)
   })
 })
 
@@ -165,9 +191,10 @@ describe('filtrarCola', () => {
   })
 
   /**
-   * El candado de §4.3. Una asignada con la etapa 2 abierta pertenece al chip
-   * aunque se haya asignado hace un mes: el chip pregunta por la etapa, no por
-   * el reloj. Si vuelve una ventana de horas, este caso se cae.
+   * El candado de §4.3 · CI-048. Una asignada sin coordinación pertenece al chip
+   * aunque se haya asignado hace un mes: el chip pregunta por la coordinación, no
+   * por el reloj (la cota de 4h de §2.1 se dropea de la pertenencia). Si vuelve
+   * una ventana de horas, este caso se cae.
    */
   it('no aplica ninguna ventana de tiempo sobre la fecha de asignación', () => {
     const vieja = {

@@ -74,33 +74,29 @@ export function enColaVisible(t: Pick<Tasacion, 'estado'>): boolean {
 }
 
 /**
- * "Por coordinar" — **`asignada` con la etapa 2 abierta**.
+ * "Por coordinar" — **`asignada` sin coordinación vigente** (CI-045 · CI-048).
  *
- * La definición de §4.1 es *sin coordinación vigente, `asignada`, y
- * `now() - fecha_asignacion < 4h`*. Este predicado la aproxima por la etapa:
- * la etapa 2 de §5.2.4 es justamente la del primer contacto (RN-53), la abre el
- * motor al asignar y se cierra cuando el resultado del llamado se registra.
- * Cero aritmética de horas acá: pregunta por la etapa, no por el reloj.
+ * Membresía directa por el dato que P4-TAS repuso: `estado === 'asignada'` y
+ * sin desenlace de coordinación registrado (`coordinacionVigente == null`, que
+ * cubre `null` y `undefined`). Una solicitud `confirmada` ya pasó a la captura y
+ * una `rechazada` espera a la ejecutiva (Regla T-A): las dos **salen del chip**
+ * pero siguen en "Todas".
  *
- * ⚠ **Esta aproximación se adoptó porque la definición literal no era
- * computable, y hoy sí lo es.** Se escribió bajo **RO-29** —*"la coordinación
- * no se soporta por sistema, `TX_CoordinacionVisita` no existe"*—, regla
- * **anulada el 19-ago-2026** por la revisión de Héctor del diseño v4. Desde
- * P4-TAS la tabla existe y `TX_Solicitudes.coordinacion_vigente`
- * (`fldI4Dv0jpRQvbdHl`) da el dato directo que §4.1 pide.
+ * ⚠ **Sin cota horaria — A-22 aprobada · CI-048.** §2.1 / RF-TAS-01 pide además
+ * `now() - fecha_asignacion < 4h`. Esa cota **no se implementa**: IF-03 no
+ * recalcula horas hábiles sin duplicar la aritmética que CI-021 retiró
+ * (`horas_restantes`), y §2.2 declara que IF-03 **consume** el control de SLA,
+ * no lo recalcula. La cota se dropea de la **pertenencia**; el "menor tiempo
+ * restante" de §2.1 se preserva en el **orden** de `filtrarCola` (`venceTs`
+ * asc). Ficha completa en `docs/CODE_INCONSISTENCIES.md` · CI-048.
  *
- * ⚠ La nota anterior advertía que *"mientras nadie escriba `sla_e2_fin_ts` una
- * solicitud `asignada` no sale nunca de este chip"*. **Eso dejó de ser cierto**:
- * el handler de `POST /api/tasaciones/[id]/coordinacion` cierra e2 y e3 en el
- * mismo evento (Q5), así que hoy la solicitud sale del chip al registrar el
- * resultado — en las dos ramas.
- *
- * **La lógica NO se cambió en P4-TAS**, a propósito: tocar el predicado es
- * trabajo de Pantalla 1, no de la limpieza de RO-29. La revisión de si debe
- * pasar a consultar `coordinacion_vigente` está en **CI-045**.
+ * Historia: hasta P3-TAS.A esto vivía bajo **RO-29** —coordinación no soportada
+ * por sistema— y aproximaba la membresía por `slaEtapa.numero === 2`. RO-29 fue
+ * anulada el 19-ago-2026 y `TX_Solicitudes.coordinacion_vigente`
+ * (`fldI4Dv0jpRQvbdHl`) da hoy el dato directo.
  */
-export function esPorCoordinar(t: Pick<Tasacion, 'estado' | 'slaEtapa'>): boolean {
-  return t.estado === 'asignada' && t.slaEtapa?.numero === 2
+export function esPorCoordinar(t: Pick<Tasacion, 'estado' | 'coordinacionVigente'>): boolean {
+  return t.estado === 'asignada' && t.coordinacionVigente == null
 }
 
 /** Instante de vencimiento en ms. Sin dato → al final del orden, nunca al principio. */
@@ -118,7 +114,7 @@ function vencimiento(t: Pick<Tasacion, 'slaEtapa'>): number {
  * vence antes, primero—, que es el "menor tiempo restante" de §4.1 leído sobre
  * el instante que el motor ya materializó, en vez de recalculado en el cliente.
  */
-export function filtrarCola<T extends Pick<Tasacion, 'estado' | 'slaEtapa'>>(
+export function filtrarCola<T extends Pick<Tasacion, 'estado' | 'slaEtapa' | 'coordinacionVigente'>>(
   tasaciones: readonly T[],
   chip: ChipActivo
 ): T[] {
