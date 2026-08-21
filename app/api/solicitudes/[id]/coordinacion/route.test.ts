@@ -9,7 +9,8 @@ import type { CoordinacionSolicitud } from '@/lib/coordinacion-airtable'
  * La ruta es un pasamanos deliberado: valida el `[id]`, delega en el reader y
  * sirve el payload al ras. Lo que se prueba acá es justo lo que el reader no
  * puede probar — el 404 del id mal formado, que un fallo **no** se convierta en
- * un riel vacío, y que el cuerpo no venga envuelto en `{ data }`.
+ * un riel vacío, y que el cuerpo venga envuelto en `{ data }` como el de los
+ * hermanos de la carpeta.
  */
 
 const fetchCoordinacionSolicitud = vi.fn()
@@ -66,11 +67,13 @@ describe('identidad del [id]', () => {
 })
 
 describe('200', () => {
-  it('sirve el payload al ras, sin envolver en { data }', async () => {
+  it('envuelve el payload del reader en { data }', async () => {
     const res = await llamar()
+    const cuerpo = await res.json()
 
     expect(res.status).toBe(200)
-    await expect(res.json()).resolves.toEqual(RESPUESTA)
+    expect(cuerpo.data.coordinacionVigente).toBe('confirmada')
+    expect(cuerpo.data.intentos).toEqual(RESPUESTA.intentos)
   })
 
   it('sin intentos devuelve null y lista vacía (RO-34)', async () => {
@@ -80,9 +83,11 @@ describe('200', () => {
     })
 
     const res = await llamar()
+    const cuerpo = await res.json()
 
     expect(res.status).toBe(200)
-    await expect(res.json()).resolves.toEqual({ coordinacionVigente: null, intentos: [] })
+    expect(cuerpo.data.coordinacionVigente).toBeNull()
+    expect(cuerpo.data.intentos).toEqual([])
   })
 })
 
@@ -94,7 +99,9 @@ describe('errores', () => {
     const cuerpo = await res.json()
 
     expect(res.status).toBe(502)
-    expect(cuerpo.intentos).toBeUndefined()
+    // El cuerpo de error no lleva `data`: un riel vacío que en realidad falló
+    // es indistinguible de "no se coordinó todavía".
+    expect(cuerpo.data).toBeUndefined()
     // §6.1 · nada de jerga técnica hacia la persona.
     expect(cuerpo.error).toBe(
       'No pudimos completar la acción. Intenta nuevamente en unos segundos.'

@@ -35,19 +35,21 @@ export const dynamic = 'force-dynamic'
  *
  * ## Contrato
  *
- * `{ coordinacionVigente: EstadoCoordinacion | null, intentos: [...] }`, con los
- * intentos del más reciente al más antiguo. Cero filas devuelve
+ * `{ data: { coordinacionVigente, intentos } }` — el mismo envoltorio `{ data }`
+ * de los hermanos de esta carpeta (`eventos/`, `sla/`, `decision-motor/`), de
+ * modo que el hook de C4 puede reusar el desenvoltorio de
+ * `use-historial-solicitud.ts` tal cual. El envoltorio lo pone **esta ruta**:
+ * `fetchCoordinacionSolicitud` sigue devolviendo el payload al ras, que es lo
+ * que cualquier consumidor server-side quiere.
+ *
+ * Los intentos van del más reciente al más antiguo. Cero filas devuelve
  * `coordinacionVigente: null` y `intentos: []` — **RO-34**: la ausencia de
  * coordinación no es un desenlace neutro, y el consumidor tiene que poder
  * distinguirla de `rechazada`.
  *
- * ⚠ Es el **único** GET de `app/api/solicitudes/**` que responde con el payload
- * al ras y no envuelto en `{ data }`. Es lo que fijó la propuesta aprobada del
- * bloque; queda anotado acá porque el hook de C4 no va a poder reusar el
- * desenvoltorio de `use-historial-solicitud.ts` tal cual.
- *
  * Un fallo de lectura sale por el 502 y **no** degrada a lista vacía: un riel
  * vacío que en realidad falló es indistinguible de "no se coordinó todavía".
+ * El cuerpo de error lleva `error` y **no** `data`, igual que los hermanos.
  */
 export async function GET(
   _request: NextRequest,
@@ -55,12 +57,16 @@ export async function GET(
 ) {
   const { id } = await params
 
+  // TODO(auth) · sin gate de Clerk, igual que `eventos/` y `decision-motor/` —
+  // `sla/` sí lo tiene. La asimetría de `app/api/solicitudes/**` se resuelve
+  // entera en la tanda de auth uniforme con Óscar, no ruta por ruta.
+
   if (!isValidRecordId(id)) {
     return NextResponse.json({ error: 'Solicitud no encontrada.' }, { status: 404 })
   }
 
   try {
-    return NextResponse.json(await fetchCoordinacionSolicitud(id))
+    return NextResponse.json({ data: await fetchCoordinacionSolicitud(id) })
   } catch (err) {
     console.error('[GET /api/solicitudes/[id]/coordinacion]', err)
     return NextResponse.json(
