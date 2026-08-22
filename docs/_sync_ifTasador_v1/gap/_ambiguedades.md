@@ -1301,3 +1301,110 @@ IF-03, se observa.
 **Candado.** El caso *"no aplica ninguna ventana de tiempo sobre la fecha de asignación"* en
 `cola-filtros.test.ts` fija una solicitud `asignada` sin coordinar de hace un mes y exige que siga
 en el chip. Si alguien reintroduce una ventana horaria, ese test se cae.
+
+---
+
+> **Tanda del 22-ago-2026 (b) — P0.5-TAS.** Las tres entradas que siguen salieron de crear
+> `C_DefaultsAntecedentes` (`tblOj7nXcjeouPy09`). Se registran acá y no sólo en el snapshot por
+> la convención **C-20**: los identificadores `A-XX` los asigna este archivo y sólo este archivo.
+> Detalle operativo completo en `docs/_notas/snapshot-P0.5-TAS-defaults.md`.
+
+---
+
+## A-37 · **BLOQUEANTE** · Contra qué fila de `M_TiposPropiedad` se cuelga cada default
+
+**Estado** — abierta · **bloquea el sembrado de `C_DefaultsAntecedentes`** · impacto alto.
+**Dueños: Óscar (datos) + Héctor (dominio de negocio).**
+
+`M_TiposPropiedad` (`tbl8rxZA14xFIBGU6`) tiene **15 filas**, no las 8 que declara
+`ListaTipoPropiedad` `[Excel: FICHA SOLIC!AD25:AD32]`, y **dos pares duplicados por
+capitalización**:
+
+| Duplicado | Record ID | Observación |
+|---|---|---|
+| `CASA` | `rec5J0dPImsDm5Leb` | sin `categoria` |
+| `Casa` | `recrXDAjlVCe59XBW` | **la única de las 15 con `categoria = Habitacional`** |
+| `DEPARTAMENTO` | `recJ0OIjob9ywogr6` | sin `categoria` |
+| `Departamento` | `recf9hz8TbkQ6wsus` | sin `categoria` |
+
+**Por qué no bloqueó la creación de la tabla pero sí el sembrado.** El campo
+`C_DefaultsAntecedentes.tipo_propiedad` es un Link y admite cualquiera de las 15 filas. El
+problema aparece al escribir datos: si el default de "Departamento" se cuelga de `DEPARTAMENTO` y
+las solicitudes reales linkean `Departamento`, **el lookup devuelve vacío sin error**. La sección E
+del formulario aparecería sin pre-llenar y el diagnóstico costaría una sesión entera, porque no hay
+nada que falle — sólo un conjunto vacío que se lee como "esta combinación no tiene defaults", que
+es un estado legítimo según §2.8.1.
+
+Es el mismo modo de fallo silencioso de **P-5** (el género de `tipo_propiedad` entre
+`D_TipoDocumento` y `TX_Solicitudes`), y la razón por la que el eje 1 se modeló como Link y no como
+`singleSelect`: el Link al menos hace que el problema sea de **qué fila**, no de **qué literal**.
+
+**Las dos preguntas:**
+
+1. **¿Se sanea la maestra antes de sembrar, o se siembra contra las filas actuales?** Sanear es
+   más limpio y es **tanda propia**: `M_TiposPropiedad` recibe links entrantes desde
+   `TX_Solicitudes`, `C_PreciosUnitarios`, `C_VidaUtil`, `C_Factores`, `C_Formulas`, `C_SLA`,
+   `C_ReglasNegocio`, `C_FactoresHomogeneizacion`, `TX_Comparables`, `H_Comparables_Historico` y
+   `C_Plantillas`. Un merge mal hecho los arrastra a todos.
+2. **¿Cuál de los dos duplicados es el canónico?** `Casa` tiene `categoria` poblada, lo que sugiere
+   que es la viva; pero eso es inferencia sobre una sola celda y hay que verificar contra qué fila
+   apuntan las solicitudes reales antes de decidir.
+
+**Consecuencia inmediata:** el sembrado de `C_DefaultsAntecedentes` **no arranca** hasta cerrarla.
+La tabla queda creada y vacía, que es un estado consistente.
+
+---
+
+## A-38 · Dónde se materializan los catálogos de valores admisibles
+
+**Estado** — abierta · **no bloqueante para el schema, sí para la UI de P7-TAS** · impacto medio.
+**Dueño: Arquitecto de Datos.**
+
+Cada campo de §2.8.1 tiene su catálogo cerrado —36 valores en estructura soportante
+`[Excel: Antecedentes!BZ45:BZ80]`, 19 en cubierta `[Excel: Antecedentes!CE45:CE63]`, 13 en muebles
+de cocina `[Excel: Antecedentes!CO44:CO56]`, 11 en ventanas `[Excel: Antecedentes!BX54:BX64]`, y
+así—. La Pantalla 5 los necesita para poblar sus selects.
+
+**No se alojaron en `C_DefaultsAntecedentes`, y el motivo es de normalización.** Los catálogos
+**no dependen de la combinación**: el de cubierta es idéntico para departamento nuevo y para casa
+usada. Con la granularidad elegida —un registro por (combinación, campo, atributo)— alojarlos ahí
+los duplicaría hasta **16 veces por campo**, que es exactamente la denormalización que **RO-05**
+desaconseja y la que garantiza deriva el día que alguien edite una copia.
+
+Lo que sí quedó es `catalogo_ref` (`fld0NAJv7E1rLFWVX`), que **referencia** el rango del Excel sin
+materializarlo.
+
+**Las opciones:**
+
+1. **Tabla hermana `C_CatalogosAntecedentes`**, un registro por (campo, valor admisible, orden).
+   Normaliza bien y permite que el negocio agregue valores sin deploy. Es tabla nueva: aprobación.
+2. **Constante versionada server-side**, expuesta por la misma ruta que sirve los defaults.
+   Más barata, pero agregar un valor exige deploy — lo que RF-TAS-08 evita para los defaults y
+   sería inconsistente aplicar sólo a la mitad del problema.
+
+**Consecuencia sobre P7-TAS:** los selects de la sección E se construyen contra los catálogos de
+§2.8.1, que están escritos en la spec. Mientras A-38 no cierre, esos valores **no tienen origen
+consultable en runtime**, de modo que la pantalla puede construirse pero su catálogo no es
+parametrizable todavía.
+
+---
+
+## A-39 · Dónde vive el anexo de estado de conservación
+
+**Estado** — abierta · **no bloqueante** · impacto bajo. **Dueño: Arquitecto de Datos.**
+
+El anexo `[Excel: Estado Conservación!A7:W46]` son 38 filas de inspección, **todas** pre-llenadas
+con la misma terna `Bueno` / `Ninguno` / `Funcionando`.
+
+**No entró en `C_DefaultsAntecedentes`**, y por eso el campo `bloque` tiene tres opciones y no
+cuatro. El motivo: **no ramifica por ninguno de los dos ejes de la partición**. Es constante para
+las 16 combinaciones. Alojarlo en una tabla particionada significaría escribir **114 filas
+idénticas por combinación** —38 filas × 3 atributos— que no aportan información y sí costo de
+mantenimiento: el día que la terna cambie, hay que editarlas todas.
+
+**Las opciones:** tabla hermana propia, o declararlo constante de aplicación con su cita al Excel
+en la spec y ninguna fila en Airtable. La segunda es la que corresponde a un dato que no varía; la
+primera sólo se justifica si el negocio anticipa que la terna vaya a depender de algo.
+
+Si se elige alojarlo en `C_DefaultsAntecedentes` de todos modos, agregar la cuarta opción a
+`bloque` es un `update_field` trivial y no invalida ninguna fila existente.

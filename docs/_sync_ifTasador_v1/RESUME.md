@@ -681,3 +681,40 @@ El candado está en `cola-filtros.test.ts` (**C-21**).
 Consulta a Héctor con tres puntos, ninguno largo: **(1)** el valor por defecto de cada uno de los
 tres factores —única bloqueante— · **(2)** confirmar que las 4 h son **hábiles** y no de reloj ·
 **(3)** qué son `D. F.` y `F. M.` (**A-35**, sin prisa).
+
+---
+
+## Estado canónico · P0.5-TAS completa · 22-ago-2026 (b)
+
+> **Manda sobre todos los bloques anteriores.** Complementa al bloque del 22-ago-2026 (a), del que
+> sólo cambia lo que sigue.
+
+**P0.5-TAS quedó completa.** La tabla de defaults existe:
+**`C_DefaultsAntecedentes` · `tblOj7nXcjeouPy09`**, 11 campos, **0 filas**. IDs de campo en
+`docs/schema-airtable.md`; detalle de la tanda en `docs/_notas/snapshot-P0.5-TAS-defaults.md`.
+
+**Qué desbloquea.** **P7-TAS puede construir la sección E con precarga**: el punto de consumo tiene
+tabla, clave y tipos reales. Hasta que se siembre, la precarga devuelve **vacío**, que es el
+comportamiento correcto de §2.8.1 y no un error.
+
+**Qué NO se hizo, a propósito.** No se sembró ninguna fila (R5 de la tanda). Los valores se revisan
+antes de escribirlos, y además el sembrado está bloqueado.
+
+**Bloqueante nuevo: A-37.** `M_TiposPropiedad` tiene 15 filas con duplicados por capitalización
+—`CASA`/`Casa`, `DEPARTAMENTO`/`Departamento`— y su dominio no coincide con los 8 valores del
+Excel. Colgar un default de la fila equivocada produce un lookup vacío **sin error**: el mismo
+fallo silencioso de P-5. **Resolver antes de sembrar.** Sanear la maestra es tanda propia: recibe
+links entrantes de once tablas.
+
+**No bloqueantes nuevos:** **A-38** (dónde se materializan los catálogos de valores admisibles) y
+**A-39** (dónde vive el anexo de estado de conservación, que no ramifica por los ejes).
+
+**Sigue bloqueado, sin cambios:** **A-18**. `C_FactoresHomogeneizacion.valor_referencia` sigue
+vacío en sus 15 filas —foto verificada hoy—, de modo que `GET /api/tasaciones/config/defaults`
+sigue sin construirse.
+
+### Próximo paso
+
+Resolver **A-37** con Óscar y Héctor, y recién entonces la tanda de sembrado. En paralelo siguen
+las dos preguntas del bloque anterior: el valor por defecto de cada factor (A-18) y si las 4 h del
+recordatorio son hábiles.

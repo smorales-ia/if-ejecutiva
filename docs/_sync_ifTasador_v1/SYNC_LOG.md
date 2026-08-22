@@ -454,3 +454,38 @@ decisión de Sergio.
 | **C-19** | **Una cifra ratificada que coincide con un umbral ya existente no crea un mecanismo nuevo.** Héctor fijó el recordatorio en 4 h hábiles y ese número **ya estaba en la base**: es `sla_ideal_horas` de `e2` en `C_SLA_Etapas`, cuyo instante el motor materializa como `sla_etapa_alerta_ts`. El plan v1.13 tenía diferido un campo para alojarlo; v1.14 **cierra el diferimiento sin crear nada** y el predicado pasa a ser el semáforo que la fórmula ya emite. Modelarlo igual habría producido **dos fuentes para el mismo número** —lo que **RO-05** prohíbe—, con un fallo silencioso: los dos valores empiezan iguales y divergen el día que alguien edita uno. Queda como **§9.6-R8** en el plan de IF-02. La regla de método: **antes de modelar una cifra que llega del negocio, comprobar si el sistema ya la calcula** | Sesión 22-ago-2026 |
 | **C-20** | **Los identificadores `A-XX` los asigna `gap/_ambiguedades.md` y sólo ese archivo.** La decisión sobre la cota del chip "Por coordinar" se registró en CI-045 y CI-048 bajo la etiqueta `A-22`, que el registro ya usaba para el umbral del recordatorio. Ambas giran alrededor de "4 h en coordinación", que es lo que las volvía indistinguibles. **La del chip se re-etiqueta como A-36**, entra al registro con ficha propia marcada cerrada · aplicada, y las dos fichas CI llevan nota de desambiguación. Precedente directo: **A-10** (colisión SC05/SC08), que costó un lote bloqueado. La regla: una ficha CI **cita** un `A-XX`, nunca lo crea | Sesión 22-ago-2026 · instrucción explícita del usuario |
 | **C-21** | **Ratificar un umbral no lo hace replicable aguas abajo.** Con las 4 h confirmadas, la tentación en IF-03 era reintroducir la cota horaria en el chip "Por coordinar" para que la cola "cuadrara" con el recordatorio. **No se hace**, y el argumento es más fuerte que antes: reabriría **CI-021** —recalcular horas hábiles en el cliente— y desharía **A-36**, escondiendo del chip justamente las coordinaciones vencidas que el recordatorio acaba de señalar. IF-03 **observa** coherencia; no replica aritmética | Sesión 22-ago-2026 |
+
+---
+
+## Tanda del 22-ago-2026 (b) — P0.5-TAS · schema de defaults
+
+> **Primera tanda de esta serie que muta Airtable.** Las anteriores fueron documentales. Contrato
+> 🔴 pausa-total: ocho pausas `s/n`, ninguna rechazada, ningún `create_field` fallido.
+
+**Rama** — `feat/tasador-ui`. **Base** — `app9G7lLkIV3CpeLa`.
+**Habilitada por** — el cierre de **A-27** el 22-ago-2026: sin la clave de partición, esta tabla no
+se podía diseñar.
+
+### Qué se creó
+
+**`C_DefaultsAntecedentes` · `tblOj7nXcjeouPy09`** · 11 campos · **0 filas**.
+
+Aloja los defaults de la hoja de antecedentes (spec v1.9.14 §2.8.1 · RF-TAS-23), particionados por
+tipo de propiedad × estado de uso, con un registro por (combinación, `campo_destino`, `atributo`).
+IDs completos en `docs/schema-airtable.md` y en `docs/_notas/snapshot-P0.5-TAS-defaults.md`.
+
+**Efecto colateral inevitable:** el Link generó el campo inverso `fldN5ya6IA6j0nM0S` en
+`M_TiposPropiedad`. Anotado para que no aparezca como huérfano en la próxima auditoría.
+
+### Decisiones de esta tanda
+
+| # | Resolución | Origen |
+|---|---|---|
+| **C-22** | **El eje de una tabla particionada copia el TIPO del campo contra el que se va a unir, no su vocabulario.** `TX_Solicitudes.tipo_propiedad` es un `multipleRecordLinks` a `M_TiposPropiedad`, así que el eje 1 de `C_DefaultsAntecedentes` es Link y no `singleSelect` con los 8 literales del Excel; y `estado_uso` copia `nuevo`/`usado` en **minúscula** de `TX_Solicitudes.tipo_propiedad_nuevo_usado`, no `Nuevo`/`Usado` del Excel ni `nueva`/`usada` de `D_TipoDocumento`. Tres vocabularios para el mismo dominio ya produjeron **P-5**, cuyo síntoma es un join que nunca coincide y una pantalla vacía sin error. La regla: **antes de declarar un eje, leer el tipo y el dominio reales del campo con el que va a casar** | Sesión 22-ago-2026 · hallazgo de la verificación previa |
+| **C-23** | **Granularidad fina sobre fila ancha, cuando el conjunto de campos puede crecer.** `C_DefaultsAntecedentes` usa un registro por (combinación, campo, atributo) —~216 filas sembradas— en vez de un registro por combinación con ~54 columnas. Tres razones: agregar un campo es alta de datos y no `create_field`, que es la operación más frágil del MCP; cada default lleva **su propia** cita `[Excel: hoja!celda]`, imposible en una fila ancha; y 54 columnas no son mantenibles a mano, mientras que 216 filas son triviales para Airtable | Sesión 22-ago-2026 |
+| **C-24** | **Lo que no ramifica por la clave no entra a la tabla particionada.** El anexo de estado de conservación —38 filas con la misma terna— es constante para las 16 combinaciones, y alojarlo habría significado 114 filas idénticas por combinación. Queda fuera (**A-39**), y `bloque` se crea con tres opciones. Lo mismo con los catálogos de valores admisibles, que no dependen de la combinación y sólo se **referencian** por `catalogo_ref` (**A-38**). Meter un dato constante en una tabla particionada no es conservador: es duplicación con costo de mantenimiento y riesgo de deriva (**RO-05**) | Sesión 22-ago-2026 |
+
+### Ambigüedades abiertas
+
+**A-37** (bloqueante · duplicados en `M_TiposPropiedad`) · **A-38** (catálogos) · **A-39** (anexo de
+conservación). Registradas en `gap/_ambiguedades.md` según **C-20**, no sólo en el snapshot.

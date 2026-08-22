@@ -1505,38 +1505,61 @@ al leer el schema.
 
 ---
 
-## Tabla pendiente de creación · defaults de la hoja de antecedentes (IF-03)
+## `C_DefaultsAntecedentes` · defaults de la hoja de antecedentes (IF-03)
 
-> **TODO de la tanda de schema · P0.5-TAS.** No existe en `app9G7lLkIV3CpeLa` y **no se crea desde
-> aquí**: toda tabla nueva en Airtable requiere aprobación explícita de Sergio. Este bloque fija lo
-> que ya está decidido para que la tanda que la cree no tenga que volver a resolverlo.
+**TABLE_ID: `tblOj7nXcjeouPy09`** · creada el 22-ago-2026 en la tanda **P0.5-TAS**.
+Catálogo paramétrico de los valores por defecto que el tasador recibe pre-llenados en la sección E
+de la Pantalla 5. Fuente normativa: **spec v1.9.14 §2.8.1 (RF-TAS-23)**. Origen de los valores:
+`Formato Informe VProperty Enero2026.xlsm`, hoja `Antecedentes`.
 
-**Qué aloja.** Los valores por defecto de la hoja de antecedentes que el tasador recibe
-pre-llenados en la sección E de la Pantalla 5: características constructivas principales,
-elementos "otros" y terminaciones por recinto. La especificación completa —campo por campo, con su
-valor y su catálogo— está en **spec §2.8.1 (RF-TAS-23)**, con cada valor citado por su celda de
-origen en `Formato Informe VProperty Enero2026.xlsm`.
+**Clave de partición: tipo de propiedad × estado de uso** (A-27, decidida por Héctor el
+22-ago-2026). **Granularidad: un registro por (combinación, `campo_destino`, `atributo`)** —
+decidida en esta tanda: agregar un campo nuevo es alta de datos y no `create_field`, y cada
+default puede llevar su propia cita al Excel.
 
-**Clave de partición: tipo de propiedad × estado de uso.** Decidida por Héctor el 22-ago-2026
-(cierra **A-27** y **D-20**), replicando los dos interruptores de la plantilla:
-
-| Eje | Dominio | Cardinalidad | Origen en la plantilla |
+| Campo | FIELD_ID | Tipo | Notas |
 |---|---|---|---|
-| Tipo de propiedad | `ListaTipoPropiedad` | 8 valores | `[Excel: FICHA SOLIC!AD25:AD32]` |
-| Estado de uso | `Nuevo` · `Usado` | 2 valores | `[Excel: FICHA SOLIC!K36]` |
+| `clave` | `fldbKTZStDCrl5Utr` | singleLineText (**primary**) | `{tipo}·{estado_uso}·{campo_destino}·{atributo}`. La escribe el cargador |
+| `tipo_propiedad` | `fldNZVhxeoIMGCMiZ` | multipleRecordLinks → `M_TiposPropiedad` (`tbl8rxZA14xFIBGU6`) | **Eje 1.** Link y no select: `TX_Solicitudes.tipo_propiedad` (`fld701TB0LXovvQmt`) también es Link, y unir por nombre reproduciría el fallo de **P-5** |
+| `estado_uso` | `fldnXKVSv2xbPWi2j` | singleSelect: `nuevo` · `usado` | **Eje 2.** Minúscula, copiado exacto de `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`) |
+| `bloque` | `fldUR8GDz3I0Xzc4D` | singleSelect: `elementos_fundamentales` · `elementos_otros` · `terminaciones_recinto` | **Tres opciones, no cuatro** — ver A-39 abajo |
+| `atributo` | `fld4kwnOUfGtFJx6I` | singleSelect: `materialidad` · `calidad` · `estado` · `pavimento` · `revestimiento_muros` · `cielo` · `iluminacion` | No existe `material_o_marca`: se **deriva** del pavimento `[Excel: Antecedentes!W46:W50]` |
+| `campo_destino` | `fldZajTzom9Lvxe0Y` | singleLineText | El elemento o el recinto |
+| `valor_default` | `fldQH8JTWRQMW4Mgx` | singleLineText | Texto y no select: los catálogos son largos y distintos por campo. Vacío es valor legítimo |
+| `catalogo_ref` | `fld0NAJv7E1rLFWVX` | singleLineText | **Referencia** al rango del catálogo, no el catálogo materializado — ver A-38 |
+| `origen` | `fldp8lPwlMe6gKmx5` | singleLineText | `[Excel: hoja!celda]`. Obligatorio al sembrar |
+| `activo` | `fldTRdqlHaNJeRrLi` | checkbox | Baja lógica |
+| `notas` | `fldHRmQCMEOpqGgbo` | multilineText | Excepciones que el valor solo no transmite |
 
-En `TX_Solicitudes` los dos ejes llegan como `tipo_propiedad` y `tipo_propiedad_nuevo_usado`.
+**Efecto colateral del Link.** Crear `tipo_propiedad` generó automáticamente el campo inverso
+**`fldN5ya6IA6j0nM0S`** en `M_TiposPropiedad`. Es inevitable en Airtable y no requiere acción;
+se anota para que no aparezca como campo huérfano en la próxima auditoría de esa tabla.
 
-**Decisiones que quedan para la tanda que la cree**, ninguna de las cuales cambia el
-comportamiento observable:
+**La unicidad de la clave compuesta NO tiene realización en schema.** Airtable no soporta
+constraints de unicidad — mismo caso que la constraint blanda de `TX_CoordinacionVisita` (§2.12).
+El campo primario `clave` la hace **visible** en la grilla; el guard efectivo vive en el cargador
+y en el Route Handler que lea la tabla. No darla por cubierta al leer el schema.
 
-- **Granularidad de fila** — un registro por campo, o uno por combinación con todos los campos. La
-  primera escala mejor a campos nuevos; la segunda se lee de un vistazo.
-- **Representación de los catálogos** — `singleSelect` por campo frente a tabla de valores
-  admisibles enlazada. Los catálogos son largos (36 valores en estructura soportante, 19 en
-  cubierta) y algunos se comparten entre campos.
+**Sin herencia entre combinaciones.** Una combinación `(tipo_propiedad, estado_uso)` sin fila
+cargada presenta los campos **vacíos**. No hereda de la combinación vecina ni cae a un conjunto
+por defecto: heredar produciría valores plausibles y falsos, que es el modo de fallo que el
+pre-llenado viene a evitar (spec §2.8.1).
 
-**Regla de comportamiento que la tabla debe permitir.** Una combinación (tipo, estado de uso) sin
-fila cargada deja los campos **vacíos**. **No se hereda de la combinación vecina** ni se cae a un
-conjunto por defecto: heredar produciría valores plausibles y falsos, que es exactamente el modo de
-fallo que el pre-llenado viene a evitar (spec §2.8.1).
+**Estado: creada y VACÍA.** 0 filas al 22-ago-2026. El sembrado es tanda aparte y está bloqueado
+por **A-37**.
+
+### Pendientes antes de sembrar
+
+- **A-37 · bloqueante.** `M_TiposPropiedad` tiene **15 filas** con **duplicados por
+  capitalización** —`CASA` (`rec5J0dPImsDm5Leb`) / `Casa` (`recrXDAjlVCe59XBW`), `DEPARTAMENTO`
+  (`recJ0OIjob9ywogr6`) / `Departamento` (`recf9hz8TbkQ6wsus`)— y su dominio no coincide con los
+  8 valores de `ListaTipoPropiedad` del Excel. Si un default se cuelga de la fila equivocada, el
+  lookup devuelve vacío **sin error**. Sanear la maestra es tanda propia.
+- **A-38.** Dónde se materializan los catálogos de valores admisibles (36 de estructura
+  soportante, 19 de cubierta, 13 de muebles de cocina…). No dependen de la combinación, así que
+  alojarlos en esta tabla los duplicaría; hoy sólo se referencian por `catalogo_ref`.
+- **A-39.** El anexo de estado de conservación (38 filas × `Bueno`/`Ninguno`/`Funcionando`,
+  `[Excel: Estado Conservación!A7:W46]`) **no está en esta tabla**: no ramifica por ninguno de los
+  dos ejes, de modo que alojarlo acá duplicaría 114 filas constantes por combinación. Se resuelve
+  con tabla hermana o como constante de aplicación; agregar la cuarta opción a `bloque` es un
+  `update_field` trivial si se decide lo primero.

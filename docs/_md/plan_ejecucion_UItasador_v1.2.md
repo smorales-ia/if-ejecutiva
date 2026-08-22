@@ -581,7 +581,7 @@ de código en esta tanda.**
 1. Schema actualizado en `app9G7lLkIV3CpeLa`.
 2. `docs/schema-airtable.md` actualizado con TABLE_ID y FIELD_IDs reales *(única excepción a R4:
    este archivo **sí** se toca aquí, porque P1-TAS y los Route Handlers lo leen como fuente)*.
-3. `docs/_notas/snapshot-P0.5-TAS.md` con el estado post-tanda.
+3. `docs/_notas/snapshot-P0.5-TAS-defaults.md` con el estado post-tanda.
 4. Tabla-resumen impresa al final: `{tabla, campo, accion: creado | existía_ok | conflicto}`.
 
 **Reglas duras de verificación previa:**
@@ -697,7 +697,7 @@ explícita para tablas nuevas).
 8. Actualizar `docs/schema-airtable.md`: sección nueva para IF-03 con TABLE_ID y todos los
    FIELD_IDs reales, más las **cuatro notas de realización** (`id`, `intento_numero`,
    `coordinacion_vigente`, unicidad blanda).
-9. Escribir `docs/_notas/snapshot-P0.5-TAS.md` y la tabla-resumen.
+9. Escribir `docs/_notas/snapshot-P0.5-TAS-defaults.md` y la tabla-resumen.
 10. Generar `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P0.5-TAS.md`.
 
 ### §1.5.3 Criterios de aceptación
@@ -1454,7 +1454,10 @@ proveedor.
 > punto más frágil de IF-03: edición libre, pausa obligatoria antes de cualquier comando.
 
 > **Ambigüedades e inconsistencias declaradas:** **A-13** (origen de los comparables) · **A-18**
-> (los factores de homogeneización siguen sin valor de referencia — **única bloqueante**) ·
+> (los factores de homogeneización siguen sin valor de referencia — **única bloqueante para la
+> ruta de defaults**) · **A-37** (el sembrado de `C_DefaultsAntecedentes` está bloqueado; la tabla
+> existe y responde vacío, que es lo correcto) · **A-38** (los catálogos aún no son parametrizables
+> en runtime) ·
 > **CI-014** (ocho secciones, no siete) · **CI-015** (traza legacy del contador de intentos).
 > **Cerradas desde v1.2:** **A-14**, **A-27** (los defaults constructivos tienen valores y clave)
 > y **A-28** (RF-TAS-08 ratificado). **Regla T-B** es el criterio dominante de esta pantalla.
@@ -1538,11 +1541,21 @@ alguien cuenta siete es **G (Overrides)**, que es la que materializa la Capacida
    **"Pre-llenado · editable"** cableado y **la precarga efectiva conectada**. Héctor cerró la
    clave el 22-ago-2026: **tipo de propiedad × estado de uso**.
 
-   *La precondición que sí queda:* la tabla debe existir. **P0.5-TAS la crea** con esa clave —y
-   crear tabla en Airtable exige aprobación explícita de Sergio, que es una compuerta distinta de
-   la ambigüedad ya cerrada—. Si P7-TAS corre antes que esa tabla exista, construye la sección
-   **con campos y sin valores**, exactamente como v1.1, y la precarga se conecta después sin
-   tocar la UI: el punto de consumo está aislado en el mismo módulo que consume el conjunto 1.
+   *La tabla ya existe (P0.5-TAS · 22-ago-2026).* **`C_DefaultsAntecedentes` ·
+   `tblOj7nXcjeouPy09`**, 11 campos, particionada por (`tipo_propiedad`, `estado_uso`). El punto de
+   consumo tiene tabla, clave y tipos reales; los FIELD_IDs están en `docs/schema-airtable.md` y el
+   detalle de la tanda en `docs/_notas/snapshot-P0.5-TAS-defaults.md`. Los dos ejes de lectura son
+   `tipo_propiedad` (`fldNZVhxeoIMGCMiZ`, **Link** a `M_TiposPropiedad`) y `estado_uso`
+   (`fldnXKVSv2xbPWi2j`, `nuevo`/`usado` en minúscula): P7-TAS los resuelve desde
+   `TX_Solicitudes.tipo_propiedad` y `.tipo_propiedad_nuevo_usado`, **sin normalizar literales**
+   —el join del eje 1 es por record ID—.
+
+   *Lo que la tabla devuelve hoy es vacío, y eso es correcto.* Está **creada y sin sembrar**: el
+   sembrado es tanda aparte y está bloqueado por **A-37** (duplicados por capitalización en
+   `M_TiposPropiedad`). Una combinación sin filas presenta los campos vacíos, que es el
+   comportamiento declarado en §2.8.1 y **no un error a reportar**. P7-TAS se construye y se
+   libera contra ese comportamiento; cuando el sembrado ocurra, la pantalla empieza a pre-llenar
+   sin tocar una línea de UI.
 
    *Comportamiento con clave sin fila:* una combinación de (tipo, estado de uso) que no tenga fila
    cargada presenta los campos **vacíos**. **No hereda de la combinación vecina** ni cae a un
@@ -1614,9 +1627,10 @@ components/tasador/formulario/
    identificadores. **Prohibido `fechaVisita` a secas** (Regla T-B).
 6. Sección D: grilla densa con header fijo, primera columna sticky y scroll horizontal **contenido**.
 7. Construir la sección E **contra los catálogos de spec §2.8.1**, con el badge "Pre-llenado ·
-   editable" cableado y el punto de consumo aislado. **Conectar la precarga** contra la tabla de
-   P0.5-TAS, con clave (tipo de propiedad × estado de uso); si la tabla aún no existe, dejar el
-   punto de consumo listo y la sección sin valores. **No** precargar el conjunto 1 mientras A-18
+   editable" cableado y el punto de consumo aislado. **Conectar la precarga** contra
+   `C_DefaultsAntecedentes` (`tblOj7nXcjeouPy09`), filtrando por `tipo_propiedad` (Link, por record
+   ID) y `estado_uso`. La tabla está vacía hasta que se siembre: el resultado esperado hoy es un
+   conjunto vacío, **no un error**. **No** precargar el conjunto 1 mientras A-18
    siga abierta: la ruta `GET /api/tasaciones/config/defaults` no existe en este plan. Material o
    marca de cada recinto se renderiza como campo **derivado del pavimento** y de sólo lectura;
    orientación de la construcción se renderiza **vacía**.
