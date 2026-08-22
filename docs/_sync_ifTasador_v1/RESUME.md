@@ -588,7 +588,7 @@ usa `[Excel: hoja!celda]` (**C-16**).
 
 Al leerla con `openpyxl`, **usar `data_only=False`**: los defaults son fórmulas ramificadas y el
 valor cacheado corresponde a la última propiedad tasada sobre la plantilla. Ver la entrada del
-21-ago-2026 (b) en `docs/aprendizajes.md`.
+21-ago-2026 (b) en `docs/_archivo/aprendizajes_20260822.md` (archivada el 22-ago-2026).
 
 ### Ambigüedades — estado al cierre de esta ronda
 
