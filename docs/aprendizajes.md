@@ -1607,3 +1607,61 @@ salvo por 13 errores de `tsc`; dejarlo excluido dos días habría costado una l�
 si un aprendizaje tiene menos de una semana **y** existe una consulta abierta a la
 contraparte que podría revertirlo, se marca como **provisional** y sólo autoriza cambios
 reversibles.
+
+### 2026-08-21 — Audios del cliente + plantilla Excel: un bloqueo que no era de datos
+
+**Contexto:** integración de la segunda tanda de audios de Héctor (`docs/_md/audios/`) y de la
+plantilla operativa `Formato Informe VProperty Enero2026.xlsm` en los cuatro documentos de SLA y
+UI Tasador. Frente documental, sin tocar código.
+
+**Inconveniente:** **A-14** llevaba abierta desde el 13-ago-2026 bloqueando la sección E completa
+del formulario del tasador (P7-TAS), con el diagnóstico *"ninguna tabla actual los alberga"*
+para los defaults constructivos. El diagnóstico era correcto y la ambigüedad se había redactado
+como una decisión de negocio pendiente: crear tabla, elegir clave, esperar a Héctor.
+
+**Causa raíz:** la pregunta estaba mal planteada. A-14 preguntaba **dónde viven** los defaults
+dando por supuesto que **no existían**, y esa suposición nunca se verificó fuera del schema. Los
+valores existían completos y llevaban años en producción, en la planilla que el cliente usa a
+diario — que está en el repositorio desde siempre como archivo de ejemplo, sin que nadie la
+hubiera abierto. El audio `p8` los describe literalmente: *"esa parte siempre el tasador la
+recibe completa… nunca lo mandamos en blanco"*.
+
+**Solución aplicada:** radiografía del libro con `openpyxl` (`docs/_notas/radiografia-excel-informe.md`)
+y especificación de los valores en spec §2.8.1 (RF-TAS-23), citando cada uno por su celda de
+origen. A-14 pasa de bloqueante a **reducida**: lo único que sigue abierto es la tabla destino,
+renumerado como **A-27**. La sección E deja de esperar y se construye con sus campos y catálogos;
+sólo la precarga queda condicionada.
+
+**Prevención futura:** antes de declarar que un dato de negocio no existe, **revisar los
+artefactos operativos con que el cliente trabaja a diario** —planillas, formularios, plantillas de
+correo—, no sólo el schema y los documentos. El schema dice qué guarda el sistema; no dice qué
+sabe el negocio. Una ambigüedad que pide una decisión de negocio y otra que pide abrir un archivo
+cuestan lo mismo de escribir y órdenes de magnitud distintos de resolver.
+
+### 2026-08-21 (b) — `data_only=True` habría producido un catálogo de defaults falso
+
+**Contexto:** misma sesión, extracción de los valores por defecto de la hoja `Antecedentes`.
+
+**Inconveniente:** los defaults de la plantilla **parecen constantes** al mirarlos en Excel —la
+celda muestra `HORMIGON ARMADO`, `PISO FLOTANTE`, `CERAMICO`— y no lo son: son fórmulas
+ramificadas por dos interruptores, el tipo de propiedad (`'FICHA SOLIC'!K35`) y el estado de uso
+(`'FICHA SOLIC'!K36`). Leer el libro con `openpyxl(data_only=True)` habría devuelto el **valor
+cacheado de la última propiedad tasada sobre esa plantilla**, no la regla.
+
+**Causa raíz:** `data_only=True` no lee el libro, lee el resultado que Excel guardó la última vez
+que lo calculó. Sobre una plantilla en uso, ese resultado es un caso particular disfrazado de
+regla general.
+
+**Solución aplicada:** todo el barrido se hizo con `data_only=False`, que conserva la fórmula. Así
+apareció que `Cubierta` vale `FE GALVANIZADO` en departamento y `PLANCHA METALICA` en el resto, o
+que `Entrepisos` va vacío en casa de un piso — comportamiento que el valor cacheado habría
+ocultado por completo. Los defaults quedaron especificados **con su ramificación**, no como lista
+plana.
+
+**Prevención futura:** es el mismo patrón que ya dejó la lección de los módulos Airtable v3 en
+Make (`metadata.expect` descriptivo no es contrato) y el de los literales de `semaforo_sla`
+(RO-13): **lo que un artefacto muestra no es lo que un artefacto declara.** Al extraer reglas de
+una planilla, leer siempre las fórmulas; el valor visible es evidencia de un caso, no de la regla.
+Corolario menor de la misma sesión: un literal sin ramificación entre veinte que sí ramifican es
+sospechoso de residuo, no de regla — `Antecedentes!Z17 = NOROESTE` se descartó como default por
+eso, y quedó anotado en §2.8.1 para que nadie lo reponga.

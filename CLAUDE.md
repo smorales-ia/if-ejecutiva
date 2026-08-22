@@ -26,7 +26,7 @@ Este repo implementa **IF-02**: la consola diaria de la Ejecutiva Comercial de V
 > **Antes de proponer cualquier comando de terminal, lee `docs/aprendizajes.md`.**
 
 1. Lee `docs/diseno.md`, `docs/construccion.md` y `docs/schema-airtable.md` al inicio de la sesión.
-   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md`.
+   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`.
 2. Implementa **una RF por sesión**. Nunca "construir toda la consola" de golpe.
 3. Después de cada RF: `pnpm build` debe salir limpio antes del commit.
 4. Haz push; Railway redespliega automáticamente.
@@ -80,8 +80,16 @@ tipo_informe) en días, que alimenta el semáforo de bandeja (`C_SLA` · RN-04),
 por etapa** del workflow en horas hábiles (siete etapas, §5.2.4). El cómputo corre de lunes
 a viernes de 9:00 a 18:00, excluidos feriados, y se pausa fuera de esa ventana (§5.2.1); el
 reloj arranca cuando Control y Seguimiento abre el correo e ingresa la solicitud, no cuando
-el correo llega al buzón (§5.2.2). El reproceso tiene matriz propia (§5.2.5). **Nada de esto
-está implementado todavía** — ver CI-005 en `docs/CODE_INCONSISTENCIES.md`.
+el correo llega al buzón (§5.2.2). El reproceso tiene matriz propia (§5.2.5). **El reloj no está
+implementado todavía** — ver CI-005 y CI-037 en `docs/CODE_INCONSISTENCIES.md`; cinco de las siete
+etapas no tienen escritor.
+
+Desde v1.9.13, §5.2 contiene además tres cosas que no son el reloj y conviene no confundir con él:
+los **recordatorios automáticos al ejecutor** (§5.2.8), dirigidos al tasador para que actúe y
+distintos de la escalada al responsable de área; el **tope de 24 h** para responderle al cliente
+con fecha de visita, que atraviesa las etapas 2 a 4 y puede incumplirse con las tres en verde; y
+los **reportes de control diario** (§5.2.9). Ninguno está implementado, y el umbral del
+recordatorio **llega sin ratificar**: se carga como dato, nunca como constante en código.
 
 **SC13 fuera de alcance CU-002**: las acciones de reasignación, cambio de prioridad y pausa actualizan Airtable + `A_Eventos` pero **no envían email** en este CU. Deuda técnica para un CU posterior.
 
@@ -425,7 +433,7 @@ docs/
 ├─ aprendizajes.md                     (bitácora de sesión · sólo append)
 ├─ CODE_INCONSISTENCIES.md             (deuda detectada en código)
 ├─ _md/                               (fuentes canónicas en MD — no editar)
-│  ├─ VProperty_Especificacion_Proyecto_v1_9_12.md   ← FUENTE NORMATIVA
+│  ├─ VProperty_Especificacion_Proyecto_v1_9_13.md   ← FUENTE NORMATIVA
 │  ├─ VProperty_Blueprint_Interfaces_v2_10.md
 │  ├─ Arquitectura_Enterprise_VProperty_v2_9.md
 │  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md
@@ -448,7 +456,7 @@ sólo-append de ese archivo.
 ## Fuente única de especificación
 
 El único documento normativo del producto es
-`docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md`.
+`docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`.
 La versión del archivo y la versión interna del cuerpo deben coincidir
 SIEMPRE.
 
@@ -579,7 +587,7 @@ app/
 
 ## Referencias rápidas
 
-- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md`
+- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`
 - Diseño funcional: `docs/diseno.md`
 - Guía de construcción: `docs/construccion.md`
 - Schema Airtable: `docs/schema-airtable.md`

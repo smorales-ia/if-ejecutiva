@@ -1,6 +1,34 @@
-# Plan de Ejecución IF-02 v1.12 — Guía maestra para Claude Code
+# Plan de Ejecución IF-02 v1.13 — Guía maestra para Claude Code
 
-> **Versión del plan: v1.12** (10-ago-2026). Cambio respecto de v1.11: **el criterio de
+> **Versión del plan: v1.13** (21-ago-2026). Cambio respecto de v1.12: se incorpora a §9.6 la
+> **segunda tanda de audios del cliente**, que agrega tres cosas al control de SLA y corrige el
+> fundamento de una cuarta. Sin campos nuevos en `C_SLA_Etapas`, sin tandas nuevas y sin
+> checkpoints nuevos: se amplían §9.6.1 (*Modelo de datos*, *Alertas y notificaciones*,
+> *UI en IF-02*, *Reglas de reproceso*) y la lista de *Impacto en documentos vigentes*.
+>
+> **1 · Los recordatorios al ejecutor son un mecanismo distinto de la escalada al responsable.**
+> El plan tenía una sola familia de avisos —la alerta roja por área de AT08— y el cliente pide
+> otra: insistirle al **tasador** para que actúe, antes de que haya nada que escalar. Se declara
+> en *Alertas y notificaciones* con su propia clave de idempotencia. El umbral llega declarado
+> pero **no ratificado** (spec §5.2.8 · A-22 · D-17), así que se carga como dato, no como
+> constante.
+>
+> **2 · Falta el reporte de solicitudes sin fecha de visita.** Es el reporte que hace verificable
+> el tope de 24 h al cliente, y hoy no existe en ninguna forma —*"yo hoy día no sé de todos los
+> informes cuántos no tienen fecha de visita"*—. Entra como filtro de bandeja en *UI en IF-02*.
+>
+> **3 · El tablero de control diario tiene dos bloques, no uno.** Reprocesos arriba, vencimientos
+> por días desde la visita abajo. §1.9 lo listaba como "tablero diario de las tres fechas"; el
+> levantamiento lo precisa y queda descrito en *UI en IF-02* como lo que la bandeja debe poder
+> componer con filtros ya existentes más el nuevo.
+>
+> **4 · El reproceso sigue diferido, pero cambia el motivo.** v1.10 · Decisión 3 lo difirió en
+> parte porque *"un catálogo cerrado de motivos que nadie ha elicitado"*. Ese catálogo **ya está
+> elicitado**: son siete motivos y viven en spec §5.2.5. El diferimiento se mantiene por alcance;
+> la frase que lo justificaba se corrige para que la próxima versión no herede un argumento
+> falso. Queda como reconciliación greppable **§9.6-R7**.
+>
+> **v1.12** (10-ago-2026). Cambio respecto de v1.11: **el criterio de
 > aceptación de la Tanda B se corrige y sus entregables se completan**. La Tanda B cerró con 186
 > tests verdes, y al ejecutar su propio criterio de aceptación se descubrió que el `grep` estaba
 > mal escrito: barría también los `.test.ts`, donde los catorce números de §5.2.4 aparecen
@@ -126,7 +154,7 @@
 >
 > **Uso.** Este archivo es la referencia única para construir IF-02. Claude Code lo lee al iniciar cada sesión, detecta la última P completada y ejecuta la siguiente **sin que Sergio le pase el prompt**. Sergio solo confirma que la P quedó ok y da señal para avanzar.
 >
-> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada. *(La ruta canónica es `v1_9_9`; el nombre de archivo de este plan conserva `v1_9` por compatibilidad con §0.1 — no renombrar.)*
+> **Precedencia.** Ante cualquier contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md` u otros docs, mandan las **Reglas A, B, C** de este archivo (§0.3): son la fuente de verdad de la UI implementada. *(El nombre de archivo de este plan conserva `v1_9` por compatibilidad con §0.1 — no renombrar; el motivo está en la nota de esa sección.)*
 
 ---
 
@@ -142,6 +170,17 @@
 6. `docs/construccion.md`
 7. Último `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P{n}.md` disponible (para saber dónde quedó la sesión anterior).
 8. Último `docs/_notas/snapshot-P{n}.md` disponible.
+
+> **Por qué el nombre del archivo dice `v1_9` y el encabezado dice v1.13.** No es un descuido y
+> no se corrige. El sufijo del nombre es la **referencia estable** que apunta el paso 1 de esta
+> misma lista, `CLAUDE.md`, el plan de IF-03 y los archivos de aprendizajes ya escritos; la
+> versión del encabezado es el **contador de revisiones del contenido**, que va por v1.13. Los
+> dos números miden cosas distintas y desacoplarlos es deliberado: renombrar el archivo en cada
+> bump obligaría a actualizar todas esas referencias en el mismo commit, y una que se escape deja
+> a la sesión siguiente leyendo un plan que no existe. La convención general del repositorio
+> —archivo nuevo por versión— **sí** rige para la especificación normativa y para los documentos
+> de diseño, donde la versión del nombre y la del cuerpo deben coincidir siempre. Este plan es la
+> excepción declarada, y su bump se registra sólo en el encabezado.
 
 ### §0.2 Convenciones no negociables
 
@@ -2224,6 +2263,15 @@ para que un `grep sla_` los liste completos, y todos `dateTime` **con hora**, en
 | `sla_pausa_habil_min` | number (entero) | — (RN-54) | Minutos hábiles ya consumidos por pausas cerradas. El motor lo lee y lo resta; hoy lee 0. |
 | `sla_semaforo_etapa` | **formula** | Airtable | `verde` · `ambar` · `rojo` · `sin_dato`. Ver *El truco que hace barato todo lo demás*. |
 
+**Los recordatorios al ejecutor no agregan campos en v1.13.** La segunda familia de avisos que
+describe *Alertas y notificaciones* se apoya en lo que estas tablas ya tienen: los timestamps de
+entrada de etapa dicen desde cuándo corre el plazo, y `TX_Notificaciones` con su `clave_notif`
+resuelve la idempotencia. Lo único que le falta es **el umbral**, que llega de la spec sin
+ratificar (§5.2.8 · A-22 · D-17) y por eso no se materializa todavía: crear el campo que lo aloje
+antes de saber si es un número por etapa, uno global o uno por cliente es elegir la forma de un
+dato cuya semántica está abierta. Cuando Héctor lo ratifique, el campo entra por la Tanda A como
+cualquier otro dato de catálogo. **Cero campos nuevos respecto de v1.12.**
+
 **El hito de inicio de §5.2.2, sin tocar el disparador de creación.** El reloj arranca cuando
 Control y Seguimiento **abre el correo e ingresa la solicitud**, no cuando el correo llega al
 buzón. Eso se captura sin cambiar nada del flujo actual: el wizard de creación (§4 · P3)
@@ -2419,6 +2467,44 @@ Se agrega un filtro nuevo en la URL, `?sla_etapa=ambar|rojo`, para aislar el rel
 tocar el contrato de `?sla=`, que sigue significando el agregado. El contador de la pestaña
 (`/api/solicitudes/contadores`) cuenta la unión, que es lo que la pestaña muestra.
 
+**Vista "Sin fecha de visita" — el reporte que hoy no existe (v1.13).** Spec §5.2.9 lo especifica
+y el cliente lo enuncia como carencia declarada: *"yo hoy día no sé de todos los informes cuántos
+no tienen fecha de visita"*. Es el reporte que hace verificable el tope de 24 h al cliente
+(§5.2.8 · A-23 · D-18), y su ausencia es la razón por la que ese tope se incumple sin que nadie
+lo advierta.
+
+- **Filtro nuevo en la URL:** `?sin_fecha_visita=1`. No se sobrecarga `?estado=` ni `?sla_etapa=`:
+  una solicitud sin fecha de visita puede estar en cualquier estado previo a la visita y con
+  cualquiera de los dos semáforos en verde, que es justamente el caso que hay que poder ver.
+- **Predicado:** `fecha_visita_programada` vacía y estado en un conjunto anterior a la visita.
+  Se resuelve server-side sobre `TX_Solicitudes`, como el resto de los filtros de §6.
+- **Orden por defecto:** antigüedad desde `sla_e1_inicio_ts` descendente. La pregunta que la
+  vista responde no es cuántas hay, sino cuáles llevan más tiempo esperando.
+- **No se crea pestaña nueva.** Entra como filtro de la fila de filtros colapsable existente. Una
+  pestaña más en la bandeja compite por atención con "SLA en riesgo" y las dos se leen igual de
+  urgentes, que es precisamente lo que no son.
+
+**Tablero de control diario — dos bloques, no uno (v1.13).** §1.9 lo listaba como "tablero diario
+de las tres fechas". El levantamiento lo precisa: son **dos** bloques, y el orden importa porque
+refleja urgencia real (spec §5.2.9).
+
+```
+┌─ Reprocesos abiertos ────────────────────────────────────┐
+│ (diferido · FUT-EJ-08 — el bloque se declara, no se      │
+│  construye: no hay marca de reproceso que consultar)     │
+└──────────────────────────────────────────────────────────┘
+┌─ Vencimientos por días desde la visita ──────────────────┐
+│ 4 días · 3 días · 2 días · 1 día                         │
+└──────────────────────────────────────────────────────────┘
+```
+
+El segundo bloque **se puede construir hoy**: es un agrupamiento por días transcurridos desde
+`fecha_visita` sobre solicitudes sin informe recibido, y todos sus datos existen. El primero
+depende de la marca de reproceso, que sigue diferida. Se declaran juntos para que la versión que
+levante FUT-EJ-08 sepa dónde encaja el bloque que le falta, y **no se construye un tablero a
+medias**: mientras el primer bloque no exista, el segundo vive como agrupamiento de la bandeja y
+no como pantalla propia. La inclusión de un grupo de día 0 está pendiente (A-32).
+
 > **`sla_semaforo_etapa` se compara por igualdad, no por `FIND`, y eso es deliberado.** RO-13
 > obliga a filtrar por el formato real que emite la fórmula. Esta fórmula la escribimos nosotros
 > en M-13 y emite exactamente cuatro literales en minúscula, sin emoji ni adornos —precisamente
@@ -2497,6 +2583,43 @@ viva: ésa es la ventaja de haber materializado los dos instantes en vez del col
   rojo. El ámbar vive en la bandeja, en el detalle y en el resumen diario de AT08. Mandar correo
   en ámbar convertiría la alerta roja en ruido de fondo en dos semanas.
 
+**Recordatorios al ejecutor — segunda familia de avisos, no una variante de la anterior (v1.13).**
+La alerta de arriba avisa al **responsable del área** para que escale. Lo que el levantamiento de
+agosto de 2026 agrega es lo contrario: insistirle al **ejecutor** de la etapa para que actúe,
+antes de que haya nada que escalar. Están en spec §5.2.8 y son dos:
+
+| Recordatorio | Cuándo | Destinatario | Etapa |
+|---|---|---|---|
+| Coordinación pendiente | Al cumplirse el umbral sin desenlace registrado | Tasador asignado | e2 · e3 |
+| Informe pendiente | 24 h hábiles desde la fecha real de visita, sin informe | Tasador asignado | e5 |
+
+- **El umbral no se hardcodea, y en v1.9 no se ratifica.** Spec §5.2.8 lo declara en 8 horas
+  hábiles con estado *pendiente de ratificación* (A-22 · D-17). Un número no ratificado escrito
+  en el código es exactamente lo que obliga a un deploy cuando Héctor responda. Va como **fila de
+  datos**, no como constante: el mismo tratamiento que los catorce números de §5.2.4 reciben en
+  `C_SLA_Etapas`. Dónde vive esa fila —dos campos nuevos en `C_SLA_Etapas` o una tabla de
+  recordatorios— es decisión de la Tanda A cuando el umbral se ratifique; **v1.13 no crea el
+  campo**, porque crear un campo para alojar un número que puede cambiar de semántica es
+  prematuro.
+- **Idempotencia:** `TX_Notificaciones.clave_notif = "{codigo_solicitud}-recordatorio-{etapa_key}"`.
+  Un recordatorio por solicitud y por etapa. Misma mecánica que la alerta roja y que SC05, con
+  prefijo distinto para que los dos no colisionen sobre la misma solicitud: una solicitud puede
+  legítimamente recibir el recordatorio al tasador y, más tarde, la escalada al área.
+- **Canal:** correo, por el mismo motivo que el resto de v1.9. El cliente pide además WhatsApp
+  (*"un nuevo mail y un nuevo whatsapp"*) y **no hay proveedor definido** (A-24 · D-19 ·
+  FUT-EJ-10). La parte de WhatsApp queda declarada y no construida; el diseño del recordatorio no
+  asume un solo canal, de modo que agregarlo después no lo reescriba.
+- **Quién lo dispara:** AT08, en la misma corrida diaria. No se crea una automatización nueva:
+  AT08 ya recorre las solicitudes con semáforo de etapa encendido, y el recordatorio es un
+  segundo predicado sobre el mismo barrido. Lo que sí cambia es que AT08 deja de escribir una
+  sola clase de notificación, y su script debe distinguirlas.
+
+> **La razón de fondo por la que estas dos familias no se funden.** Comparten disparador (un
+> plazo que se está perdiendo) y difieren en todo lo demás: destinatario, momento, tono y qué se
+> espera que ocurra después. Fundirlas produce el modo de fallo que el cliente ya describe —el
+> tasador esperando un correo que estaba dirigido a su jefatura— y hace que la alerta roja pierda
+> el significado que la vuelve accionable.
+
 **Alerta de fin de jornada para reprocesos abiertos (§5.2.5).** **Queda diferida** junto con todo
 el reproceso — ver abajo. No hay nada que alertar mientras no exista la marca de reproceso.
 
@@ -2516,6 +2639,28 @@ decisiones de negocio y se confirma tal cual: **ni la matriz R1–R3 ni RN-55 en
 tanda de esta iteración**, y `FUT-EJ-08` sigue siendo su único domicilio. Este párrafo es el
 anclaje greppable de la ratificación; el diferimiento en sí no se reescribe ni se duplica en
 otra sección.
+
+**§9.6-R7 · El reproceso sigue diferido, pero uno de los tres motivos del diferimiento ya no es
+cierto (v1.13).** El párrafo de arriba justifica el diferimiento en tres cosas: una tabla nueva,
+*"un catálogo cerrado de motivos que nadie ha elicitado"* y una marca de estado que §2.11 no
+contempla. **La segunda dejó de ser verdad.** El levantamiento de agosto de 2026 cerró el
+catálogo —siete motivos, con el antecedente documental que acompaña a cada uno— y quedó escrito
+en spec §5.2.5, junto con dos precisiones que el plan tampoco tenía: que el reproceso **conserva
+el código de la solicitud original** y que los motivos de forma, valor y destinatario los ejecuta
+el perfil de visación, no el tasador que nombra R2.
+
+*Qué cambia en el plan:* **nada de construcción.** El diferimiento se mantiene, ahora por alcance
+y no por falta de definición, y `FUT-EJ-08` sigue siendo el domicilio. Lo que se corrige es el
+**argumento**, porque un plan que sigue afirmando que un dato no existe hace que la próxima
+versión lo vuelva a elicitar y presupueste una entrevista que ya ocurrió.
+
+*Lo que la versión que implemente FUT-EJ-08 se encuentra hecho:* el catálogo de siete valores
+para el `singleSelect` de motivo, la regla de un solo código por caso, y el criterio de asignación
+de R2 por motivo. Lo que sigue faltándole: `TX_Reprocesos`, la marca de estado y el filtro de
+bandeja que spec §5.2.5 exige para que los reprocesos se aíslen.
+
+*Ubicación del trabajo:* ninguna tanda. Es una corrección de texto y su anclaje greppable.
+*Impacto en campos declarados en §9.6:* **cero.**
 
 #### Impacto en documentos vigentes (se listan, no se editan)
 
@@ -2544,14 +2689,20 @@ otra sección.
   **dentro** de la Tanda A, no después: P1/Types y los Route Handlers lo leen como fuente.
 - **`CLAUDE.md`** — la tabla de escenarios Make no tiene fila para `SC-SLA-Alertas`; la lista de
   `C_SLA` menciona las dos familias duplicadas de campos sin decir cuál gana.
-- **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md`** — **no requiere cambios**: es la
-  fuente normativa y P8.6 la implementa sin desviarse. Las dos divergencias que P8.6 encuentra
-  son de la spec hacia la base, ya registradas y sin editar aquí: `H_Feriados` no existe
-  (CI-007 · **§9.6-R1**) y `sla_revision` en `C_SLA` tampoco (§5.2.4 · etapa 7 y §3.2 lo dan por
-  existente · **§9.6-R3**). Se suma una tercera, menor, detectada en la reverificación de v1.9:
-  §3.2 nombra un `sla_aplicable` global que tampoco existe —el agregado vive en `dias_totales`—.
-  Las tres se corrigen en el próximo bump normativo, con su changelog, no dentro de esta tanda
-  (RO-15).
+- **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`** *(sucede a `v1_9_12` · v1.13)* —
+  **la fuente normativa cambió, y P8.6 la sigue.** El bump de agosto de 2026 incorporó a §5.2 la
+  segunda tanda de audios: recordatorios al ejecutor en §5.2.8, tope de 24 h al cliente en la
+  misma subsección, catálogo de siete motivos de reproceso en §5.2.5, tablero de dos bloques y
+  reporte de solicitudes sin fecha de visita en §5.2.9, y precisiones de las etapas 2 y 5 en
+  §5.2.4. **Los catorce números de la matriz no cambiaron**, de modo que la siembra de
+  `C_SLA_Etapas` de la Tanda A sigue siendo válida tal cual y **M-11.b no se reabre**. Lo que
+  P8.6 agrega en respuesta son las dos ampliaciones de §9.6.1 de esta versión —la segunda familia
+  de avisos y el filtro `?sin_fecha_visita=1`—, ambas aditivas.
+  Las tres divergencias de la spec hacia la base siguen abiertas y sin editar aquí: `H_Feriados`
+  no existe (CI-007 · **§9.6-R1**), `sla_revision` en `C_SLA` tampoco (§5.2.4 · etapa 7 y §3.2 lo
+  dan por existente · **§9.6-R3**), y §3.2 nombra un `sla_aplicable` global que tampoco existe
+  —el agregado vive en `dias_totales`—. Las tres se corrigen en un bump normativo posterior, con
+  su changelog, no dentro de esta tanda (RO-15).
 
 ### §9.6.2 Construcción — Tandas
 
@@ -3116,7 +3267,9 @@ Al iniciar la siguiente P, Claude Code:
 | RN-04 | SLA agregado por par (cliente, tipo_informe) en días, sobre `C_SLA` y `C_Feriados` | P5, **P8.6** |
 | RF-53 | SLA por etapa en horas hábiles 9–18 L-V; siete etapas de §5.2.4; semáforo propio e independiente del agregado | **P8.6** |
 | RN-54 | El reloj se detiene por contacto no logrado — campos creados, **sin escritor en v1.9** (FUT-EJ-07) | **P8.6** (declarativo) |
-| RN-55 | Reproceso con SLA propio — **diferido** en §1.9 · FUT-EJ-08, fuera de las tandas | — |
+| RN-55 | Reproceso con SLA propio — **diferido** en §1.9 · FUT-EJ-08, fuera de las tandas. Su catálogo de siete motivos **ya está elicitado** (spec §5.2.5 · **§9.6-R7**) | — |
+| §5.2.8 · recordatorios | Aviso al **ejecutor** para que actúe, distinto de la escalada al responsable de área. Umbral declarado y **no ratificado** (A-22 · D-17): se carga como dato, nunca como constante | **P8.6** |
+| §5.2.9 · sin fecha de visita | Filtro `?sin_fecha_visita=1` sobre solicitudes sin `fecha_visita_programada`, ordenadas por antigüedad de ingreso | **P8.6** |
 
 ---
 
@@ -3134,13 +3287,13 @@ son las que agrega el control de SLA en v1.8 del plan.
 | `CLAUDE.md` **(§9.6)** | La tabla de escenarios Make no tiene fila para `SC-SLA-Alertas`. La entrada de `C_SLA` lista las dos familias de campos duplicadas sin decir cuál gana: gana `dias_totales`/`dias_alerta_amarilla`/`dias_alerta_roja` y la otra desaparece en M-11.a (**§9.6-R4**), así que tras P8.6 esa fila queda desactualizada. La sección de SLA operacional dice *"Nada de esto está implementado todavía — ver CI-005"*, que deja de ser exacto al cerrar §9.6. |
 | `docs/CODE_INCONSISTENCIES.md` **(§9.6)** | **CI-005** queda cubierta en sus pasos (2), (3) y (4); el (1) —poblar `C_SLA`— queda cubierto por **M-11.a** con la fila default de la Decisión 2 (**§9.6-R4**), así que deja de depender de una elicitación pendiente. Corresponde actualizar su estado, no cerrarla. **CI-007** (`H_Feriados` vs `C_Feriados`) sigue abierta y §9.6 la respeta usando el nombre real (**§9.6-R1**); conviene anotarle que el saneamiento de datos de la tabla es M-12 de este plan y no forma parte de la corrección de la spec. |
 | `C_AutomationsAirtable` **(§9.6 · dato, no documento)** | La fila `recxWkj3x8tzqzHmo` (`codigo = AT08`) dice `nombre_automation = AT08_alertas_sla`, `estado = Inventariado` y `descripcion = "…dispara SC13"`. Al cerrar la Tanda F ninguna de las tres es cierta. **Sí se corrige** —es el único ítem de esta tabla que no queda diferido—, en **F-5 · M-17** (**§9.6-R2**). |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md` **(§9.6)** | Fuente canónica, **no editable** y **sin cambios requeridos**: §9.6 la implementa sin desviarse. Tres divergencias spec→base a corregir en el próximo bump normativo, con su changelog (RO-15): (1) §5.2 y §5.2.1 nombran `H_Feriados`, que no existe (CI-007 · **§9.6-R1**); (2) §5.2.4 · etapa 7 y §3.2 dan por existente `sla_revision` en `C_SLA`, que tampoco existe — §9.6 lo crea como `sla_revision_horas` (**§9.6-R3**); (3) §3.2 nombra además un `sla_aplicable` global inexistente, cuyo equivalente real es `dias_totales`. |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md` **(§9.6)** | Fuente canónica, **no editable desde este plan**. Ya **no** está "sin cambios requeridos": el bump a v1.9.13 incorporó los recordatorios al ejecutor (§5.2.8), el tope de 24 h al cliente, el catálogo de siete motivos de reproceso (§5.2.5) y los reportes de §5.2.9, y §9.6 los sigue con las ampliaciones aditivas de v1.13 del plan. Los catorce números de la matriz **no cambiaron**: la siembra de `C_SLA_Etapas` sigue vigente y M-11.b no se reabre. Tres divergencias spec→base a corregir en el próximo bump normativo, con su changelog (RO-15): (1) §5.2 y §5.2.1 nombran `H_Feriados`, que no existe (CI-007 · **§9.6-R1**); (2) §5.2.4 · etapa 7 y §3.2 dan por existente `sla_revision` en `C_SLA`, que tampoco existe — §9.6 lo crea como `sla_revision_horas` (**§9.6-R3**); (3) §3.2 nombra además un `sla_aplicable` global inexistente, cuyo equivalente real es `dias_totales`. |
 | `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` **(§9.6)** | §6 no incluye los dos literales de alerta de etapa (ámbar y rojo) que §9.6.1 propone. Se implementan tal cual quedaron escritos y esperan ratificación en el catálogo de mensajes canónicos. Arrastra además el nombre `H_Feriados` (CI-007). |
 | `docs/_notas/checklist-P9-manual.md` **(§9.6)** | Sin sección para `SC-SLA-Alertas` ni para `AT08_Alertas_SLA`. §10.4.1 y §10.4.2 de este plan tampoco listan todavía el blueprint y el `.js` de la Tanda F. |
 | `CLAUDE.md` | La tabla de escenarios Make marca `SC05` como *"❌ por provisionar (BQ-3) · verificar código libre (H-03)"*. Tras §9.5 el código deja de estar libre: SC05 es el correo de asignación. Falta también la fila de `SC-Asignar` (hook `3441086`), que existe pero no está en la tabla. |
 | `docs/diseno.md` | §269 y §546 dicen que SC05 se dispara desde AT02. **D-15 dejó AT02 fuera de alcance de IF-02** y §278 ya lo corrige — pero §269/§546 conservan la redacción vieja. Con §9.5, SC05 se dispara desde SC-Asignar. |
 | `docs/construccion.md` | §316 afirma *"SC05 se dispara desde AT02 al pasar a `asignada`, no desde la UI directamente"*. Misma corrección que arriba. §343 conserva el diagrama con AT02. |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_12.md` | Fuente canónica, **no editable**. Dos divergencias a registrar en otro lado: (1) §1.6.3 llama SC13 al escenario que este plan llama SC05; (2) §1.6.3 ubica la plantilla en `C_Plantillas`, que no tiene ningún campo donde quepa un cuerpo HTML — la fuente de runtime es `C_NotificacionesConfig`. |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md` | Fuente canónica, **no editable**. Dos divergencias a registrar en otro lado: (1) §1.6.3 llama SC13 al escenario que este plan llama SC05; (2) §1.6.3 ubica la plantilla en `C_Plantillas`, que no tiene ningún campo donde quepa un cuerpo HTML — la fuente de runtime es `C_NotificacionesConfig`. |
 | `docs/schema-airtable.md` | Conviene anotar que `M_Tasadores.email` (`fldsUu1pJ92HdYQUD`) es el destinatario del correo, que `M_Tasadores` **no** tiene link a `AUTH_Usuarios`, y la divergencia `C_Plantillas` / `C_NotificacionesConfig`. |
 | `docs/_notas/checklist-P9-manual.md` | §10.4.3 ya quedó actualizado en este archivo; el checklist en sí todavía dice SC13 y "módulo de correo en SC-Asignar". |
 | `docs/_artefactos/make/SC-Adjuntos-Upload.blueprint.json` · `lib/adjuntos.ts` | Producen `/VProperty/Tasaciones/{codigo}/…` en vez de la plantilla de spec v1.9.6 `/Test_ValueProperty/INFORMES_{AAAA}/{Cliente}/{codigo}/{Unidad}/…`. Migración diferida — registrada como **CI-003** en `docs/CODE_INCONSISTENCIES.md`. **No bloquea P8**: los archivos se guardan y recuperan bien; lo que falla es la conformidad con la norma, no la operación. |
@@ -3149,7 +3302,16 @@ son las que agrega el control de SLA en v1.8 del plan.
 
 ---
 
-*Última actualización: 10-ago-2026 · **v1.12 del plan** (corrección del criterio de aceptación de
+*Última actualización: 21-ago-2026 · **v1.13 del plan** (segunda tanda de audios del cliente
+incorporada a §9.6: recordatorios al ejecutor como segunda familia de avisos, distinta de la
+escalada al responsable, con umbral que se carga como dato porque llega sin ratificar —A-22 ·
+D-17— · filtro `?sin_fecha_visita=1` para el reporte que hace verificable el tope de 24 h al
+cliente · tablero de control diario precisado en dos bloques, con el de reprocesos declarado y
+diferido · reconciliación nueva **§9.6-R7**: el catálogo de motivos de reproceso ya está
+elicitado, de modo que el diferimiento se mantiene por alcance y no por falta de definición ·
+la fuente normativa pasa a `VProperty_Especificacion_Proyecto_v1_9_13.md` y los catorce números
+de la matriz no cambian, así que M-11.b no se reabre · sin campos, tandas ni checkpoints nuevos)
+· v1.12 (corrección del criterio de aceptación de
 la Tanda B y ratificación de sus dos entregables de infraestructura: reconciliación nueva
 **§9.6-R6** — un criterio por `grep` declara sus exclusiones y se **corre** antes de escribirse, y
 un literal de §5.2.4 dentro de un `.test.ts` es un fixture correcto, no una constante

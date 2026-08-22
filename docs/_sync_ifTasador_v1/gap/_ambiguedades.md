@@ -442,6 +442,28 @@ de homogeneización; estos son defaults de dominio constructivo, que no dependen
 decidir si los defaults son globales, por tipo de propiedad o por comuna es una definición de
 negocio. Hasta cerrarla, el subconjunto constructivo de RF-TAS-08 no se implementa.
 
+> **Enmienda del 21-ago-2026 — REDUCIDA, no cerrada.** La premisa *"ninguna tabla actual los
+> alberga"* sigue siendo cierta y era, además, el diagnóstico correcto del schema. Pero escondía
+> una pregunta mal planteada: A-14 preguntaba **dónde viven** los defaults dando por supuesto que
+> **no existían**. Existen. Llevan años en producción, fuera del repositorio, en la hoja de
+> antecedentes de la plantilla operativa `Formato Informe VProperty Enero2026.xlsm`, y el cliente
+> los describe explícitamente en el audio `p8`: *"esa parte siempre el tasador la recibe completa…
+> nunca lo mandamos en blanco"*.
+>
+> Quedan **especificados valor por valor en spec §2.8.1 (RF-TAS-23)**, con su celda de origen y —lo
+> que el diseño v4 no decía— con la regla de ramificación que los gobierna: no son constantes,
+> dependen del tipo de propiedad `[Excel: FICHA SOLIC!K35]` y del estado de uso
+> `[Excel: FICHA SOLIC!K36]`.
+>
+> **Lo que sigue abierto** es sólo el domicilio dentro del sistema, que es decisión de arquitectura
+> de datos y de aprobación de schema, no de elicitación. Se renumera como **A-27** y esta ficha
+> deja de bloquear la construcción: P7-TAS construye la sección E contra los campos y catálogos de
+> §2.8.1, y sólo la **precarga** espera a A-27.
+>
+> **La lección, para que la próxima no cueste una semana:** antes de declarar que un dato de
+> negocio no existe, revisar los artefactos operativos con que el cliente trabaja a diario. El
+> schema dice qué guarda el sistema, no qué sabe el negocio.
+
 ---
 
 ## A-15 · Si el rechazo del informe emite un aviso al visador
@@ -486,9 +508,20 @@ en terreno.
 
 ---
 
-## A-17 · Catálogo de motivos de contacto no logrado: paramétrico o fijo
+## A-17 · Catálogo de motivos de contacto no logrado: paramétrico o fijo — **CERRADA**
 
-**Estado** — abierta · **afecta a RF-TAS-12** · impacto bajo.
+**Estado** — **cerrada** el 21-ago-2026 · **afecta a RF-TAS-12** · impacto bajo.
+
+> **Cierre formal (21-ago-2026).** A-21 ya la daba por cerrada —*"A-17 preguntaba dónde vive el
+> catálogo de motivos y se cerró: `singleSelect`, servido desde el schema"*— pero el encabezado de
+> esta ficha y el §0.4-bis de ambos planes seguían listándola abierta. El residuo se limpia acá.
+> **Resolución:** `TX_CoordinacionVisita.motivo` es un **`singleSelect`** cuyo dominio vive en el
+> schema y la UI lee desde el API, nunca desde un enum del cliente (spec §2.12). Si el negocio lo
+> quiere paramétrico más adelante, migra a Link sin tocar la UI, que es la propiedad que esta
+> ambigüedad existía para preservar.
+> **Nota:** el catálogo pasó de cuatro a **seis valores** en spec v1.9.13 (§2.3 · §2.12 ·
+> RF-TAS-12). Eso **no reabre** A-17: cambia el contenido del dominio, no dónde vive. La
+> composición de los seis valores se ratifica por **A-25**, que es una pregunta distinta.
 
 El diseño v4 (p. 19) muestra el desplegable de Motivo con cuatro valores: `Teléfono no
 contesta`, `Teléfono equivocado`, `Cliente rechaza visita`, `Otro`. §5.2.4 (etapa 3) los
@@ -684,3 +717,387 @@ la mitad ya existe en otra tabla. Son distintas y la segunda no invalida la prim
 `TX_ContactosVisita` para replicarlo. Registrada por instrucción de Sergio; **no se toca nada de
 `TX_ContactosVisita` en esta tanda.**
 
+
+---
+
+> **Tanda del 21-ago-2026 — audios del cliente + plantilla operativa.** Las entradas que siguen
+> (A-22 a A-34) nacen de la misma revisión: la segunda tanda de audios de `docs/_md/audios/`
+> (`p1`–`p8`, `r21`–`r23`, `revision 1`) contrastada contra la plantilla vigente
+> `Formato Informe VProperty Enero2026.xlsm`. La radiografía del libro está en
+> `docs/_notas/radiografia-excel-informe.md` y las citas usan el formato `[Excel: hoja!celda]`.
+>
+> Las marcadas **`[fuera-de-ámbito-actual]`** se registran para no perderlas, pero **no se
+> trabajan en esta ronda** (decisión de Sergio, 21-ago-2026): el ámbito era Control de SLA + UI
+> Tasador, y esas cuatro pertenecen al alta de IF-02 y a funcionalidad post-entrega.
+
+---
+
+## A-22 · Umbral del recordatorio automático de coordinación al tasador
+
+**Estado** — abierta · **afecta a spec §5.2.8 y a AT08** · impacto medio. **Dueño: Héctor**
+(decisión de negocio). Registrada como **D-17** en spec §15.
+
+El cliente pide que el sistema le insista al tasador que no ha informado el resultado de su
+llamado, sin que Control y Seguimiento tenga que perseguirlo: *"que le llegue en forma
+automática… oye favor informar fecha de visita"* (`p5`), *"ahí que le llegue un correo otra vez
+al tazador, un WhatsApp al tazador"* (`p7`).
+
+**El problema no es si el recordatorio existe, sino cuándo se dispara.** La misma tanda de audios
+menciona cuatro números distintos y no son intercambiables:
+
+| Número | Dónde aparece | Qué es en realidad |
+|---|---|---|
+| 4 h | `p1`, `revision 1` | SLA **ideal** de la etapa 2, ya fijado en §5.2.4 |
+| 6 h | `p1` | SLA **máximo** de la etapa 2, ya fijado en §5.2.4 |
+| **8 h** | `p5`, `p7` | **El candidato a umbral del recordatorio** |
+| 24 h | `p3`, `p5`, `p7` | El **tope de respuesta al cliente** — ver A-23 |
+
+Los dos primeros ya tienen domicilio y no son esto. El cuarto es otra cosa. Queda el tercero, que
+el cliente enuncia dos veces —*"pasadas las 8 horas"*— pero siempre en la misma frase en que
+menciona las 24, de modo que no es evidente si son dos mecanismos o uno mal recordado.
+
+**Por qué no se resuelve aquí.** Un recordatorio a las 8 h llega **después** de que la etapa 2 ya
+está en rojo (6 h), lo que es defendible —primero se avisa al área, después se insiste al
+ejecutor— pero también puede ser exactamente al revés de lo que el cliente quiere. Elegir por
+nuestra cuenta produce un sistema que insiste tarde o que satura.
+
+**Consecuencia sobre la construcción.** El umbral **se carga como dato, nunca como constante**
+(plan IF-02 §9.6.1 · *Alertas y notificaciones*). v1.13 del plan **no crea el campo** que lo
+aloje: hacerlo antes de saber si es un número por etapa, uno global o uno por cliente es elegir
+la forma de un dato cuya semántica está abierta. IF-03 no lo replica en ninguna forma; P10-TAS
+sólo verifica coherencia (plan Tasador §11.1 · Verificación 4).
+
+---
+
+## A-23 · Modelado del tope de 24 horas para responder al cliente
+
+**Estado** — abierta · **afecta a spec §5.2.4, §5.2.8 y §5.2.9** · impacto medio.
+**Dueños: Héctor + Arquitecto de Software.** Registrada como **D-18** en spec §15.
+
+El compromiso **no está en duda**: VProperty le responde al ejecutivo del cliente con una fecha
+de visita —o con el motivo por el cual no la hay— dentro de las 24 horas del ingreso. El cliente
+lo describe como la obligación que ordena todo el tramo: *"en el extremo tenemos que devolverle
+al cliente las 24 horas"* (`p5`), *"esos 20 hay que contestar la fecha de visita a nuestro
+cliente vía correo"* (`p7`).
+
+Lo que está abierto es **cómo se modela**, y las tres opciones no cuestan lo mismo:
+
+1. **Umbral agregado sobre las etapas 2+3+4.** Es lo más fiel al compromiso, y es el único
+   modelado que produce un semáforo propio. Exige un cómputo que hoy no existe: el motor mide
+   etapas, no tramos de etapas.
+2. **Sólo corte del reporte** de §5.2.9. Barato y suficiente para que el área lo vea, pero no
+   alerta: alguien tiene que abrir el reporte.
+3. **Atributo derivado de la etapa 4.** El más simple, y el que peor describe la realidad: una
+   solicitud puede incumplir el tope con las tres etapas individualmente en verde, que es
+   justamente el caso que hay que poder detectar.
+
+**Por qué importa elegir bien.** La opción (3) hace invisible el único escenario que el tope
+existe para atrapar. La (1) es correcta y es trabajo real de motor. La (2) es la que se puede
+entregar ya, y puede ser suficiente si el reporte se mira a diario —que es lo que el cliente
+declara hacer—.
+
+---
+
+## A-24 · Proveedor y contrato del canal WhatsApp
+
+**Estado** — abierta · **afecta a spec §5.2.8 y §5.3** · impacto medio.
+**Dueños: Héctor + Ingeniero Make.** Registrada como **D-19** en spec §15.
+
+El cliente pide WhatsApp como segundo canal de los recordatorios al tasador, en dos audios
+distintos y sin ambigüedad: *"que le llegue un nuevo mail y un nuevo whatsapp"* (`p5`), *"un
+WhatsApp al tazador"* (`p7`).
+
+**No hay nada decidido debajo de esa petición:** ni proveedor (Twilio, WhatsApp Business API,
+un intermediario), ni número emisor, ni plantillas aprobadas por Meta —que son obligatorias para
+mensajes iniciados por la empresa y tienen su propio ciclo de aprobación—, ni costo por mensaje,
+ni quién administra el opt-in de cada tasador.
+
+**Estado en la documentación.** §1.9 · **FUT-EJ-10** ya declara la notificación por WhatsApp al
+tasador fuera de alcance de v1.9, y esta tanda **no la mete en alcance**: fija su contrato para
+cuando entre. Mientras tanto el recordatorio se emite **sólo por correo**, y el diseño del
+recordatorio no asume un canal único, de modo que agregarlo después no lo reescriba.
+
+**Nota sobre `M_Tasadores.notificar_whatsapp`.** El campo aparece nombrado en §1.9.1 como parte
+de lo diferido. Su existencia no implica que el canal esté resuelto: un booleano de preferencia
+no es un proveedor.
+
+---
+
+## A-25 · Composición del catálogo de motivos de contacto no logrado
+
+**Estado** — abierta · **afecta a spec §2.3, §2.12, RF-TAS-12 y §5.2.9** · impacto medio.
+**Dueño: Héctor** (product owner).
+
+**Distinta de A-17, que está cerrada.** A-17 preguntaba **dónde vive** el catálogo y se resolvió:
+`singleSelect` servido desde el schema. A-25 pregunta **cuáles son sus valores**.
+
+El audio `p1` enumera los desenlaces que el tasador reporta en la práctica: *"primero, coordino
+la visita tal día y tal hora. Segundo, fono erróneo, solicitar a otro. Tercero, no contesta, se
+le envió WhatsApp. Cuarto, el contacto no sabe de lo que le están hablando, también pasa. Quinto,
+el contacto que es el dueño o el corredor tiene que coordinar con el que ocupa la propiedad"*, y
+cierra con *"o el quinto puede ser otro motivo"*.
+
+Spec v1.9.13 amplía el catálogo de cuatro a **seis** valores incorporando los dos que el cliente
+nombra y que antes caían en `Otro`:
+
+| Motivo | Origen |
+|---|---|
+| `Teléfono no contesta` | ya existía |
+| `Teléfono equivocado` | ya existía |
+| `Cliente rechaza visita` | ya existía · **el cliente no lo menciona en `p1`** |
+| `El contacto no reconoce la solicitud` | **nuevo** · `p1` |
+| `El contacto coordina con el ocupante` | **nuevo** · `p1` |
+| `Otro` | ya existía |
+
+**Las dos preguntas concretas:**
+
+1. **¿`Cliente rechaza visita` se conserva?** El cliente no lo nombra. Se mantiene porque el
+   audio no lo niega y porque borrar un valor de un `singleSelect` invalida filas históricas,
+   pero conviene confirmarlo.
+2. **¿Las etiquetas son las correctas de cara al cliente final?** El catálogo tiene doble
+   destinatario: es lo que el tasador elige y es lo que Control y Seguimiento le comunica al
+   ejecutivo (§5.2.4 · etapa 4). Una etiqueta interna puede no servir para un correo externo.
+
+**Por qué importa cerrarlo antes de P4-TAS.** Los dos valores nuevos se **agregan**; ninguno de
+los cuatro anteriores se renombra ni se borra, así que la ampliación es segura. Pero cada motivo
+que quede fuera del catálogo termina en `Otro`, donde es invisible para los reportes de
+desviaciones de §5.2.9 — que es exactamente el problema que esta ampliación viene a corregir.
+
+---
+
+## A-26 · Catálogo de motivos de reproceso
+
+**Estado** — abierta · **afecta a spec §5.2.5** · impacto bajo mientras el reproceso siga
+diferido. **Dueño: Héctor** (product owner).
+
+El audio `p3` cierra el catálogo que §5.2.5 daba por no elicitado. Son siete motivos, que el
+cliente enumera por frecuencia y con el antecedente documental que acompaña a cada uno:
+permiso de recepción final · corrección de dirección por certificado de número · revisión por
+aumento de valor · regularización de ampliación · corrección de forma (nombre, RUT) · cambio de
+cliente destinatario del informe · pronunciamiento sobre afectación de utilidad pública.
+
+Dos precisiones que el mismo audio aporta y que la documentación no tenía:
+
+- **El reproceso conserva el código de la solicitud original**: *"no se creó una nueva solicitud,
+  es el mismo código"*. Responde el punto **(a)** de **CI-038**.
+- **Quién lo ejecuta depende del motivo.** Los de forma, valor y destinatario los resuelve el
+  **perfil de visación**, único con permiso sobre las tres dimensiones del informe (`p4`: *"el
+  perfil del visador… es el que puede hacer todos estos cambios de forma y de fondo y también los
+  valores"*). La matriz R1–R3 nombra al tasador como responsable de R2 porque era el caso
+  supuesto.
+
+**Qué queda por ratificar:** que los siete son el dominio cerrado y no una muestra —el cliente
+dice *"esos son los más típicos"* y *"los más característicos"*, que es lenguaje de muestra, no
+de catálogo—; y las etiquetas exactas para el `singleSelect`.
+
+**Consecuencia sobre el plan.** Ninguna inmediata: el reproceso sigue diferido en §1.9 ·
+FUT-EJ-08. Lo que cambia es **el fundamento del diferimiento**, registrado como **§9.6-R7** en el
+plan de IF-02: se posterga por alcance, no por falta de definición, y la versión que lo implemente
+no tiene que volver a elicitarlo.
+
+---
+
+## A-27 · Domicilio de los defaults constructivos de spec §2.8.1
+
+**Estado** — abierta · **bloquea la precarga de la sección E de P7-TAS** · impacto medio.
+**Dueños: Arquitecto de Datos + Héctor.** Registrada como **D-20** en spec §15.
+**Sucede a la mitad no resuelta de A-14.**
+
+Los valores ya no faltan: están especificados uno a uno en spec §2.8.1, con su celda de origen.
+Lo que falta es **dónde se alojan dentro del sistema**, y son tres decisiones encadenadas:
+
+1. **¿Tabla nueva o tabla existente?** Ninguna de las actuales sirve: `C_VariablesCliente` es
+   clave-valor por cliente y estos defaults **no dependen del cliente**; `C_FactoresHomogeneizacion`
+   y `C_Factores` son de coeficientes de cálculo. Crear tabla en Airtable **exige aprobación
+   explícita de Sergio**.
+2. **¿Cuál es la clave?** La plantilla ramifica por **tipo de propiedad × estado de uso**
+   `[Excel: FICHA SOLIC!K35 · K36]`. Copiar esa clave es lo más fiel; una clave global sería más
+   simple y perdería la mitad del comportamiento; una por comuna —que A-14 planteaba— no tiene
+   respaldo en la plantilla.
+3. **¿Qué granularidad de fila?** Un registro por campo, o un registro por combinación con todos
+   los campos. La primera escala mejor a campos nuevos; la segunda se lee de un vistazo.
+
+**Consecuencia sobre la construcción.** P7-TAS **sí construye** la sección E, con los campos y los
+catálogos de §2.8.1 y el badge "Pre-llenado · editable" cableado; lo que espera es la **precarga
+efectiva**. La sección se libera **con campos y sin valores**, que es distinto de liberarla sin
+campos, y el punto de consumo queda aislado en el mismo módulo que consume los factores.
+
+**El riesgo específico de esta ambigüedad.** Ahora que los valores se conocen, escribirlos en un
+`const` del frontend es trivial y tentador — y es exactamente lo que RF-TAS-08 prohíbe. El
+criterio de aceptación de P7-TAS incluye un `grep` de los literales de §2.8.1 sobre
+`components/tasador/` y `lib/tasador/` para atraparlo.
+
+---
+
+## A-28 · Los tres factores de homogeneización no aparecen en la plantilla operativa
+
+**Estado** — abierta · **refuerza el bloqueo de A-18 sobre RF-TAS-08** · impacto alto.
+**Dueños: Héctor + Visador titular.** Registrada como **D-21** en spec §15.
+
+A-18 concluyó que ninguna tabla puede servir hoy un valor de referencia para `factor_sup`,
+`factor_edad` y `factor_distancia`. La revisión de la plantilla vigente buscó ese valor fuera del
+schema —el mismo movimiento que resolvió A-14— y encontró algo distinto y más incómodo: **los
+tres factores no existen en la planilla en ninguna forma**.
+
+**Lo que la planilla hace en su lugar.** El cuadro de comparables calcula el valor unitario de
+forma directa, sin homogeneizar: `(total UF − UF/m² terreno × sup. terreno − OO.CC.) / sup.
+construida` `[Excel: Portada!AX29]`. No hay columna de factor, ni de superficie, ni de edad, ni
+de distancia.
+
+**Lo que sí tiene.** Dos factores multiplicativos, en el **cuadro de valoración** y no en el de
+comparables: `D. F.` y `F. M.` `[Excel: Portada!AX50 · BA50]`, ambos con valor por defecto `1`
+`[Excel: Portada!AX51:AX53 · BA51:BA53]`, aplicados como `F. M. × D. F. × UF/m² nuevo`
+`[Excel: Portada!BD51]`. **Su nombre desarrollado no está escrito en ninguna parte del libro.**
+
+**Las tres preguntas:**
+
+1. **¿Los tres factores de RF-TAS-08 describen la práctica real del negocio, o son una
+   importación de literatura de tasación que nunca se usó?** El diseño v4 los nombra; la
+   operación no los tiene.
+2. **¿Qué son `D. F.` y `F. M.`?** La lectura probable es *Depreciación/Factor* y *Factor de
+   Mercado*, pero es inferencia y no se documenta como hecho.
+3. **Si la práctica real son estos dos, ¿RF-TAS-08 se reescribe?** Es la pregunta cara: cambia
+   la grilla de comparables, el contrato de la ruta de defaults y el motor.
+
+**Consecuencia sobre el plan.** Refuerza lo que A-18 ya impone:
+`GET /api/tasaciones/config/defaults` **sigue sin construirse**. La grilla conserva sus tres
+columnas de factor como campos capturables **sin precarga**, y **no se implementa** ninguna
+variante de dos factores mientras A-28 siga abierta: sería sustituir una suposición por otra.
+
+---
+
+## A-29 · Precio de venta: campo pedido sin origen en la plantilla
+
+**Estado** — abierta · **afecta al alta de solicitud** · impacto bajo. **Dueño: Héctor.**
+
+El cliente lo pide de forma explícita en las pruebas del sistema: *"tiene que incorporar el
+precio de venta… es importante porque es un precio que a nosotros nos da referencia para poder
+valorizar"* (`r21`).
+
+**No existe en la plantilla.** El barrido completo del libro no encontró ninguna celda de precio
+de venta: lo más cercano son el `Avalúo Fiscal` `[Excel: FICHA SOLIC!K41]`, que es otra cosa, y
+los `Total UF` de los comparables `[Excel: Portada!AD29:AD33]`, que son de otras propiedades.
+
+**Las tres preguntas:** unidad (¿UF o pesos?, la planilla mezcla ambas y la UF es la unidad del
+informe); obligatoriedad en el alta —el mismo audio pide **reducir** los campos obligatorios, de
+modo que agregar uno obligatorio contradiría la petición vecina—; y si es dato de referencia para
+el tasador o entra al cálculo, que es la que decide si lo toca el motor.
+
+**Nota de ámbito.** El campo se captura en el alta de IF-02, que quedó fuera del ámbito de esta
+ronda, pero lo consume el tasador. Se registra en ámbito por ese consumo.
+
+---
+
+## A-32 · Grupo de "día 0" en el tablero de vencimientos
+
+**Estado** — abierta · **afecta a spec §5.2.9** · impacto bajo. **Dueño: Héctor.**
+
+> **Nota de numeración.** Esta ficha se numeró originalmente en el bloque fuera de ámbito de la
+> tanda del 21-ago-2026. Se reclasificó **en ámbito** el mismo día, sin renumerar, porque el
+> tablero de vencimientos es §5.2.9 —Control de SLA— y la ficha quedó citada desde tres secciones
+> normativas: `VProperty_SLA_Negocio_v1.2.md` §5, `VProperty_Especificacion_Proyecto_v1_9_13.md`
+> §5.2.9 y `plan-ejecucion-if02-v1_9.md` §9.6.1. Un tag `[fuera-de-ámbito-actual]` diría lo
+> contrario de lo que hacen esas tres referencias.
+
+El cliente describe el tablero que revisa a diario con cuatro grupos por días transcurridos desde
+la visita —4, 3, 2 y 1— y agrega la posibilidad al pasar: *"incluso podríamos colocar cero días
+de la visita"* (`p3`).
+
+**La pregunta.** Un grupo de día 0 son las visitas del propio día, cuyos informes **todavía no
+pueden estar atrasados**: el plazo de la etapa 5 recién empieza a correr. Incluirlas cambia la
+naturaleza del bloque, que pasa de *"lo que está por vencer"* a *"todo lo que está en vuelo"*.
+Puede ser exactamente lo que el cliente quiere —ver la carga entrante— o puede diluir la señal
+de urgencia que hace útil al tablero.
+
+**Consecuencia sobre la construcción.** Ninguna bloqueante: el bloque de vencimientos se
+construye con los cuatro grupos declarados y agregar un quinto después es aditivo.
+
+---
+
+## A-30 · `[fuera-de-ámbito-actual]` · Abreviatura de cliente en el código de solicitud
+
+**Estado** — abierta · **fuera del ámbito de la ronda del 21-ago-2026** · impacto medio.
+**Dueño: Héctor.**
+
+El cliente pide cambiar el formato del código: sin guiones, `BP` + año + mes + número **+ código
+del cliente**, porque *"si me dicen Héctor el código BP no voy a saber de lo que es"* y porque
+identifica al cliente de un vistazo (`r21`, `revision 1`).
+
+**El Excel tiene dos listas de abreviatura y son incompatibles:** la columna `X`
+`[Excel: FICHA SOLIC!X25:X64]`, con 40 valores de largo variable (`HIPOTECARIA SECURITY`,
+`METLIFE`, `ULH`, `HEV`…), y una lista de códigos de tres letras
+`[Excel: FICHA SOLIC!S5:S19]` (`BIC`, `MET`, `PAR`, `PEN`…) que cubre sólo una parte del padrón.
+
+**Y la abreviatura no es única:** `BCH` aparece dos veces — Bice Hipotecaria
+`[Excel: FICHA SOLIC!X38]` y Banco de Chile `[Excel: FICHA SOLIC!X40]`. Una abreviatura
+duplicada **no puede formar parte de una clave de código** sin desambiguar antes.
+
+Afecta además a `codigo_ext`, que es fórmula en Airtable y read-only desde la app.
+
+---
+
+## A-31 · `[fuera-de-ámbito-actual]` · Reasignación de tasador
+
+**Estado** — abierta · **fuera del ámbito de la ronda del 21-ago-2026** · **impacto alto**.
+**Dueño: Héctor** (reabre una decisión firmada).
+
+El cliente lo pide con énfasis: *"tiene que permitir que nosotros le mandamos un tazador y que
+ese tazador no puede reasignar a otro tazador… nosotros tenemos que reasignarlo a otro tazador,
+entonces también tiene que permitir reasignar"* (`r21`).
+
+**Leído completo, el audio distingue dos sujetos:** el **tasador** no puede reasignarse a otro
+—lo que el sistema ya cumple— y **Control y Seguimiento sí** debe poder. Ese segundo flujo es
+exactamente el que v1.9 retiró.
+
+**Contradice tres puntos vigentes:** spec §1.6 y §1.3.1 (*"no existe botón «Reasignar Tasador» ni
+flujo de reasignación formal"*), la **REGLA A · D-15** y la **D-01**. Hoy la única vía de
+corrección es "Editar solicitud" mientras el estado siga `creada`, lo que **no cubre** el caso
+del audio: reasignar después de asignada.
+
+**No se resuelve por documentación.** Es una decisión de producto que revierte una decisión
+firmada, y su reapertura arrastra el correo al tasador saliente, el estado de la solicitud y la
+trazabilidad en `A_Eventos`.
+
+---
+
+## A-33 · `[fuera-de-ámbito-actual]` · Honorarios al tasador y facturación al cliente
+
+**Estado** — abierta · **fuera del ámbito de la ronda del 21-ago-2026** · impacto medio.
+**Dueño: Héctor.** Relacionada con **D-02** y **D-03** de spec §15.
+
+El cliente describe el cierre económico del ciclo, que hoy hace a mano: *"le pago un horario a
+los tasadores desde la fecha envío al cliente… todos los enviados al cliente desde el día 1 al 31
+elijo el tasador y le pago el honorario"*, y *"todos los días 5 de cada mes bajo las operaciones
+de Medline y todas las fechas de enviado… y cobro mi factura a mis clientes"* (`r23`).
+
+**El dato que ancla todo es la fecha de envío al cliente**, que es el cierre de la etapa 7 de
+§5.2.4 y que el sistema ya va a registrar. Eso hace la funcionalidad más barata de lo que parece:
+lo que falta es el corte mensual, la tarifa por tasador y la exportación.
+
+El mismo audio pide **exportar la base a Excel** para análisis, que es el vehículo natural de
+ambos cortes.
+
+**Relación con D-02 y D-03.** D-02 pregunta si la gestión de honorarios vive dentro de VProperty
+o se exporta a contabilidad externa; D-03, el modelo tarifario. A-33 aporta el **criterio de
+devengo** —fecha de envío al cliente— que ninguna de las dos tenía.
+
+---
+
+## A-34 · `[fuera-de-ámbito-actual]` · Detección de proyectos y direcciones ya tasados
+
+**Estado** — abierta · **fuera del ámbito de la ronda del 21-ago-2026** · impacto medio.
+**Dueño: Héctor.**
+
+En propiedades nuevas, VProperty visita el edificio **una sola vez** y reutiliza el trabajo para
+las unidades siguientes: *"nosotros vamos una vez al edificio y no vamos más"*. Por eso, al
+cargar el alta, necesitan que el sistema busque direcciones parecidas y muestre lo ya tasado:
+*"buscamos direcciones parecidas y nos arroja direcciones y ahí vemos que ya lo hicimos… así
+decimos, ah, este proyecto ya lo hemos hecho"* (`r21`).
+
+**Es una funcionalidad de búsqueda difusa sobre dirección y nombre de proyecto**, no un filtro
+exacto: el cliente describe buscar *"teatino 950"* y ver todas sus coincidencias, sin importar
+nuevo o usado. Airtable no ofrece coincidencia difusa nativa, de modo que la realización no es
+trivial y hay que decidir dónde corre.
+
+**Impacto operativo si no se resuelve:** se repite una visita ya hecha, que es costo directo, o
+se emite un informe inconsistente con el que ya se entregó para el mismo edificio.

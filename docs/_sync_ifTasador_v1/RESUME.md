@@ -560,3 +560,58 @@ documento.
 5. **No reinstaurar la excepción a RN-59 ni la coordinación en §1** sin el cierre de CI-012.
 6. **No renumerar** ningún RF-TAS: van del 01 al 22, sin huecos, y la regla de oro sigue
    siendo cero renumeración de identificadores históricos.
+
+---
+
+## Estado canónico · ronda de audios + plantilla operativa · 21-ago-2026
+
+> **Este bloque manda sobre todo lo anterior del archivo**, incluido el *«Estado canónico · cierre
+> del lote 7 · 13-ago-2026»*. Las secciones previas quedan como registro de su fecha. Si vas a
+> ejecutar algo, lee esto primero.
+
+### Lo que cambió respecto del bloque anterior
+
+- **Documento normativo:** ya **no** es v1.9.9 ni v1.9.12, sino
+  **`docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`**. Los predecesores quedan SUPERSEDED.
+- **Rama activa:** **`feat/tasador-ui`** (no `docs/sync-ifTasador-v193`).
+- **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.2.md`.
+- **Planes de ejecución:** IF-03 pasa a `plan_ejecucion_UItasador_v1.1.md`; IF-02 sigue
+  llamándose `plan-ejecucion-if02-v1_9.md` con versión interna **v1.13** — ver **C-14** del
+  `SYNC_LOG` antes de "corregir" ese nombre.
+
+### Insumo nuevo que no existía en las rondas anteriores
+
+`docs/_md/archivo_ejemplo/Formato Informe VProperty Enero2026.xlsm` — la plantilla operativa con
+que VProperty trabaja hoy. **Es la fuente de verdad de todo valor por defecto del informe.**
+Radiografía completa en `docs/_notas/radiografia-excel-informe.md`; toda cita hacia los normativos
+usa `[Excel: hoja!celda]` (**C-16**).
+
+Al leerla con `openpyxl`, **usar `data_only=False`**: los defaults son fórmulas ramificadas y el
+valor cacheado corresponde a la última propiedad tasada sobre la plantilla. Ver la entrada del
+21-ago-2026 (b) en `docs/aprendizajes.md`.
+
+### Ambigüedades — estado al cierre de esta ronda
+
+- **Cerrada:** **A-17** (catálogo de motivos: `singleSelect` servido desde el schema).
+- **Reducida:** **A-14** — los defaults constructivos **existen** y están especificados en spec
+  §2.8.1; sólo falta su tabla destino, que es **A-27**. **Deja de bloquear P7-TAS.**
+- **Abiertas en ámbito, nuevas:** A-22 · A-23 · A-24 · A-25 · A-26 · A-27 · A-28 · A-29 · A-32.
+- **Abiertas fuera de ámbito** (registradas, sin trabajar): A-30 · A-31 · A-33 · A-34.
+- **Sigue abierta y sigue bloqueando:** **A-18**, y ahora además **A-28** la agrava — la plantilla
+  no contiene los tres factores de homogeneización. `GET /api/tasaciones/config/defaults`
+  **sigue sin construirse**.
+
+### Lo que NO se debe implementar como constante
+
+Tres cifras entraron a la spec **marcadas como pendientes de ratificación** (**C-15**) y ninguna
+está acordada con Héctor: el **umbral de 8 h** del recordatorio al tasador (A-22 · D-17), la
+composición de los **seis motivos** de coordinación (A-25) y la de los **siete motivos** de
+reproceso (A-26). Se cargan como dato o se dejan sin poblar; **jamás como literal en código**.
+Lo mismo vale para los defaults de §2.8.1: ahora que se conocen, escribirlos en un `const` del
+frontend es trivial y es exactamente lo que RF-TAS-08 prohíbe — el criterio de aceptación de
+P7-TAS incluye un `grep` para atraparlo.
+
+### Próximo paso
+
+Ratificación de Héctor sobre A-22 y A-27, que son las dos que desbloquean trabajo de
+construcción. Todo lo demás de esta ronda es documental y está cerrado.

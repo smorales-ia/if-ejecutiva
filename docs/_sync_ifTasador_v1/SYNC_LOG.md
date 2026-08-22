@@ -373,3 +373,46 @@ Estado al cierre de Fase 2. Ninguna ejecutada aún; la columna *Destino* indica 
 | **D-B** | Métrica de tasa de devolución: **marcar, no recalcular**. Se eleva a firma PM aparte | PM + QA |
 | **D-C** | `A_Eventos.visita_completada` **conserva su literal** (A-06 cerrada) | DE + INT |
 | **D-D** | SC08/SC09 **no** entran al Motor de Cálculo (cubre AT01–AT10, Airtable) | EA |
+
+---
+
+## Tanda del 21-ago-2026 — audios del cliente + plantilla operativa
+
+> **No pertenece a la Fase 3 planificada**, con el mismo criterio que el lote 7 (**C-11**): se
+> registra acá por compartir eje —§2 del spec y sus RF-TAS— y porque partirla en un archivo aparte
+> fragmentaría la trazabilidad que este registro sostiene. **No se numera como lote**: no es una
+> sub-rama del plan de la Fase 2, es una ronda disparada por insumos de negocio nuevos.
+
+**Insumos** — segunda tanda de audios de Héctor en `docs/_md/audios/` (12 transcripciones `.txt`:
+`p1`–`p8`, `r21`–`r23`, `revision 1`) y la plantilla operativa vigente
+`docs/_md/archivo_ejemplo/Formato Informe VProperty Enero2026.xlsm` (21 hojas). Radiografía del
+libro en `docs/_notas/radiografia-excel-informe.md`.
+
+**Rama** — `feat/tasador-ui`.
+
+**Ámbito** — Control de SLA + UI Tasador. Los hallazgos del alta de IF-02 (código de solicitud,
+campos obligatorios, comunas, clientes, reasignación) quedan **registrados y sin trabajar**, por
+decisión de Sergio.
+
+### Entregables
+
+| Archivo | Acción |
+|---|---|
+| `docs/_md/VProperty_SLA_Negocio_v1.2.md` | **nuevo** · sucede a v1.1 |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md` | **nuevo** · sucede a v1.9.12, que queda SUPERSEDED |
+| `docs/_md/plan_ejecucion_UItasador_v1.1.md` | **nuevo** · sucede a v1.0 |
+| `docs/_md/plan-ejecucion-if02-v1_9.md` | **in-place** · bump interno v1.12 → v1.13 |
+| `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` | A-14 enmendada · **A-17 cerrada** · alta de A-22 a A-34 |
+| `docs/CODE_INCONSISTENCIES.md` | **CI-049** nuevo · CI-021, CI-038 y CI-040 enmendadas · 19 punteros actualizados |
+| `docs/aprendizajes.md` | dos entradas |
+| `CLAUDE.md` · `docs/schema-airtable.md` | punteros al normativo y al plan del Tasador |
+
+### Convenciones y decisiones de esta tanda
+
+| # | Resolución | Origen |
+|---|---|---|
+| **C-14** | **El plan de IF-02 se versiona sólo en su encabezado.** `plan-ejecucion-if02-v1_9.md` conserva el sufijo `v1_9` del nombre mientras su versión interna avanza (v1.13). Los dos números miden cosas distintas: el sufijo es la **referencia estable** que apuntan §0.1 de ambos planes, `CLAUDE.md` y los aprendizajes ya escritos; el encabezado es el **contador de revisiones**. Renombrarlo en cada bump obligaría a actualizar todas esas referencias en el mismo commit, y una que se escape deja a la sesión siguiente leyendo un plan inexistente. **La regla general —archivo nuevo por versión— sigue vigente para la especificación normativa y los documentos de diseño**, donde nombre y cuerpo deben coincidir siempre. El motivo queda escrito en §0.1 del propio plan, no sólo acá | Sesión 21-ago-2026 · instrucción explícita del usuario |
+| **C-15** | **Las cifras que el cliente declara en audio entran a la spec marcadas, no como normativas.** Formato fijo: `**Valor**: X · **Fuente**: audio [pN] · **Estado**: pendiente de ratificación por el product owner (A-XX)`. Se aplicó al umbral del recordatorio (A-22), al catálogo de seis motivos (A-25) y al de siete motivos de reproceso (A-26). El motivo es que un audio es evidencia de intención, no una decisión firmada: escribirla sin marca la vuelve indistinguible de un número acordado, y escribirla fuera de la spec la pierde | Sesión 21-ago-2026 |
+| **C-16** | **Toda cita de la plantilla operativa lleva su celda**, en formato `[Excel: hoja!celda]`. 29 citas en total entre el SLA de negocio, la spec y el plan del Tasador. Sin la celda, un valor por defecto es indistinguible de una invención, y la plantilla cambia con cada versión mensual | Sesión 21-ago-2026 · instrucción explícita del usuario |
+| **C-17** | **A-32 se reclasificó en ámbito sin renumerar.** Nació en el bloque fuera de ámbito y terminó citada desde tres secciones normativas, porque el tablero de vencimientos es §5.2.9 — Control de SLA. Se dejó su número y se documentó el motivo en la propia ficha, en vez de renumerar y romper las tres citas | Sesión 21-ago-2026 · decisión del usuario |
+| **C-18** | **El código no se toca, ni siquiera en comentarios.** Dos punteros JSDoc quedaron apuntando a documentos inexistentes (`lib/tasaciones.ts:4`, `lib/tipos-documento.ts:53`) y **no se corrigieron**, contra el precedente C-10 del lote 7, que sí actualizó seis punteros equivalentes. La diferencia es de alcance declarado: esta ronda era documental y R2 excluía código. El hallazgo se registró como **CI-049** en vez de arreglarse sobre la marcha, que es el mecanismo que este registro tiene para eso | Sesión 21-ago-2026 · instrucción explícita del usuario |

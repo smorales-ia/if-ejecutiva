@@ -25,3 +25,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+docs/_md/archivo_ejemplo/Formato Informe VProperty Enero2026.xlsm

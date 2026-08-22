@@ -1238,7 +1238,7 @@ webhooks— pero cualquier código futuro que la consulte va a fallar por esto.
 
 ## 26. IF-03 · Tasador — delta de schema P0.5-TAS (17-ago-2026)
 
-> **Tanda:** P0.5-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.0.md` §1.5.
+> **Tanda:** P0.5-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.1.md` §1.5.
 > **Vía de ejecución:** Airtable **Meta API REST** con `AIRTABLE_TOKEN` (scope `schema.bases:write`
 > confirmado en runtime). **No se usó el MCP** — no está autenticado en la sesión y la preferencia
 > operativa del proyecto es schema desde `docs/` + REST server-side.
