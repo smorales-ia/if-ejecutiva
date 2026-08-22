@@ -489,6 +489,28 @@ Lo que sigue vigente como regla vive abajo, destilado.
   dos capas deben coincidir; ésta es su consecuencia en CSS — si no está
   declarada, no existe, y dos vocabularios para el mismo color son dos fuentes.
   Vigente desde el 22-ago-2026.
+- **RO-41 · Después de `pnpm build`, limpiar `.next` antes de `pnpm dev`.** El
+  build de producción deja sus artefactos —`BUILD_ID`, `prerender-manifest.json`,
+  `export-marker.json`— en el mismo `.next` que después usa el servidor de
+  desarrollo. Turbopack arranca encima de ese manifiesto y **todas las rutas
+  responden 404**.
+  **El síntoma engaña porque el servidor está sano:** emite su `✓ Ready in Xs`
+  sin una sola línea de error, y el 404 llega sin log. Con Clerk en medio es peor
+  todavía, porque un 404 sin sesión es también la respuesta normal de
+  `auth.protect()` y las dos causas se confunden.
+  **El control que las separa:** pedir **`/api/health`** y **`/sign-in`**, que son
+  rutas públicas. Si esas dos devuelven 404, no es autenticación ni es el código:
+  es `.next` contaminado. Si devuelven 200 y las protegidas siguen en 404 con
+  `x-clerk-auth-reason: protect-rewrite`, eso sí es Clerk y es correcto.
+  **Regla:** si en la misma sesión se corrió `pnpm build` —típicamente al cerrar
+  una tanda con los gates completos— y después hace falta levantar el servidor de
+  desarrollo para una verificación visual, ejecutar `rm -rf .next` **antes** de
+  `pnpm dev`. Es limpieza necesaria, no preventiva: comprobado el 22-ago-2026 en
+  las dos tandas que arrancaron el server tras builddear, con el `BUILD_ID` de
+  producción todavía en disco. Y el orden inverso importa igual: no correr
+  `pnpm build` con un `pnpm dev` vivo sobre el mismo directorio.
+  Costó una sesión entera de diagnóstico la primera vez, persiguiendo una ruta de
+  `/sign-in` que existía y funcionaba. Vigente desde el 22-ago-2026.
 
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 

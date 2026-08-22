@@ -17,7 +17,17 @@ export function SeccionDocumentos({
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground">
         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
-        <span>Prellenado por IA cuando los PDFs estén adjuntos (SC07). Editable.</span>
+        {/*
+          Regla T-C · ningún literal visible nombra el medio técnico. El texto
+          anterior lo nombraba, y además exponía el código interno del escenario
+          de extracción, que al tasador no le dice nada. Incumplía la regla dos
+          veces; el original queda en el historial de git.
+
+          Corregido en **P6-TAS**, donde T-C es el criterio dominante y el grep
+          de auditoría de §7.2 paso 8 no podía dar cero con esta línea viva. El
+          inventario asignaba la purga a P7-TAS: **ya está hecha, no rehacerla**.
+        */}
+        <span>Se completa con los datos de la visita cuando los documentos estén adjuntos. Editable.</span>
       </div>
 
       <div className="grid grid-cols-3 gap-3">

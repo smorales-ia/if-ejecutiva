@@ -1,12 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
+import {
+  MSG_LECTURA_FALLIDA,
+  useAvanceLectura,
+} from "@/lib/tasador/use-avance-lectura"
 
 type Fase = 0 | 1 | 2 // 0: procesando, 1: casi listo, 2: completado
 type Variante = "lectura" | "calculo"
@@ -70,6 +73,18 @@ export function EstadoProcesando({
   /* Ésta es la pantalla de espera: el sondeo va encendido. */
   const { estado } = useEstadoTasador(id)
 
+  /**
+   * Avance real de la extracción documental (P6-TAS · RF-TAS-15).
+   *
+   * Sólo lo usa la variante `lectura`. El hook sondea igual en las dos —montar
+   * un hook condicionalmente rompe las reglas de React—, pero en `calculo` su
+   * resultado se ignora por completo y manda `useEstadoTasador`, que es lo que
+   * esa pantalla siempre usó. **Parametrizar, no bifurcar**: el inventario
+   * marca este componente como compartido con P8-TAS y cualquier cambio en una
+   * rama no debe alcanzar a la otra.
+   */
+  const { avance, error: errorLectura, agotado } = useAvanceLectura(id)
+
   /*
    * ⚠ **El v0 disparaba el cálculo desde acá** si llegaba en `BORRADOR`, para
    * cubrir una recarga directa de la URL. Contra el backend real eso convierte
@@ -84,16 +99,18 @@ export function EstadoProcesando({
    * ningún cálculo corriendo.
    */
 
-  // Fase local para la simulación visual (lectura) y como respaldo del stepper.
-  const [fase, setFase] = useState<Fase>(0)
-  useEffect(() => {
-    const t1 = setTimeout(() => setFase(1), 4000)
-    const t2 = setTimeout(() => setFase(2), 8000)
-    return () => {
-      clearTimeout(t1)
-      clearTimeout(t2)
-    }
-  }, [])
+  /*
+   * ⚠ **Acá vivía la simulación, y era el defecto central de esta pantalla.**
+   * Hasta P6-TAS la fase de la variante `lectura` la movían dos `setTimeout` de
+   * 4 y 8 segundos: el stepper llegaba a «Datos listos» y habilitaba
+   * «Continuar» pasaran ocho segundos y nada más, con la extracción todavía
+   * corriendo —o fallada—. §7.3 lo pide al revés: el stepper avanza *según el
+   * estado backend*, nunca según un temporizador local.
+   *
+   * El progreso ya no se guarda en estado local, y por eso volver a Fotos y
+   * regresar lo encuentra donde estaba: vive en Airtable, no en este componente
+   * (§7.2 paso 6). No hay nada que persistir del lado del cliente.
+   */
 
   /*
    * Los literales del v0 (`INFORME_DISPONIBLE`, `APROBADO`, `EN_CALCULO`) eran
@@ -103,7 +120,16 @@ export function EstadoProcesando({
    */
   const calculoListo = estado?.informeDisponible ?? false
   const enCalculo = (estado?.bloqueadoParaEdicion ?? false) && !calculoListo
-  const completado = esCalculo ? calculoListo : fase === 2
+
+  /**
+   * `completado` mueve el aspecto de la pantalla; `puedeContinuar` habilita el
+   * botón. **No son lo mismo en la variante `lectura`**: `error` y
+   * `delegado_visador` son terminales —el proceso acabó y el stepper lo
+   * refleja— pero no autorizan a seguir (§7.3). En `calculo` coinciden, que es
+   * el comportamiento que esa pantalla siempre tuvo.
+   */
+  const completado = esCalculo ? calculoListo : (avance?.completo ?? false)
+  const puedeContinuar = esCalculo ? calculoListo : (avance?.puedeContinuar ?? false)
 
   // Fase efectiva mostrada en el stepper/subtítulo.
   const faseEfectiva: Fase = esCalculo
@@ -112,7 +138,18 @@ export function EstadoProcesando({
       : enCalculo
         ? 1
         : 0
-    : fase
+    : (avance?.fase ?? 0)
+
+  /** Aviso humano de la variante `lectura`. Regla T-C: nunca el error técnico. */
+  const avisoLectura = !esCalculo
+    ? errorLectura || agotado
+      ? MSG_LECTURA_FALLIDA
+      : avance?.hayError
+        ? "No pudimos leer algunos documentos. Puedes completar esos datos a mano."
+        : avance?.hayDelegado
+          ? "Algunos datos quedaron para que los complete el visador."
+          : null
+    : null
 
   const pasos: { label: string; estado: "done" | "active" | "pending" }[] = [
     { label: copy.pasos[0], estado: "done" },
@@ -191,22 +228,56 @@ export function EstadoProcesando({
         ))}
       </div>
 
-      {/* Card tiempo estimado */}
+      {/*
+        Card de avance.
+
+        ⚠ **El «Tiempo estimado: 15 segundos» se retiró en P6-TAS.** §7.1 lo
+        marca como valor del prototipo v4 y **no** un compromiso normativo: *«el
+        tiempo estimado se calcula o se omite, no se hardcodea como promesa»*.
+        No hay forma de estimarlo —depende de cuántos documentos y de lo que
+        tarde el pipeline—, así que se omite y en su lugar se dice cuántos van,
+        que es un dato cierto.
+
+        En la variante `calculo` no hay conteo que mostrar y la barra conserva
+        su avance por fase, igual que antes de esta tanda.
+      */}
       {!completado && (
         <div className="mt-8 w-full rounded-xl bg-muted p-4">
-          <p className="text-base text-foreground">
-            Tiempo estimado: <span className="font-semibold">15 segundos</span>
-          </p>
+          {!esCalculo && avance && avance.total > 0 && (
+            <p className="text-base text-foreground">
+              {avance.terminados} de {avance.total}{" "}
+              {avance.total === 1 ? "archivo procesado" : "archivos procesados"}
+            </p>
+          )}
           <Progress
-            value={faseEfectiva === 1 ? 75 : 35}
+            value={esCalculo ? (faseEfectiva === 1 ? 75 : 35) : (avance?.progreso ?? 0)}
             className="mt-3 block [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-track]]:bg-border [&_[data-slot=progress-indicator]]:animate-pulse [&_[data-slot=progress-indicator]]:bg-brand [&_[data-slot=progress-indicator]]:transition-all"
           />
         </div>
       )}
 
+      {/*
+        Aviso de la variante `lectura`. Regla T-C: dice qué pasó y qué hacer, sin
+        nombrar el medio técnico ni exponer el error del proveedor.
+      */}
+      {avisoLectura && (
+        <p className="mt-6 w-full rounded-xl bg-amber-50 px-4 py-3 text-sm text-warning">
+          {avisoLectura}
+        </p>
+      )}
+
       {/* Botones */}
       <div className="mt-8 flex w-full flex-col gap-3">
-        {completado ? (
+        {/*
+          §7.3 · «Continuar» **no es accionable ni por teclado ni por doble
+          toque** mientras el proceso no autorice a seguir. Se renderiza como
+          `<button disabled>` y no como enlace: un `<a>` deshabilitado no existe
+          —sigue siendo focalizable y activable con Enter—, así que la variante
+          bloqueada tiene que ser un botón nativo. Y el gate es `puedeContinuar`,
+          no `completado`: con `error` o `delegado_visador` el proceso terminó
+          pero el botón sigue cerrado.
+        */}
+        {puedeContinuar ? (
           <Button
             render={<Link href={copy.continuarHref(id)} />}
             nativeButton={false}
@@ -219,9 +290,10 @@ export function EstadoProcesando({
           <Button
             type="button"
             disabled
-            className="min-h-12 w-full cursor-wait bg-[#9CA3AF] text-base font-semibold text-white"
+            aria-disabled="true"
+            className="min-h-12 w-full cursor-wait bg-muted-foreground text-base font-semibold text-white"
           >
-            <Loader2 className="h-4 w-4 animate-spin" />
+            {!completado && <Loader2 className="h-4 w-4 animate-spin" />}
             {copy.continuarLabel}
           </Button>
         )}

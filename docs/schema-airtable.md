@@ -344,7 +344,7 @@ migrar sus 26 links y verificar conteo 0.
 | `orden` | `fld0t0ytqAkd3bzvd` ✅ | Number | |
 | `descripcion` | `fldsG18353kHMw0yQ` ✅ | Single line text | |
 | `requerido_por_ejecutiva` | `fldhKxTGC76faGGv3` ✅ | Checkbox | **Creado** 08-jul-2026 (Fase 2 · Tanda A). Distingue documentos del checklist obligatorio de adjuntos sueltos opcionales |
-| `estado_extraccion` | `fld54epvDJ7YdJIYD` ✅ | Single select | Opciones: `idle · extrayendo · listo · error` (choice IDs `selVJKgo84b62ikEp` · `selfPHp5m6o0hPjgV` · `selICqKF879p4Y3r7` · `selMxROzMpcREqA9B`). El blueprint `SC-Adjuntos-Upload` (Fase Adjuntos 1) escribe `idle` al crear cada adjunto nuevo. Bloqueador de RF-09 resuelto — pendiente mapear en el escenario Make RF-09 (Fase Adjuntos 2, aún sin provisionar, BQ-3-c) |
+| `estado_extraccion` | `fld54epvDJ7YdJIYD` ✅ | Single select | **7 opciones** (verificadas vía meta API el 05-ago-2026 y re-verificadas vía MCP el 22-ago-2026): `idle · extrayendo · listo · error` (choice IDs `selVJKgo84b62ikEp` · `selfPHp5m6o0hPjgV` · `selICqKF879p4Y3r7` · `selMxROzMpcREqA9B`) **+ `skipped · no_corresponde · delegado_visador`** (`selLXLctZ2y3NGu84` · `seliEeDTpH7SxCFzr` · `selmwx207ikwAc9i5`), agregadas para el flujo de §4. El blueprint `SC-Adjuntos-Upload` (Fase Adjuntos 1) escribe `idle` al crear cada adjunto nuevo. Bloqueador de RF-09 resuelto — pendiente mapear en el escenario Make RF-09 (Fase Adjuntos 2, aún sin provisionar, BQ-3-c). **El mapeo de los 7 valores a los 3 pasos del stepper de Pantalla 4 vive en `lib/tasador/avance-lectura.ts`** (P6-TAS): `error` y `delegado_visador` son terminales que **no** habilitan «Continuar» |
 
 **Decisión pendiente (Tanda B/C)**: ni `tipo` ni `tipo_adjunto` se llaman `tipo_documento` como asumía la documentación previa, y ninguno de los dos está referenciado hoy en código (no existe aún `/api/adjuntos/upload`). Ambos campos ya tienen equivalente de "otro" (`Otro` en `tipo`, `otro` en `tipo_adjunto`), por lo que cualquiera sirve para el checklist de documentos requeridos — el Data Designer debe decidir cuál usar (o si ambos cubren necesidades distintas) antes de mapear el checklist del formulario en Tanda B/C.
 
@@ -473,7 +473,7 @@ Sesión de 4 fases (Airtable → Make → Frontend → corte `.banco`) para cerr
 
 | Tabla | Campo | FIELD_ID | Tipo | Opciones |
 |---|---|---|---|---|
-| `TX_Adjuntos` | `estado_extraccion` | `fld54epvDJ7YdJIYD` | Single select | `idle · extrayendo · listo · error` |
+| `TX_Adjuntos` | `estado_extraccion` | `fld54epvDJ7YdJIYD` | Single select | `idle · extrayendo · listo · error · skipped · no_corresponde · delegado_visador` (7 · ver §8) |
 
 Bloqueador de RF-09 (§8) resuelto. Pendiente: mapear en el escenario Make RF-09 (aún sin provisionar, BQ-3-c) y consumir desde `ExtraccionStatusBadge` (Paso 6 de `construccion.md`). `canal_contacto_original` se revisó en la misma fase y se decidió **no migrarlo** de Single select a texto libre (ver nota en §2).
 
