@@ -718,3 +718,47 @@ sigue sin construirse.
 Resolver **A-37** con Óscar y Héctor, y recién entonces la tanda de sembrado. En paralelo siguen
 las dos preguntas del bloque anterior: el valor por defecto de cada factor (A-18) y si las 4 h del
 recordatorio son hábiles.
+
+---
+
+## Estado canónico · P0.5.B-TAS completa · 22-ago-2026 (c)
+
+> **Manda sobre todos los bloques anteriores.** Complementa al bloque 22-ago-2026 (b).
+
+**`M_TiposPropiedad` (`tbl8rxZA14xFIBGU6`) quedó saneada. A-37 CERRADA.**
+
+Dominio final: **9 filas activas** en Title Case —`Casa`, `Departamento`, `Bodega`, `Oficina`,
+`Casa Piloto`, `Departamento Piloto`, `Local Comercial`, `Sitio`, `Terreno`— más 6 en baja lógica.
+`CASA` y `DEPARTAMENTO` eliminadas tras migrar sus 26 links. Foto completa en
+`docs/schema-airtable.md` §7.1; detalle de la tanda en `docs/_notas/snapshot-P0.5.B-TAS.md`.
+
+**Los dos record IDs que hay que conocer para sembrar:**
+`Casa` = `recrXDAjlVCe59XBW` · `Departamento` = `recf9hz8TbkQ6wsus`.
+
+**El hallazgo que no conviene perder.** Los duplicados no estaban solapados: las mayúsculas
+acumulaban transacciones y el Title Case, configuración. **Ninguna de las 39 solicitudes resolvía
+su regla de negocio, vida útil, precio unitario ni SLA por ese eje.** El saneamiento reparó una
+desconexión que ya estaba viva, no sólo un riesgo futuro.
+
+**Verificación pendiente, fuera del alcance de aquella tanda:** el motor de cálculo ahora encuentra
+configuración donde antes no encontraba nada. **Conviene probarlo sobre una solicitud real** antes
+de dar por bueno el cambio de comportamiento.
+
+### Qué se desbloqueó
+
+**El sembrado de `C_DefaultsAntecedentes`** puede arrancar: los defaults se cuelgan de `Casa` y
+`Departamento` sin ambigüedad de fila.
+
+### Qué sigue abierto
+
+- **A-18** — el valor por defecto de cada factor de homogeneización. Única bloqueante de
+  `GET /api/tasaciones/config/defaults`. Sin cambios.
+- **A-38** — dónde se materializan los catálogos de valores admisibles.
+- **A-39** — dónde vive el anexo de estado de conservación.
+- **A-40** *(nueva)* — si `Bodega` es tipo de propiedad o tipo de bien. No bloquea.
+
+### Próximo paso
+
+La tanda de **sembrado de `C_DefaultsAntecedentes`**, con dos preguntas por resolver antes:
+cuántas combinaciones se siembran (las 4 del Excel o las 16 del dominio) y si A-38 se resuelve en
+el mismo movimiento.

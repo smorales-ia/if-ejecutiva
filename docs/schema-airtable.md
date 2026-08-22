@@ -277,9 +277,44 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | Tabla | TABLE_ID | Campo clave adicional |
 |---|---|---|
 | `M_TiposInforme` | `tblOcsdiwxQLfD178` | `activo` (checkbox) |
-| `M_TiposPropiedad` | `tbl8rxZA14xFIBGU6` | `requiere_subtipo` (checkbox) |
+| `M_TiposPropiedad` | `tbl8rxZA14xFIBGU6` | `requiere_subtipo` (checkbox) · **dominio saneado — ver §7.1** |
 | `M_Bancos` | `tblGlYuJo5AeMehhs` | `activo` (checkbox) |
 | `M_Productos` | `tbll6D4KQ5aDdjjaj` | `activo` (checkbox) |
+
+### 7.1 `M_TiposPropiedad` — dominio saneado (22-ago-2026 · P0.5.B-TAS)
+
+**Convención de capitalización: Title Case**, alineada con `ListaTipoPropiedad`
+`[Excel: FICHA SOLIC!AD25:AD32]`. Toda alta futura la respeta.
+
+**9 filas activas** — las 8 del Excel más `Bodega`:
+
+| `nombre` | Record ID | `categoria` | Links vivos |
+|---|---|---|---|
+| `Casa` | `recrXDAjlVCe59XBW` | Habitacional | **38** · 6 solicitudes + 6 reglas + 13 vida útil + 4 precios + 7 comparables + 1 SLA + 1 plantilla |
+| `Departamento` | `recf9hz8TbkQ6wsus` | — | **21** · 20 solicitudes + 1 regla |
+| `Bodega` | `rechtTVCD9YbfD08T` | — | **8** solicitudes · ⚠ fuera del dominio del Excel — ver **A-40** |
+| `Oficina` | `rec3zizQ4VNa3VZBo` | — | **5** solicitudes |
+| `Casa Piloto` | `recoCHaCWolPWtgeW` | Habitacional | 0 · **alta 22-ago-2026** |
+| `Departamento Piloto` | `reck6cHbNAcmJPj8X` | Habitacional | 0 · **alta 22-ago-2026** |
+| `Local Comercial` | `recPiUiPFgQblO4HQ` | — | 0 |
+| `Sitio` | `recuRG89tkR7srCS2` | — | 0 |
+| `Terreno` | `recuHxhPUhS5HxdHP` | — | 0 |
+
+**6 filas en baja lógica** (`activo = false`, 0 links) — reversibles, y `lib/catalogos.ts` las
+excluye sola por su filtro `{activo} = TRUE()`: `EDIFICIO` (`rec9t6YyVzvRAUdHE`),
+`ESTACIONAMIENTO` (`rec1K8CFwYioHAdwE`), `GALPON` (`rec8eeyZUpXU8P6s5`), `INDUSTRIA`
+(`recloRBc7s99pLg7x`), `OTRO` (`reccoaabDUvg7O79h`), `PILOTO` (`recS12nTcW9HxAmMo`). Conservan su
+nombre en mayúsculas a propósito: son filas retiradas, no parte del dominio vigente.
+
+**2 filas eliminadas**: `CASA` (`rec5J0dPImsDm5Leb`) y `DEPARTAMENTO` (`recJ0OIjob9ywogr6`), tras
+migrar sus 26 links y verificar conteo 0.
+
+> **Por qué existían los duplicados y por qué importaba.** No estaban solapados: `CASA` y
+> `DEPARTAMENTO` acumulaban **sólo** links transaccionales (26 solicitudes de jul–ago-2026) y
+> `Casa`/`Departamento` **sólo** configuración (33 referencias del alta inicial). La línea de corte
+> era exactamente la frontera transacciones / configuración, de modo que **ninguna de las 39
+> solicitudes podía resolver su regla de negocio, su vida útil ni su SLA por este eje**. No era un
+> duplicado cosmético: era una desconexión funcional viva en la base. El saneamiento la repara.
 
 ---
 

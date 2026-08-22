@@ -1455,8 +1455,8 @@ proveedor.
 
 > **Ambigüedades e inconsistencias declaradas:** **A-13** (origen de los comparables) · **A-18**
 > (los factores de homogeneización siguen sin valor de referencia — **única bloqueante para la
-> ruta de defaults**) · **A-37** (el sembrado de `C_DefaultsAntecedentes` está bloqueado; la tabla
-> existe y responde vacío, que es lo correcto) · **A-38** (los catálogos aún no son parametrizables
+> ruta de defaults**) · **A-37 cerrada** (`M_TiposPropiedad` saneada · el sembrado
+> queda desbloqueado, y hasta que ocurra la tabla responde vacío, que es lo correcto) · **A-38** (los catálogos aún no son parametrizables
 > en runtime) ·
 > **CI-014** (ocho secciones, no siete) · **CI-015** (traza legacy del contador de intentos).
 > **Cerradas desde v1.2:** **A-14**, **A-27** (los defaults constructivos tienen valores y clave)
@@ -1551,8 +1551,10 @@ alguien cuenta siete es **G (Overrides)**, que es la que materializa la Capacida
    —el join del eje 1 es por record ID—.
 
    *Lo que la tabla devuelve hoy es vacío, y eso es correcto.* Está **creada y sin sembrar**: el
-   sembrado es tanda aparte y está bloqueado por **A-37** (duplicados por capitalización en
-   `M_TiposPropiedad`). Una combinación sin filas presenta los campos vacíos, que es el
+   sembrado es tanda aparte. **A-37 quedó cerrada** el 22-ago-2026 por P0.5.B-TAS —`M_TiposPropiedad`
+   saneada, sin duplicados, 9 filas activas en Title Case— de modo que el sembrado **ya no está
+   bloqueado**; los defaults se cuelgan de `Casa` (`recrXDAjlVCe59XBW`) y `Departamento`
+   (`recf9hz8TbkQ6wsus`) sin ambigüedad de fila. Una combinación sin filas presenta los campos vacíos, que es el
    comportamiento declarado en §2.8.1 y **no un error a reportar**. P7-TAS se construye y se
    libera contra ese comportamiento; cuando el sembrado ocurra, la pantalla empieza a pre-llenar
    sin tocar una línea de UI.

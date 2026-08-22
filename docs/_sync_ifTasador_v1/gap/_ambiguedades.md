@@ -1311,10 +1311,42 @@ en el chip. Si alguien reintroduce una ventana horaria, ese test se cae.
 
 ---
 
-## A-37 · **BLOQUEANTE** · Contra qué fila de `M_TiposPropiedad` se cuelga cada default
+## A-37 · Contra qué fila de `M_TiposPropiedad` se cuelga cada default — **CERRADA**
 
-**Estado** — abierta · **bloquea el sembrado de `C_DefaultsAntecedentes`** · impacto alto.
-**Dueños: Óscar (datos) + Héctor (dominio de negocio).**
+**Estado** — **cerrada** el 22-ago-2026 por la tanda **P0.5.B-TAS** · **desbloquea el sembrado de
+`C_DefaultsAntecedentes`** · impacto alto. **Dueños: Óscar (datos) + Héctor (dominio de negocio).**
+
+> **RESOLUCIÓN — la maestra se saneó, y el problema era peor de lo que esta ficha describía.**
+>
+> El conteo de links entrantes reveló que **los duplicados no estaban solapados**: `CASA` y
+> `DEPARTAMENTO` acumulaban **sólo** links transaccionales (26 solicitudes de jul–ago-2026) y
+> `Casa`/`Departamento` **sólo** configuración (33 referencias del alta inicial). La línea de corte
+> era exactamente la frontera transacciones / configuración.
+>
+> Es decir: **ninguna de las 39 solicitudes con tipo de propiedad poblado podía resolver su regla
+> de negocio, su tramo de vida útil, su precio unitario ni su SLA por ese eje.** Esta ficha lo
+> planteaba como riesgo para un sembrado futuro; era una desconexión funcional **ya viva** en la
+> base, que el sembrado habría heredado.
+>
+> **Qué se hizo** (detalle en `docs/_notas/snapshot-P0.5.B-TAS.md`):
+>
+> - **Canónico: Title Case**, alineado con `[Excel: FICHA SOLIC!AD25:AD32]`.
+> - **26 links migrados** a `Casa` (`recrXDAjlVCe59XBW`) y `Departamento` (`recf9hz8TbkQ6wsus`).
+> - **`CASA` y `DEPARTAMENTO` eliminadas**, tras verificar conteo 0 en las 12 tablas.
+> - **5 filas renombradas** a Title Case sin tocar links; **6 en baja lógica**; **2 altas**
+>   (`Casa Piloto`, `Departamento Piloto`) que el Excel declaraba y la tabla no tenía.
+> - Dominio final: **9 filas activas** — las 8 del Excel más `Bodega` (ver **A-40**).
+>
+> **Los defaults se cuelgan sin ambigüedad** de `Casa` y `Departamento`. El sembrado de
+> `C_DefaultsAntecedentes` queda desbloqueado.
+>
+> **Efecto colateral que conviene verificar aparte:** las 39 solicitudes ahora sí resuelven su
+> configuración. El comportamiento del motor de cálculo cambió, y **conviene probarlo sobre una
+> solicitud real** — no lo hizo P0.5.B-TAS, que era una tanda de schema.
+
+---
+
+### Contenido original de la ficha (17-ago → 22-ago-2026)
 
 `M_TiposPropiedad` (`tbl8rxZA14xFIBGU6`) tiene **15 filas**, no las 8 que declara
 `ListaTipoPropiedad` `[Excel: FICHA SOLIC!AD25:AD32]`, y **dos pares duplicados por
@@ -1408,3 +1440,43 @@ primera sólo se justifica si el negocio anticipa que la terna vaya a depender d
 
 Si se elige alojarlo en `C_DefaultsAntecedentes` de todos modos, agregar la cuarta opción a
 `bloque` es un `update_field` trivial y no invalida ninguna fila existente.
+
+---
+
+## A-40 · `Bodega` y `Estacionamiento`: ¿tipo de propiedad o tipo de bien?
+
+**Estado** — abierta · **no bloqueante** · impacto bajo. **Dueño: Héctor.**
+Detectada en **P0.5.B-TAS** (22-ago-2026) al sanear `M_TiposPropiedad`.
+
+Dos valores de `M_TiposPropiedad` solapan conceptualmente con `M_TiposDeBien`, que ya cubre
+`Bodega`, `Estacionamiento cubierto`, `Estacionamiento descubierto` y `Estacionamiento uso y goce`:
+
+| Valor | En `M_TiposPropiedad` | En `M_TiposDeBien` | En el Excel |
+|---|---|---|---|
+| `Bodega` | **activa, 8 solicitudes** | sí | ❌ no está en `ListaTipoPropiedad` |
+| `ESTACIONAMIENTO` | en baja lógica, 0 links | sí (en tres variantes) | ❌ |
+
+**Los dos ejes son conceptualmente distintos y conviene no fundirlos a la ligera.**
+`M_TiposPropiedad` responde *qué clase de inmueble se tasa*; `M_TiposDeBien` responde *qué unidad
+física compone la tasación* — una solicitud de departamento puede incluir bodega y estacionamiento
+como unidades. Que "bodega" aparezca en los dos no es necesariamente un error: puede ser una bodega
+tasada por sí sola, y las **8 solicitudes reales** sugieren que ese caso existe.
+
+**Las dos preguntas:**
+
+1. **¿Se tasa una bodega como propiedad independiente?** Si sí, `Bodega` pertenece legítimamente a
+   `M_TiposPropiedad` y lo que falta es que el Excel la incorpore a `ListaTipoPropiedad`. Si no,
+   esas 8 solicitudes están mal tipificadas y hay que reclasificarlas.
+2. **¿Qué hacer con `ESTACIONAMIENTO`?** Quedó en baja lógica y sin links, de modo que no urge;
+   pero si la respuesta a (1) es que sí se tasan unidades sueltas, debería reactivarse en Title
+   Case por coherencia.
+
+**Por qué no se resolvió en P0.5.B-TAS.** Esa tanda tenía por objetivo eliminar la ambigüedad de
+**capitalización**, que era mecánica y verificable. Ésta es una pregunta de dominio: qué considera
+el negocio una propiedad tasable. Responderla por cuenta propia habría significado reclasificar 8
+solicitudes reales sobre una suposición.
+
+**Consecuencia sobre el trabajo en curso: ninguna.** `Bodega` conserva sus 8 solicitudes y su fila
+activa; el sembrado de `C_DefaultsAntecedentes` no la necesita —los defaults de §2.8.1 describen
+casas y departamentos—, y una combinación sin fila deja los campos vacíos, que es el comportamiento
+correcto.

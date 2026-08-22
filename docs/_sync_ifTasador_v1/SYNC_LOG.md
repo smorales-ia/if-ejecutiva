@@ -489,3 +489,44 @@ IDs completos en `docs/schema-airtable.md` y en `docs/_notas/snapshot-P0.5-TAS-d
 
 **A-37** (bloqueante · duplicados en `M_TiposPropiedad`) · **A-38** (catálogos) · **A-39** (anexo de
 conservación). Registradas en `gap/_ambiguedades.md` según **C-20**, no sólo en el snapshot.
+
+---
+
+## Tanda del 22-ago-2026 (c) — P0.5.B-TAS · saneamiento de `M_TiposPropiedad`
+
+> **La tanda de mayor riesgo de esta serie**: primera con borrados irreversibles sobre una tabla
+> maestra con 72 referencias vivas desde 12 tablas. Contrato 🔴 pausa-total extrema: ocho pausas
+> `s/n` más una **pausa manual** para verificación humana de Automations. Ninguna rechazada,
+> ninguna operación fallida.
+
+**Objetivo** — cerrar **A-37**, que bloqueaba el sembrado de `C_DefaultsAntecedentes`.
+
+### El hallazgo
+
+A-37 se había registrado como "duplicados por capitalización". El conteo de links mostró que **los
+duplicados no estaban solapados**: `CASA`/`DEPARTAMENTO` acumulaban sólo links transaccionales (26
+solicitudes) y `Casa`/`Departamento` sólo configuración (33 referencias). **Ninguna de las 39
+solicitudes podía resolver su regla, su vida útil, su precio unitario ni su SLA por ese eje.** No
+era deuda pendiente de sembrado: era una desconexión funcional viva en la base.
+
+### Resultado
+
+15 filas → **9 activas + 6 en baja lógica**, con `CASA` y `DEPARTAMENTO` eliminadas y `Casa Piloto`
+/ `Departamento Piloto` dadas de alta. Dominio final = las 8 de `ListaTipoPropiedad` más `Bodega`
+(**A-40**). Detalle en `docs/_notas/snapshot-P0.5.B-TAS.md` y en `docs/schema-airtable.md` §7.1.
+
+### Decisiones de esta tanda
+
+| # | Resolución | Origen |
+|---|---|---|
+| **C-25** | **Antes de deduplicar una maestra, contar los links entrantes por fila — el reparto es el diagnóstico.** Aquí la distribución reveló que el problema no era el duplicado sino la **desconexión** entre transacciones y configuración, y además decidió cuál fila era canónica sin necesidad de opinar: se conserva la que concentra la configuración (más cara de migrar y la que alimenta al motor) y se migran los links transaccionales. Un merge decidido por "cuál se ve mejor escrita" habría podido tirar las 33 referencias de configuración | Sesión 22-ago-2026 |
+| **C-26** | **Renombrar no es migrar, y conviene no confundirlos.** Para las filas sin duplicado, normalizar la capitalización es un `update` del campo primario que **preserva todos los links**: `OFICINA`→`Oficina` conservó sus 5 solicitudes y `BODEGA`→`Bodega` sus 8, sin tocar `TX_Solicitudes`. Sólo los duplicados verdaderos exigen migrar y borrar. Distinguirlos redujo esta tanda de 15 operaciones de migración a 2 | Sesión 22-ago-2026 |
+| **C-27** | **Una verificación que el MCP no puede hacer se convierte en pausa manual explícita, no en supuesto.** Renombrar el primary de una maestra rompe cualquier filtro por literal, y el MCP **no puede leer el estado ni el código de una Airtable Automation**. En vez de asumir que no había ninguna, la tanda se detuvo con un mensaje literal hasta que Sergio confirmó `OK Automations verificadas`. El `grep` sobre `lib/`, `app/` y los blueprints —cero coincidencias— cubrió la mitad automatizable; la otra mitad la cubrió un humano | Sesión 22-ago-2026 · instrucción explícita del usuario |
+| **C-28** | **Baja lógica antes que borrado, salvo evidencia de orfandad.** Las 6 filas sin match ni links se marcaron `activo = false` en vez de borrarse: son reversibles, no estorban, y `lib/catalogos.ts` ya las excluye del dropdown por su filtro `{activo} = TRUE()`. El borrado se reservó para las 2 filas cuya orfandad se **verificó** por lectura tras migrar. La eliminación por API no tiene papelera | Sesión 22-ago-2026 · R6 del prompt |
+
+### Efecto sobre el código, sin tocarlo
+
+`lib/catalogos.ts` tenía un workaround explícito para este duplicado. El saneamiento **lo mejora**:
+la deduplicación pasa a ser un no-op y el nombre que viaja a SC01 se vuelve determinista, cuando
+antes dependía del orden en que Airtable devolviera los registros. El comentario de las líneas
+43-44 queda desactualizado y se anotó en **CI-049**; no se corrigió (R5).
