@@ -1762,3 +1762,42 @@ Cuando el conteo real difiere, **el primer sospechoso es el plan** — y la comp
 "¿cuántos hay?" sino "¿cuáles son?": el desglose ubica el error en un paso, mientras que releer la
 suma puede repetirla. Vale también al revés: si el conteo real hubiera dado 12 por coincidencia con
 una fila faltante, sólo el desglose lo habría detectado.
+
+---
+
+### 2026-08-22 — El estado vigente de una CI vive en su ficha, no en el snapshot que la detectó
+
+**Contexto:** Gate 1 de una tanda cuyo alcance era cerrar **CI-046** (el gate de coordinación de
+§2.4 sin cablear en la card).
+
+**Inconveniente:** reporté CI-046 como pendiente. Ya estaba cerrada desde hacía un día: el commit
+`b035172` del 21-ago-2026 —*"Frente A+B · gate §2.4 en card + chip «Por coordinar»"*— aplicó los
+dos pasos, y la ficha lo dice. Media tanda se planificó sobre trabajo terminado. En la misma
+sesión había pasado lo mismo con **P2-TAS.B**, reportada como pendiente estando cerrada desde el
+18-ago.
+
+**Causa raíz:** dos atajos que se refuerzan. **(1)** Leí la deuda en
+`docs/_notas/sesion-2026-08-19-p4-tas-cierre.md`, que lista CI-046 como pendiente y **es correcto a
+su fecha** — un snapshot con fecha es una foto, no un estado vivo, y envejece en cuanto alguien
+trabaja. **(2)** Acoté el `git log` con `--until=2026-08-20` para "ver la tanda", y ese filtro
+escondió justamente el commit que la cerraba.
+
+**Solución aplicada:** contrastar contra las dos fuentes que sí son vivas — el campo `Estado` de la
+ficha en `docs/CODE_INCONSISTENCIES.md` y el código. Para CI-046 bastó
+`grep -n "coordinacionVigente" lib/tasador/lectura-tasacion.ts` y
+`grep -n "resolverAccionCard" components/tasador/tasacion-card.tsx`: las dos piezas estaban.
+
+**Prevención futura — regla de verificación, en este orden:**
+
+1. **La ficha manda.** Antes de reportar una CI como pendiente, leer el campo **`Estado`** de su
+   ficha en `docs/CODE_INCONSISTENCIES.md`. Es el único lugar donde el estado se actualiza.
+2. **El snapshot no manda.** Una nota de `docs/_notas/` con fecha describe lo que era cierto ese
+   día. Sirve para reconstruir el porqué, **nunca** para afirmar el estado de hoy.
+3. **El código desempata.** Si ficha y snapshot discrepan, `grep` sobre los archivos que la
+   mitigación nombra resuelve en un paso.
+4. **No acotar el `git log` por fecha** cuando la pregunta es *"¿esto sigue abierto?"*. La fecha que
+   importa es la del último commit que tocó el archivo (`git log -3 -- <ruta>`), no la de la tanda
+   que lo detectó.
+
+Vale para las CI y para las tandas: el estado de una tanda está en su commit de cierre y en su
+archivo de `docs/_archivo/aprendizajes-*`, no en el snapshot que la abrió.

@@ -831,8 +831,32 @@ consumo de tener datos reales.
 
 ### Próximo paso
 
-**P1-TAS**, según el orden del plan. La serie P0.5-TAS → P0.5.B-TAS → P0.5.C-TAS cierra acá: el
-schema de IF-03 existe, la maestra está saneada y el catálogo de defaults tiene datos.
+**P5-TAS · §6 del plan · Pantalla 3 · Ingreso de fotos.**
+
+> ⚠ **Corrección (22-ago-2026).** La primera redacción de este bloque decía *"Próximo paso:
+> **P1-TAS**"*. Era incorrecto: P1-TAS a P4-TAS están cerradas desde el 19-ago-2026, y el Frente
+> A+B las siguió el 21-ago. El error surgió de leer el orden nominal del plan sin contrastar el
+> `git log` de la rama.
+
+**Lo que ya está cerrado en el frente de código de IF-03:**
+
+| Tanda | Cierre | Commit |
+|---|---|---|
+| **P1-TAS** · types TypeScript | 17-ago-2026 | `00330f0` |
+| **P2-TAS.A** · 11 rutas + 6 capas + 3 tests | 18-ago-2026 | `9dc1ee5` |
+| **P2-TAS.B** · capa cliente · cierra OV-7 (build verde) | 18-ago-2026 | `890bffa` |
+| **P3-TAS** · Pantalla 1 · cola con SLA real | 19-ago-2026 | `84233c2` |
+| **P4-TAS** · Pantalla 2 · Coordinar visita (6 bloques) | 19-ago-2026 | `336be28` |
+| **Frente A+B** · gate §2.4 en card + chip "Por coordinar" | 21-ago-2026 | `b035172` |
+
+El Frente A+B cerró **CI-045**, **CI-046** y **CI-048**, las tres marcadas `aplicada` en
+`docs/CODE_INCONSISTENCIES.md`. En particular **CI-046 ya no es deuda**: `proyectarTasacion()`
+puebla `coordinacionVigente` y `tasacion-card.tsx` cablea `resolverAccionCard()` con las tres
+variantes de la Regla T-A. La deuda que el snapshot de cierre de P4-TAS lista como pendiente es
+correcta **a su fecha** (19-ago) y quedó superada dos días después.
+
+La serie P0.5-TAS → P0.5.B-TAS → P0.5.C-TAS cierra el frente de datos: el schema de IF-03 existe,
+la maestra está saneada y el catálogo de defaults tiene 212 filas.
 
 Sigue conviniendo lo que quedó pendiente de P0.5.B-TAS: **probar el motor de cálculo sobre una
 solicitud real**, ahora que encuentra configuración donde antes no encontraba nada.

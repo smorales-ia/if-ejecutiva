@@ -877,7 +877,7 @@ primera línea.
 |---|---|---|---|
 | GET | `/api/tasaciones` | Cola del tasador: `TX_Solicitudes.tasador = usuario` y `estado ∈ {asignada, visitada, calculada}`, con el SLA por etapa resuelto | RF-09 · RF-TAS-01 · RF-TAS-02 |
 | GET | `/api/tasaciones/[id]` | Datos de la solicitud para las pantallas 2, 5 y 7 | RF-09 |
-| GET | `/api/tasaciones/[id]/coordinacion` | Último intento + historial de intentos | RF-TAS-03 |
+| ~~GET~~ | ~~`/api/tasaciones/[id]/coordinacion`~~ | ~~Último intento + historial de intentos~~ · **NO SE CONSTRUYÓ** — ver divergencia (a) abajo | RF-TAS-03 |
 | POST | `/api/tasaciones/[id]/coordinacion` | Inserta 1 fila en `TX_CoordinacionVisita` con `email_enviado_status = pendiente` | RF-TAS-03 · RF-TAS-12 |
 | GET | `/api/tasaciones/[id]/fotos` | Fotos por categoría + contadores | RF-TAS-14 |
 | POST | `/api/tasaciones/[id]/fotos` | Alta de foto → `TX_Adjuntos` (binario por el pipeline existente) | RF-TAS-14 |
@@ -889,7 +889,37 @@ primera línea.
 | GET | `/api/tasaciones/[id]/informe` | Datos de los 8 bloques del preview + versión vigente | RF-TAS-20 |
 | GET | `/api/tasaciones/[id]/expediente` | Adjuntos de sólo lectura para "Ver expediente" | RF-TAS-10 |
 | POST | `/api/tasaciones/[id]/rechazo` | Persiste `observacion_rechazo_tasador` **sin cambiar estado** | RF-TAS-09 |
-| GET | `/api/tasaciones/config/defaults` | Factores de homogeneización y coeficientes desde la capa de configuración | RF-TAS-08 |
+| ~~GET~~ | ~~`/api/tasaciones/config/defaults`~~ | ~~Factores de homogeneización y coeficientes~~ · **NO SE CONSTRUYÓ** — ver divergencia (b) abajo | RF-TAS-08 |
+
+> ### ⚠ Dos divergencias entre esta tabla y lo construido
+>
+> *Anotación in-place del 22-ago-2026, sin bump del plan. Detectadas al inventariar los endpoints
+> contra el árbol real. **Ninguna es deuda**: las dos son decisiones tomadas y registradas.*
+>
+> **(a) `GET /api/tasaciones/[id]/coordinacion` no existe, y no hace falta.** El archivo
+> `app/api/tasaciones/[id]/coordinacion/route.ts` **sólo exporta `POST`**. P4-TAS resolvió la
+> lectura de la coordinación **server-side**: `proyectarTasacion()` en
+> `lib/tasador/lectura-tasacion.ts` lee `TX_Solicitudes.coordinacion_vigente` y lo proyecta en
+> `Tasacion.coordinacionVigente`, de modo que `leerCola()` y `leerTasacion()` lo entregan a los
+> Server Components sin pasar por un Route Handler. Un GET habría sido una segunda vía de lectura
+> para el mismo dato, con el riesgo clásico de que las dos divergan. **Divergencia deliberada, no
+> hueco.** Si alguna tanda futura necesita el **historial completo de intentos** —que la proyección
+> no entrega, sólo el desenlace vigente— ahí sí corresponde construir el GET.
+>
+> **(b) `GET /api/tasaciones/config/defaults` no existe, por mandato de este mismo plan.**
+> **A-18** sigue abierta: `C_FactoresHomogeneizacion.valor_referencia` está vacío en sus 15 filas,
+> así que la ruta devolvería `null` para los tres factores y su criterio de aceptación sería
+> inverificable. Ya está dicho en §0 (punto 4), en la ficha de **A-18** y en la de **A-28** de la
+> tabla de ambigüedades; se marca también acá para que quien lea la tabla de rutas no lo derive de
+> nuevo. El frente cliente **no está bloqueado por esto**: `lib/tasador/factores-default.ts`
+> construye la *forma* —tres factores en `""`, `ufHomogeneizada()` calculando sobre lo tecleado— y
+> la *precarga* entra en **P7-TAS** cuando A-18 cierre. Registrado en **CI-031**, cerrada en
+> cliente.
+>
+> **Conteo real:** 15 filas en la tabla → **13 archivos `route.ts`** y 16 combinaciones
+> método × ruta. Las 11 de P2-TAS.A más las 2 que agregó P4-TAS
+> (`[id]/coordinacion` · `config/motivos-devolucion`, esta última no figura arriba). El aviso de
+> §0.1 del snapshot de P2-TAS vale igual: **una fila por método ≠ un archivo**.
 
 **Las cuatro capas obligatorias de cada Route Handler**, en este orden:
 
@@ -952,7 +982,9 @@ obligatorio se implementan en las tandas de UI, pero el contrato de respuesta se
 
 ### §3.3 Criterios de aceptación
 
-- [ ] Las 15 rutas existen bajo `app/api/tasaciones/**`.
+- [x] Las rutas existen bajo `app/api/tasaciones/**`. **13 archivos `route.ts`** = las 15 filas de
+      §3.1 menos las **2 divergencias** anotadas allí (`GET /coordinacion` y `GET /config/defaults`),
+      menos las que comparten archivo por método, más `config/motivos-devolucion` de P4-TAS.
 - [ ] **Cero Make.** `grep -rniE "make|postToMake|MAKE_WEBHOOK|X-VP-Signature" app/api/tasaciones/`
       no devuelve nada (R3).
 - [ ] Toda ruta pasa por las cuatro capas en orden. Verificable: cada `route.ts` importa
