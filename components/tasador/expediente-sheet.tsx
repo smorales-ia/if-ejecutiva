@@ -26,7 +26,12 @@ function tamano(bytes: number) {
   return `${bytes} B`
 }
 
-type Foto = { id: number; categoria: string }
+/**
+ * Foto del expediente. El `id` es el record ID de `TX_Adjuntos` desde P5-TAS —
+ * antes era un contador local sin contraparte en la base—, y `nombre` es el
+ * archivo real, así que el pie del preview ya no fabrica `IMG_<n>.jpg`.
+ */
+type Foto = { id: string; categoria: string; nombre: string }
 
 /**
  * Expediente read-only (§7.3): lista todos los adjuntos (fotos + documentos)
@@ -44,18 +49,23 @@ export function ExpedienteSheet({
 }) {
   const [preview, setPreview] = useState<Foto | null>(null)
 
-  // Fotos agrupadas por categoría (ids de placeholder).
+  // Fotos agrupadas por categoría.
   const gruposFoto = useMemo(() => {
     const predefinidas = CATEGORIAS_FOTO.map((c) => ({
       label: c.label,
-      fotos: (payload.fotosPredefinidas[c.id] ?? []).map((id) => ({
-        id,
+      fotos: (payload.fotosPredefinidas[c.id] ?? []).map((f) => ({
+        id: f.id,
         categoria: c.label,
+        nombre: f.nombre,
       })),
     }))
     const custom = payload.categoriasCustom.map((c) => ({
       label: c.nombre,
-      fotos: c.fotos.map((id) => ({ id, categoria: c.nombre })),
+      fotos: c.fotos.map((f) => ({
+        id: f.id,
+        categoria: c.nombre,
+        nombre: f.nombre,
+      })),
     }))
     return [...predefinidas, ...custom].filter((g) => g.fotos.length > 0)
   }, [payload])
@@ -145,7 +155,7 @@ export function ExpedienteSheet({
               />
             </div>
             <p className="border-t border-border px-5 py-3 text-sm text-vp-text-secondary">
-              {preview.categoria} · IMG_{preview.id}.jpg
+              {preview.categoria} · {preview.nombre}
             </p>
           </div>
         ) : (

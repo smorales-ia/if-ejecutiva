@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { resolverAccionCard, type EstadoCoordinacion, type Tasacion } from './tasaciones'
+import {
+  normalizarFotosBorrador,
+  resolverAccionCard,
+  type EstadoCoordinacion,
+  type FotoAdjunta,
+  type InformeData,
+  type Tasacion,
+} from './tasaciones'
 
 /**
  * Bloque 2 (A · gate §2.4 · CI-046) — el único punto de la Regla T-A.
@@ -62,5 +69,85 @@ describe('resolverAccionCard · las tres variantes excluyentes de la Regla T-A',
     const abrir = resolverAccionCard(tasacion('rec9', 'confirmada'))
     expect(coordinar.tipo === 'coordinar' && coordinar.href).toBe('/tasaciones/rec9/coordinar')
     expect(abrir.tipo === 'abrir' && abrir.href).toBe('/tasaciones/rec9')
+  })
+})
+
+/**
+ * P5-TAS · B2 — el saneo de las fotos de un borrador local.
+ *
+ * `InformeData.fotosPredefinidas` pasó de `number[]` a `FotoAdjunta[]`, y en
+ * `localStorage` hay borradores con la forma vieja. El mecanismo previsto para
+ * un cambio de forma es subir la `VERSION` de `tasador-store`, pero eso
+ * **descartaría el formulario entero** —las ocho secciones medidas en terreno—
+ * para arreglar dos arrays. Esta función los sanea y deja el resto intacto.
+ *
+ * Sin este saneo el fallo sería silencioso y tardío: TypeScript no ve lo que
+ * sale de `JSON.parse`, así que los números sobrevivirían hasta que algo
+ * intentara leerles `.id` o `.nombre` en pantalla.
+ */
+describe('normalizarFotosBorrador · borradores anteriores a P5-TAS', () => {
+  const foto = (n: number): FotoAdjunta => ({
+    id: `recF${String(n).padStart(13, '0')}`,
+    categoria: 'cocina',
+    nombre: `IMG_${n}.jpg`,
+    url: null,
+    thumbnailUrl: null,
+    hashMd5: null,
+  })
+
+  /** Un borrador con la forma que se guardaba antes de esta tanda. */
+  const borradorViejo = () =>
+    ({
+      dormitorios: '3',
+      observacionesTasador: 'Piso flotante en dormitorios',
+      fotosPredefinidas: { cocina: [1, 2], banos: [3] },
+      categoriasCustom: [{ id: 'cat-1', nombre: 'Bodega', minimo: 1, fotos: [4, 5] }],
+    }) as unknown as InformeData
+
+  it('descarta los identificadores locales, que no referenciaban nada', () => {
+    const saneado = normalizarFotosBorrador(borradorViejo())
+
+    expect(saneado.fotosPredefinidas.cocina).toEqual([])
+    expect(saneado.fotosPredefinidas.banos).toEqual([])
+    expect(saneado.categoriasCustom[0].fotos).toEqual([])
+  })
+
+  it('conserva el resto del formulario, que es lo caro de rehacer', () => {
+    const saneado = normalizarFotosBorrador(borradorViejo())
+
+    expect(saneado.dormitorios).toBe('3')
+    expect(saneado.observacionesTasador).toBe('Piso flotante en dormitorios')
+    expect(saneado.categoriasCustom[0].nombre).toBe('Bodega')
+  })
+
+  it('deja las ocho categorías presentes aunque el borrador sólo trajera dos', () => {
+    const saneado = normalizarFotosBorrador(borradorViejo())
+
+    expect(Object.keys(saneado.fotosPredefinidas)).toHaveLength(8)
+  })
+
+  it('no toca las fotos que ya tienen la forma nueva', () => {
+    const nuevo = {
+      fotosPredefinidas: { cocina: [foto(1)] },
+      categoriasCustom: [{ id: 'cat-1', nombre: 'Bodega', minimo: 0, fotos: [foto(2)] }],
+    } as unknown as InformeData
+
+    const saneado = normalizarFotosBorrador(nuevo)
+
+    expect(saneado.fotosPredefinidas.cocina).toHaveLength(1)
+    expect(saneado.fotosPredefinidas.cocina[0].nombre).toBe('IMG_1.jpg')
+    expect(saneado.categoriasCustom[0].fotos).toHaveLength(1)
+  })
+
+  it('sobrevive a un borrador corrupto o manipulado a mano', () => {
+    const roto = {
+      fotosPredefinidas: null,
+      categoriasCustom: 'no soy un array',
+    } as unknown as InformeData
+
+    const saneado = normalizarFotosBorrador(roto)
+
+    expect(Object.keys(saneado.fotosPredefinidas)).toHaveLength(8)
+    expect(saneado.categoriasCustom).toEqual([])
   })
 })

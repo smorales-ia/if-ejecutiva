@@ -426,6 +426,26 @@ Lo que sigue vigente como regla vive abajo, destilado.
   la duda sea "¿esto va en el cliente compartido o en un módulo propio?", la
   pregunta útil no es dónde queda más ordenado sino **quién más se rompe si me
   equivoco**.
+- **RO-38 · Antes de filtrar por el valor de un `singleSelect`, leer sus
+  opciones en el schema y descartar duplicados de capitalización.** Con
+  `typecast: true` un valor equivocado **no falla: se guarda**, y la fila queda
+  fuera de todo filtro que use el literal correcto. El fallo es silencioso por
+  partida doble —ni la escritura da error ni la lectura devuelve menos de lo que
+  parece razonable— y sobrevive a la revisión porque las dos mitades del código
+  *se ven* bien por separado.
+  Caso que la origina: `TX_Adjuntos.subido_por` tiene hoy **`Tasador` y
+  `tasador`** como opciones distintas del mismo campo, la minúscula ya presente
+  en filas reales, mientras `lib/adjuntos-uploader.ts` manda `'Ejecutivo'` por
+  defecto y `GET /api/tasaciones/[id]/fotos` filtra por `{subido_por}="Tasador"`.
+  Una foto escrita con la minúscula sube, se guarda y **no vuelve nunca** al
+  listado.
+  Dos corolarios, y los dos hacen falta: si UI y backend tienen que coincidir en
+  un literal, **se declara en un sitio y lo consumen los dos** (**RO-05**); y
+  cuando el servidor puede reescribirlo, que lo reescriba — el valor que decide
+  si un dato es localizable no debería depender de lo que mandó el cliente.
+  Es **RO-13** por el mismo filo, aplicado a un `singleSelect` en vez de a un
+  campo fórmula: derivar el literal de la fuente de verdad, nunca del vocabulario
+  con que el equipo habla del campo.
 
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 
@@ -1801,3 +1821,88 @@ ficha en `docs/CODE_INCONSISTENCIES.md` y el código. Para CI-046 bastó
 
 Vale para las CI y para las tandas: el estado de una tanda está en su commit de cierre y en su
 archivo de `docs/_archivo/aprendizajes-*`, no en el snapshot que la abrió.
+
+### 2026-08-22 — P5-TAS reanudada · cierre de CI-052 y persistencia real de fotos
+
+**Contexto:** batches B3, B2 y B4 de P5-TAS (Pantalla 3 · organizador de fotos), que la tanda del
+mismo día había dejado bloqueados. Sergio aprobó en el Gate 2 la opción (a) de **CI-052** y una
+excepción R4 acotada a un solo archivo bajo `app/api/`.
+
+**Inconveniente:** `POST /api/tasaciones/[id]/fotos` y `POST /api/adjuntos/upload` creaban **cada
+uno** una fila en `TX_Adjuntos`; encadenarlos —que es lo que §6.1 describe— dejaba dos registros por
+foto.
+
+**Causa raíz:** el alta de la fila vive dentro del **módulo 8 de `SC-Adjuntos-Upload`**, no en el
+Route Handler. Leer `upload/route.ts` no revela que crea un registro salvo que se siga el rastro
+hasta el comentario del módulo. P2-TAS.A escribió la otra ruta sobre una suposición razonable y
+escrita, que simplemente no era cierta.
+
+**Solución aplicada:** el pipeline pasa a ser el dueño de la fila. `app/api/tasaciones/[id]/fotos/route.ts`
+perdió el `createRecord` y expone un **`PATCH`** que actualiza el adjunto que Make ya creó,
+escribiendo la categoría sobre el `adjunto_id` devuelto. Se cambió el verbo y no sólo el cuerpo:
+nada consumía el `POST`, y `PATCH` cubre además la recategorización de una foto ya subida, que es la
+operación más frecuente del organizador. El escenario Make no se tocó y la idempotencia por
+`hash_md5` se conserva. Cobertura: `app/api/tasaciones/[id]/fotos/route.test.ts` (15 tests) y
+`lib/tasador/fotos.test.ts` (14).
+
+**Prevención futura:** al reutilizar un endpoint ajeno, la pregunta útil no es *"¿existe y
+funciona?"* sino **"¿qué más hace además de lo que su nombre promete?"**, y la respuesta puede no
+estar en el código que se lee — acá vivía en un blueprint de Make, a un salto de distancia. Un test
+que afirme lo que la ruta **dejó de hacer** (`expect(createRecord).not.toHaveBeenCalled()`) es lo
+único que impide que el defecto vuelva: una fila duplicada no falla, sólo cuenta de más.
+
+### 2026-08-22 — Un `singleSelect` con dos opciones que sólo difieren en la mayúscula
+
+**Contexto:** mismo batch B3. `GET /api/tasaciones/[id]/fotos` filtra por
+`{subido_por}="Tasador"`, y el cliente tenía que declarar ese valor al subir.
+
+**Inconveniente:** `TX_Adjuntos.subido_por` tiene hoy **`Tasador` y `tasador`** como opciones
+distintas del mismo `singleSelect` —la minúscula ya está en filas reales, verificado vía MCP—, y
+`lib/adjuntos-uploader.ts` manda `'Ejecutivo'` por defecto. Con `typecast: true`, escribir la
+minúscula **no da error**: reutiliza la otra opción y la foto queda fuera del `GET` para siempre.
+
+**Causa raíz:** dos capas escribiendo el mismo campo con vocabularios que nadie había contrastado,
+sobre un dominio que se dejó crecer con duplicados de capitalización. `typecast` convierte lo que
+sería un 422 en un dato mal clasificado.
+
+**Solución aplicada:** el literal se declara una sola vez por lado —`SUBIDO_POR_TASADOR` en
+`lib/tasador/fotos.ts` y en el Route Handler— y **el `PATCH` lo reescribe server-side**, de modo que
+una foto categorizada es localizable pase lo que pase en el payload de subida. Dos tests lo fijan:
+uno sobre lo que se escribe y otro sobre el literal que el `GET` filtra, para que no puedan
+divergir.
+
+**Prevención futura:** antes de filtrar por el valor de un `singleSelect`, **leer su dominio real**
+—no el que uno espera— y buscar duplicados por capitalización o acento. Con `typecast` activado, un
+valor equivocado no falla: se guarda. Es RO-13 (*filtrar por el formato real, no por el literal
+humano*) aplicado a un `singleSelect` en vez de a una fórmula, y **RO-05** por el otro extremo: si
+UI y backend tienen que coincidir en un literal, se declara en un sitio y lo consumen los dos.
+Registrado como regla operativa **RO-38**, aprobada por Sergio el 22-ago-2026.
+
+### 2026-08-22 — E-024 quedó SUPERADO: `codigo_solicitud` sí está poblado
+
+**Contexto:** verificación previa a B2. `GET /fotos` filtra los adjuntos con
+`{solicitud}="{codigo_solicitud}"`, y un campo Link dentro de `filterByFormula` se evalúa contra el
+**primary field** de la tabla vinculada (lección E-018).
+
+**Inconveniente:** **E-024** (10-jul-2026, archivado en `docs/_archivo/aprendizajes_20260807.md`)
+declara que `TX_Solicitudes.codigo_solicitud` *"está vacío en todas las filas — nunca se pobló"*. De
+ser cierto hoy, el `GET` devolvería vacío siempre y la hidratación de B2 no probaría nada, aun con
+el camino de escritura terminado.
+
+**Causa raíz:** ninguna. El campo **se convirtió en fórmula** entre el 10 y el 13-jul-2026 —lo
+registra `docs/schema-airtable.md` §19— y desde entonces se calcula solo. La afirmación de E-024 era
+cierta a su fecha y dejó de serlo tres días después.
+
+**Solución aplicada:** verificado vía MCP el 22-ago-2026 sobre `TX_Solicitudes`: las filas traen
+`codigo_solicitud` poblado (`VP-2026-0004`, `VP-2026-0060`, `VP-2026-0061`…). **E-024 queda
+SUPERADO.** No se editó la entrada original: vive en un archivo histórico y la regla de sólo-append
+lo protege; esta entrada es su corrección, y `docs/schema-airtable.md` §19 ya documentaba el cambio.
+
+**Prevención futura:** una entrada de bitácora afirma lo que era cierto **el día que se escribió**.
+Antes de tratarla como un bloqueo vigente, comprobar el hecho contra la base — es un `list_records`
+por MCP, treinta segundos. Es la misma lección que la entrada del 21-ago sobre CI-046 («el snapshot
+no manda»), ahora del lado de la bitácora: ningún documento con fecha describe el presente.
+
+> **Nota de mantenimiento.** Este archivo pasa de 1800 líneas y cumple de sobra el umbral de
+> archivado de `CLAUDE.md`. **No se archivó acá**: el archivado es una operación deliberada, de
+> tanda propia, y hacerlo a mitad de P5-TAS habría mezclado dos cosas con criterios distintos.

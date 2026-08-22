@@ -633,13 +633,46 @@ export interface Comodidades {
   estacionamientoVisitas: boolean
 }
 
+/**
+ * Una foto de la visita, ya subida a Dropbox o esperando en la cola offline.
+ *
+ * Reemplaza en **P5-TAS** al `number` que la pantalla usaba como identificador
+ * local. Aquel número no correspondía a nada: se generaba con un contador de
+ * módulo (`uid++`), no sobrevivía a un refresco y no tenía contraparte en
+ * `TX_Adjuntos`, así que la pantalla no podía ni rehidratarse ni borrar de
+ * verdad. Ver `lib/tasador/fotos.ts`.
+ */
+export interface FotoAdjunta {
+  /**
+   * Record ID de `TX_Adjuntos` (`rec…`) una vez subida.
+   *
+   * Mientras la foto vive sólo en la cola offline lleva un id local
+   * `cola-<uuid>`, que se sustituye por el definitivo al drenar la cola. Es el
+   * único momento en que este campo no es una clave de Airtable, y por eso
+   * `pendiente` lo acompaña siempre.
+   */
+  id: string
+  /** Categoría del organizador: una de las ocho fijas o una personalizada. */
+  categoria: string
+  nombre: string
+  /** `url_dropbox` — es un `path_display`, no un enlace navegable. */
+  url: string | null
+  thumbnailUrl: string | null
+  /**
+   * `hash_md5`, necesario para el borrado real: `SC-Adjuntos-Delete` se niega a
+   * destruir nada si el registro apuntado ya no tiene ese hash (§8.6.3).
+   */
+  hashMd5: string | null
+  /** `true` mientras la foto está en la cola offline y aún no llegó a Dropbox. */
+  pendiente?: boolean
+}
+
 /** Categoría personalizada de fotos creada por el tasador en terreno (§2.6). */
 export interface FotoCategoriaCustom {
   id: string
   nombre: string
   minimo: number
-  /** Identificadores locales de las fotos, previos a la subida. */
-  fotos: number[]
+  fotos: FotoAdjunta[]
 }
 
 /**
@@ -745,7 +778,7 @@ export interface InformeData {
   valorReferenciaClp: string
 
   /* --- Fotos y documentos de la visita (§2.6) --- */
-  fotosPredefinidas: Record<CategoriaFotoId, number[]>
+  fotosPredefinidas: Record<CategoriaFotoId, FotoAdjunta[]>
   categoriasCustom: FotoCategoriaCustom[]
   /** Clave: `tipo_documento`. Valor: identificadores locales de los archivos. */
   documentosCargados?: Record<string, number[]>
@@ -1103,10 +1136,48 @@ function comodidadesVacias(): Comodidades {
   }
 }
 
-function fotosVacias(): Record<CategoriaFotoId, number[]> {
+function fotosVacias(): Record<CategoriaFotoId, FotoAdjunta[]> {
   return Object.fromEntries(
-    CATEGORIAS_FOTO.map((c) => [c.id, [] as number[]]),
-  ) as Record<CategoriaFotoId, number[]>
+    CATEGORIAS_FOTO.map((c) => [c.id, [] as FotoAdjunta[]]),
+  ) as Record<CategoriaFotoId, FotoAdjunta[]>
+}
+
+/**
+ * Sanea las fotos de un borrador local antes de devolverlo a la pantalla.
+ *
+ * ## Por qué no se sube `VERSION` en `tasador-store`
+ *
+ * `InformeData.fotosPredefinidas` cambió de forma en P5-TAS (`number[]` →
+ * `FotoAdjunta[]`), y el mecanismo previsto para eso es invalidar el borrador
+ * subiendo su `VERSION`. Aquí sale más caro que el problema: eso **descartaría
+ * el formulario entero** —las ocho secciones que el tasador midió en terreno—
+ * para arreglar dos arrays.
+ *
+ * Y no hay nada que migrar en esos arrays. Los `number` eran identificadores de
+ * un contador en memoria, sin contraparte en `TX_Adjuntos` ni archivo detrás:
+ * convertirlos a `FotoAdjunta` fabricaría fotos que nunca existieron. Se
+ * descartan, y la hidratación desde `GET /fotos` repone las que sí están
+ * subidas — que son todas las reales.
+ *
+ * Es tolerante a cualquier basura, no sólo a la forma vieja: un borrador
+ * manipulado a mano no debe poder tumbar la pantalla.
+ */
+export function normalizarFotosBorrador(datos: InformeData): InformeData {
+  const esFoto = (v: unknown): v is FotoAdjunta =>
+    typeof v === 'object' && v !== null && typeof (v as FotoAdjunta).id === 'string'
+
+  const soloFotos = (v: unknown): FotoAdjunta[] =>
+    Array.isArray(v) ? v.filter(esFoto) : []
+
+  const fotosPredefinidas = Object.fromEntries(
+    CATEGORIAS_FOTO.map((c) => [c.id, soloFotos(datos.fotosPredefinidas?.[c.id])]),
+  ) as Record<CategoriaFotoId, FotoAdjunta[]>
+
+  const categoriasCustom = (
+    Array.isArray(datos.categoriasCustom) ? datos.categoriasCustom : []
+  ).map((c) => ({ ...c, fotos: soloFotos(c?.fotos) }))
+
+  return { ...datos, fotosPredefinidas, categoriasCustom }
 }
 
 /**

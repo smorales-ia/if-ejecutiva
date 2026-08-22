@@ -4,7 +4,11 @@ import {
   evaluarCustom,
   type FotosPorCategoria,
 } from './fotos-categorizadas'
-import { CATEGORIAS_FOTO, type FotoCategoriaCustom } from '@/lib/tasaciones'
+import {
+  CATEGORIAS_FOTO,
+  type FotoAdjunta,
+  type FotoCategoriaCustom,
+} from '@/lib/tasaciones'
 
 /**
  * RF-TAS-14 · criterio de aceptación: *"el contador de cada categoría y el total
@@ -17,6 +21,20 @@ import { CATEGORIAS_FOTO, type FotoCategoriaCustom } from '@/lib/tasaciones'
  * funciones cubre el contador y el total con la misma aserción: no hay un
  * tercer sitio donde el número pueda divergir.
  */
+
+/**
+ * Fixture de foto persistida. Desde P5-TAS el estado guarda `FotoAdjunta` —con
+ * el record ID de `TX_Adjuntos`— y no el contador local que se usaba antes; las
+ * aserciones de conteo son las mismas, pero el dato ya no es un número suelto.
+ */
+const foto = (n: number): FotoAdjunta => ({
+  id: `recFOTO${String(n).padStart(9, '0')}`,
+  categoria: 'cocina',
+  nombre: `IMG_${n}.jpg`,
+  url: null,
+  thumbnailUrl: null,
+  hashMd5: null,
+})
 
 const vacio = (): FotosPorCategoria => {
   const f = {} as FotosPorCategoria
@@ -47,7 +65,7 @@ describe('evaluarCategorias · las ocho del catálogo', () => {
     const fotos = vacio()
     expect(evaluarCategorias(fotos, declarados).find((e) => e.id === 'cocina')!.count).toBe(0)
 
-    const conFoto = { ...fotos, cocina: [1] }
+    const conFoto = { ...fotos, cocina: [foto(1)] }
     const cocina = evaluarCategorias(conFoto, declarados).find((e) => e.id === 'cocina')!
     expect(cocina.count).toBe(1)
     expect(cocina.completa).toBe(true)
@@ -55,12 +73,12 @@ describe('evaluarCategorias · las ocho del catálogo', () => {
   })
 
   it('el contador baja en la misma interacción en que se elimina', () => {
-    const conDos = { ...vacio(), banos: [1, 2] }
+    const conDos = { ...vacio(), banos: [foto(1), foto(2)] }
     expect(evaluarCategorias(conDos, declarados).find((e) => e.id === 'banos')!.completa).toBe(
       true,
     )
 
-    const conUna = { ...conDos, banos: [1] }
+    const conUna = { ...conDos, banos: [foto(1)] }
     const banos = evaluarCategorias(conUna, declarados).find((e) => e.id === 'banos')!
     expect(banos.count).toBe(1)
     expect(banos.completa).toBe(false)
@@ -68,7 +86,7 @@ describe('evaluarCategorias · las ocho del catálogo', () => {
   })
 
   it('el mínimo de habitaciones sigue lo declarado, no un literal del componente', () => {
-    const fotos = { ...vacio(), habitaciones: [1, 2] }
+    const fotos = { ...vacio(), habitaciones: [foto(1), foto(2)] }
     const conDos = evaluarCategorias(fotos, declarados).find((e) => e.id === 'habitaciones')!
     expect(conDos.completa).toBe(true)
 
@@ -107,7 +125,7 @@ describe('evaluarCustom · RF-TAS-14 · sin mínimo', () => {
   })
 
   it('cuenta sus fotos igual que una del catálogo', () => {
-    const [estado] = evaluarCustom([nueva({ fotos: [1, 2, 3] })])
+    const [estado] = evaluarCustom([nueva({ fotos: [foto(1), foto(2), foto(3)] })])
     expect(estado.count).toBe(3)
     expect(estado.label).toBe('Bodega')
   })
@@ -117,11 +135,11 @@ describe('total del header · "N fotos · N docs"', () => {
   it('suma catálogo y personalizadas en la misma interacción', () => {
     expect(totalHeader(vacio(), [])).toBe(0)
 
-    const fotos = { ...vacio(), cocina: [1], banos: [2, 3] }
+    const fotos = { ...vacio(), cocina: [foto(1)], banos: [foto(2), foto(3)] }
     expect(totalHeader(fotos, [])).toBe(3)
 
     const custom: FotoCategoriaCustom[] = [
-      { id: 'cat-1', nombre: 'Bodega', minimo: 0, fotos: [4, 5] },
+      { id: 'cat-1', nombre: 'Bodega', minimo: 0, fotos: [foto(4), foto(5)] },
     ]
     expect(totalHeader(fotos, custom)).toBe(5)
   })

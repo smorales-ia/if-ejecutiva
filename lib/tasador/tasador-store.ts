@@ -26,7 +26,7 @@
  * no puede pisar una con la otra — el bug clásico de una clave global.
  */
 
-import type { InformeData } from "@/lib/tasaciones"
+import { normalizarFotosBorrador, type InformeData } from "@/lib/tasaciones"
 
 const PREFIJO = "vp.tasador.informe."
 
@@ -79,7 +79,17 @@ export function readPayload(id: string): InformeData | null {
       ls.removeItem(clave(id))
       return null
     }
-    return envoltorio.datos ?? null
+    if (!envoltorio.datos) return null
+
+    /*
+     * Las fotos cambiaron de forma en P5-TAS (`number[]` → `FotoAdjunta[]`) y
+     * este borrador puede traer la vieja. No se sube `VERSION` porque eso
+     * descartaría el formulario entero —las ocho secciones medidas en terreno—
+     * para arreglar dos arrays cuyo contenido, además, no vale nada: eran
+     * identificadores de un contador en memoria, sin archivo ni fila detrás.
+     * Se descartan y la hidratación desde `GET /fotos` repone las reales.
+     */
+    return normalizarFotosBorrador(envoltorio.datos)
   } catch (err) {
     // Un borrador ilegible es peor que ninguno: se descarta en vez de
     // propagar el fallo a la pantalla.

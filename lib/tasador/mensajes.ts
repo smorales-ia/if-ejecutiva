@@ -28,6 +28,16 @@ export const MENSAJES = Object.freeze({
   /** Cuerpo que no pasa el schema Zod. El detalle por campo va aparte. */
   datosInvalidos: 'Revisa los datos: hay campos que no podemos guardar así.',
 
+  /**
+   * Foto que no existe, o que no cuelga de esta tasación
+   * (`PATCH /api/tasaciones/[id]/fotos`, guard de pertenencia · P5-TAS).
+   *
+   * Un solo literal para los dos casos, por la misma razón que
+   * `solicitudNoDisponible`: distinguirlos le confirmaría a un tercero que el
+   * adjunto existe.
+   */
+  adjuntoNoDisponible: 'No encontramos esta foto entre las de tu tasación.',
+
   /** `POST /calcular` sobre una solicitud que ya salió de `asignada` (RF-TAS-07). */
   calculoYaIniciado: 'Esta tasación ya fue enviada a cálculo.',
 

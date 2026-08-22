@@ -4,21 +4,36 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import type { Dispatch, SetStateAction } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Camera, FileText } from "lucide-react"
+import { ArrowLeft, ArrowRight, Camera, CloudOff, FileText } from "lucide-react"
+import { toast } from "sonner"
 import {
   resolverInforme,
-  CATEGORIAS_FOTO,
   type Tasacion,
+  type FotoAdjunta,
   type InformeData,
   type FotoCategoriaCustom,
 } from "@/lib/tasaciones"
 import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
+import {
+  eliminarFotoDeVisita,
+  leerFotosDeVisita,
+  subirFotoDeVisita,
+} from "@/lib/tasador/fotos"
+import { repartirFotos } from "@/lib/tasador/reparto-fotos"
+import {
+  archivoDeCola,
+  drenarCola,
+  eliminarDeCola,
+  encolarFoto,
+  esIdDeCola,
+  listarPendientes,
+  type FotoEnCola,
+} from "@/lib/tasador/cola-fotos"
 import { Button } from "@/components/ui/button"
 import {
   FotosCategorizadas,
   evaluarCategorias,
   evaluarCustom,
-  type FotosPorCategoria,
 } from "@/components/tasador/fotos-categorizadas"
 import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
 import { aSolicitudParaSheet } from "@/lib/tasador/adaptador-solicitud"
@@ -29,12 +44,25 @@ import {
 import { useAdjuntosSolicitud } from "@/lib/use-adjuntos-solicitud"
 import type { TipoDocumento } from "@/lib/use-tipos-documento"
 
-const FOTO_IDS = CATEGORIAS_FOTO.map((c) => c.id)
+/** Literal §6.1 para el fallo que no sabemos explicar al usuario. */
+const MSG_ERROR_RED =
+  "No pudimos completar la acción. Intenta nuevamente en unos segundos."
+const MSG_SIN_CONEXION =
+  "Sin conexión. La foto queda guardada y se sube cuando vuelvas a tener señal."
+const MSG_SIN_ALMACENAMIENTO =
+  "Tu navegador no permite guardar la foto para reintentarla. Vuelve a tomarla con señal."
 
-function toFull(parcial: Record<string, number[]>): FotosPorCategoria {
-  const full = {} as FotosPorCategoria
-  for (const id of FOTO_IDS) full[id] = parcial[id] ?? []
-  return full
+/** Una foto de la cola, proyectada a la forma que pinta la pantalla. */
+function desdeCola(registro: FotoEnCola): FotoAdjunta {
+  return {
+    id: registro.id,
+    categoria: registro.categoria,
+    nombre: registro.nombre,
+    url: null,
+    thumbnailUrl: null,
+    hashMd5: null,
+    pendiente: true,
+  }
 }
 
 export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
@@ -50,17 +78,7 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
     writePayload(tasacion.id, form)
   }, [tasacion.id, form])
 
-  const fotos = useMemo(() => toFull(form.fotosPredefinidas), [form.fotosPredefinidas])
-  const setFotos: Dispatch<SetStateAction<FotosPorCategoria>> = useCallback((action) => {
-    setForm((prev) => {
-      const current = toFull(prev.fotosPredefinidas)
-      const next =
-        typeof action === "function"
-          ? (action as (p: FotosPorCategoria) => FotosPorCategoria)(current)
-          : action
-      return { ...prev, fotosPredefinidas: next }
-    })
-  }, [])
+  const fotos = form.fotosPredefinidas
   const setCustom: Dispatch<SetStateAction<FotoCategoriaCustom[]>> = useCallback(
     (action) => {
       setForm((prev) => {
@@ -74,6 +92,211 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
       })
     },
     [],
+  )
+
+  /* --- Persistencia de fotos (P5-TAS · B2/B3/B4) ------------------------ */
+
+  const [subiendoEn, setSubiendoEn] = useState<string | null>(null)
+  const [borrandoId, setBorrandoId] = useState<string | null>(null)
+  const [pendientes, setPendientes] = useState(0)
+
+  /**
+   * Relee la verdad —`GET /fotos` más la cola— y la proyecta al formulario.
+   *
+   * Es **la única** vía por la que el listado de fotos cambia. No hay
+   * actualización optimista: una foto que la pantalla muestra es una foto que
+   * está en `TX_Adjuntos` o en la cola local, nunca una que "debería" estar. Es
+   * más lento y es lo correcto para una pantalla cuyo propósito es acreditar
+   * que la evidencia de terreno quedó guardada.
+   */
+  const refrescar = useCallback(async () => {
+    let subidas: FotoAdjunta[] = []
+    try {
+      subidas = await leerFotosDeVisita(tasacion.id)
+    } catch (err) {
+      // Un fallo de lectura no puede vaciar la pantalla: se conserva lo que ya
+      // se mostraba y se sale sin tocar el estado.
+      console.error("[FotosScreen] no se pudieron leer las fotos", err)
+      return
+    }
+
+    const enCola = await listarPendientes(tasacion.id)
+    setPendientes(enCola.length)
+
+    setForm((prev) => {
+      const { fotosPredefinidas, categoriasCustom } = repartirFotos(
+        [...subidas, ...enCola.map(desdeCola)],
+        prev.categoriasCustom,
+      )
+      return { ...prev, fotosPredefinidas, categoriasCustom }
+    })
+  }, [tasacion.id])
+
+  /**
+   * Hidratación al montar y drenaje de la cola al recuperar la conexión.
+   *
+   * `drenarCola` con la cola vacía es una lectura y nada más, así que este mismo
+   * efecto cubre los dos casos sin duplicar la carga inicial.
+   */
+  useEffect(() => {
+    let vivo = true
+
+    const drenar = async () => {
+      const resultado = await drenarCola(tasacion.id, async (registro) => {
+        const res = await subirFotoDeVisita({
+          file: archivoDeCola(registro),
+          solicitudId: registro.solicitudId,
+          codigoExt: registro.codigoExt,
+          categoria: registro.categoria,
+        })
+        return { ok: res.ok, reintentable: res.ok ? false : res.reintentable }
+      })
+
+      if (!vivo) return
+      if (resultado.subidas > 0) {
+        toast.success(
+          resultado.subidas === 1
+            ? "Se subió 1 foto que estaba pendiente"
+            : `Se subieron ${resultado.subidas} fotos que estaban pendientes`,
+        )
+      }
+      await refrescar()
+    }
+
+    void drenar()
+    window.addEventListener("online", drenar)
+    return () => {
+      vivo = false
+      window.removeEventListener("online", drenar)
+    }
+  }, [tasacion.id, refrescar])
+
+  /** Guarda la foto en la cola y avisa. Devuelve `false` si ni eso se pudo. */
+  const encolar = useCallback(
+    async (categoria: string, file: File, mensaje: string) => {
+      const encolada = await encolarFoto({
+        solicitudId: tasacion.id,
+        codigoExt: tasacion.codigo,
+        categoria,
+        file,
+      })
+      if (!encolada) {
+        toast.error(MSG_SIN_ALMACENAMIENTO)
+        return false
+      }
+      toast.info(mensaje)
+      await refrescar()
+      return true
+    },
+    [tasacion.id, tasacion.codigo, refrescar],
+  )
+
+  /**
+   * Regla D · el reset de `subiendoEn` va en el `finally`.
+   *
+   * Sin él, cualquier salida que no pase por el `catch` —un throw síncrono, un
+   * fallo de parseo, un timeout— dejaría el botón de esa categoría deshabilitado
+   * y con el spinner encendido para el resto de la sesión, y el tasador tendría
+   * que recargar en terreno.
+   */
+  const agregarFoto = useCallback(
+    async (categoria: string, file: File) => {
+      setSubiendoEn(categoria)
+      try {
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+          await encolar(categoria, file, MSG_SIN_CONEXION)
+          return
+        }
+
+        const res = await subirFotoDeVisita({
+          file,
+          solicitudId: tasacion.id,
+          codigoExt: tasacion.codigo,
+          categoria,
+        })
+
+        if (res.ok) {
+          await refrescar()
+          return
+        }
+
+        // Un fallo reintentable en terreno es casi siempre la señal yéndose: la
+        // foto va a la cola en vez de perderse. Uno definitivo —archivo
+        // demasiado grande, path irresoluble— se informa con su propio literal,
+        // que ya explica qué hacer.
+        if (res.reintentable) {
+          await encolar(categoria, file, MSG_SIN_CONEXION)
+          return
+        }
+
+        toast.error(res.mensaje)
+      } finally {
+        setSubiendoEn(null)
+      }
+    },
+    [tasacion.id, tasacion.codigo, encolar, refrescar],
+  )
+
+  const borrarFoto = useCallback(
+    async (_categoria: string, foto: FotoAdjunta) => {
+      setBorrandoId(foto.id)
+      try {
+        // Una foto que nunca llegó a subir se descarta de la cola: no hay nada
+        // que borrar en Dropbox ni en Airtable.
+        if (esIdDeCola(foto.id)) {
+          await eliminarDeCola(foto.id)
+          await refrescar()
+          return
+        }
+
+        const ok = await eliminarFotoDeVisita({
+          adjuntoId: foto.id,
+          solicitudId: tasacion.id,
+          codigoExt: tasacion.codigo,
+          hashMd5: foto.hashMd5,
+        })
+        if (!ok) {
+          toast.error(MSG_ERROR_RED)
+          return
+        }
+        await refrescar()
+      } finally {
+        setBorrandoId(null)
+      }
+    },
+    [tasacion.id, tasacion.codigo, refrescar],
+  )
+
+  /**
+   * Eliminar una categoría personalizada borra también sus fotos.
+   *
+   * Dejarlas huérfanas en `TX_Adjuntos` sería peor que no borrar la categoría:
+   * volverían a aparecer en la siguiente hidratación, recreando la categoría que
+   * el tasador acaba de quitar. Si algún borrado falla, el refresco final las
+   * repone —la pantalla dice la verdad de la base, no la del clic.
+   */
+  const eliminarCategoria = useCallback(
+    async (categoriaId: string) => {
+      const cat = form.categoriasCustom.find((c) => c.id === categoriaId)
+      if (!cat) return
+
+      for (const foto of cat.fotos) {
+        if (esIdDeCola(foto.id)) {
+          await eliminarDeCola(foto.id)
+          continue
+        }
+        await eliminarFotoDeVisita({
+          adjuntoId: foto.id,
+          solicitudId: tasacion.id,
+          codigoExt: tasacion.codigo,
+          hashMd5: foto.hashMd5,
+        })
+      }
+
+      setCustom((prev) => prev.filter((c) => c.id !== categoriaId))
+      await refrescar()
+    },
+    [form.categoriasCustom, tasacion.id, tasacion.codigo, setCustom, refrescar],
   )
 
   /**
@@ -201,13 +424,26 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
           Cada foto se asocia a una categoría. Mínimos según lo declarado.
         </p>
 
+        {pendientes > 0 && (
+          <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm text-vp-warning">
+            <CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+            {pendientes === 1
+              ? "1 foto está guardada en este dispositivo y se subirá cuando vuelvas a tener señal."
+              : `${pendientes} fotos están guardadas en este dispositivo y se subirán cuando vuelvas a tener señal.`}
+          </p>
+        )}
+
         <div className="mt-3">
           <FotosCategorizadas
             fotos={fotos}
-            setFotos={setFotos}
             declarados={declarados}
             custom={form.categoriasCustom}
             setCustom={setCustom}
+            onAgregar={agregarFoto}
+            onBorrarFoto={borrarFoto}
+            onEliminarCategoria={eliminarCategoria}
+            subiendoEn={subiendoEn}
+            borrandoId={borrandoId}
           />
         </div>
       </main>
