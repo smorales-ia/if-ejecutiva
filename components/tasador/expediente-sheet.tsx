@@ -75,7 +75,20 @@ export function ExpedienteSheet({
     [tipos],
   )
 
-  // Documentos cargados por tipo (ids de placeholder).
+  /*
+   * Documentos cargados por tipo (ids de placeholder).
+   *
+   * ⚠ **Desde P5-TAS este bloque rinde siempre vacío.** `documentosCargados` lo
+   * poblaba la copia del sheet documental que vivía en `components/tasador/`;
+   * esa copia se eliminó por **R7** y ahora Pantalla 3 abre el sheet de la
+   * ejecutiva, que persiste en `TX_Adjuntos` de verdad. Los nombres que este
+   * `useMemo` fabrica —`${tipo}_${i}.pdf`— nunca fueron archivos reales.
+   *
+   * No se borra acá porque el expediente es territorio de **RF-TAS-10**, no de
+   * P5-TAS. Lo que corresponde al retomarlo es leer los documentos de
+   * `adjuntos` —que sí son reales y ya se muestran abajo— y quitar este bloque
+   * junto con el campo `InformeData.documentosCargados`.
+   */
   const gruposDoc = useMemo(() => {
     return Object.entries(payload.documentosCargados ?? {})
       .filter(([, ids]) => ids.length > 0)

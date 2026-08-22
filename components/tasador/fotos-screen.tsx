@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import type { Dispatch, SetStateAction } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ArrowRight, Camera } from "lucide-react"
+import { ArrowLeft, ArrowRight, Camera, FileText } from "lucide-react"
 import {
   resolverInforme,
   CATEGORIAS_FOTO,
@@ -20,7 +20,14 @@ import {
   evaluarCustom,
   type FotosPorCategoria,
 } from "@/components/tasador/fotos-categorizadas"
-import { SheetDocumentos, type DocsPorTipo } from "@/components/tasador/sheet-documentos"
+import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
+import { aSolicitudParaSheet } from "@/lib/tasador/adaptador-solicitud"
+import {
+  desdeTipoPropiedadNuevoUsado,
+  documentoAplicaA,
+} from "@/lib/tasador/tipo-propiedad"
+import { useAdjuntosSolicitud } from "@/lib/use-adjuntos-solicitud"
+import type { TipoDocumento } from "@/lib/use-tipos-documento"
 
 const FOTO_IDS = CATEGORIAS_FOTO.map((c) => c.id)
 
@@ -69,18 +76,44 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
     [],
   )
 
-  const docs = (form.documentosCargados ?? {}) as DocsPorTipo
-  const setDocs: Dispatch<SetStateAction<DocsPorTipo>> = useCallback((action) => {
-    setForm((prev) => {
-      const current = (prev.documentosCargados ?? {}) as DocsPorTipo
-      const next =
-        typeof action === "function"
-          ? (action as (p: DocsPorTipo) => DocsPorTipo)(current)
-          : action
-      return { ...prev, documentosCargados: next }
-    })
-  }, [])
-  const totalDocumentos = Object.values(docs).reduce((a, arr) => a + arr.length, 0)
+  /**
+   * Sheet documental de la ejecutiva, **reutilizado tal cual** (R7 · RF-TAS-06).
+   * Hasta P5-TAS esta pantalla abría una copia de 242 líneas en
+   * `components/tasador/sheet-documentos.tsx`, que se eliminó.
+   */
+  const [docsOpen, setDocsOpen] = useState(false)
+
+  /**
+   * Conteo real de documentos para el "N docs" de la cabecera.
+   *
+   * `activo = !docsOpen` no es un truco: hace que la lectura ocurra al montar y
+   * **se repita cuando el sheet se cierra**, que es justo cuando el número pudo
+   * cambiar. Mientras el sheet está abierto, el suyo es el que manda; duplicar
+   * la consulta ahí sólo sumaría presión sobre el límite de 5 req/s de Airtable
+   * que ya documenta `GET /api/solicitudes/[id]/adjuntos`.
+   */
+  const { adjuntos } = useAdjuntosSolicitud(tasacion.id, !docsOpen)
+  const totalDocumentos = adjuntos.length
+
+  /**
+   * Filtro de RF-TAS-06: sólo los documentos cuyo `tipo_propiedad` case con la
+   * condición de la solicitud, o sea `ambas`.
+   *
+   * El predicado vive en `lib/tasador/tipo-propiedad.ts` — **paliativo de P-5**,
+   * porque los dos dominios de Airtable difieren en género (`nuevo`/`usado` en
+   * `TX_Solicitudes`, `nueva`/`usada`/`ambas` en `D_TipoDocumento`) y la
+   * comparación literal no casa nunca. Ningún literal de género aparece acá.
+   */
+  const condicion = useMemo(
+    () => desdeTipoPropiedadNuevoUsado(tasacion.tipoPropiedad),
+    [tasacion.tipoPropiedad],
+  )
+  const filtroTipos = useCallback(
+    (t: TipoDocumento) => documentoAplicaA(t.tipo_propiedad, condicion),
+    [condicion],
+  )
+
+  const solicitudParaSheet = useMemo(() => aSolicitudParaSheet(tasacion), [tasacion])
 
   const declarados = useMemo(
     () => ({
@@ -141,11 +174,25 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
         </div>
 
         <div className="mt-4">
-          <SheetDocumentos
-            codigo={tasacion.codigo}
-            tipoPropiedad={tasacion.tipoPropiedad}
-            docs={docs}
-            setDocs={setDocs}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setDocsOpen(true)}
+            className="min-h-12 w-full border-vp-primary text-base font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark"
+          >
+            <FileText className="h-4 w-4" />
+            Cargar documentos de la propiedad
+          </Button>
+          {/* `readOnly={false}` es obligatorio y no redundante: sin él, el sheet
+              degrada a consulta con cualquier estado distinto de `creada`, y una
+              tasación siempre está en `asignada` o posterior — el tasador vería
+              el checklist sin poder subir nada. */}
+          <DocumentosAdjuntosSheet
+            open={docsOpen}
+            onOpenChange={setDocsOpen}
+            solicitud={solicitudParaSheet}
+            readOnly={false}
+            filtroTipos={filtroTipos}
           />
         </div>
 

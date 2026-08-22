@@ -5,10 +5,15 @@ import { Camera, Plus, X, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   CATEGORIAS_FOTO,
-  resolverLimite,
   type CategoriaFotoId,
   type FotoCategoriaCustom,
 } from "@/lib/tasaciones"
+import {
+  minimoCategoriaPersonalizada,
+  resolverMaximo,
+  resolverMinimo,
+  type DeclaradosSeccionB,
+} from "@/lib/tasador/minimos-fotos"
 import { Button } from "@/components/ui/button"
 import { FotoCategoriaCreator } from "@/components/tasador/foto-categoria-creator"
 
@@ -24,31 +29,50 @@ export type EstadoCategoria = {
   faltan: number
 }
 
+/**
+ * Estado de las ocho categorías del catálogo.
+ *
+ * **Ningún mínimo se calcula acá** (§6.3): `resolverMinimo` y `resolverMaximo`
+ * viven en `lib/tasador/minimos-fotos.ts`, que es el punto único de **A-16**.
+ */
 export function evaluarCategorias(
   fotos: FotosPorCategoria,
-  declarados: { dorm: number; banos: number; estac: number },
+  declarados: DeclaradosSeccionB,
 ): EstadoCategoria[] {
   return CATEGORIAS_FOTO.map((c) => {
-    const min = resolverLimite(c.min, declarados) ?? 0
-    const max = resolverLimite(c.max, declarados)
+    const min = resolverMinimo(c.id, declarados)
+    const max = resolverMaximo(c.id, declarados)
     const count = fotos[c.id]?.length ?? 0
     const faltan = Math.max(0, min - count)
     return { id: c.id, label: c.label, count, min, max, completa: count >= min, faltan }
   })
 }
 
+/**
+ * Estado de las categorías personalizadas.
+ *
+ * **No exigen mínimo** (spec §2.6 · criterio de RF-TAS-14): están `completa`
+ * desde que se crean, incluso con cero fotos. Antes de P5-TAS se creaban con
+ * `minimo: 1`, de modo que una categoría recién creada aparecía marcada como
+ * incompleta y contaba contra el estado global de la pantalla — lo contrario de
+ * lo que pide el requisito.
+ *
+ * `c.minimo` se sigue leyendo del dato por compatibilidad con los borradores ya
+ * guardados en `localStorage`, que lo traen en `1`; `minimoCategoriaPersonalizada()`
+ * lo sobrescribe para que un borrador viejo no reviva la exigencia.
+ */
 export function evaluarCustom(custom: FotoCategoriaCustom[]): EstadoCategoria[] {
+  const min = minimoCategoriaPersonalizada()
   return custom.map((c) => {
     const count = c.fotos.length
-    const faltan = Math.max(0, c.minimo - count)
     return {
       id: c.id,
       label: c.nombre,
       count,
-      min: c.minimo,
+      min,
       max: null,
-      completa: count >= c.minimo,
-      faltan,
+      completa: count >= min,
+      faltan: Math.max(0, min - count),
     }
   })
 }
@@ -165,7 +189,7 @@ export function FotosCategorizadas({
 }: {
   fotos: FotosPorCategoria
   setFotos: React.Dispatch<React.SetStateAction<FotosPorCategoria>>
-  declarados: { dorm: number; banos: number; estac: number }
+  declarados: DeclaradosSeccionB
   custom: FotoCategoriaCustom[]
   setCustom: React.Dispatch<React.SetStateAction<FotoCategoriaCustom[]>>
 }) {
@@ -183,10 +207,7 @@ export function FotosCategorizadas({
     const t = targetRef.current
     if (!t) return
     if (t.kind === "pre") {
-      const max = resolverLimite(
-        CATEGORIAS_FOTO.find((c) => c.id === t.id)!.max,
-        declarados,
-      )
+      const max = resolverMaximo(t.id, declarados)
       setFotos((prev) => {
         const actuales = prev[t.id] ?? []
         if (max !== null && actuales.length >= max) return prev
@@ -212,7 +233,7 @@ export function FotosCategorizadas({
   const crearCategoria = (nombre: string) =>
     setCustom((prev) => [
       ...prev,
-      { id: `cat-${Date.now()}`, nombre, minimo: 1, fotos: [] },
+      { id: `cat-${Date.now()}`, nombre, minimo: minimoCategoriaPersonalizada(), fotos: [] },
     ])
 
   const eliminarCategoria = (id: string) => {

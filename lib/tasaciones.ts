@@ -1056,29 +1056,17 @@ async function llamarApi<T>(url: string, init?: RequestInit): Promise<T> {
   return sobre.data as T
 }
 
-/**
- * Traduce el límite de una categoría de fotos a un número concreto.
+/*
+ * `resolverLimite()` vivía acá hasta **P5-TAS**. Se retiró, no se movió:
+ * `lib/tasador/minimos-fotos.ts` es desde esta tanda el punto único de **A-16**
+ * (criterio §6.3), y dejar acá una segunda implementación del mismo cálculo
+ * habría sido exactamente lo que ese criterio existe para impedir.
  *
- * Es el **único punto de traducción** de `LimiteFoto` (A-16): si el negocio
- * decide que los mínimos son fijos y no dinámicos, se cambia acá y ninguna
- * pantalla se entera. `null` significa «sin límite», no cero.
+ * No se reexporta desde allá para evitar un ciclo: `minimos-fotos` importa
+ * `CATEGORIAS_FOTO` de este módulo. Quien necesite traducir un `LimiteFoto`
+ * suelto usa `resolverLimiteFoto()`; quien necesite el mínimo de una categoría
+ * —que es el caso real— usa `resolverMinimo(id, declarados)`.
  */
-export function resolverLimite(
-  limite: LimiteFoto,
-  declarados: { dorm: number; banos: number; estac: number },
-): number | null {
-  if (limite === null) return null
-  if (typeof limite === 'number') return limite
-
-  switch (limite) {
-    case 'dorm':
-      return declarados.dorm
-    case 'banos':
-      return declarados.banos
-    case 'estac':
-      return declarados.estac
-  }
-}
 
 /** Conteo de recintos de un nivel, todo en cero. */
 function nivelVacio(): NivelHabitaciones {

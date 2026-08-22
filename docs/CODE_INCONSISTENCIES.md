@@ -1689,3 +1689,53 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 - Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
 - **No fusionar con CI-046.** Aquélla está `aplicada` y describe un gate **ausente**; ésta describe un gate **presente pero de alcance menor al del enunciado que lo motiva**. Fusionarlas reabriría una ficha cerrada correctamente y perdería la distinción útil: una era *no está construido*, la otra es *está construido donde la spec dijo, y la spec dijo menos de lo que su propia frase promete*.
 - **Puede que la corrección correcta sea a la spec, no al código.** Si el negocio acepta que el gate sea de navegación —el tasador entra por la cola, no tecleando URLs—, entonces §2.4 está bien como está y esta ficha se cierra sin escribir una línea. Esa decisión es de Héctor, no de la tanda que implemente. Lo que no debería quedar es la ambigüedad actual, donde el texto promete *"no entra a la captura"* y la realización garantiza *"la card no lo lleva a la captura"*.
+
+---
+
+## CI-051 · `TX_Adjuntos.seccion` no existe: el plan pide escribir un campo que la tabla no tiene
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-051 |
+| **Archivo:línea** | `app/api/tasaciones/[id]/fotos/route.ts` → `POST`, el objeto de `createRecord` · vs plan IF-03 §6.1 y §6.3, y spec §2.6 |
+| **Contexto** | §2.6 lo enuncia como una precaución razonada: *"el campo `TX_Adjuntos.seccion` se sigue escribiendo aunque la sección ya aparezca en el path: es lo que permite filtrar por sección en Airtable sin parsear el string"*. El plan lo recoge como criterio de aceptación de P5-TAS: *"`TX_Adjuntos.seccion` se escribe en cada alta, además del path"*. El razonamiento es correcto —filtrar por un campo es mejor que parsear un string— pero el campo **no existe**. |
+| **Síntoma** | `TX_Adjuntos` (`tblur71x1oItbmKZc`) tiene **26 campos verificados por Meta API el 17-ago-2026** y ninguno se llama `seccion`. El criterio de aceptación de §6.3 es, tal como está escrito, **inverificable**: no hay campo que comprobar. Escribirlo con `typecast` tampoco sirve — Airtable no crea campos por escritura, sólo opciones de `singleSelect`. |
+| **Causa** | Deuda de schema que nadie resolvió entre la redacción de §2.6 y la construcción del endpoint. P2-TAS.A lo detectó al escribir la ruta, lo dejó anotado en el docblock —*"Anotado para P5-TAS, que es la tanda de esta pantalla"*— y siguió adelante con el contrato que sí era implementable. P5-TAS lo hereda: es la tanda que el propio aviso designaba. |
+| **Impacto** | **Bajo. La información no se pierde**, cambia de nombre. La categoría de cada foto se guarda en `descripcion` (texto libre, que admite las categorías personalizadas de §2.6) y `tipo_adjunto` lleva el valor cerrado `foto_interior`. El filtrado en Airtable sigue siendo posible por `descripcion`; lo que se pierde es el `singleSelect` que habría hecho ese filtro robusto ante erratas. **Nada en la UI depende de este campo.** |
+| **Mitigación pendiente** | **Decisión de negocio, no de código.** Dos salidas, y conviene elegir una en vez de dejar la spec y la base discrepando: <br>**(a) Crear el campo `seccion` en `TX_Adjuntos`** —`singleSelect` con el dominio de secciones de §8— y migrar las filas existentes leyendo `descripcion`. Exige aprobación explícita de Sergio (`CLAUDE.md`: crear campos en Airtable no se hace por cuenta propia) y una pasada de migración sobre las filas ya escritas. <br>**(b) Corregir §2.6 y el criterio de §6.3** para que nombren `descripcion` / `tipo_adjunto`, que es lo que la tabla tiene. Más barato, y suficiente si nadie va a filtrar por sección en la UI de Airtable. <br>La pregunta que decide entre las dos: **¿alguien filtra adjuntos por sección desde Airtable, o sólo desde la app?** Si es lo segundo, (b) alcanza. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Resolución** | **ABIERTA.** P5-TAS escribió la categoría en `tipo_adjunto` / `descripcion` —el contrato que el endpoint ya implementaba— por decisión de Sergio en el Gate 1 del 22-ago-2026, y registró esta ficha en vez de crear el campo. Crear schema no era necesario para que la pantalla funcione, y hacerlo dentro de una tanda de cliente habría mezclado dos tipos de cambio con aprobaciones distintas. |
+| **Estado** | **abierta** · no bloquea P5-TAS ni ninguna tanda posterior |
+| **Origen** | Gate 1 de **P5-TAS** (22-ago-2026), al contrastar los criterios de §6.3 contra el contrato real del endpoint. El docblock de la ruta ya lo advertía desde P2-TAS.A. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **El docblock del endpoint es la mejor documentación de esta inconsistencia** y conviene no borrarlo al resolverla: explica por qué `tipo_adjunto` lleva un valor fijo y `descripcion` la categoría real, que de otro modo se lee como un error.
+- Emparenta con **CI-049** en la especie —el código afirma algo que dejó de ser cierto— pero al revés: acá es el **documento** el que afirma la existencia de algo que el código no puede usar.
+
+---
+
+## CI-052 · Dos endpoints crean la misma fila en `TX_Adjuntos`: encadenarlos duplica el registro
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-052 |
+| **Archivo:línea** | `app/api/adjuntos/upload/route.ts` (respuesta con `adjunto_id`) · `app/api/tasaciones/[id]/fotos/route.ts` → `POST`, `createRecord(TABLE_IDS.adjuntos, …)` |
+| **Contexto** | El plan §6.1 describe el guardado de fotos como una cadena: el binario sube *"por el pipeline existente"* y el organizador registra la fila con su categoría. El docblock de `POST /fotos` lo enuncia explícitamente: *"El archivo sube por el pipeline existente (`app/api/adjuntos/upload/route.ts` → Make → Dropbox), que IF-03 reutiliza tal cual (R7). El POST de acá registra la fila y su categoría; recibe la `url_dropbox` que aquel devolvió."* |
+| **Síntoma** | **Esa cadena escribe dos filas por foto.** `/api/adjuntos/upload` no sólo sube el binario: el módulo 8 de `SC-Adjuntos-Upload` **crea la fila en `TX_Adjuntos`** y devuelve su `adjunto_id`. La ruta lo trata como obligatorio —responde **502** si Make contesta 200 sin él— así que no es un efecto opcional sino parte de su contrato. `POST /api/tasaciones/[id]/fotos` hace su propio `createRecord` sobre la misma tabla. Encadenados, cada foto deja **dos registros**: uno con el archivo y sin categoría, otro con la categoría y la URL copiada. Los contadores de `GET /fotos` contarían de más y el expediente mostraría duplicados. |
+| **Causa** | Dos tandas distintas escribieron cada extremo sin que ninguna viera el conjunto. El pipeline de adjuntos es de **IF-02** y su alta en Airtable vive dentro del escenario Make, no en el código del Route Handler — así que leer `upload/route.ts` no revela que crea una fila salvo que se siga el rastro hasta el comentario del módulo 8. P2-TAS.A escribió `POST /fotos` asumiendo que aquel endpoint sólo movía el binario. **La suposición es razonable y está escrita; simplemente no es cierta.** |
+| **Impacto** | **Alto sobre la tanda, nulo sobre producción hoy.** Nada llama todavía a `POST /fotos` —la pantalla nunca persistió fotos—, así que la duplicación **no ha ocurrido nunca**. Pero bloquea el camino de escritura de Pantalla 3: implementarlo tal como está descrito introduciría el defecto en el primer uso. |
+| **Mitigación pendiente** | **Decidir cuál de los dos endpoints es dueño de la fila.** Tres salidas: <br>**(a) Dueño el pipeline.** `/fotos` deja de crear y pasa a **actualizar** el registro que Make ya creó, escribiendo la categoría sobre el `adjunto_id` devuelto. Es un `PATCH`, no un `POST`, y conserva la idempotencia que `SC-Adjuntos-Upload` ya resuelve por `hash_md5`. **Es la que menos toca**: el pipeline sigue siendo la única puerta a Dropbox. <br>**(b) Dueño `/fotos`.** Exigiría que el pipeline no cree fila para fotos, lo que significa tocar el escenario Make de IF-02 — más caro y con más superficie de riesgo. <br>**(c) Ruta propia de subida para IF-03**, que viola R7 y duplica la integración con Dropbox. Se descarta salvo que aparezca un motivo fuerte. <br>**Recomendada: (a).** Requiere que `POST /fotos` mute a `PATCH` o acepte un `adjuntoId` existente, que es cambio de **server** y por tanto de tanda propia. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Resolución** | **ABIERTA · bloquea los batches B2, B3 y B4 de P5-TAS.** La tanda del 22-ago-2026 se detuvo al detectarlo, siguiendo su contrato explícito de parar ante ambigüedad no resoluble leyendo la spec: §2.6 dice *"guardado en Dropbox por API Route con retry offline"* y **no adjudica** cuál de los dos endpoints es dueño de la fila. Se completaron B1, B5 y B6, que no dependen del camino de escritura. |
+| **Estado** | **abierta** · **bloqueante de la persistencia de fotos** |
+| **Origen** | Batch B3 de **P5-TAS** (22-ago-2026), en la verificación previa que el propio Gate 1 exigía: *"antes de B3, verificá que `/api/adjuntos/upload` existe y funciona"*. Existe y funciona — el problema no era su estado sino su contrato. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **La verificación pedida era "¿existe y funciona?" y la respuesta fue "sí".** Lo que no estaba en la pregunta —y resultó ser lo que importaba— es *qué más hace además de lo que su nombre promete*. Vale como regla: al reutilizar un endpoint ajeno, leer sus **efectos**, no sólo su firma y su estado.
+- **`GET /api/solicitudes/[id]/adjuntos` no tiene guard de pertenencia.** Se observó al reutilizar el sheet documental desde IF-03: la ruta valida el record ID y la sesión de Clerk, pero no comprueba que la solicitud sea del usuario. No lo introdujo P5-TAS y no es de su alcance corregirlo; se anota acá por proximidad temática con **CI-050**, que registra el mismo tipo de hueco en las páginas del tasador.

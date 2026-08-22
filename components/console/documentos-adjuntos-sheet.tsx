@@ -69,16 +69,57 @@ function checklistDesdeAdjuntos(
   })
 }
 
+/**
+ * Lo que este sheet **realmente** lee de la solicitud: cinco campos, no los
+ * cuarenta de `Solicitud`.
+ *
+ * Se estrechó en **P5-TAS · R7** para que IF-03 pueda reutilizar el componente
+ * sin fabricar un `Solicitud` completo. La alternativa era rellenar treinta
+ * campos con `""` en un adaptador, y eso es peor que un tipo ancho: un dato
+ * inventado no se distingue de uno real, y el día que este sheet lea
+ * `solicitud.rut` recibiría cadena vacía en silencio.
+ *
+ * **No rompe a IF-02.** Un `Solicitud` completo satisface este tipo por
+ * estructura, así que `solicitud-detail.tsx` sigue pasando `{...datos, estado}`
+ * sin cambio alguno. Estrechar un parámetro es estrictamente más permisivo para
+ * el llamador.
+ *
+ * Si el sheet pasa a leer un campo más, va acá — y el compilador señala a los
+ * llamadores que no lo tengan, que es exactamente el aviso que se quiere.
+ */
+export type SolicitudParaSheetDocumentos = Pick<
+  Solicitud,
+  'id' | 'codigoExt' | 'cliente' | 'estado' | 'unidades'
+>
+
 interface DocumentosAdjuntosSheetProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  solicitud: Solicitud
+  solicitud: SolicitudParaSheetDocumentos
   /**
    * Modo consulta (RN-59). Lo calcula el detalle (`estado !== "creada" &&
    * tieneTasador`) y lo pasa aquí. Si no se provee, se degrada a la condición
    * por estado (compatibilidad con llamadores que aún no lo pasan).
    */
   readOnly?: boolean
+  /**
+   * Filtro opcional sobre el catálogo de `D_TipoDocumento` (**P5-TAS · R7**).
+   *
+   * Existe para que **IF-03 reutilice este sheet en vez de copiarlo**: RF-TAS-06
+   * pide que el tasador vea sólo los documentos cuyo `tipo_propiedad` case con
+   * el de la solicitud o sea `ambas`, y ese predicado vive en
+   * `lib/tasador/tipo-propiedad.ts` (paliativo de **P-5**). Sin esta prop, la
+   * única forma de tener el filtro era duplicar el componente, que es
+   * exactamente lo que R7 prohíbe.
+   *
+   * **Aditiva por diseño.** Si no se pasa, no se filtra nada y el catálogo llega
+   * entero: el llamador de IF-02 (`solicitud-detail.tsx`) no la pasa y su
+   * comportamiento observable es idéntico al de antes de P5-TAS.
+   *
+   * El filtro se aplica **antes** de construir el checklist, de modo que el
+   * contador "N/N con archivo" cuenta sobre lo que el usuario efectivamente ve.
+   */
+  filtroTipos?: (tipo: TipoDocumento) => boolean
 }
 
 export function DocumentosAdjuntosSheet({
@@ -86,12 +127,24 @@ export function DocumentosAdjuntosSheet({
   onOpenChange,
   solicitud,
   readOnly,
+  filtroTipos,
 }: DocumentosAdjuntosSheetProps) {
   // RN-59: modo consulta cuando estado ≠ "creada" Y hay tasador asignado. El
   // detalle ya lo evalúa; aquí sólo se respeta (con fallback por estado).
   const soloLectura = readOnly ?? solicitud.estado !== "creada"
 
-  const { tipos, cargando, error } = useTiposDocumento()
+  const { tipos: tiposCatalogo, cargando, error } = useTiposDocumento()
+
+  /**
+   * Catálogo efectivo. Sin `filtroTipos` es el catálogo entero — la identidad,
+   * no una copia filtrada de todo, para que el llamador de IF-02 conserve
+   * exactamente el comportamiento previo a P5-TAS.
+   */
+  const tipos = React.useMemo(
+    () => (filtroTipos ? tiposCatalogo.filter(filtroTipos) : tiposCatalogo),
+    [tiposCatalogo, filtroTipos],
+  )
+
   const {
     adjuntos,
     cargando: cargandoAdjuntos,
@@ -200,9 +253,17 @@ export function DocumentosAdjuntosSheet({
                   mensaje="No pudimos completar la acción. Intenta nuevamente en unos segundos."
                 />
               ) : tipos.length === 0 ? (
+                /* Con `filtroTipos` activo hay dos causas distintas de lista
+                   vacía y conviene no confundirlas: que el catálogo esté vacío
+                   —problema de configuración— o que ninguno de sus tipos
+                   aplique a esta propiedad, que es un resultado legítimo. */
                 <AvisoCatalogo
                   tono="neutro"
-                  mensaje="No hay tipos de documento configurados."
+                  mensaje={
+                    tiposCatalogo.length === 0
+                      ? "No hay tipos de documento configurados."
+                      : "No hay documentos que apliquen a este tipo de propiedad."
+                  }
                 />
               ) : soloLectura ? (
                 <ChecklistConsulta items={checklist} tipos={tipos} />
