@@ -141,12 +141,12 @@ export function ExpedienteSheet({
             <button
               type="button"
               onClick={() => setPreview(null)}
-              className="flex items-center gap-2 border-b border-border px-5 py-3 text-sm font-semibold text-vp-primary"
+              className="flex items-center gap-2 border-b border-border px-5 py-3 text-sm font-semibold text-brand"
             >
               <ArrowLeft className="h-4 w-4" />
               Volver al expediente
             </button>
-            <div className="flex flex-1 items-center justify-center overflow-auto bg-vp-surface p-4">
+            <div className="flex flex-1 items-center justify-center overflow-auto bg-muted p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={previewSrc || "/placeholder.svg"}
@@ -154,7 +154,7 @@ export function ExpedienteSheet({
                 className="max-h-full max-w-full rounded-lg object-contain"
               />
             </div>
-            <p className="border-t border-border px-5 py-3 text-sm text-vp-text-secondary">
+            <p className="border-t border-border px-5 py-3 text-sm text-muted-foreground">
               {preview.categoria} · {preview.nombre}
             </p>
           </div>
@@ -165,9 +165,9 @@ export function ExpedienteSheet({
               {gruposFoto.map((g) => (
                 <section key={g.label}>
                   <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                    <ImageIcon className="h-4 w-4 text-vp-primary" />
+                    <ImageIcon className="h-4 w-4 text-brand" />
                     {g.label}
-                    <span className="text-vp-text-secondary">({g.fotos.length})</span>
+                    <span className="text-muted-foreground">({g.fotos.length})</span>
                   </h3>
                   <div className="grid grid-cols-3 gap-2">
                     {g.fotos.map((f) => (
@@ -175,7 +175,7 @@ export function ExpedienteSheet({
                         key={f.id}
                         type="button"
                         onClick={() => setPreview(f)}
-                        className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-vp-surface"
+                        className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
                         aria-label={`Ver fotografía ${f.id} de ${g.label}`}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -196,9 +196,9 @@ export function ExpedienteSheet({
               {gruposDoc.map((g) => (
                 <section key={g.label}>
                   <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                    <FileText className="h-4 w-4 text-vp-primary" />
+                    <FileText className="h-4 w-4 text-brand" />
                     {g.label}
-                    <span className="text-vp-text-secondary">({g.archivos.length})</span>
+                    <span className="text-muted-foreground">({g.archivos.length})</span>
                   </h3>
                   <ul className="flex flex-col gap-2">
                     {g.archivos.map((a) => (
@@ -212,9 +212,9 @@ export function ExpedienteSheet({
               {adjuntos.length > 0 && (
                 <section>
                   <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
-                    <FileText className="h-4 w-4 text-vp-primary" />
+                    <FileText className="h-4 w-4 text-brand" />
                     Adjuntos de la solicitud
-                    <span className="text-vp-text-secondary">({adjuntos.length})</span>
+                    <span className="text-muted-foreground">({adjuntos.length})</span>
                   </h3>
                   <ul className="flex flex-col gap-2">
                     {adjuntos.map((a) => (
@@ -230,7 +230,7 @@ export function ExpedienteSheet({
               )}
 
               {totalArchivos === 0 && (
-                <p className="py-8 text-center text-sm text-vp-text-secondary">
+                <p className="py-8 text-center text-sm text-muted-foreground">
                   No hay archivos en el expediente.
                 </p>
               )}
@@ -254,13 +254,13 @@ function ArchivoRow({
 }) {
   return (
     <li className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-red-50 text-vp-danger">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-red-50 text-danger">
         <FileText className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-foreground">{nombre}</p>
         {detalle ? (
-          <p className="text-xs text-vp-text-secondary">{detalle}</p>
+          <p className="text-xs text-muted-foreground">{detalle}</p>
         ) : null}
       </div>
       <a
@@ -269,7 +269,7 @@ function ArchivoRow({
         rel="noopener noreferrer"
         className={cn(
           "flex h-9 items-center gap-1.5 rounded-md px-3 text-sm font-semibold",
-          "bg-vp-surface text-vp-primary hover:bg-blue-50",
+          "bg-muted text-brand hover:bg-blue-50",
         )}
       >
         <Download className="h-4 w-4" />

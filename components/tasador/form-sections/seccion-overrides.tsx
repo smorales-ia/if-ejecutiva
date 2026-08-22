@@ -71,14 +71,14 @@ export function SeccionOverrides({
           placeholder="Justifica por qué se ajusta el valor calculado (mínimo 20 caracteres)…"
           className={cn(
             "text-base",
-            activo && !motivoValido && "border-vp-danger",
+            activo && !motivoValido && "border-danger",
           )}
         />
         {activo && (
           <p
             className={cn(
               "flex items-center gap-1.5 text-xs",
-              motivoValido ? "text-vp-success" : "text-vp-danger",
+              motivoValido ? "text-success" : "text-danger",
             )}
           >
             {!motivoValido && <TriangleAlert className="h-3.5 w-3.5" />}

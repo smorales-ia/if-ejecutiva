@@ -57,7 +57,7 @@ export function SeccionValoracion({
   return (
     <div className="flex flex-col gap-3">
       {items.length === 0 && (
-        <p className="text-sm text-vp-text-secondary">
+        <p className="text-sm text-muted-foreground">
           Sin ítems. Agrega el primer ítem del cuadro de valoración.
         </p>
       )}
@@ -74,7 +74,7 @@ export function SeccionValoracion({
                 type="button"
                 onClick={() => removeItem(it.id)}
                 aria-label={`Eliminar ítem ${idx + 1}`}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-vp-danger hover:bg-red-50"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-danger hover:bg-red-50"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -186,7 +186,7 @@ export function SeccionValoracion({
         type="button"
         variant="outline"
         onClick={() => set("items", [...items, nuevoItem()])}
-        className="min-h-11 w-full border-dashed border-vp-primary text-sm font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark"
+        className="min-h-11 w-full border-dashed border-brand text-sm font-semibold text-brand hover:bg-blue-50 hover:text-brand/90"
       >
         <Plus className="h-4 w-4" />
         Agregar ítem

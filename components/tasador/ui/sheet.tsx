@@ -51,7 +51,7 @@ function SheetContent({
       >
         {children}
         <SheetPrimitive.Close
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-vp-text-secondary transition-colors hover:bg-vp-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-vp-primary"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
           aria-label="Cerrar"
         >
           <X className="h-5 w-5" />
@@ -85,7 +85,7 @@ function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
 function SheetDescription({ className, ...props }: SheetPrimitive.Description.Props) {
   return (
     <SheetPrimitive.Description
-      className={cn("text-sm text-vp-text-secondary", className)}
+      className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   )

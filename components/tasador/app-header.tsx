@@ -26,7 +26,7 @@ export function AppHeader({ userName }: { userName: string }) {
         <span className="hidden text-sm font-medium text-foreground sm:inline">{userName}</span>
         <span
           aria-label={userName}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-vp-primary text-sm font-semibold text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white"
         >
           {initials}
         </span>

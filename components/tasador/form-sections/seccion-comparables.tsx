@@ -46,10 +46,10 @@ function CeldaInput({
       data-vacio={vacioRequerido ? "true" : undefined}
       className={cn(
         "min-h-10 rounded-md border bg-background px-2 py-1 text-sm text-foreground",
-        "focus:border-vp-primary focus:outline-none focus:ring-1 focus:ring-vp-primary",
+        "focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand",
         "disabled:cursor-not-allowed disabled:opacity-60",
         ancho,
-        vacioRequerido ? "border-vp-danger" : "border-border",
+        vacioRequerido ? "border-danger" : "border-border",
       )}
     />
   )
@@ -118,7 +118,7 @@ export function SeccionComparables({
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-vp-text-secondary">
+        <span className="text-sm font-medium text-muted-foreground">
           {total} de mínimo 3 comparables
         </span>
       </div>
@@ -126,21 +126,21 @@ export function SeccionComparables({
       <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-lg border border-border">
         <table className="w-max border-collapse text-left">
           <thead>
-            <tr className="bg-vp-surface text-xs font-semibold text-vp-text-secondary">
-              <th className="sticky left-0 z-10 min-w-44 bg-vp-surface px-2 py-2">
-                N° · Dirección <span className="text-vp-danger">*</span>
+            <tr className="bg-muted text-xs font-semibold text-muted-foreground">
+              <th className="sticky left-0 z-10 min-w-44 bg-muted px-2 py-2">
+                N° · Dirección <span className="text-danger">*</span>
               </th>
               <th className="px-2 py-2">Comuna</th>
               <th className="px-2 py-2">Sup. terreno</th>
               <th className="whitespace-nowrap px-2 py-2">
-                Sup. const. <span className="text-vp-danger">*</span>
+                Sup. const. <span className="text-danger">*</span>
               </th>
               <th className="whitespace-nowrap px-2 py-2">
-                Precio UF <span className="text-vp-danger">*</span>
+                Precio UF <span className="text-danger">*</span>
               </th>
               <th className="whitespace-nowrap px-2 py-2">UF/m²</th>
               <th className="px-2 py-2">
-                Año <span className="text-vp-danger">*</span>
+                Año <span className="text-danger">*</span>
               </th>
               <th className="px-2 py-2">Tipo</th>
               <th className="whitespace-nowrap px-2 py-2">Factor sup.</th>
@@ -150,7 +150,7 @@ export function SeccionComparables({
               {hayCbr && <th className="px-2 py-2">Foja</th>}
               {hayCbr && <th className="px-2 py-2">Número</th>}
               {!readOnly && (
-                <th className="sticky right-0 z-10 bg-vp-surface px-2 py-2" aria-label="Acciones" />
+                <th className="sticky right-0 z-10 bg-muted px-2 py-2" aria-label="Acciones" />
               )}
             </tr>
           </thead>
@@ -159,7 +159,7 @@ export function SeccionComparables({
               <tr key={c.id} className="border-t border-border align-top">
                 <td className="sticky left-0 z-10 min-w-44 bg-background px-2 py-2">
                   <div className="flex items-start gap-2">
-                    <span className="mt-2 text-xs font-bold text-vp-text-secondary">{idx + 1}</span>
+                    <span className="mt-2 text-xs font-bold text-muted-foreground">{idx + 1}</span>
                     <CeldaInput
                       value={c.direccionReferencia}
                       onChange={(v) => update(c.id, { direccionReferencia: v })}
@@ -205,7 +205,7 @@ export function SeccionComparables({
                     disabled={inputsOff}
                   />
                 </td>
-                <td className="whitespace-nowrap px-2 py-2 text-sm tabular-nums text-vp-text-secondary">
+                <td className="whitespace-nowrap px-2 py-2 text-sm tabular-nums text-muted-foreground">
                   {fmt(ufM2(c))}
                 </td>
                 <td className="px-2 py-2">
@@ -229,7 +229,7 @@ export function SeccionComparables({
                         className={cn(
                           "min-h-10 px-2 text-xs font-semibold capitalize disabled:cursor-not-allowed",
                           c.fuente === f
-                            ? "bg-vp-primary text-white"
+                            ? "bg-brand text-white"
                             : "bg-background text-foreground",
                         )}
                       >
@@ -275,7 +275,7 @@ export function SeccionComparables({
                         disabled={inputsOff}
                       />
                     ) : (
-                      <span className="text-sm text-vp-text-secondary">—</span>
+                      <span className="text-sm text-muted-foreground">—</span>
                     )}
                   </td>
                 )}
@@ -289,7 +289,7 @@ export function SeccionComparables({
                         disabled={inputsOff}
                       />
                     ) : (
-                      <span className="text-sm text-vp-text-secondary">—</span>
+                      <span className="text-sm text-muted-foreground">—</span>
                     )}
                   </td>
                 )}
@@ -303,7 +303,7 @@ export function SeccionComparables({
                         disabled={inputsOff}
                       />
                     ) : (
-                      <span className="text-sm text-vp-text-secondary">—</span>
+                      <span className="text-sm text-muted-foreground">—</span>
                     )}
                   </td>
                 )}
@@ -315,7 +315,7 @@ export function SeccionComparables({
                         type="button"
                         onClick={() => remove(c.id)}
                         aria-label="Confirmar eliminación"
-                        className="flex h-9 w-9 items-center justify-center rounded-md bg-red-50 text-vp-danger"
+                        className="flex h-9 w-9 items-center justify-center rounded-md bg-red-50 text-danger"
                       >
                         <Check className="h-4 w-4" />
                       </button>
@@ -323,7 +323,7 @@ export function SeccionComparables({
                         type="button"
                         onClick={() => setConfirmando(null)}
                         aria-label="Cancelar eliminación"
-                        className="flex h-9 w-9 items-center justify-center rounded-md text-vp-text-secondary hover:bg-vp-surface"
+                        className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
                       >
                         <X className="h-4 w-4" />
                       </button>
@@ -334,7 +334,7 @@ export function SeccionComparables({
                       disabled={inputsOff}
                       onClick={() => setConfirmando(c.id)}
                       aria-label={`Eliminar comparable ${idx + 1}`}
-                      className="flex h-9 w-9 items-center justify-center rounded-md text-vp-danger hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-9 w-9 items-center justify-center rounded-md text-danger hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -345,8 +345,8 @@ export function SeccionComparables({
             ))}
 
             {/* Fila de cierre: promedio homogeneizado */}
-            <tr className="border-t border-border bg-vp-surface font-semibold text-foreground">
-              <td className="sticky left-0 z-10 bg-vp-surface px-2 py-2 text-sm">
+            <tr className="border-t border-border bg-muted font-semibold text-foreground">
+              <td className="sticky left-0 z-10 bg-muted px-2 py-2 text-sm">
                 Promedio homogeneizado UF/m²
               </td>
               <td className="px-2 py-2 text-sm tabular-nums" colSpan={cols - 1}>
@@ -363,8 +363,8 @@ export function SeccionComparables({
           disabled={disabled || total >= MAX_COMPARABLES}
           onClick={() => set("comparables", [...comparables, nuevoComparable()])}
           className={cn(
-            "flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-vp-primary text-sm font-semibold text-vp-primary transition-colors hover:bg-blue-50",
-            "disabled:cursor-not-allowed disabled:border-border disabled:text-vp-text-secondary disabled:hover:bg-transparent",
+            "flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-brand text-sm font-semibold text-brand transition-colors hover:bg-blue-50",
+            "disabled:cursor-not-allowed disabled:border-border disabled:text-muted-foreground disabled:hover:bg-transparent",
           )}
         >
           <Plus className="h-4 w-4" />
@@ -382,7 +382,7 @@ export function ComparablesBadge({ total }: { total: number }) {
     <span
       className={cn(
         "rounded-full px-2.5 py-1 text-xs font-semibold",
-        ok ? "bg-emerald-50 text-vp-success" : "bg-red-50 text-vp-danger",
+        ok ? "bg-emerald-50 text-success" : "bg-red-50 text-danger",
       )}
     >
       {total} / 3

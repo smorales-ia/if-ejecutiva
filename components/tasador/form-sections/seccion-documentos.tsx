@@ -15,8 +15,8 @@ export function SeccionDocumentos({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start gap-2 rounded-lg bg-vp-surface px-3 py-2.5 text-sm text-vp-text-secondary">
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-vp-primary" aria-hidden="true" />
+      <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-sm text-muted-foreground">
+        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
         <span>Prellenado por IA cuando los PDFs estén adjuntos (SC07). Editable.</span>
       </div>
 

@@ -25,7 +25,7 @@ export function CampoPrellenado({
         {label}
       </Label>
       {prellenado && (
-        <span className="inline-flex w-fit items-center gap-1 text-xs font-medium text-vp-primary">
+        <span className="inline-flex w-fit items-center gap-1 text-xs font-medium text-brand">
           <Sparkles aria-hidden="true" className="h-3 w-3" />
           Pre-llenado{fuente ? ` · ${fuente}` : ""} · editable
         </span>

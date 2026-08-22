@@ -105,7 +105,7 @@ function Miniatura({
   onBorrar: () => void
 }) {
   return (
-    <div className="relative aspect-square overflow-hidden rounded-lg bg-vp-surface">
+    <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
       {foto.thumbnailUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -115,14 +115,14 @@ function Miniatura({
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
-          <Camera className="h-5 w-5 text-vp-text-secondary" aria-hidden="true" />
+          <Camera className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
         </div>
       )}
 
       <span
         className={cn(
           "absolute bottom-0 left-0 flex max-w-full items-center gap-1 truncate rounded-tr-md px-1.5 py-0.5 text-xs text-white",
-          foto.pendiente ? "bg-vp-warning" : "bg-vp-primary",
+          foto.pendiente ? "bg-warning" : "bg-brand",
         )}
       >
         {foto.pendiente && <CloudOff className="h-3 w-3 shrink-0" aria-hidden="true" />}
@@ -182,7 +182,7 @@ function Bloque({
           <span
             className={cn(
               "inline-flex items-center gap-1 text-xs font-semibold",
-              completa ? "text-vp-success" : "text-vp-danger",
+              completa ? "text-success" : "text-danger",
             )}
           >
             {count}/{min}
@@ -198,7 +198,7 @@ function Bloque({
               type="button"
               onClick={onEliminarCategoria}
               aria-label={`Eliminar categoría ${label}`}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-vp-danger hover:bg-red-50"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-danger hover:bg-red-50"
             >
               <X className="h-4 w-4" />
             </button>
@@ -232,7 +232,7 @@ function Bloque({
         variant="outline"
         disabled={maxAlcanzado || subiendo}
         onClick={onAdd}
-        className="mt-3 min-h-10 w-full border-dashed border-vp-primary text-sm font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark disabled:opacity-50"
+        className="mt-3 min-h-10 w-full border-dashed border-brand text-sm font-semibold text-brand hover:bg-blue-50 hover:text-brand/90 disabled:opacity-50"
       >
         {subiendo ? (
           <Loader2 data-icon="inline-start" className="animate-spin" />

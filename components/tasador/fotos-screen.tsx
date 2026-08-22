@@ -360,14 +360,14 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-2xl bg-vp-surface">
+    <div className="mx-auto min-h-screen w-full max-w-2xl bg-muted">
       <header className="sticky top-0 z-30 border-b border-border bg-background">
         <div className="flex items-center justify-between gap-3 px-3 py-3">
           <div className="flex items-center gap-2">
             <Link
               href="/tasaciones"
               aria-label="Volver a mis tasaciones"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-vp-surface"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-muted"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -375,12 +375,12 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
               <span className="text-base font-semibold text-foreground">
                 {tasacion.codigo}
               </span>
-              <span className="text-xs text-vp-text-secondary">Fotos de la visita</span>
+              <span className="text-xs text-muted-foreground">Fotos de la visita</span>
             </div>
           </div>
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-              completas ? "bg-emerald-50 text-vp-success" : "bg-amber-50 text-vp-warning"
+              completas ? "bg-emerald-50 text-success" : "bg-amber-50 text-warning"
             }`}
           >
             {totalFotos} fotos · {totalDocumentos} docs
@@ -401,7 +401,7 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
             type="button"
             variant="outline"
             onClick={() => setDocsOpen(true)}
-            className="min-h-12 w-full border-vp-primary text-base font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark"
+            className="min-h-12 w-full border-brand text-base font-semibold text-brand hover:bg-blue-50 hover:text-brand/90"
           >
             <FileText className="h-4 w-4" />
             Cargar documentos de la propiedad
@@ -419,13 +419,13 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
           />
         </div>
 
-        <p className="mt-4 flex items-center gap-1.5 text-sm text-vp-text-secondary">
+        <p className="mt-4 flex items-center gap-1.5 text-sm text-muted-foreground">
           <Camera className="h-4 w-4 shrink-0" aria-hidden="true" />
           Cada foto se asocia a una categoría. Mínimos según lo declarado.
         </p>
 
         {pendientes > 0 && (
-          <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm text-vp-warning">
+          <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-sm text-warning">
             <CloudOff className="h-4 w-4 shrink-0" aria-hidden="true" />
             {pendientes === 1
               ? "1 foto está guardada en este dispositivo y se subirá cuando vuelvas a tener señal."
@@ -453,7 +453,7 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
           render={<Link href="/tasaciones" />}
           nativeButton={false}
           variant="outline"
-          className="min-h-12 border-vp-primary px-4 text-base font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark"
+          className="min-h-12 border-brand px-4 text-base font-semibold text-brand hover:bg-blue-50 hover:text-brand/90"
         >
           <ArrowLeft className="h-4 w-4" />
           Volver
@@ -461,7 +461,7 @@ export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
         <Button
           type="button"
           onClick={continuar}
-          className="min-h-12 flex-1 bg-vp-primary text-base font-semibold text-white hover:bg-vp-primary-dark"
+          className="min-h-12 flex-1 bg-brand text-base font-semibold text-white hover:bg-brand/90"
         >
           Continuar con datos de la visita
           <ArrowRight className="h-4 w-4" />

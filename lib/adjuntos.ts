@@ -1,8 +1,10 @@
-import { listRecords } from '@/lib/airtable-client'
+import { getRecord, listRecords } from '@/lib/airtable-client'
 import { relativeTime } from '@/lib/solicitudes'
 
 // TX_Adjuntos verified via MCP 2026-07-04
 export const TX_ADJUNTOS = 'tblur71x1oItbmKZc'
+/** `TX_Solicitudes` — se lee sólo para resolver `codigo_solicitud`. */
+const TX_SOLICITUDES = 'tblaHTyMHYfmy7Fg6'
 
 export interface Adjunto {
   id: string
@@ -106,34 +108,63 @@ function formatTamanioKb(kb: number): string {
   return `${(kb / 1024).toFixed(1)} MB`
 }
 
+const CAMPOS_ADJUNTO = [
+  'nombre_archivo',
+  'tipo',
+  'clave_adjunto',
+  'url_dropbox',
+  'tamanio_kb',
+  'hash_md5',
+  'requerido_por_ejecutiva',
+  'estado_extraccion',
+  'solicitud',
+]
+
 /**
- * `TX_Solicitudes.codigo_solicitud` (su primary field) está vacío en todas
- * las filas — nunca se pobló (hallazgo 10-jul-2026, ver docs/aprendizajes.md
- * E-024). Como un campo Link, DENTRO de filterByFormula, se evalúa contra el
- * primary field del registro vinculado (no contra su record ID — lección
- * E-018), filtrar `TX_Adjuntos.solicitud` con FIND()/ARRAYJOIN() siempre
- * devolvía "" y nunca hacía match. Se pide el campo en formato JSON normal
- * (sin cellFormat 'string', que también renderiza Link fields como texto del
- * primary field) para que `fields.solicitud` traiga el array real de record
- * IDs, y se filtra en memoria.
+ * Adjuntos de una solicitud, filtrados **en Airtable** y no en memoria.
+ *
+ * ## Por qué antes se leía la tabla entera, y por qué ya no hace falta
+ *
+ * Un campo Link, dentro de `filterByFormula`, se evalúa contra el **primary
+ * field** del registro vinculado —no contra su record ID (lección E-018)—, que
+ * en `TX_Solicitudes` es `codigo_solicitud`. El 10-jul-2026 ese campo estaba
+ * vacío en todas las filas (**E-024**), así que cualquier `FIND()/ARRAYJOIN()`
+ * comparaba contra `""` y no hacía match nunca. La salida entonces fue correcta:
+ * traer toda la tabla y filtrar en memoria.
+ *
+ * **E-024 quedó superado.** El campo se convirtió en fórmula entre el 10 y el
+ * 13-jul-2026 (`docs/schema-airtable.md` §19) y hoy está poblado —verificado vía
+ * MCP el 22-ago-2026—, de modo que el filtro server-side vuelve a ser posible y
+ * el escaneo completo deja de justificarse: `TX_Adjuntos` crece con cada subida
+ * y esta lectura corre en cada apertura del sheet.
+ *
+ * ## El coste: una lectura extra, deliberada
+ *
+ * Filtrar por `codigo_solicitud` obliga a resolverlo primero, así que son dos
+ * peticiones donde antes había una. Es la misma forma que ya usan
+ * `filasDeSolicitud()` en las rutas de IF-03. Se acepta porque la segunda
+ * petición pasa de O(tabla) a O(adjuntos de esta solicitud), que es lo que
+ * escala; y porque las dos son lecturas, cubiertas por el reintento de red de
+ * `lib/airtable-client.ts`.
+ *
+ * Si la solicitud no existe o no tiene código, se devuelve `[]` en vez de caer
+ * al escaneo completo: sin código no hay nada que casar, y traer la tabla entera
+ * para filtrarla contra un id que ya sabemos ausente sólo gasta cuota.
  */
 export async function fetchAdjuntosPorSolicitud(solicitudId: string): Promise<Adjunto[]> {
+  const solicitud = await getRecord<{ codigo_solicitud?: string }>(
+    TX_SOLICITUDES,
+    solicitudId
+  )
+  const codigo = solicitud?.fields.codigo_solicitud?.trim() ?? ''
+  if (!codigo) return []
+
   const records = await listRecords<RawFields>(TX_ADJUNTOS, {
-    fields: [
-      'nombre_archivo',
-      'tipo',
-      'clave_adjunto',
-      'url_dropbox',
-      'tamanio_kb',
-      'hash_md5',
-      'requerido_por_ejecutiva',
-      'estado_extraccion',
-      'solicitud',
-    ],
+    fields: CAMPOS_ADJUNTO,
+    filterByFormula: `{solicitud}="${codigo.replace(/"/g, '\\"')}"`,
   })
 
   return records
-    .filter((r) => (r.fields.solicitud ?? []).includes(solicitudId))
     .map((r) => {
       const tamano = formatTamanioKb(Number(r.fields.tamanio_kb ?? 0))
       const hace = relativeTime(r.createdTime)

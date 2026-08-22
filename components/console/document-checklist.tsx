@@ -350,8 +350,23 @@ function DocumentRow({
 
   return (
     <div
+      /*
+       * Rejilla de la fila. **Dos columnas en móvil, cuatro desde `sm`.**
+       *
+       * Hasta el 22-ago-2026 el móvil usaba tres columnas y ponía el badge de
+       * vigencia en la primera fila, a la derecha del nombre. A 375 px eso deja
+       * al nombre con ~180 px y parte los títulos largos en tres y cuatro
+       * líneas —«Certificado de Deuda de Contribuciones» llegaba a cuatro—,
+       * porque el badge es de ancho fijo y se lo come la columna `1fr`.
+       *
+       * Con dos columnas el nombre ocupa todo el ancho útil y el badge baja a la
+       * fila siguiente, alineado bajo el texto. **A partir de `sm` no cambia
+       * nada**: la rejilla de cuatro columnas y las posiciones explícitas de las
+       * zonas 3 y 4 son las mismas que antes, así que el sheet de la Ejecutiva
+       * en escritorio se ve exactamente igual.
+       */
       className={cn(
-        "grid grid-cols-[auto_1fr_auto] items-start gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-3 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center",
+        "grid grid-cols-[auto_1fr] items-start gap-x-3 gap-y-2 rounded-lg border border-border bg-card p-3 sm:grid-cols-[auto_1fr_auto_auto] sm:items-center",
         item.requerido_por_ejecutiva &&
           !tieneArchivo &&
           estado !== "uploading" &&
@@ -408,8 +423,11 @@ function DocumentRow({
         )}
       </div>
 
-      {/* Zona 3 · Badge de vigencia */}
-      <div className="row-start-1 col-start-3 justify-self-end sm:row-auto sm:col-auto">
+      {/* Zona 3 · Badge de vigencia
+          Móvil: baja a su propia fila bajo el nombre (columna 2), para no
+          robarle ancho al título. Desde `sm` vuelve a su columna propia, a la
+          derecha, exactamente como estaba. */}
+      <div className="col-start-2 justify-self-start sm:row-auto sm:col-auto sm:justify-self-end">
         {meta.vigencia_dias != null && (
           <Badge variant="secondary" className="text-muted-foreground">
             Vigencia {meta.vigencia_dias} días
@@ -418,7 +436,7 @@ function DocumentRow({
       </div>
 
       {/* Zona 4 · Slot de carga */}
-      <div className="col-span-3 sm:col-span-1 sm:col-start-4 sm:justify-self-end">
+      <div className="col-span-2 sm:col-span-1 sm:col-start-4 sm:justify-self-end">
         <input
           ref={inputRef}
           type="file"

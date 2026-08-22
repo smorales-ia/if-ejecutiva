@@ -64,7 +64,7 @@ export function Section({
         <span className="flex items-center gap-2 text-base font-semibold text-foreground">
           <ChevronDown
             className={cn(
-              "h-5 w-5 text-vp-text-secondary transition-transform duration-200",
+              "h-5 w-5 text-muted-foreground transition-transform duration-200",
               !open && "-rotate-90",
             )}
             aria-hidden="true"
@@ -95,13 +95,13 @@ export function SubSection({
     <Collapsible
       open={open}
       onOpenChange={setOpen}
-      className="rounded-lg border border-border bg-vp-surface/50"
+      className="rounded-lg border border-border bg-muted/50"
     >
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-2 px-3 py-3 text-left">
         <span className="text-sm font-semibold text-foreground">{titulo}</span>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-vp-text-secondary transition-transform duration-200",
+            "h-4 w-4 text-muted-foreground transition-transform duration-200",
             !open && "-rotate-90",
           )}
           aria-hidden="true"
@@ -122,7 +122,7 @@ function useFieldId(prefix: string) {
 /** Badge neutro "Pre-llenado · editable" (§5.1). */
 export function PrellenadoBadge() {
   return (
-    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-vp-text-secondary">
+    <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
       Pre-llenado · editable
     </span>
   )
@@ -162,7 +162,7 @@ export function TextField({
       <div className="flex items-center justify-between gap-2">
         <Label htmlFor={id} className="text-sm font-medium">
           {label}
-          {requerido && <span className="ml-0.5 text-vp-danger">*</span>}
+          {requerido && <span className="ml-0.5 text-danger">*</span>}
         </Label>
         {prellenado && <PrellenadoBadge />}
       </div>
@@ -180,10 +180,10 @@ export function TextField({
         }}
         className={cn(
           "min-h-12 text-base",
-          vacioRequerido && "data-[faltante=true]:border-vp-danger",
+          vacioRequerido && "data-[faltante=true]:border-danger",
         )}
       />
-      {hint ? <p className="text-xs text-vp-text-secondary">{hint}</p> : null}
+      {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   )
 }
@@ -251,7 +251,7 @@ export function SwitchField({
         <Label htmlFor={id} className="text-sm font-medium">
           {label}
         </Label>
-        {hint ? <span className="text-xs text-vp-text-secondary">{hint}</span> : null}
+        {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
       </div>
       <Switch id={id} checked={checked} onCheckedChange={onChange} disabled={disabled} />
     </div>
@@ -278,12 +278,12 @@ export function StarsField({
             type="button"
             aria-label={`${n} de 5`}
             onClick={() => onChange(n)}
-            className="flex h-11 w-11 items-center justify-center rounded-lg border border-border transition-colors hover:bg-vp-surface"
+            className="flex h-11 w-11 items-center justify-center rounded-lg border border-border transition-colors hover:bg-muted"
           >
             <Star
               className={cn(
                 "h-6 w-6",
-                n <= value ? "fill-vp-accent text-vp-accent" : "text-border",
+                n <= value ? "fill-accent-orange text-accent-orange" : "text-border",
               )}
             />
           </button>
@@ -319,7 +319,7 @@ export function MultiChipField({
               className={cn(
                 "min-h-11 rounded-full border px-4 text-sm font-medium transition-all",
                 activo
-                  ? "border-vp-primary bg-blue-50 text-vp-primary"
+                  ? "border-brand bg-blue-50 text-brand"
                   : "border-border bg-background text-foreground",
               )}
             >

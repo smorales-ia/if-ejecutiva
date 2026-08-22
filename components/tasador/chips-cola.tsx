@@ -29,10 +29,10 @@ import { CHIPS, esChipActivo, type ChipActivo } from "@/lib/tasador/cola-filtros
 const CLASES_BASE =
   "flex min-h-12 shrink-0 items-center rounded-lg border px-4 text-base font-medium transition-all duration-200"
 
-const CLASES_ACTIVO = "border-vp-primary bg-vp-primary text-white"
+const CLASES_ACTIVO = "border-brand bg-brand text-white"
 
 const CLASES_INACTIVO =
-  "border-border bg-background text-foreground hover:bg-vp-surface"
+  "border-border bg-background text-foreground hover:bg-muted"
 
 export function ChipsCola({
   activo,

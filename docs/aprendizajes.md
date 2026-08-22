@@ -446,6 +446,48 @@ Lo que sigue vigente como regla vive abajo, destilado.
   Es **RO-13** por el mismo filo, aplicado a un `singleSelect` en vez de a un
   campo fórmula: derivar el literal de la fuente de verdad, nunca del vocabulario
   con que el equipo habla del campo.
+- **RO-39 · Un 5xx intermitente contra Airtable es fallo de transporte hasta que
+  se demuestre lo contrario.** `fetch` de Node no informa la caída donde uno la
+  busca: lanza `TypeError: fetch failed`, con un mensaje genérico, y esconde la
+  causa dentro de un `AggregateError` anidado —un `Error` con `code: 'ETIMEDOUT'`
+  por **cada IP** que resolvió el DNS, diez en el caso de `api.airtable.com`—. La
+  respuesta HTTP no ayuda: los Route Handlers del repo mapean `AirtableError` a
+  **502** y cualquier otra excepción a **500**, así que un **500 con
+  `airtableStatus: undefined`** significa *«Airtable nunca respondió»*, no *«el
+  código hizo algo mal»*.
+  **Cómo se diagnostica, en este orden:** leer los logs de instrumentación del
+  propio endpoint —`[ADJUNTOS-LEER]` en `app/api/solicitudes/[id]/adjuntos/route.ts`
+  es el molde— antes de sospechar del id, del filtro o del nombre de un campo; y
+  comprobar si el fallo es **intermitente**, porque el mismo endpoint alternando
+  200 y 500 en una sesión descarta por sí solo toda hipótesis determinista. Sobre
+  WSL2 y `/mnt/c` esto pasa de verdad y no es reproducible a voluntad.
+  **La mitigación es asimétrica y tiene que seguir siéndolo:** `request()` en
+  `lib/airtable-client.ts` reintenta ante fallo de transporte además del 429/5xx
+  que ya cubría, pero **`postRequest()` no reintenta nunca**. Una lectura es
+  idempotente; una escritura que falla por red **puede haber llegado igual**, y
+  un `createRecord` reintentado a ciegas duplica el registro — exactamente el
+  defecto que **CI-052** cerró, y que no se reintroduce por la puerta del cliente
+  HTTP. Vigente desde el 22-ago-2026.
+- **RO-40 · Una clase Tailwind que nadie declaró no falla: no existe.** Sin una
+  entrada en `@theme` de `app/globals.css` —y este repo **no puede** tener
+  `tailwind.config` (`CLAUDE.md`)—, Tailwind v4 no emite **ni una línea de CSS**
+  para una clase propia. El build pasa, `tsc` pasa, el `className` se escribe en
+  el HTML y el elemento simplemente hereda: sin fondo, sin color, sin borde. Es
+  el modo de fallo más caro de los silenciosos, porque *se ve* como una decisión
+  de diseño.
+  **Se verifica con un `grep` sobre el CSS compilado, no leyendo el JSX:**
+  `grep -o "vp-primary" .next/static/chunks/*.css | wc -l` → **0** demuestra que
+  la clase no genera nada; el mismo `grep` sobre un token real devuelve
+  ocurrencias. Caso que la origina: `components/tasador/` acumulaba **255 clases
+  `vp-*`** heredadas del import v0 —cuyo despliegue online sí tenía su propio
+  config—, así que las capturas del prototipo mostraban colores que el repo local
+  nunca renderizó. **Cuidado con esa trampa al comparar contra un diseño de
+  referencia: la captura puede ser de otro build.**
+  **Regla:** todo token de color nuevo pasa por `@theme`, y antes de crear uno se
+  comprueba si ya existe con otro nombre. **RO-05** pide una sola fuente cuando
+  dos capas deben coincidir; ésta es su consecuencia en CSS — si no está
+  declarada, no existe, y dos vocabularios para el mismo color son dos fuentes.
+  Vigente desde el 22-ago-2026.
 
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 
@@ -1906,3 +1948,63 @@ no manda»), ahora del lado de la bitácora: ningún documento con fecha describ
 > **Nota de mantenimiento.** Este archivo pasa de 1800 líneas y cumple de sobra el umbral de
 > archivado de `CLAUDE.md`. **No se archivó acá**: el archivado es una operación deliberada, de
 > tanda propia, y hacerlo a mitad de P5-TAS habría mezclado dos cosas con criterios distintos.
+
+### 2026-08-22 — Tanda B1·B2·B3 · el 500 de adjuntos, el sheet a 375 px y una paleta que no existía
+
+**Contexto:** verificación visual de P5-TAS a 375×667 con el server local. Aparecieron tres
+hallazgos —uno funcional y dos cosméticos— y se abordaron en una tanda corta, en ese orden.
+
+**Inconveniente:** `/api/solicitudes/[id]/adjuntos` devolvía **500 de forma recurrente** y la
+cabecera de Pantalla 3 mostraba "0 docs". La hipótesis de partida —razonable— era que el hook
+pasaba un id de tasación donde el endpoint espera uno de solicitud, y que B5 no había adaptado el
+id al integrar el sheet en IF-03.
+
+**Causa raíz:** ninguna de las dos cosas. El id era correcto (`rec9qf3DchOY5Lk2N` es el record ID
+de `TX_Solicitudes` de VP-2026-0061, y un id mal formado habría dado 404, no 500). La
+instrumentación `[ADJUNTOS-LEER]` que el propio endpoint ya tenía lo dijo entero:
+`airtableStatus: undefined`, `detalle: 'fetch failed'`, causa `AggregateError` con
+`code: 'ETIMEDOUT'` sobre las diez IPs de `api.airtable.com`. **La salida de red de WSL2 se cae de
+forma intermitente**; en el mismo log conviven tres `[ADJUNTOS-LEER] ok · 200`. Y el "0 docs" era
+**el dato correcto**: verificado en Airtable, las tres tasaciones del tasador mock tienen cero
+adjuntos.
+
+**Solución aplicada:** `request()` en `lib/airtable-client.ts` reintenta ante fallo de transporte
+además del 429/5xx, con detección de la causa anidada (`esFalloDeRedTransitorio`, 19 tests).
+`postRequest()` **no** se tocó, a propósito. Y `fetchAdjuntosPorSolicitud` pasó a filtrar en
+Airtable en vez de leer `TX_Adjuntos` entera: el filtro en memoria era correcto cuando
+`codigo_solicitud` estaba vacío (E-024) y dejó de serlo al convertirse en fórmula. Verificado
+contra la base: VP-2026-0049 → 2, VP-2026-0038 → 5, VP-2026-0061 → 0.
+
+**Prevención futura:** **RO-39**. Ante un 5xx intermitente contra Airtable, leer primero los logs
+de instrumentación del endpoint y comprobar si el fallo alterna con éxitos — eso solo descarta
+cualquier hipótesis determinista, y ahorra buscar un bug que no existe.
+
+### 2026-08-22 — Las capturas del prototipo no describen el código local
+
+**Contexto:** mismo día, batch B3. `components/tasador/` usaba 253 clases `vp-*` (`bg-vp-primary`,
+`text-vp-success`, `bg-vp-surface`…) que `components/console/` no usa ni una vez.
+
+**Inconveniente:** el encargo era "el Tasador usa otra paleta, unificarla con la de la Ejecutiva".
+A mitad de la migración el equipo detectó, comparando capturas del v0, que en IF-03 el naranja es
+**acción primaria** (el botón "Coordinar visita") mientras en IF-02 se reserva para **badges de
+alerta**, y pidió revertir por si la migración había vuelto azul ese botón.
+
+**Causa raíz:** dos cosas, y ninguna era la que parecía. **(1)** `vp-*` **no estaba declarada en
+ningún sitio**: sin `@theme` y sin `tailwind.config` —prohibido por `CLAUDE.md`—, Tailwind v4 no
+generaba una sola línea de CSS para esas clases. Confirmado con `grep` sobre el CSS compilado: 0
+ocurrencias de `vp-`, contra las que sí aparecen para los tokens reales. Los colores del Tasador no
+eran otra paleta: **no eran ninguna**, y las capturas venían del despliegue online de v0, que sí
+tenía su config. **(2)** El botón "Coordinar visita" nunca usó `vp-primary`: ya estaba en
+`bg-accent-orange` con un comentario A-24 preexistente, así que la migración no lo tocó — el mapeo
+llevaba `vp-accent` → `accent-orange` y ningún naranja se convirtió en azul.
+
+**Solución aplicada:** **no se revirtió.** Se presentó la tabla de mapeo con el contexto de los
+cinco usos de naranja y la evidencia de que el botón seguía intacto, y Sergio confirmó mantener la
+migración: 255 sustituciones a `brand` / `brand/90` / `muted` / `muted-foreground` /
+`accent-orange`, más tres tokens nuevos para el semáforo (`success` · `warning` · `danger`) con los
+valores que fija `CLAUDE.md` §4.4. Sin agregar `vp-*` al `@theme`: vocabulario único.
+
+**Prevención futura:** **RO-40**. Antes de tratar una diferencia visual como decisión de diseño,
+comprobar que las clases implicadas **generan CSS**. Y al comparar contra un diseño de referencia,
+verificar de qué build salió la captura: un prototipo online y el repo local pueden no compartir la
+configuración que da color a la pantalla.

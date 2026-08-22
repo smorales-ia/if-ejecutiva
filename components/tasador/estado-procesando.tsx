@@ -129,7 +129,7 @@ export function EstadoProcesando({
       <div
         className={cn(
           "flex items-center justify-center rounded-full text-white transition-all duration-500",
-          completado ? "h-28 w-28 bg-vp-success" : "h-24 w-24 bg-vp-primary",
+          completado ? "h-28 w-28 bg-success" : "h-24 w-24 bg-brand",
         )}
       >
         {completado ? (
@@ -142,7 +142,7 @@ export function EstadoProcesando({
       <h1 className="mt-6 text-2xl font-bold text-foreground">
         {completado ? copy.tituloListo : copy.tituloProceso}
       </h1>
-      <p className="mt-2 text-base text-vp-text-secondary">{copy.subtitulo(faseEfectiva)}</p>
+      <p className="mt-2 text-base text-muted-foreground">{copy.subtitulo(faseEfectiva)}</p>
 
       {/* Stepper horizontal */}
       <div className="mt-8 flex w-full items-start justify-between">
@@ -152,13 +152,13 @@ export function EstadoProcesando({
               <div
                 className={cn(
                   "relative flex h-8 w-8 items-center justify-center rounded-full transition-all duration-300",
-                  paso.estado === "done" && "bg-vp-success text-white",
-                  paso.estado === "active" && "bg-vp-primary text-white",
-                  paso.estado === "pending" && "bg-border text-vp-text-secondary",
+                  paso.estado === "done" && "bg-success text-white",
+                  paso.estado === "active" && "bg-brand text-white",
+                  paso.estado === "pending" && "bg-border text-muted-foreground",
                 )}
               >
                 {paso.estado === "active" && (
-                  <span className="absolute inset-0 animate-ping rounded-full bg-vp-primary/40" />
+                  <span className="absolute inset-0 animate-ping rounded-full bg-brand/40" />
                 )}
                 {paso.estado === "done" ? (
                   <Check className="h-4 w-4" strokeWidth={3} />
@@ -171,7 +171,7 @@ export function EstadoProcesando({
               <span
                 className={cn(
                   "px-1 text-xs font-medium leading-tight text-balance",
-                  paso.estado === "pending" ? "text-vp-text-secondary" : "text-foreground",
+                  paso.estado === "pending" ? "text-muted-foreground" : "text-foreground",
                 )}
               >
                 {paso.label}
@@ -182,7 +182,7 @@ export function EstadoProcesando({
                 className={cn(
                   "mt-4 h-0.5 flex-1 transition-colors duration-300",
                   pasos[i].estado === "done" && pasos[i + 1].estado !== "pending"
-                    ? "bg-vp-success"
+                    ? "bg-success"
                     : "bg-border",
                 )}
               />
@@ -193,13 +193,13 @@ export function EstadoProcesando({
 
       {/* Card tiempo estimado */}
       {!completado && (
-        <div className="mt-8 w-full rounded-xl bg-vp-surface p-4">
+        <div className="mt-8 w-full rounded-xl bg-muted p-4">
           <p className="text-base text-foreground">
             Tiempo estimado: <span className="font-semibold">15 segundos</span>
           </p>
           <Progress
             value={faseEfectiva === 1 ? 75 : 35}
-            className="mt-3 block [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-track]]:bg-border [&_[data-slot=progress-indicator]]:animate-pulse [&_[data-slot=progress-indicator]]:bg-vp-primary [&_[data-slot=progress-indicator]]:transition-all"
+            className="mt-3 block [&_[data-slot=progress-track]]:h-2 [&_[data-slot=progress-track]]:bg-border [&_[data-slot=progress-indicator]]:animate-pulse [&_[data-slot=progress-indicator]]:bg-brand [&_[data-slot=progress-indicator]]:transition-all"
           />
         </div>
       )}
@@ -210,7 +210,7 @@ export function EstadoProcesando({
           <Button
             render={<Link href={copy.continuarHref(id)} />}
             nativeButton={false}
-            className="min-h-12 w-full bg-vp-primary text-base font-semibold text-white hover:bg-vp-primary-dark"
+            className="min-h-12 w-full bg-brand text-base font-semibold text-white hover:bg-brand/90"
           >
             {copy.continuarLabel}
             <ArrowRight className="h-4 w-4" />
@@ -229,7 +229,7 @@ export function EstadoProcesando({
           render={<Link href={copy.volverHref(id)} />}
           nativeButton={false}
           variant="outline"
-          className="min-h-12 w-full border-vp-primary text-base font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark"
+          className="min-h-12 w-full border-brand text-base font-semibold text-brand hover:bg-blue-50 hover:text-brand/90"
         >
           <ArrowLeft className="h-4 w-4" />
           {copy.volverLabel}

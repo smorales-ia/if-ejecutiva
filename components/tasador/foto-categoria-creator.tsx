@@ -35,7 +35,7 @@ export function FotoCategoriaCreator({
   }
 
   return (
-    <div className="rounded-lg border border-dashed border-vp-primary/60 bg-vp-surface/50 p-3">
+    <div className="rounded-lg border border-dashed border-brand/60 bg-muted/50 p-3">
       <p className="text-sm font-semibold text-foreground">Categoría personalizada</p>
       <div className="mt-2 flex flex-col gap-2">
         <Input
@@ -48,12 +48,12 @@ export function FotoCategoriaCreator({
           className="min-h-12 text-base"
           aria-label="Nombre de la categoría"
         />
-        {error ? <p className="text-xs font-medium text-vp-danger">{error}</p> : null}
+        {error ? <p className="text-xs font-medium text-danger">{error}</p> : null}
         <Button
           type="button"
           variant="outline"
           onClick={handleCrear}
-          className="min-h-11 w-full border-vp-primary text-sm font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark"
+          className="min-h-11 w-full border-brand text-sm font-semibold text-brand hover:bg-blue-50 hover:text-brand/90"
         >
           <Plus className="h-4 w-4" />
           Crear categoría

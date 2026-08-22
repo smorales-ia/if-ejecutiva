@@ -5,16 +5,16 @@ const STYLES: Record<EstadoColor, string> = {
   verde: "bg-emerald-50 text-emerald-700 border-emerald-200",
   ambar: "bg-amber-50 text-amber-700 border-amber-200",
   rojo: "bg-red-50 text-red-700 border-red-200",
-  azul: "bg-blue-50 text-vp-primary border-blue-200",
+  azul: "bg-blue-50 text-brand border-blue-200",
   naranja: "bg-orange-50 text-orange-700 border-orange-200",
 }
 
 const DOT: Record<EstadoColor, string> = {
-  verde: "bg-vp-success",
-  ambar: "bg-vp-warning",
-  rojo: "bg-vp-danger",
-  azul: "bg-vp-primary",
-  naranja: "bg-vp-accent",
+  verde: "bg-success",
+  ambar: "bg-warning",
+  rojo: "bg-danger",
+  azul: "bg-brand",
+  naranja: "bg-accent-orange",
 }
 
 export function EstadoBadge({

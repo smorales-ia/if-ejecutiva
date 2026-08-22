@@ -86,7 +86,7 @@ export function ColaTasaciones({
 
       <main className="px-4 pb-12 pt-5">
         <h1 className="text-2xl font-bold text-foreground">Mis tasaciones</h1>
-        <p className="mt-1 text-base text-vp-text-secondary">{enCurso} en curso</p>
+        <p className="mt-1 text-base text-muted-foreground">{enCurso} en curso</p>
 
         <ChipsCola activo={chip} onSeleccionar={seleccionar} />
 
@@ -95,7 +95,7 @@ export function ColaTasaciones({
             <TasacionCard key={t.id} tasacion={t} />
           ))}
           {tasaciones.length === 0 && (
-            <p className="py-12 text-center text-base text-vp-text-secondary">
+            <p className="py-12 text-center text-base text-muted-foreground">
               No hay tasaciones en esta categoría.
             </p>
           )}

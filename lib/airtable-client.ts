@@ -7,14 +7,81 @@ export class AirtableError extends Error {
   }
 }
 
+/**
+ * ¿El fallo es de red y vale la pena reintentarlo?
+ *
+ * `fetch` de Node no lanza `AirtableError` ni devuelve un status cuando la
+ * conexión no llega a establecerse: lanza `TypeError: fetch failed` con la causa
+ * real anidada —típicamente un `AggregateError` con `code: 'ETIMEDOUT'`, uno por
+ * cada IP que resolvió el DNS—. Sin mirar la causa, todos esos casos se
+ * confunden con un error de programación.
+ *
+ * Detectado el 22-ago-2026 verificando IF-03 sobre WSL2: la salida a
+ * `api.airtable.com` cae de forma intermitente y el mismo endpoint alterna 200 y
+ * 500 en la misma sesión. El código no tenía nada malo; simplemente no
+ * reintentaba lo único que estaba fallando.
+ */
+export function esFalloDeRedTransitorio(err: unknown): boolean {
+  const CODIGOS = new Set([
+    'ETIMEDOUT',
+    'ECONNRESET',
+    'ECONNREFUSED',
+    'EAI_AGAIN',
+    'ENOTFOUND',
+    'EPIPE',
+    'UND_ERR_CONNECT_TIMEOUT',
+    'UND_ERR_SOCKET',
+  ])
+
+  // La causa puede venir anidada varios niveles (TypeError → AggregateError →
+  // Error), así que se recorre la cadena en vez de mirar sólo el primer nivel.
+  let actual: unknown = err
+  for (let nivel = 0; nivel < 5 && actual; nivel++) {
+    if (typeof actual !== 'object') break
+    const e = actual as { code?: string; errors?: unknown[]; cause?: unknown }
+
+    if (e.code && CODIGOS.has(e.code)) return true
+    if (Array.isArray(e.errors) && e.errors.some((sub) => esFalloDeRedTransitorio(sub))) {
+      return true
+    }
+    actual = e.cause
+  }
+
+  // Último recurso: el mensaje. `fetch failed` es el texto que Node emite para
+  // todo fallo de transporte, y no hay ningún caso en que reintentarlo sea peor
+  // que devolver un 500 al usuario.
+  return err instanceof TypeError && /fetch failed/i.test(err.message)
+}
+
+/**
+ * Lectura con reintentos.
+ *
+ * ⚠ El reintento ante fallo de red vive **sólo acá y no en `postRequest`**. Una
+ * lectura es idempotente y repetirla no tiene consecuencias; una escritura que
+ * falla por red puede haber llegado igualmente al servidor, y reintentar un
+ * `createRecord` a ciegas duplicaría el registro. Ésa es exactamente la clase de
+ * duplicación que CI-052 acaba de cerrar, y no se reintroduce por la puerta del
+ * cliente HTTP.
+ */
 async function request(url: string, attempt = 1): Promise<Response> {
   const token = process.env.AIRTABLE_TOKEN
   if (!token) throw new Error('AIRTABLE_TOKEN is not configured')
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  })
+  let res: Response
+  try {
+    res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    })
+  } catch (err) {
+    if (attempt < 3 && esFalloDeRedTransitorio(err)) {
+      // Backoff igual al de los 5xx: el enlace intermitente se recupera en
+      // cientos de milisegundos, y esperar más castiga al usuario en terreno.
+      await new Promise((r) => setTimeout(r, 500 * attempt))
+      return request(url, attempt + 1)
+    }
+    throw err
+  }
 
   if (res.status === 429 && attempt < 3) {
     const retryAfter = Number(res.headers.get('Retry-After') ?? attempt)

@@ -85,7 +85,7 @@ function Counter({
           type="button"
           aria-label={`Aumentar ${label}`}
           onClick={() => onChange(value + 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-vp-primary text-vp-primary"
+          className="flex h-9 w-9 items-center justify-center rounded-md border border-brand text-brand"
         >
           <Plus className="h-4 w-4" />
         </button>
@@ -171,7 +171,7 @@ export function SeccionEdificacion({
                   type="button"
                   onClick={() => removeAmp(a.id)}
                   aria-label="Eliminar ampliación"
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-vp-danger hover:bg-red-50"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-danger hover:bg-red-50"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -193,7 +193,7 @@ export function SeccionEdificacion({
             type="button"
             variant="outline"
             onClick={addAmpliacion}
-            className="min-h-11 w-full border-dashed border-vp-primary text-sm font-semibold text-vp-primary hover:bg-blue-50 hover:text-vp-primary-dark"
+            className="min-h-11 w-full border-dashed border-brand text-sm font-semibold text-brand hover:bg-blue-50 hover:text-brand/90"
           >
             <Plus className="h-4 w-4" />
             Agregar ampliación
@@ -239,7 +239,7 @@ export function SeccionEdificacion({
                   type="button"
                   onClick={() => removeRecinto(r.id)}
                   aria-label={`Eliminar recinto ${r.nombre}`}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-vp-danger hover:bg-red-50"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-danger hover:bg-red-50"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -262,7 +262,7 @@ export function SeccionEdificacion({
                   key={nombre}
                   type="button"
                   onClick={() => addRecinto(nombre)}
-                  className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-vp-primary px-3 text-sm font-medium text-vp-primary hover:bg-blue-50"
+                  className="inline-flex min-h-10 items-center gap-1 rounded-full border border-dashed border-brand px-3 text-sm font-medium text-brand hover:bg-blue-50"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   {nombre}

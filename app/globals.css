@@ -42,6 +42,9 @@
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-accent-orange: var(--accent-orange);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -64,6 +67,27 @@
   --brand: #075899;
   --brand-foreground: #ffffff;
   --accent-orange: #f5a213;
+
+  /*
+   * Semáforo operacional (CLAUDE.md §4.4 punto 5). Los tres valores están
+   * fijados ahí y no se eligen acá.
+   *
+   * Viven junto a `--brand` y `--accent-orange` y, como ellos, **no se
+   * redefinen en el bloque `.dark`**: son colores de marca y de estado, no
+   * superficies, y el resto de la paleta corporativa sigue esa misma regla.
+   *
+   * ⚠ El ámbar operacional (`--warning`) **no es** el naranja de marca
+   * (`--accent-orange`, #f5a213). §4.4 lo dice explícitamente: nunca
+   * colisionarlos. Un badge de "atrasado" y un acento de marca tienen que poder
+   * distinguirse de un vistazo.
+   *
+   * `--danger` tampoco es `--destructive`: aquél es el rojo del semáforo
+   * (#b91c1c, el mismo que `document-checklist.tsx` venía escribiendo a mano en
+   * siete sitios), éste es el rojo de shadcn para acciones destructivas.
+   */
+  --success: #15803d;
+  --warning: #d97706;
+  --danger: #b91c1c;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);

@@ -150,9 +150,9 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
       target?.scrollIntoView({ behavior: "smooth", block: "center" })
       if (campo) {
         campo.focus({ preventScroll: true })
-        campo.classList.add("ring-2", "ring-vp-danger", "ring-offset-2")
+        campo.classList.add("ring-2", "ring-danger", "ring-offset-2")
         setTimeout(
-          () => campo.classList.remove("ring-2", "ring-vp-danger", "ring-offset-2"),
+          () => campo.classList.remove("ring-2", "ring-danger", "ring-offset-2"),
           2200,
         )
       }
@@ -199,14 +199,14 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
     setOpenSections((prev) => ({ ...prev, [s]: v }))
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-2xl bg-vp-surface">
+    <div className="mx-auto min-h-screen w-full max-w-2xl bg-muted">
       <header className="sticky top-0 z-30 bg-background">
         <div className="flex items-start justify-between gap-3 px-3 py-3">
           <div className="flex items-start gap-2">
             <Link
               href={`/tasaciones/${tasacion.id}/fotos`}
               aria-label="Volver a fotos"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-vp-surface"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-foreground hover:bg-muted"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
@@ -216,13 +216,13 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
               </span>
             </div>
           </div>
-          <span className="pr-1 pt-1 text-base font-semibold text-vp-primary">
+          <span className="pr-1 pt-1 text-base font-semibold text-brand">
             {progreso}%
           </span>
         </div>
         <Progress
           value={progreso}
-          className="block [&_[data-slot=progress-track]]:h-1 [&_[data-slot=progress-track]]:rounded-none [&_[data-slot=progress-track]]:bg-border [&_[data-slot=progress-indicator]]:bg-vp-primary"
+          className="block [&_[data-slot=progress-track]]:h-1 [&_[data-slot=progress-track]]:rounded-none [&_[data-slot=progress-track]]:bg-border [&_[data-slot=progress-indicator]]:bg-brand"
         />
         {/* Banner de modo consulta (§6.1) */}
         {consulta && (
@@ -239,14 +239,14 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
             {d.comuna.valor} · {d.tipo.valor}
           </p>
           <p className="mt-0.5 text-base text-foreground">{d.direccion.valor}</p>
-          <p className="mt-0.5 text-sm text-vp-text-secondary">
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Cliente: {d.cliente.valor}
           </p>
 
           {/* Chip: fotos gestionadas en la pantalla anterior (§5.6) */}
           <Link
             href={`/tasaciones/${tasacion.id}/fotos`}
-            className="mt-3 inline-flex items-center gap-2 rounded-full border border-vp-primary/30 bg-blue-50 px-3 py-1.5 text-sm font-medium text-vp-primary hover:bg-blue-100"
+            className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand/30 bg-blue-50 px-3 py-1.5 text-sm font-medium text-brand hover:bg-blue-100"
           >
             <ImageIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
             {totalFotos} fotos ingresadas
@@ -261,8 +261,8 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
             className={cn(
               "mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
               puedeCalcular
-                ? "bg-emerald-50 text-vp-success"
-                : "bg-amber-50 text-vp-warning",
+                ? "bg-emerald-50 text-success"
+                : "bg-amber-50 text-warning",
             )}
           >
             {puedeCalcular ? (
@@ -342,7 +342,7 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
             open={openSections.C}
             onOpenChange={setOpen("C")}
             badge={
-              <span className="rounded-full bg-vp-surface px-2.5 py-1 text-xs font-semibold text-vp-text-secondary">
+              <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
                 {form.items.length} ítems
               </span>
             }
@@ -387,7 +387,7 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
             onOpenChange={setOpen("G")}
             badge={
               hayOverride(form) ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-vp-warning">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-warning">
                   <TriangleAlert className="h-3.5 w-3.5" />
                   Activo
                 </span>
@@ -431,7 +431,7 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
         <div className="flex items-center gap-3 px-4 pb-3 pt-3">
           <Link
             href={`/tasaciones/${tasacion.id}/fotos`}
-            className="flex h-14 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-vp-primary px-4 text-sm font-semibold text-vp-primary hover:bg-blue-50"
+            className="flex h-14 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-brand px-4 text-sm font-semibold text-brand hover:bg-blue-50"
           >
             <ArrowLeft className="h-4 w-4" />
             Volver a fotos
@@ -454,7 +454,7 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
             onClick={handleCalcular}
           />
         </div>
-        <p className="pb-3 text-center text-xs text-vp-text-secondary">
+        <p className="pb-3 text-center text-xs text-muted-foreground">
           {consulta ? "Modo consulta · solo lectura" : "✓ Autosave hace 22 s"}
         </p>
       </footer>
@@ -482,7 +482,7 @@ function BotonCalcular({
           <button
             type="button"
             aria-disabled="true"
-            className={cn(base, "w-full cursor-wait bg-vp-primary text-white opacity-60")}
+            className={cn(base, "w-full cursor-wait bg-brand text-white opacity-60")}
           >
             <Loader2 className="h-5 w-5 animate-spin" />
             Calcular Tasación
@@ -516,7 +516,7 @@ function BotonCalcular({
     <button
       type="button"
       onClick={onClick}
-      className={cn(base, "bg-vp-primary text-white hover:bg-vp-primary-dark")}
+      className={cn(base, "bg-brand text-white hover:bg-brand/90")}
     >
       Calcular Tasación
       <ArrowRight className="h-5 w-5" />

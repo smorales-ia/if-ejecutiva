@@ -69,20 +69,20 @@ export function TasacionCard({ tasacion }: { tasacion: Tasacion }) {
 
         {/* 4 · dirección */}
         <p className="mt-1 flex items-start gap-1.5 text-base text-foreground">
-          <MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-vp-text-secondary" />
+          <MapPin aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
           {tasacion.direccion}
         </p>
 
         {/* 5 · rol SII — la línea se omite si la solicitud no lo tiene */}
         {tieneRolSii && (
           <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-foreground">
-            <FileText aria-hidden="true" className="h-4 w-4 shrink-0 text-vp-text-secondary" />
+            <FileText aria-hidden="true" className="h-4 w-4 shrink-0 text-muted-foreground" />
             Rol: {rolSii}
           </p>
         )}
 
         {/* 6 · cliente institucional · producto */}
-        <p className="mt-2 text-sm text-vp-text-secondary">
+        <p className="mt-2 text-sm text-muted-foreground">
           {tasacion.cliente} · {tasacion.producto}
         </p>
 
@@ -95,7 +95,7 @@ export function TasacionCard({ tasacion }: { tasacion: Tasacion }) {
         {contactoTelefono && (
           <a
             href={`tel:${contactoTelefono.replace(/\s+/g, "")}`}
-            className="mt-1 flex w-fit items-center gap-1.5 text-sm font-medium text-vp-primary hover:underline"
+            className="mt-1 flex w-fit items-center gap-1.5 text-sm font-medium text-brand hover:underline"
           >
             <Phone aria-hidden="true" className="h-4 w-4 shrink-0" />
             {contactoTelefono}
@@ -104,7 +104,7 @@ export function TasacionCard({ tasacion }: { tasacion: Tasacion }) {
 
         {/* 8 · fecha de visita — sólo cuando ya está coordinada */}
         {visitaCoordinada && (
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-vp-text-secondary">
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
             <CalendarDays aria-hidden="true" className="h-4 w-4 shrink-0" />
             Visita: {tasacion.visita}
           </p>
@@ -131,7 +131,7 @@ function AccionCardBoton({ accion }: { accion: AccionCard }) {
         <Button
           render={<Link href={accion.href} />}
           nativeButton={false}
-          className="mt-4 min-h-12 w-full bg-vp-primary text-base font-semibold text-white hover:bg-vp-primary-dark"
+          className="mt-4 min-h-12 w-full bg-brand text-base font-semibold text-white hover:bg-brand/90"
         >
           {accion.rotulo}
           <ArrowRight className="h-4 w-4" />

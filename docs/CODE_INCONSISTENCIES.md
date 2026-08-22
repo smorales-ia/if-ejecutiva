@@ -1740,3 +1740,28 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 - Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
 - **La verificación pedida era "¿existe y funciona?" y la respuesta fue "sí".** Lo que no estaba en la pregunta —y resultó ser lo que importaba— es *qué más hace además de lo que su nombre promete*. Vale como regla: al reutilizar un endpoint ajeno, leer sus **efectos**, no sólo su firma y su estado.
 - **`GET /api/solicitudes/[id]/adjuntos` no tiene guard de pertenencia.** Se observó al reutilizar el sheet documental desde IF-03: la ruta valida el record ID y la sesión de Clerk, pero no comprueba que la solicitud sea del usuario. No lo introdujo P5-TAS y no es de su alcance corregirlo; se anota acá por proximidad temática con **CI-050**, que registra el mismo tipo de hueco en las páginas del tasador.
+
+---
+
+## CI-053 · El pie fijo de Pantalla 3 no entra a 375 px
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-053 |
+| **Archivo:línea** | `components/tasador/fotos-screen.tsx:451-469` — el `<footer>` de la pantalla que sirve `app/tasaciones/[id]/fotos/page.tsx` |
+| **Contexto** | §6.1 del plan IF-03 fija el pie de Pantalla 3: *"«Volver» y «Continuar con datos de la visita»"*. Los dos botones se disponen en una fila `flex` de ancho completo, con el segundo en `flex-1`. |
+| **Síntoma** | **A viewport 375×667 los dos botones no caben lado a lado y el copy se corta.** «Continuar con datos de la visita» es una etiqueta larga y comparte fila con «Volver», su icono y el `gap-3` del contenedor. Observado por Sergio en Chrome DevTools el 22-ago-2026, en la verificación de P5-TAS. |
+| **Causa** | Layout heredado del import v0, pensado para el `max-w-2xl` del contenedor y nunca contrastado contra el ancho real de un teléfono. Es el mismo tipo de hueco que CI-053 comparte con el sheet documental: componentes correctos en escritorio que nadie midió a 375 px. |
+| **Impacto** | **Cosmético. No bloquea el flujo**: los dos botones siguen siendo funcionales y alcanzables, y el destino de cada uno es inequívoco por su icono. Se degrada la legibilidad del rótulo, no la operación. |
+| **Mitigación pendiente** | Tres salidas, a evaluar juntas porque compiten: <br>**(a) Apilar en vertical bajo `sm`** — el pie pasa a dos filas. Es lo más legible y lo que más alto roba a una pantalla que ya tiene cabecera pegajosa y pie fijo. <br>**(b) `min-w-0` + `truncate`** en el botón largo — conserva una sola fila y corta el texto con elipsis, que es lo que hoy pasa sin control. <br>**(c) Acortar el copy a «Continuar →»** bajo `sm` — el más barato y el que mejor se ve, pero **toca un literal de §6.1**, así que exige sign-off: los rótulos del pie están fijados en el plan y no se cambian desde el código. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Resolución** | **ABIERTA · asignada a P8-TAS (pulido UI).** No se corrigió en la tanda del 22-ago-2026 por dos razones: es **preexistente** —el `git blame` lo sitúa en el import v0 y la migración de tokens de esa tanda no tocó el layout del pie, sólo los colores— y la salida (c), que es la más limpia visualmente, cambia un literal normativo y no es decisión del ejecutor. |
+| **Estado** | **abierta** · cosmético · no bloquea P5-TAS ni el commit de la tanda |
+| **Origen** | Verificación visual a 375×667 de **P5-TAS** (22-ago-2026), la misma que confirmó el arreglo del sheet documental. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **No lo introdujo la migración de tokens (B3).** Conviene dejarlo dicho porque las dos cosas se vieron en la misma sesión: B3 cambió `bg-vp-primary` por `bg-brand` en ese botón y nada más — ni el `flex`, ni el `flex-1`, ni el `gap-3`, ni el rótulo. El problema es de ancho disponible, no de color.
+- Emparenta con el arreglo de `document-checklist.tsx` de esa misma tanda: allí la fila del checklist se reorganizó a dos columnas bajo `sm` por el mismo motivo —un layout de escritorio estrangulando texto en un teléfono—. La diferencia es que aquel componente admitía el cambio sin tocar literales y éste, en su salida más limpia, no.

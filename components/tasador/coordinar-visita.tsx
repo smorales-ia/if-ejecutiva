@@ -61,7 +61,7 @@ function TarjetaResumen({
       open={defaultOpen}
       className="group rounded-xl border border-border bg-background [&_summary::-webkit-details-marker]:hidden"
     >
-      <summary className="flex cursor-pointer items-center justify-between gap-2 rounded-xl bg-vp-surface px-4 py-3 text-sm font-bold uppercase tracking-wide text-vp-text-secondary">
+      <summary className="flex cursor-pointer items-center justify-between gap-2 rounded-xl bg-muted px-4 py-3 text-sm font-bold uppercase tracking-wide text-muted-foreground">
         {titulo}
         <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
       </summary>
@@ -73,7 +73,7 @@ function TarjetaResumen({
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col py-1.5">
-      <span className="text-xs font-medium uppercase tracking-wide text-vp-text-secondary">
+      <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
       <span className="text-base text-foreground">{children}</span>
@@ -202,12 +202,12 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
         <Link
           href="/tasaciones"
           aria-label="Volver a mis tasaciones"
-          className="flex size-10 items-center justify-center rounded-lg text-foreground hover:bg-vp-surface"
+          className="flex size-10 items-center justify-center rounded-lg text-foreground hover:bg-muted"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex flex-col">
-          <span className="text-xs text-vp-text-secondary">Coordinar visita</span>
+          <span className="text-xs text-muted-foreground">Coordinar visita</span>
           <span className="font-mono text-base font-semibold text-foreground">
             {tasacion.codigo}
           </span>
@@ -234,7 +234,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
               )}
               <div className="flex items-center justify-between gap-3 py-1.5">
                 <div className="flex flex-col">
-                  <span className="text-xs font-medium uppercase tracking-wide text-vp-text-secondary">
+                  <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     Código VP
                   </span>
                   <span className="font-mono text-base font-semibold text-foreground">
@@ -244,7 +244,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                 <button
                   type="button"
                   onClick={copiarCodigo}
-                  className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-vp-primary hover:bg-vp-surface"
+                  className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-brand hover:bg-muted"
                 >
                   <Copy className="h-4 w-4" />
                   Copiar
@@ -259,7 +259,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
               <span
                 className={cn(
                   "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
-                  esNuevo ? "bg-vp-accent text-white" : "bg-muted text-foreground",
+                  esNuevo ? "bg-accent-orange text-white" : "bg-muted text-foreground",
                 )}
               >
                 {esNuevo ? "Nuevo" : "Usado"}
@@ -280,14 +280,14 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
 
             {/* Unidades con sus Roles SII */}
             <div className="mt-3">
-              <span className="text-xs font-medium uppercase tracking-wide text-vp-text-secondary">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 {unidades.length > 1 ? "Unidades y Roles SII" : "Unidad y Rol SII"}
               </span>
               {unidades.length > 1 ? (
                 <div className="mt-2 overflow-x-auto">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="text-xs uppercase tracking-wide text-vp-text-secondary">
+                      <tr className="text-xs uppercase tracking-wide text-muted-foreground">
                         <th className="py-1.5 pr-3 font-medium">N°</th>
                         <th className="py-1.5 pr-3 font-medium">Dirección</th>
                         <th className="py-1.5 pr-3 font-medium">Rol SII</th>
@@ -325,16 +325,16 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
           <TarjetaResumen titulo="Personas">
             {tasacion.vendedor && (
               <div className="border-b border-border pb-3">
-                <span className="text-xs font-medium uppercase tracking-wide text-vp-text-secondary">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Vendedor
                 </span>
                 <p className="text-base text-foreground">{tasacion.vendedor.nombre}</p>
-                <p className="text-sm text-vp-text-secondary">RUT {tasacion.vendedor.rut}</p>
+                <p className="text-sm text-muted-foreground">RUT {tasacion.vendedor.rut}</p>
               </div>
             )}
 
             <div className="pt-3">
-              <span className="text-xs font-medium uppercase tracking-wide text-vp-text-secondary">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Contactos de visita
               </span>
               <ol className="mt-2 flex flex-col gap-3">
@@ -350,7 +350,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                       y un "3" junto a un "3" no ayuda a nadie. El badge de
                       abajo sí usa el dato real.
                     */}
-                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-vp-primary text-xs font-bold text-white">
+                    <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
                       {i + 1}
                     </span>
                     <div className="flex min-w-0 flex-col gap-1">
@@ -359,22 +359,22 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                           {c.nombre}
                         </span>
                         {c.ordenPrioridad === 1 && (
-                          <span className="rounded-full bg-vp-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                          <span className="rounded-full bg-accent-orange px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
                             Prioridad 1
                           </span>
                         )}
                       </div>
-                      <span className="text-sm text-vp-text-secondary">{c.rol}</span>
+                      <span className="text-sm text-muted-foreground">{c.rol}</span>
                       <a
                         href={`tel:${c.telefono.replace(/\s+/g, "")}`}
-                        className="flex w-fit items-center gap-1.5 text-sm font-medium text-vp-primary hover:underline"
+                        className="flex w-fit items-center gap-1.5 text-sm font-medium text-brand hover:underline"
                       >
                         <Phone className="h-4 w-4" />
                         {c.telefono}
                       </a>
                       <a
                         href={`mailto:${c.email}`}
-                        className="flex w-fit items-center gap-1.5 text-sm text-vp-primary hover:underline"
+                        className="flex w-fit items-center gap-1.5 text-sm text-brand hover:underline"
                       >
                         <Mail className="h-4 w-4" />
                         {c.email}
@@ -387,7 +387,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
 
             {tasacion.observaciones && (
               <div className="mt-3 border-t border-border pt-3">
-                <span className="text-xs font-medium uppercase tracking-wide text-vp-text-secondary">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Observaciones
                 </span>
                 <p className="mt-1 text-sm leading-relaxed text-foreground">
@@ -400,7 +400,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
           {/* Tarjeta 4 · Adjuntos */}
           <TarjetaResumen titulo="Adjuntos">
             {adjuntos.length === 0 ? (
-              <p className="text-sm text-vp-text-secondary">Sin archivos adjuntos.</p>
+              <p className="text-sm text-muted-foreground">Sin archivos adjuntos.</p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {adjuntos.map((a) => (
@@ -409,13 +409,13 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                       href={a.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 hover:bg-vp-surface"
+                      className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2.5 hover:bg-muted"
                     >
-                      <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-vp-primary">
+                      <span className="flex min-w-0 items-center gap-2 text-sm font-medium text-brand">
                         <Paperclip className="h-4 w-4 shrink-0" />
                         <span className="truncate">{a.nombre}</span>
                       </span>
-                      <span className="shrink-0 text-xs text-vp-text-secondary">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {formatearTamano(a.sizeBytes)}
                       </span>
                     </a>
@@ -429,7 +429,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
         {/* Resultado del contacto */}
         <section className="mt-6">
           <h2 className="text-base font-bold text-foreground">Resultado del contacto</h2>
-          <p className="mt-1 text-sm text-vp-text-secondary">
+          <p className="mt-1 text-sm text-muted-foreground">
             Llama al contacto de prioridad 1
             {contactoPrincipal ? ` (${contactoPrincipal.nombre})` : ""} y registra el resultado.
           </p>
@@ -443,17 +443,17 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
               className={cn(
                 "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors",
                 resultado === "exitoso"
-                  ? "border-vp-primary bg-blue-50"
-                  : "border-border hover:bg-vp-surface",
+                  ? "border-brand bg-blue-50"
+                  : "border-border hover:bg-muted",
               )}
             >
               <RadioGroupItem value="exitoso" className="mt-1" />
               <div className="flex flex-col">
                 <span className="flex items-center gap-2 text-base font-semibold text-foreground">
-                  <PhoneCall className="h-4 w-4 text-vp-success" />
+                  <PhoneCall className="h-4 w-4 text-success" />
                   Contacto exitoso
                 </span>
-                <span className="text-sm text-vp-text-secondary">
+                <span className="text-sm text-muted-foreground">
                   Coordiné la fecha de visita
                 </span>
               </div>
@@ -463,17 +463,17 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
               className={cn(
                 "flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors",
                 resultado === "no_contactado"
-                  ? "border-vp-danger bg-red-50"
-                  : "border-border hover:bg-vp-surface",
+                  ? "border-danger bg-red-50"
+                  : "border-border hover:bg-muted",
               )}
             >
               <RadioGroupItem value="no_contactado" className="mt-1" />
               <div className="flex flex-col">
                 <span className="flex items-center gap-2 text-base font-semibold text-foreground">
-                  <PhoneOff className="h-4 w-4 text-vp-danger" />
+                  <PhoneOff className="h-4 w-4 text-danger" />
                   No pude contactar
                 </span>
-                <span className="text-sm text-vp-text-secondary">Devolver a la ejecutiva</span>
+                <span className="text-sm text-muted-foreground">Devolver a la ejecutiva</span>
               </div>
             </label>
           </RadioGroup>
@@ -483,7 +483,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
             <div className="mt-4 flex flex-col gap-4 rounded-xl border border-border p-4">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="fecha-visita" className="text-sm font-medium">
-                  Fecha planificada de visita <span className="text-vp-danger">*</span>
+                  Fecha planificada de visita <span className="text-danger">*</span>
                 </Label>
                 <Input
                   id="fecha-visita"
@@ -497,7 +497,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="notas" className="text-sm font-medium">
                   Nota de la coordinación{" "}
-                  <span className="text-vp-text-secondary">(opcional)</span>
+                  <span className="text-muted-foreground">(opcional)</span>
                 </Label>
                 <Textarea
                   id="notas"
@@ -516,7 +516,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
             <div className="mt-4 flex flex-col gap-4 rounded-xl border border-border p-4">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="motivo-devolucion" className="text-sm font-medium">
-                  Motivo <span className="text-vp-danger">*</span>
+                  Motivo <span className="text-danger">*</span>
                 </Label>
                 <Select
                   value={motivo}
@@ -556,7 +556,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                   </SelectContent>
                 </Select>
                 {motivosError && (
-                  <span className="text-xs text-vp-danger">
+                  <span className="text-xs text-danger">
                     No pudimos cargar los motivos. Recarga la pantalla para intentarlo
                     de nuevo.
                   </span>
@@ -564,7 +564,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="detalle" className="text-sm font-medium">
-                  Detalle <span className="text-vp-danger">*</span>
+                  Detalle <span className="text-danger">*</span>
                 </Label>
                 <Textarea
                   id="detalle"
@@ -578,8 +578,8 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                   className={cn(
                     "text-xs",
                     detalle.trim().length >= DETALLE_MIN
-                      ? "text-vp-success"
-                      : "text-vp-text-secondary",
+                      ? "text-success"
+                      : "text-muted-foreground",
                   )}
                 >
                   {detalle.trim().length}/{DETALLE_MIN} caracteres mínimos
@@ -595,7 +595,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
         {resultado === "" ? (
           <Button
             disabled
-            className="min-h-12 w-full bg-vp-primary text-base font-semibold text-white opacity-50"
+            className="min-h-12 w-full bg-brand text-base font-semibold text-white opacity-50"
           >
             Selecciona un resultado
           </Button>
@@ -603,7 +603,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
           <Button
             onClick={() => void handleConfirmar()}
             disabled={!puedeConfirmar || enviando}
-            className="min-h-12 w-full bg-vp-primary text-base font-semibold text-white hover:bg-vp-primary-dark disabled:opacity-50"
+            className="min-h-12 w-full bg-brand text-base font-semibold text-white hover:bg-brand/90 disabled:opacity-50"
           >
             {enviando && <Loader2 data-icon="inline-start" className="animate-spin" />}
             {enviando ? "Confirmando…" : "Confirmar coordinación"}
@@ -613,7 +613,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
           <Button
             onClick={() => void handleConfirmar()}
             disabled={!puedeConfirmar || enviando}
-            className="min-h-12 w-full bg-vp-danger text-base font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+            className="min-h-12 w-full bg-danger text-base font-semibold text-white hover:bg-red-700 disabled:opacity-50"
           >
             {enviando && <Loader2 data-icon="inline-start" className="animate-spin" />}
             {enviando ? "Devolviendo…" : "Devolver a ejecutiva"}

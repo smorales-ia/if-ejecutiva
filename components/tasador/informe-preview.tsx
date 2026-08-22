@@ -71,8 +71,8 @@ function ReportSection({
 }) {
   return (
     <section className="print-block rounded-xl border border-border bg-background p-4">
-      <h2 className="flex items-center gap-2 border-b border-border pb-2 text-sm font-bold uppercase tracking-wide text-vp-primary">
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-vp-primary/10 text-[11px] text-vp-primary">
+      <h2 className="flex items-center gap-2 border-b border-border pb-2 text-sm font-bold uppercase tracking-wide text-brand">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-brand/10 text-[11px] text-brand">
           {numero}
         </span>
         {titulo}
@@ -85,7 +85,7 @@ function ReportSection({
             <div
               key={i}
               className={cn(
-                "h-3 animate-pulse rounded bg-vp-surface",
+                "h-3 animate-pulse rounded bg-muted",
                 i === 2 ? "w-2/3" : "w-full",
               )}
             />
@@ -103,7 +103,7 @@ function DataGrid({ children }: { children: React.ReactNode }) {
 function Dato({ k, v }: { k: string; v: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs text-vp-text-secondary">{k}</dt>
+      <dt className="text-xs text-muted-foreground">{k}</dt>
       <dd className="truncate text-sm font-medium text-foreground">{v}</dd>
     </div>
   )
@@ -191,16 +191,16 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
   /* ---- Pantalla de agradecimiento (§7.5) ---- */
   if (enviado) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-vp-surface px-6 text-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-muted px-6 text-center">
         <CheckCircle2 className="h-20 w-20" style={{ color: "#059669" }} />
         <h1 className="text-2xl font-bold text-foreground">Informe enviado</h1>
-        <p className="max-w-sm text-base leading-relaxed text-vp-text-secondary">
+        <p className="max-w-sm text-base leading-relaxed text-muted-foreground">
           Gracias. El visador revisará este informe. Ya no aparecerá en tu lista.
         </p>
         <Button
           type="button"
           onClick={() => router.push("/tasaciones")}
-          className="mt-2 min-h-12 bg-vp-primary px-6 text-base font-semibold text-white hover:brightness-95"
+          className="mt-2 min-h-12 bg-brand px-6 text-base font-semibold text-white hover:brightness-95"
         >
           Volver al inicio
         </Button>
@@ -209,9 +209,9 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-2xl bg-vp-surface">
+    <div className="mx-auto min-h-screen w-full max-w-2xl bg-muted">
       {/* Header */}
-      <header className="no-print sticky top-0 z-30 border-b border-border bg-vp-primary text-white">
+      <header className="no-print sticky top-0 z-30 border-b border-border bg-brand text-white">
         <div className="flex items-center gap-2 px-3 py-3">
           <button
             type="button"
@@ -235,22 +235,22 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
       <main className="print-area px-4 pb-40 pt-4">
         {/* Encabezado del documento (visible al imprimir) */}
         <div className="mb-4 hidden print:block">
-          <h1 className="text-lg font-bold text-vp-primary">
+          <h1 className="text-lg font-bold text-brand">
             Informe de Tasación · {tasacion.codigo}
           </h1>
-          <p className="text-sm text-vp-text-secondary">
+          <p className="text-sm text-muted-foreground">
             {tasacion.direccion}, {tasacion.comuna} · v{tasacion.version}
           </p>
         </div>
 
         {enCalculo && (
           <div className="no-print mb-4 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
-            <Loader2 className="h-5 w-5 shrink-0 animate-spin text-vp-primary" />
+            <Loader2 className="h-5 w-5 shrink-0 animate-spin text-brand" />
             <div>
-              <p className="text-base font-semibold text-vp-primary">
+              <p className="text-base font-semibold text-brand">
                 Generando informe…
               </p>
-              <p className="text-sm text-vp-text-secondary">
+              <p className="text-sm text-muted-foreground">
                 El cálculo tarda unos segundos. Esta vista se actualizará sola.
               </p>
             </div>
@@ -266,13 +266,13 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
                   className={cn(
                     "rounded-full px-2.5 py-0.5 text-xs font-semibold",
                     esNuevo
-                      ? "bg-blue-50 text-vp-primary"
-                      : "bg-amber-50 text-vp-warning",
+                      ? "bg-blue-50 text-brand"
+                      : "bg-amber-50 text-warning",
                   )}
                 >
                   {esNuevo ? "Nuevo" : "Usado"}
                 </span>
-                <span className="text-xs text-vp-text-secondary">
+                <span className="text-xs text-muted-foreground">
                   {tasacion.codigo}
                 </span>
               </div>
@@ -287,24 +287,24 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
 
           {/* 2 · Valor de tasación destacado */}
           <ReportSection titulo="Valor de tasación" numero={2} listo={listo}>
-            <div className="rounded-lg bg-vp-primary/5 p-5 text-center">
-              <p className="text-xs uppercase tracking-wide text-vp-text-secondary">
+            <div className="rounded-lg bg-brand/5 p-5 text-center">
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Valor de tasación
               </p>
-              <p className="mt-1 text-5xl font-bold text-vp-primary">
+              <p className="mt-1 text-5xl font-bold text-brand">
                 {valorUf ? nfUf.format(valorUf) : "—"}
                 <span className="ml-2 text-2xl font-semibold">UF</span>
               </p>
-              <p className="mt-2 text-base font-medium text-vp-text-secondary">
+              <p className="mt-2 text-base font-medium text-muted-foreground">
                 Cap rate:{" "}
                 {capRate ? (
-                  <span className="text-vp-success">{capRate}%</span>
+                  <span className="text-success">{capRate}%</span>
                 ) : (
                   "—"
                 )}
               </p>
               {overrideUf > 0 && (
-                <p className="mt-1 text-xs text-vp-text-secondary">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Ajuste manual del tasador
                   {d.motivoOverride ? `: ${d.motivoOverride}` : ""}
                 </p>
@@ -334,7 +334,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left text-sm">
                   <thead>
-                    <tr className="border-b border-border text-xs text-vp-text-secondary">
+                    <tr className="border-b border-border text-xs text-muted-foreground">
                       <th className="py-2 pr-3 font-semibold">Unidad</th>
                       <th className="py-2 pr-3 font-semibold">Rol SII</th>
                       <th className="py-2 text-right font-semibold">Sup. (m²)</th>
@@ -366,7 +366,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-vp-text-secondary">
+              <p className="text-sm text-muted-foreground">
                 Sin unidades registradas.
               </p>
             )}
@@ -385,7 +385,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
                       <p className="truncate text-sm font-medium text-foreground">
                         {txt(it.descripcion)}
                       </p>
-                      <p className="truncate text-xs text-vp-text-secondary">
+                      <p className="truncate text-xs text-muted-foreground">
                         {txt(it.subtipo)} ·{" "}
                         {it.aportaGarantia ? "Aporta garantía" : "No aporta"}
                       </p>
@@ -397,7 +397,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-vp-text-secondary">
+              <p className="text-sm text-muted-foreground">
                 Sin ítems registrados.
               </p>
             )}
@@ -419,7 +419,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
                   key={c.id}
                   className="flex items-center justify-between text-xs"
                 >
-                  <span className="truncate text-vp-text-secondary">
+                  <span className="truncate text-muted-foreground">
                     {c.label}
                   </span>
                   <span className="font-medium text-foreground">
@@ -432,7 +432,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
                   key={c.id}
                   className="flex items-center justify-between text-xs"
                 >
-                  <span className="truncate text-vp-text-secondary">
+                  <span className="truncate text-muted-foreground">
                     {c.nombre}
                   </span>
                   <span className="font-medium text-foreground">
@@ -448,7 +448,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
             <div className="flex flex-col gap-3">
               {d.observacionesTasador ? (
                 <div>
-                  <p className="text-xs text-vp-text-secondary">
+                  <p className="text-xs text-muted-foreground">
                     Observaciones del tasador
                   </p>
                   <p className="whitespace-pre-line text-sm text-foreground">
@@ -474,7 +474,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
                 overrideUf === 0 &&
                 !d.tasaCapRateOverride &&
                 !d.vidaUtilOverride && (
-                  <p className="text-sm text-vp-text-secondary">
+                  <p className="text-sm text-muted-foreground">
                     Sin observaciones ni ajustes manuales.
                   </p>
                 )}
@@ -515,7 +515,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
             type="button"
             disabled={!disponible}
             onClick={() => setRechazoOpen(true)}
-            className="min-h-12 bg-vp-danger text-sm font-semibold text-white hover:brightness-95 disabled:opacity-50"
+            className="min-h-12 bg-danger text-sm font-semibold text-white hover:brightness-95 disabled:opacity-50"
           >
             <X className="h-4 w-4" />
             Rechazar
@@ -525,7 +525,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
             type="button"
             disabled={!disponible}
             onClick={() => setConfirmarOpen(true)}
-            className="min-h-12 bg-vp-success text-sm font-semibold text-white hover:brightness-95 disabled:opacity-50"
+            className="min-h-12 bg-success text-sm font-semibold text-white hover:brightness-95 disabled:opacity-50"
           >
             <Check className="h-4 w-4" />
             Confirmar
@@ -559,7 +559,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
             <p
               className={cn(
                 "mt-1 text-xs",
-                obsValida ? "text-vp-success" : "text-vp-text-secondary",
+                obsValida ? "text-success" : "text-muted-foreground",
               )}
             >
               {obs.trim().length}/{MIN_OBS} caracteres mínimos
@@ -578,7 +578,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
               type="button"
               disabled={!obsValida}
               onClick={handleGuardarObservacion}
-              className="min-h-11 bg-vp-danger font-semibold text-white hover:brightness-95 disabled:opacity-50"
+              className="min-h-11 bg-danger font-semibold text-white hover:brightness-95 disabled:opacity-50"
             >
               Guardar observación
             </Button>
@@ -598,7 +598,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
             <Button
               type="button"
               onClick={() => setRechazoOkOpen(false)}
-              className="min-h-11 bg-vp-primary font-semibold text-white hover:brightness-95"
+              className="min-h-11 bg-brand font-semibold text-white hover:brightness-95"
             >
               Entendido
             </Button>
@@ -626,7 +626,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
             <Button
               type="button"
               onClick={handleEnviar}
-              className="min-h-11 bg-vp-success font-semibold text-white hover:brightness-95"
+              className="min-h-11 bg-success font-semibold text-white hover:brightness-95"
             >
               Enviar informe
             </Button>
