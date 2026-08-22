@@ -422,9 +422,10 @@ RF-12 su validación, con la nota de que ambas quedan condicionadas.
 
 ---
 
-## A-14 · Tabla de configuración donde viven los defaults constructivos
+## A-14 · Tabla de configuración donde viven los defaults constructivos — **CERRADA**
 
-**Estado** — abierta · **bloquea el subconjunto constructivo de RF-TAS-08** · impacto medio.
+**Estado** — **cerrada** el 22-ago-2026 · reducida el 21-ago-2026 · impacto medio.
+**Ya no bloquea el subconjunto constructivo de RF-TAS-08.**
 
 El diseño v4 (p. 24, punto 13) adjunta una tabla de *características constructivas
 principales* —materialidad, calidad y estado de estructura soportante, divisiones interiores,
@@ -463,6 +464,12 @@ negocio. Hasta cerrarla, el subconjunto constructivo de RF-TAS-08 no se implemen
 > **La lección, para que la próxima no cueste una semana:** antes de declarar que un dato de
 > negocio no existe, revisar los artefactos operativos con que el cliente trabaja a diario. El
 > schema dice qué guarda el sistema, no qué sabe el negocio.
+
+> **Cierre del 22-ago-2026.** **A-27 se cerró** —los defaults se particionan por tipo de
+> propiedad × estado de uso— y con ella se agota la mitad que esta ficha había derivado. **A-14
+> queda CERRADA en ambas mitades**: los valores están en spec §2.8.1 y su domicilio tiene clave
+> decidida. Lo que resta es trabajo de schema con su propia compuerta de aprobación, no
+> ambigüedad.
 
 ---
 
@@ -585,6 +592,34 @@ decide crear una tabla de defaults, la respuesta a las dos puede salir del mismo
 
 **Registro asociado:** **CI-022** documenta las dos tablas sin documentar que salieron de esta
 verificación, y se cierra apuntando a esta ambigüedad como resolución.
+
+> **Enmienda del 22-ago-2026 — ESTRECHADA por la respuesta de Héctor a A-28. Sigue abierta y
+> sigue bloqueando.**
+>
+> Héctor ratificó que los tres factores —superficie, edad y distancia— se usan en la práctica, de
+> modo que **A-28 cierra** y con ella la duda estructural: ya no hay riesgo de construir contra un
+> modelo equivocado. **Pero eso no es lo que A-18 preguntaba.** Ratificar *qué* factores no dice
+> *cuánto* vale cada uno, y `C_FactoresHomogeneizacion.valor_referencia` **sigue vacío en las 15
+> filas**.
+>
+> Estado de las cuatro preguntas de arriba:
+>
+> | # | Pregunta | Estado |
+> |---|---|---|
+> | **1** | ¿Cuál es el valor por defecto de cada factor? | **ABIERTA · la única bloqueante.** Va a la próxima consulta a Héctor |
+> | 2 | `Edad` o `Antiguedad` en el `singleSelect` | Abierta · **deuda de schema**, no bloqueante |
+> | 3 | Las 10 cáscaras `FH-` frente a las 5 filas `FH_` | Abierta · **deuda de schema**, no bloqueante |
+> | 4 | ¿`C_FactoresHomogeneizacion` es la canónica? | Abierta · **deuda de schema**, no bloqueante |
+>
+> Las tres últimas son saneamiento de una tabla y se resuelven en la tanda de schema que la
+> pueble; ninguna impide construir. La primera sí: `GET /api/tasaciones/config/defaults` se
+> puede escribir, pero hoy devolvería `null` para los tres factores y su criterio de aceptación
+> —*"un cambio en la configuración se refleja en la próxima carga sin deploy"*— seguiría siendo
+> **inverificable, porque no hay dato que cambiar**.
+>
+> **Consecuencia sobre el plan, sin cambios:** la ruta sigue sin construirse en P2-TAS. Lo que sí
+> cambia es que el bloqueo dejó de ser una elicitación de método y pasó a ser **una sola cifra
+> por factor**.
 
 
 ---
@@ -732,10 +767,46 @@ la mitad ya existe en otra tabla. Son distintas y la segunda no invalida la prim
 
 ---
 
-## A-22 · Umbral del recordatorio automático de coordinación al tasador
+## A-22 · Umbral del recordatorio automático de coordinación al tasador — **CERRADA**
 
-**Estado** — abierta · **afecta a spec §5.2.8 y a AT08** · impacto medio. **Dueño: Héctor**
-(decisión de negocio). Registrada como **D-17** en spec §15.
+**Estado** — **cerrada** el 22-ago-2026 por respuesta de Héctor · **afecta a spec §5.2.8 y a
+AT08** · impacto medio. **Dueño: Héctor** (decisión de negocio). Registrada como **D-17** en
+spec §15, ahora cerrada.
+
+> ⚠ **No confundir con la `A-22` que citan CI-045 y CI-048.** Ese identificador se usó en el
+> frente A+B para una decisión distinta —dropear la cota de 4 h de la *pertenencia* del chip
+> "Por coordinar"— y quedó **re-etiquetado como A-36** el 22-ago-2026. Las dos giran alrededor
+> de "4 h en coordinación", que es exactamente lo que las hacía fáciles de confundir. Precedente
+> del mismo problema: **A-10** (colisión SC05/SC08).
+
+> **RESOLUCIÓN — 4 horas hábiles, y el instante ya existía.**
+>
+> Héctor responde: **4 horas** sin coordinar → aviso automático al tasador. La cifra deja de ser
+> un dato sin ratificar y pasa a **constante de negocio**.
+>
+> **El hallazgo que la respuesta destapa es más importante que la cifra.** 4 h **es** el SLA
+> ideal de la etapa 2 (§5.2.4), y el motor ya materializa ese instante como
+> **`sla_etapa_alerta_ts`** (`fldLfFftNm0Kvvu08`) — *"el instante de pared en que la etapa
+> vigente alcanza su SLA ideal"*. De modo que la respuesta **no agrega un umbral nuevo:
+> confirma el que ya estaba**, y el recordatorio no necesita campo, configuración ni cómputo
+> propio. Se dispara en el mismo instante en que el semáforo de e2 pasa a ámbar.
+>
+> La secuencia queda ordenada y con dos destinatarios distintos:
+>
+> | Momento | Qué ocurre | A quién |
+> |---|---|---|
+> | **4 h hábiles** | e2 pasa a ámbar · **recordatorio** | Tasador (ejecutor) |
+> | **6 h hábiles** | e2 pasa a rojo · **escalada** | Responsable de área |
+>
+> El plan de IF-02 v1.13 difería la creación del campo del umbral *"hasta saber si es un número
+> por etapa, uno global o uno por cliente"*. La respuesta muestra que **nunca hizo falta el
+> campo**: v1.14 lo declara así y cierra el diferimiento sin crear nada.
+>
+> **Pendiente menor, no bloqueante.** Héctor dijo "4 horas" sin precisar unidad. Se escribe como
+> **4 h hábiles** porque todo §5.2 corre sobre la ventana de §5.2.1 y porque es la lectura que
+> hace coincidir la cifra con un instante ya calculado. **Si la intención fue 4 h de reloj, el
+> diseño cambia**: sería un mecanismo separado, con campo propio, capaz de avisar un sábado.
+> La confirmación explícita se agrega a la próxima consulta a Héctor.
 
 El cliente pide que el sistema le insista al tasador que no ha informado el resultado de su
 llamado, sin que Control y Seguimiento tenga que perseguirlo: *"que le llegue en forma
@@ -897,11 +968,38 @@ no tiene que volver a elicitarlo.
 
 ---
 
-## A-27 · Domicilio de los defaults constructivos de spec §2.8.1
+## A-27 · Domicilio de los defaults constructivos de spec §2.8.1 — **CERRADA**
 
-**Estado** — abierta · **bloquea la precarga de la sección E de P7-TAS** · impacto medio.
-**Dueños: Arquitecto de Datos + Héctor.** Registrada como **D-20** en spec §15.
-**Sucede a la mitad no resuelta de A-14.**
+**Estado** — **cerrada** el 22-ago-2026 por respuesta de Héctor · **desbloquea la precarga de la
+sección E de P7-TAS** · impacto medio. **Dueños: Arquitecto de Datos + Héctor.** Registrada como
+**D-20** en spec §15, ahora cerrada. **Sucede a la mitad no resuelta de A-14, que queda cerrada
+con ésta.**
+
+> **RESOLUCIÓN — partición por tipo de propiedad × estado de uso.**
+>
+> Héctor responde: los defaults se particionan **por tipo de propiedad × estado de uso
+> (nueva/usada)**, replicando el modelo que la plantilla ya usa con sus dos interruptores,
+> `[Excel: FICHA SOLIC!K35]` (`tipoPropiedad`) y `[Excel: FICHA SOLIC!K36]` (`estadoUso`).
+>
+> Es la opción 2 de las tres que esta ficha planteaba, y la que **no pierde comportamiento**: una
+> clave global habría aplanado la mitad de las reglas de §2.8.1 —cubierta, adosamiento, estado de
+> conservación—, y una clave por comuna no tenía respaldo en ningún artefacto.
+>
+> **Lo que la decisión habilita:** definir la tabla destino en Airtable con esa clave, y con ella
+> la precarga efectiva de la sección E. En IF-03 los dos interruptores llegan desde
+> `TX_Solicitudes.tipo_propiedad` y `TX_Solicitudes.tipo_propiedad_nuevo_usado`, de modo que el
+> conjunto **se resuelve server-side** y viaja ya resuelto: el frontend recibe valores, nunca
+> reglas (RF-TAS-23).
+>
+> **Lo que sigue siendo trabajo, no ambigüedad:** crear la tabla es una tanda de schema y
+> **exige aprobación explícita de Sergio**, que es una compuerta distinta de esta ficha. La
+> granularidad de fila —un registro por campo, o uno por combinación con todos los campos— queda
+> como decisión de implementación de esa tanda; ninguna de las dos cambia la clave ni el
+> comportamiento observable.
+>
+> **El riesgo se mantiene y el candado también.** Que ahora exista domicilio no autoriza a
+> escribir los valores en el frontend: el criterio de aceptación de P7-TAS conserva el `grep` de
+> los literales de §2.8.1 sobre `components/tasador/` y `lib/tasador/`.
 
 Los valores ya no faltan: están especificados uno a uno en spec §2.8.1, con su celda de origen.
 Lo que falta es **dónde se alojan dentro del sistema**, y son tres decisiones encadenadas:
@@ -929,10 +1027,31 @@ criterio de aceptación de P7-TAS incluye un `grep` de los literales de §2.8.1 
 
 ---
 
-## A-28 · Los tres factores de homogeneización no aparecen en la plantilla operativa
+## A-28 · Los tres factores de homogeneización no aparecen en la plantilla operativa — **CERRADA**
 
-**Estado** — abierta · **refuerza el bloqueo de A-18 sobre RF-TAS-08** · impacto alto.
-**Dueños: Héctor + Visador titular.** Registrada como **D-21** en spec §15.
+**Estado** — **cerrada** el 22-ago-2026 por respuesta de Héctor · impacto alto. **Dueños: Héctor
++ Visador titular.** Registrada como **D-21** en spec §15, ahora cerrada.
+
+> **RESOLUCIÓN — los tres factores se usan. RF-TAS-08 queda ratificado tal como está.**
+>
+> Héctor confirma que **superficie, edad y distancia se siguen usando en la práctica**. La
+> ausencia en la plantilla no significa que el negocio no los aplique: significa que la planilla
+> no los materializa como columna, y esa es una propiedad del artefacto, no del método.
+>
+> `factor_sup`, `factor_edad` y `factor_distancia` **no se tocan**, ni en la grilla de
+> comparables, ni en RF-TAS-08, ni en el contrato de
+> `GET /api/tasaciones/config/defaults`. **No se implementa ninguna variante de dos factores.**
+>
+> **Sobre `D. F.` y `F. M.`** `[Excel: Portada!AX50 · BA50]`, ambos con default `1`: Héctor no
+> los desmintió, pero tampoco los propuso como reemplazo. Se degradan de *"posible modelo
+> alternativo"* a **observación**: probablemente factores adicionales o históricos que la
+> plantilla arrastra en el cuadro de valoración —que es otro cuadro que el de comparables—.
+> Aclararlos queda como **A-35**, no bloqueante.
+>
+> **Lo que esta ficha cierra y lo que no.** Cierra la duda **estructural**: ya no hay riesgo de
+> construir la ruta contra un modelo equivocado, que era el bloqueo real que A-28 introdujo. **No
+> cierra A-18**, que sigue sin poder servir un valor: ratificar *qué* factores no dice *cuánto*
+> vale cada uno. Ver la enmienda del 22-ago-2026 en A-18.
 
 A-18 concluyó que ninguna tabla puede servir hoy un valor de referencia para `factor_sup`,
 `factor_edad` y `factor_distancia`. La revisión de la plantilla vigente buscó ese valor fuera del
@@ -1101,3 +1220,84 @@ trivial y hay que decidir dónde corre.
 
 **Impacto operativo si no se resuelve:** se repite una visita ya hecha, que es costo directo, o
 se emite un informe inconsistente con el que ya se entregó para el mismo edificio.
+
+---
+
+> **Tanda del 22-ago-2026 — respuestas de Héctor.** Las tres ambigüedades bloqueantes de la ronda
+> anterior (A-22, A-27, A-28) quedan **cerradas** arriba, en sus fichas, con la resolución
+> integrada. Lo que sigue son las dos entradas que esa misma ronda genera: una observación
+> heredada de A-28 y el saneamiento de una colisión de identificador.
+
+---
+
+## A-35 · Qué son `D. F.` y `F. M.` en el cuadro de valoración
+
+**Estado** — abierta · **no bloqueante** · impacto bajo. **Dueño: Héctor.**
+Registrada como **D-22** en spec §15. Heredada del cierre de **A-28**.
+
+El cuadro de valoración de la plantilla aplica dos factores multiplicativos cuyo nombre
+desarrollado **no está escrito en ninguna parte del libro**: `D. F.` y `F. M.`
+`[Excel: Portada!AX50 · BA50]`, ambos con valor por defecto `1`
+`[Excel: Portada!AX51:AX53 · BA51:BA53]`, aplicados como `F. M. × D. F. × UF/m² nuevo`
+`[Excel: Portada!BD51]`.
+
+**Por qué dejó de ser urgente.** A-28 los planteaba como posible **reemplazo** de los tres
+factores de homogeneización de RF-TAS-08, lo que habría obligado a reescribir la grilla de
+comparables, el contrato de la ruta de defaults y el motor. Héctor ratificó los tres factores y
+no los mencionó como alternativa, de modo que la hipótesis del reemplazo **queda descartada**.
+
+**Lo que queda por aclarar, sin prisa:**
+
+1. **Qué son.** La lectura probable es *Depreciación/Factor* y *Factor de Mercado*, pero es
+   inferencia sobre dos abreviaturas y no se documenta como hecho.
+2. **Si están vivos o son arrastre.** Ambos valen `1` por defecto, que es el elemento neutro de
+   la multiplicación: una columna que nunca se toca y un residuo histórico se ven exactamente
+   igual desde afuera.
+3. **Si el motor debe replicarlos.** Sólo si (2) responde que están vivos. Viven en el cuadro de
+   valoración, que es distinto del de comparables, así que su ámbito sería el cálculo del valor
+   unitario por ítem y no la homogeneización.
+
+**Por qué se registra igual.** Dos factores multiplicativos sin nombre en la planilla que produce
+el informe entregable son, en el peor caso, una regla de cálculo que el sistema no está
+replicando. El costo de preguntarlo es una línea en la próxima consulta; el de descubrirlo tarde,
+un informe con un valor distinto del que la operación produce hoy.
+
+---
+
+## A-36 · Cota de 4 h en la pertenencia del chip "Por coordinar" — **CERRADA · APLICADA**
+
+**Estado** — **cerrada** · decisión aprobada por Sergio y **ya implementada** en el Bloque 3 del
+frente A+B. Registrada retroactivamente el 22-ago-2026. **Acuse formal de Héctor pendiente, no
+bloqueante.**
+
+> **Esta ficha existe para deshacer una colisión de identificador, no para reabrir la decisión.**
+> La decisión se tomó y se aplicó bajo la etiqueta **`A-22`**, que en el registro designa otra
+> cosa —el umbral del recordatorio al tasador, abierto el 21-ago-2026 y cerrado el 22-ago-2026—.
+> Ambas giran alrededor de "4 h en coordinación", que es justamente lo que las volvía
+> indistinguibles al leerlas por separado. Manda el registro, que es la fuente de los `A-XX`, de
+> modo que **la decisión del chip se re-etiqueta como A-36** y `A-22` conserva su significado
+> único. Precedente del mismo problema: **A-10** (colisión SC05/SC08).
+>
+> **Dónde estaba citada como `A-22`:** `docs/CODE_INCONSISTENCIES.md` en **CI-045** (resolución) y
+> **CI-048** (decisión, dueño). Ambas llevan ahora nota de desambiguación.
+
+**La decisión, sin cambios.** §2.1 y RF-TAS-01 definen el chip "Por coordinar" como *"solicitudes
+sin coordinación vigente, en estado `asignada` y con `now() - fecha_asignacion < 4h`"*. La cota
+horaria **se dropea de la pertenencia**: membresía = `estado === 'asignada' && coordinacionVigente
+== null`. El *"menor tiempo restante"* se preserva en el **orden**, por `sla_etapa_vence_ts`
+ascendente — el instante que el motor ya materializó, sin recalcular nada en el cliente.
+
+**Por qué es la única lectura fiel.** Implementar la cota exigiría o bien recalcular horas hábiles
+en el cliente —lo que reabre **CI-021**, que retiró `horas_restantes` por producir una cifra
+irreproducible— o bien esconder del chip las coordinaciones **vencidas**, que son las más urgentes
+de coordinar y cuya desaparición vaciaría de sentido a RF-TAS-01.
+
+**Relación con el cierre de A-22.** Ninguna, y conviene que quede escrito. A-22 fijó **cuándo se
+avisa** al tasador (4 h hábiles, coincidente con el ámbar de e2); A-36 fija **qué se muestra** en
+su cola. Que Héctor haya ratificado 4 h **no reabre** A-36: el chip sigue sin aplicar cota de
+pertenencia, y el plan de IF-03 §11 lo sostiene explícitamente — el umbral **no se replica** en
+IF-03, se observa.
+
+**Candado.** El caso *"no aplica ninguna ventana de tiempo sobre la fecha de asignación"* en
+`cola-filtros.test.ts` fija una solicitud `asignada` sin coordinar de hace un mes y exige que siga
+en el chip. Si alguien reintroduce una ventana horaria, ese test se cae.

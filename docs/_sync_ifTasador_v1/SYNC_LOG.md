@@ -416,3 +416,41 @@ decisión de Sergio.
 | **C-16** | **Toda cita de la plantilla operativa lleva su celda**, en formato `[Excel: hoja!celda]`. 29 citas en total entre el SLA de negocio, la spec y el plan del Tasador. Sin la celda, un valor por defecto es indistinguible de una invención, y la plantilla cambia con cada versión mensual | Sesión 21-ago-2026 · instrucción explícita del usuario |
 | **C-17** | **A-32 se reclasificó en ámbito sin renumerar.** Nació en el bloque fuera de ámbito y terminó citada desde tres secciones normativas, porque el tablero de vencimientos es §5.2.9 — Control de SLA. Se dejó su número y se documentó el motivo en la propia ficha, en vez de renumerar y romper las tres citas | Sesión 21-ago-2026 · decisión del usuario |
 | **C-18** | **El código no se toca, ni siquiera en comentarios.** Dos punteros JSDoc quedaron apuntando a documentos inexistentes (`lib/tasaciones.ts:4`, `lib/tipos-documento.ts:53`) y **no se corrigieron**, contra el precedente C-10 del lote 7, que sí actualizó seis punteros equivalentes. La diferencia es de alcance declarado: esta ronda era documental y R2 excluía código. El hallazgo se registró como **CI-049** en vez de arreglarse sobre la marcha, que es el mecanismo que este registro tiene para eso | Sesión 21-ago-2026 · instrucción explícita del usuario |
+
+---
+
+## Tanda del 22-ago-2026 — respuestas de Héctor
+
+> **Ronda de cierre, no de elicitación.** No hay insumo nuevo: Héctor respondió las tres consultas
+> bloqueantes que dejó abiertas la tanda del 21-ago-2026. Se registra por el mismo criterio
+> (**C-11**) y porque cierra ambigüedades que atraviesan §2 y §5.2 del spec.
+
+**Rama** — `feat/tasador-ui`. **Ámbito** — Control de SLA + UI Tasador.
+
+### Decisiones bajadas
+
+| Consulta | Respuesta de Héctor | Efecto |
+|---|---|---|
+| **A-22** · umbral del recordatorio | **4 horas hábiles** | Cierra A-22 y **D-17**. Resulta coincidir con el SLA ideal de la etapa 2, ya sembrado en `C_SLA_Etapas` |
+| **A-27** · domicilio de los defaults | **Tipo de propiedad × estado de uso** | Cierra A-27, **D-20** y **A-14** completa. Desbloquea la precarga de la sección E |
+| **A-28** · factores de homogeneización | **Los tres se usan · RF-TAS-08 ratificado** | Cierra A-28 y **D-21**. `D. F.`/`F. M.` pasan a observación (**A-35** · **D-22**) |
+
+### Entregables
+
+| Archivo | Acción |
+|---|---|
+| `docs/_md/VProperty_SLA_Negocio_v1.3.md` | **nuevo** · sucede a v1.2 |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` | **nuevo** · sucede a v1.9.13, que queda SUPERSEDED |
+| `docs/_md/plan_ejecucion_UItasador_v1.2.md` | **nuevo** · sucede a v1.1 |
+| `docs/_md/plan-ejecucion-if02-v1_9.md` | **in-place** · bump interno v1.13 → v1.14 (**C-14**) |
+| `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` | A-14/A-22/A-27/A-28 cerradas · A-18 estrechada · alta de A-35 y **A-36** |
+| `docs/CODE_INCONSISTENCIES.md` | CI-045 y CI-048 desambiguadas · CI-022 y CI-031 enmendadas |
+| `docs/_sync_ifTasador_v1/RESUME.md` · `CLAUDE.md` · `docs/schema-airtable.md` | estado canónico y punteros |
+
+### Convenciones y decisiones de esta tanda
+
+| # | Resolución | Origen |
+|---|---|---|
+| **C-19** | **Una cifra ratificada que coincide con un umbral ya existente no crea un mecanismo nuevo.** Héctor fijó el recordatorio en 4 h hábiles y ese número **ya estaba en la base**: es `sla_ideal_horas` de `e2` en `C_SLA_Etapas`, cuyo instante el motor materializa como `sla_etapa_alerta_ts`. El plan v1.13 tenía diferido un campo para alojarlo; v1.14 **cierra el diferimiento sin crear nada** y el predicado pasa a ser el semáforo que la fórmula ya emite. Modelarlo igual habría producido **dos fuentes para el mismo número** —lo que **RO-05** prohíbe—, con un fallo silencioso: los dos valores empiezan iguales y divergen el día que alguien edita uno. Queda como **§9.6-R8** en el plan de IF-02. La regla de método: **antes de modelar una cifra que llega del negocio, comprobar si el sistema ya la calcula** | Sesión 22-ago-2026 |
+| **C-20** | **Los identificadores `A-XX` los asigna `gap/_ambiguedades.md` y sólo ese archivo.** La decisión sobre la cota del chip "Por coordinar" se registró en CI-045 y CI-048 bajo la etiqueta `A-22`, que el registro ya usaba para el umbral del recordatorio. Ambas giran alrededor de "4 h en coordinación", que es lo que las volvía indistinguibles. **La del chip se re-etiqueta como A-36**, entra al registro con ficha propia marcada cerrada · aplicada, y las dos fichas CI llevan nota de desambiguación. Precedente directo: **A-10** (colisión SC05/SC08), que costó un lote bloqueado. La regla: una ficha CI **cita** un `A-XX`, nunca lo crea | Sesión 22-ago-2026 · instrucción explícita del usuario |
+| **C-21** | **Ratificar un umbral no lo hace replicable aguas abajo.** Con las 4 h confirmadas, la tentación en IF-03 era reintroducir la cota horaria en el chip "Por coordinar" para que la cola "cuadrara" con el recordatorio. **No se hace**, y el argumento es más fuerte que antes: reabriría **CI-021** —recalcular horas hábiles en el cliente— y desharía **A-36**, escondiendo del chip justamente las coordinaciones vencidas que el recordatorio acaba de señalar. IF-03 **observa** coherencia; no replica aritmética | Sesión 22-ago-2026 |

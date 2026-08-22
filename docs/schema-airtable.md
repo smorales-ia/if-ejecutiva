@@ -53,7 +53,7 @@
 | `C_Feriados` | `tblJVh2kPd4uMgxpb` | Lectura indirecta para SLA hábil |
 | `C_TramosHonorarios` | `tbl3M8p4Mdl1JBZ1f` | No usada en IF-02 |
 | `C_TramosBienComun` | `tbluLTZ30drAAJHQ2` | No usada en IF-02 |
-| `C_FactoresHomogeneizacion` | `tblep24N9gPMrDPIN` | No usada en IF-02 |
+| `C_FactoresHomogeneizacion` | `tblep24N9gPMrDPIN` | No usada en IF-02. **Es la canónica de IF-03** para los tres factores de RF-TAS-08, ratificados el 22-ago-2026 (A-28). `valor_referencia` sigue **vacío en sus 15 filas**: poblarla es A-18, la única pregunta bloqueante de ese frente. Ver CI-022 |
 | `C_AutomationsAirtable` | `tblYYtKEaPgH7GfY0` | Registro AT01/AT02/AT08 — 9 filas presentes |
 
 ### Dominio TX_ · Transacciones
@@ -1238,7 +1238,7 @@ webhooks— pero cualquier código futuro que la consulte va a fallar por esto.
 
 ## 26. IF-03 · Tasador — delta de schema P0.5-TAS (17-ago-2026)
 
-> **Tanda:** P0.5-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.1.md` §1.5.
+> **Tanda:** P0.5-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.2.md` §1.5.
 > **Vía de ejecución:** Airtable **Meta API REST** con `AIRTABLE_TOKEN` (scope `schema.bases:write`
 > confirmado en runtime). **No se usó el MCP** — no está autenticado en la sesión y la preferencia
 > operativa del proyecto es schema desde `docs/` + REST server-side.
@@ -1502,3 +1502,41 @@ La constraint blanda `(solicitud, fecha_respuesta truncada al minuto)` de §2.12
 realización en el schema**: Airtable no soporta constraints de unicidad. Vive como guard en el
 Route Handler. Es la mitigación **R-2** (doble disparo por doble tap) y no debe darse por cubierta
 al leer el schema.
+
+---
+
+## Tabla pendiente de creación · defaults de la hoja de antecedentes (IF-03)
+
+> **TODO de la tanda de schema · P0.5-TAS.** No existe en `app9G7lLkIV3CpeLa` y **no se crea desde
+> aquí**: toda tabla nueva en Airtable requiere aprobación explícita de Sergio. Este bloque fija lo
+> que ya está decidido para que la tanda que la cree no tenga que volver a resolverlo.
+
+**Qué aloja.** Los valores por defecto de la hoja de antecedentes que el tasador recibe
+pre-llenados en la sección E de la Pantalla 5: características constructivas principales,
+elementos "otros" y terminaciones por recinto. La especificación completa —campo por campo, con su
+valor y su catálogo— está en **spec §2.8.1 (RF-TAS-23)**, con cada valor citado por su celda de
+origen en `Formato Informe VProperty Enero2026.xlsm`.
+
+**Clave de partición: tipo de propiedad × estado de uso.** Decidida por Héctor el 22-ago-2026
+(cierra **A-27** y **D-20**), replicando los dos interruptores de la plantilla:
+
+| Eje | Dominio | Cardinalidad | Origen en la plantilla |
+|---|---|---|---|
+| Tipo de propiedad | `ListaTipoPropiedad` | 8 valores | `[Excel: FICHA SOLIC!AD25:AD32]` |
+| Estado de uso | `Nuevo` · `Usado` | 2 valores | `[Excel: FICHA SOLIC!K36]` |
+
+En `TX_Solicitudes` los dos ejes llegan como `tipo_propiedad` y `tipo_propiedad_nuevo_usado`.
+
+**Decisiones que quedan para la tanda que la cree**, ninguna de las cuales cambia el
+comportamiento observable:
+
+- **Granularidad de fila** — un registro por campo, o uno por combinación con todos los campos. La
+  primera escala mejor a campos nuevos; la segunda se lee de un vistazo.
+- **Representación de los catálogos** — `singleSelect` por campo frente a tabla de valores
+  admisibles enlazada. Los catálogos son largos (36 valores en estructura soportante, 19 en
+  cubierta) y algunos se comparten entre campos.
+
+**Regla de comportamiento que la tabla debe permitir.** Una combinación (tipo, estado de uso) sin
+fila cargada deja los campos **vacíos**. **No se hereda de la combinación vecina** ni se cae a un
+conjunto por defecto: heredar produciría valores plausibles y falsos, que es exactamente el modo de
+fallo que el pre-llenado viene a evitar (spec §2.8.1).

@@ -615,3 +615,69 @@ P7-TAS incluye un `grep` para atraparlo.
 
 Ratificación de Héctor sobre A-22 y A-27, que son las dos que desbloquean trabajo de
 construcción. Todo lo demás de esta ronda es documental y está cerrado.
+
+---
+
+## Estado canónico · respuestas de Héctor · 22-ago-2026
+
+> **Este bloque manda sobre todo lo anterior del archivo**, incluido el bloque del 21-ago-2026.
+> Si vas a ejecutar algo, lee esto primero.
+
+### Punteros vigentes
+
+- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md`.
+- **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.3.md`.
+- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.2.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
+  con versión interna **v1.14** (el nombre no se renombra · **C-14**).
+- **Rama activa:** `feat/tasador-ui`.
+
+### Las tres decisiones
+
+| Tema | Decisión | Cierra |
+|---|---|---|
+| Recordatorio al tasador | **4 horas hábiles** sin coordinar | A-22 · D-17 |
+| Defaults de la hoja de antecedentes | Partición por **tipo de propiedad × estado de uso** | A-27 · D-20 · **A-14 completa** |
+| Factores de homogeneización | **Los tres se usan** · RF-TAS-08 ratificado | A-28 · D-21 |
+
+**El hallazgo que conviene no perder.** Las 4 h **ya estaban en el sistema**: son el
+`sla_ideal_horas` de `e2` en `C_SLA_Etapas`, y el instante correspondiente es
+`sla_etapa_alerta_ts`. El recordatorio se dispara cuando e2 pasa a ámbar, y **no necesita campo,
+configuración ni cómputo propio**. El plan de IF-02 tenía un campo diferido para alojarlo; v1.14
+cierra ese diferimiento **sin crear nada** (**§9.6-R8** · **C-19**).
+
+### Qué se desbloqueó
+
+- **Sección E de P7-TAS**: pasa de "campos sin valores" a **implementable con precarga**. La
+  precondición que queda es que **P0.5-TAS cree la tabla** con clave (tipo × estado de uso), y
+  crear tabla en Airtable **exige aprobación explícita de Sergio**.
+- **El módulo de factores de IF-03** queda validado contra el negocio: la forma de
+  `ufHomogeneizada()` y `nuevoComparable()` **no se toca** (CI-031).
+
+### Qué sigue bloqueado
+
+**A-18, con una sola pregunta viva: ¿cuál es el valor por defecto de cada factor?**
+`C_FactoresHomogeneizacion.valor_referencia` sigue vacío en sus 15 filas. Ratificar *qué* factores
+no dice *cuánto* vale cada uno, de modo que `GET /api/tasaciones/config/defaults` **sigue sin
+construirse**: se podría escribir, pero devolvería `null` para los tres y su criterio de
+aceptación seguiría siendo inverificable. Sus otras tres preguntas —`Edad` vs `Antiguedad`, las
+cáscaras `FH-`, cuál tabla es canónica— quedan como **deuda de schema, no bloqueante**.
+
+### Lo que NO se debe implementar como constante
+
+**El umbral de 4 h sale de esta lista**: ahora es constante de negocio. Pero **no se escribe en
+código igualmente**, por un motivo distinto — vive en `C_SLA_Etapas` y se lee a través del
+semáforo, de modo que un cambio futuro se propaga solo.
+
+Siguen en la lista: los **defaults de §2.8.1** —ahora que se conocen y la tabla puede no existir
+todavía, es cuando más tienta escribirlos en un `const`; el criterio de P7-TAS incluye un `grep`
+para atraparlo— y los **valores de los tres factores**, que no existen en ninguna parte.
+
+Y una advertencia específica de IF-03: **no reintroducir la cota de 4 h en el chip "Por
+coordinar"** para hacerlo "cuadrar" con el recordatorio. Reabriría CI-021 y desharía **A-36**.
+El candado está en `cola-filtros.test.ts` (**C-21**).
+
+### Próximo paso
+
+Consulta a Héctor con tres puntos, ninguno largo: **(1)** el valor por defecto de cada uno de los
+tres factores —única bloqueante— · **(2)** confirmar que las 4 h son **hábiles** y no de reloj ·
+**(3)** qué son `D. F.` y `F. M.` (**A-35**, sin prisa).

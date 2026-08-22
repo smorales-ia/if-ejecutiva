@@ -26,7 +26,7 @@ Este repo implementa **IF-02**: la consola diaria de la Ejecutiva Comercial de V
 > **Antes de proponer cualquier comando de terminal, lee `docs/aprendizajes.md`.**
 
 1. Lee `docs/diseno.md`, `docs/construccion.md` y `docs/schema-airtable.md` al inicio de la sesión.
-   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`.
+   La fuente normativa de requisitos es `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md`.
 2. Implementa **una RF por sesión**. Nunca "construir toda la consola" de golpe.
 3. Después de cada RF: `pnpm build` debe salir limpio antes del commit.
 4. Haz push; Railway redespliega automáticamente.
@@ -88,8 +88,12 @@ Desde v1.9.13, §5.2 contiene además tres cosas que no son el reloj y conviene 
 los **recordatorios automáticos al ejecutor** (§5.2.8), dirigidos al tasador para que actúe y
 distintos de la escalada al responsable de área; el **tope de 24 h** para responderle al cliente
 con fecha de visita, que atraviesa las etapas 2 a 4 y puede incumplirse con las tres en verde; y
-los **reportes de control diario** (§5.2.9). Ninguno está implementado, y el umbral del
-recordatorio **llega sin ratificar**: se carga como dato, nunca como constante en código.
+los **reportes de control diario** (§5.2.9). Ninguno está implementado.
+
+El umbral del recordatorio quedó **ratificado en v1.9.14: 4 horas hábiles**, y resulta ser el
+mismo número que el SLA ideal de la etapa 2 — de modo que **no se almacena aparte ni se escribe
+en código**: el predicado es `sla_semaforo_etapa = ambar` sobre una solicitud en etapa 2. Guardarlo
+por separado crearía dos fuentes para el mismo umbral (plan IF-02 · §9.6-R8 · RO-05).
 
 **SC13 fuera de alcance CU-002**: las acciones de reasignación, cambio de prioridad y pausa actualizan Airtable + `A_Eventos` pero **no envían email** en este CU. Deuda técnica para un CU posterior.
 
@@ -433,7 +437,7 @@ docs/
 ├─ aprendizajes.md                     (bitácora de sesión · sólo append)
 ├─ CODE_INCONSISTENCIES.md             (deuda detectada en código)
 ├─ _md/                               (fuentes canónicas en MD — no editar)
-│  ├─ VProperty_Especificacion_Proyecto_v1_9_13.md   ← FUENTE NORMATIVA
+│  ├─ VProperty_Especificacion_Proyecto_v1_9_14.md   ← FUENTE NORMATIVA
 │  ├─ VProperty_Blueprint_Interfaces_v2_10.md
 │  ├─ Arquitectura_Enterprise_VProperty_v2_9.md
 │  ├─ VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md
@@ -456,7 +460,7 @@ sólo-append de ese archivo.
 ## Fuente única de especificación
 
 El único documento normativo del producto es
-`docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`.
+`docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md`.
 La versión del archivo y la versión interna del cuerpo deben coincidir
 SIEMPRE.
 
@@ -587,7 +591,7 @@ app/
 
 ## Referencias rápidas
 
-- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_13.md`
+- **Especificación (normativa)**: `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md`
 - Diseño funcional: `docs/diseno.md`
 - Guía de construcción: `docs/construccion.md`
 - Schema Airtable: `docs/schema-airtable.md`
