@@ -65,8 +65,15 @@ propiedades, y así el tasador mira rápido y dice voy a cambiar ésta, pero no 
 | Entrepisos | `H39` | `LOSA DE HORMIGON ARMADO` | vacío si Casa de 1 piso; si no `LOSA DE HORMIGON ARMADO` | lista literal de 6 valores |
 | Cubierta | `H40` | `FE GALVANIZADO` | `PLANCHA METALICA` | `[Excel: Antecedentes!CE45:CE63]` · 19 valores |
 | Revestimiento exterior | `H41` | `ESTUCO Y PINTURA` | `ESTUCO Y PINTURA` | `[Excel: Antecedentes!CH45:CH54]` · 10 valores |
-| Cierros exteriores | `H42` | `REJA METALICA` | `REJA METALICA` | `[Excel: Antecedentes!CK45:CK50]` · 6 valores |
-| O. Complementarias | `H43` | `PISCINA` | *(vacío)* | mismo catálogo |
+| Cierros exteriores | `H42` | `REJA METALICA` | `REJA METALICA` | **sin catálogo — texto libre** ⚠ ver nota |
+| O. Complementarias | `H43` | `PISCINA` | *(vacío)* | `[Excel: Antecedentes!CK45:CK50]` · 6 valores |
+
+> ⚠ **Corrección in-place (22-ago-2026 · P0.5.C-TAS).** Esta tabla atribuía `CK45:CK50` a *cierros
+> exteriores* y dejaba a *obras complementarias* como "mismo catálogo". Es al revés: la lectura de
+> las `dataValidation` del `.xlsm` muestra `H43:X43 → $CK$45:$CK$50` y **ninguna validación sobre
+> `H42`**, que por lo tanto es texto libre. La spec §2.8.1 arrastra la misma atribución invertida y
+> queda anotada para su próximo bump. El sembrado de `C_DefaultsAntecedentes` siguió el archivo
+> real (R1), no esta tabla.
 | Construcción anexo | `H44` | *(vacío)* | *(vacío)* | — |
 
 **Calidad** (`Y37:Y44`) y **Estado** (`AF37:AF44`) se derivan de `estadoUso`: calidad `BUENA` en

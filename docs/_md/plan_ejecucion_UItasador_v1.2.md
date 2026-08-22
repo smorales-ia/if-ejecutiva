@@ -1550,14 +1550,41 @@ alguien cuenta siete es **G (Overrides)**, que es la que materializa la Capacida
    `TX_Solicitudes.tipo_propiedad` y `.tipo_propiedad_nuevo_usado`, **sin normalizar literales**
    —el join del eje 1 es por record ID—.
 
-   *Lo que la tabla devuelve hoy es vacío, y eso es correcto.* Está **creada y sin sembrar**: el
-   sembrado es tanda aparte. **A-37 quedó cerrada** el 22-ago-2026 por P0.5.B-TAS —`M_TiposPropiedad`
-   saneada, sin duplicados, 9 filas activas en Title Case— de modo que el sembrado **ya no está
-   bloqueado**; los defaults se cuelgan de `Casa` (`recrXDAjlVCe59XBW`) y `Departamento`
-   (`recf9hz8TbkQ6wsus`) sin ambigüedad de fila. Una combinación sin filas presenta los campos vacíos, que es el
-   comportamiento declarado en §2.8.1 y **no un error a reportar**. P7-TAS se construye y se
-   libera contra ese comportamiento; cuando el sembrado ocurra, la pantalla empieza a pre-llenar
-   sin tocar una línea de UI.
+   *Y ya tiene datos: **212 filas**, sembradas por **P0.5.C-TAS** el 22-ago-2026* (actualización
+   in-place, sin bump del plan). Cubren las **4 combinaciones que la plantilla distingue** —`Casa` y
+   `Departamento` × `nuevo` y `usado`— con 51/51/55/55 filas. **A-37 quedó cerrada** por P0.5.B-TAS,
+   de modo que los defaults se cuelgan de `Casa` (`recrXDAjlVCe59XBW`) y `Departamento`
+   (`recf9hz8TbkQ6wsus`) sin ambigüedad de fila. Detalle en
+   `docs/_notas/snapshot-P0.5.C-TAS.md`. **La precarga de la sección E deja de ser teórica: P7-TAS
+   la construye contra datos reales.**
+
+   *Las otras 12 combinaciones siguen vacías, y eso es correcto.* Incluye `Casa Piloto` y
+   `Departamento Piloto`, deliberadamente sin sembrar (**A-43**). Una combinación sin filas presenta
+   los campos vacíos, que es el comportamiento declarado en §2.8.1 y **no un error a reportar**.
+
+   *Cuatro cosas del sembrado que la UI debe respetar:*
+
+   - **`catalogo_ref` tiene tres estados, no dos.** Rango oculto (`Antecedentes!BZ45:BZ80`), lista
+     inline en la celda (`Antecedentes!AF39 · lista inline`) y **vacío = texto libre**. El tercero
+     decide si el campo se renderiza como dropdown o como input.
+   - ⚠ **Airtable descarta el string vacío al escribir.** Las filas de texto libre
+     —`cierros_exteriores`, `closet_mural`, `sanitarios`, `griferia`— vuelven de la API **sin la
+     clave** `catalogo_ref`, no con `""`. Tolerar la ausencia; no asumir la presencia.
+   - ⚠ **Un valor llega fuera de su catálogo.**
+     `Departamento·usado·obras_complementarias·estado` vale `BUENA`, que pertenece al catálogo de
+     **calidad** (**A-42** · es el valor del Excel, sembrado tal cual por R1). El `singleSelect` de
+     estado **debe mostrarlo igual**: si lo descarta por no estar en su lista, el campo aparece
+     vacío, que es peor que mostrar el valor raro.
+   - **Tres campos no tienen fila en ninguna combinación** y no son filas faltantes:
+     `construccion_anexo`, la **calidad** de `aire_acondicionado` y `calefaccion`, y
+     `obras_complementarias` completo en `Casa`. Son vacíos deliberados de la plantilla.
+
+   ⚠ *Corrección a los catálogos que este plan cita arriba.* La spec §2.8.1 —y esta sección, que la
+   sigue— atribuye `[Excel: Antecedentes!CK45:CK50]` a **cierros exteriores**. El `.xlsm` real
+   declara esa validación sobre **`H43`, obras complementarias**, y deja `H42` **sin ninguna
+   validación**: cierros exteriores es **texto libre**. Verificado el 22-ago-2026 leyendo los
+   bloques `dataValidation` del archivo. El sembrado siguió el archivo, no la spec. Corregido
+   in-place en `docs/_notas/radiografia-excel-informe.md`; la spec espera su bump.
 
    *Comportamiento con clave sin fila:* una combinación de (tipo, estado de uso) que no tenga fila
    cargada presenta los campos **vacíos**. **No hereda de la combinación vecina** ni cae a un

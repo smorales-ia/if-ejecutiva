@@ -1542,7 +1542,8 @@ al leer el schema.
 
 ## `C_DefaultsAntecedentes` · defaults de la hoja de antecedentes (IF-03)
 
-**TABLE_ID: `tblOj7nXcjeouPy09`** · creada el 22-ago-2026 en la tanda **P0.5-TAS**.
+**TABLE_ID: `tblOj7nXcjeouPy09`** · creada el 22-ago-2026 en la tanda **P0.5-TAS** ·
+**sembrada el 22-ago-2026 en la tanda P0.5.C-TAS (212 filas)**.
 Catálogo paramétrico de los valores por defecto que el tasador recibe pre-llenados en la sección E
 de la Pantalla 5. Fuente normativa: **spec v1.9.14 §2.8.1 (RF-TAS-23)**. Origen de los valores:
 `Formato Informe VProperty Enero2026.xlsm`, hoja `Antecedentes`.
@@ -1580,16 +1581,62 @@ cargada presenta los campos **vacíos**. No hereda de la combinación vecina ni 
 por defecto: heredar produciría valores plausibles y falsos, que es el modo de fallo que el
 pre-llenado viene a evitar (spec §2.8.1).
 
-**Estado: creada y VACÍA.** 0 filas al 22-ago-2026. El sembrado es tanda aparte y está bloqueado
-por **A-37**.
+**Estado: SEMBRADA.** **212 filas** al 22-ago-2026, cargadas por **P0.5.C-TAS** en 12 batches.
+`activo = TRUE` en las 212; cero filas huérfanas (todas resuelven su Link a `M_TiposPropiedad`).
 
-### Pendientes antes de sembrar
+**Se sembraron 4 de las 16 combinaciones** —las que la plantilla distingue—:
 
-- **A-37 · bloqueante.** `M_TiposPropiedad` tiene **15 filas** con **duplicados por
-  capitalización** —`CASA` (`rec5J0dPImsDm5Leb`) / `Casa` (`recrXDAjlVCe59XBW`), `DEPARTAMENTO`
-  (`recJ0OIjob9ywogr6`) / `Departamento` (`recf9hz8TbkQ6wsus`)— y su dominio no coincide con los
-  8 valores de `ListaTipoPropiedad` del Excel. Si un default se cuelga de la fila equivocada, el
-  lookup devuelve vacío **sin error**. Sanear la maestra es tanda propia.
+| Combinación | record ID de `tipo_propiedad` | `elementos_fundamentales` | `elementos_otros` | `terminaciones_recinto` | Total |
+|---|---|---|---|---|---|
+| `Casa` × `nuevo` | `recrXDAjlVCe59XBW` | 17 | 14 | 20 | **51** |
+| `Casa` × `usado` | `recrXDAjlVCe59XBW` | 17 | 14 | 20 | **51** |
+| `Departamento` × `nuevo` | `recf9hz8TbkQ6wsus` | 21 | 14 | 20 | **55** |
+| `Departamento` × `usado` | `recf9hz8TbkQ6wsus` | 21 | 14 | 20 | **55** |
+
+Las 12 combinaciones restantes **no tienen filas y eso es correcto**: presentan los campos vacíos
+por la regla de arriba. `Casa Piloto` y `Departamento Piloto` quedaron deliberadamente sin sembrar
+(**A-43**). Detalle completo del mapeo en `docs/_notas/snapshot-P0.5.C-TAS.md`.
+
+**Tres campos no se siembran en ninguna combinación**, porque la plantilla los despacha vacíos:
+`construccion_anexo` (`[Excel: Antecedentes!H44]` vacío, y sus fórmulas de calidad y estado
+dependen de él), la **calidad** de `aire_acondicionado` y `calefaccion` (`BE37`/`BE38` devuelven
+`""` cuando la materialidad es `NO PRESENTA`), y `obras_complementarias` completo en `Casa`
+(`H43` devuelve `""` para todo lo que no sea Departamento).
+
+**Convención de `catalogo_ref` (fijada en P0.5.C-TAS).** Tres estados distinguibles, y conviene no
+confundirlos al leer una fila:
+
+| Forma del valor | Significado | Ejemplo |
+|---|---|---|
+| `Antecedentes!<rango>` | Catálogo en rango oculto de la hoja | `Antecedentes!BZ45:BZ80` |
+| `Antecedentes!<celda> · lista inline` | Catálogo declarado inline en la data validation de esa celda | `Antecedentes!AF39 · lista inline` |
+| *(vacío)* | **Texto libre** — la celda no tiene data validation | `cierros_exteriores` · `closet_mural` · `sanitarios` · `griferia` |
+
+⚠ **Airtable descarta el string vacío al escribir**, de modo que las filas de texto libre vuelven
+**sin la clave** `fld0NAJv7E1rLFWVX` en la respuesta de la API, no con `""`. El efecto observable
+es el mismo —celda vacía— pero un cliente que espere la clave presente debe tolerar su ausencia.
+
+**`iluminacion` comparte la data validation de `calidad`.** `BE46:BE50` y `Y37:Y44` están en la
+misma `dataValidation` del `.xlsm` (`DEFICIENTE · INFERIOR · REGULAR · CORRIENTE · BUENA ·
+SUPERIOR`). Sus 20 filas llevan `catalogo_ref` inline, no vacío.
+
+### Ambigüedades vigentes
+
+- **A-37 · ✅ CERRADA** el 22-ago-2026 por **P0.5.B-TAS**. `M_TiposPropiedad` quedó saneada —9
+  filas activas en Title Case, sin duplicados por capitalización— y los defaults se cuelgan de
+  `Casa` (`recrXDAjlVCe59XBW`) y `Departamento` (`recf9hz8TbkQ6wsus`) sin ambigüedad de fila.
+  Era la bloqueante del sembrado. Ver §7.1.
+- **A-41 · abierta, no bloqueante.** Dos defaults dependen de interruptores ajenos a la clave de
+  partición: la materialidad de `entrepisos` depende de `numeroPisos` `[Excel: Portada!BK5]` y
+  **no se sembró en `Casa`** (sí su calidad y su estado, que no dependen de `H39`); `calefaccion`
+  depende de `AB22` y se sembró con `NO PRESENTA`, que es lo que la plantilla despacha en blanco.
+- **A-42 · abierta, no bloqueante.** `Departamento·usado·obras_complementarias·estado` vale
+  **`BUENA`**, un valor del catálogo de **calidad** que no pertenece al de estado. Es el valor del
+  Excel tal cual (R1); lo esperable sería `BUENO`. Pendiente de validación con Héctor.
+- **A-43 · abierta, no bloqueante.** `Casa Piloto` y `Departamento Piloto` existen en
+  `M_TiposPropiedad` pero **no tienen defaults**: sus fórmulas caen en la rama "resto", que para
+  `Departamento Piloto` significa comportarse como Casa (cubierta `PLANCHA METALICA`, sin
+  `PISCINA`), casi con certeza no deseado.
 - **A-38.** Dónde se materializan los catálogos de valores admisibles (36 de estructura
   soportante, 19 de cubierta, 13 de muebles de cocina…). No dependen de la combinación, así que
   alojarlos en esta tabla los duplicaría; hoy sólo se referencian por `catalogo_ref`.

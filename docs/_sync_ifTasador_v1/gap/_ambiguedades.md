@@ -1480,3 +1480,93 @@ solicitudes reales sobre una suposición.
 activa; el sembrado de `C_DefaultsAntecedentes` no la necesita —los defaults de §2.8.1 describen
 casas y departamentos—, y una combinación sin fila deja los campos vacíos, que es el comportamiento
 correcto.
+
+---
+
+## A-41 · Dos defaults dependen de interruptores ajenos a la clave de partición
+
+**Estado** — abierta · **no bloqueante** · impacto bajo. **Dueño: Héctor.**
+Detectada en **P0.5.C-TAS** (22-ago-2026) al resolver las fórmulas de la hoja `Antecedentes`.
+
+La partición de `C_DefaultsAntecedentes` es (tipo de propiedad × estado de uso), cerrada por A-27.
+Dos defaults de §2.8.1 **no se resuelven con esos dos ejes**: necesitan un tercero que la solicitud
+no aporta al abrir la Pantalla 5.
+
+| Default | Fórmula | Tercer eje | Qué se sembró |
+|---|---|---|---|
+| `entrepisos` · materialidad | `[Excel: Antecedentes!H39]` = `IF(tipoPropiedad="Departamento","LOSA…",IF(AND(tipoPropiedad="Casa",numeroPisos=1),"","LOSA…"))` | **`numeroPisos`** `[Excel: Portada!BK5]` | **Nada en `Casa`** · `LOSA DE HORMIGON ARMADO` en `Departamento` |
+| `calefaccion` · materialidad | `[Excel: Antecedentes!AR38]` = `IF(AB22="SI","LOSA RADIANTE","NO PRESENTA")` | **`AB22`**, la declaración de calefacción en el bloque de comodidades | `NO PRESENTA` en las 4 combinaciones |
+
+**Los dos casos se resolvieron distinto, y la asimetría es deliberada.** En `calefaccion` hay una
+rama que corresponde inequívocamente al caso que el pre-llenado modela —la plantilla en blanco, con
+`AB22` vacío, despacha `NO PRESENTA`—, de modo que sembrarla no inventa nada. En `entrepisos` las
+dos ramas son igual de plausibles: una casa de un piso no tiene entrepisos y una de dos sí, y no
+hay un "caso en blanco" que desempate. Poner una losa donde no la hay es exactamente el modo de
+fallo que §2.8.1 quiere evitar, así que se dejó vacío.
+
+**Nota de lectura que conviene no perder.** En `Casa`, `entrepisos` **sí tiene calidad y estado
+sembrados** aunque no tenga materialidad: `Y39` y `AF39` son constantes por rama y no dependen de
+`H39`. Una fila con calidad y sin materialidad no es un sembrado a medias; es el reflejo fiel de
+lo que hace la plantilla.
+
+**La pregunta abierta:** ¿se agrega `numeroPisos` como tercer eje de partición, se resuelve
+`entrepisos` server-side leyendo el dato de la solicitud, o se acepta que quede vacío y el tasador
+lo complete? La tercera es la que rige hoy.
+
+---
+
+## A-42 · `BUENA` como valor de estado, fuera de su propio catálogo
+
+**Estado** — abierta · **no bloqueante** · impacto bajo. **Dueño: Héctor.**
+Detectada en **P0.5.C-TAS** (22-ago-2026).
+
+`[Excel: Antecedentes!AF43]` = `IF(H43<>"",IF(estadoUso="Nuevo","NUEVO S/USO","BUENA"),"")`.
+
+En la combinación **`Departamento` × `usado`** —la única donde `H43` no está vacío y el estado de
+uso no es nuevo— devuelve **`BUENA`**, que pertenece al catálogo de **calidad**
+(`DEFICIENTE · INFERIOR · REGULAR · CORRIENTE · BUENA · SUPERIOR`) y **no** al de **estado**
+(`MUY BUENO · NUEVO S/USO · BUENO · REGULAR · DEFICIENTE · OBRA GUESA · TERMINACIONES`). Es con
+toda probabilidad un error de tipeo en la plantilla; lo esperable sería `BUENO`.
+
+**Se sembró `BUENA` tal cual** (R1: gana el Excel), con la excepción anotada en el campo `notas` de
+la fila `Departamento·usado·obras_complementarias·estado`. Corregirlo por cuenta propia habría
+significado que la tabla dejara de reproducir la plantilla vigente sin que nadie lo hubiera
+decidido.
+
+**Consecuencia práctica si no se resuelve:** el `singleSelect` de estado que P7-TAS construya
+recibirá un valor que no está en su lista de opciones. La UI debe tolerarlo —mostrarlo como valor
+actual aunque no esté en el catálogo— o el campo se presentará vacío, que es peor que presentar el
+valor raro.
+
+**La pregunta:** ¿se corrige a `BUENO` en la tabla, se corrige en la plantilla, o se deja como está?
+
+---
+
+## A-43 · `Casa Piloto` y `Departamento Piloto` no tienen defaults
+
+**Estado** — abierta · **no bloqueante** · impacto bajo. **Dueño: Héctor.**
+Detectada en **P0.5.C-TAS** (22-ago-2026). Emparentada con **A-40**.
+
+`ListaTipoPropiedad` `[Excel: FICHA SOLIC!AD25:AD32]` declara los dos como valores propios, y
+`M_TiposPropiedad` los tiene activos desde P0.5.B-TAS (`recoCHaCWolPWtgeW`, `reck6cHbNAcmJPj8X`).
+**Las fórmulas de la plantilla no los distinguen**: comparan por igualdad exacta contra `"Casa"` y
+`"Departamento"`, de modo que los dos caen en la rama "resto".
+
+| Valor | Cómo lo trata la plantilla |
+|---|---|
+| `Casa Piloto` | Igual que `Casa`, salvo `entrepisos`: `AND(tipoPropiedad="Casa",…)` es falso y devuelve `LOSA DE HORMIGON ARMADO` |
+| `Departamento Piloto` | **Se comporta como Casa** — cubierta `PLANCHA METALICA` en vez de `FE GALVANIZADO`, y sin `PISCINA` |
+
+Lo segundo es casi con certeza no deseado: un departamento piloto es un departamento. Es el mismo
+patrón de fallo silencioso de **P-5** y **A-37** — comparación por literal exacto contra un dominio
+que creció por un lado y no por el otro.
+
+**No se sembraron** (decisión de Sergio, 22-ago-2026). Sus 4 combinaciones quedan sin filas y la UI
+presenta los campos vacíos, que es el comportamiento correcto de §2.8.1. La alternativa —copiar los
+datos de la raíz— exigía decidir *cuál* raíz, y para `Departamento Piloto` la plantilla responde
+"Casa", que es justamente lo que parece estar mal. Sembrar sobre esa respuesta habría materializado
+el error en datos.
+
+**La pregunta:** ¿un piloto hereda los defaults de su tipo base —`Casa Piloto` de `Casa` y
+`Departamento Piloto` de **`Departamento`**, no de Casa— o el negocio los tasa con criterios
+propios? Si es lo primero, son 4 combinaciones más de sembrado y una corrección a la plantilla.

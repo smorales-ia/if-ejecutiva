@@ -530,3 +530,51 @@ era deuda pendiente de sembrado: era una desconexión funcional viva en la base.
 la deduplicación pasa a ser un no-op y el nombre que viaja a SC01 se vuelve determinista, cuando
 antes dependía del orden en que Airtable devolviera los registros. El comentario de las líneas
 43-44 queda desactualizado y se anotó en **CI-049**; no se corrigió (R5).
+
+---
+
+## Tanda del 22-ago-2026 (d) — P0.5.C-TAS · sembrado de `C_DefaultsAntecedentes`
+
+> **La tanda que convierte una tabla vacía en un catálogo consultable.** 212 filas en 12 batches,
+> cero rechazos, cero reintentos. Contrato 🔴 pausa-total para escritura, relajado a corrido por
+> instrucción explícita de Sergio tras el primer batch verificado.
+
+**Objetivo** — sembrar los defaults de spec §2.8.1 (RF-TAS-23) en la tabla que P0.5-TAS creó vacía,
+una vez que P0.5.B-TAS cerró **A-37**.
+
+### Resultado
+
+**212 filas** repartidas en las **4 combinaciones que la plantilla distingue** —`Casa` y
+`Departamento` × `nuevo` y `usado`—, de las 16 que el dominio admite. Las otras 12 quedan sin filas,
+que es el comportamiento declarado: campos vacíos, sin herencia. Verificación post-sembrado en ocho
+comprobaciones independientes: total 212, cero huérfanas, cero inactivas, 51/51/55/55 por
+combinación, 13 filas con nota de excepción. Detalle en `docs/_notas/snapshot-P0.5.C-TAS.md`.
+
+### El hallazgo
+
+Al re-verificar el mapeo contra el `.xlsm` real —leyendo los bloques `dataValidation` del XML de la
+hoja, sin `openpyxl`— apareció que **la spec §2.8.1 y `radiografia-excel-informe.md` invierten dos
+catálogos**: le atribuyen `Antecedentes!CK45:CK50` a *cierros exteriores* cuando el archivo lo
+declara sobre `H43`, *obras complementarias*, y **`H42` no tiene ninguna validación** — es texto
+libre. El mapeo de Fase 1 ya lo tenía bien, de modo que el sembrado salió correcto; lo que estaba
+mal era la documentación derivada. Se corrigió la radiografía in-place; la spec, por normativa,
+espera su bump.
+
+Del mismo barrido salió que **`iluminacion` comparte la `dataValidation` de `calidad`**
+(`BE46:BE50` y `Y37:Y44` en la misma declaración), campo que la decisión del Gate 1 no había
+incluido entre los de catálogo inline. Sergio lo aprobó y sus 20 filas lo llevan.
+
+### Decisiones de esta tanda
+
+| # | Resolución | Origen |
+|---|---|---|
+| **C-29** | **Un default que depende de un tercer eje no se siembra "por mayoría".** `entrepisos` en Casa depende de `numeroPisos`, ajeno a la clave de partición, y sus dos ramas son igual de plausibles: se dejó sin sembrar (**A-41**). `calefaccion` depende de `AB22` pero **sí** tiene una rama que corresponde al caso que el pre-llenado modela —la plantilla en blanco despacha `NO PRESENTA`—, y esa se sembró. El criterio no es "cuántos ejes faltan" sino **si existe un caso en blanco que desempate**; sin él, vacío es más honesto que plausible-y-falso | Sesión 22-ago-2026 · decisión de Sergio |
+| **C-30** | **Un valor claramente errado del origen se copia igual, con la excepción anotada en la fila.** `Departamento·usado·obras_complementarias·estado` vale `BUENA`, del catálogo de calidad y no del de estado. Corregirlo a `BUENO` habría hecho que la tabla dejara de reproducir la plantilla vigente sin que nadie lo decidiera, y habría escondido el error en vez de exponerlo. Se sembró tal cual (R1) con la nota en el campo `notas`, y **la carga de tolerarlo pasa a la UI**: el `singleSelect` de P7-TAS debe mostrar un valor fuera de su lista en vez de presentar el campo vacío (**A-42**) | Sesión 22-ago-2026 · decisión de Sergio |
+| **C-31** | **`catalogo_ref` distingue tres estados, no dos.** Rango oculto (`Antecedentes!BZ45:BZ80`), lista inline en la celda (`Antecedentes!AF39 · lista inline`) y **vacío = texto libre**. Sin el estado intermedio, un campo con catálogo declarado dentro de la propia data validation era indistinguible de uno sin catálogo, y P7-TAS habría tenido que adivinar cuál renderizar como dropdown. ⚠ Airtable **descarta el string vacío al escribir**: esas filas vuelven de la API sin la clave, no con `""` | Sesión 22-ago-2026 · decisión 4 del Gate 1 |
+| **C-32** | **Verificar el `.xlsm` no requiere `openpyxl`.** El entorno no lo tenía y `python3 -m venv` falla sin `ensurepip`. Un `.xlsm` es un ZIP: `zipfile` + una regex sobre `xl/worksheets/sheetN.xml` extrae los bloques `dataValidation` con sus `sqref` y sus `formula1`, que es exactamente lo que hacía falta para saber qué celda tiene qué catálogo. La ruta de respaldo resultó más directa que la principal, y no dependió de instalar nada | Sesión 22-ago-2026 |
+| **C-33** | **El conteo declarado en un plan se verifica contra la base, no contra la aritmética del plan.** El plan de esta tanda anunciaba "12 filas con nota"; la lectura post-sembrado devolvió **13**, y el desglose —4 + 4 + 4 + 1— mostró que el error estaba en la suma del plan, no en los datos. La comprobación por consulta detectó en un paso lo que releer el plan no habría detectado | Sesión 22-ago-2026 |
+
+### Efecto sobre el código
+
+**Ninguno** (R4). No se tocó `app/`, `lib/` ni `components/`. El efecto es aguas abajo: **P7-TAS
+puede construir la sección E con precarga efectiva**, que hasta hoy leía una tabla vacía.

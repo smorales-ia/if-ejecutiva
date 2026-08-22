@@ -1665,3 +1665,100 @@ una planilla, leer siempre las fórmulas; el valor visible es evidencia de un ca
 Corolario menor de la misma sesión: un literal sin ramificación entre veinte que sí ramifican es
 sospechoso de residuo, no de regla — `Antecedentes!Z17 = NOROESTE` se descartó como default por
 eso, y quedó anotado en §2.8.1 para que nadie lo reponga.
+
+---
+
+### 2026-08-22 — P0.5.C-TAS · sembrado de `C_DefaultsAntecedentes` (212 filas)
+
+**Contexto:** Fase 2 y 3 de la tanda de sembrado, retomada desde
+`docs/_notas/snapshot-P0.5.C-TAS-fase1-en-curso.md` con el mapeo de Fase 1 ya cerrado.
+
+**Inconveniente:** había que re-verificar el mapeo contra el `.xlsm` real (R1) y el entorno **no
+tiene `openpyxl`**. `python3 -m venv` tampoco resuelve: falla con *"ensurepip is not available"*
+en este WSL, y `apt install python3.14-venv` habría requerido `sudo` para una verificación de
+lectura.
+
+**Causa raíz:** la Fase 1 se hizo en una sesión donde `openpyxl` sí estaba disponible, y el plan
+de reanudación lo daba por sentado. La dependencia no estaba declarada en ninguna parte del repo
+—no es una dependencia del proyecto, es una herramienta de análisis ad hoc—, así que su ausencia
+no era detectable antes de necesitarla.
+
+**Solución aplicada:** un `.xlsm` es un ZIP. Con `zipfile` de la stdlib más una regex sobre
+`xl/worksheets/sheet3.xml` se extraen todos los bloques `dataValidation` con su `sqref` y su
+`formula1`, que era exactamente el dato que hacía falta. El mapeo sheet-name → sheetN.xml sale de
+`xl/workbook.xml` cruzado con `xl/_rels/workbook.xml.rels`. Cero instalaciones.
+
+**Prevención futura:** para inspeccionar estructura de un Office abierto (validaciones, fórmulas,
+nombres definidos), la ruta ZIP+XML es de primera elección y no de respaldo: no depende de nada,
+es más rápida y muestra el XML tal cual. `openpyxl` sigue conviniendo para recorrer celdas con
+valores calculados.
+
+### 2026-08-22 — La spec y la radiografía invierten dos catálogos del Excel
+
+**Contexto:** misma tanda, al verificar `catalogo_ref` de `elementos_fundamentales`.
+
+**Inconveniente:** el snapshot de Fase 1 decía que `cierros_exteriores` es texto libre y que
+`Antecedentes!CK45:CK50` corresponde a `obras_complementarias`. La spec §2.8.1 y
+`docs/_notas/radiografia-excel-informe.md` decían lo contrario. Dos fuentes del repo en conflicto
+directo sobre un dato que iba a quedar escrito en 8 filas.
+
+**Causa raíz:** la tabla de la radiografía usa "mismo catálogo" para heredar el valor de la fila
+anterior. En algún momento la atribución se corrió una fila y el `[Excel: …CK45:CK50]` quedó
+pegado a *cierros exteriores*, con *obras complementarias* heredando por "mismo catálogo". La spec
+copió la tabla con el error incorporado. Nada en el texto delataba la inversión: las dos filas son
+plausibles y el rango existe de verdad.
+
+**Solución aplicada:** el `.xlsm` decide. La lectura de las `dataValidation` muestra
+`H43:X43 → $CK$45:$CK$50` y **ninguna validación sobre `H42`**. Gana el snapshot de Fase 1 por R1
+(gana el Excel); se sembró texto libre en `cierros_exteriores`, con la excepción anotada en el
+campo `notas` de las 4 filas. `radiografia-excel-informe.md` §2.1 corregido in-place; la spec, por
+ser normativa, queda anotada para su próximo bump.
+
+**Prevención futura:** **"mismo catálogo" / "ídem" en una tabla derivada es una construcción
+frágil** — desplaza silenciosamente si alguien inserta o reordena una fila, y el error se propaga a
+todo lo que copie la tabla. Al transcribir catálogos desde un origen, repetir la cita completa en
+cada fila aunque se repita. Y al sembrar datos desde documentación derivada, verificar contra el
+origen: acá el conflicto se detectó porque había dos fuentes; con una sola, el error se habría
+escrito en la base sin ruido.
+
+### 2026-08-22 — Airtable descarta el string vacío al escribir
+
+**Contexto:** misma tanda, verificando la primera respuesta de `create_records_for_table`.
+
+**Inconveniente:** las filas enviadas con `catalogo_ref: ""` volvieron **sin la clave**
+`fld0NAJv7E1rLFWVX` en la respuesta, no con `""`. A primera vista parecía un campo que no se había
+escrito.
+
+**Causa raíz:** Airtable normaliza el string vacío a "celda sin valor", y la API no devuelve las
+claves de celdas vacías. No es un rechazo ni una pérdida: `""` y *ausente* son el mismo estado en
+Airtable.
+
+**Solución aplicada:** ninguna sobre los datos —el efecto observable es el correcto, celda vacía
+significa "texto libre"—. Se documentó en `docs/schema-airtable.md` y en el plan IF-03 §8, porque
+**el consumidor sí lo nota**: P7-TAS decide entre dropdown e input mirando `catalogo_ref`, y un
+`record.fields.catalogo_ref` sin la clave revienta si se accede sin guardia.
+
+**Prevención futura:** al modelar un campo donde "vacío" es un valor semántico —no ausencia de
+dato— no confiar en el string vacío para transportarlo: o se acepta que el cliente maneje la clave
+ausente, o se usa un valor centinela explícito. Y al verificar una escritura, comparar la respuesta
+contra el payload clave por clave, no sólo contar registros.
+
+### 2026-08-22 — El conteo de un plan se verifica contra la base, no contra el plan
+
+**Contexto:** verificación final de las 212 filas.
+
+**Inconveniente:** el plan de la tanda anunciaba "12 filas con nota de excepción". La consulta
+`isNotEmpty` sobre el campo `notas` devolvió **13**.
+
+**Causa raíz:** suma mal hecha al redactar el plan: 4 (entrepisos) + 4 (calefacción) + 4 (cierros)
++ 1 (A-42) = 13, no 12. El error estaba en la aritmética del plan, no en los datos ni en el
+generador.
+
+**Solución aplicada:** listar las 13 filas y reconstruir el desglose, que cuadró exactamente con lo
+esperado. Se corrigió el número en el snapshot y en el reporte, sin tocar la base.
+
+**Prevención futura:** un número declarado en un plan es una hipótesis, no una verificación.
+Cuando el conteo real difiere, **el primer sospechoso es el plan** — y la comprobación útil no es
+"¿cuántos hay?" sino "¿cuáles son?": el desglose ubica el error en un paso, mientras que releer la
+suma puede repetirla. Vale también al revés: si el conteo real hubiera dado 12 por coincidencia con
+una fila faltante, sólo el desglose lo habría detectado.

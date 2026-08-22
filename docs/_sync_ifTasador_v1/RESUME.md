@@ -762,3 +762,77 @@ de dar por bueno el cambio de comportamiento.
 La tanda de **sembrado de `C_DefaultsAntecedentes`**, con dos preguntas por resolver antes:
 cuántas combinaciones se siembran (las 4 del Excel o las 16 del dominio) y si A-38 se resuelve en
 el mismo movimiento.
+
+---
+
+## Estado canónico · P0.5.C-TAS completa · 22-ago-2026 (d)
+
+> **Manda sobre todos los bloques anteriores.** Complementa al bloque 22-ago-2026 (c).
+
+**`C_DefaultsAntecedentes` (`tblOj7nXcjeouPy09`) quedó SEMBRADA: 212 filas.**
+
+Se sembraron **4 de las 16 combinaciones** —las que la plantilla distingue—, con este reparto:
+
+| Combinación | `elementos_fundamentales` | `elementos_otros` | `terminaciones_recinto` | Total |
+|---|---|---|---|---|
+| `Casa` × `nuevo` | 17 | 14 | 20 | **51** |
+| `Casa` × `usado` | 17 | 14 | 20 | **51** |
+| `Departamento` × `nuevo` | 21 | 14 | 20 | **55** |
+| `Departamento` × `usado` | 21 | 14 | 20 | **55** |
+
+Verificado por lectura independiente: 212 filas, cero huérfanas, `activo = TRUE` en todas. Detalle
+en `docs/_notas/snapshot-P0.5.C-TAS.md`; foto del schema en `docs/schema-airtable.md`.
+
+**Las 12 combinaciones restantes no tienen filas y eso es correcto** — campos vacíos, sin herencia
+(spec §2.8.1). Incluye `Casa Piloto` y `Departamento Piloto`, que quedaron deliberadamente sin
+sembrar (**A-43**).
+
+**El hallazgo que no conviene perder.** La spec §2.8.1 y `radiografia-excel-informe.md` **invierten
+dos catálogos**: atribuyen `Antecedentes!CK45:CK50` a *cierros exteriores*, cuando el `.xlsm`
+declara esa validación sobre `H43` —*obras complementarias*— y deja `H42` **sin ninguna
+validación**, es decir texto libre. El mapeo de Fase 1 ya lo tenía bien, así que el sembrado salió
+correcto. La radiografía se corrigió in-place; **la spec sigue con la atribución invertida** y
+espera su bump.
+
+### Lo que P7-TAS necesita saber para consumirla
+
+- **Los dos ejes de lectura**: `tipo_propiedad` (`fldNZVhxeoIMGCMiZ`, **Link** a `M_TiposPropiedad`
+  — el join es por **record ID**, nunca por literal) y `estado_uso` (`fldnXKVSv2xbPWi2j`,
+  `nuevo`/`usado` **en minúscula**).
+- **`catalogo_ref` tiene tres estados**: rango oculto (`Antecedentes!BZ45:BZ80`), lista inline
+  (`Antecedentes!AF39 · lista inline`) y **vacío = texto libre**. El tercero determina si el campo
+  se renderiza como dropdown o como input.
+- ⚠ **Airtable descarta el string vacío**: las filas de texto libre vuelven de la API **sin la
+  clave** `catalogo_ref`, no con `""`. Tolerar la ausencia, no asumir la presencia.
+- ⚠ **Un valor fuera de catálogo**: `Departamento·usado·obras_complementarias·estado` vale `BUENA`,
+  que pertenece al catálogo de calidad (**A-42**). El `singleSelect` de estado debe **mostrarlo
+  igual**; si lo descarta por no estar en su lista, el campo aparece vacío, que es peor.
+- **Tres campos no se siembran nunca**: `construccion_anexo`, la calidad de `aire_acondicionado` y
+  `calefaccion`, y `obras_complementarias` completo en `Casa`. Son vacíos deliberados de la
+  plantilla, no filas faltantes.
+
+### Qué se desbloqueó
+
+**P7-TAS construye la sección E con precarga efectiva.** Era lo último que separaba al punto de
+consumo de tener datos reales.
+
+### Qué sigue abierto
+
+- **A-18** — el valor por defecto de cada factor de homogeneización. **Única bloqueante** de
+  `GET /api/tasaciones/config/defaults`. Sin cambios.
+- **A-38** — dónde se materializan los catálogos de valores admisibles. Sin cambios: esta tanda los
+  referenció por `catalogo_ref` y no creó tabla hermana.
+- **A-39** — dónde vive el anexo de estado de conservación.
+- **A-40** — si `Bodega` es tipo de propiedad o tipo de bien. No bloquea.
+- **A-41** *(nueva)* — `entrepisos` y `calefaccion` dependen de un tercer eje ajeno a la clave.
+- **A-42** *(nueva)* — `BUENA` como valor de estado, fuera de su catálogo.
+- **A-43** *(nueva)* — `Casa Piloto` y `Departamento Piloto` sin defaults.
+- **La inversión de catálogos en spec §2.8.1** — corregir en el próximo bump de la normativa.
+
+### Próximo paso
+
+**P1-TAS**, según el orden del plan. La serie P0.5-TAS → P0.5.B-TAS → P0.5.C-TAS cierra acá: el
+schema de IF-03 existe, la maestra está saneada y el catálogo de defaults tiene datos.
+
+Sigue conviniendo lo que quedó pendiente de P0.5.B-TAS: **probar el motor de cálculo sobre una
+solicitud real**, ahora que encuentra configuración donde antes no encontraba nada.
