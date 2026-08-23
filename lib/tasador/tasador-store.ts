@@ -26,7 +26,7 @@
  * no puede pisar una con la otra — el bug clásico de una clave global.
  */
 
-import { normalizarFotosBorrador, type InformeData } from "@/lib/tasaciones"
+import { normalizarFotosBorrador, type InformeData } from "@/lib/tasador/tasaciones"
 
 const PREFIJO = "vp.tasador.informe."
 

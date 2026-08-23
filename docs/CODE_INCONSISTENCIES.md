@@ -850,7 +850,7 @@ lo que conviene recordar cuando P7-TAS cablee esa sección.
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-023 |
-| **Archivo:línea** | `lib/tasaciones.ts:323` (`InformeData`, 68 campos) · `docs/_md/VProperty_Origen_Datos_Informe_v1.1.md` §3.3 (tabla *Campo del informe → Campo en TX_DatosTasacion*, líneas 492-548) · vs base `app9G7lLkIV3CpeLa`, schema levantado vía Meta API el **18-ago-2026** |
+| **Archivo:línea** | `lib/tasador/tasaciones.ts:704` (`InformeData`, 68 campos · reubicado en P7-TAS.0) · `docs/_md/VProperty_Origen_Datos_Informe_v1.1.md` §3.3 (tabla *Campo del informe → Campo en TX_DatosTasacion*, líneas 492-548) · vs base `app9G7lLkIV3CpeLa`, schema levantado vía Meta API el **18-ago-2026** |
 | **Síntoma** | `PATCH /api/tasaciones/[id]/datos` (RF-TAS-16 · RF-TAS-17) debe persistir las secciones A-H sobre `TX_DatosTasacion` (83 campos) más cuatro tablas hijas. Al contrastar los 68 campos de `InformeData` contra el schema real aparecen **tres clases de fallo distintas**: (1) **26 campos no tienen columna destino en ninguna de las seis tablas**; (2) **`dfl2` existe pero es una fórmula** —escribirla devuelve 422—; (3) **cuatro pares de homónimos**, de los cuales los tres de la sección H tienen el campo de nombre obvio equivocado y el correcto es el que ningún documento nombra. La documentación no permite detectar ninguno de los tres: §3.3 nombra campos que no existen y omite los que sí. |
 | **Causa** | `InformeData` se derivó del formulario v0 (`components/tasador/tasacion-form.tsx`), que es una maqueta de UI diseñada sin contraste contra la base. `TX_DatosTasacion` creció por acumulación —bloque SII de §20.6, campos del motor AT03, campos de la extracción RF-09— sin un pase de consolidación, de lo que quedan pares como `anio_construccion`/`anno_construccion` conviviendo. `VProperty_Origen_Datos_Informe_v1.1.md` §3.3 es un documento de **diseño de origen de datos**, no un snapshot de schema, y nunca se verificó contra la base. Es el mismo patrón que P1-TAS encontró en los catálogos de `OPCIONES` (8 de 9 mal por derivarlos de documentación). |
 | **Resolución** | ⚠ **PARCIAL — la ruta se construye sobre el subconjunto verificado; la decisión de modelado se difiere a P7-TAS.** <br>**(a) Hecho en P2-TAS.A:** `PATCH /datos` persiste **únicamente los 39 campos escalares con destino verificado** más las 4 colecciones hijas. Los 26 huérfanos se listan de forma explícita en el docblock de `app/api/tasaciones/[id]/datos/route.ts` y abajo en esta ficha. La ruta **no los acepta en silencio**: lo que no tiene dónde guardarse, no se guarda y queda declarado. <br>**(b) Diferido a P7-TAS**, que es la tanda dueña del formulario de 8 secciones: decidir si los 26 huérfanos se crean como campos en Airtable (requiere aprobación explícita de Sergio · `CLAUDE.md`), si se retiran de `InformeData` por no ser datos que el negocio necesite persistir, o si se consolidan en los `multilineText` que ya existen (`elementos_interiores`, `espacios_comunes`, `notas_campo`). **Precedente exacto:** P1-TAS dejó `Comodidades` sin tabla destino con esta misma forma de cierre. <br>**(c) Documental, próximo bump:** corregir la tabla §3.3 de `VProperty_Origen_Datos_Informe_v1.1.md`. **No se tocó el documento en esta tanda.** |
@@ -898,7 +898,7 @@ Ninguno existe en `TX_DatosTasacion`, `TX_DocumentosLegales`, `TX_ItemsCuadroVal
 | F | `afectoExpropiacion` | Existe `n_cert_no_expropiacion` (el número del certificado), no el booleano. |
 | H | `valorReferenciaClp` | **Es el denominador del cap rate** (`informe-preview.tsx:141`). Sin él, el cap rate de la sección H no se puede recomputar server-side. |
 
-> Se suman los **14 booleanos de `Comodidades`**, que P1-TAS ya declaró sin tabla destino en el docblock de `lib/tasaciones.ts:283`. No se recuentan acá; misma resolución y misma tanda (P7-TAS).
+> Se suman los **14 booleanos de `Comodidades`**, que P1-TAS ya declaró sin tabla destino en el docblock de `lib/tasador/tasaciones.ts:638`. No se recuentan acá; misma resolución y misma tanda (P7-TAS).
 
 ### 2 · `dfl2` es una fórmula, no un campo escribible
 
@@ -916,7 +916,7 @@ IF({fldhsMeHuyoUMnvqq} < 140, 'SI', 'NO')     ← {sup_construida_total}
 
 ### 3 · `Recinto` es ancho; `TX_TerminacionesPorRecinto` es largo
 
-`Recinto` (`lib/tasaciones.ts:270`) tiene 7 atributos en un objeto. La tabla real modela **una fila por (recinto, categoría)**, con `categoria` en dominio cerrado `Pisos · Muros · Cielos · Puertas · Ventanas · Cocina · Banos`.
+`Recinto` (`lib/tasador/tasaciones.ts:620`) tiene 7 atributos en un objeto. La tabla real modela **una fila por (recinto, categoría)**, con `categoria` en dominio cerrado `Pisos · Muros · Cielos · Puertas · Ventanas · Cocina · Banos`.
 
 **Un recinto no es una fila: son tres.** Mapeo adoptado en P2-TAS.A:
 
@@ -1156,7 +1156,7 @@ tanda «arregle» el conteo reconstruyendo una pantalla que el negocio descartó
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-028 |
-| **Archivo:línea** | `lib/tasaciones.ts` · `marcarPdfListo()` (**stub declarado**) · `components/tasador/informe-preview.tsx:170` (llamador) · contraste con `app/api/tasaciones/**` (11 rutas) y con el plan §3.1 (tabla de 15 filas) |
+| **Archivo:línea** | `lib/tasador/tasaciones.ts:1444` · `marcarPdfListo()` (**stub declarado**) · `components/tasador/informe-preview.tsx:170` (llamador) · contraste con `app/api/tasaciones/**` (11 rutas) y con el plan §3.1 (tabla de 15 filas) |
 | **Síntoma** | La Pantalla 7 tiene un botón que envía el informe y avanza a una pantalla de agradecimiento. **Ninguna ruta de IF-03 escribe esa transición.** P2-TAS.A construyó once rutas y ninguna toca el estado en ese sentido; el plan §3.1, que enumera quince, **tampoco la lista**. El v0 lo resolvía mutando un array en memoria, así que el hueco no se veía. |
 | **Causa** | El set de rutas del plan se derivó de las pantallas de lectura y de las mutaciones evidentes (`/calcular`, `/rechazo`, `/coordinacion`, `/fotos`, `/datos`). La transición de **envío** del informe quedó fuera: en la máquina de estados oficial, `calculada → pdf_listo` la escribe el **pipeline PDF** (E1/E2/E3), no el tasador, y esa lectura hizo que pareciera cubierta. Pero el botón de §7.5 es una acción del tasador y necesita persistir algo — como mínimo, la marca de que el tasador dio el informe por bueno. **Qué escribe exactamente, y sobre qué campo, no está definido en ningún documento.** |
 | **Resolución** | ⚠ **NO SE RESUELVE EN P2-TAS.B — falta la definición, no el código.** <br>**(a) Hecho:** `marcarPdfListo(id)` existe con la firma que el llamador espera, **no persiste nada**, y emite un `console.warn` que nombra el hueco y remite a esta ficha. El docblock lo declara stub en su primera línea. <br>**(b) Por qué stub y no una ruta inventada:** cablear contra un endpoint adivinado habría sido peor que no cablear — el botón diría «enviado» y el informe se quedaría donde está, que es exactamente el verde falso que esta tanda rechazó en el hallazgo del ensanchado de proyecciones. <br>**(c) Lo que hay que decidir antes de escribir la ruta:** qué campo se escribe, si hay transición de estado o sólo una marca de conformidad del tasador, y si el visador recibe aviso (ligado a **A-15**, hoy resuelta en negativo para el rechazo). |
@@ -1183,15 +1183,15 @@ tanda «arregle» el conteo reconstruyendo una pantalla que el negocio descartó
 
 ---
 
-## CI-030 · Enmienda a OV-4: `getTasacion` no podía vivir en `lib/tasaciones.ts` sin filtrar `AIRTABLE_TOKEN` al bundle cliente
+## CI-030 · Enmienda a OV-4: `getTasacion` no podía vivir en el módulo de tipos y catálogos sin filtrar `AIRTABLE_TOKEN` al bundle cliente
 
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-030 |
-| **Archivo:línea** | `lib/tasador/lectura-tasacion.ts` (**nuevo**) · `lib/tasaciones.ts:15-28` (docblock enmendado) · `app/tasaciones/[id]/*/page.tsx` (5 imports reescritos) · contraste con **OV-4** en `docs/_notas/inventario-tasador.md` |
-| **Síntoma** | OV-4 fijó `@/lib/tasaciones` como hogar único de todo lo que el v0 importaba desde esa ruta, incluida `getTasacion()`. Aplicado al pie de la letra, eso obligaba a poner una lectura de Airtable —con `AIRTABLE_TOKEN` y el cliente REST— dentro de un módulo que **importan componentes cliente** (`OPCIONES`, `CATEGORIAS_FOTO` y los tipos se usan en `"use client"`). El resultado habría sido el token y el cliente HTTP en el bundle del navegador. |
+| **Archivo:línea** | `lib/tasador/lectura-tasacion.ts` (**nuevo**) · `lib/tasador/tasaciones.ts:34-47` (docblock enmendado · reubicado en P7-TAS.0) · `app/tasaciones/[id]/*/page.tsx` (5 imports reescritos) · contraste con **OV-4** en `docs/_notas/inventario-tasador.md` |
+| **Síntoma** | OV-4 fijó `@/lib/tasaciones` —hoy `@/lib/tasador/tasaciones`— como hogar único de todo lo que el v0 importaba desde esa ruta, incluida `getTasacion()`. Aplicado al pie de la letra, eso obligaba a poner una lectura de Airtable —con `AIRTABLE_TOKEN` y el cliente REST— dentro de un módulo que **importan componentes cliente** (`OPCIONES`, `CATEGORIAS_FOTO` y los tipos se usan en `"use client"`). El resultado habría sido el token y el cliente HTTP en el bundle del navegador. |
 | **Causa** | OV-4 se decidió en **P1-TAS**, una tanda que sólo escribía tipos. En ese contexto la regla era correcta y sin efectos secundarios: los tipos se borran en compilación y no llegan al bundle. La regla **no contempló módulos server-only** porque todavía no existía ninguno. Es una regla buena aplicada fuera del dominio en que se formuló, no una regla equivocada. |
-| **Resolución** | ✅ **EJECUTADA (18-ago-2026), con aprobación explícita de Sergio.** <br>**(a) Alcance conservado de OV-4:** `lib/tasaciones.ts` sigue siendo el hogar único de **tipos y catálogos**, y ahora también de las funciones cliente que no tocan Airtable (`resolverLimite`, `resolverInforme`, `marcarVisitada`, `guardarObservacionRechazo`, `marcarPdfListo`). <br>**(b) Lo que se movió:** `getTasacion` → `leerTasacion()` en `lib/tasador/lectura-tasacion.ts`, junto con `leerCola()` y el mapper `proyectarTasacion()`. Los 5 Server Components reescribieron su import. <br>**(c) Beneficio no buscado:** el mapper quedó compartido con `GET /api/tasaciones` y `GET /api/tasaciones/[id]`, de modo que la pantalla y el API **no pueden divergir**: es el mismo mapeo o ninguno. <br>**(d) Regla derivada:** en `lib/tasaciones.ts` sólo entra lo que un componente cliente pueda importar sin riesgo. |
+| **Resolución** | ✅ **EJECUTADA (18-ago-2026), con aprobación explícita de Sergio.** <br>**(a) Alcance conservado de OV-4:** el módulo de tipos y catálogos —`lib/tasador/tasaciones.ts` desde P7-TAS.0— sigue siendo el hogar único de **tipos y catálogos**, y ahora también de las funciones cliente que no tocan Airtable (`resolverLimite`, `resolverInforme`, `marcarVisitada`, `guardarObservacionRechazo`, `marcarPdfListo`). <br>**(b) Lo que se movió:** `getTasacion` → `leerTasacion()` en `lib/tasador/lectura-tasacion.ts`, junto con `leerCola()` y el mapper `proyectarTasacion()`. Los 5 Server Components reescribieron su import. <br>**(c) Beneficio no buscado:** el mapper quedó compartido con `GET /api/tasaciones` y `GET /api/tasaciones/[id]`, de modo que la pantalla y el API **no pueden divergir**: es el mismo mapeo o ninguno. <br>**(d) Regla derivada:** en `lib/tasaciones.ts` sólo entra lo que un componente cliente pueda importar sin riesgo. |
 | **Dueño** |  |
 | **Fecha objetivo** |  |
 | **Estado** | **cerrada** (18-ago-2026) |
@@ -1695,7 +1695,7 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-049 |
-| **Archivo:línea** | `lib/tasaciones.ts:4` · `lib/tipos-documento.ts:53` |
+| **Archivo:línea** | ~~`lib/tasaciones.ts:4`~~ **corregido en P7-TAS.0** · `lib/tipos-documento.ts:53` (**sigue abierto**) |
 | **Síntoma** | Dos comentarios de documentación en código citan archivos que fueron renombrados por bumps posteriores y **ya no existen en el árbol**. `lib/tasaciones.ts:4` dice *"Tanda P1-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.0.md` §2"*, cuando el plan vigente es `v1.2`. `lib/tipos-documento.ts:53` dice `@see docs/_md/VProperty_Especificacion_Proyecto_v1_9_5.md §4.1 · §4.2 (RN-25)`, cuando el normativo vigente es `v1_9_14`: **nueve versiones de distancia**. Ninguno de los dos rompe la compilación —son comentarios, no imports— y por eso ninguna herramienta los detecta. |
 | **Causa** | La convención de la especificación es *archivo nuevo por versión* con `git mv` y actualización de referencias en el mismo commit. Los punteros dentro de `.ts` quedaron fuera de ese barrido en al menos dos bumps: el de `v1_9_5` en adelante para `tipos-documento.ts`, y el de `v1.0 → v1.1` del plan del Tasador, hecho en esta misma ronda del 21-ago-2026 bajo una regla que **excluía tocar código** (R2). El precedente **C-10** del `SYNC_LOG` muestra que en el lote 7 sí se actualizaron seis punteros equivalentes, de modo que la práctica existe pero no es sistemática. |
 | **Resolución** | ⚠ **ABIERTA · deliberadamente diferida.** No se corrige en la ronda del 21-ago-2026 por decisión explícita de Sergio: la ronda era documental y R2 protegía el código. La corrección es de **una línea por archivo** y no tiene riesgo de comportamiento; se aplica en la próxima tanda que toque cualquiera de los dos módulos. <br>**Al aplicarla, conviene además decidir la regla general**, que es lo que evita la tercera repetición: (i) que el bump normativo incluya un barrido de `.ts`/`.tsx` en su checklist —precedente C-10—, o (ii) que los comentarios citen el documento **sin número de versión** (`VProperty_Especificacion_Proyecto` §4.1), aceptando perder precisión histórica a cambio de no envejecer. La opción (ii) es la que resuelve el problema de raíz. |
@@ -1709,6 +1709,12 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 - Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
 - **Encaja en el alcance de este registro y conviene decir por qué.** El archivo excluye explícitamente las divergencias *documento ↔ documento*. Ésta no lo es: es el **código** el que afirma algo —que existe un archivo en una ruta— que dejó de ser cierto. La verificación es abrir la ruta y no encontrarla.
 - El caso de `tipos-documento.ts` es el más viejo y el que mejor ilustra el costo: un lector que siga esa cita para entender RN-25 no encuentra el archivo, y no tiene forma de saber si la regla cambió de número o de contenido en las ocho versiones intermedias.
+- **Caso 1 CERRADO en P7-TAS.0 (23-ago-2026).** `lib/tasaciones.ts:4` citaba
+  `plan_ejecucion_UItasador_v1.0.md`. El archivo se movió a `lib/tasador/tasaciones.ts` en la
+  mudanza de territorio y **la cita se corrigió en el mismo commit**, a `v1.3` y con la nota de
+  bajo qué versión se creó. **Queda un solo caso vivo**: `lib/tipos-documento.ts:53`, que sigue
+  citando `VProperty_Especificacion_Proyecto_v1_9_5.md` y es **territorio IF-02** (R5), de modo
+  que su corrección necesita autorización aparte.
 - **La brecha se ensanchó un bump más (23-ago-2026).** El bump a v1.9.15 y el de
   `plan_ejecucion_UItasador` a v1.3 dejaron las dos citas de `.ts` **una versión más atrás**;
   no se añadieron citas nuevas. La tanda del 23-ago era documental y R2 volvió a proteger el

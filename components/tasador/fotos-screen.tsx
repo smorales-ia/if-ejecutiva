@@ -12,7 +12,7 @@ import {
   type FotoAdjunta,
   type InformeData,
   type FotoCategoriaCustom,
-} from "@/lib/tasaciones"
+} from "@/lib/tasador/tasaciones"
 import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
 import {
   eliminarFotoDeVisita,

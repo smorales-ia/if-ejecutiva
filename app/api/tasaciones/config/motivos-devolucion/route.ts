@@ -5,7 +5,7 @@
  * Airtable**, no de una constante del repositorio. Es la mitad server del
  * criterio de aceptación de A-17: *un motivo agregado desde Airtable llega a la
  * UI sin deploy*. La otra mitad es que el cliente no tenga lista local, y la
- * cumple `cargarMotivosDevolucion()` en `lib/tasaciones.ts`.
+ * cumple `cargarMotivosDevolucion()` en `lib/tasador/tasaciones.ts`.
  *
  * ## Por qué no lleva guard de solicitud
  *

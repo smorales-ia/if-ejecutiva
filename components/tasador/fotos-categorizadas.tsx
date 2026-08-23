@@ -8,7 +8,7 @@ import {
   type CategoriaFotoId,
   type FotoAdjunta,
   type FotoCategoriaCustom,
-} from "@/lib/tasaciones"
+} from "@/lib/tasador/tasaciones"
 import {
   minimoCategoriaPersonalizada,
   resolverMaximo,

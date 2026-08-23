@@ -17,7 +17,7 @@ import {
   type CategoriaFotoId,
   type FotoAdjunta,
   type FotoCategoriaCustom,
-} from '@/lib/tasaciones'
+} from '@/lib/tasador/tasaciones'
 
 const FOTO_IDS = CATEGORIAS_FOTO.map((c) => c.id)
 const ES_PREDEFINIDA = new Set<string>(FOTO_IDS)

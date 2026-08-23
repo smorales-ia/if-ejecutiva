@@ -12,7 +12,7 @@ import type {
   EstadoCoordinacion,
   SlaEtapaSolicitud,
   Tasacion,
-} from '@/lib/tasaciones'
+} from '@/lib/tasador/tasaciones'
 
 /**
  * P3-TAS.A · §4.2 paso 7 — chips de la cola (RF-TAS-01 · CI-019 · A-12).

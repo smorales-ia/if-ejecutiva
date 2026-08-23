@@ -23,7 +23,7 @@ import {
   devolverCoordinacion,
   type MotivoNoContacto,
   type Tasacion,
-} from "@/lib/tasaciones"
+} from "@/lib/tasador/tasaciones"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"

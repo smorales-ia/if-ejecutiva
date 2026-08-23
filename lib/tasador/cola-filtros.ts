@@ -21,7 +21,7 @@
  * nada de lo que entre acá puede tocar `lib/airtable-client`.
  */
 
-import type { Tasacion } from '@/lib/tasaciones'
+import type { Tasacion } from '@/lib/tasador/tasaciones'
 
 /** Los tres chips de CI-019. **No existe** "SLA en riesgo" — no se crea ni como stub. */
 export type ChipCola = 'todas' | 'hoy' | 'por_coordinar'

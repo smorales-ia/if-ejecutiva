@@ -8,7 +8,7 @@ import {
   CATEGORIAS_FOTO,
   type FotoAdjunta,
   type FotoCategoriaCustom,
-} from '@/lib/tasaciones'
+} from '@/lib/tasador/tasaciones'
 
 /**
  * RF-TAS-14 · criterio de aceptación: *"el contador de cada categoría y el total

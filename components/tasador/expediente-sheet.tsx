@@ -7,7 +7,7 @@ import {
   CATEGORIAS_FOTO,
   type Tasacion,
   type InformeData,
-} from "@/lib/tasaciones"
+} from "@/lib/tasador/tasaciones"
 import { useTiposDocumento } from "@/lib/use-tipos-documento"
 import {
   Sheet,

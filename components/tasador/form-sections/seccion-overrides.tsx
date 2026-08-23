@@ -2,7 +2,7 @@
 
 import { TriangleAlert } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { InformeData } from "@/lib/tasaciones"
+import type { InformeData } from "@/lib/tasador/tasaciones"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { TextField } from "./fields"

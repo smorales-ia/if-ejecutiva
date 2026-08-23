@@ -8,8 +8,8 @@ import type {
   NivelId,
   NivelHabitaciones,
   Comodidades,
-} from "@/lib/tasaciones"
-import { OPCIONES, RECINTOS_SUGERIDOS } from "@/lib/tasaciones"
+} from "@/lib/tasador/tasaciones"
+import { OPCIONES, RECINTOS_SUGERIDOS } from "@/lib/tasador/tasaciones"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"

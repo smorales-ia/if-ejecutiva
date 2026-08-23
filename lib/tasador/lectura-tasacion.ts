@@ -5,17 +5,17 @@
  * de IF-03 necesitan, y la fuente única de la proyección que sirven
  * `GET /api/tasaciones` y `GET /api/tasaciones/[id]`.
  *
- * ## Por qué no vive en `lib/tasaciones.ts` — enmienda a OV-4
+ * ## Por qué no vive en `lib/tasador/tasaciones.ts` — enmienda a OV-4
  *
- * OV-4 fijó `@/lib/tasaciones` como hogar de los **tipos y catálogos** de IF-03,
- * para preservar la ruta de import del v0. Ese argumento no alcanza a un módulo
- * que lee Airtable: `lib/tasaciones.ts` lo importan componentes cliente
+ * OV-4 fijó ese módulo como hogar de los **tipos y catálogos** de IF-03, para
+ * preservar la ruta de import del v0. Ese argumento no alcanza a un módulo
+ * que lee Airtable: `tasaciones.ts` lo importan componentes cliente
  * (`OPCIONES`, `CATEGORIAS_FOTO`, los tipos), así que meterle una lectura con
  * `AIRTABLE_TOKEN` arrastraría el token y el cliente REST al bundle del
  * navegador. OV-4 no cerró la ubicación de módulos server-only nuevos porque no
  * existían cuando se escribió.
  *
- * **Regla:** en `lib/tasaciones.ts` sólo entra lo que un componente cliente
+ * **Regla:** en `lib/tasador/tasaciones.ts` sólo entra lo que un componente cliente
  * puede importar sin riesgo. Todo lo que toque Airtable vive acá.
  *
  * ⚠ La separación es **por convención, no por `import 'server-only'`**: ese
@@ -51,7 +51,7 @@ import {
   type SlaEtapaSolicitud,
   type Tasacion,
   type UnidadSii,
-} from '@/lib/tasaciones'
+} from '@/lib/tasador/tasaciones'
 import { autorizarSolicitud, type SolicitudFields } from './auth-guard'
 import { telefonosPrioritarios } from './contactos-cola'
 import { TABLE_IDS } from './field-ids'

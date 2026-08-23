@@ -13,7 +13,7 @@ import {
   ImageIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { type Tasacion, type InformeData, resolverInforme } from "@/lib/tasaciones"
+import { type Tasacion, type InformeData, resolverInforme } from "@/lib/tasador/tasaciones"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
 import { Label } from "@/components/ui/label"

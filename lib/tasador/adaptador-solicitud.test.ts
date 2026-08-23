@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { aSolicitudParaSheet } from './adaptador-solicitud'
 import { documentoAplicaA, desdeTipoPropiedadNuevoUsado } from './tipo-propiedad'
-import type { Tasacion } from '@/lib/tasaciones'
+import type { Tasacion } from '@/lib/tasador/tasaciones'
 
 /**
  * R7 · RF-TAS-06. El sheet documental de IF-02 se **reutiliza**, no se copia, y

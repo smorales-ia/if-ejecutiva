@@ -1,19 +1,39 @@
 /**
  * Tipos de dominio y catálogos de IF-03 · Interfaz Tasador (CU-003).
  *
- * Tanda P1-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.0.md` §2.
+ * Tanda P1-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.3.md` §2
+ * (creado bajo la v1.0 del plan; la cita se actualiza al bumpear · CI-049).
  *
- * ⚠ **Ubicación — override OV-4.** El plan §2.1 sitúa estos tipos en
- * `lib/tasador/types.ts`. Decisión de Sergio (17-ago-2026): viven en
- * `@/lib/tasaciones`, que es la ruta que el código v0 ya importa en 26 líneas
- * de 18 archivos. Una sola ruta canónica; no existe re-export paralelo.
+ * ## Ubicación: **R5 · IF-03**
+ *
+ * Reubicado desde la raíz de `lib/` en **P7-TAS.0** para cumplir **OV-4** sin
+ * ambigüedad de territorio. **Revierte la decisión del docblock previo**
+ * (17-ago-2026, que fijó la raíz como ruta canónica porque era la que el v0 ya
+ * importaba): en agosto R5 no tenía la ambigüedad que motivó esta mudanza. Un
+ * módulo de IF-03 en la raíz de `lib/` es indistinguible de los
+ * `lib/*.ts` de IF-02 que R5 prohíbe modificar, y eso bloqueaba los sub-bloques
+ * de P7-TAS que necesitan tocar `Comparable` e `InformeData`. Bajo
+ * `lib/tasador/` la pertenencia es legible desde la ruta.
+ *
+ * ⚠ **No se renombró a `types.ts`, y es deliberado.** El plan §2.1 lo pedía
+ * así, pero este archivo **no es un módulo de tipos**: son ~250 líneas de
+ * catálogos (`OPCIONES`, `CATEGORIAS_FOTO`, `RECINTOS_SUGERIDOS`), funciones
+ * puras y seis helpers `fetch`. Llamarlo `types.ts` repetiría **OV-6** —el
+ * nombre que miente sobre el contenido, que ya costó una ficha en
+ * `factores-default.ts`—. El split en cuatro módulos (tipos · catálogos ·
+ * capa cliente · derivación del informe) queda **diferido a un refactor
+ * propio**: llevaría las 34 sentencias de import a 48 y haría que 16 de los 30
+ * consumidores importaran de dos o más módulos, que es trabajo de otra tanda.
+ *
+ * Ningún archivo de IF-02 importa este módulo: los 30 consumidores viven en
+ * `components/tasador/**` y `lib/tasador/**`.
  *
  * Las formas de este archivo se derivaron **leyendo los consumidores reales**
  * bajo `app/tasaciones/**` y `components/tasador/**`, no del plan ni de la
  * spec. Los FIELD_IDs de Airtable viven en `lib/tasador/field-ids.ts`.
  *
- * ⚠ **Enmienda a OV-4 (P2-TAS.B · 18-ago-2026).** OV-4 fijó esta ruta para los
- * **tipos y catálogos**, y ese sigue siendo su alcance. Pero el archivo lo
+ * ⚠ **Enmienda a OV-4 (P2-TAS.B · 18-ago-2026).** OV-4 fijó este módulo para
+ * los **tipos y catálogos**, y ese sigue siendo su alcance. Pero el archivo lo
  * importan componentes cliente, así que **nada que lea Airtable puede vivir
  * acá**: arrastraría `AIRTABLE_TOKEN` y el cliente REST al bundle del
  * navegador. Las lecturas contra la base —`leerTasacion`, `leerCola`, y el
@@ -28,7 +48,7 @@
  * `leerTasacion` al mudarse; el mock `TASACIONES` se sustituyó por `leerCola`.
  */
 
-import type { ContactoVisita, SlaEtapaSolicitud } from './console-data'
+import type { ContactoVisita, SlaEtapaSolicitud } from '../console-data'
 
 /* -------------------------------------------------------------------------
  * Estado y semáforo
@@ -86,7 +106,7 @@ export type EstadoBackend =
  * Mismo criterio que `ContactoVisita`: es la misma fila de Airtable y el mismo
  * concepto que ya tipa IF-02. Duplicarlo habría dejado dos formas para un dato.
  */
-export type { SlaEtapaSolicitud } from './console-data'
+export type { SlaEtapaSolicitud } from '../console-data'
 
 /** Paleta del badge de estado (`components/tasador/estado-badge.tsx`). */
 export type EstadoColor = 'verde' | 'ambar' | 'rojo' | 'azul' | 'naranja'
@@ -133,7 +153,7 @@ export interface DatoPrellenado {
  * formas para una sola fila de Airtable. Se ordena por `ordenPrioridad` — ése
  * es el nombre del campo, no `prioridad`.
  */
-export type { ContactoVisita } from './console-data'
+export type { ContactoVisita } from '../console-data'
 
 /** Unidad SII de la solicitud (`TX_Unidades`). */
 export interface UnidadSii {

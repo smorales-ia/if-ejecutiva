@@ -1,8 +1,8 @@
 "use client"
 
 import { Plus, Trash2, Info } from "lucide-react"
-import type { InformeData, ItemValoracion } from "@/lib/tasaciones"
-import { OPCIONES } from "@/lib/tasaciones"
+import type { InformeData, ItemValoracion } from "@/lib/tasador/tasaciones"
+import { OPCIONES } from "@/lib/tasador/tasaciones"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,

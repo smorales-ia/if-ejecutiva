@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { fotosPorCategoriaVacias, repartirFotos } from './reparto-fotos'
-import { CATEGORIAS_FOTO, type FotoAdjunta, type FotoCategoriaCustom } from '@/lib/tasaciones'
+import { CATEGORIAS_FOTO, type FotoAdjunta, type FotoCategoriaCustom } from '@/lib/tasador/tasaciones'
 
 /**
  * P5-TAS · B2 — la hidratación del organizador desde `GET /fotos`.

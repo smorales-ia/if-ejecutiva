@@ -45,7 +45,7 @@ import {
   filtrarCola,
   type ChipActivo,
 } from "@/lib/tasador/cola-filtros"
-import type { Tasacion } from "@/lib/tasaciones"
+import type { Tasacion } from "@/lib/tasador/tasaciones"
 
 export function ColaTasaciones({
   tasaciones: todas,

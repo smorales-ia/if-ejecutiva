@@ -25,7 +25,7 @@
  */
 
 import type { Unidad } from '@/lib/console-data'
-import type { Tasacion } from '@/lib/tasaciones'
+import type { Tasacion } from '@/lib/tasador/tasaciones'
 import type { SolicitudParaSheetDocumentos } from '@/components/console/documentos-adjuntos-sheet'
 
 /**

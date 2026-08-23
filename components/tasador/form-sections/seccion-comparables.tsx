@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Plus, Trash2, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { InformeData, Comparable } from "@/lib/tasaciones"
+import type { InformeData, Comparable } from "@/lib/tasador/tasaciones"
 /*
  * A-18 sigue abierta, pero **no bloquea la forma**: este módulo no precarga
  * ningún factor. Un comparable nuevo nace con los tres en blanco y la

@@ -31,7 +31,7 @@
  * según R5, mismo criterio que OV-9 aplicó al hook de estado.
  */
 
-import type { Comparable } from '@/lib/tasaciones'
+import type { Comparable } from '@/lib/tasador/tasaciones'
 
 /** Contador local de ids, con el mismo patrón que el resto del formulario (`amp-N`, `it-new-N`). */
 let comparableUid = 0

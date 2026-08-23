@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import type { EstadoColor } from "@/lib/tasaciones"
+import type { EstadoColor } from "@/lib/tasador/tasaciones"
 
 const STYLES: Record<EstadoColor, string> = {
   verde: "bg-emerald-50 text-emerald-700 border-emerald-200",

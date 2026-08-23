@@ -1,7 +1,7 @@
 "use client"
 
-import type { InformeData } from "@/lib/tasaciones"
-import { OPCIONES } from "@/lib/tasaciones"
+import type { InformeData } from "@/lib/tasador/tasaciones"
+import { OPCIONES } from "@/lib/tasador/tasaciones"
 import {
   TextField,
   SelectField,

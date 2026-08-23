@@ -48,7 +48,7 @@
  */
 
 import { uploadConReintentos, type UploadResult } from "@/lib/adjuntos-uploader"
-import type { FotoAdjunta } from "@/lib/tasaciones"
+import type { FotoAdjunta } from "@/lib/tasador/tasaciones"
 
 /** Literal §6.1 para el fallo que no sabemos explicar al usuario. */
 const MSG_ERROR_RED =

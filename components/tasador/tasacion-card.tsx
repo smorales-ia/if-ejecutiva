@@ -9,7 +9,7 @@ import {
   SIN_FECHA_VISITA,
   type AccionCard,
   type Tasacion,
-} from "@/lib/tasaciones"
+} from "@/lib/tasador/tasaciones"
 
 /**
  * Card de la cola personal · RF-TAS-11 · CI-018.
@@ -21,7 +21,7 @@ import {
  * ejecutiva"—, y el gate entre ellas es el estado de la coordinación.
  *
  * La card **no decide**: llama a `resolverAccionCard()` (único punto de la
- * Regla T-A, en `lib/tasaciones.ts`) y renderiza la variante que devuelve. El
+ * Regla T-A, en `lib/tasador/tasaciones.ts`) y renderiza la variante que devuelve. El
  * `switch` sobre `AccionCard` es **exhaustivo por tipo** —el `default: never`
  * hace fallar `tsc` si el union crece sin cubrirse acá—, que es la garantía de
  * que nunca aparezcan dos variantes ni falte una.

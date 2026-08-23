@@ -6,7 +6,7 @@
  * ## Por qué existe este archivo
  *
  * Antes de P5-TAS la resolución vivía repartida en tres sitios: el catálogo
- * `CATEGORIAS_FOTO` (`lib/tasaciones.ts`), el traductor `resolverLimite()` en
+ * `CATEGORIAS_FOTO` (`lib/tasador/tasaciones.ts`), el traductor `resolverLimite()` en
  * ese mismo módulo y la evaluación en `components/tasador/fotos-categorizadas.tsx`.
  * Ninguno estaba mal, pero revertir A-16 obligaba a visitar los tres y a
  * confiar en que no hubiera un cuarto. §6.1 pide **una sola función**, y ésta
@@ -31,7 +31,7 @@
  * declara qué categoría es dinámica, y este módulo decide en qué se traduce.
  */
 
-import { CATEGORIAS_FOTO, type CategoriaFotoId, type LimiteFoto } from '@/lib/tasaciones'
+import { CATEGORIAS_FOTO, type CategoriaFotoId, type LimiteFoto } from '@/lib/tasador/tasaciones'
 
 /**
  * Lo declarado por el tasador en la sección B del formulario (§2.8), que es de

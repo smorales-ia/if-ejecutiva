@@ -1,6 +1,6 @@
 import { Sparkles } from "lucide-react"
 import { Label } from "@/components/ui/label"
-import type { FuenteDato } from "@/lib/tasaciones"
+import type { FuenteDato } from "@/lib/tasador/tasaciones"
 
 /**
  * Wrapper de campo de formulario que muestra un badge sutil

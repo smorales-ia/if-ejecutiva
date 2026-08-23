@@ -1,8 +1,8 @@
 "use client"
 
 import { Sparkles } from "lucide-react"
-import type { InformeData } from "@/lib/tasaciones"
-import { OPCIONES } from "@/lib/tasaciones"
+import type { InformeData } from "@/lib/tasador/tasaciones"
+import { OPCIONES } from "@/lib/tasador/tasaciones"
 import { TextField, SelectField, SwitchField } from "./fields"
 import type { SetForm } from "./seccion-propiedad"
 

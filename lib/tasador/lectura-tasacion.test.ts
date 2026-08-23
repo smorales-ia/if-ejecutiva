@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { _coordinacionVigente, _fechaVisible, proyectarSlaEtapa } from './lectura-tasacion'
 import type { SolicitudFields } from './auth-guard'
-import { SIN_FECHA_VISITA } from '@/lib/tasaciones'
+import { SIN_FECHA_VISITA } from '@/lib/tasador/tasaciones'
 
 /**
  * P3-TAS.A · el reloj por etapa de la card (RF-53 · CI-021).

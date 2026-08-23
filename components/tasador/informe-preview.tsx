@@ -19,7 +19,7 @@ import {
   resolverInforme,
   type Tasacion,
   type InformeData,
-} from "@/lib/tasaciones"
+} from "@/lib/tasador/tasaciones"
 import { readPayload } from "@/lib/tasador/tasador-store"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import type { SetForm } from "@/components/tasador/form-sections/seccion-propiedad"
