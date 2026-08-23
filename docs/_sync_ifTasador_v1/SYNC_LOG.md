@@ -578,3 +578,58 @@ incluido entre los de catálogo inline. Sergio lo aprobó y sus 20 filas lo llev
 
 **Ninguno** (R4). No se tocó `app/`, `lib/` ni `components/`. El efecto es aguas abajo: **P7-TAS
 puede construir la sección E con precarga efectiva**, que hasta hoy leía una tabla vacía.
+
+---
+
+## Tanda · 23-ago-2026 · Segunda tanda de respuestas del cliente · siete ambigüedades cerradas
+
+**Actor:** Claude Code (documentación) · **Aprobación:** Sergio, con las cinco decisiones
+explícitas del arranque de la tanda. **Efecto sobre el código: ninguno** (R4).
+
+### Documentos emitidos
+
+| Archivo | Estado |
+|---|---|
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` | **nuevo** · sucede a v1.9.14, que queda SUPERSEDED |
+| `docs/_md/VProperty_SLA_Negocio_v1.4.md` | **nuevo** · sucede a v1.3 |
+| `docs/_md/plan_ejecucion_UItasador_v1.3.md` | **nuevo** · sucede a v1.2 |
+| `docs/_md/plan-ejecucion-if02-v1_9.md` | versión interna **v1.14 → v1.15** · el nombre no se renombra (**C-14**) |
+| `docs/_referencias/` | **nuevo directorio versionado** · el `.xlsm` de la plantilla operativa y el JPG del cuadro de comparables |
+
+### Las siete ambigüedades
+
+**Cierran:** A-13 · A-18 · A-23 · A-24 · A-25 · A-26 · A-32.
+**Abre:** A-44.
+**Decisiones de spec §15:** **D-18**, **D-19** y **D-24** cierran; entra **D-23**.
+
+### El hallazgo
+
+La respuesta del cliente a A-18 —*"los valores por defecto son los del `.xlsm`"*— **no respondía la
+pregunta que A-18 tenía viva**. Tras cuatro estrechamientos, A-18 pedía una sola cosa: la cifra de
+`factor_sup`, `factor_edad` y `factor_distancia`. El libro no las contiene, cosa que la radiografía
+del 21-ago ya había establecido y que se re-verificó leyendo `xl/worksheets/sheet2.xml` con
+`zipfile`: el cuadro `[Excel: Portada!B28:AX44]` tiene **doce columnas y ninguna de factor**, y
+calcula `UF/m² C. = (Total UF − UF/m²T × Sup.Terreno − OO.CC.) / Sup.Constr.` La foto de ejemplo
+que aportó el cliente es exactamente ese rango.
+
+Lo que la respuesta sí hizo fue **disolver la pregunta**: al pasar la sección D a sólo lectura, no
+queda campo de factor que precargar. A-18 se cerró por esa vía y **con la reserva escrita**: la
+cifra nunca se dio, y si vuelve la captura, vuelve el bloqueo.
+
+De ahí salió **A-44**: **D-21** había ratificado el 22-ago que los tres factores *"se usan en la
+práctica"*, y el cuadro que ahora es su única entrada tampoco los trae.
+
+### Decisiones de esta tanda
+
+| # | Resolución | Origen |
+|---|---|---|
+| **C-34** | **Una respuesta del cliente se contrasta contra la pregunta archivada antes de aplicarla.** Cuando una ficha lleva varios estrechamientos, su enunciado original y su pregunta viva dejan de coincidir, y el cliente responde a la conversación, no a la ficha. | A-18, cuya respuesta cerraba una pregunta que la ficha no estaba haciendo |
+| **C-35** | **"Cerrada por disolución del requisito" es un desenlace propio y se nombra así.** Una ficha cerrada *con respuesta* no se vuelve a mirar; una cerrada *por disolución* hay que volver a mirarla si vuelve el requisito. La reserva va en la ficha, en la spec y en el CI asociado. | A-18 · D-24 |
+| **C-36** | **Un identificador que aparece una sola vez, y en `docs/_notas/`, no es vocabulario del proyecto.** Se traduce al canónico en vez de propagarlo. | «T1–T7», que sólo existía en el snapshot del 22-ago; las tandas reales son A–G |
+| **C-37** | **Un criterio de aceptación se corre antes de escribirse** (RO-16). Los dos `grep` de P7-TAS se ejecutaron al redactarlos y quedaron con su baseline anotado —**1** y **7** hits—, en rojo a propósito. | §8 de `plan_ejecucion_UItasador_v1.3.md` |
+
+### Efecto aguas abajo
+
+**P7-TAS queda sin ambigüedades bloqueantes**, con la sección D redefinida. **En IF-02 no se
+desbloquea ninguna tanda**: las cuatro respuestas de SLA habilitan §5.2.9 y ratifican los dos
+catálogos. **Tanda F sigue bloqueada** por el patrón de disparo de `AT08_Alertas_SLA`.

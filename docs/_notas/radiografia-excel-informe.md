@@ -1,7 +1,12 @@
 # Radiografía · `Formato Informe VProperty Enero2026.xlsm`
 
 > **Fecha de extracción** — 21-ago-2026.
-> **Fuente** — `docs/_md/archivo_ejemplo/Formato Informe VProperty Enero2026.xlsm` (4,3 MB, 21 hojas).
+> **Fuente** — `docs/_referencias/Formato-Informe-VProperty-Enero2026.xlsm` (4,3 MB, 21 hojas,
+> md5 `83d632f94bc124f71a1616afe8eacaa4`).
+> **Corrección de puntero, 23-ago-2026 —** al escribirse esta nota el libro vivía en
+> `docs/_md/archivo_ejemplo/`, una ruta local que **nunca estuvo versionada** y que hoy no
+> existe. El archivo quedó versionado en `docs/_referencias/` con el nombre de arriba. Sólo
+> cambia el puntero: el contenido de la nota es el del 21-ago-2026 y no se toca (RO-24).
 > **Método** — `openpyxl` 3.1.5 en modo `data_only=False` (conserva fórmulas y macro-libro).
 > **Propósito** — Insumo de trabajo para integrar los audios del cliente en la documentación de
 > SLA + UI Tasador. **No es especificación.** Toda cita hacia los documentos normativos usa el

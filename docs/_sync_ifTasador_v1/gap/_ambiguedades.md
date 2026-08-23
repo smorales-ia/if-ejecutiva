@@ -398,9 +398,38 @@ no se libera a producción (RF-TAS-01).
 
 ---
 
-## A-13 · Origen de los comparables si la sección D pasa a sólo lectura
+## A-13 · Origen de los comparables si la sección D pasa a sólo lectura — **CERRADA**
 
-**Estado** — abierta · **bloquea RF-12 y §2.8** · impacto alto.
+**Estado** — **CERRADA** el 23-ago-2026 por respuesta del cliente · **desbloquea la sección D de
+P7-TAS** · impacto alto. **Dueño: Héctor** (product owner).
+
+**Resolución.** Los comparables llegan por **extracción documental**, que era la primera de las
+tres opciones de la tabla de abajo. El flujo queda así:
+
+1. El tasador **fotografía el cuadro de comparables** de la plantilla operativa vigente. El
+   ejemplo canónico de esa foto es `docs/_referencias/ejemplo-comparables-cuadro.JPG`, que
+   corresponde exactamente al rango `[Excel: Portada!B28:AX44]` de
+   `docs/_referencias/Formato-Informe-VProperty-Enero2026.xlsm`.
+2. La **funcionalidad de lectura** (RF-09-repo · extracción con Claude API) puebla la base a
+   partir de esa foto.
+3. La UI del tasador **muestra los comparables sin posibilidad de modificarlos**.
+
+**Consecuencias, todas de aplicación inmediata:**
+
+- **La sección D de P7-TAS deja de ser grilla editable.** Caen "Agregar comparable", la
+  eliminación por fila y la captura de campos. Queda una grilla de **sólo lectura** alimentada
+  por `GET /api/tasaciones/[id]/comparables`; el `POST` y el `DELETE` de esa ruta pierden
+  consumidor.
+- **RF-12 conserva el mínimo de 3, pero cambia de sujeto**: la validación deja de recaer sobre
+  la captura del tasador y pasa a recaer sobre el origen que los provea. El tasador no puede
+  corregir un conjunto insuficiente; puede, a lo sumo, volver a fotografiar.
+- **Cierra A-18 por disolución**: sin campo editable no hay nada que precargar. Ver esa ficha.
+- **Abre A-44**: el cuadro fotografiado no contiene los tres factores de homogeneización que
+  D-21 ratificó como vigentes.
+
+**Registro en la spec:** v1.9.15 · §2.8 y RF-12.
+
+Enunciado original, conservado:
 
 El diseño v4 (p. 23, punto 6.1) anota sobre la categoría D.Comparables: *"esta categoría debe
 ser cambiado su diseño, por sólo mostrar datos, antes leídos"*.
@@ -419,6 +448,13 @@ dice quién:
 **No se resuelve aquí.** Tampoco es sólo una decisión de UI: cambia de dónde viene el insumo
 principal del método comparativo. Mientras siga abierta, §2.8 conserva la captura manual y
 RF-12 su validación, con la nota de que ambas quedan condicionadas.
+
+> **Nota sobre el enunciado, 23-ago-2026.** La objeción que la tabla oponía a la extracción
+> documental —*"hoy `D_TipoDocumentoAtributo` no los contempla"*— era correcta y sigue siéndolo:
+> lo que la respuesta del cliente agrega no es una fila de catálogo sino **un documento nuevo**,
+> la foto del propio cuadro, que no es un antecedente de la propiedad sino un artefacto de
+> traspaso desde la planilla. Modelarlo en `D_TipoDocumento` es trabajo de schema y tiene su
+> propia compuerta de aprobación.
 
 ---
 
@@ -543,10 +579,50 @@ del campo en §2.12, así que conviene cerrarlo antes de crear la tabla, no desp
 
 ---
 
-## A-18 · **BLOQUEANTE** · Ninguna tabla de configuración puede servir hoy un factor de homogeneización
+## A-18 · Ninguna tabla de configuración puede servir hoy un factor de homogeneización — **CERRADA**
 
-**Estado** — abierta · **bloquea RF-TAS-08 y `GET /api/tasaciones/config/defaults`** · impacto alto.
-**Dueños: Héctor y Óscar** (decisión de negocio, no de esquema).
+**Estado** — **CERRADA el 23-ago-2026 · por disolución del requisito**, no por respuesta de la
+cifra · impacto alto. **Dueños: Héctor y Óscar.** Registrada como **D-24** en spec §15.
+
+**Cómo se cierra, y por qué la distinción importa.** A-18 preguntaba, después de cuatro
+estrechamientos sucesivos, una sola cosa: **cuál es el valor por defecto de `factor_sup`,
+`factor_edad` y `factor_distancia`**. Esa cifra **sigue sin existir**. Lo que desapareció es la
+pregunta: al cerrar **A-13** a favor de una sección D de **sólo lectura** poblada por extracción
+de la foto del cuadro, **no queda ningún campo de factor que el tasador teclee**, y un campo que
+no se captura no se puede precargar.
+
+| Qué se preguntaba | Qué pasó |
+|---|---|
+| Valor por defecto de cada factor | **Sin respuesta y sin consumidor.** El requisito que lo exigía se retira |
+| `Edad` o `Antiguedad` en el `singleSelect` | Deuda de schema · **ahora sin consumidor conocido** |
+| Las 10 cáscaras `FH-` frente a las 5 filas `FH_` | Deuda de schema · **ahora sin consumidor conocido** |
+| ¿`C_FactoresHomogeneizacion` es la canónica? | Pregunta vacía: **la tabla queda sin consumidor en IF-03** |
+
+**Lo que se retira, literal:**
+
+- **RF-TAS-08 pierde su conjunto 1.** Los factores de homogeneización y los coeficientes de la
+  tabla de referencia salen del requisito. Queda vivo **sólo el conjunto 2** —defaults de
+  características constructivas y terminaciones, §2.8.1— cuya clave de partición ya decidió
+  **D-20** y cuyo domicilio es `C_DefaultsAntecedentes` (`tblOj7nXcjeouPy09`).
+- **`GET /api/tasaciones/config/defaults` deja de ser necesaria para los factores.** No se
+  construye, y ahora no por falta de datos sino por falta de propósito.
+- **`C_FactoresHomogeneizacion` (`tblep24N9gPMrDPIN`) pasa a tabla sin consumidor en IF-03.**
+  No se borra —es trabajo de schema con su propia compuerta— pero deja de estar en la ruta
+  crítica de ninguna tanda. **CI-022** se enmienda en consecuencia.
+- **`lib/tasador/factores-default.ts` pierde su consumidor** junto con la grilla editable. Su
+  purga se evalúa en P7-TAS; ver **CI-031**.
+
+**Lo que NO se cierra, y por eso hay ficha nueva.** **D-21** ratificó el 22-ago-2026 que los tres
+factores *"se usan en la práctica"*. El cuadro que el tasador fotografía —y que desde A-13 es la
+**única** entrada de comparables— **no los contiene**: calcula `UF/m² C.` directamente por
+fórmula, sin columnas de factor. Si los factores se usan, no es en este flujo. Se registra como
+**A-44**, no bloqueante.
+
+> **Advertencia para quien retome.** Este cierre **no autoriza a inventar un valor de factor**.
+> Si una tanda futura reintroduce captura o cálculo de homogeneización, A-18 revive con su
+> pregunta intacta: la cifra nunca se respondió.
+
+Enunciado original, conservado:
 
 RF-TAS-08 exige que los factores de homogeneización (`factor_sup`, `factor_edad`,
 `factor_distancia`) se precarguen desde la capa de configuración vía API Route, y prohíbe
@@ -840,10 +916,30 @@ sólo verifica coherencia (plan Tasador §11.1 · Verificación 4).
 
 ---
 
-## A-23 · Modelado del tope de 24 horas para responder al cliente
+## A-23 · Modelado del tope de 24 horas para responder al cliente — **CERRADA**
 
-**Estado** — abierta · **afecta a spec §5.2.4, §5.2.8 y §5.2.9** · impacto medio.
-**Dueños: Héctor + Arquitecto de Software.** Registrada como **D-18** en spec §15.
+**Estado** — **CERRADA** el 23-ago-2026 por respuesta del cliente · **afecta a spec §5.2.4,
+§5.2.8 y §5.2.9** · impacto medio. **Dueños: Héctor + Arquitecto de Software.** Registrada como
+**D-18** en spec §15, ahora cerrada.
+
+**Resolución: opción 2 —sólo corte del reporte de §5.2.9—.** El tope de 24 horas se materializa
+como **reporte diario**, sin semáforo agregado propio y **sin alerta en pantalla**. Ni la bandeja
+de §1.1 ni el detalle emiten aviso cuando una solicitud lo supera: el incumplimiento se ve en el
+corte diario, que es el artefacto que el área ya revisa.
+
+Lo que eso descarta, explícitamente:
+
+- **No** hay umbral agregado sobre las etapas 2+3+4 (opción 1). El motor sigue midiendo etapas,
+  no tramos de etapas, y no gana cómputo nuevo.
+- **No** hay atributo derivado de la etapa 4 (opción 3).
+- **No** se agrega píldora, banner ni badge de "24 h" a ninguna pantalla.
+
+**Riesgo asumido, registrado a propósito.** La ficha ya advertía que la opción 2 *"no alerta:
+alguien tiene que abrir el reporte"*. El cliente lo acepta sobre la base de que el tablero se
+revisa a diario —*"vital"*, *"a cada rato"*—. Si esa práctica cambia, el tope vuelve a
+incumplirse sin que nadie lo advierta, y la opción 1 vuelve a estar sobre la mesa.
+
+Enunciado original, conservado:
 
 El compromiso **no está en duda**: VProperty le responde al ejecutivo del cliente con una fecha
 de visita —o con el motivo por el cual no la hay— dentro de las 24 horas del ingreso. El cliente
@@ -869,10 +965,27 @@ declara hacer—.
 
 ---
 
-## A-24 · Proveedor y contrato del canal WhatsApp
+## A-24 · Proveedor y contrato del canal WhatsApp — **CERRADA EN NEGATIVO**
 
-**Estado** — abierta · **afecta a spec §5.2.8 y §5.3** · impacto medio.
-**Dueños: Héctor + Ingeniero Make.** Registrada como **D-19** en spec §15.
+**Estado** — **CERRADA en negativo** el 23-ago-2026 por respuesta del cliente · **afecta a spec
+§5.2.8 y §5.3** · impacto medio. **Dueños: Héctor + Ingeniero Make.** Registrada como **D-19** en
+spec §15, ahora cerrada.
+
+**Resolución: no por ahora. Los recordatorios se emiten sólo por correo.** El cliente retira la
+petición para esta versión. No se contrata proveedor, no se registran plantillas ante Meta, no se
+define número emisor ni se administra opt-in.
+
+Consecuencias:
+
+- **§1.9 · FUT-EJ-10 se mantiene** tal cual: la notificación por WhatsApp al tasador sigue fuera
+  de alcance, y ahora por decisión explícita y no por falta de definición.
+- **§5.2.8 deja de declarar el canal como pendiente de proveedor.** Pasa a declarar **correo
+  único**, que es lo que ya hacía §5.3 para el canal al tasador.
+- **El diseño del recordatorio conserva su neutralidad de canal.** Es la única parte del contrato
+  que sobrevive: agregar WhatsApp más adelante no debe obligar a reescribirlo.
+- **`M_Tasadores.notificar_whatsapp`** queda como campo sin consumidor, igual que antes.
+
+Enunciado original, conservado:
 
 El cliente pide WhatsApp como segundo canal de los recordatorios al tasador, en dos audios
 distintos y sin ambigüedad: *"que le llegue un nuevo mail y un nuevo whatsapp"* (`p5`), *"un
@@ -894,10 +1007,29 @@ no es un proveedor.
 
 ---
 
-## A-25 · Composición del catálogo de motivos de contacto no logrado
+## A-25 · Composición del catálogo de motivos de contacto no logrado — **CERRADA**
 
-**Estado** — abierta · **afecta a spec §2.3, §2.12, RF-TAS-12 y §5.2.9** · impacto medio.
-**Dueño: Héctor** (product owner).
+**Estado** — **CERRADA** el 23-ago-2026 por respuesta del cliente · **afecta a spec §2.3, §2.12,
+RF-TAS-12 y §5.2.9** · impacto medio. **Dueño: Héctor** (product owner).
+
+**Resolución: los seis desenlaces quedan ratificados tal como están.** El catálogo es **cerrado**
+y sus etiquetas son las que se muestran abajo, sin cambios de redacción.
+
+Las dos preguntas que la ficha planteaba quedan respondidas:
+
+1. **`Cliente rechaza visita` se conserva.** El cliente lo ratifica pese a no haberlo nombrado en
+   `p1`; se mantiene, y con él la validez de las filas históricas que ya lo usan.
+2. **Las etiquetas sirven para los dos destinatarios.** No se acuña una redacción distinta para
+   el correo al ejecutivo del cliente: §5.2.4 · etapa 4 reproduce el mismo valor que el tasador
+   eligió.
+
+**Consecuencia sobre el schema y la UI:** el `singleSelect` `TX_CoordinacionVisita.motivo` se crea
+—o se completa— con estos seis valores y **A-17 ya había fijado la realización** (`singleSelect`
+servido desde el schema, leído por la UI desde el API y no desde un enum del cliente). Nada de lo
+construido en P0.5-TAS ni en P4-TAS cambia: lo que cambia es que el catálogo deja de ser
+provisional.
+
+Enunciado original, conservado:
 
 **Distinta de A-17, que está cerrada.** A-17 preguntaba **dónde vive** el catálogo y se resolvió:
 `singleSelect` servido desde el schema. A-25 pregunta **cuáles son sus valores**.
@@ -936,10 +1068,30 @@ desviaciones de §5.2.9 — que es exactamente el problema que esta ampliación 
 
 ---
 
-## A-26 · Catálogo de motivos de reproceso
+## A-26 · Catálogo de motivos de reproceso — **CERRADA**
 
-**Estado** — abierta · **afecta a spec §5.2.5** · impacto bajo mientras el reproceso siga
-diferido. **Dueño: Héctor** (product owner).
+**Estado** — **CERRADA** el 23-ago-2026 por respuesta del cliente · **afecta a spec §5.2.5** ·
+impacto bajo mientras el reproceso siga diferido. **Dueño: Héctor** (product owner).
+
+**Resolución: los siete motivos son el dominio cerrado, no una muestra.** Era exactamente la duda
+que la ficha dejaba abierta —el cliente había dicho *"los más típicos"* y *"los más
+característicos"*, que es lenguaje de muestra—. Queda ratificado que no lo era: los siete son el
+catálogo completo y sus etiquetas son las de la tabla de §5.2.5, aptas para el `singleSelect`.
+
+Con esto quedan firmes también las dos precisiones que el audio `p3` había aportado y que la ficha
+registraba como derivadas:
+
+- **El reproceso conserva el código de la solicitud original.** Cierra el punto **(a)** de
+  **CI-038**.
+- **Quién ejecuta depende del motivo**: los de forma, valor y destinatario (3, 5 y 6) los resuelve
+  el perfil de visación; los que incorporan antecedentes (1, 2, 4 y 7) vuelven al tasador.
+
+**Consecuencia sobre el plan: ninguna inmediata.** El reproceso sigue diferido en §1.9 ·
+FUT-EJ-08, y el fundamento del diferimiento no cambia (**§9.6-R7** del plan IF-02): se posterga
+por alcance, no por falta de definición. La versión que lo implemente **no tiene que volver a
+elicitarlo**.
+
+Enunciado original, conservado:
 
 El audio `p3` cierra el catálogo que §5.2.5 daba por no elicitado. Son siete motivos, que el
 cliente enumera por frecuencia y con el antecedente documental que acompaña a cada uno:
@@ -1107,9 +1259,21 @@ ronda, pero lo consume el tasador. Se registra en ámbito por ese consumo.
 
 ---
 
-## A-32 · Grupo de "día 0" en el tablero de vencimientos
+## A-32 · Grupo de "día 0" en el tablero de vencimientos — **CERRADA EN NEGATIVO**
 
-**Estado** — abierta · **afecta a spec §5.2.9** · impacto bajo. **Dueño: Héctor.**
+**Estado** — **CERRADA en negativo** el 23-ago-2026 por respuesta del cliente · **afecta a spec
+§5.2.9** · impacto bajo. **Dueño: Héctor.**
+
+**Resolución: no se incluye el grupo de día 0.** El bloque de vencimientos por antigüedad desde la
+visita queda con **cuatro grupos —4, 3, 2 y 1 día—**, que es como el cliente lo usa hoy fuera del
+sistema.
+
+Prevalece el argumento que la ficha ya anticipaba: incluir las visitas del propio día convertiría
+el bloque de *"lo que está por vencer"* en *"todo lo que está en vuelo"* y **diluiría la señal de
+urgencia** que lo hace útil. Agregar el quinto grupo más adelante sigue siendo **aditivo** y no
+obliga a rehacer nada.
+
+Enunciado original, conservado:
 
 > **Nota de numeración.** Esta ficha se numeró originalmente en el bloque fuera de ámbito de la
 > tanda del 21-ago-2026. Se reclasificó **en ámbito** el mismo día, sin renumerar, porque el
@@ -1570,3 +1734,47 @@ el error en datos.
 **La pregunta:** ¿un piloto hereda los defaults de su tipo base —`Casa Piloto` de `Casa` y
 `Departamento Piloto` de **`Departamento`**, no de Casa— o el negocio los tasa con criterios
 propios? Si es lo primero, son 4 combinaciones más de sembrado y una corrección a la plantilla.
+
+---
+
+## A-44 · Los tres factores de homogeneización ratificados no aparecen en el flujo real
+
+**Estado** — abierta · **no bloqueante** · impacto medio. **Dueños: Héctor + visador titular.**
+Registrada como **D-23** en spec §15. Ligada a **A-35** y sucesora del residuo de **A-18**.
+
+**La contradicción, en dos hechos que hoy conviven.**
+
+1. **D-21 los ratificó** el 22-ago-2026: `factor_sup`, `factor_edad` y `factor_distancia` *"se usan
+   en la práctica"*, y RF-TAS-08 quedó firme sobre esa base. La ausencia de los factores en la
+   plantilla se atribuyó entonces a *"propiedad del artefacto, no del método"*.
+2. **A-13 cerró** el 23-ago-2026 dejando la foto del cuadro de comparables como **única entrada**
+   de comparables al sistema, y ese cuadro **no los contiene**. `[Excel: Portada!B28:AX44]` tiene
+   doce columnas —`#`, mes-año, `Ofert./CBR.`, dirección, año, teléfono o foja y número,
+   `Total UF`, `Sup. Terreno`, `Sup. Constr.`, `OO.CC.`, `UF/m² T.`, `UF/m² C.`— y calcula el
+   unitario por fórmula: `UF/m² C. = (Total UF − UF/m²T × Sup.Terreno − OO.CC.) / Sup.Constr.`
+   Cero columnas de factor. Verificado sobre
+   `docs/_referencias/Formato-Informe-VProperty-Enero2026.xlsm` y sobre el ejemplo de foto
+   `docs/_referencias/ejemplo-comparables-cuadro.JPG`, que es ese mismo rango.
+
+Mientras la sección D era editable, la contradicción era tolerable: el tasador podía teclear los
+factores aunque la plantilla no los trajera. **Con la sección en sólo lectura ya no hay dónde**:
+si los factores se usan, no es en este flujo.
+
+**Las tres preguntas:**
+
+1. **¿Dónde se aplican hoy los tres factores?** Si el visador los aplica fuera de la planilla, en
+   qué momento y sobre qué soporte. Si nadie los aplica, D-21 describe una práctica que ya no
+   existe.
+2. **¿Debe el motor replicarlos?** Hoy no lo hace: reproduce la aritmética de la plantilla, que
+   homogeneiza restando terreno y obras complementarias, no multiplicando por coeficientes.
+3. **¿Qué relación tienen con `D. F.` y `F. M.`** —los dos factores multiplicativos que la
+   plantilla **sí** aplica, ambos con default `1` `[Excel: Portada!AX50 · BA50]`—? Es la pregunta
+   de **A-35**, y las dos pueden resolverse en el mismo movimiento.
+
+**Por qué no bloquea.** Nada de lo que P7-TAS construye depende de la respuesta: la sección D es de
+sólo lectura y el cálculo sigue la aritmética de la plantilla. Lo que está en juego es si
+RF-TAS-08 y `C_FactoresHomogeneizacion` describen algo real, y eso se puede responder sin detener
+la construcción.
+
+**Registro asociado:** **CI-022**, enmendada el 23-ago-2026 para reflejar que la tabla queda sin
+consumidor en IF-03.

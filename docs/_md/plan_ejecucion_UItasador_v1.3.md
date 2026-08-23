@@ -1,6 +1,38 @@
-# Plan de Ejecución IF-03 · UI Tasador v1.2 — Guía maestra para Claude Code
+# Plan de Ejecución IF-03 · UI Tasador v1.3 — Guía maestra para Claude Code
 
-> **Versión del plan: v1.2** (22-ago-2026). Cambio respecto de v1.1: **Héctor respondió las tres
+> **Versión del plan: v1.3** (23-ago-2026). Cambio respecto de v1.2: **el cliente respondió la
+> segunda tanda de consultas y una de las respuestas cambia el alcance de P7-TAS**. No hay tandas
+> nuevas ni rutas nuevas; hay una sección que se construye distinto.
+>
+> **1 · A-13 cerrada: la sección D de comparables pasa a SÓLO LECTURA.** Los comparables llegan
+> por **extracción de una foto del cuadro** de la plantilla operativa —ejemplo canónico en
+> `docs/_referencias/ejemplo-comparables-cuadro.JPG`, correspondiente a
+> `[Excel: Portada!B28:AX44]`— y el tasador **no puede modificarlos**. Caen "Agregar comparable"
+> y la eliminación por fila; el `POST` y el `DELETE` de
+> `app/api/tasaciones/[id]/comparables/route.ts` pierden consumidor. **RF-12 conserva el mínimo de
+> 3 y cambia de sujeto**: la validación recae sobre el origen, no sobre la captura. Ver §8.
+>
+> **2 · A-18 cerrada por disolución del requisito** (spec §15 · D-24). Sin campo editable no hay
+> nada que precargar: **RF-TAS-08 pierde su conjunto 1** —factores de homogeneización y
+> coeficientes de la tabla de referencia— y `GET /api/tasaciones/config/defaults`
+> **deja de estar pendiente: no se construye, y ahora por falta de propósito y no de datos**.
+> `C_FactoresHomogeneizacion` queda como tabla sin consumidor en IF-03. La cifra que A-18 pedía
+> **nunca se respondió**: si una versión futura reintroduce captura de homogeneización, A-18
+> revive.
+>
+> **3 · A-25 cerrada: los seis desenlaces quedan ratificados.** Catálogo cerrado, etiquetas
+> firmes. **Nada cambia** en P0.5-TAS ni en P4-TAS: lo construido ya usaba los seis valores leídos
+> desde el API. Lo que cambia es que dejan de ser provisionales.
+>
+> **4 · A-44 nueva, no bloqueante** (spec §15 · D-23). El cuadro que el tasador fotografía **no
+> trae** los tres factores que **D-21** ratificó hace un día como vigentes. Si se usan, no es en
+> este flujo. No detiene nada: la sección D es de sólo lectura y el cálculo sigue la aritmética de
+> la plantilla.
+>
+> **5 · Fuera de IF-03**, la misma tanda cerró A-23, A-24, A-26 y A-32 (SLA · IF-02). No tocan
+> este plan.
+>
+> **v1.2** (22-ago-2026). Cambio respecto de v1.1: **Héctor respondió las tres
 > consultas bloqueantes** y con ellas se desbloquea la parte de P7-TAS que v1.1 dejaba en espera.
 > Sin tandas nuevas, sin rutas nuevas, sin cambios de orden.
 >
@@ -67,7 +99,7 @@
 > hasta P11-TAS se trabaja con `mockUserTasador`; **(3)** IF-03 es **mobile-first** (375×812),
 > mientras IF-02 es una consola de escritorio.
 >
-> **Precedencia.** Ante contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md`
+> **Precedencia.** Ante contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md`
 > u otros documentos, mandan las **Reglas T-A, T-B y T-C** de §0.3 y las **Reglas duras R1–R12**
 > de §0.2 de este archivo. Ante contradicción con el plan de IF-02, manda el plan de IF-02 en
 > todo lo que sea código ya construido de la Ejecutiva: IF-03 **no gobierna** ese territorio.
@@ -83,18 +115,18 @@
 
 ### §0.1 Archivos a leer al iniciar sesión (en este orden)
 
-1. `docs/_md/plan_ejecucion_UItasador_v1.2.md` (este archivo, completo)
+1. `docs/_md/plan_ejecucion_UItasador_v1.3.md` (este archivo, completo)
 2. `docs/_notas/inventario-tasador.md` (generado en P0-TAS — **obligatorio a partir de P1-TAS**)
 3. `docs/_notas/inventario-if02.md` (inventario del rol Ejecutiva — **fuente de las rutas reales
    de todo lo que IF-03 reutiliza**; se lee, nunca se edita)
-4. `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` — **§2 completa** (§2.1 a §2.16),
+4. `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` — **§2 completa** (§2.1 a §2.16),
    incluida **§2.8.1** (pre-llenado de la hoja de antecedentes · RF-TAS-23). Es la fuente
    normativa de todos los RF-TAS. Léase además **§5.2.8** y **§5.2.9**, que gobiernan los
    recordatorios y los reportes que P10-TAS verifica.
 5. `docs/schema-airtable.md`
 6. `docs/aprendizajes.md`
 7. `docs/CODE_INCONSISTENCIES.md` — **CI-012 a CI-021** (las nueve inconsistencias de §2)
-8. `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` — **A-12 a A-18**, **A-22 a A-29** y **A-35/A-36**. Al 22-ago-2026 siguen abiertas y tocan a IF-03: **A-13**, **A-15**, **A-16**, **A-18** (bloqueante), **A-25**, **A-29** y **A-35**
+8. `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` — **A-12 a A-18**, **A-22 a A-29** y **A-35/A-36/A-44**. Al 23-ago-2026 siguen abiertas y tocan a IF-03: **A-15**, **A-16**, **A-29**, **A-35** y **A-44**. **Ninguna es bloqueante.** A-13, A-18 y A-25 cerraron el 23-ago-2026
 9. `CLAUDE.md`
 10. Último `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P{n}-TAS.md` disponible (dónde quedó la sesión
     anterior).
@@ -139,7 +171,7 @@ entender un componente de la Ejecutiva que va a reutilizar.
 | **R7** | **Reuso obligatorio antes de crear.** Los componentes y módulos de IF-02 listados en §0.2-bis se **importan**, nunca se re-crean bajo `components/tasador/`. | Toda tanda de UI |
 | **R8** | **Cero lenguaje de IA en la UI.** Ningún texto visible dice "AI", "IA", "Claude", "modelo", "OCR", "inteligencia artificial" ni nombra el medio técnico. Los literales correctos son "Leyendo datos de la visita", "Procesando archivos de la visita…", "Calculando tasación". Es política transversal del proyecto (§2.7, §2.9) y se eleva a **Regla T-C**. | P6-TAS, P8-TAS · grep en P12-TAS |
 | **R9** | **Mobile-first.** IF-03 es la app móvil del tasador. Base de diseño **375×812**; el layout de escritorio es secundario y nunca dicta decisiones. shadcn/ui v4 sobre `@base-ui/react`, nunca Radix. | Toda tanda de UI |
-| **R10** | **Respeto a ambigüedades e inconsistencias abiertas.** Detalle en §0.4-bis: CI-012 bloquea RF-TAS-04 y RF-TAS-05 y mantiene P4-TAS sin liberar a producción; A-12 deja el chip "Hoy" como stub deshabilitado; A-13 a A-17 se declaran al inicio de la tanda que dependa de ellas y no se implementan hasta su cierre. | P3-TAS, P4-TAS, P5-TAS, P7-TAS, P9-TAS |
+| **R10** | **Respeto a ambigüedades e inconsistencias abiertas.** Detalle en §0.4-bis: CI-012 bloquea RF-TAS-04 y RF-TAS-05 y mantiene P4-TAS sin liberar a producción; A-12 deja el chip "Hoy" como stub deshabilitado; A-15 a A-17 se declaran al inicio de la tanda que dependa de ellas y no se implementan hasta su cierre. **A-13 y A-18 cerraron el 23-ago-2026 y su resolución sí se implementa**: la sección D es de sólo lectura y no hay precarga de factores. | P3-TAS, P4-TAS, P5-TAS, P7-TAS, P9-TAS |
 | **R11** | **Ejecución dirigida por el propio plan.** Claude Code detecta la última tanda completada por los archivos `docs/_archivo/aprendizajes-YYYYMMDD-HHMM-P{n}-TAS.md` y ejecuta la siguiente. Sergio no pasa prompt por tanda. | §0.7 |
 | **R12** | **Commits los hace Sergio.** Claude Code **nunca** ejecuta `git commit` ni `git push`. Tampoco `git checkout -b`, `git merge` ni `git revert` sin pedirlo explícitamente. | Toda tanda |
 
@@ -292,7 +324,7 @@ aplica, construye lo que no depende de ella y deja el resto explícitamente fuer
 |---|---|---|---|
 | **CI-012** | La coordinación por sistema: la spec §2.3 la describe, §1 la retira, y `TX_CoordinacionVisita` no existe en la base. Decisión de negocio Héctor/Óscar, consulta enviada el 11-ago-2026. | **RF-TAS-04 y RF-TAS-05 no se construyen.** P4-TAS construye RF-TAS-03, RF-TAS-12 y RF-TAS-13 **detrás de un flag apagado** y queda marcada **"bloqueada · pendiente decisión Héctor/Óscar"**: **no se libera a producción** hasta el cierre. | **P0.5-TAS** (crea la tabla) · **P4-TAS** (construye y no libera) |
 | **A-12** | Qué entra en el chip "Hoy" (la agenda del día del tasador). | La Pantalla 1 se construye con **"Todas"** y **"Por coordinar"** únicamente. **"Hoy" queda como stub deshabilitado**, visible pero no accionable, con tooltip que declara que su definición está pendiente. | **P3-TAS** |
-| **A-13** | De dónde salen los comparables si la sección D pasa a sólo lectura. | La **captura manual sigue vigente** y RF-12 conserva su validación de mínimo 3. La grilla se construye editable. **No se implementa** ninguna variante de sólo lectura. | **P7-TAS** |
+| **A-13** ✅ | **CERRADA (23-ago-2026): los comparables salen de la extracción documental.** El tasador fotografía el cuadro de la plantilla `[Excel: Portada!B28:AX44]` —ejemplo en `docs/_referencias/ejemplo-comparables-cuadro.JPG`—, la lectura puebla la base y la UI los muestra. | **La sección D se construye de SÓLO LECTURA.** Sin "Agregar comparable" y sin eliminar por fila; el `POST` y el `DELETE` de `app/api/tasaciones/[id]/comparables/route.ts` quedan sin consumidor. RF-12 conserva el mínimo de 3 y **cambia de sujeto**: valida el origen, no la captura. La corrección del tasador es volver a fotografiar. | **P7-TAS** |
 | **A-14** ✅ | **CERRADA (22-ago-2026).** ~~Qué tabla de configuración alberga los defaults constructivos.~~ Reducida en v1.1, Su mitad de contenido está resuelta: los defaults existen, llevan años en producción en la plantilla operativa y quedan especificados valor por valor en spec **§2.8.1** con su celda de origen. cerrada al cerrarse **A-27**. | La sección E se construye contra los campos, catálogos y valores de spec §2.8.1, **con precarga**. Sigue prohibido hardcodear: los valores son datos y se cargan como tales, nunca como constantes del frontend. | **P7-TAS** |
 | **A-27** ✅ | **CERRADA (22-ago-2026).** Los defaults de spec §2.8.1 se particionan **por tipo de propiedad × estado de uso**, replicando los dos interruptores de la plantilla `[Excel: FICHA SOLIC!K35 · K36]`. Cierra **D-20**. | **P0.5-TAS crea la tabla** con esa clave —creación en Airtable, con la aprobación explícita que toda tabla nueva exige— y **P7-TAS consume la precarga**. Una combinación sin fila cargada presenta los campos **vacíos**: no hereda de la combinación vecina (spec §2.8.1). | **P0.5-TAS** (tabla) · **P7-TAS** (consumo) |
 | **A-15** | Si el rechazo del informe emite aviso al visador. | Se implementa **sólo** lo que RF-TAS-09 declara: persistir la observación y mostrar el mensaje que dirige al canal habitual. **Ningún aviso, ninguna notificación, ningún evento adicional.** El texto del diálogo no promete un aviso que el sistema no hace. | **P9-TAS** |
@@ -309,9 +341,9 @@ aplica, construye lo que no depende de ella y deja el resto explícitamente fuer
 | **CI-020** | Ya resuelta en la doc: siete rutas, sin pantalla de detalle. | Ver §0.4 · nota 4. | **P0-TAS** · **P3-TAS** |
 | **CI-021** | El SLA del tasador se lee del plazo **por etapa** (RF-53 · §5.2.4), no del agregado en días. Falta la contraparte: §5.2.4 no declara su contrato de lectura. Ligada a CI-005. | P2-TAS expone las etapas 2 y 5 desde `lib/sla-etapas.ts`. **P10-TAS verifica** que el número que muestra la card coincide con el que calcula el motor sobre la ventana hábil. IF-03 **no** implementa aritmética propia. | **P2-TAS** · **P10-TAS** |
 | **A-22** ✅ | **CERRADA (22-ago-2026): 4 horas hábiles**, coincidentes con el SLA ideal de la etapa 2 y con el instante que el motor ya materializa. Cierra **D-17**. ⚠ No confundir con la `A-22` que citaban CI-045 y CI-048, re-etiquetada **A-36**. | **No cambia nada en IF-03.** El disparo es de IF-02 · AT08, y el umbral **no se replica acá** — ver el punto 5 del encabezado y §11.1 · Verificación 4. El chip "Por coordinar" conserva su membresía sin cota horaria (**A-36**). **P10-TAS verifica** coherencia, no aritmética. | **P10-TAS** |
-| **A-18** | **Única pregunta bloqueante restante: cuál es el valor por defecto de cada factor.** `C_FactoresHomogeneizacion.valor_referencia` está vacío en sus 15 filas. Sus otras tres preguntas —`Edad` vs `Antiguedad`, las cáscaras `FH-`, y cuál tabla es canónica— quedan como **deuda de schema, no bloqueante**. | `GET /api/tasaciones/config/defaults` **no se construye** en P2-TAS. Se puede escribir, pero devolvería `null` para los tres factores y su criterio de aceptación seguiría siendo inverificable. La grilla conserva los tres campos capturables sin precarga. | **P2-TAS** (no construye) · **P7-TAS** (consumidora) |
+| **A-18** ✅ | **CERRADA (23-ago-2026) por disolución del requisito, no por respuesta** (spec §15 · D-24). La cifra nunca se dio; lo que desapareció es la pregunta, porque con la sección D en sólo lectura no hay campo de factor que precargar. Sus otras tres preguntas —`Edad` vs `Antiguedad`, las cáscaras `FH-`, y cuál tabla es canónica— quedan como **deuda de schema sin consumidor conocido**. | **RF-TAS-08 pierde su conjunto 1.** `GET /api/tasaciones/config/defaults` **no se construye**, ahora por falta de propósito y no de datos. La grilla **no lleva campos de factor**. `C_FactoresHomogeneizacion` queda sin consumidor en IF-03. **Si vuelve la captura, A-18 revive.** | **P2-TAS** (no construye) · **P7-TAS** (sin precarga de factores) |
 | **A-35** | Qué son `D. F.` y `F. M.` `[Excel: Portada!AX50 · BA50]`, ambos con default `1`, en el cuadro de **valoración** —no en el de comparables—. Heredada del cierre de A-28. | **Ninguno.** No bloqueante: viven en un cuadro que IF-03 no captura. Se registra para que el motor no los omita si resultan estar vivos. | — |
-| **A-25** | Composición exacta del catálogo de motivos de contacto no logrado: seis valores según spec §2.3, ampliado desde cuatro. Distinta de **A-17**, que pregunta si es paramétrico o fijo. | El `singleSelect` se crea con los **seis** valores y la UI los lee desde el API, no desde un enum del cliente. Si el negocio ratifica una lista distinta, cambia el contenido del select y **no** la UI. Los dos valores nuevos se **agregan**; ninguno de los cuatro anteriores se renombra ni se borra, para no invalidar filas ya escritas. | **P0.5-TAS** (schema) · **P4-TAS** (UI) |
+| **A-25** ✅ | **CERRADA (23-ago-2026): los seis valores quedan ratificados como catálogo cerrado.** `Cliente rechaza visita` se conserva y las etiquetas sirven a los dos destinatarios. Distinta de **A-17**, que pregunta si es paramétrico o fijo y **sigue abierta**. | **Nada que rehacer.** El `singleSelect` ya se creó con los **seis** valores y la UI los lee desde el API, no desde un enum del cliente; esa decisión resultó correcta y es lo que hace que la ratificación no cueste una línea de código. | **P0.5-TAS** (hecho) · **P4-TAS** (hecho) |
 | **A-28** ✅ | **CERRADA (22-ago-2026): los tres factores se usan y RF-TAS-08 queda ratificado tal como está.** Cierra **D-21**. La duda era si describían la práctica real. La plantilla operativa vigente **no los contiene**: aplica dos factores, `D. F.` y `F. M.`, ambos con default `1` `[Excel: Portada!AX50 · BA50]`, y calcula el valor unitario de los comparables sin homogeneizar `[Excel: Portada!AX29]`. Ligada a **A-18**. | **No se implementa ninguna variante de dos factores.** `D. F.` y `F. M.` quedan como observación (**A-35**, no bloqueante). La ruta `GET /api/tasaciones/config/defaults` **sigue sin construirse**, pero ya no por duda de modelo sino por falta de valores: ver **A-18**, cuya pregunta 1 es la única bloqueante restante. | **P2-TAS** (no construye) · **P7-TAS** (consumidora) |
 
 ### §0.5 Modos de Claude Code por tanda
@@ -906,15 +938,18 @@ primera línea.
 > hueco.** Si alguna tanda futura necesita el **historial completo de intentos** —que la proyección
 > no entrega, sólo el desenlace vigente— ahí sí corresponde construir el GET.
 >
-> **(b) `GET /api/tasaciones/config/defaults` no existe, por mandato de este mismo plan.**
-> **A-18** sigue abierta: `C_FactoresHomogeneizacion.valor_referencia` está vacío en sus 15 filas,
-> así que la ruta devolvería `null` para los tres factores y su criterio de aceptación sería
-> inverificable. Ya está dicho en §0 (punto 4), en la ficha de **A-18** y en la de **A-28** de la
-> tabla de ambigüedades; se marca también acá para que quien lea la tabla de rutas no lo derive de
-> nuevo. El frente cliente **no está bloqueado por esto**: `lib/tasador/factores-default.ts`
-> construye la *forma* —tres factores en `""`, `ufHomogeneizada()` calculando sobre lo tecleado— y
-> la *precarga* entra en **P7-TAS** cuando A-18 cierre. Registrado en **CI-031**, cerrada en
-> cliente.
+> **(b) `GET /api/tasaciones/config/defaults` no existe, y desde v1.3 tampoco va a existir.**
+> **A-18 cerró por disolución del requisito** el 23-ago-2026 (spec §15 · D-24): con la sección D
+> en sólo lectura no hay campo de factor que precargar, de modo que la ruta pierde su propósito.
+> No es que devuelva `null` —es que nadie la llamaría—. `C_FactoresHomogeneizacion` queda como
+> tabla sin consumidor en IF-03; su `valor_referencia` sigue vacío en las 15 filas y **la cifra
+> que A-18 pedía nunca se respondió**, cosa que importa si una versión futura reintroduce la
+> captura.
+>
+> **Consecuencia sobre el frente cliente:** `lib/tasador/factores-default.ts` construía la *forma*
+> —tres factores en `""`, `ufHomogeneizada()` calculando sobre lo tecleado— para una grilla que ya
+> no se captura. **Pierde su consumidor junto con la grilla editable**; su purga se evalúa en
+> P7-TAS. Registrado en **CI-031**, enmendada el 23-ago-2026.
 >
 > **Conteo real:** 15 filas en la tabla → **13 archivos `route.ts`** y 16 combinaciones
 > método × ruta. Las 11 de P2-TAS.A más las 2 que agregó P4-TAS
@@ -1485,14 +1520,18 @@ proveedor.
 > **🟡 Contrato de comportamiento:** **pausa-en-comandos**. Es la tanda más grande del plan y el
 > punto más frágil de IF-03: edición libre, pausa obligatoria antes de cualquier comando.
 
-> **Ambigüedades e inconsistencias declaradas:** **A-13** (origen de los comparables) · **A-18**
-> (los factores de homogeneización siguen sin valor de referencia — **única bloqueante para la
-> ruta de defaults**) · **A-37 cerrada** (`M_TiposPropiedad` saneada · el sembrado
-> queda desbloqueado, y hasta que ocurra la tabla responde vacío, que es lo correcto) · **A-38** (los catálogos aún no son parametrizables
-> en runtime) ·
+> **Ambigüedades e inconsistencias declaradas:** **A-38** (los catálogos aún no son parametrizables
+> en runtime) · **A-44** (los tres factores ratificados por D-21 no aparecen en el flujo real —
+> **no bloqueante**, la sección D es de sólo lectura y el cálculo sigue la aritmética de la
+> plantilla) ·
 > **CI-014** (ocho secciones, no siete) · **CI-015** (traza legacy del contador de intentos).
-> **Cerradas desde v1.2:** **A-14**, **A-27** (los defaults constructivos tienen valores y clave)
-> y **A-28** (RF-TAS-08 ratificado). **Regla T-B** es el criterio dominante de esta pantalla.
+> **Cerradas desde v1.3:** **A-13** (los comparables salen de la extracción de la foto del cuadro
+> · la sección D pasa a **sólo lectura**) y **A-18** (cerrada por disolución: sin campo editable
+> no hay precarga · RF-TAS-08 pierde su conjunto 1).
+> **Cerradas desde v1.2:** **A-14**, **A-27** (los defaults constructivos tienen valores y clave),
+> **A-28** (RF-TAS-08 ratificado) y **A-37** (`M_TiposPropiedad` saneada · el sembrado queda
+> desbloqueado, y hasta que ocurra la tabla responde vacío, que es lo correcto).
+> **Regla T-B** es el criterio dominante de esta pantalla.
 
 ### §8.1 Diseño
 
@@ -1516,7 +1555,7 @@ alguien cuenta siete es **G (Overrides)**, que es la que materializa la Capacida
 | **A · Visita** | Fecha planificada de visita, **fecha real de visita** y observaciones del tasador | **Regla T-B.** Ver abajo. |
 | **B · Datos de la propiedad** | Superficies, año, materialidad, calidad, estado de conservación y recintos | RN-45 (origen + adjunto de respaldo por superficie), RN-49 (estado heredado a recintos). Alimenta los mínimos dinámicos de P5-TAS. |
 | **C · Cuadro de valoración** | Ítems con sus m² y su aporte a garantía, **con contador de ítems** | Persiste en `TX_ItemsCuadroValoracion`. |
-| **D · Comparables** | Grilla con contador **"N/3"** | **A-13** · ver abajo. |
+| **D · Comparables** | Grilla de **sólo lectura** con contador **"N/3"** | **A-13 cerrada** · poblada por extracción · ver abajo. |
 | **E · Niveles · Terminaciones · Comodidades** | Características constructivas, terminaciones por recinto y amenities | Valores y catálogos en spec **§2.8.1** (RF-TAS-23); domicilio pendiente de **A-27** · ver abajo. |
 | **F · Documentos legales** | Antecedentes legales con lo extraído de los documentos cargados | Se puebla desde el pipeline de P6-TAS. |
 | **G · Overrides (CU-007)** | Ajustes manuales del tasador sobre el resultado del motor, **con su motivo** | La sección que CI-014 protege. |
@@ -1531,31 +1570,40 @@ alguien cuenta siete es **G (Overrides)**, que es la que materializa la Capacida
 - La ausencia de fecha real **cuenta entre los obligatorios faltantes y bloquea "Calcular
   Tasación"**.
 
-**Sección D · Comparables (§8.1 del ADR) — se construye editable (A-13).**
-- Grilla **tabular densa**, no formulario acordeón. Una fila por comparable (3 a 10), columnas por
-  atributo.
+**Sección D · Comparables (§8.1 del ADR) — se construye de SÓLO LECTURA (A-13 cerrada, v1.3).**
+
+El tasador **no captura comparables**. Los fotografía: saca una foto del cuadro de la plantilla
+operativa `[Excel: Portada!B28:AX44]` —ejemplo canónico en
+`docs/_referencias/ejemplo-comparables-cuadro.JPG`—, la lectura de P6-TAS puebla la base y esta
+sección los **muestra**.
+
+- Grilla **tabular densa**, no formulario acordeón. Una fila por comparable, columnas por
+  atributo. **Ningún campo es editable.**
 - **Header fijo y scroll horizontal en móvil**, con la primera columna (N° / dirección) **sticky**.
   El scroll horizontal vive **dentro de la grilla**; el body de la página nunca scrollea en
   horizontal (R9).
-- Orden de columnas: N°, dirección, comuna, `sup_terreno_m2`, `sup_construccion_m2`, `precio_uf`,
-  `uf_m2` (calculado), año, tipo de referencia (badge Oferta / CBR), `factor_sup`, `factor_edad`,
-  `factor_distancia`.
+- Orden de columnas, espejando el cuadro de origen: N°, dirección, comuna, `sup_terreno_m2`,
+  `sup_construccion_m2`, `precio_uf`, `uf_m2` (calculado), año, tipo de referencia (badge Oferta /
+  CBR). **Sin columnas de `factor_sup`, `factor_edad` ni `factor_distancia`** — ver A-18 y A-44.
 - Campos condicionales: en **Oferta** se muestra `telefono_contacto`; en **CBR**, `foja` y `numero`.
-- **Fila resumen final** con el promedio homogeneizado de `uf_m2_construccion` que alimenta el
-  cálculo.
-- Botón **"Agregar comparable"** y acción de eliminar por fila. Validación de **mínimo 3** antes de
-  habilitar "Calcular Tasación" (**RF-12**).
-- **A-13:** el diseño v4 anota que esta categoría *"debe ser cambiado su diseño, por sólo mostrar
-  datos, antes leídos"*, pero **no dice de dónde salen**. Mientras no se responda, **la captura
-  manual sigue vigente**. No se construye ninguna variante de sólo lectura.
+- **Fila resumen final** con el promedio de `uf_m2_construccion` que alimenta el cálculo.
+- **No hay botón "Agregar comparable" ni acción de eliminar por fila.** El `POST` y el `DELETE` de
+  `app/api/tasaciones/[id]/comparables/route.ts` **quedan sin consumidor**; el `GET` se conserva.
+  Decidir si se retiran es parte de esta tanda.
+- Validación de **mínimo 3** antes de habilitar "Calcular Tasación" (**RF-12**), **con el sujeto
+  cambiado**: valida el origen, no la captura. El mensaje de bloqueo **no debe pedirle al tasador
+  que agregue comparables** —no puede—: su única acción correctiva es volver a fotografiar el
+  cuadro, y el literal tiene que decir eso.
+- El módulo `lib/tasador/factores-default.ts` **pierde su consumidor** con la grilla editable.
+  Evaluar su purga acá; ver **CI-031** y **OV-6**.
 
-**Valores por defecto (§8.4 del ADR · RF-TAS-08) — dos conjuntos con distinto destino:**
+**Valores por defecto (§8.4 del ADR · RF-TAS-08) — queda un solo conjunto:**
 
-1. **Factores de homogeneización y coeficientes de la tabla de referencia** (`factor_sup`,
-   `factor_edad`, `factor_distancia`). **SÍ se precargan**, desde la capa de configuración
-   (`C_VariablesCliente` / tabla de factores) vía `GET /api/tasaciones/config/defaults`. Badge
-   **"Pre-llenado · editable"**. **Ningún valor por defecto vive en el código de IF-03, ni siquiera
-   de forma transitoria.**
+1. ~~Factores de homogeneización y coeficientes de la tabla de referencia~~ — **RETIRADO en v1.3**
+   por el cierre de A-18 (spec §15 · D-24). Sin campo editable no hay precarga:
+   `GET /api/tasaciones/config/defaults` **no se construye**, y `C_FactoresHomogeneizacion` queda
+   sin consumidor en IF-03. **No inventar valores de factor bajo ningún concepto** — la cifra
+   nunca se respondió, y esto es exactamente lo que RF-TAS-08 prohibía.
 2. **Defaults de características constructivas y terminaciones** (sección E: materialidad y estado
    de estructura soportante, divisiones interiores, entrepisos, cubierta, revestimientos, cierros,
    obras complementarias, construcción anexa; aire acondicionado, calefacción, clóset mural,
@@ -1686,13 +1734,16 @@ components/tasador/formulario/
 4. Crear las **ocho** secciones. **Contarlas explícitamente antes de cerrar la tanda.**
 5. Sección A: los dos campos de fecha, con `fechaVisitaPlanificada` y `fechaRealVisita` como
    identificadores. **Prohibido `fechaVisita` a secas** (Regla T-B).
-6. Sección D: grilla densa con header fijo, primera columna sticky y scroll horizontal **contenido**.
+6. Sección D: grilla densa **de sólo lectura**, con header fijo, primera columna sticky y scroll
+   horizontal **contenido**. **Sin "Agregar comparable", sin eliminar por fila y sin columnas de
+   factor.** Redactar el literal de bloqueo de RF-12 sobre la acción que el tasador sí tiene
+   —volver a fotografiar el cuadro—, no sobre una que ya no existe.
 7. Construir la sección E **contra los catálogos de spec §2.8.1**, con el badge "Pre-llenado ·
    editable" cableado y el punto de consumo aislado. **Conectar la precarga** contra
    `C_DefaultsAntecedentes` (`tblOj7nXcjeouPy09`), filtrando por `tipo_propiedad` (Link, por record
    ID) y `estado_uso`. La tabla está vacía hasta que se siembre: el resultado esperado hoy es un
-   conjunto vacío, **no un error**. **No** precargar el conjunto 1 mientras A-18
-   siga abierta: la ruta `GET /api/tasaciones/config/defaults` no existe en este plan. Material o
+   conjunto vacío, **no un error**. El conjunto 1 **ya no existe**: A-18 cerró por disolución y
+   `GET /api/tasaciones/config/defaults` no se construye. Material o
    marca de cada recinto se renderiza como campo **derivado del pavimento** y de sólo lectura;
    orientación de la construcción se renderiza **vacía**.
 8. Implementar la validación enumerada con salto al primer faltante y apertura de su sección.
@@ -1735,8 +1786,18 @@ components/tasador/formulario/
       tentador escribirlos; el criterio existe para atrapar eso.
 - [ ] La sección E renderiza **material o marca** como campo derivado de sólo lectura, y
       **orientación de la construcción** vacía y editable.
-- [ ] **A-13 respetado:** la sección D es **editable** con captura manual; no existe variante de
-      sólo lectura.
+- [ ] **A-13 aplicado:** la sección D es de **sólo lectura**.
+      `grep -rn "Agregar comparable" components/tasador/` devuelve **cero** (baseline al
+      23-ago-2026: **1**), y ningún campo de la grilla es un input editable.
+- [ ] **A-18 aplicado:** `grep -rn "factorSup\|factorEdad\|factorDistancia\|config/defaults"
+      components/` devuelve **cero** (baseline al 23-ago-2026: **7**, todas en
+      `seccion-comparables.tsx`). Ningún valor numérico de factor aparece en el código, ni
+      siquiera comentado como ejemplo. **Los dos greps se corrieron el 23-ago-2026 y hoy
+      están en rojo a propósito: son el trabajo de esta tanda, no una comprobación de que ya
+      esté hecho.**
+- [ ] **Ruta de comparables saneada:** decidido y aplicado qué pasa con el `POST` y el
+      `DELETE` de `app/api/tasaciones/[id]/comparables/route.ts`, que quedan sin consumidor.
+      Si se conservan, el porqué queda escrito en el archivo; si se retiran, sus tests también.
 - [ ] **CI-015 cerrado:** `grep -rn "IntentosIndicator\|MAX_INTENTOS\|intentosRestantes\|
       PENDIENTE_VISADOR"` sobre todo el repo devuelve **cero**; la auditoría de Regla T-C también.
 - [ ] `localStorage` aparece **sólo** en el autosave del formulario, y en ningún otro punto de
@@ -2496,7 +2557,7 @@ este plan.** Quedan listados para que Sergio decida cuáles corregir y cuándo.
 | `docs/construccion.md` | Guía de construcción **por RF de IF-02**. No tiene ninguna sección para los RF-TAS, y su tabla de avance no contempla la secuencia `P{n}-TAS`. Si se quiere una vista única del avance del proyecto, hay que decidir si IF-03 entra ahí o mantiene sus snapshots aparte (este plan opta por lo segundo: §14.3). |
 | `docs/diseno.md` | Diseño funcional **de IF-02**. Su §3 describe la bandeja y el detalle de la Ejecutiva sin mencionar que dos de sus componentes (`FileUploadZone` y el sheet documental) pasan a tener un segundo consumidor. Más relevante: no registra que el visor de adjuntos de §1.3.4 **no está extraído como componente reutilizable**, que es la causa de la excepción R5-E. |
 | `docs/aprendizajes.md` | Bitácora de sólo-append **compartida**. A partir de P0-TAS convivirán dos secuencias de tandas en `docs/_archivo/`, distinguidas sólo por el sufijo `-TAS`. Conviene una nota al inicio que lo declare, para que quien busque "la última tanda" sepa que hay dos respuestas. El archivo ya está cerca del umbral de archivado que fija `CLAUDE.md` (~1500 líneas): archivarlo es una tanda propia y **no** debe hacerse a mitad de una sesión de IF-03. |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` | Fuente canónica, **no editable**. Cinco divergencias que este plan introduce o hereda, a registrar en el próximo bump normativo: **(1)** §2.11 atribuye los correos de coordinación a **SC13 (Make)**; **R3 los reasigna a una Automation de Airtable**. **(2)** §2.12 ubica las dos plantillas en `C_Plantillas`, que **no tiene campo para cuerpo HTML** — la fuente de runtime real es `C_NotificacionesConfig` (misma divergencia que IF-02 ya registró para SC05). **(3)** §2.12 declara `intento_numero` como fórmula y `coordinacion_vigente` con `LAST(... ORDER BY ...)`: ninguna de las dos es expresable en Airtable tal como está escrita. **(4)** §2.12 declara `D_TipoDocumento.tipo_propiedad` como alta nueva y **ya existía** desde antes del 25-jul-2026 (A-05). **(5)** §2.13 nombra `EstadoBadge`; el repo exporta `StateBadge`. |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` | Fuente canónica, **no editable**. Cinco divergencias que este plan introduce o hereda, a registrar en el próximo bump normativo: **(1)** §2.11 atribuye los correos de coordinación a **SC13 (Make)**; **R3 los reasigna a una Automation de Airtable**. **(2)** §2.12 ubica las dos plantillas en `C_Plantillas`, que **no tiene campo para cuerpo HTML** — la fuente de runtime real es `C_NotificacionesConfig` (misma divergencia que IF-02 ya registró para SC05). **(3)** §2.12 declara `intento_numero` como fórmula y `coordinacion_vigente` con `LAST(... ORDER BY ...)`: ninguna de las dos es expresable en Airtable tal como está escrita. **(4)** §2.12 declara `D_TipoDocumento.tipo_propiedad` como alta nueva y **ya existía** desde antes del 25-jul-2026 (A-05). **(5)** §2.13 nombra `EstadoBadge`; el repo exporta `StateBadge`. |
 | `docs/CODE_INCONSISTENCIES.md` | **CI-012** cambia de naturaleza al abrirse IF-03: deja de ser deuda documental y pasa a ser bloqueante activo con una tanda detenida por su causa (P4-TAS). Corresponde actualizar su estado y su fecha objetivo, que hoy dice *"condicional a la apertura de la tanda de IF-03"* — la tanda queda abierta con este plan. **CI-013 a CI-020** están declaradas "pendientes en el código de IF-03"; cada una queda cubierta por la tanda que indica §0.4-bis y su estado debería seguir el avance. **CI-021** sigue abierta y **no cierra sin CI-005**. |
 | `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` | **A-09** (`TX_CoordinacionVisita` no existe) se resuelve materialmente en P0.5-TAS, pero **no por decisión de negocio**: la tabla se crea y CI-012 sigue abierta. Corresponde anotar esa distinción para que nadie lea la existencia de la tabla como el cierre de la ambigüedad. **A-12 a A-17** siguen abiertas y este plan las respeta una por una; sus fichas podrían anotar qué tanda las declara. |
 | `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` | Registra `DEP-EXT:A-09` como *"pendiente creación Airtable · no verificada 2026-07-25"*. Tras P0.5-TAS deja de ser exacto. Conviene además verificar si replica el **árbol de ocho rutas** que CI-020 corrigió a siete; **no se verificó** al redactar este plan. |
@@ -2537,7 +2598,14 @@ Se listan porque callarlos no los elimina.
 
 ---
 
-*Última actualización: 22-ago-2026 · **v1.2 del plan** (respuestas de Héctor · **A-14, A-22, A-27
+*Última actualización: 23-ago-2026 · **v1.3 del plan** (segunda tanda de respuestas del cliente ·
+**A-13, A-18 y A-25 cerradas** · la sección D de P7-TAS pasa a **sólo lectura** poblada por
+extracción de la foto del cuadro, caen "Agregar comparable" y la eliminación por fila, y RF-12
+conserva el mínimo de 3 cambiando de sujeto · **RF-TAS-08 pierde su conjunto 1** y
+`GET /api/tasaciones/config/defaults` deja de estar pendiente: no se construye ·
+`C_FactoresHomogeneizacion` y `lib/tasador/factores-default.ts` quedan sin consumidor ·
+**A-44** nueva: los tres factores que D-21 ratificó no aparecen en el flujo real, no bloqueante ·
+sin tandas, rutas ni cambios de orden nuevos) · v1.2 (respuestas de Héctor · **A-14, A-22, A-27
 y A-28 cerradas** · la sección E de P7-TAS pasa a implementable con precarga, clave tipo de
 propiedad × estado de uso, y P0.5-TAS crea la tabla · RF-TAS-08 ratificado con sus tres factores ·
 **A-18 sigue bloqueando** `GET /api/tasaciones/config/defaults`, ahora con una sola pregunta: el

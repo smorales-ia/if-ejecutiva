@@ -625,10 +625,10 @@ construcción. Todo lo demás de esta ronda es documental y está cerrado.
 
 ### Punteros vigentes
 
-- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md`.
-- **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.3.md`.
-- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.2.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
-  con versión interna **v1.14** (el nombre no se renombra · **C-14**).
+- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md`.
+- **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.4.md`.
+- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.3.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
+  con versión interna **v1.15** (el nombre no se renombra · **C-14**).
 - **Rama activa:** `feat/tasador-ui`.
 
 ### Las tres decisiones
@@ -860,3 +860,60 @@ la maestra está saneada y el catálogo de defaults tiene 212 filas.
 
 Sigue conviniendo lo que quedó pendiente de P0.5.B-TAS: **probar el motor de cálculo sobre una
 solicitud real**, ahora que encuentra configuración donde antes no encontraba nada.
+
+---
+
+## Estado canónico · segunda tanda de respuestas del cliente · 23-ago-2026
+
+> **Este bloque manda sobre todo lo anterior del archivo**, incluido el bloque del 22-ago-2026.
+> Si vas a ejecutar algo, lee esto primero.
+
+### Punteros vigentes
+
+- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md`.
+- **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.4.md`.
+- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.3.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
+  con versión interna **v1.15**.
+- **Referencias del cliente versionadas:** `docs/_referencias/Formato-Informe-VProperty-Enero2026.xlsm`
+  y `docs/_referencias/ejemplo-comparables-cuadro.JPG`.
+- **Rama activa:** `feat/tasador-ui`.
+
+### Las siete decisiones
+
+| Tema | Decisión | Cierra |
+|---|---|---|
+| Origen de los comparables | **Foto del cuadro + extracción** · sección D de **sólo lectura** | A-13 |
+| Valor por defecto de los factores | **Cerrada por disolución**: sin campo editable no hay precarga | A-18 · D-24 |
+| Desenlaces de la coordinación | **Los seis quedan ratificados** · catálogo cerrado | A-25 |
+| Motivos de reproceso | **Los siete quedan ratificados** · dominio, no muestra | A-26 |
+| Tope de 24 h al cliente | **Sólo corte de reporte** · sin semáforo agregado ni alerta en pantalla | A-23 · D-18 |
+| Canal WhatsApp | **Descartado** · recordatorio en correo único | A-24 · D-19 |
+| Grupo "día 0" del tablero | **Descartado** · cuatro grupos | A-32 |
+
+### Qué se desbloqueó
+
+**P7-TAS queda sin ambigüedades bloqueantes.** La sección D se construye de **sólo lectura**: caen
+"Agregar comparable" y la eliminación por fila, el `POST` y el `DELETE` de
+`app/api/tasaciones/[id]/comparables/route.ts` quedan sin consumidor, y **RF-12 conserva el mínimo
+de 3 cambiando de sujeto** —valida el origen, no la captura—. **RF-TAS-08 pierde su conjunto 1** y
+`GET /api/tasaciones/config/defaults` no se construye.
+
+**En IF-02 no se desbloquea ninguna tanda.** Lo que habilitan las cuatro respuestas de SLA es
+**§5.2.9** —tablero de cuatro grupos y reporte de 24 h en su forma de opción B— y la ratificación
+de los dos catálogos. Las tandas del control de SLA son **A–G** (plan §9.6.2) y conservan orden y
+precondiciones; **Tanda F sigue bloqueada** por el patrón de disparo de `AT08_Alertas_SLA`, que es
+asunto anterior e independiente.
+
+### Qué queda sin consumidor
+
+- **`C_FactoresHomogeneizacion`** (`tblep24N9gPMrDPIN`) — no se borra; sale de la ruta crítica.
+  Con ella, sus tres deudas de saneamiento. Ver **CI-022**.
+- **`lib/tasador/factores-default.ts`** — su purga se evalúa en P7-TAS. Ver **CI-031**.
+
+### Qué sigue abierto
+
+- **A-44** *(nueva)* — los tres factores que **D-21** ratificó no aparecen en el cuadro que el
+  tasador fotografía. **No bloqueante.** Ligada a **A-35**. Dueños: Héctor + visador titular.
+- **A-15**, **A-16**, **A-17**, **A-29**, **A-35**, **A-38** a **A-43** — sin cambios.
+- **A-18 revive** si una versión futura reintroduce captura o cálculo de homogeneización: la cifra
+  que pedía **nunca se respondió**.

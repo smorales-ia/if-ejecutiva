@@ -4,10 +4,11 @@
 
 | Campo | Valor |
 |---|---|
-| **Versión** | 1.3 |
-| **Fecha** | 22 de agosto de 2026 |
-| **Propósito** | Consolidación con respuestas del cliente (Héctor). Base para incorporación a la especificación oficial. |
-| **Fuentes** | Audios explicativos del cliente ("sla del negocio.txt", "sla parte 2 de 2.txt") y la segunda tanda de audios de `docs/_md/audios/` (`p1`–`p8`, `r21`–`r23`, `revision 1`). Plantilla operativa vigente `Formato Informe VProperty Enero2026.xlsm`, citada como `[Excel: hoja!celda]`. |
+| **Versión** | 1.4 |
+| **Fecha** | 23 de agosto de 2026 |
+| **Propósito** | Consolidación con respuestas del cliente (Héctor). Base para incorporación a la especificación oficial. **Ya incorporado**: el contenido de esta versión está vertido en `VProperty_Especificacion_Proyecto_v1_9_15.md` §5.2, que es la fuente normativa; este documento queda como insumo trazable. |
+| **Fuentes** | Audios explicativos del cliente ("sla del negocio.txt", "sla parte 2 de 2.txt") y la segunda tanda de audios de `docs/_md/audios/` (`p1`–`p8`, `r21`–`r23`, `revision 1`). Plantilla operativa vigente `docs/_referencias/Formato-Informe-VProperty-Enero2026.xlsm`, citada como `[Excel: hoja!celda]`, y el ejemplo del cuadro de comparables que fotografía el tasador, `docs/_referencias/ejemplo-comparables-cuadro.JPG`. |
+| **Cambios vs. v1.3** | Segunda tanda de respuestas del cliente. Los **cinco puntos de SLA que quedaban abiertos se cierran**: los seis desenlaces de la coordinación y los siete motivos de reproceso quedan **ratificados como catálogos cerrados**; el tope de 24 horas se modela **sólo como corte del reporte** de la sección 5, sin semáforo agregado ni alerta en pantalla; el canal **WhatsApp se descarta** y los recordatorios quedan en correo único; el tablero de vencimientos queda con **cuatro grupos**, sin día 0. Cierra A-23, A-24, A-25, A-26 y A-32. |
 | **Cambios vs. v1.2** | Respuestas de Héctor a las tres consultas bloqueantes. El umbral del recordatorio de coordinación queda fijado en **4 horas hábiles** y deja de ser provisional; se documenta que coincide con el ámbar de la etapa 2 y que, por tanto, no introduce un instante nuevo. Los defaults de la hoja de antecedentes se particionan por tipo de propiedad × estado de uso. Los tres factores de homogeneización quedan ratificados. |
 | **Cambios vs. v1.1** | Recordatorio automático al tasador y tope de respuesta al cliente incorporados a la etapa 2. Catálogo de desenlaces de la coordinación. Catálogo de motivos de reproceso. Los dos reportes de control diario que hoy viven fuera del sistema. Pre-llenado de la hoja de antecedentes como compromiso de servicio. Plazo de la etapa 5 corroborado contra la plantilla. |
 
@@ -84,7 +85,7 @@ Se considera reproceso cuando el ejecutivo del cliente devuelve un informe ya en
 | 6 | Cambio de cliente destinatario del informe | El cliente al que hay que reemitirlo, con su código y logo |
 | 7 | Pronunciamiento sobre afectación de utilidad pública | El certificado que la acredita, solicitado por el abogado |
 
-**Valor**: siete motivos · **Fuente**: audio `p3` · **Estado**: pendiente de ratificación por el product owner (A-26).
+**Valor**: siete motivos · **Fuente**: audio `p3` · **Estado**: **ratificado** por el product owner el 23-ago-2026 como dominio cerrado, no como muestra (A-26 cerrada). Las etiquetas de la tabla son las del `singleSelect`.
 
 Quién ejecuta el reproceso depende de su naturaleza. Los cambios de forma, los de fondo y los de valor los realiza el **perfil de visación**, que es el único con permiso sobre las tres dimensiones; los motivos que exigen revisar la propiedad vuelven al tasador.
 
@@ -115,13 +116,13 @@ Los umbrales de la matriz miden el cumplimiento. Lo que sigue son dos mecanismos
 | **4 h hábiles** | La etapa 2 pasa a ámbar · **recordatorio** | Tasador | Que actúe |
 | **6 h hábiles** | La etapa 2 pasa a rojo · **escalada** | Responsable de área | Que intervenga |
 
-- **Canales**: correo y WhatsApp. El segundo es una petición explícita del cliente y no tiene proveedor definido (**A-24**).
+- **Canales**: **correo, único**. El cliente había pedido WhatsApp como segundo canal y **retiró la petición** el 23-ago-2026 (**A-24** cerrada en negativo): no se contrata proveedor ni se registran plantillas. El diseño del recordatorio conserva su neutralidad de canal para que agregarlo después no obligue a reescribirlo.
 
 > **Nota de unidad.** Umbral en horas hábiles, coincidente con el ámbar de la etapa 2. Pendiente confirmación explícita con Héctor de que la intención fue hábiles y no reloj (se agrega a la próxima consulta). Si fuese de reloj, el recordatorio dejaría de coincidir con el ámbar, exigiría cómputo propio y podría avisar un sábado.
 
 **Recordatorio de entrega del informe.** Transcurridas 24 horas desde la visita sin que el informe haya llegado, el tasador recibe un aviso de que el plazo vence al segundo día. Es el mismo mecanismo aplicado a la etapa 5, y su umbral coincide con el SLA ideal de esa etapa.
 
-**Tope de respuesta al cliente.** Con independencia de lo que ocurra con la coordinación, VProperty se compromete a responderle al ejecutivo del cliente con una fecha de visita —o con el motivo por el cual no la hay— dentro de las **24 horas** desde el ingreso de la solicitud. No es una etapa nueva: es una restricción que atraviesa las etapas 2, 3 y 4, y su incumplimiento es visible aunque cada etapa individual esté dentro de plazo. Cómo se modela —umbral agregado sobre esas tres etapas o sólo reporte— está pendiente (**A-23**).
+**Tope de respuesta al cliente.** Con independencia de lo que ocurra con la coordinación, VProperty se compromete a responderle al ejecutivo del cliente con una fecha de visita —o con el motivo por el cual no la hay— dentro de las **24 horas** desde el ingreso de la solicitud. No es una etapa nueva: es una restricción que atraviesa las etapas 2, 3 y 4, y su incumplimiento es visible aunque cada etapa individual esté dentro de plazo. **Cómo se modela quedó decidido el 23-ago-2026: sólo corte del reporte** de la sección 5, sin semáforo agregado propio y **sin alerta en pantalla** (**A-23** cerrada). Riesgo asumido: esta realización no alerta y depende de que el tablero se revise a diario.
 
 ### 3.4 Catálogo de desenlaces de la coordinación
 
@@ -136,7 +137,7 @@ El tasador cierra la etapa 3 eligiendo exactamente uno de estos desenlaces. El c
 | 5 | El contacto debe coordinar con quien ocupa la propiedad | — | La coordinación quedó en manos del contacto |
 | 6 | Otro motivo | Detalle obligatorio | Según el detalle |
 
-**Valor**: seis desenlaces · **Fuente**: audios `p1` y `p2` · **Estado**: pendiente de ratificación por el product owner (**A-25**).
+**Valor**: seis desenlaces · **Fuente**: audios `p1` y `p2` · **Estado**: **ratificado** por el product owner el 23-ago-2026 · catálogo cerrado (**A-25** cerrada). `Cliente rechaza visita` se conserva pese a no figurar en `p1`, y las etiquetas sirven tanto al tasador que elige como al ejecutivo del cliente al que se le comunica el desenlace.
 
 Sólo el primer desenlace produce fecha de visita y permite avanzar a la etapa 5. Los cinco restantes devuelven la solicitud a Control y Seguimiento, que gestiona un contacto nuevo, y detienen el reloj de la etapa 2 mientras la solicitud espera esa gestión.
 
@@ -196,7 +197,7 @@ El proceso operativo actual: al cierre del visado se sube el(los) archivo(s) a D
 **Los dos reportes de control diario.** El área revisa a diario un tablero que hoy vive fuera del sistema, en una planilla compartida, y que el cliente describe como *"vital"*. Tiene exactamente dos bloques, y ambos son requisito del sistema:
 
 1. **Reprocesos abiertos**, con fecha, código y qué se está pidiendo. Encabeza el tablero porque el cliente ya está escriturando la operación: un reproceso demorado bloquea una firma.
-2. **Vencimientos por antigüedad desde la visita**, agrupados en días —4, 3, 2 y 1— para leer de un vistazo cuántos informes deben despacharse hoy y por qué uno de cuatro días no salió al tercero. La conveniencia de incluir un grupo de día 0 está planteada por el cliente y pendiente (**A-32**).
+2. **Vencimientos por antigüedad desde la visita**, agrupados en días —4, 3, 2 y 1— para leer de un vistazo cuántos informes deben despacharse hoy y por qué uno de cuatro días no salió al tercero. **El bloque queda con cuatro grupos, sin día 0** (**A-32** cerrada en negativo el 23-ago-2026): incluir las visitas del propio día convertiría el bloque de *"lo que está por vencer"* en *"todo lo que está en vuelo"* y diluiría la señal de urgencia. Agregarlo después es aditivo.
 
 **El reporte que hoy no existe.** No hay forma de saber cuántas solicitudes llevan más de 24 horas sin fecha de visita: *"yo hoy día no sé de todos los informes cuántos no tienen fecha de visita"*. Es el reporte que hace verificable el tope de respuesta al cliente de la sección 3.3, y su ausencia es la razón por la que ese tope se incumple sin que nadie lo note. Se especifica como filtro de la bandeja y como corte diario.
 

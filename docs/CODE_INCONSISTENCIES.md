@@ -205,7 +205,7 @@ a exigir ambos campos.**
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-004 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §8 (nota de diseño) y §8.2 (campo `dropbox_path`) · afecta a la futura implementación del path de §8.1 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §8 (nota de diseño) y §8.2 (campo `dropbox_path`) · afecta a la futura implementación del path de §8.1 |
 | **Síntoma** | El segmento `{Unidad}` del path Dropbox deriva de `TX_Unidades.subtipo` (`fldNU8ee30AvvRWHZ`, singleSelect editable). Si la Ejecutiva corrige el subtipo de una unidad después de haber subido adjuntos —algo permitido mientras la solicitud está en estado `creada`, RN-59—, el binario **no se mueve** y `TX_Adjuntos.dropbox_path` deja de coincidir con el estado vigente de la unidad. La divergencia es silenciosa: no hay error, no hay aviso, y el archivo sigue descargándose bien. Aparece sólo en la auditoría de path de RF-51, como un archivo en una carpeta que no corresponde a ninguna unidad actual de la solicitud. |
 | **Causa** | Hasta v1.9.5 los cuatro segmentos del path derivaban de datos inmutables una vez creada la solicitud (cliente, año, código). El nivel Unidad introducido en v1.9.6 es el primer segmento que depende de un campo editable. Se decidió declarar `dropbox_path` como snapshot inmutable en vez de reubicar el binario: mover el archivo invalidaría el `url_dropbox` ya persistido y ya entregado en la UI y en los correos, y exigiría un módulo Dropbox de movimiento no probado en la instancia Make del proyecto —el mismo tipo de apuesta que causó E-026 y el incidente de `dropbox:deleteAFile` de Tanda 3. |
 | **Resolución** | Opciones, a decidir cuando se implemente el path de §8.1 (CI-003): (a) dejarlo como está y que la auditoría de RF-51 tolere el caso, tratando el path como histórico; (b) añadir a la auditoría un reporte de divergencias path↔subtipo que la Ejecutiva pueda revisar, sin mover nada; (c) bloquear la edición de `subtipo` una vez que la unidad tiene adjuntos, empujando la corrección a borrar y recrear el adjunto; (d) implementar la reubicación real, previa verificación de que existe un módulo Dropbox de movimiento en la instancia —exportar un escenario-probe antes de escribir el blueprint. |
@@ -306,7 +306,7 @@ de las siete etapas no tienen escritor. La secuencia correcta de trabajo es (1) 
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-007 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` (8 apariciones, incluidas §5.2, §5.2.1 y el glosario) vs `docs/schema-airtable.md:51` |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` (8 apariciones, incluidas §5.2, §5.2.1 y el glosario) vs `docs/schema-airtable.md:51` |
 | **Síntoma** | Quien lea la spec y vaya a Airtable a buscar `H_Feriados` no la encuentra. La tabla real es **`C_Feriados`** (`tblJVh2kPd4uMgxpb`), poblada y bien estructurada (`fecha`, `es_irrenunciable`, `activo`, `anno`). El `Blueprint de Interfaces v2.10` arrastra el mismo nombre incorrecto. |
 | **Causa** | El nombre `H_Feriados` viene del diseño de la Capa de Datos, que la ubicaba en el dominio histórico `H_`. Al crearse en la base real quedó en el dominio de configuración `C_`, que es donde corresponde por naturaleza —es un catálogo paramétrico, no un histórico—, y la spec nunca se actualizó. |
 | **Resolución** | Corregir la **spec** en el próximo bump: `H_Feriados` → `C_Feriados` en las 8 apariciones. **Gana la tabla real**, porque renombrarla en Airtable rompería la implementación y además el nombre real es el correcto por dominio. No se toca la spec en esta tanda por decisión explícita: un rename de 8 puntos en el documento normativo merece su propio bump con changelog, no un parche dentro de una auditoría. |
@@ -420,7 +420,7 @@ de las siete etapas no tienen escritor. La secuencia correcta de trabajo es (1) 
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-012 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §1.3.2 (bloque *Coordinación*), §1.3.3 (eventos de coordinación), §2.3 (RF-TAS-05), §2.11, §2.12 (declaración de la tabla) y §5.2 · vs base `app9G7lLkIV3CpeLa`, cuyo listado de **68 tablas no la contiene** |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §1.3.2 (bloque *Coordinación*), §1.3.3 (eventos de coordinación), §2.3 (RF-TAS-05), §2.11, §2.12 (declaración de la tabla) y §5.2 · vs base `app9G7lLkIV3CpeLa`, cuyo listado de **68 tablas no la contiene** |
 | **Síntoma** | La spec describe la coordinación de visita como funcionalidad existente en cinco secciones, con criterios de aceptación verificables ("cada acción crea exactamente una fila en `TX_CoordinacionVisita`"), y §1.3.2/§1.3.3 encargan a IF-02 **leerla** en las pestañas Datos e Historial. La tabla no existe. Consecuencia concreta y ya materializada: el timeline de §1.3.3 se entregó en la Fase 2 **sin los eventos de coordinación**, y el bloque *Coordinación* de §1.3.2 no se puede construir. No es un fallo de implementación: no hay origen de datos. |
 | **Causa** | La tabla se declaró en la spec v1.9.3 §2.12 como parte del alcance de IF-03 (Interfaz Tasador) y su creación en Airtable quedó pendiente. Está registrada como dependencia externa **DEP-EXT:A-09** en `docs/_md/Arquitectura_Enterprise_VProperty_v2_9.md:1280` y en `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md:2560`, ambas con la marca *"pendiente creación Airtable · no verificada 2026-07-25"*. El sync de IF-Tasador ya lo había detectado (`docs/_sync_ifTasador_v1/00_inventario.md:259`). Lo que esta entrada agrega es que **la deuda ya tiene consecuencia observable en IF-02**, no sólo en IF-03. |
 | **Resolución** | 🔄 **REABIERTA Y CERRADA EN SENTIDO OPUESTO — 19-ago-2026.** La revisión de **Héctor** sobre el diseño IF Tasador v4 (`docs/_md/Imagenes_IF_Tasador_v4.pdf`, **Pantalla 2, puntos 1 a 4**, pp. 18-19) **revierte la decisión del 17-ago-2026**: la coordinación de visitas **sí se soporta por sistema**. El punto 2 exige correo de confirmación con fecha y nota; el punto 3, correo de devolución con motivo y detalle; el punto 4, que **la ejecutiva vea esas respuestas en su UI**. Ninguno de los tres es realizable por teléfono: los tres describen escritura y lectura de datos estructurados. La cita literal de los cuatro puntos está en la nota **«Cita literal — Pantalla 2»** más abajo, y es la evidencia que gobierna este cierre. <br>**Cierre vigente: opción (a) — se construye.** `TX_CoordinacionVisita` **se crea**; los correos de coordinación se emiten; la ejecutiva lee el resultado en las pestañas Datos e Historial de IF-02. <br>**RO-29 queda anulada** (ver la nota de anulación más abajo). El trabajo de reposición **no se ejecuta en esta ronda**: queda registrado como alcance de **P4-TAS**. |
@@ -516,7 +516,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-013 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.7 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 21 (Pantalla 4, partes 1 y 2) |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.7 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 21 (Pantalla 4, partes 1 y 2) |
 | **Síntoma** | Hasta v1.9.8, §2.7 decía que el botón "Continuar" *"avanza a §2.8 sin esperar a que SC07 termine; los datos leídos se irán poblando en el formulario según lleguen"*. El diseño v4 muestra el botón **deshabilitado** mientras el stepper no llega a "Datos listos", y habilitado sólo en la segunda variante. Construir según el texto anterior produce un formulario que se repuebla bajo el cursor mientras el tasador escribe, con riesgo de sobrescribir lo que acaba de teclear. |
 | **Causa** | El texto de v1.9.3 optimizaba el tiempo de espera y no consideró la colisión entre la escritura del tasador y la llegada asincrónica de los datos extraídos. El diseño v4 resuelve la colisión por la vía simple: no dejar entrar al formulario hasta que la lectura termine. |
 | **Resolución** | Ya aplicada en la documentación: §2.7 de v1.9.9 fija el bloqueo y lo formaliza en **RF-TAS-15**. Queda pendiente que el código de IF-03 lo respete cuando se construya, junto con la regla de que "Volver" no cancela el proceso en background. |
@@ -537,7 +537,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-014 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.8 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 22 (Pantalla 5, partes 1 y 2) |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.8 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 22 (Pantalla 5, partes 1 y 2) |
 | **Síntoma** | §2.8 declaraba *"siete secciones colapsables alineadas con Origen de Datos del Informe v1.1 §3.3"*. El diseño v4 presenta **ocho**: A Visita, B Datos de la propiedad, C Cuadro de valoración, D Comparables, E Niveles · Terminaciones · Comodidades, F Documentos legales, G Overrides (CU-007), H Rentabilidad (opcional). Quien construya contando siete dejará una fuera, y la candidata natural a caerse es G (Overrides), que es la que materializa la Capacidad C-7. |
 | **Causa** | El conteo de siete viene del contrato de Origen de Datos del Informe §3.3, que agrupa los overrides dentro de otra sección. El diseño los separa para que el tasador declare el ajuste manual con su motivo en un bloque propio. |
 | **Resolución** | Ya aplicada en la documentación: §2.8 de v1.9.9 enumera las ocho secciones en tabla y las formaliza en **RF-TAS-16**. Queda pendiente verificar si el contrato de Origen de Datos del Informe v1.1 §3.3 necesita alinearse, lo que **no se hizo** en esta versión por estar fuera del alcance autorizado. |
@@ -558,7 +558,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-015 |
-| **Archivo:línea** | `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 13 y 22 (`components/tasacion-form.tsx`, `IntentosIndicator`, `MAX_INTENTOS = 3` en `use-estado-tasador`) · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2 (decisión capital 1) y §2.13 |
+| **Archivo:línea** | `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 13 y 22 (`components/tasacion-form.tsx`, `IntentosIndicator`, `MAX_INTENTOS = 3` en `use-estado-tasador`) · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2 (decisión capital 1) y §2.13 |
 | **Síntoma** | El prototipo IF-Tasador renderiza en la cabecera del formulario un indicador de tres puntos con el texto "0 de 3 usados", y el hook conserva la constante que lo alimenta. La decisión capital 1 de §2 retiró el ciclo de devolución estructurado, *"el contador de tres re-visitas y la alerta de último intento"*. El tasador ve un contador de intentos que ya no gobierna nada, y que sugiere un límite de reenvíos inexistente. |
 | **Causa** | Traza legacy del modelo anterior a v1.9. La propia auditoría del PDF (p. 13) la identifica como deuda técnica visible, junto con la lógica muerta del hook (`confirmar`, `rechazar`, `intentosRestantes`, `bloqueado`, estado `PENDIENTE_VISADOR`) que `InformePreview` ya no consume. |
 | **Resolución** | Eliminar del código de IF-03 el componente `IntentosIndicator`, su render en el formulario y la constante `MAX_INTENTOS`, junto con las ramas del hook que nadie consume. **No requiere decisión**: la spec ya dice qué debe pasar. Documentado en §2.13 de v1.9.9. |
@@ -580,7 +580,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-016 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.10 (footer de acciones) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 27, punto 2 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.10 (footer de acciones) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 27, punto 2 |
 | **Síntoma** | Hasta v1.9.8, §2.10 permitía que "Descargar PDF" cayera en `window.print()` con estilos `@media print` cuando la solicitud estaba en `calculada` sin PDF depositado. El diseño v4 exige que *"se deberá imprimir con la plantilla asignada a esta solicitud y ser generada por Carbone"*. El respaldo produce un documento con el maquetado del navegador y **sin la plantilla del cliente institucional**, que es precisamente lo que el motor de reglas resuelve por solicitud. Un documento así puede salir de la organización pareciendo un informe de tasación. |
 | **Causa** | El respaldo se introdujo para que la vista previa fuera útil antes de que el pipeline PDF depositara el archivo. Resolvía un problema de disponibilidad creando uno de identidad del documento. |
 | **Resolución** | Ya aplicada en la documentación: §2.10 de v1.9.9 retira el respaldo y **RF-TAS-21** fija que la descarga siempre proviene de Carbone con la plantilla asignada, informando la espera cuando el PDF aún no está. Queda pendiente alinear §7 (Impresión del Informe de Tasación), **que no se tocó** por estar fuera del alcance autorizado de la sesión. |
@@ -601,7 +601,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-017 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.10 (acción Confirmar) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 29-30 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.10 (acción Confirmar) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 29-30 |
 | **Síntoma** | §2.10 decía que al confirmar *"la pantalla muestra un mensaje de agradecimiento antes de redirigir a Pantalla 1"*, y el prototipo lo implementa con un temporizador de 2,5 s. El diseño v4 muestra dos pasos distintos: un diálogo de confirmación previo ("¿Enviar este informe al visador?") y, tras el envío, una pantalla de acuse con un botón "Volver al inicio". La redirección automática puede robar el foco mientras el tasador lee el acuse, y el diálogo previo no estaba especificado en absoluto. |
 | **Causa** | La versión anterior describía el desenlace del envío pero no su confirmación, y resolvía el acuse como transición en vez de como pantalla. El envío al visador es irreversible desde IF-03 y merecía confirmación explícita. |
 | **Resolución** | Ya aplicada en la documentación: §2.10 de v1.9.9 especifica el diálogo y el acuse, y **RF-TAS-22** fija que no hay redirección por temporizador y que un doble toque produce una sola transición. Pendiente en el código de IF-03, donde hoy vive el temporizador. |
@@ -621,7 +621,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-018 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.1 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.1 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17 |
 | **Síntoma** | §2.1 declaraba que la card muestra *"código VP-AAAA-NNNN, EstadoBadge con color por estado, dirección, cliente y versión"*. El diseño v4 muestra código, badge de **SLA** con horas, comuna · tipo de propiedad, dirección, **Rol SII**, cliente · **producto**, **teléfono accionable** y fecha de visita; y **no** muestra versión del informe. Además, el badge no es de estado sino de SLA: construir según el texto anterior deja al tasador sin el dato que le dice qué hacer primero. |
 | **Causa** | El texto de v1.9.3 describía la card en abstracto, antes de que existiera un diseño que resolviera qué necesita el tasador en la calle. La versión del informe es relevante en el preview (§2.10) y no en la cola. |
 | **Resolución** | Ya aplicada en la documentación: §2.1 de v1.9.9 enumera el contenido real y lo formaliza en **RF-TAS-11**, junto con la llamada a la acción contextual de tres variantes que el texto anterior tampoco recogía. |
@@ -642,7 +642,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-019 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.1 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.1 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17 |
 | **Síntoma** | §2.1 enumeraba cuatro filtros: "Hoy", "Por coordinar", "Toda mi cola" y "SLA en riesgo". El diseño v4 muestra tres: **Todas** (por defecto), **Hoy** y **Por coordinar**. El chip "SLA en riesgo" no existe, y "Toda mi cola" aparece rotulado "Todas". |
 | **Causa** | "SLA en riesgo" se heredó de la bandeja de la Ejecutiva (§1.1), donde tiene sentido porque la vista abarca la operación completa. En la cola del tasador —cinco o seis solicitudes— el estado del SLA viaja en cada card y una vista aparte no agrega información. |
 | **Resolución** | Ya aplicada en la documentación: §2.1 de v1.9.9 declara los tres chips y RF-TAS-01 los fija. **El chip "Hoy" queda condicionado a A-12**, que define qué entra en la agenda del día. |
@@ -663,7 +663,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-020 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.4 y §2.13 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 11-12 (árbol de rutas del App Router) y pp. 17-30 |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.4 y §2.13 · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` pp. 11-12 (árbol de rutas del App Router) y pp. 17-30 |
 | **Síntoma** | §2.4 describía una pantalla "Detalle de Solicitud" con botón "Iniciar captura" y §2.13 listaba ocho rutas, entre ellas `[id]/` como detalle, `[id]/captura/` para el formulario y `[id]/calculo/` para el progreso. El diseño v4 no tiene pantalla de detalle: `[id]/` **es** el formulario de captura, el progreso vive en `[id]/estado/` y las rutas `captura/` y `calculo/` no existen. Quien planifique la construcción sobre §2.13 provisiona dos rutas de más y busca una pantalla que nadie diseñó. |
 | **Causa** | §2.4 y la lista de rutas se redactaron en v1.9.3 desde el ADR, antes de que existiera el prototipo. El detalle intermedio quedó absorbido: sus contenidos se repartieron entre la pantalla de coordinación, la sección F del formulario y el sheet "Ver expediente". |
 | **Resolución** | Ya aplicada en la documentación: §2.4 de v1.9.9 declara que la pantalla no existe y explica dónde quedó cada contenido; §2.13 corrige el árbol a siete rutas. El gate de coordinación, que era lo único funcional que §2.4 aportaba, se conserva en la llamada a la acción de la card (RF-TAS-11). |
@@ -684,7 +684,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-021 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.2 y §2.12 (campo `horas_restantes`) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17, punto 1.1, y §5.2.4 (RF-53) del propio spec |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.2 y §2.12 (campo `horas_restantes`) · vs `docs/_md/Imagenes_IF_Tasador_v4.pdf` p. 17, punto 1.1, y §5.2.4 (RF-53) del propio spec |
 | **Síntoma** | Hasta v1.9.8, RF-TAS-02 calculaba las horas restantes del tasador como `(sla_aplicable * 24) - horas_desde_solicitud`, es decir, convirtiendo a horas el **plazo agregado en días** del semáforo de bandeja. El diseño v4 pide *"usar el RF de Control de SLA del Proyecto, reutilizar dicha funcionalidad según corresponda al tasador"*, que para el tasador es el **plazo por etapa en horas hábiles** de §5.2.4: etapa 2 (coordinación, 4 h / 6 h) y etapa 5 (visita y envío, 24 h / 48 h). Las dos lecturas dan números distintos: la derivación anterior ignora la ventana hábil, los feriados y la etapa en curso, de modo que la card puede decir "12h restantes" un viernes a las 17:00 cuando quedan 2 h hábiles. |
 | **Causa** | §5.2 y RF-53 se incorporaron en v1.9.7, después de que §2.1 y §2.2 se redactaran en v1.9.3. La fórmula `horas_restantes` es anterior al reloj por etapa y nunca se reconcilió con él. |
 | **Resolución** | Aplicada parcialmente: §2.2 de v1.9.9 ancla el semáforo del tasador a RF-53 · §5.2.4, RF-TAS-02 se reescribe en esos términos y §2.12 retira el campo `horas_restantes`. **Falta la contraparte**: §5.2.4 y RF-53 deben exponer el plazo por etapa de forma consumible por IF-03 —hoy la matriz es normativa pero no declara el contrato de lectura—, y §5.2 no se tocó por estar fuera del alcance autorizado. Relacionada con **CI-005**, que ya registra que el reloj del SLA no está implementado. |
@@ -706,7 +706,7 @@ el tipo del campo `motivo` en la tabla que ahora sí se crea).
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-022 |
-| **Archivo:línea** | `docs/schema-airtable.md` §1 (*Dominio C_ · Configuración*, líneas 37-58) y `docs/_md/plan_ejecucion_UItasador_v1.2.md` §3.1 (ruta `GET /api/tasaciones/config/defaults`) · vs base `app9G7lLkIV3CpeLa`, verificada vía Meta API el 17-ago-2026 |
+| **Archivo:línea** | `docs/schema-airtable.md` §1 (*Dominio C_ · Configuración*, líneas 37-58) y `docs/_md/plan_ejecucion_UItasador_v1.3.md` §3.1 (ruta `GET /api/tasaciones/config/defaults`) · vs base `app9G7lLkIV3CpeLa`, verificada vía Meta API el 17-ago-2026 |
 | **Síntoma** | La base tiene **`C_FactoresHomogeneizacion`** (`tblep24N9gPMrDPIN`, 8 campos) y **`C_Factores`** (`tblNHze3ZZYJblJ7S`, 14 campos). Ninguna de las dos aparece en el inventario de tablas de `docs/schema-airtable.md`, ni en el plan de IF-03, ni en la spec. Lo que ambos documentos nombran como origen de los factores de homogeneización es **`C_VariablesCliente`** (`tblgrY8j4ugFzS7v9`), que es una tabla **clave-valor genérica** —`clave · valor · tipo · activa · cliente · valor_defecto · descripcion`— sin ninguna columna de factores. Consecuencia concreta: **`GET /api/tasaciones/config/defaults` (RF-TAS-08) no se puede construir desde la documentación**. Quien la escriba siguiendo el plan leerá `C_VariablesCliente` buscando `factor_sup`, `factor_edad` y `factor_distancia`, que ahí no existen como campos. |
 | **Causa** | La spec §2.8 dice que los defaults viven en *"`C_VariablesCliente` / tabla de factores según §5.4"*. La disyunción quedó sin resolver y `docs/schema-airtable.md` sólo documentó la primera rama. Las dos tablas de factores se crearon en la base en algún momento del diseño del motor AT01-AT10 y nunca entraron al snapshot de schema, que se ha ido ampliando por secciones (§13, §18, §20, §21, §26) sin un pase completo sobre el dominio `C_`. |
 | **Resolución** | ✅ **CERRADA (17-ago-2026) — la parte documental se ejecutó; la decisión de negocio se escaló a A-18.** <br>**(a) Hecho:** las tres tablas quedan documentadas abajo con campos, tipos y FIELD_IDs, levantados vía Meta API. No hay que volver a consultarlos. <br>**(b) Ejecutado y resuelto en negativo:** se leyeron las filas de las tres. `C_FactoresHomogeneizacion` es la canónica por descarte —única con filas de homogeneización— pero **no puede servir un valor por defecto**: `valor_referencia` está vacío en las 15. `C_Factores` está poblada y sana pero es **otra cosa** (coeficientes del motor de valoración). `C_VariablesCliente` está vacía a efectos prácticos. <br>**(c) Escalado:** lo que queda no es documentación ni código sino **carga de configuración con criterio de negocio**, y vive en **`docs/_sync_ifTasador_v1/gap/_ambiguedades.md` · A-18** (dueños: Héctor y Óscar). Corregir el plan §3.1 y la spec §2.8 para que nombren la tabla elegida es tarea del próximo bump normativo, **una vez A-18 responda cuál es**. |
@@ -723,8 +723,26 @@ bloqueante, única pregunta viva de A-18**; **qué tabla es canónica → deuda 
 bloqueante** (junto con `Edad`/`Antiguedad` y las cáscaras `FH-`). La corrección del plan §3.1 y
 de la spec §2.8 para nombrar la tabla elegida sigue esperando esa decisión de schema, no la de
 negocio.
-| **Fecha objetivo** | Documentación: **cerrada 17-ago-2026**. Lo demás: **condicional al cierre de A-18**. |
-| **Estado** | **cerrada** (17-ago-2026) · el bloqueo vivo es **A-18**, no esta ficha |
+
+**Enmienda del 23-ago-2026 — el escalamiento se extingue: la tabla queda sin consumidor.**
+**A-18 cerró por disolución del requisito** (spec §15 · D-24), no por respuesta. Al cerrar A-13 a
+favor de una sección D de **sólo lectura** poblada por extracción de la foto del cuadro, no queda
+ningún campo de factor que el tasador teclee, **RF-TAS-08 pierde su conjunto 1** y
+`GET /api/tasaciones/config/defaults` deja de construirse por falta de propósito.
+
+Consecuencia para esta ficha: **`C_FactoresHomogeneizacion` (`tblep24N9gPMrDPIN`) pasa a ser una
+tabla sin consumidor en IF-03.** No se borra —es trabajo de schema con su propia compuerta de
+aprobación— pero sale de la ruta crítica, y con ella las tres deudas de saneamiento
+(`Edad`/`Antiguedad`, las cáscaras `FH-`, cuál es canónica), que quedan **sin consumidor
+conocido**. La corrección del plan §3.1 y de la spec §2.8 para "nombrar la tabla elegida" **ya no
+tiene objeto**: no hay tabla que elegir porque no hay quien lea.
+
+⚠ **Lo que no se extingue.** La cifra que A-18 pedía —el valor por defecto de cada factor— **nunca
+se respondió**. Si una versión futura reintroduce captura o cálculo de homogeneización, esta ficha
+y A-18 reviven juntas. Y queda registrado en **A-44** que **D-21** ratificó los tres factores como
+vigentes el 22-ago-2026 mientras el cuadro que el tasador fotografía no los contiene.
+| **Fecha objetivo** | Documentación: **cerrada 17-ago-2026**. Lo demás: **extinguido** con el cierre de A-18 el 23-ago-2026. |
+| **Estado** | **cerrada** (17-ago-2026) · **sin bloqueo vivo desde el 23-ago-2026** — ver la enmienda al pie |
 | **Origen** | P2-TAS (17-ago-2026), checkpoint previo a escribir `/config/defaults` — al verificar contra la base que `C_VariablesCliente` tuviera los tres factores que RF-TAS-08 necesita. |
 
 **Schema levantado (Meta API · 17-ago-2026), para no repetir la consulta:**
@@ -975,7 +993,7 @@ Para el próximo bump de `VProperty_Origen_Datos_Informe_v1.1.md`. **El document
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-024 |
-| **Archivo:línea** | `docs/schema-airtable.md` §1 (`TX_DocumentosGenerados` · `tbl5sYnGPZXgYCBSY`, documentada como *"No usada en IF-02"* y sin tabla de campos) · `docs/_md/plan_ejecucion_UItasador_v1.2.md` §10.1 (cabecera del preview: *"la versión del informe debe coincidir con la del registro vigente de `TX_DocumentosGenerados` para esa solicitud"*) · vs base `app9G7lLkIV3CpeLa`, verificada vía **MCP** el 18-ago-2026 |
+| **Archivo:línea** | `docs/schema-airtable.md` §1 (`TX_DocumentosGenerados` · `tbl5sYnGPZXgYCBSY`, documentada como *"No usada en IF-02"* y sin tabla de campos) · `docs/_md/plan_ejecucion_UItasador_v1.3.md` §10.1 (cabecera del preview: *"la versión del informe debe coincidir con la del registro vigente de `TX_DocumentosGenerados` para esa solicitud"*) · vs base `app9G7lLkIV3CpeLa`, verificada vía **MCP** el 18-ago-2026 |
 | **Síntoma** | `GET /api/tasaciones/[id]/informe` (RF-TAS-20) debe mostrar en la cabecera la **versión vigente del informe**, que sólo vive en esta tabla. **No hay forma de asociar sus filas a una solicitud.** La tabla tiene 1 sola fila y su Link `solicitud` (`fldLGIn2LYIFA5MEe`) está **vacío**; su primary field `clave_natural` vale `METLIFE-6283\|doc\|preliminar\|v1`, y ese `METLIFE-6283` **no corresponde a ningún identificador de `TX_Solicitudes`**: los 43 registros usan `codigo_solicitud` y `codigo_ext` con formato `VP-2026-NNNN`. Ni el Link ni el código permiten el join. A eso se suma que la tabla arrastra **cuatro pares de campos homónimos** de dos generaciones distintas, y cuál está poblado no sigue ningún patrón (ver §2). |
 | **Causa** | La tabla la escribe el pipeline PDF (E1/E2/E3 · Carbone), que es anterior a IF-03 y ajeno a él. La fila existente es de **carga de demostración** (`createdTime` 01-jun-2026, `clave_natural` con el nombre del cliente en vez del código de solicitud), no producto del pipeline en régimen. Los cuatro pares de homónimos son sedimento de dos iteraciones del diseño de la tabla que nunca se consolidaron, el mismo patrón de acumulación que **CI-023** documenta para `TX_DatosTasacion`. |
 | **Resolución** | ⚠ **PARCIAL — la ruta se construye contra el contrato correcto y degrada de forma explícita.** <br>**(a) Hecho en P2-TAS.A:** `/informe` busca la versión vigente **por el Link `solicitud`**, que es el contrato correcto y el que el pipeline debe poblar. Si no hay fila, devuelve **`versionVigente: null`** y el preview usa su estado vacío, que ya está especificado: §10.1 del plan manda estado vacío explícito en bloques sin contenido y **CI-016** fija que si el PDF no está depositado se informa la espera. **Los otros 7 bloques no se degradan**: no dependen de esta tabla. <br>**(b) Descartado explícitamente:** parsear `clave_natural` para inferir la solicitud. Sería derivar un contrato de **una fila de demostración**; un acierto casual hoy se rompe cuando el pipeline escriba la segunda, y un match falso mostraría al tasador la versión de **otro** informe, que es peor que no mostrar ninguna. <br>**(c) Pendiente, fuera del repo:** que el pipeline PDF **pueble el Link `solicitud`** al depositar cada documento. Sin eso, la cabecera del preview nunca mostrará versión, por correcta que sea la ruta. |
@@ -1189,10 +1207,10 @@ tanda «arregle» el conteo reconstruyendo una pantalla que el negocio descartó
 | **Archivo:línea** | `lib/tasador/factores-default.ts` (**nuevo**) · `components/tasador/form-sections/seccion-comparables.tsx:21` (import reubicado) · contraste con **A-18** en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md:506` |
 | **Síntoma** | A-18 se venía tratando como bloqueante de **todo** lo relacionado con factores de homogeneización, incluida la existencia del módulo. Consecuencia: `seccion-comparables.tsx` importaba un archivo inexistente, y ese único import mantuvo **`pnpm build` en rojo** —con la pantalla del informe sin compilar— después de haberse resuelto los otros 41 errores de `tsc`. |
 | **Causa** | Se confundieron dos cosas distintas bajo una sola ficha. A-18 bloquea **precargar valores**: ninguna tabla de configuración puede servir hoy un factor por defecto (`C_FactoresHomogeneizacion.valor_referencia` vacío en las 15 filas; `C_Factores` es otra cosa; `C_VariablesCliente` vacía), y elegir uno es decisión de negocio. Pero **la forma no depende de esa respuesta**: los tres factores son campos que **teclea el tasador**, y la aritmética de homogeneización está definida desde siempre. |
-| **Resolución** | ✅ **EJECUTADA (18-ago-2026), con fundamento aprobado por Sergio.** <br>**(a) Hecho:** `nuevoComparable()` devuelve un comparable con `factorSup`, `factorEdad` y `factorDistancia` en `""`; `ufHomogeneizada(c)` calcula `totalUf × factorSup × factorEdad × factorDistancia` sobre lo tecleado y devuelve `null` si falta cualquiera. **Cero valores numéricos por defecto, cero lectura de configuración, cero red.** <br>**(b) A-18 queda intacta:** sigue abierta para la precarga desde `GET /api/tasaciones/config/defaults`, que entra en **P7-TAS** cuando Héctor y Óscar respondan. Cuando llegue, rellena esos tres campos antes de pintarlos y **este módulo no cambia**. <br>**(c) Efecto colateral:** cerró **OV-7** — primer `pnpm build` verde desde que el código v0 entró al repo. <br>**(d) Deuda menor · OV-6:** el nombre `factores-default` sugiere lo que RF-TAS-08 prohíbe y **miente sobre el contenido**: acá no hay ningún default. Se conservó por ser la ruta que el v0 importa. Renombrarlo es gratis si P7-TAS toca el archivo. |
+| **Resolución** | ✅ **EJECUTADA (18-ago-2026), con fundamento aprobado por Sergio.** <br>**(a) Hecho:** `nuevoComparable()` devuelve un comparable con `factorSup`, `factorEdad` y `factorDistancia` en `""`; `ufHomogeneizada(c)` calcula `totalUf × factorSup × factorEdad × factorDistancia` sobre lo tecleado y devuelve `null` si falta cualquiera. **Cero valores numéricos por defecto, cero lectura de configuración, cero red.** <br>**(b) A-18 queda intacta:** sigue abierta para la precarga desde `GET /api/tasaciones/config/defaults`, que entra en **P7-TAS** cuando Héctor y Óscar respondan. ⚠ **Superado el 23-ago-2026** — A-18 cerró por disolución y esa precarga nunca va a llegar; ver la enmienda al pie. Cuando llegue, rellena esos tres campos antes de pintarlos y **este módulo no cambia**. <br>**(c) Efecto colateral:** cerró **OV-7** — primer `pnpm build` verde desde que el código v0 entró al repo. <br>**(d) Deuda menor · OV-6:** el nombre `factores-default` sugiere lo que RF-TAS-08 prohíbe y **miente sobre el contenido**: acá no hay ningún default. Se conservó por ser la ruta que el v0 importa. Renombrarlo es gratis si P7-TAS toca el archivo. |
 | **Dueño** |  |
 | **Fecha objetivo** |  |
-| **Estado** | **cerrada** en lo que toca al frente cliente · **A-18 sigue abierta** para la precarga |
+| **Estado** | **cerrada** · desde el 23-ago-2026 el módulo que produjo **queda sin consumidor**: ver la enmienda al pie |
 | **Origen** | P2-TAS.B (18-ago-2026): el build rojo con un solo error obligó a separar qué parte de A-18 bloqueaba de verdad. |
 
 **Enmienda del 22-ago-2026 — la separación que hizo esta ficha resultó ser la correcta.** Héctor
@@ -1207,6 +1225,24 @@ cada uno, y `C_FactoresHomogeneizacion.valor_referencia` sigue vacío en sus 15 
 abierta**, ahora con una sola pregunta bloqueante —el valor por defecto de cada factor— y sus otras
 tres degradadas a deuda de schema. Cuando llegue la cifra, rellena esos tres campos antes de
 pintarlos y este módulo sigue sin cambiar, tal como (b) anticipaba.
+
+**Enmienda del 23-ago-2026 — el módulo pierde su consumidor, y la lección se invierte.** **A-13
+cerró**: los comparables llegan por extracción de la foto del cuadro y **la sección D pasa a sólo
+lectura**. Con la grilla editable cae la captura de los tres factores, y con ella la razón de ser
+de `nuevoComparable()` y de `ufHomogeneizada()`. **A-18 cierra por disolución** (spec §15 · D-24):
+la precarga que este módulo esperaba ya no va a llegar, porque no hay campo que precargar.
+
+Qué hacer con el archivo es decisión de **P7-TAS**, y hay un criterio en la lista de aceptación de
+esa tanda. Lo que no se debe hacer es dejarlo importado "por si acaso": sería un módulo de
+homogeneización vivo en una pantalla que no homogeneiza, y el nombre —`factores-default`— ya
+mentía sobre su contenido (**OV-6**).
+
+> **La lección, para la próxima.** La separación que hizo esta ficha —forma ahora, valores
+> después— fue correcta y desbloqueó el build. Pero el desenlace muestra su límite: **construir la
+> forma antes de que el negocio confirme que el dato se captura apuesta a que la captura existirá.**
+> Acá esa apuesta se perdió por completo, y el costo fue acotado sólo porque el módulo era pequeño
+> y puro. Cuando lo que espera respuesta es *si un dato se captura* —y no sólo *cuánto vale*—, la
+> forma también está en duda.
 
 ---
 
@@ -1308,7 +1344,7 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 
 > ## Entradas CI-037 a CI-040 · contraste del SLA v1.1 contra el estado real (19-ago-2026)
 >
-> Las cuatro nacen de la misma revisión: contrastar `docs/_md/VProperty_SLA_Negocio_v1.3.md`
+> Las cuatro nacen de la misma revisión: contrastar `docs/_md/VProperty_SLA_Negocio_v1.4.md`
 > —ya absorbido al normativo en el bump v1.9.7 (§5.2.4 · RF-53 · D-16)— contra el schema real de
 > Airtable y el código. **No son requisitos nuevos**: el documento está trackeado desde el commit
 > `dfddb37` del 07-ago-2026 y su configuración vive en la base desde el 10-ago. Lo que estas
@@ -1348,7 +1384,7 @@ recarga, por hidratación y por remontajes de React que el código no controla.
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-038 |
-| **Archivo:línea** | `docs/_md/VProperty_SLA_Negocio_v1.3.md` §3.2 y §6.5 · spec v1.9.9 §5.2.5 (RN-55) · contraste con `TX_Solicitudes` (probado vía API) y con el árbol de código completo |
+| **Archivo:línea** | `docs/_md/VProperty_SLA_Negocio_v1.4.md` §3.2 y §6.5 · spec v1.9.9 §5.2.5 (RN-55) · contraste con `TX_Solicitudes` (probado vía API) y con el árbol de código completo |
 | **Síntoma** | El reproceso —informe ya entregado que el ejecutivo del cliente devuelve para modificar— tiene **matriz de SLA propia (R1, R2, R3)**, regla operativa *"reproceso limpio"* con cortes horarios, motivo tipificado, trazabilidad al informe original y alerta de fin de jornada. **Nada de eso existe.** La API responde `422 · Could not find a field with name or ID "es_reproceso", "motivo_reproceso", "reproceso_origen"`; `grep -rn "reproceso"` sobre `lib/`, `app/` y `components/` no devuelve ninguna coincidencia, y `docs/schema-airtable.md` tampoco lo menciona. No hay campos, ni tabla, ni estado, ni código. |
 | **Causa** | El reproceso entró en el insumo de negocio en la **v1.1** (07-ago-2026) como uno de sus cinco cambios declarados, y se absorbió al normativo como §5.2.5. La construcción del sistema venía —y sigue— enfocada en el flujo principal de solicitud nueva: IF-02 lo crea, IF-03 lo captura, el pipeline PDF lo entrega. El reproceso es un **segundo ciclo de vida sobre un informe ya entregado** y no se parece a ninguna transición del flujo principal, así que no cayó dentro del alcance de ningún CU en curso. |
 | **Resolución** | ⚠ **ABIERTA — bloqueada por decisiones de negocio, no por esfuerzo técnico.** Antes de tocar schema hay que responder: <br>**(a)** ¿Un reproceso es una **fila nueva** en `TX_Solicitudes` ligada a la original, o una **marca de estado** sobre la misma fila? La decisión determina si `A_Cambios` alcanza para la trazabilidad o hace falta un Link. <br>**(b)** ¿Cuáles son los **motivos tipificados**? El documento nombra tres ejemplos —permiso de recepción final, RUT/apellido del vendedor, certificado de profesión— más "aumento de valor", y declara que el más frecuente es el permiso de recepción final en viviendas usadas. Un `singleSelect` necesita el dominio cerrado. <br>**(c)** ¿Qué significa exactamente que *"los SLA de reproceso corren en paralelo a los del flujo principal"* (§4)? Si la solicitud original ya está cerrada, no hay reloj principal contra el cual correr en paralelo. <br>**(d)** La regla *"reproceso limpio"* tiene **cortes horarios propios** (18:00–19:00, 12:00–14:00, 14:00–15:00) que **no encajan en el modelo de horas hábiles** del motor: es una regla de despacho por franja del día, no un plazo en horas. Requiere un cómputo distinto del de `lib/sla-habil.ts`. |
@@ -1383,6 +1419,16 @@ forma, valor y destinatario los resuelve el perfil de visación, no el tasador q
 **El estado no cambia:** sigue **abierta** y sigue sin soporte alguno en el modelo de datos. Lo
 que cambia es que ya no espera una elicitación: espera una decisión de diseño sobre (c) y (d).
 
+**Enmienda del 23-ago-2026 — (a) y (b) quedan firmes.** **A-26 cerró**: el cliente ratificó que los
+siete motivos son **dominio cerrado y no muestra**, con las etiquetas de spec §5.2.5 como valores
+del `singleSelect`. Con eso el punto **(b)** deja de tener reserva y el punto **(a)** —marca sobre
+la misma fila, mismo código— queda confirmado por la misma respuesta.
+
+**El estado sigue sin cambiar:** **abierta** por (c) y (d), que son decisiones de diseño y no de
+negocio, y sin soporte alguno en el modelo de datos. El reproceso sigue diferido en §1.9 ·
+FUT-EJ-08 **por alcance, no por falta de definición**: la versión que lo implemente no tiene que
+volver a elicitar el catálogo.
+
 ---
 
 ## CI-039 · La etiqueta de la píldora de etapa ignora la ventana hábil
@@ -1411,7 +1457,7 @@ que cambia es que ya no espera una elicitación: espera una decisión de diseño
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-040 |
-| **Archivo:línea** | `docs/_md/VProperty_SLA_Negocio_v1.3.md` §4.1 y §6.4 · contraste con `M_Clientes` (`tblpK7AcYBMH93apK`, 90 filas) |
+| **Archivo:línea** | `docs/_md/VProperty_SLA_Negocio_v1.4.md` §4.1 y §6.4 · contraste con `M_Clientes` (`tblpK7AcYBMH93apK`, 90 filas) |
 | **Síntoma** | §4.1 define **tres perfiles de entregable** y dice que el correo automático de cierre adjunta lo que corresponda al perfil del cliente: (1) **estándar** — PDF con carátula e informe; (2) **con resumen ejecutivo** — PDF **más un Excel** de resumen en formato único para todos los clientes de la categoría; (3) **Unidad de Vivienda Habitacional** — PDF con la hoja de resumen **embebida** antes de la carátula. No encontré en `M_Clientes` ningún campo que discrimine el perfil: la tabla tiene la plantilla `.docx` del informe, el tipo de producto, códigos y ratios, pero nada que diga qué se adjunta al correo. |
 | **Causa** | §4.1 entró con la **v1.1** del insumo (07-ago-2026) describiendo un comportamiento del **pipeline PDF** (E1/E2/E3), que es la parte del sistema que ni CU-002 ni CU-003 tocan y cuyo dueño es otro. La configuración por cliente que sí existe en `M_Clientes` —la plantilla `.docx`— resuelve **cómo se ve el informe**, no **qué se adjunta al correo**, y son dos ejes distintos que se pueden confundir a simple vista. |
 | **Resolución** | ⚠ **ABIERTA · hallazgo a confirmar, no defecto confirmado.** <br>**Lo verificado:** nueve nombres candidatos probados contra la API, los nueve con `422 · Could not find a field` — `perfil_entregable`, `tipo_entregable`, `entregable`, `genera_excel`, `resumen_ejecutivo`, `formato_salida`, `plantilla_excel`, `adjuntos_correo`, `config_entregable`. Más el muestreo de tres filas y la ausencia de toda mención en `docs/schema-airtable.md`. <br>**Lo NO verificado:** que no exista un campo con un nombre que no se me ocurrió, o que el perfil no viva **fuera** de `M_Clientes` — en el propio pipeline, en una tabla de configuración de correo, o codificado en los escenarios E1/E2/E3. <br>**Antes de crear nada, preguntar al dueño de E1/E2/E3** dónde vive hoy esa decisión: puede estar resuelta fuera del alcance de este repositorio, en cuyo caso la ficha se cierra documentando dónde. |
@@ -1452,7 +1498,7 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-041 |
-| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.12 (bloque *Campos nuevos en `TX_Solicitudes`*) · vs base `app9G7lLkIV3CpeLa`, `TX_Solicitudes.observacion_rechazo_tasador` = **`fldAccib5yNYaOmJc`**, `multilineText` |
+| **Archivo:línea** | `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.12 (bloque *Campos nuevos en `TX_Solicitudes`*) · vs base `app9G7lLkIV3CpeLa`, `TX_Solicitudes.observacion_rechazo_tasador` = **`fldAccib5yNYaOmJc`**, `multilineText` |
 | **Síntoma** | §2.12 lista `observacion_rechazo_tasador` entre los campos **nuevos** que hay que crear, con la fórmula habitual *"(texto largo, nullable) — observación persistida por RF-TAS-09"*. El campo **ya está creado** desde el 17-ago-2026: lo creó **P0.5-TAS** y está registrado en `docs/schema-airtable.md` §26.1 como *"el único campo creado"* de esa tanda. Quien lea §2.12 al abrir P9-TAS —que es la consumidora de RF-TAS-09— intentará crearlo y recibirá un 422 por nombre duplicado, o peor, lo creará con otro nombre y duplicará el dato. |
 | **Causa** | P0.5-TAS ejecutó una parte del delta de §2.12 y lo registró en `schema-airtable.md`, pero **la spec no se actualizó**: §2.12 describe el delta como intención permanente y no distingue lo ejecutado de lo pendiente. Es la misma clase de divergencia que §26.3 documenta para `fecha_real_visita`, con el signo invertido: allá el campo existía con otro nombre, acá existe con el mismo. |
 | **Resolución** | En el próximo bump normativo, marcar en §2.12 los campos ya materializados con su FIELD_ID real, en lugar de listarlos como pendientes. Mínimo viable: anotar `observacion_rechazo_tasador` como **✅ creado 17-ago-2026 · `fldAccib5yNYaOmJc`**. Conviene hacerlo para los tres campos del bloque a la vez —`fecha_real_visita` ya tiene su nota en §26.3 y `coordinacion_vigente` se crea en P4-TAS—, porque el bloque entero tiene el mismo defecto. **No es trabajo de código.** |
@@ -1504,7 +1550,7 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-043 |
-| **Archivo:línea** | `components/tasador/coordinar-visita.tsx`, comentario del banner de reapertura retirado · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.3 (**RF-TAS-04**) y §1.4 (excepción acotada a RN-59) |
+| **Archivo:línea** | `components/tasador/coordinar-visita.tsx`, comentario del banner de reapertura retirado · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.3 (**RF-TAS-04**) y §1.4 (excepción acotada a RN-59) |
 | **Síntoma** | **RF-TAS-04 quedó desbloqueado en la spec v1.9.10 y no se construye en P4-TAS.** La spec describe la reapertura del segundo intento: cuando la coordinación está `rechazada` y la ejecutiva corrige los contactos de visita, la Pantalla 2 vuelve a abrirse para el tasador con ambos desenlaces disponibles, y el nuevo intento se registra con `intento_numero = 2`. El componente v0 lo implementaba con un banner condicionado a `tasacion.coordinacionVigente === "rechazada" && tasacion.contactosEditadosPorEjecutiva === true`. **El segundo discriminante no existe**: no hay campo en `TX_Solicitudes`, ni en `TX_ContactosVisita`, ni forma de derivarlo de lo que hay. |
 | **Causa** | `coordinacionVigente` sí volvió en P4-TAS —es `fldI4Dv0jpRQvbdHl`, creado en el Bloque 1— pero `contactosEditadosPorEjecutiva` **nunca tuvo respaldo en la base**: en el v0 era un booleano del array en memoria. Reponerlo exige decidir **qué cuenta como "la ejecutiva editó los contactos"**: cualquier escritura sobre `TX_ContactosVisita` posterior a la devolución, sólo las de ciertos campos, o un acto explícito de la ejecutiva. `TX_ContactosVisita` tiene `ultima_modificacion` (`lastModifiedTime`), que permitiría compararla contra `fecha_respuesta` del último intento — pero eso es una **regla de negocio nueva**, no una lectura. |
 | **Impacto** | **Acotado y declarado.** Pantalla 2 funciona completa en su camino principal: los cuatro bloques de resumen, los dos desenlaces, los correos y la visibilidad para la ejecutiva. Lo que falta es el **segundo intento**. Consecuencia operativa concreta: si el tasador devuelve a la ejecutiva y ésta corrige el teléfono, **hoy no hay forma de que la pantalla se reabra desde el sistema** — se resuelve fuera, como antes. No hay pérdida de datos ni estado inconsistente: la fila `rechazada` queda registrada y la ejecutiva la ve. |
@@ -1552,7 +1598,7 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-045 |
-| **Archivo:línea** | `lib/tasador/cola-filtros.ts` → `esPorCoordinar()` · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §4.1 y **RF-TAS-01** |
+| **Archivo:línea** | `lib/tasador/cola-filtros.ts` → `esPorCoordinar()` · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §4.1 y **RF-TAS-01** |
 | **Contexto** | §4.1 define el chip como *"solicitudes **sin coordinación vigente**, en estado `asignada` y con `now() - fecha_asignacion < 4h`"*. Bajo **RO-29** esa definición no era computable —no existía `TX_CoordinacionVisita`— y P3-TAS.A la aproximó por la etapa del motor: `estado === 'asignada' && slaEtapa?.numero === 2`. La etapa 2 de §5.2.4 es la del primer contacto (RN-53), así que la aproximación era razonable. **RO-29 fue anulada el 19-ago-2026** y P4-TAS creó `TX_Solicitudes.coordinacion_vigente` (`fldI4Dv0jpRQvbdHl`): el dato que §4.1 pide existe y no se está usando. |
 | **Síntoma** | El predicado **depende del motor de SLA para responder una pregunta que no es de SLA**. `proyectarSlaEtapa()` devuelve `undefined` cuando el motor no resuelve etapa para la solicitud —y el propio módulo declara que eso es *"un resultado legítimo y no un error"*—. En ese caso `slaEtapa?.numero === 2` es `false` y **la solicitud no aparece en el chip aunque no tenga ninguna coordinación registrada**. Son precisamente las solicitudes peor instrumentadas las que desaparecen de la lista que existe para no perderlas de vista. |
 | **Causa** | La aproximación se adoptó por falta de dato, no por preferencia de diseño, y **nadie la revisó cuando el dato apareció**. Es la deuda típica de un rodeo que sobrevive a su motivo: el comentario del predicado citaba RO-29 como justificación y RO-29 ya no existe. |
@@ -1601,7 +1647,7 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-048 |
-| **Archivo:línea** | `lib/tasador/cola-filtros.ts` → `esPorCoordinar()` · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_14.md` §2.1, **RF-TAS-01**, §2.2 · relacionada con **CI-021** y **CI-045** |
+| **Archivo:línea** | `lib/tasador/cola-filtros.ts` → `esPorCoordinar()` · vs `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.1, **RF-TAS-01**, §2.2 · relacionada con **CI-021** y **CI-045** |
 | **Contexto** | §2.1 / RF-TAS-01 define el chip "Por coordinar" como *"solicitudes **sin coordinación vigente**, en estado `asignada` y con `now() - fecha_asignacion < 4h`"*. Al cablear el chip contra `coordinacion_vigente` (cierre de CI-045), la parte de coordinación es directa —`estado === 'asignada' && coordinacionVigente == null`—; el problema es la **cota horaria de 4h**. |
 | **Síntoma** | La cota `now() - fecha_asignacion < 4h` **no es reproducible en IF-03**. El plazo real de la etapa 2 (§5.2.4) se mide en **horas hábiles** —lunes a viernes, 09:00–18:00, feriados excluidos, con pausa fuera de ventana (§5.2.1)—, no en horas de reloj. Restar `now() - fecha_asignacion` en el cliente daría un número **distinto** del que el motor calcula, y reintroduciría la aritmética de plazos que **CI-021 retiró a propósito** (el campo `horas_restantes` se eliminó por producir una cifra irreproducible). §2.2 declara que IF-03 **consume** el control de SLA, no lo recalcula. Además, una cota de pertenencia **esconde del chip las coordinaciones vencidas** (pasadas las 4h), que son precisamente las más urgentes de coordinar. |
 | **Causa** | La spec describe el chip con una resta de reloj que era natural cuando el SLA se pensaba en días agregados; el modelo por etapa en horas hábiles (RF-53) la volvió no computable del lado cliente sin duplicar el motor. La letra no tiene una realización alternativa fiel dentro de las reglas de IF-03. |
@@ -1626,7 +1672,7 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | Campo | Valor |
 |---|---|
 | **Identificador** | CI-047 |
-| **Archivo:línea** | `docs/_md/plan_ejecucion_UItasador_v1.2.md` §5 (P4-TAS) · vs el árbol real de código |
+| **Archivo:línea** | `docs/_md/plan_ejecucion_UItasador_v1.3.md` §5 (P4-TAS) · vs el árbol real de código |
 | **Contexto** | §5 del plan declara la Pantalla 2 (coordinar visita) como *"⛔ BLOQUEADA · pendiente decisión Héctor/Óscar"* y detalla que RF-TAS-03/12/13 *"se construyen detrás de un flag de entorno apagado (`TASADOR_COORDINACION_ENABLED=false`)"*, con el flag a apagarse en Railway en P12-TAS. |
 | **Síntoma** | **Ese flag nunca se creó.** No existe `TASADOR_COORDINACION_ENABLED` —ni ninguna variante— en el código: `grep` sobre `app/`, `lib/` y `components/` no lo encuentra. CI-012 se cerró en positivo el 19-ago-2026 (revisión de Héctor del diseño v4, que anuló RO-29), así que P4-TAS quedó **viva y sin gate**: la ruta `/tasaciones/[id]/coordinar` es alcanzable directamente. El código y el plan describen dos realidades distintas del mismo flujo. |
 | **Causa** | La compuerta de negocio de §5 se resolvió (CI-012 positiva) entre la redacción del plan y la ejecución de P4-TAS, y el plan —documento maestro— no se realineó con esa resolución. Es la desincronización típica entre un plan escrito por adelantado y el estado que la implementación alcanzó. |
@@ -1663,6 +1709,11 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 - Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
 - **Encaja en el alcance de este registro y conviene decir por qué.** El archivo excluye explícitamente las divergencias *documento ↔ documento*. Ésta no lo es: es el **código** el que afirma algo —que existe un archivo en una ruta— que dejó de ser cierto. La verificación es abrir la ruta y no encontrarla.
 - El caso de `tipos-documento.ts` es el más viejo y el que mejor ilustra el costo: un lector que siga esa cita para entender RN-25 no encuentra el archivo, y no tiene forma de saber si la regla cambió de número o de contenido en las ocho versiones intermedias.
+- **La brecha se ensanchó un bump más (23-ago-2026).** El bump a v1.9.15 y el de
+  `plan_ejecucion_UItasador` a v1.3 dejaron las dos citas de `.ts` **una versión más atrás**;
+  no se añadieron citas nuevas. La tanda del 23-ago era documental y R2 volvió a proteger el
+  código, de modo que la corrección sigue diferida por la misma razón que el 21-ago. Sigue
+  siendo una línea por archivo.
 - **Tercer caso, de otra especie (22-ago-2026 · P0.5.B-TAS).** `lib/catalogos.ts:43-44` documenta un workaround: *"`M_TiposPropiedad` tiene `DEPARTAMENTO` y `Departamento` como filas distintas"*. **Ya no las tiene**: la tanda P0.5.B-TAS eliminó los duplicados y dejó `Casa` y `Departamento` como únicas canónicas. El comentario quedó factualmente falso. <br>Se anota acá y **no se corrigió** (R5 de esa tanda: es código). Difiere de los dos casos anteriores en que no envejeció por un renombre de archivo sino por un **cambio en los datos**, lo que lo hace más difícil de detectar: ningún `grep` de rutas lo encuentra. <br>**El código sigue siendo correcto** —`claveDedupe()` sobre una lista sin duplicados es un no-op inofensivo, y de hecho el saneamiento lo volvió determinista, cuando antes cuál fila ganaba dependía del orden de Airtable—. Lo que hay que decidir al tocarlo es si la deduplicación se conserva como red de seguridad o se retira junto con el comentario.
 
 ---

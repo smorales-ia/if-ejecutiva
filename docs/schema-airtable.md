@@ -53,7 +53,7 @@
 | `C_Feriados` | `tblJVh2kPd4uMgxpb` | Lectura indirecta para SLA hábil |
 | `C_TramosHonorarios` | `tbl3M8p4Mdl1JBZ1f` | No usada en IF-02 |
 | `C_TramosBienComun` | `tbluLTZ30drAAJHQ2` | No usada en IF-02 |
-| `C_FactoresHomogeneizacion` | `tblep24N9gPMrDPIN` | No usada en IF-02. **Es la canónica de IF-03** para los tres factores de RF-TAS-08, ratificados el 22-ago-2026 (A-28). `valor_referencia` sigue **vacío en sus 15 filas**: poblarla es A-18, la única pregunta bloqueante de ese frente. Ver CI-022 |
+| `C_FactoresHomogeneizacion` | `tblep24N9gPMrDPIN` | No usada en IF-02 **ni en IF-03**. Era la canónica para los tres factores de RF-TAS-08, pero **desde el 23-ago-2026 queda sin consumidor**: con la sección D de comparables en sólo lectura (A-13) no hay campo de factor que precargar, RF-TAS-08 pierde su conjunto 1 y A-18 cierra por disolución (spec §15 · D-24). `valor_referencia` sigue **vacío en sus 15 filas** y la cifra nunca se respondió: si vuelve la captura, vuelve el bloqueo. No se borra la tabla. Ver CI-022 y A-44 |
 | `C_AutomationsAirtable` | `tblYYtKEaPgH7GfY0` | Registro AT01/AT02/AT08 — 9 filas presentes |
 
 ### Dominio TX_ · Transacciones
@@ -1273,7 +1273,7 @@ webhooks— pero cualquier código futuro que la consulte va a fallar por esto.
 
 ## 26. IF-03 · Tasador — delta de schema P0.5-TAS (17-ago-2026)
 
-> **Tanda:** P0.5-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.2.md` §1.5.
+> **Tanda:** P0.5-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.3.md` §1.5.
 > **Vía de ejecución:** Airtable **Meta API REST** con `AIRTABLE_TOKEN` (scope `schema.bases:write`
 > confirmado en runtime). **No se usó el MCP** — no está autenticado en la sesión y la preferencia
 > operativa del proyecto es schema desde `docs/` + REST server-side.

@@ -24,6 +24,33 @@ Lo que sigue vigente como regla vive abajo, destilado.
 
 ## Estado de tareas
 
+- 🟢 **2026-08-23 — DESBLOQUEOS por la segunda tanda de respuestas del cliente.** Siete
+  ambigüedades cierran de una vez. Detalle en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md`;
+  normado en `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md`.
+  - **P7-TAS desbloqueada** (IF-03). **A-13 cierra**: los comparables llegan por extracción de una
+    foto del cuadro de la plantilla y **la sección D pasa a sólo lectura** —caen "Agregar
+    comparable" y la eliminación por fila; RF-12 conserva el mínimo de 3 y **cambia de sujeto**,
+    valida el origen y no la captura—. **A-18 cierra por disolución del requisito** (D-24): sin
+    campo editable no hay precarga, **RF-TAS-08 pierde su conjunto 1** y
+    `GET /api/tasaciones/config/defaults` no se construye. `C_FactoresHomogeneizacion` y
+    `lib/tasador/factores-default.ts` quedan **sin consumidor**. **A-25 cierra** sin costo: el
+    catálogo de seis desenlaces ya estaba construido así.
+  - **A-44 nueva, no bloqueante** (D-23): los tres factores que **D-21** ratificó el 22-ago no
+    aparecen en el cuadro que el tasador fotografía, que desde A-13 es su única entrada. Si se
+    usan, no es en este flujo. Dueños Héctor + visador titular.
+  - **SLA · IF-02: cierran A-23, A-24, A-26 y A-32**, y con ellas **D-18 y D-19**. El tope de 24 h
+    se modela **sólo como corte de reporte**, sin semáforo agregado ni alerta en pantalla; el
+    recordatorio queda en **correo único** (WhatsApp descartado); el tablero de vencimientos queda
+    con **cuatro grupos**, sin día 0; los siete motivos de reproceso quedan ratificados como
+    dominio cerrado.
+  - ⚠ **Lo que estas cinco respuestas NO destraban: ninguna tanda entera.** Lo que habilitan es
+    **§5.2.9** —tablero de cuatro grupos y reporte de 24 h, opción B— y los dos `singleSelect` de
+    catálogo. Las tandas del plan IF-02 · SLA son **A–G** (§9.6.2) y conservan su orden y sus
+    precondiciones. **La nomenclatura «T1–T7» del snapshot del 22-ago-2026 no existe en el repo**
+    y no debe reutilizarse.
+  - 🔴 **Tanda F sigue bloqueada**, por un motivo distinto y anterior: el patrón de disparo de
+    `AT08_Alertas_SLA`. Ver la entrada de abajo. Estas respuestas no lo tocan.
+
 - 🔴 **2026-08-11 — TANDA F BLOQUEADA · decisión arquitectónica pendiente antes de arrancar: patrón de disparo de `AT08_Alertas_SLA`.** Dos opciones detectadas el 11-ago-2026:
   - **(A) Fila observada en `TX_Notificaciones`** — patrón del script existente `docs/_artefactos/airtable/AT08_Alertas_SLA.js` (702 líneas, commit `bd5768d`). Evita el problema del secreto HMAC en Airtable Automations pero acopla a polling en Make.
   - **(B) Webhook firmado con HMAC-SHA256** — patrón del plan v1.12 · F-1, consistente con SC01/SC05/SC-Edicion. Obliga a decidir dónde vive el secreto HMAC, ya que Airtable Automations **no lee env vars**.
@@ -850,3 +877,74 @@ histórico+activo, que es lo único que prueba que ningún `sed` se comió una l
 entrada; **(3)** `grep` de punteros vivos **antes** de cortar, separando los que hay que actualizar
 de los que RO-24 protege. La comprobación (2) es la que vale: el recuento de entradas puede dar
 bien con el contenido mutilado.
+
+---
+
+### 2026-08-23 — Segunda tanda de respuestas del cliente · siete ambigüedades cerradas
+
+**Contexto:** tanda documental pura, sin código. Llegaron las respuestas que destrababan A-18 y los
+cinco puntos abiertos de SLA. Antes de registrarlas había que verificar contra qué se estaban
+respondiendo.
+
+**Inconveniente:** la respuesta a A-18 —*"los valores por defecto son los del `.xlsm`"*— **no podía
+ser cierta tal como estaba planteada la pregunta**. A-18 pedía una sola cosa después de cuatro
+estrechamientos: la cifra de `factor_sup`, `factor_edad` y `factor_distancia`. Y el `.xlsm` no las
+tiene.
+
+**Causa raíz:** dos preguntas distintas venían viajando bajo el mismo nombre. El repo ya lo había
+detectado —`docs/_notas/radiografia-excel-informe.md`, hallazgo 5, del 21-ago— y aun así la
+respuesta del cliente se leía, en primera lectura, como si cerrara A-18 con valores. La
+verificación directa lo zanjó: se abrió el libro con `zipfile` sobre `xl/worksheets/sheet2.xml` y
+se leyó la foto de ejemplo. El cuadro `[Excel: Portada!B28:AX44]` tiene **doce columnas y ninguna
+de factor**; calcula `UF/m² C. = (Total UF − UF/m²T × Sup.Terreno − OO.CC.) / Sup.Constr.`. La foto
+de `docs/_referencias/ejemplo-comparables-cuadro.JPG` es exactamente ese rango.
+
+**Solución aplicada:** se separaron las dos mitades y se registró cada una donde correspondía.
+
+- **A-13 cierra con respuesta real**: los comparables salen de la extracción de la foto y la
+  **sección D pasa a sólo lectura**.
+- **A-18 cierra por disolución del requisito, no por respuesta** (spec §15 · **D-24**): sin campo
+  editable no hay precarga. RF-TAS-08 pierde su conjunto 1, `GET /api/tasaciones/config/defaults`
+  no se construye y `C_FactoresHomogeneizacion` queda sin consumidor. **La cifra nunca se dio**, y
+  eso quedó escrito en la ficha: si vuelve la captura, A-18 revive.
+- La contradicción con **D-21** —ratificado un día antes: *"los tres factores se usan en la
+  práctica"*— se abrió como **A-44** (D-23), no bloqueante.
+- Los cinco de SLA cerraron sin sorpresas: **A-23** opción B (sólo reporte), **A-24** en negativo
+  (correo único), **A-25** y **A-26** ratificados, **A-32** en negativo (sin día 0).
+
+Archivos: `_ambiguedades.md`, spec v1.9.14 → **v1.9.15**, `VProperty_SLA_Negocio` v1.3 → **v1.4**,
+plan IF-03 v1.2 → **v1.3**, plan IF-02 v1.14 → **v1.15**, `CODE_INCONSISTENCIES.md` (CI-022,
+CI-031, CI-038), `schema-airtable.md`, `radiografia-excel-informe.md` (puntero).
+
+**Prevención futura:** **una respuesta del cliente se contrasta contra la pregunta archivada antes
+de darla por aplicada.** Cuando una ficha lleva varios estrechamientos, su enunciado original y su
+pregunta viva ya no dicen lo mismo, y el cliente responde a la conversación —no a la ficha—. Aquí
+la respuesta cerraba una pregunta que la ficha *no* estaba haciendo, y la que sí hacía se extinguió
+por un camino distinto. Registrar "A-18 resuelta: valores del xlsm" habría dejado en la spec una
+cifra inexistente como si estuviera disponible. Corolario: **cerrar por disolución es un desenlace
+legítimo y hay que nombrarlo así**, porque una ficha cerrada «con respuesta» no se vuelve a mirar,
+y ésta sí hay que volver a mirarla si la captura regresa.
+
+### 2026-08-23 — La nomenclatura «T1–T7» del plan IF-02 · SLA no existe
+
+**Contexto:** el arranque de la sesión pedía reflejar que las respuestas de SLA desbloqueaban «T1,
+T3, T5, T6 y T7 del plan IF-02 · SLA».
+
+**Inconveniente:** ninguno de esos identificadores existe en el repositorio.
+
+**Causa raíz:** el snapshot de cierre del 22-ago-2026 los introdujo en una sola línea
+(`docs/_notas/snapshot-cierre-2026-08-22.md`, deudas registradas) sin respaldo en el plan. Las
+tandas del control de SLA son **A–G** (`plan-ejecucion-if02-v1_9.md` §9.6.2). `grep -rn "T-1\|T1 ·"`
+sobre `docs/` devuelve cero fuera de esa línea.
+
+**Solución aplicada:** se corrigió al vocabulario real y, sobre todo, se corrigió la afirmación:
+**estas cinco respuestas no desbloquean ninguna tanda entera.** Habilitan §5.2.9 —el tablero de
+cuatro grupos y el reporte de 24 h en su forma de opción B— y ratifican los dos `singleSelect` de
+catálogo. **Tanda F sigue bloqueada** por el patrón de disparo de `AT08_Alertas_SLA`, que es un
+asunto anterior e independiente. Queda escrito en §«Estado de tareas».
+
+**Prevención futura:** un identificador que aparece **una sola vez** y en una nota de `docs/_notas/`
+no es vocabulario del proyecto: es una anotación de sesión. Antes de propagarlo a un plan o a la
+spec, `grep` y, si no tiene segunda aparición, se traduce al identificador canónico en vez de
+adoptarlo. Es **RO-24** por el otro extremo: las notas fechadas no son fuente de estado, y tampoco
+de nombres.

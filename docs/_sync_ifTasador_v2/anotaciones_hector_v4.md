@@ -281,3 +281,31 @@ Las 22 imágenes de `docs/_md/img_hector_v4/`, verificadas el 19-ago-2026.
 | `p28_1.jpeg` | 7 | Diálogo **"Rechazar borrador"** |
 | `p29_1.png` | 7 | Diálogo **"¿Enviar este informe al visador?"** |
 | `p30_1.png` | 7 | Acuse posterior al envío |
+
+---
+
+## Nota de resolución · 23-ago-2026
+
+> Añadida sin tocar el cuerpo del acta, que es la lectura del **19-ago-2026** y se conserva como
+> tal. Sólo cierra el hilo que quedaba colgando.
+
+**El punto 6.1 quedó resuelto, y en el sentido que este documento anticipó.** El acta cerraba su
+bloque de Pantalla 5 diciendo que la instrucción de Héctor —*"sólo mostrar datos, antes leídos"*—
+y las validaciones de los puntos 7 y 9 *"sólo son compatibles si **alguien más** provee los
+comparables"*. Ese alguien ya tiene nombre: **la extracción documental sobre una foto del cuadro**
+de la plantilla operativa. El cliente lo respondió el 23-ago-2026 y **A-13 cierra**.
+
+Consecuencias sobre lo que este acta registraba:
+
+- **A-13** deja de estar *"agravada"*: la sección D se construye de **sólo lectura** y RF-12
+  conserva su mínimo de 3 **cambiando de sujeto** —valida el origen, no la captura—. Las
+  validaciones de `Sup. const. *` y `Precio UF *` de los puntos 7 y 9 siguen vigentes y pasan a
+  recaer sobre lo extraído.
+- **A-18** cierra por disolución del requisito: sin campos editables no hay precarga que hacer.
+- **A-14** ya había cerrado el 22-ago-2026 (puntos 13 y siguientes).
+
+**Ambigüedad nueva que sale de aquí: A-44.** El cuadro que el tasador fotografía no contiene los
+tres factores de homogeneización que **D-21** ratificó como vigentes un día antes. No bloquea.
+
+Detalle en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` y en
+`docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.8.
