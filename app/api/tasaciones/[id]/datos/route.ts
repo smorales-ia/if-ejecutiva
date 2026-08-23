@@ -92,11 +92,17 @@
  */
 
 import type { NextRequest } from 'next/server'
-import { type AirtableRecord, createRecord, listRecords, updateRecord } from '@/lib/airtable-client'
+import { type AirtableRecord, createRecord, updateRecord } from '@/lib/airtable-client'
 import { deleteRecords } from '@/lib/tasador/airtable-writes'
 import { autorizarSolicitud } from '@/lib/tasador/auth-guard'
 import { auditar, derivarCambios, type CambioAuditado } from '@/lib/tasador/auditoria'
 import { OPCIONES_CAPTURA, TABLA_ORIGEN, TABLE_IDS } from '@/lib/tasador/field-ids'
+import {
+  CATEGORIAS_RECINTO,
+  filasDeSolicitud,
+  proyectarDatosCaptura,
+  TIPO_RECINTO,
+} from '@/lib/tasador/lectura-datos'
 import { desdeExcepcion, desdeGuard, error, ok } from '@/lib/tasador/respuestas'
 import {
   CAMPOS_SIN_DESTINO,
@@ -108,28 +114,6 @@ import {
 export const dynamic = 'force-dynamic'
 
 type Fields = Record<string, unknown>
-
-/* -------------------------------------------------------------------------
- * Lectura de las tablas hijas
- * ---------------------------------------------------------------------- */
-
-/**
- * Filas de una tabla hija que cuelgan de esta solicitud.
- *
- * El Link `solicitud` se evalúa contra el primary field de `TX_Solicitudes`
- * (`codigo_solicitud`), no contra el record id — mismo patrón que
- * `/comparables`. Con `codigo` vacío no se consulta: un `filterByFormula` con
- * cadena vacía devolvería la tabla entera.
- */
-async function filasDeSolicitud<T extends Fields>(
-  tableId: string,
-  codigo: string
-): Promise<AirtableRecord<T>[]> {
-  if (!codigo) return []
-  return listRecords<T>(tableId, {
-    filterByFormula: `{solicitud}="${codigo.replace(/"/g, '\\"')}"`,
-  })
-}
 
 /* -------------------------------------------------------------------------
  * Sync destructivo · RO-31
@@ -198,34 +182,6 @@ async function sincronizarHijas(
  * Mapeos de dominio
  * ---------------------------------------------------------------------- */
 
-/**
- * `NivelHabitaciones` (10 claves del v0) → `TX_HabitacionesPorNivel.tipo_recinto`
- * (dominio cerrado de 11 valores).
- *
- * ⚠ `walkIn` no tiene equivalente y cae en `Otro`; para no perder qué era, el
- * campo libre `nombre` conserva la etiqueta. `loggia` va a `Lavadero`, que es
- * lo que una logia es en la práctica chilena.
- */
-const TIPO_RECINTO: Record<string, { valor: string; etiqueta: string }> = {
-  living: { valor: 'Living', etiqueta: 'Living' },
-  estar: { valor: 'Sala', etiqueta: 'Sala de estar' },
-  cocina: { valor: 'Cocina', etiqueta: 'Cocina' },
-  comedor: { valor: 'Comedor', etiqueta: 'Comedor' },
-  dormitoriosSimples: { valor: 'D.Simple', etiqueta: 'Dormitorio simple' },
-  suites: { valor: 'Suite', etiqueta: 'Suite' },
-  banos: { valor: 'Bano', etiqueta: 'Baño' },
-  walkIn: { valor: 'Otro', etiqueta: 'Walk-in closet' },
-  escritorio: { valor: 'Estudio', etiqueta: 'Escritorio' },
-  loggia: { valor: 'Lavadero', etiqueta: 'Logia' },
-}
-
-/** Las tres categorías de `TX_TerminacionesPorRecinto` que `/datos` escribe. */
-const CATEGORIAS_RECINTO = [
-  { campo: 'pavimento', categoria: OPCIONES_CAPTURA.categoriaTerminacion.pisos },
-  { campo: 'revestimientoMuros', categoria: OPCIONES_CAPTURA.categoriaTerminacion.muros },
-  { campo: 'terminacionCielo', categoria: OPCIONES_CAPTURA.categoriaTerminacion.cielos },
-] as const
-
 /** Sufijo de clave estable: sin acentos, sin espacios, apto para un texto corto. */
 function slug(valor: string): string {
   return valor
@@ -240,6 +196,16 @@ function slug(valor: string): string {
  * GET
  * ---------------------------------------------------------------------- */
 
+/**
+ * La proyección de la captura vive en `lib/tasador/lectura-datos.ts` desde
+ * P7-TAS.A.1: la pantalla la consume directo y esta ruta la sirve, de modo que
+ * no puedan divergir (precedente CI-030).
+ *
+ * El aplanado `{ id, codigo, ...datos, derivados }` es lo que conserva el
+ * contrato HTTP ya publicado —`derivados` agrupado, todo lo demás al ras— sin
+ * obligar al helper a mentir en el tipo: `derivados.dfl2` es `'SI'`/`'NO'` y
+ * `InformeData.dfl2` es `boolean`.
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -249,132 +215,9 @@ export async function GET(
   const guard = await autorizarSolicitud(id)
   if (!guard.ok) return desdeGuard(guard)
 
-  const codigo = String(guard.fields.codigo_solicitud ?? '')
-
   try {
-    const [datos, legales, items, ampliaciones, habitaciones, terminaciones] = await Promise.all([
-      filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.itemsCuadroValoracion, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.ampliaciones, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.habitacionesPorNivel, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.terminacionesPorRecinto, codigo),
-    ])
-
-    const d = datos[0]?.fields ?? {}
-    const l = legales[0]?.fields ?? {}
-    const s = guard.fields as Fields
-
-    const texto = (v: unknown) => (v === null || v === undefined ? '' : String(v))
-
-    /* Niveles: se reconstruye el Record<NivelId, NivelHabitaciones> del v0
-       recorriendo las filas y volcando cada `cantidad` en su casilla. */
-    const niveles: Record<string, Record<string, number>> = {}
-    for (const [idNivel, valorNivel] of Object.entries(OPCIONES_CAPTURA.nivel)) {
-      const casillas: Record<string, number> = {}
-      for (const [clave, mapa] of Object.entries(TIPO_RECINTO)) {
-        const fila = habitaciones.find(
-          (h) => h.fields.nivel === valorNivel && h.fields.tipo_recinto === mapa.valor
-        )
-        casillas[clave] = Number(fila?.fields.cantidad ?? 0)
-      }
-      niveles[idNivel] = casillas
-    }
-
-    /* Recintos: la tabla es larga (una fila por categoría) y el v0 los quiere
-       anchos (un objeto por recinto). Se reagrupa por `nombre`. */
-    const porRecinto = new Map<string, Record<string, string>>()
-    for (const t of terminaciones) {
-      const nombre = texto(t.fields.nombre)
-      if (!porRecinto.has(nombre)) porRecinto.set(nombre, { id: nombre, nombre })
-      const destino = CATEGORIAS_RECINTO.find((c) => c.categoria === t.fields.categoria)
-      if (destino) porRecinto.get(nombre)![destino.campo] = texto(t.fields.descripcion)
-    }
-
-    return ok({
-      id,
-      codigo,
-      /* --- A --- */
-      fechaPlanificadaVisita: texto(s.fecha_visita_programada),
-      fechaVisitaReal: texto(s.fecha_visita),
-      observacionesTasador: texto(d.observaciones_tasador),
-      /* --- B --- */
-      supTerreno: texto(d.sup_terreno_m2),
-      supConstruida: texto(d.sup_construccion_m2),
-      supPrimerPiso: texto(d.sup_primer_piso_m2),
-      anioConstruccion: texto(d.anio_construccion),
-      estadoConservacion: texto(d.estado_conservacion),
-      agrupacionPropiedad: texto(d.agrupacion_propiedad),
-      materialPredominante: texto(d.material_predominante),
-      calidadConstruccion: Number(d.calidad_construccion ?? 0),
-      pisosPropiedad: texto(d.pisos),
-      orientacion: d.orientacion ? [String(d.orientacion)] : [],
-      numAscensores: texto(d.num_ascensores),
-      dormitorios: texto(d.dormitorios),
-      banos: texto(d.banos),
-      estacionamientos: texto(d.estacionamientos),
-      rolesEstacionamientos: texto(d.roles_estacionamientos),
-      bodegas: texto(d.bodegas),
-      rolesBodegas: texto(d.roles_bodegas),
-      servidumbreM2: texto(d.servidumbre_m2),
-      velocidadVenta: texto(d.velocidad_venta_estimada),
-      tipoZona: texto(d.tipo_zona_descripcion),
-      /* --- C --- */
-      items: items.map((i) => ({
-        id: i.id,
-        descripcion: texto(i.fields.descripcion),
-        subtipo: texto(i.fields.subtipo),
-        rolSii: texto(i.fields.rol_sii),
-        anioItem: texto(i.fields.anno_construccion),
-        tipo: texto(i.fields.tipo_item),
-        situacionMunicipal: texto(i.fields.situacion_municipal),
-        estado: texto(i.fields.flag_estado),
-        aportaGarantia: Boolean(i.fields.aporta_a_garantia),
-        superficieM2: texto(i.fields.sup_m2),
-        materialItem: texto(i.fields.material),
-        origenSuperficie: '',
-      })),
-      /* --- E --- */
-      ampliaciones: ampliaciones.map((a) => ({
-        id: a.id,
-        nPe: '',
-        fechaRecepcion: texto(a.fields.anno_regularizacion),
-        m2: texto(a.fields.sup_m2),
-        destino: texto(a.fields.descripcion),
-      })),
-      niveles,
-      recintos: [...porRecinto.values()],
-      /* --- F --- */
-      cbrFoja: texto(l.fojas),
-      cbrNumero: texto(l.numero_inscripcion),
-      cbrAnio: texto(l.ano_inscripcion),
-      nPermisoEdificacion: texto(l.permiso_edificacion_numero),
-      fechaPermisoEdif: texto(l.permiso_edificacion_fecha),
-      nRecepcionFinal: texto(l.recepcion_final_numero),
-      fechaRecepcionFinal: texto(l.recepcion_final_fecha),
-      nCertificadoNoExpropiacion: texto(d.n_cert_no_expropiacion),
-      coordenadasLat: texto(d.lat),
-      coordenadasLng: texto(d.long),
-      /* --- G --- */
-      tasaCapRateOverride: texto(s.tasa_cap_rate_override),
-      vidaUtilOverride: texto(s.vida_util_override),
-      valorSugeridoOverride: texto(s.valor_final_override),
-      motivoOverride: texto(s.override_motivo),
-      /* --- H --- */
-      arriendoBrutoClp: texto(d.arriendo_mensual),
-      gastoAnualClp: texto(d.gasto_anual),
-
-      /**
-       * Campos calculados por Airtable. **La UI no los edita**: son fórmulas y
-       * un PATCH contra ellas devuelve 422. Van agrupados y no sueltos entre
-       * los editables justamente para que no se confundan. CI-023 §2.
-       */
-      derivados: {
-        dfl2: texto(d.dfl2),
-        supConstruidaTotal: texto(d.sup_construida_total),
-        ingresoLiquidoAnual: texto(d.ingreso_liquido_anual),
-      },
-    })
+    const { codigo, datos, derivados } = await proyectarDatosCaptura(guard.fields)
+    return ok({ id, codigo, ...datos, derivados })
   } catch (err) {
     return desdeExcepcion('GET /api/tasaciones/[id]/datos', err)
   }

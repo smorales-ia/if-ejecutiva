@@ -948,3 +948,32 @@ no es vocabulario del proyecto: es una anotación de sesión. Antes de propagarl
 spec, `grep` y, si no tiene segunda aparición, se traduce al identificador canónico en vez de
 adoptarlo. Es **RO-24** por el otro extremo: las notas fechadas no son fuente de estado, y tampoco
 de nombres.
+
+### 2026-08-23 — «Pre-llenado · editable» no se pone sobre un dato que el tasador escribió
+
+**Contexto:** P7-TAS.A.1, hidratación server-side del formulario de captura. `app/tasaciones/[id]/page.tsx`
+pasó a resolver el estado inicial con `{ ...resolverInforme(tasacion), ...(guardados?.datos ?? {}) }`,
+de modo que lo guardado en Airtable llega en el **primer render** y no por un `fetch` posterior.
+
+**Inconveniente:** con los datos ya presentes en el montaje, el badge **"Pre-llenado · editable"**
+—Regla T-B, §8.1 del plan IF-03— quedaría colgado también sobre los campos hidratados, y no sólo
+sobre los defaults. Un tasador vería marcada como sugerencia del sistema una superficie que escribió
+él mismo en la visita anterior.
+
+**Causa raíz:** `TextField` deriva `prellenado` de `useState(value)` en el montaje
+(`components/tasador/form-sections/fields.tsx:155`). El predicado es «vino con valor al montar», que
+antes de .A.1 sólo podía ser cierto para un default y ahora también lo es para lo hidratado. El
+badge no distingue **origen**, sólo **presencia**.
+
+**Solución aplicada:** ninguna en código, y es deliberado. El orden de la hidratación hace que el
+badge **no aparezca** sobre lo hidratado sin escribir una línea extra, así que .A.1 no toca
+`fields.tsx`. Lo que se fija es el criterio: **«Pre-llenado · editable» aplica sólo a defaults
+reales** —la fecha planificada de visita (sección A) y los defaults constructivos de
+`C_DefaultsAntecedentes` (sección E · sección F)—. Un dato que el tasador guardó **es suyo, no una
+sugerencia del sistema**, y no lleva badge.
+
+**Prevención futura:** cuando la sección E cablee la precarga contra `C_DefaultsAntecedentes`, el
+badge tiene que colgar del **origen del valor**, no de su presencia en el montaje. Si en esa tanda
+se toca `TextField`, la condición correcta es «este valor viene de la tabla de defaults», no «este
+campo llegó con algo». Sustituir un predicado por el otro es lo que volvería a marcar como
+pre-llenado el trabajo del tasador.

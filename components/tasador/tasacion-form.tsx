@@ -13,7 +13,7 @@ import {
   ImageIcon,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { type Tasacion, type InformeData, resolverInforme } from "@/lib/tasador/tasaciones"
+import { type Tasacion, type InformeData } from "@/lib/tasador/tasaciones"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
 import { Label } from "@/components/ui/label"
@@ -42,7 +42,19 @@ import {
 type Seccion = "A" | "B" | "C" | "D" | "F" | "G"
 type Faltante = { label: string; seccion: Seccion }
 
-export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
+export function TasacionForm({
+  tasacion,
+  informeInicial,
+}: {
+  tasacion: Tasacion
+  /**
+   * Estado inicial del formulario, hidratado server-side por la página
+   * (P7-TAS.A.1): defaults de `resolverInforme` con lo guardado en Airtable
+   * encima. Llega como prop y no se resuelve acá para que el primer render ya
+   * traiga los datos del tasador, sin carrera entre hidratación y tecleo.
+   */
+  informeInicial: InformeData
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const consulta = searchParams.get("modo") === "consulta"
@@ -53,7 +65,7 @@ export function TasacionForm({ tasacion }: { tasacion: Tasacion }) {
   const d = tasacion.datos
 
   const [form, setForm] = useState<InformeData>(
-    () => readPayload(tasacion.id) ?? resolverInforme(tasacion),
+    () => readPayload(tasacion.id) ?? informeInicial,
   )
   const [calculando, setCalculando] = useState(false)
 
