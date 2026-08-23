@@ -151,6 +151,31 @@ export function useGuardado(
     return () => clearInterval(intervalo)
   }, [id, activo, guardarLocal])
 
+  /**
+   * Guardado al desmontar — el que cubre el hueco entre dos ticks.
+   *
+   * Desde P7-TAS.A.3 el formulario ya no escribe el borrador en cada tecla:
+   * sin esto, salir a la pantalla de fotos a los diez segundos de teclear
+   * perdería lo tecleado hasta el tick siguiente.
+   *
+   * Va en su **propio efecto con `[]`** y lee `id` y `activo` por ref, no en la
+   * limpieza del intervalo: aquella corre también cuando `activo` cambia, y
+   * escribiría el borrador justo al entrar en modo consulta, que es cuando no
+   * hay que escribir nada.
+   */
+  const idRef = React.useRef(id)
+  idRef.current = id
+  const activoRef = React.useRef(activo)
+  activoRef.current = activo
+
+  React.useEffect(() => {
+    return () => {
+      if (!idRef.current || !activoRef.current) return
+      // Sin `setState`: el componente ya se está yendo.
+      writePayload(idRef.current, datosRef.current)
+    }
+  }, [])
+
   const guardarAhora = React.useCallback(async () => {
     if (!id) return
 
@@ -192,4 +217,45 @@ export function useGuardado(
   }, [id])
 
   return { estado, guardadoLocalTs, sincronizadoTs, noPersistidos, guardarAhora }
+}
+
+/* -------------------------------------------------------------------------
+ * Leyenda del pie
+ * ---------------------------------------------------------------------- */
+
+/** `HH:MM` en hora local. Devuelve `''` si el ISO no es una fecha. */
+function hora(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ""
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+}
+
+/**
+ * Lo que dice el pie del formulario sobre el guardado.
+ *
+ * **Función pura**, exportada aparte del hook para poder probarla: es el único
+ * pedazo de `use-guardado` que decide algo, y no necesita React para correr.
+ *
+ * ## Por qué esto reemplaza a un literal de §6.1
+ *
+ * El pie decía `"✓ Autosave hace 22 s"` — una **constante** heredada de la
+ * maqueta v0 que mostraba «22 s» en todos los renders, recién abierta la
+ * pantalla o veinte minutos después. Es un literal fijado en §6.1 del plan, y
+ * el desvío se toma con sign-off explícito: conservarlo por respeto a la letra
+ * habría sido conservar una afirmación falsa sobre si el trabajo del tasador
+ * está a salvo, que es de las peores cosas que puede decir esta pantalla.
+ *
+ * Tres estados, no cuatro. **El fallo del PATCH colapsa en «Sin enviar»**: el
+ * error ya se reporta por toast (Regla B) y el pie es estado ambiente, donde
+ * «sin enviar» es igual de cierto y no compite con el toast.
+ */
+export function leyendaGuardado(
+  g: Pick<Guardado, "estado" | "guardadoLocalTs" | "sincronizadoTs">,
+): string {
+  if (g.estado === "guardando") return "Guardando…"
+  if (!g.sincronizadoTs) return "Sin enviar"
+  if (g.guardadoLocalTs && g.guardadoLocalTs > g.sincronizadoTs) return "Sin enviar"
+
+  const hhmm = hora(g.sincronizadoTs)
+  return hhmm ? `Guardado ${hhmm}` : "Sin enviar"
 }

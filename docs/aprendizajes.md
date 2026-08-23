@@ -951,6 +951,8 @@ de nombres.
 
 ### 2026-08-23 — «Pre-llenado · editable» no se pone sobre un dato que el tasador escribió
 
+⚠ CORREGIDO — ver entrada 2026-08-23 · «P7-TAS.A.3 · el badge sí aparecía, el borrador de fotos tapaba la hidratación, y "diferente" no es "aporta"» al final del archivo.
+
 **Contexto:** P7-TAS.A.1, hidratación server-side del formulario de captura. `app/tasaciones/[id]/page.tsx`
 pasó a resolver el estado inicial con `{ ...resolverInforme(tasacion), ...(guardados?.datos ?? {}) }`,
 de modo que lo guardado en Airtable llega en el **primer render** y no por un `fetch` posterior.
@@ -977,3 +979,89 @@ badge tiene que colgar del **origen del valor**, no de su presencia en el montaj
 se toca `TextField`, la condición correcta es «este valor viene de la tabla de defaults», no «este
 campo llegó con algo». Sustituir un predicado por el otro es lo que volvería a marcar como
 pre-llenado el trabajo del tasador.
+
+### 2026-08-23 — P7-TAS.A.3 · el badge sí aparecía, el borrador de fotos tapaba la hidratación, y «diferente» no es «aporta»
+
+**Contexto:** cableado de `useGuardado` en `components/tasador/tasacion-form.tsx`, banner de
+recuperación y regla corregida de arranque del formulario.
+
+---
+
+**Inconveniente 1 — la entrada anterior de esta misma fecha afirma algo falso.**
+Dice que, con la hidratación server-side, el badge **"Pre-llenado · editable" no aparece** sobre lo
+hidratado sin escribir una línea extra. Es al revés: aparece sobre **todos** los campos hidratados.
+
+**Causa raíz:** `components/tasador/form-sections/fields.tsx:154-157` calcula
+`prellenado = !deshabilitado && initial.trim() !== "" && !editado`, donde `initial` sale de
+`useState(value)` en el montaje. El predicado es **presencia al montar**, no **origen del valor**.
+Antes de P7-TAS.A.1 sólo podía ser cierto para un default, así que la distinción no existía; desde
+que el valor guardado llega en el primer render, cualquier campo con dato lleva badge. La entrada
+describía la mecánica correctamente y sacaba la conclusión opuesta — el error estuvo en no ejecutar
+el predicado mentalmente con el caso nuevo.
+
+**Solución aplicada:** ninguna en código todavía, y es deliberado: la corrección del badge se partió
+como **P7-TAS.A.3-bis**, el sub-bloque inmediatamente siguiente, para no meter un quinto frente en
+una tanda que ya toca cuatro. Acá se corrige el registro: la entrada vieja lleva una marca `⚠` que
+apunta a ésta, y queda escrito que **hoy la Regla T-B está incumplida en producción**.
+
+**Prevención futura:** una afirmación sobre lo que la UI muestra no se cierra leyendo el código que
+la calcula — se cierra **evaluando el predicado con los valores del caso nuevo**. Acá bastaba
+preguntar «¿`initial` está vacío cuando el campo viene hidratado?». La respuesta era no, y estaba a
+una línea de distancia del texto que se citó como prueba.
+
+---
+
+**Inconveniente 2 — la hidratación de P7-TAS.A.1 estaba muerta en el flujo normal.**
+Sólo se veía entrando directo a `/tasaciones/[id]` con `localStorage` limpio, que es exactamente
+como se verificó.
+
+**Causa raíz:** `components/tasador/fotos-screen.tsx:72-79` inicializa con
+`readPayload(id) ?? resolverInforme(tasacion)` y escribe el `InformeData` **entero** en cada cambio.
+Como el flujo canónico es *coordinar → fotos → lectura → formulario*, la pantalla de fotos **siembra
+un borrador en blanco** antes de que el formulario se abra por primera vez. Con la regla
+`readPayload(id) ?? informeInicial`, ese blanco tapaba todo lo hidratado desde Airtable. No es un
+fallo de .A.1: es la interacción con una pantalla que .A.4 todavía no absorbió.
+
+**Solución aplicada:** `lib/tasador/recuperacion-borrador.ts` reparte por clase de campo — el
+servidor manda en las secciones A–H, el borrador manda en `fotosPredefinidas`, `categoriasCustom` y
+`documentosCargados`, que hoy no tienen otra fuente. `CLAVES_SOLO_BORRADOR` es una constante
+exportada justamente para que **quede vacía en .A.4** y el reparto desaparezca sin tocar nada más.
+
+**Prevención futura:** antes de dar por buena una hidratación, recorrer **el camino de navegación
+real**, no la URL directa. Una pantalla vecina que comparte almacén es un escritor más, y en este
+repo el borrador es una variable global compartida por tres pantallas.
+
+---
+
+**Inconveniente 3 — el predicado del banner, tal como se aprobó, era una máquina de destruir datos.**
+Se detectó escribiendo su test, no revisando el diseño.
+
+**Causa raíz:** el diseño aprobado condicionaba el banner a `hayCambiosSinSincronizar` **y**
+`difiereEnSecciones`. El borrador en blanco del inconveniente 2 cumple las dos: tiene `''` donde
+Airtable tiene `'5024.86'`, que es una diferencia perfectamente legítima. El banner habría ofrecido
+«Recuperar» un formulario vacío **encima de la visita anterior**, con un rótulo tranquilizador.
+
+**Solución aplicada:** se añadió `borradorAportaContenido()`, que exige que la clave que difiere
+traiga **contenido del lado del borrador** — cadena no vacía, número distinto de cero, `true`, array
+con elementos, u objeto con alguna hoja con contenido. `difiereEnSecciones` se conserva como
+definición del reparto y como candado de sus tests, pero **el banner no la usa**. Coste aceptado y
+escrito en el docblock: vaciar un campo a mano y salir sin enviar no se ofrece para recuperación.
+
+**Prevención futura:** un predicado que decide si se ofrece **sobrescribir** datos se escribe con su
+peor caso al lado. La pregunta que faltó fue «¿qué es lo peor que puede recuperar esto?», y la
+respuesta —un formulario vacío— estaba en el inconveniente que se había diagnosticado media hora
+antes, en el mismo archivo.
+
+---
+
+**Desvío de §6.1 registrado — el pie del formulario.**
+El literal `"✓ Autosave hace 22 s"` (`tasacion-form.tsx:470`, hoy retirado) era una **constante** de
+la maqueta v0: mostraba «22 s» en cada render, recién abierta la pantalla o veinte minutos después.
+§6.1 del plan fija los literales de esta pantalla, así que reemplazarlo es un desvío y se tomó con
+autorización explícita de Sergio. Lo reemplaza `leyendaGuardado()`, con **tres** literales:
+`"Guardando…"` · `"Guardado HH:MM"` · `"Sin enviar"`. El fallo del PATCH colapsa en `"Sin enviar"` en
+vez de tener literal propio: el error ya se reporta por toast (Regla B) y el pie es estado ambiente.
+
+**Regla que queda:** un literal fijado en el plan se respeta **mientras sea cierto**. Uno que miente
+sobre si el trabajo del usuario está a salvo no se conserva por respeto a la letra; se cambia con
+sign-off y se registra el desvío, que es lo que se hizo acá.

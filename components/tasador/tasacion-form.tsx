@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
@@ -15,7 +15,14 @@ import {
 import { cn } from "@/lib/utils"
 import { type Tasacion, type InformeData } from "@/lib/tasador/tasaciones"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
-import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
+import { clearPayload, leerMeta, readPayload, writePayload } from "@/lib/tasador/tasador-store"
+import { leyendaGuardado, useGuardado } from "@/lib/tasador/use-guardado"
+import {
+  combinarConBorrador,
+  debeOfrecerRecuperacion,
+  soloClavesDeBorrador,
+} from "@/lib/tasador/recuperacion-borrador"
+import { BannerRecuperacion } from "@/components/tasador/banner-recuperacion"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Progress } from "@/components/ui/progress"
@@ -64,10 +71,69 @@ export function TasacionForm({
   const { enviarParaCalculo } = useEstadoTasador(tasacion.id, false)
   const d = tasacion.datos
 
+  /**
+   * El borrador se lee **una sola vez** y alimenta tanto el estado inicial como
+   * la decisión del banner: dos lecturas podrían devolver cosas distintas si
+   * otra pestaña escribe en medio, y el formulario quedaría mostrando una cosa
+   * y ofreciendo otra.
+   *
+   * ⚠ Se lee en el inicializador de `useState`, que corre también en el render
+   * de servidor, donde `localStorage` no existe y `readPayload` devuelve
+   * `null`. No produce desajuste de hidratación porque este componente **no se
+   * renderiza en el servidor**: usa `useSearchParams()` bajo un `<Suspense>`
+   * (`app/tasaciones/[id]/page.tsx`), lo que lo saca del render de servidor.
+   * Es una dependencia implícita y frágil, y se prefiere igual: moverlo a un
+   * efecto post-montaje reintroduce el parpadeo que P7-TAS.A.1 vino a matar.
+   */
+  const borradorInicial = useMemo(() => readPayload(tasacion.id), [tasacion.id])
+
+  /**
+   * Regla de arranque corregida (P7-TAS.A.3). Hasta .A.2 era
+   * `readPayload(id) ?? informeInicial`, donde el borrador tapaba lo hidratado
+   * siempre que existiera — y existe casi siempre, porque `fotos-screen`
+   * siembra uno en blanco antes de que esta pantalla se abra. Ahora el servidor
+   * manda en A–H y el borrador sólo en las fotos. Ver el docblock de
+   * `lib/tasador/recuperacion-borrador.ts`.
+   */
   const [form, setForm] = useState<InformeData>(
-    () => readPayload(tasacion.id) ?? informeInicial,
+    () => combinarConBorrador(informeInicial, borradorInicial),
   )
   const [calculando, setCalculando] = useState(false)
+
+  /** ¿Hay trabajo local sin enviar que valga la pena ofrecer? */
+  const [ofrecerRecuperacion, setOfrecerRecuperacion] = useState(
+    () =>
+      !consulta &&
+      debeOfrecerRecuperacion({
+        meta: leerMeta(tasacion.id),
+        informeInicial,
+        borrador: borradorInicial,
+      }),
+  )
+
+  /* Autoguardado local cada 30 s + envío bajo demanda. En modo consulta va
+     apagado: no hay nada que guardar y escribir pisaría el borrador real. */
+  const guardado = useGuardado(tasacion.id, form, { activo: !consulta })
+
+  const recuperarBorrador = useCallback(() => {
+    if (borradorInicial) setForm(borradorInicial)
+    setOfrecerRecuperacion(false)
+  }, [borradorInicial])
+
+  /**
+   * Descarta las secciones A–H y vuelve a lo hidratado, **resembrando las
+   * fotos**: son lo único que no está en ninguna otra parte hasta .A.4, y
+   * borrarlas se llevaría archivos ya subidos a Dropbox.
+   */
+  const descartarBorrador = useCallback(() => {
+    const soloFotos = borradorInicial ? soloClavesDeBorrador(borradorInicial) : {}
+    const limpio = { ...informeInicial, ...soloFotos }
+
+    clearPayload(tasacion.id)
+    writePayload(tasacion.id, limpio)
+    setForm(limpio)
+    setOfrecerRecuperacion(false)
+  }, [borradorInicial, informeInicial, tasacion.id])
 
   // Estado blocked (§5.5): el workflow ya pasó a visitada/calculada.
   const bloqueadoCalculo =
@@ -79,11 +145,6 @@ export function TasacionForm({
       ? { A: true, B: true, C: true, D: true, F: true, G: true }
       : { A: true, B: false, C: false, D: false, F: false, G: false },
   )
-
-  // Mantener el store en sync para que el informe lea los datos reales.
-  useEffect(() => {
-    if (!consulta) writePayload(tasacion.id, form)
-  }, [tasacion.id, form, consulta])
 
   const set: SetForm = useCallback((key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -190,7 +251,16 @@ export function TasacionForm({
      */
     setCalculando(true)
     try {
-      writePayload(tasacion.id, form)
+      /*
+       * «Calcular Tasación» cumple la función de *guardar y calcular* (§2.8), y
+       * el orden importa: si el PATCH falla, **no se calcula**. `POST /calcular`
+       * hace la transición `asignada → visitada` y dispara AT03 contra lo que
+       * haya en Airtable; calcular sin haber guardado produciría un informe
+       * sobre datos viejos, en silencio y con el estado ya avanzado.
+       * `guardarAhora()` relanza el error, así que el `catch` de abajo corta el
+       * flujo antes de `enviarParaCalculo()`.
+       */
+      await guardado.guardarAhora()
       await enviarParaCalculo()
       router.push(`/tasaciones/${tasacion.id}/estado`)
     } catch (err) {
@@ -236,6 +306,13 @@ export function TasacionForm({
           value={progreso}
           className="block [&_[data-slot=progress-track]]:h-1 [&_[data-slot=progress-track]]:rounded-none [&_[data-slot=progress-track]]:bg-border [&_[data-slot=progress-indicator]]:bg-brand"
         />
+        {/* Borrador local sin enviar (P7-TAS.A.3) */}
+        {ofrecerRecuperacion && (
+          <BannerRecuperacion
+            onRecuperar={recuperarBorrador}
+            onDescartar={descartarBorrador}
+          />
+        )}
         {/* Banner de modo consulta (§6.1) */}
         {consulta && (
           <div className="flex items-center gap-2 bg-[#FEF3C7] px-4 py-2.5 text-sm font-medium text-amber-800">
@@ -467,7 +544,7 @@ export function TasacionForm({
           />
         </div>
         <p className="pb-3 text-center text-xs text-muted-foreground">
-          {consulta ? "Modo consulta · solo lectura" : "✓ Autosave hace 22 s"}
+          {consulta ? "Modo consulta · solo lectura" : leyendaGuardado(guardado)}
         </p>
       </footer>
     </div>
