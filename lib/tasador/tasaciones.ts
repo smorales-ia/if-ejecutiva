@@ -1083,8 +1083,13 @@ const ERROR_GENERICO =
  * Lanza `Error` con el literal humano que trajo la respuesta. Los llamadores
  * son componentes cliente que ya tienen que cerrar el ciclo de la Regla D
  * (spinner → resultado), así que reciben algo que pueden mostrar tal cual.
+ *
+ * Exportada desde **P7-TAS.A.2** para que `lib/tasador/use-guardado.ts` la use
+ * en vez de escribir un cuarto `fetch` a mano (R7 · reuso antes que crear).
+ * `use-estado-tasador` y `use-avance-lectura` ya duplican parte de esta lógica;
+ * un tercero la habría fijado como patrón.
  */
-async function llamarApi<T>(url: string, init?: RequestInit): Promise<T> {
+export async function llamarApi<T>(url: string, init?: RequestInit): Promise<T> {
   let respuesta: Response
   try {
     respuesta = await fetch(url, { credentials: 'same-origin', ...init })

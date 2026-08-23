@@ -1822,3 +1822,25 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 - Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
 - **No lo introdujo la migración de tokens (B3).** Conviene dejarlo dicho porque las dos cosas se vieron en la misma sesión: B3 cambió `bg-vp-primary` por `bg-brand` en ese botón y nada más — ni el `flex`, ni el `flex-1`, ni el `gap-3`, ni el rótulo. El problema es de ancho disponible, no de color.
 - Emparenta con el arreglo de `document-checklist.tsx` de esa misma tanda: allí la fila del checklist se reorganizó a dos columnas bajo `sm` por el mismo motivo —un layout de escritorio estrangulando texto en un teléfono—. La diferencia es que aquel componente admitía el cambio sin tocar literales y éste, en su salida más limpia, no.
+
+---
+
+## CI-054 · `PATCH /api/tasaciones/[id]/datos` no tenía consumidor: la captura de terreno nunca llegaba a Airtable
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-054 |
+| **Archivo:línea** | `app/api/tasaciones/[id]/datos/route.ts:309` (`PATCH`, sin llamador) · `components/tasador/tasacion-form.tsx:193` (`handleCalcular`) · `lib/tasador/use-guardado.ts` (**nuevo**) |
+| **Síntoma** | Ningún punto de la UI llamaba `PATCH /datos`. `handleCalcular` hacía `writePayload()` y `POST /calcular`, de modo que **las ocho secciones del formulario vivían sólo en `localStorage`** y jamás se escribían en `TX_DatosTasacion` ni en sus cuatro tablas hijas. Verificable: `grep -rn 'method: "PATCH"' components/ lib/` fuera de `app/api/` devolvía dos usos, ninguno contra `/datos`. `clearPayload()` y `ultimoGuardado()` tampoco tenían consumidores. |
+| **Causa** | P2-TAS.A construyó la ruta completa —Zod, guard de pertenencia, auditoría en `A_Cambios`, sync destructivo por `clave_*`— y P7-TAS todavía no existía como tanda de UI. La ruta quedó correcta y huérfana. El hueco es invisible en uso: el borrador local hace que el formulario **se vea** persistido al recargar, así que sólo se nota cuando alguien busca el dato en Airtable. Es lo contrario de la spec §2.8, que fija que *"Calcular Tasación cumple la función de guardar y calcular"* — sólo calculaba. |
+| **Resolución** | ✅ **CERRADA POR PARTES.** <br>**(a) P7-TAS.A.2 (23-ago-2026):** `lib/tasador/use-guardado.ts` es el consumidor. Expone `guardarAhora()`, que escribe el borrador, hace el `PATCH` con el `InformeData` entero y marca el sobre con `marcarSincronizado()`. El autoguardado de 30 s **sigue siendo local** por spec §2.8 y, sobre todo, porque el `PATCH` ejecuta sync destructivo (**RO-31**): en bucle borraría y recrearía las filas hijas cien veces por visita. <br>**(b) P7-TAS.A.3 (pendiente):** cablear `guardarAhora()` en «Calcular Tasación», antes de `enviarParaCalculo()`, y decidir qué hacer con `noPersistidos[]` (**CI-023**) y con `clearPayload()`. |
+| **Dueño** |  |
+| **Fecha objetivo** |  |
+| **Estado** | **en curso** · el consumidor existe desde P7-TAS.A.2; queda cablearlo en la pantalla (P7-TAS.A.3) |
+| **Origen** | P7-TAS.A.2 (23-ago-2026), al inventariar quién llamaba a `/datos` antes de escribir el hook de guardado. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **No es un duplicado de CI-023.** Aquélla registra que 23 identificadores llegan al `PATCH` y no tienen columna destino; ésta, que el `PATCH` no se llamaba nunca. Se tocan en un punto: `noPersistidos[]` sólo empieza a significar algo cuando alguien hace la petición, y hasta P7-TAS.A.2 nadie la hacía.
+- **El hook no cierra la ficha solo.** Mientras `tasacion-form.tsx` no lo monte, el comportamiento observable no cambia. Por eso el estado es *en curso* y no *cerrada*: cerrarla acá dejaría el registro diciendo que el dato llega a Airtable cuando todavía no llega.
