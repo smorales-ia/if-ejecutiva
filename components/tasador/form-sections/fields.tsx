@@ -119,8 +119,16 @@ function useFieldId(prefix: string) {
   return `${prefix}-${useId()}`
 }
 
-/** Badge neutro "Pre-llenado · editable" (§5.1). */
-export function PrellenadoBadge() {
+/**
+ * Badge neutro "Pre-llenado · editable" (§5.1).
+ *
+ * **Privado a propósito** (P7-TAS.A.3-bis). Sólo lo renderiza `TextField`, y
+ * sólo cuando su prop `prellenado` lo declara. Exportarlo invita a pintarlo
+ * suelto, que es saltarse el contrato de abajo: el badge afirma el **origen**
+ * del valor, y esa afirmación la hace quien construye el valor, no quien lo
+ * muestra.
+ */
+function PrellenadoBadge() {
   return (
     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
       Pre-llenado · editable
@@ -138,6 +146,7 @@ export function TextField({
   hint,
   requerido = false,
   disabled = false,
+  prellenado = false,
 }: {
   label: string
   value: string
@@ -147,14 +156,37 @@ export function TextField({
   hint?: string
   requerido?: boolean
   disabled?: boolean
+  /**
+   * El valor es una **sugerencia del sistema** —un default real—, no un dato
+   * que el tasador escribió. Lo declara quien construye el valor; **no se
+   * infiere de que el campo llegue con algo**.
+   *
+   * ## Por qué es una prop y no un cálculo (P7-TAS.A.3-bis · Regla T-B)
+   *
+   * Hasta esta tanda el badge salía de `useState(value)` en el montaje: el
+   * predicado era «vino con valor», que antes de P7-TAS.A.1 sólo podía ser
+   * cierto para un default. Desde que el formulario se hidrata server-side, el
+   * dato que el tasador midió en la visita anterior **también** llega con valor
+   * en el primer render, y el badge se colgaba encima marcándolo como
+   * sugerencia del sistema. Un dato que el tasador guardó es suyo.
+   *
+   * El default es `false` a propósito: de los 67 `TextField` del formulario,
+   * hoy **uno solo** es un default real —la fecha planificada de visita, que
+   * pone la Ejecutiva en la coordinación (§2.3)—. Los demás no se tocan.
+   *
+   * ⚠ Es **estático**: declara que el valor *nació* default, no que lo siga
+   * siendo. Sobrescribir un default y guardar hace que en la apertura
+   * siguiente vuelva con badge. Hoy es irrelevante con un único default; se
+   * decide al construir la precarga de la sección E. **CI-055.**
+   */
+  prellenado?: boolean
 }) {
   const id = useFieldId("f")
   const consulta = useContext(FormModoConsultaContext)
   const deshabilitado = disabled || consulta
-  // Pre-llenado: montó con un valor no vacío y el usuario aún no lo ha editado.
-  const [initial] = useState(value)
   const [editado, setEditado] = useState(false)
-  const prellenado = !deshabilitado && initial.trim() !== "" && !editado
+  // El badge lo declara el llamador; acá sólo se decide si toca mostrarlo.
+  const mostrarPrellenado = prellenado && !editado && !deshabilitado
   const vacioRequerido = requerido && value.trim() === ""
 
   return (
@@ -164,7 +196,7 @@ export function TextField({
           {label}
           {requerido && <span className="ml-0.5 text-danger">*</span>}
         </Label>
-        {prellenado && <PrellenadoBadge />}
+        {mostrarPrellenado && <PrellenadoBadge />}
       </div>
       <Input
         id={id}

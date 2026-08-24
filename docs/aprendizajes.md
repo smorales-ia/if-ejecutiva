@@ -953,6 +953,8 @@ de nombres.
 
 ⚠ CORREGIDO — ver entrada 2026-08-23 · «P7-TAS.A.3 · el badge sí aparecía, el borrador de fotos tapaba la hidratación, y "diferente" no es "aporta"» al final del archivo.
 
+⚠ CORREGIDO (2) — la afirmación «defaults reales (sección E · F)» de esta entrada es falsa: E no tiene precarga construida y F es indistinguible sin cambio de schema. Ver entrada 2026-08-23 · «P7-TAS.A.3-bis · el único default real hoy es la fecha planificada (sección A)» al final del archivo.
+
 **Contexto:** P7-TAS.A.1, hidratación server-side del formulario de captura. `app/tasaciones/[id]/page.tsx`
 pasó a resolver el estado inicial con `{ ...resolverInforme(tasacion), ...(guardados?.datos ?? {}) }`,
 de modo que lo guardado en Airtable llega en el **primer render** y no por un `fetch` posterior.
@@ -1065,3 +1067,73 @@ vez de tener literal propio: el error ya se reporta por toast (Regla B) y el pie
 **Regla que queda:** un literal fijado en el plan se respeta **mientras sea cierto**. Uno que miente
 sobre si el trabajo del usuario está a salvo no se conserva por respeto a la letra; se cambia con
 sign-off y se registra el desvío, que es lo que se hizo acá.
+
+### 2026-08-23 — P7-TAS.A.3-bis · el único default real hoy es la fecha planificada (sección A)
+
+**Contexto:** corrección del badge «Pre-llenado · editable» en
+`components/tasador/form-sections/fields.tsx` para cumplir la Regla T-B, partida como sub-bloque
+propio al cerrar P7-TAS.A.3.
+
+---
+
+**Inconveniente 1 — el badge marcaba por presencia, no por origen.**
+`TextField` calculaba `prellenado = !deshabilitado && initial.trim() !== "" && !editado`, con
+`initial` tomado de `useState(value)` en el montaje. Antes de P7-TAS.A.1 el predicado era inofensivo:
+lo único que podía llegar con valor era un default. Desde la hidratación server-side, **lo que el
+tasador midió en la visita anterior también llega con valor en el primer render**, y el badge se
+colgaba encima marcando como sugerencia del sistema un dato que era suyo. Hasta **67** campos
+afectados, uno por cada `TextField` del formulario.
+
+**Causa raíz:** el badge respondía a la pregunta equivocada. «¿Este campo tiene algo?» no es «¿de
+dónde salió esto?». Mientras hubo una sola fuente, las dos preguntas tenían la misma respuesta y la
+diferencia no se veía; en cuanto apareció la segunda fuente, el predicado quedó afirmando algo que
+nunca supo.
+
+**Solución aplicada:** `TextField` recibe `prellenado?: boolean`, con default `false`, y el predicado
+pasa a `prellenado && !editado && !deshabilitado`. **El origen lo declara quien construye el valor,
+no quien lo muestra.** Se marca **un** call site en todo el repo: «Fecha planificada de visita»
+(`tasacion-form.tsx`), que es el ejemplo canónico de la Regla T-B — la pone la Ejecutiva en la
+coordinación (§2.3) y el tasador la ajusta en terreno. Los otros 66 `TextField` **no se tocaron**:
+heredan el default correcto. `PrellenadoBadge` bajó a función privada y
+`components/tasador/campo-prellenado.tsx` —segunda implementación del mismo badge, cero
+consumidores— se borró.
+
+**Prevención futura:** **origen ≠ posición ≠ presencia.** Cuando una marca de UI afirma la
+procedencia de un dato, el default seguro es *no afirmar nada*, y la afirmación la hace el punto del
+código que conoce la respuesta. Un predicado que infiere procedencia mirando el valor funciona
+exactamente hasta que aparece la segunda fuente, y falla en silencio: nadie ve un badge de más.
+
+---
+
+**Inconveniente 2 — el alcance que la entrada anterior daba por bueno no existe.**
+Las dos entradas previas de esta fecha afirman que el badge corresponde a «defaults reales (sección
+E · F)». Ninguna de las dos es cierta hoy.
+
+**Causa raíz:** se escribió el criterio desde el plan (§8.1, que describe la sección E con su
+precarga contra `C_DefaultsAntecedentes`) en vez de desde el repo. Al ir a marcar los campos
+aparecieron los hechos: **`C_DefaultsAntecedentes` (`tblOj7nXcjeouPy09`) no tiene un solo lector en
+el código** —la precarga de E no está construida— y **`resolverInforme` produce exactamente un valor
+no vacío**, `fechaPlanificadaVisita`. La sección F es peor: sus valores los escribe la extracción de
+P6-TAS en `TX_DocumentosLegales` y llegan por el mismo canal que cualquier dato hidratado; el único
+discriminador sería `origen_dato`, que **esa tabla no tiene**, y el de `TX_DatosTasacion` es de fila
+—no de campo— y `PATCH /datos` lo estampa en `tipeado` en cada escritura.
+
+**Solución aplicada:** el alcance real quedó en **sección A, un campo**. Se apiló una segunda marca
+`⚠` sobre la entrada del 23-ago que contiene la afirmación falsa, apuntando acá. La sección E
+marcará sus ~19 campos cuando construya su precarga; la F necesita crear columna en Airtable y no se
+toca sin aprobación.
+
+**Prevención futura:** un criterio de alcance —«esto aplica a las secciones X e Y»— se verifica con
+`grep` contra el repo **antes** de escribirlo en la bitácora, no al ir a ejecutarlo. Acá bastaba
+`grep -rn "DefaultsAntecedentes" lib/ app/ components/`, que devuelve cero, para no haber escrito
+dos veces un alcance inexistente.
+
+---
+
+**Deuda registrada — CI-055.**
+La prop es **estática**: declara que el valor nació default, no que lo siga siendo. Si el tasador
+sobrescribe un default y guarda, en la apertura siguiente el valor llega hidratado y el badge vuelve.
+Es el mismo bug de clase, reducido a un caso. Se difirió con fundamento —el espejo de claves
+pre-llenadas dentro de `InformeData` es infraestructura desproporcionada para un único default— y se
+dejó atada a la tanda que construya la precarga de E, que multiplicará la ventana por 19. La ficha
+lleva el `grep` de cobertura para detectar si la ventana crece antes de que alguien la resuelva.

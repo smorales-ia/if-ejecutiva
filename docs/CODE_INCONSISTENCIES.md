@@ -1846,3 +1846,27 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 - **El hook no cerraba la ficha solo.** Mientras `tasacion-form.tsx` no lo montara, el comportamiento observable no cambiaba; por eso P7-TAS.A.2 la dejó *en curso*.
 - **Cierre (23-ago-2026 · P7-TAS.A.3).** El formulario monta `useGuardado` y «Calcular Tasación» guarda antes de calcular. Lo que el tasador mide en terreno llega a `TX_DatosTasacion` y a sus cuatro tablas hijas. La ficha se cierra con el comportamiento verificable en una línea concreta, no con la existencia del hook.
 - **Lo que el cierre NO incluye.** El autoguardado de 30 s sigue siendo **local**: el `PATCH` ejecuta sync destructivo (**RO-31**) y en bucle borraría y recrearía las filas hijas cien veces por visita. La escritura a Airtable ocurre en «Calcular Tasación», que es lo que la spec §2.8 fija.
+
+---
+
+## CI-055 · El badge «Pre-llenado · editable» es una prop estática: no se recalcula si el tasador sobrescribe un default
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-055 |
+| **Archivo:línea** | `components/tasador/form-sections/fields.tsx` (`TextField`, prop `prellenado`) · `components/tasador/tasacion-form.tsx` (único call site marcado: «Fecha planificada de visita») · `docs/schema-airtable.md` (`C_DefaultsAntecedentes` · `tblOj7nXcjeouPy09`) |
+| **Síntoma** | La prop `prellenado` declara que el valor **nació** como default del sistema, no que **siga** siéndolo. Si el tasador sobrescribe un default y guarda, en la apertura siguiente ese valor llega hidratado desde Airtable —es suyo— y el campo **vuelve a mostrar el badge**. Es el mismo incumplimiento de Regla T-B que P7-TAS.A.3-bis corrigió, en su versión residual: el origen se declara **por posición** (qué campo es) y no **por dato** (de dónde salió *este* valor). |
+| **Causa** | Marcar por dato exige un espejo de claves pre-llenadas que viaje dentro de `InformeData`, se serialice con el borrador de `localStorage` y se excluya del cuerpo del `PATCH`, del store y del diff de `lib/tasador/recuperacion-borrador.ts`. Se evaluó en P7-TAS.A.3-bis y se descartó por desproporción: era infraestructura para **un solo caso**. |
+| **Impacto** | **Hoy, ninguno observable.** Existe **un único default real** en todo el formulario —la fecha planificada de visita, sección A, que pone la Ejecutiva en la coordinación (§2.3)— y la ventana de error es que el tasador la corrija, guarde y vuelva a entrar. `C_DefaultsAntecedentes` **no tiene ningún lector en el repo**: la precarga de la sección E no está construida. |
+| **Resolución** | **Diferida a propósito a la tanda que construya la precarga de la sección E** (plan IF-03 §8.2 paso 7). Esa tanda marcará ~19 campos contra `C_DefaultsAntecedentes` y multiplicará por 19 la ventana; es el momento en que el espejo por dato deja de ser desproporcionado. **Siguiente paso concreto:** al conectar la precarga, elegir entre prop estática y espejo dentro de `InformeData`, y registrar la decisión en esta ficha. |
+| **Dueño** |  |
+| **Fecha objetivo** | condicional a la construcción de la precarga de la sección E (plan IF-03 §8.2 paso 7) |
+| **Estado** | **abierta** · sin impacto observable mientras el formulario tenga un solo default real |
+| **Origen** | P7-TAS.A.3-bis (23-ago-2026), al elegir prop declarativa sobre espejo por dato para corregir el badge. |
+
+**Notas:**
+
+- Dueño y Fecha objetivo en blanco por instrucción del usuario; ver la precisión de alcance al inicio del archivo.
+- **La sección F queda fuera por schema, no por decisión.** Sus valores (`cbrFoja`, `nPermisoEdificacion`, …) los escribe la extracción de P6-TAS en `TX_DocumentosLegales` y llegan al formulario por el mismo canal que cualquier otro dato hidratado. El único discriminador posible sería `origen_dato`, y no existe donde hace falta: **`TX_DocumentosLegales` no tiene esa columna**, y la de `TX_DatosTasacion` (`fldACst7tUEy8yPOP`) es **de fila, no de campo**, con `PATCH /datos` estampándola en `tipeado` en cada escritura. Badgear F exige crear campo en Airtable, que requiere aprobación explícita (`CLAUDE.md`).
+- **No es un duplicado de la corrección que la creó.** P7-TAS.A.3-bis cerró el caso en que el badge aparecía sobre **todos** los campos hidratados —hasta 67— por inferirlo de la presencia de valor al montar. Esta ficha registra lo que queda: un caso, condicionado a que el tasador edite el único default y vuelva a entrar.
+- **Verificación de cobertura del cierre de A.3-bis** (RO-02): `grep -rn "prellenado" components/tasador/form-sections/*.tsx components/tasador/tasacion-form.tsx | grep -v "form-sections/fields.tsx"` devuelve **exactamente una** línea, la de «Fecha planificada de visita». Si algún día devuelve más sin que esta ficha se haya resuelto, la ventana creció y hay que volver acá.

@@ -112,8 +112,8 @@ export type { SlaEtapaSolicitud } from '../console-data'
 export type EstadoColor = 'verde' | 'ambar' | 'rojo' | 'azul' | 'naranja'
 
 /**
- * Procedencia de un dato pre-llenado, para el badge "Pre-llenado · {fuente} ·
- * editable" de `campo-prellenado.tsx`.
+ * Procedencia de un dato pre-llenado, para el badge "Pre-llenado · editable"
+ * de `components/tasador/form-sections/fields.tsx`.
  *
  * ⚠ **Regla T-C.** Ningún valor nombra el medio técnico. El literal visible es
  * la procedencia del dato, nunca cómo se obtuvo.

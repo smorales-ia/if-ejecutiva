@@ -386,6 +386,9 @@ export function TasacionForm({
                 type="date"
                 value={form.fechaPlanificadaVisita}
                 onChange={(v) => set("fechaPlanificadaVisita", v)}
+                /* Único default real del formulario (Regla T-B): la pone la
+                   Ejecutiva en la coordinación y el tasador la ajusta. */
+                prellenado
                 disabled={consulta}
               />
               <TextField
