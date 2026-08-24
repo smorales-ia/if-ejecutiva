@@ -1190,3 +1190,50 @@ por otra vía es parte de retirarla, no una comprobación aparte.** Una escritur
 compensando una lectura que no existe, y nada lo señala mientras las dos convivan. Queda con
 candado en `lib/tasador/lectura-datos.test.ts`: la regresión sería muda —ninguna excepción, ningún
 500, sólo una tabla vacía— y por eso necesita test y no revisión.
+
+### 2026-08-24 — CI-056 · verificación manual y fix del tooltip de RF-12
+
+**Contexto:** preparación de la prueba manual de la sección D, después de commitear CI-056.
+
+**Inconveniente:** el literal nuevo del bloqueo de RF-12 —«Del cuadro se leyeron n de 3
+comparables…»— **no aparecía nunca** en el tooltip ni en la barra ámbar del pie, en ninguna de las
+cinco solicitudes del tasador mock.
+
+**Causa raíz:** el tooltip resolvía `faltantes[0]?.detalle`, o sea sólo miraba el primer faltante.
+La sección D es la cuarta de la lista y siempre hay algo antes —la fecha real de visita encabeza—,
+así que el `detalle` de D no se alcanzaba jamás. El criterio de §8.3 pide tooltip explicativo *«con
+menos de 3 comparables»* sin condicionarlo a que ése sea el faltante más urgente.
+
+**Solución aplicada:** `faltantes.find((f) => f.detalle)?.detalle ?? …` en los dos sitios que usaban
+la misma lógica (`BotonCalcular` → `TooltipContent` y la barra ámbar del pie de
+`components/tasador/tasacion-form.tsx`). El fallback se conservó en `faltantes[0]?.label` para que
+sin ningún `detalle` el pie siga mostrando el primero en orden de sección, que es lo que §8.1 pide.
+La desalineación resultante entre lo que el tooltip explica y adónde lleva `scrollAFaltante()`
+quedó registrada en **CI-059**, sin resolver.
+
+**Prevención futura:** un literal condicionado a una posición en una lista ordenada por otro
+criterio es un literal que puede no mostrarse nunca. Al agregar un mensaje explicativo, verificar
+en datos reales que existe un estado que lo produce — no alcanza con que el código lo pueda
+producir. Acá el defecto sobrevivió a `tsc`, al build y a 662 tests: sólo lo encontró preparar la
+prueba manual.
+
+**Contexto:** misma sesión, al levantar el entorno para esa prueba.
+
+**Inconveniente:** dos falsos negativos que costaron ciclos de diagnóstico. (1) `curl` devolvía
+**404** en `/tasaciones/[id]`, `/tasaciones` y `/consola`, lo que parecía un fallo del código de la
+tanda. (2) `pnpm tsc --noEmit` salió con exit 2 y dos errores de sintaxis en
+`.next/dev/types/validator.ts`, un archivo que nadie tocó.
+
+**Causa raíz:** (1) `middleware.ts` aplica `auth.protect()` a todo lo que no sea `/sign-in` ni
+`/api/health`; sin sesión Clerk, Next responde 404 en vez de redirigir. `curl` no puede alcanzar
+ninguna pantalla de la app. (2) `.next/dev/types/validator.ts` lo regenera el dev server en
+caliente y queda a medio escribir si se lo mata; `tsc` lo incluye y falla sobre él.
+
+**Solución aplicada:** (1) el alcance se acotó comprobando que `/consola` —IF-02, ajeno a la
+tanda— también daba 404, lo que descartó el código propio; la verificación por `curl` se limitó a
+`/api/health` y `/sign-in`, y el resto se delegó al navegador con sesión. (2) `pkill -f "next dev"`,
+`rm -rf .next/dev/types` y `tsc` volvió a 0.
+
+**Prevención futura:** en este repo `curl` **no sirve** para verificar pantallas: sólo para
+`/api/health` y `/sign-in`. Y no correr `tsc` con el dev server arriba — si falla en algo bajo
+`.next/`, bajar el servidor y limpiar `.next/dev/types` antes de creerle al error.
