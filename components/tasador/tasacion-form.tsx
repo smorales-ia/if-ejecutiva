@@ -47,7 +47,16 @@ import {
 } from "@/components/tasador/form-sections/seccion-overrides"
 
 type Seccion = "A" | "B" | "C" | "D" | "F" | "G"
-type Faltante = { label: string; seccion: Seccion }
+/**
+ * Un dato obligatorio que falta.
+ *
+ * `label` es el rótulo corto que va a la lista (§8.3: los faltantes se nombran
+ * por su rótulo visible). `detalle` es opcional y sólo lo llevan los faltantes
+ * cuya acción correctiva no es evidente desde el rótulo — hoy el de la sección
+ * D, donde el tasador **no puede** agregar el dato que falta (A-13) y hay que
+ * decirle cuál es la acción que sí tiene.
+ */
+type Faltante = { label: string; seccion: Seccion; detalle?: string }
 
 export function TasacionForm({
   tasacion,
@@ -182,16 +191,21 @@ export function TasacionForm({
     )
     if (!itemOk)
       m.push({ label: "1 ítem de valoración completo", seccion: "C" })
-    // D. Comparables: mínimo 3 válidos
-    const compValidos = form.comparables.filter(
-      (c) =>
-        c.direccionReferencia.trim() &&
-        c.anio.trim() &&
-        c.totalUf.trim() &&
-        c.supConstruida.trim(),
-    )
-    if (compValidos.length < 3)
-      m.push({ label: `Comparables válidos (${compValidos.length}/3)`, seccion: "D" })
+    /*
+     * D. Comparables: mínimo 3 (RF-12), **con el sujeto cambiado** por A-13.
+     * Se cuentan las filas que la extracción leyó del cuadro, no las que el
+     * tasador completó: la sección es de sólo lectura y no hay captura que
+     * validar. Filtrar por campos llenos, como se hacía cuando la grilla era
+     * editable, castigaría al tasador por una columna que la foto cortó — y la
+     * corrección de eso es la misma con tres campos vacíos o con uno.
+     */
+    const compLeidos = form.comparables.length
+    if (compLeidos < 3)
+      m.push({
+        label: `Comparables del cuadro (${compLeidos}/3)`,
+        seccion: "D",
+        detalle: `Del cuadro se leyeron ${compLeidos} de 3 comparables. Vuelve a fotografiar el cuadro completo desde Editar fotos.`,
+      })
     // F. Documentos legales
     if (!form.cbrFoja.trim() || !form.cbrNumero.trim() || !form.cbrAnio.trim())
       m.push({ label: "CBR: foja, número y año", seccion: "F" })
@@ -451,7 +465,7 @@ export function TasacionForm({
             onOpenChange={setOpen("D")}
             badge={<ComparablesBadge total={form.comparables.length} />}
           >
-            <SeccionComparables form={form} set={set} disabled={consulta} />
+            <SeccionComparables form={form} />
           </Section>
 
           {/* E. Edificación */}
@@ -516,7 +530,7 @@ export function TasacionForm({
         {!consulta && !bloqueadoCalculo && !puedeCalcular && (
           <div className="flex items-center gap-2 bg-[#FEF3C7] px-4 py-2.5 text-sm font-medium text-amber-800">
             <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {faltantes[0]?.label}
+            {faltantes[0]?.detalle ?? faltantes[0]?.label}
             {faltantes.length > 1 ? ` · +${faltantes.length - 1} más` : ""}
           </div>
         )}
@@ -542,7 +556,7 @@ export function TasacionForm({
                   ? "enabled"
                   : "disabled"
             }
-            faltantes={faltantes.length}
+            faltantes={faltantes}
             onClick={handleCalcular}
           />
         </div>
@@ -561,7 +575,7 @@ function BotonCalcular({
   onClick,
 }: {
   estado: "enabled" | "disabled" | "blocked"
-  faltantes: number
+  faltantes: Faltante[]
   onClick: () => void
 }) {
   const base =
@@ -599,7 +613,15 @@ function BotonCalcular({
             Calcular Tasación
           </button>
         </TooltipTrigger>
-        <TooltipContent>Faltan {faltantes} datos</TooltipContent>
+        {/*
+          * El tooltip explica cuando el primer faltante trae `detalle` —hoy la
+          * sección D— y cuenta cuando no. Un «Faltan N datos» sobre el bloqueo
+          * de RF-12 le pediría implícitamente al tasador que capture algo que
+          * A-13 le quitó; el detalle nombra la acción que sí tiene.
+          */}
+        <TooltipContent>
+          {faltantes[0]?.detalle ?? `Faltan ${faltantes.length} datos`}
+        </TooltipContent>
       </Tooltip>
     )
   }

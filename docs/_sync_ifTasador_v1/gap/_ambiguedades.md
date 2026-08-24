@@ -1778,3 +1778,48 @@ la construcción.
 
 **Registro asociado:** **CI-022**, enmendada el 23-ago-2026 para reflejar que la tabla queda sin
 consumidor en IF-03.
+
+---
+
+## A-45 · Re-fotografiado del cuadro: ¿la extracción acumula filas en `TX_Comparables` o reemplaza el conjunto?
+
+**Estado** — abierta · **no bloqueante** · impacto medio. **Dueño: Héctor.**
+Registrada el 24-ago-2026 al ejecutar el cierre de **A-13** en P7-TAS. Ligada a **A-13** y a
+**CI-056**.
+
+**El hecho que la abre.** A-13 dejó la foto del cuadro `[Excel: Portada!B28:AX44]` como **única
+entrada** de comparables al sistema, y la corrección del tasador ante un cuadro mal leído es
+**volver a fotografiarlo**. Esta tanda retiró el `POST` y el `DELETE` de
+`app/api/tasaciones/[id]/comparables/route.ts` —quedaron sin consumidor al pasar la sección D a
+sólo lectura—, de modo que **IF-03 ya no tiene ninguna forma de purgar comparables**. La ruta es
+de sólo lectura en el borde, que es exactamente lo que A-13 pide.
+
+Lo que no está decidido es qué hace el pipeline de extracción cuando la segunda foto llega:
+
+1. **¿Acumula?** Entonces un cuadro fotografiado dos veces deja el doble de filas ligadas a la
+   solicitud, y RF-12 —que cuenta filas— pasaría a verde con comparables duplicados. El promedio
+   UF/m² de la grilla los promediaría dos veces.
+2. **¿Reemplaza?** Entonces alguien tiene que desligar las filas previas antes de escribir las
+   nuevas, y ese alguien **no puede ser IF-03**: no tiene la primitiva. Sería el escenario Make de
+   extracción, y hay que decir con qué criterio identifica «las previas».
+
+**Por qué no bloquea P7-TAS.** La sección D muestra lo que haya en `TX_Comparables` y RF-12 cuenta
+esas filas. Las dos respuestas producen la misma UI; lo que cambia es qué filas hay. La
+construcción no depende de la respuesta.
+
+**Por qué importa igual.** El modo de falla es silencioso: comparables duplicados no se ven como
+error, se ven como un cuadro con más filas. Y `TX_Comparables` alimenta `aporta_a_historico`, así
+que las filas duplicadas le sirven a *otras* tasaciones —es la misma razón por la que el `DELETE`
+desligaba en vez de borrar—. Un duplicado acá no se queda acá.
+
+**La pregunta para Héctor, en una línea:** cuando el tasador vuelve a fotografiar el cuadro porque
+la primera lectura salió incompleta, ¿el sistema debe quedarse con **las filas de la última foto**
+o con **la unión de todas**?
+
+**Tratamiento mientras no se responda.** No se resuelve unilateralmente. No se repone el `DELETE`
+«por si acaso»: sería reabrir en el borde la escritura que A-13 cerró, para un caso que todavía no
+está especificado. Si la respuesta es «reemplaza», la purga se implementa donde corresponde —el
+escenario Make de extracción—, no en una ruta que sirve a una UI de sólo lectura.
+
+**Registro asociado:** **CI-056** (ejecución del cierre de A-13). El `POST` y el `DELETE` retirados
+quedan en git y su protocolo de resurrección es el mismo que declaró **A-18**.

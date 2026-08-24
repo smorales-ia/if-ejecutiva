@@ -1870,3 +1870,99 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 - **La sección F queda fuera por schema, no por decisión.** Sus valores (`cbrFoja`, `nPermisoEdificacion`, …) los escribe la extracción de P6-TAS en `TX_DocumentosLegales` y llegan al formulario por el mismo canal que cualquier otro dato hidratado. El único discriminador posible sería `origen_dato`, y no existe donde hace falta: **`TX_DocumentosLegales` no tiene esa columna**, y la de `TX_DatosTasacion` (`fldACst7tUEy8yPOP`) es **de fila, no de campo**, con `PATCH /datos` estampándola en `tipeado` en cada escritura. Badgear F exige crear campo en Airtable, que requiere aprobación explícita (`CLAUDE.md`).
 - **No es un duplicado de la corrección que la creó.** P7-TAS.A.3-bis cerró el caso en que el badge aparecía sobre **todos** los campos hidratados —hasta 67— por inferirlo de la presencia de valor al montar. Esta ficha registra lo que queda: un caso, condicionado a que el tasador edite el único default y vuelva a entrar.
 - **Verificación de cobertura del cierre de A.3-bis** (RO-02): `grep -rn "prellenado" components/tasador/form-sections/*.tsx components/tasador/tasacion-form.tsx | grep -v "form-sections/fields.tsx"` devuelve **exactamente una** línea, la de «Fecha planificada de visita». Si algún día devuelve más sin que esta ficha se haya resuelto, la ventana creció y hay que volver acá.
+
+---
+
+## CI-056 · La sección D permitía agregar y eliminar comparables después de que A-13 la declarara de sólo lectura
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-056 |
+| **Archivo:línea** | `components/tasador/form-sections/seccion-comparables.tsx` (grilla completa) · `app/api/tasaciones/[id]/comparables/route.ts` (`POST` · `DELETE`) · `lib/tasador/factores-default.ts` (módulo entero) · `lib/tasador/lectura-datos.ts` (bloque D ausente) · `lib/tasador/validators/index.ts:110-130` |
+| **Síntoma** | Detectado en test manual: la sección D mostraba el botón **«+ Agregar comparable»**, un borrado por fila con confirmación en dos pasos, y **catorce campos editables** por comparable —incluidas las tres columnas de factor de homogeneización—. El plan v1.3 §8.1 mandata lo contrario desde el cierre de **A-13** (23-ago-2026): el tasador **no captura** comparables, los fotografía. |
+| **Causa** | La grilla se construyó en P2-TAS **mientras A-13 estaba abierta**, con la decisión explícita —registrada en el docblock de la ruta— de construirla editable y ajustar si A-13 cerraba a favor de sólo lectura. A-13 cerró el 23-ago-2026 y la tanda que debía aplicar el cierre es P7-TAS, ésta. La desviación no es un error de implementación: es trabajo pendiente que el test manual encontró antes que el checklist. |
+| **Impacto** | **Alto si llegaba a producción, nulo mientras tanto.** Un tasador podía teclear comparables a mano y satisfacer RF-12 sin fotografiar el cuadro, que es exactamente la trazabilidad que A-13 vino a garantizar: el comparable dejaría de tener respaldo en la plantilla operativa. Los tres factores editables agravaban el caso — **A-44** dejó registrado que el cuadro no los trae, así que cualquier valor tecleado ahí era invención. |
+| **Resolución** | ✅ **EJECUTADA (24-ago-2026), con las cinco decisiones aprobadas por Sergio.** <br>**(a) Grilla de sólo lectura:** sin «Agregar comparable», sin borrado por fila, sin ningún `input`. Las tres columnas de factor **salieron de la vista**; el discriminador Oferta/CBR pasó de toggle a badge. La grilla ya no recibe `set`. <br>**(b) Hidratación server-side (D-1 · opción A):** `lib/tasador/lectura-datos.ts` lee `TX_Comparables` como séptima tabla hija y proyecta el bloque D. **Sin esto la corrección habría sido peor que el defecto** — ver la nota al pie. <br>**(c) Ruta reducida al `GET` (D-2):** `POST` y `DELETE` retirados. La regla queda verificable en el borde HTTP, no sólo en el render: que un botón no se pinte no impide un `POST` con `curl`. Cero consumidores previos; el pipeline de P6-TAS escribe `TX_Comparables` desde Make, no por esta ruta. <br>**(d) Purga de `factores-default.ts` (cierra CI-031 y OV-6):** sucedido por `lib/tasador/comparables.ts`, que expone `ufM2()` y `promedioUfM2()` con test co-ubicado. El promedio de la fila de cierre pasó de **homogeneizado** a **simple**. <br>**(e) Tipos normalizados (D-5):** el mapeo Airtable → `Comparable` quedó en un solo lugar y devuelve `string` en todos los campos. Los tres factores **siguen en el tipo** y se proyectan; no se pintan. <br>**(f) Literales de RF-12 reescritos** sobre la acción que el tasador sí tiene. |
+| **Dueño** |  |
+| **Fecha objetivo** | — (cerrada) |
+| **Estado** | **cerrada** · 24-ago-2026 |
+| **Origen** | Test manual de P7-TAS, 24-ago-2026. |
+
+**Notas:**
+
+- **El hallazgo que el encargo no pedía, y que era el verdadero riesgo.** El reconocimiento
+  descubrió que `proyectarDatosCaptura` leía **seis** tablas hijas y `TX_Comparables` no era
+  ninguna de ellas: el formulario abría con `comparables: []` y nadie lo notaba **porque el
+  tasador podía teclearlos**. La grilla editable estaba tapando una hidratación que no existía.
+  Quitar la edición sin cablear la lectura habría dejado la sección D vacía para siempre y RF-12
+  bloqueado sin salida — una pantalla peor que la que se venía a corregir. Va con candado en
+  `lib/tasador/lectura-datos.test.ts`.
+- **La lección.** Una capacidad de escritura puede estar compensando la ausencia de una de
+  lectura sin que nada lo señale. Antes de retirar una escritura, verificar que el dato llega por
+  otra vía **es parte de retirarla**, no una comprobación aparte.
+- **Candado contra la reposición.** `app/api/tasaciones/[id]/comparables/route.test.ts` afirma
+  que el módulo **no exporta** `POST` ni `DELETE`. Si alguien los repone, el test falla y obliga a
+  leer **A-18** (protocolo de resurrección) y **A-45** (qué hace el re-fotografiado con las filas
+  previas) antes de seguir.
+- **El umbral de RF-12 se movió como consecuencia**, y tiene ficha propia: **CI-058**. El faltante
+  de la sección D pasó de contar filas completas a contar filas leídas.
+- **Deuda abierta que este cierre deja:** **CI-057** (los dos promedios divergen) y **A-45** (el
+  re-fotografiado, ¿acumula o reemplaza?). Ninguna bloquea.
+
+---
+
+## CI-057 · Dos promedios de comparables para la misma solicitud: la grilla no homogeneiza y `/informe` sí
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-057 |
+| **Archivo:línea** | `lib/tasador/comparables.ts` (`promedioUfM2`) · `app/api/tasaciones/[id]/informe/route.ts:172-206` (bloque 6) |
+| **Síntoma** | La fila de cierre de la sección D muestra un promedio **simple** de `UF/m²`. El bloque 6 del `GET /informe` calcula un promedio **homogeneizado**: multiplica cada unitario por `factor_sup × factor_edad × factor_distancia` leídos de Airtable, tratando el factor ausente como `1`. Para una misma solicitud con factores almacenados, **los dos números difieren** y ninguna de las dos pantallas dice cuál es cuál. |
+| **Causa** | Las dos aritméticas se escribieron en tandas distintas contra estados distintos de **A-18**. La de `/informe` es de P5-TAS, cuando los factores se daban por vigentes; la de la grilla es de esta tanda, después de que **A-18 cerrara por disolución** y **A-44** registrara que el cuadro fotografiado no los trae. La divergencia no existía mientras la grilla homogeneizaba también. |
+| **Impacto** | **Bajo hoy, condicionado.** El cuadro `[Excel: Portada!B28:AX44]` no trae factores, así que las filas que la extracción escribe llegan con las tres columnas vacías y `/informe` las trata como `1` — con lo cual **los dos promedios coinciden**. Divergen sólo sobre filas con factores cargados: registros históricos, o los que se hayan tecleado mientras la sección D fue editable. La ventana existe y es invisible. |
+| **Resolución** | **Pendiente · decisión de producto, no de código.** Las dos aritméticas son defendibles y la evidencia apunta a la simple: **A-28** verificó que la plantilla operativa vigente calcula el unitario **sin coeficientes** `[Excel: Portada!AX29]`, y **A-44** que el cuadro no los contiene. Alinear `/informe` con la grilla es un cambio de ~15 líneas; lo que no es trivial es qué hacer con los factores **ya almacenados** en filas históricas, que hoy alteran un número que alguien firmó. **Siguiente paso concreto:** resolver junto a **A-44** —son la misma pregunta vista desde dos lados— y, si la respuesta es «no se homogeneiza», decidir si las filas históricas se recalculan o se congelan. |
+| **Dueño** |  |
+| **Fecha objetivo** | condicional a **A-44** |
+| **Estado** | **abierta** · no bloqueante |
+| **Origen** | CI-056 (24-ago-2026), al reemplazar `ufHomogeneizada()` por `promedioUfM2()` en la grilla. Registrada por decisión explícita de no tocar `/informe` en esa tanda (**D-3**). |
+
+**Notas:**
+
+- **Por qué no se resolvió en el mismo movimiento.** Tocar `/informe` habría expandido una tanda
+  de UI a una de contrato del informe, y con la pregunta de fondo —**A-44**— todavía sin respuesta
+  de Héctor. Cambiar la aritmética del documento que el visador firma, sobre una duda abierta, es
+  peor que dejar la divergencia registrada.
+- **La divergencia es observable desde `components/tasador/informe-preview.tsx`**, que renderiza
+  la misma grilla que la captura: la vista previa muestra el promedio simple mientras el `GET
+  /informe` devuelve el homogeneizado para la misma solicitud.
+
+---
+
+## CI-058 · RF-12 cambió de umbral al cambiar de sujeto: cuenta filas leídas, no filas completas
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-058 |
+| **Archivo:línea** | `components/tasador/tasacion-form.tsx` (cálculo de `faltantes`, bloque de la sección D) |
+| **Síntoma** | El umbral de RF-12 se movió sin que ningún requisito lo pidiera explícitamente. **Antes:** «comparables válidos» = filas con `direccionReferencia` **y** `anio` **y** `totalUf` **y** `supConstruida` no vacíos. **Ahora:** filas leídas del cuadro, sin mirar su contenido. Una solicitud con tres comparables a medias **hoy pasa RF-12 y antes no**. |
+| **Causa** | El filtro por cuatro campos se escribió en P2-TAS cuando la sección D era **editable**: un comparable a medias era un comparable que el tasador había empezado y no terminado, y exigirle completarlo era la validación correcta. **A-13 cambió el sujeto de RF-12** —valida el origen, no la captura— y con ello el filtro dejó de describir lo que mide: una fila incompleta ya no es trabajo a medio hacer del tasador, es una columna que la foto cortó. |
+| **Impacto** | **Bajo, y en la dirección deliberada.** El umbral se relajó: donde antes hacían falta 3 filas completas, ahora bastan 3 filas. El riesgo teórico es habilitar «Calcular Tasación» sobre comparables sin precio o sin superficie — pero esos quedan **fuera del promedio** de todos modos (`promedioUfM2` los filtra), así que el cálculo no los usa; sólo se listan. El riesgo real que el cambio **evita** es mayor: con el filtro estricto, un tasador cuya foto cortó una columna quedaba bloqueado sin ninguna acción disponible, porque la sección es de sólo lectura y no puede completar el campo. |
+| **Resolución** | ✅ **EJECUTADA (24-ago-2026) dentro de CI-056, aprobada por Sergio.** El faltante de la sección D cuenta `form.comparables.length`. La corrección del tasador ante un cuadro mal leído es **volver a fotografiar**, y esa acción es idéntica con un campo vacío o con tres — de modo que distinguir entre «fila incompleta» y «fila ausente» no cambiaba nada de lo que el tasador podía hacer, sólo cuándo se lo decíamos. Los literales de bloqueo se reescribieron sobre esa acción. |
+| **Dueño** |  |
+| **Fecha objetivo** | — (cerrada) |
+| **Estado** | **cerrada** · 24-ago-2026 |
+| **Origen** | CI-056 (24-ago-2026), al reescribir el faltante de la sección D. Registrada por decisión explícita: el cambio de umbral es una consecuencia de A-13 que ningún documento enunciaba, y sin ficha quedaría como una relajación silenciosa de un requisito. |
+
+**Notas:**
+
+- **Por qué merece ficha propia y no una línea en CI-056.** RF-12 es un requisito numerado y su
+  umbral efectivo cambió. Que el cambio sea correcto no lo vuelve invisible: quien audite RF-12
+  dentro de seis meses va a comparar el código contra la spec —que dice «mínimo 3 comparables», sin
+  calificar— y necesita encontrar acá por qué el conteo es el que es.
+- **Lo que NO cambió.** El mínimo sigue siendo **3** y sigue bloqueando «Calcular Tasación». Lo
+  único que se movió es qué cuenta como uno.
+- **Dónde se ve el efecto de borde.** Una fila sin `totalUf` o sin `supConstruida` cuenta para
+  RF-12 pero **no entra al promedio** de la fila de cierre (`lib/tasador/comparables.ts`), y la
+  grilla la muestra con «—» en su UF/m². Es deliberado: ocultarla escondería la evidencia de que
+  la foto salió incompleta, que es justo lo que el tasador necesita ver para decidir si
+  re-fotografía.

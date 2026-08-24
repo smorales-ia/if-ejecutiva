@@ -22,7 +22,6 @@ import {
 } from "@/lib/tasador/tasaciones"
 import { readPayload } from "@/lib/tasador/tasador-store"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
-import type { SetForm } from "@/components/tasador/form-sections/seccion-propiedad"
 import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
 import { ExpedienteSheet } from "@/components/tasador/expediente-sheet"
 import { Button } from "@/components/ui/button"
@@ -108,8 +107,6 @@ function Dato({ k, v }: { k: string; v: React.ReactNode }) {
     </div>
   )
 }
-
-const noopSet: SetForm = () => {}
 
 export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
   const router = useRouter()
@@ -405,7 +402,7 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
 
           {/* 6 · Comparables (grilla §5.2 read-only) */}
           <ReportSection titulo="Comparables" numero={6} listo={listo}>
-            <SeccionComparables form={d} set={noopSet} readOnly />
+            <SeccionComparables form={d} />
           </ReportSection>
 
           {/* 7 · Registro fotográfico */}

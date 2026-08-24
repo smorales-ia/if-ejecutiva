@@ -1137,3 +1137,56 @@ Es el mismo bug de clase, reducido a un caso. Se difirió con fundamento —el e
 pre-llenadas dentro de `InformeData` es infraestructura desproporcionada para un único default— y se
 dejó atada a la tanda que construya la precarga de E, que multiplicará la ventana por 19. La ficha
 lleva el `grep` de cobertura para detectar si la ventana crece antes de que alguien la resuelva.
+
+### 2026-08-24 — CI-056 · Sección D de comparables a sólo lectura (cierre de A-13)
+
+**Contexto:** P7-TAS. El plan v1.3 §8.1 mandata desde el cierre de A-13 (23-ago) que la sección D
+sea de sólo lectura: los comparables llegan por extracción de la foto del cuadro
+`[Excel: Portada!B28:AX44]`. Un test manual encontró vivo el botón «+ Agregar comparable».
+
+**Inconveniente:** la grilla seguía siendo la editable de P2-TAS —alta, borrado por fila y catorce
+campos editables por comparable, incluidas las tres columnas de factor de homogeneización que
+A-44 registró como ausentes del cuadro de origen—.
+
+**Causa raíz:** no fue un error de implementación sino trabajo pendiente. La grilla se construyó
+editable **a propósito** mientras A-13 estaba abierta, con la decisión escrita en el docblock de
+`app/api/tasaciones/[id]/comparables/route.ts`: *«si A-13 cierra a favor de sólo lectura, lo que
+cae es el POST y el DELETE, no el GET»*. A-13 cerró y la tanda que debía aplicarlo es ésta.
+
+**Solución aplicada:** grilla reescrita sin inputs, sin «Agregar comparable», sin borrado por fila
+y sin columnas de factor (`components/tasador/form-sections/seccion-comparables.tsx`, de 391 a 189
+líneas); `POST` y `DELETE` retirados de la ruta, que queda sólo con `GET`;
+`lib/tasador/factores-default.ts` purgado y sucedido por `lib/tasador/comparables.ts` con test
+co-ubicado; los tres schemas de comparable retirados de `lib/tasador/validators/index.ts`; y los
+literales de bloqueo de RF-12 reescritos sobre la única acción que el tasador tiene —volver a
+fotografiar—, no sobre una que A-13 le quitó.
+
+**Prevención futura:** el candado contra la reposición no es un comentario sino un test —
+`route.test.ts` afirma que el módulo **no exporta** `POST` ni `DELETE`—. Un comentario no sobrevive
+a un merge distraído; un test rojo obliga a leer A-18 y A-45 antes de seguir.
+
+**Contexto:** mismo cierre de A-13, durante el reconocimiento previo a escribir.
+
+**Inconveniente:** retirar la edición habría dejado la sección D **vacía para siempre** y RF-12
+bloqueado sin salida. La corrección planificada era, tal cual estaba especificada, peor que el
+defecto que venía a corregir.
+
+**Causa raíz:** `proyectarDatosCaptura` en `lib/tasador/lectura-datos.ts` leía **seis** tablas
+hijas y `TX_Comparables` no era ninguna de ellas; nadie hacía `fetch` al `GET /comparables`. El
+formulario abría con `comparables: []` y **no se notaba porque el tasador podía teclearlos**: la
+capacidad de escritura estaba tapando la ausencia de la de lectura. El plan no lo detectó porque
+describe la sección D como «poblada por extracción», que es cierto en Airtable y falso en la
+pantalla.
+
+**Solución aplicada:** hidratación server-side (D-1 · opción A), idéntica al patrón de las otras
+seis secciones — `TX_Comparables` como séptima tabla del `Promise.all` y bloque D en la
+proyección. El mapeo Airtable → `Comparable` quedó en **un solo lugar** (`aComparable`), compartido
+por la hidratación y el `GET`, en vez de duplicado como estaba. Al unificarlo salió a la luz un
+desajuste preexistente que TS no veía —la ruta devolvía `number | null` donde el tipo declara
+`string`, porque no estaba tipada contra `Comparable`—; se normalizó a `string` (D-5).
+
+**Prevención futura:** **antes de retirar una capacidad de escritura, verificar que el dato llega
+por otra vía es parte de retirarla, no una comprobación aparte.** Una escritura puede estar
+compensando una lectura que no existe, y nada lo señala mientras las dos convivan. Queda con
+candado en `lib/tasador/lectura-datos.test.ts`: la regresión sería muda —ninguna excepción, ningún
+500, sólo una tabla vacía— y por eso necesita test y no revisión.

@@ -19,8 +19,8 @@
  * así, pero este archivo **no es un módulo de tipos**: son ~250 líneas de
  * catálogos (`OPCIONES`, `CATEGORIAS_FOTO`, `RECINTOS_SUGERIDOS`), funciones
  * puras y seis helpers `fetch`. Llamarlo `types.ts` repetiría **OV-6** —el
- * nombre que miente sobre el contenido, que ya costó una ficha en
- * `factores-default.ts`—. El split en cuatro módulos (tipos · catálogos ·
+ * nombre que miente sobre el contenido, que ya costó una ficha y terminó en la
+ * purga de un módulo entero (CI-031)—. El split en cuatro módulos (tipos · catálogos ·
  * capa cliente · derivación del informe) queda **diferido a un refactor
  * propio**: llevaría las 34 sentencias de import a 48 y haría que 16 de los 30
  * consumidores importaran de dos o más módulos, que es trabajo de otra tanda.
@@ -574,6 +574,25 @@ export interface Comparable {
    * §22 del schema: mismo literal, dos significados.
    */
   fuente: 'oferta' | 'cbr'
+  /**
+   * Los tres factores de homogeneización · **se conservan, no se muestran**
+   * (D-5 · CI-056).
+   *
+   * Las columnas existen en `TX_Comparables` y la proyección las lee, pero la
+   * sección D **no las pinta** y nada las escribe: **A-18** cerró por
+   * disolución —sin campo editable no hay nada que precargar— y **A-44** dejó
+   * registrado que el cuadro que el tasador fotografía
+   * `[Excel: Portada!B28:AX44]` no las trae. En la práctica llegan vacías.
+   *
+   * Quitarlas del tipo obligaría a tocar la proyección de `lectura-datos.ts`
+   * sin ganar nada: el criterio de A-13 es que la UI no las ofrezca, no que el
+   * dato histórico se pierda. Si alguna vez vuelven a capturarse, lo que revive
+   * primero es **A-18**.
+   *
+   * ⚠ `app/api/tasaciones/[id]/informe/route.ts` **sí** los usa para su propio
+   * promedio homogeneizado, que por eso puede diferir del de la grilla. Es
+   * **CI-057**, deuda abierta.
+   */
   factorSup: string
   factorEdad: string
   factorDistancia: string

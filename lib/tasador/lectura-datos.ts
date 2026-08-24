@@ -36,6 +36,7 @@
 
 import { type AirtableRecord, listRecords } from '@/lib/airtable-client'
 import type {
+  Comparable,
   InformeData,
   NivelHabitaciones,
   NivelId,
@@ -62,6 +63,108 @@ export async function filasDeSolicitud<T extends Fields>(
   return listRecords<T>(tableId, {
     filterByFormula: `{solicitud}="${codigo.replace(/"/g, '\\"')}"`,
   })
+}
+
+/* -------------------------------------------------------------------------
+ * Sección D · comparables (RF-12 · A-13)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Las columnas de `TX_Comparables` que la sección D muestra.
+ *
+ * La firma de índice no es decorativa: `filasDeSolicitud<T extends Fields>`
+ * exige `Record<string, unknown>`, y sin ella este tipo no satisface la
+ * restricción. Deja además pasar las demás columnas de la tabla —`fuente`,
+ * `aporta_a_historico`, `oo_cc`— que la proyección ignora a propósito.
+ */
+export interface ComparableFields {
+  [clave: string]: unknown
+  direccion?: unknown
+  comuna_comparable?: unknown
+  sup_terreno_m2?: unknown
+  sup_construccion_m2?: unknown
+  precio_uf?: unknown
+  anio?: unknown
+  tipo_referencia?: unknown
+  factor_sup?: unknown
+  factor_edad?: unknown
+  factor_distancia?: unknown
+  telefono_contacto?: unknown
+  foja?: unknown
+  numero?: unknown
+}
+
+/**
+ * `TX_Comparables.tipo_referencia` (`Oferta` · `CBR`) → `Comparable.fuente`.
+ *
+ * ⚠ **No es `TX_Comparables.fuente`.** Ese campo existe con un dominio ajeno
+ * —de dónde salió el dato, no qué clase de referencia es—. Ver el docblock de
+ * `Comparable.fuente` en `tasaciones.ts` y el de la ruta `/comparables`.
+ */
+const DESDE_TIPO_REFERENCIA: Record<string, Comparable['fuente']> = {
+  Oferta: 'oferta',
+  CBR: 'cbr',
+}
+
+/**
+ * Una fila de `TX_Comparables` → `Comparable`.
+ *
+ * ## Todo sale como `string` (D-5)
+ *
+ * `Comparable` declara sus numéricos `string` porque nació de inputs
+ * controlados del v0. Airtable los devuelve `number`. Antes de CI-056 la ruta
+ * `/comparables` devolvía los `number` tal cual **sin estar tipada contra
+ * `Comparable`**, de modo que TS no veía el desajuste y nadie lo notaba: la
+ * grilla era editable y leía de su propio estado, no de esta proyección. Al
+ * hidratar la grilla desde acá el desajuste sí llegaría a la UI, así que la
+ * normalización ocurre en este borde, una sola vez.
+ *
+ * ## Los tres factores se leen aunque no se muestren
+ *
+ * `factorSup`, `factorEdad` y `factorDistancia` siguen en el tipo por **D-5** y
+ * se proyectan por completitud, pero **la sección D no los pinta** (A-18 ·
+ * A-44) y el cuadro fotografiado no los trae, así que en la práctica llegan
+ * vacíos. Quien los quiera vivos, que reabra A-18 primero.
+ *
+ * ## `fuente` ante un valor desconocido
+ *
+ * Cae en `'oferta'`, que es el caso mayoritario, porque el tipo no admite
+ * `null`. `tipo_referencia` es un singleSelect de dos opciones: un valor fuera
+ * de dominio significa dato roto, no un tercer tipo de referencia. La
+ * consecuencia visible es que la fila muestra la columna de teléfono en vez de
+ * foja y número — no se pierde ningún dato, se pierde una etiqueta.
+ */
+export function aComparable(id: string, f: ComparableFields): Comparable {
+  const texto = (v: unknown) => (v === null || v === undefined ? '' : String(v))
+
+  return {
+    id,
+    direccionReferencia: texto(f.direccion),
+    comuna: texto(f.comuna_comparable),
+    supTerreno: texto(f.sup_terreno_m2),
+    supConstruida: texto(f.sup_construccion_m2),
+    totalUf: texto(f.precio_uf),
+    anio: texto(f.anio),
+    fuente: DESDE_TIPO_REFERENCIA[texto(f.tipo_referencia)] ?? 'oferta',
+    factorSup: texto(f.factor_sup),
+    factorEdad: texto(f.factor_edad),
+    factorDistancia: texto(f.factor_distancia),
+    telefonoContacto: texto(f.telefono_contacto),
+    foja: texto(f.foja),
+    numero: texto(f.numero),
+  }
+}
+
+/**
+ * Comparables de una solicitud, ya en la forma que la grilla consume.
+ *
+ * Dos consumidores —la hidratación de la pantalla y el `GET /comparables`—
+ * sobre una sola proyección, mismo criterio que fijó CI-030. Con `codigo`
+ * vacío devuelve `[]` sin consultar: ver `filasDeSolicitud`.
+ */
+export async function comparablesDeSolicitud(codigo: string): Promise<Comparable[]> {
+  const filas = await filasDeSolicitud<ComparableFields>(TABLE_IDS.comparables, codigo)
+  return filas.map((r) => aComparable(r.id, r.fields))
 }
 
 /**
@@ -119,14 +222,16 @@ export interface DatosCaptura {
 export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<DatosCaptura> {
   const codigo = String(fields.codigo_solicitud ?? '')
 
-  const [datos, legales, items, ampliaciones, habitaciones, terminaciones] = await Promise.all([
-    filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
-    filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
-    filasDeSolicitud<Fields>(TABLE_IDS.itemsCuadroValoracion, codigo),
-    filasDeSolicitud<Fields>(TABLE_IDS.ampliaciones, codigo),
-    filasDeSolicitud<Fields>(TABLE_IDS.habitacionesPorNivel, codigo),
-    filasDeSolicitud<Fields>(TABLE_IDS.terminacionesPorRecinto, codigo),
-  ])
+  const [datos, legales, items, ampliaciones, habitaciones, terminaciones, comparables] =
+    await Promise.all([
+      filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
+      filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
+      filasDeSolicitud<Fields>(TABLE_IDS.itemsCuadroValoracion, codigo),
+      filasDeSolicitud<Fields>(TABLE_IDS.ampliaciones, codigo),
+      filasDeSolicitud<Fields>(TABLE_IDS.habitacionesPorNivel, codigo),
+      filasDeSolicitud<Fields>(TABLE_IDS.terminacionesPorRecinto, codigo),
+      comparablesDeSolicitud(codigo),
+    ])
 
   const d = datos[0]?.fields ?? {}
   const l = legales[0]?.fields ?? {}
@@ -201,6 +306,16 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
         materialItem: texto(i.fields.material),
         origenSuperficie: '',
       })),
+      /*
+       * --- D ---
+       * Sección de **sólo lectura** desde A-13: la pantalla no captura
+       * comparables, los recibe ya proyectados y los muestra. Antes de CI-056
+       * esta clave no se hidrataba y el formulario abría con `[]`; mientras la
+       * grilla era editable eso no se notaba porque el tasador los tecleaba.
+       * Sin esta línea, la grilla de sólo lectura quedaría vacía para siempre y
+       * RF-12 no se destrabaría nunca.
+       */
+      comparables,
       /* --- E --- */
       ampliaciones: ampliaciones.map((a) => ({
         id: a.id,

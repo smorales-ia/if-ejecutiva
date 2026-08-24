@@ -107,28 +107,14 @@ export const coordinacionSchema = z.discriminatedUnion('resultado', [
     .strict(),
 ])
 
-/** Un comparable de la grilla de la sección D (RF-12). */
-export const comparableSchema = z.object({
-  direccionReferencia: z.string().trim().min(1),
-  comuna: z.string().trim().optional(),
-  supTerreno: numeroDeInput,
-  supConstruida: numeroDeInput,
-  totalUf: numeroDeInput,
-  anio: numeroDeInput,
-  /** Se persiste en `tipo_referencia`, **no** en `fuente`. Ver `Comparable.fuente`. */
-  fuente: z.enum(['oferta', 'cbr']),
-  factorSup: numeroDeInput,
-  factorEdad: numeroDeInput,
-  factorDistancia: numeroDeInput,
-  telefonoContacto: z.string().trim().optional(),
-  foja: z.string().trim().optional(),
-  numero: z.string().trim().optional(),
-})
-
-export const comparableCrearSchema = comparableSchema
-export const comparableBorrarSchema = z.object({
-  comparableId: z.string().regex(/^rec[a-zA-Z0-9]{14}$/, 'record id'),
-})
+/*
+ * Los tres schemas de comparables —`comparableSchema`, `comparableCrearSchema`
+ * y `comparableBorrarSchema`— se retiraron en **CI-056**. Validaban los cuerpos
+ * del `POST` y el `DELETE` de `/api/tasaciones/[id]/comparables`, que dejaron
+ * de existir al cerrar **A-13**: la sección D es de sólo lectura y no entra por
+ * HTTP ningún comparable que validar. Quedan en git; su resurrección va atada a
+ * la de A-18, no a la de esta ruta.
+ */
 
 /* -------------------------------------------------------------------------
  * `PATCH /api/tasaciones/[id]/datos` — secciones A a H (RF-TAS-16 · RF-TAS-17)
