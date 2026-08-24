@@ -530,7 +530,12 @@ export function TasacionForm({
         {!consulta && !bloqueadoCalculo && !puedeCalcular && (
           <div className="flex items-center gap-2 bg-[#FEF3C7] px-4 py-2.5 text-sm font-medium text-amber-800">
             <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
-            {faltantes[0]?.detalle ?? faltantes[0]?.label}
+            {/*
+              * Mismo criterio que el tooltip: gana el faltante que sabe explicar
+              * su propia corrección. Sin `detalle` en ninguno, cae al primero en
+              * orden de sección, que es lo que §8.1 pide del pie.
+              */}
+            {faltantes.find((f) => f.detalle)?.detalle ?? faltantes[0]?.label}
             {faltantes.length > 1 ? ` · +${faltantes.length - 1} más` : ""}
           </div>
         )}
@@ -614,13 +619,21 @@ function BotonCalcular({
           </button>
         </TooltipTrigger>
         {/*
-          * El tooltip explica cuando el primer faltante trae `detalle` —hoy la
-          * sección D— y cuenta cuando no. Un «Faltan N datos» sobre el bloqueo
-          * de RF-12 le pediría implícitamente al tasador que capture algo que
-          * A-13 le quitó; el detalle nombra la acción que sí tiene.
+          * El tooltip explica cuando **algún** faltante trae `detalle` —hoy sólo
+          * el de la sección D— y cuenta cuando ninguno. Un «Faltan N datos»
+          * sobre el bloqueo de RF-12 le pediría implícitamente al tasador que
+          * capture algo que A-13 le quitó; el detalle nombra la acción que sí
+          * tiene.
+          *
+          * ⚠ Busca por todo el arreglo, **no mira sólo el primero**. El criterio
+          * de §8.3 pide tooltip explicativo *«con menos de 3 comparables»*, sin
+          * condicionarlo a que ése sea el faltante más urgente — y en la práctica
+          * casi nunca lo es: la fecha real de visita y los cinco campos de la
+          * sección B se resuelven antes en el orden de la lista. Con `[0]` el
+          * literal no aparecía nunca.
           */}
         <TooltipContent>
-          {faltantes[0]?.detalle ?? `Faltan ${faltantes.length} datos`}
+          {faltantes.find((f) => f.detalle)?.detalle ?? `Faltan ${faltantes.length} datos`}
         </TooltipContent>
       </Tooltip>
     )

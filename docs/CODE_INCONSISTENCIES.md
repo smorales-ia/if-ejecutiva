@@ -1966,3 +1966,35 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
   grilla la muestra con «—» en su UF/m². Es deliberado: ocultarla escondería la evidencia de que
   la foto salió incompleta, que es justo lo que el tasador necesita ver para decidir si
   re-fotografía.
+
+---
+
+## CI-059 · Desalineación tooltip / scroll en «Calcular Tasación»: uno explica un bloqueo y el otro lleva a otro
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-059 |
+| **Archivo:línea** | `components/tasador/tasacion-form.tsx` — barra ámbar del pie (`faltantes.find((f) => f.detalle)`) · `BotonCalcular` → `TooltipContent` (mismo selector) · `scrollAFaltante()` (`faltantes[0]`) |
+| **Síntoma** | El tooltip del botón deshabilitado y la barra ámbar del pie eligen **el primer faltante que trae `detalle`** —hoy sólo el de la sección D—, mientras `scrollAFaltante()` sigue saltando a **`faltantes[0]`**, el primero en orden de aparición. Cuando el único faltante con `detalle` es «Comparables del cuadro» y hay faltantes previos —el caso normal: «Fecha real de visita» encabeza la lista—, el tooltip dice *«Del cuadro se leyeron 0 de 3 comparables. Vuelve a fotografiar el cuadro completo desde Editar fotos.»*, el tasador pulsa, y **aterriza en la sección A**. |
+| **Causa** | El selector del tooltip cambió el 24-ago-2026, después de CI-056, para cumplir el criterio de §8.3 —*«con menos de 3 comparables el botón está deshabilitado con tooltip explicativo»*—, que no condiciona el tooltip a que ése sea el faltante más urgente. Con `faltantes[0]` el literal **no aparecía nunca**: la sección D es la cuarta de la lista y siempre hay algo antes. `scrollAFaltante()` no se tocó: su regla de orden es la de **§8.1** (*«el foco aterriza en el primero en orden de aparición con su sección desplegada»*). Las dos reglas son correctas por separado y ninguna contempló a la otra. |
+| **Impacto** | **Bajo, y no es un defecto de corrección.** Son **dos trabajos distintos**: el tooltip explica *por qué* el botón está bloqueado, con el contexto que le sirve al tasador; el scroll obedece la regla de orden que el plan fija para el foco. La incoherencia es de expectativa, no de estado. **Y hay un matiz que la vuelve menos grave de lo que parece:** la acción correctiva que el tooltip nombra —«Editar fotos»— es un control del **header**, fuera del formulario, así que ni siquiera existe un destino de scroll dentro del form al que el botón pudiera llevar. Alinearlos no sería mover el scroll a la sección D: sería sacar al tasador del formulario. |
+| **Resolución** | **Pendiente · no se decide unilateralmente.** Hay al menos tres salidas y la elección es de producto: (a) dejarlo como está y documentar que tooltip y foco responden preguntas distintas; (b) que el scroll siga al faltante que el tooltip nombró, lo que en el caso de la sección D significa llevar a «Editar fotos» y abandonar el formulario; (c) que el tooltip enumere el faltante más urgente **y** el explicativo, a costa de un literal más largo. **Siguiente paso concreto:** plantearlo a Héctor junto al resto del comportamiento de bloqueo de «Calcular Tasación». |
+| **Dueño** |  |
+| **Fecha objetivo** | — |
+| **Estado** | **abierta** · no bloqueante |
+| **Origen** | Fix del tooltip de RF-12, 24-ago-2026, posterior a CI-056. Detectada al aplicar el cambio, no en revisión. |
+
+**Notas:**
+
+- **No es una regresión del fix.** Antes del cambio el literal explicativo no se mostraba nunca, así
+  que no había nada que desalinear: el tooltip decía «Faltan N datos» y el scroll iba al primero,
+  coherentes por vacío. El fix cumplió §8.3 y al hacerlo dejó a la vista una tensión entre §8.1 y
+  §8.3 que ya existía en los dos textos.
+- **Por qué se registra en vez de arreglarse.** Cualquiera de las tres salidas cambia lo que el
+  tasador experimenta al pulsar un botón bloqueado en terreno, y dos de ellas contradicen un
+  literal del plan. Es exactamente el tipo de decisión que **A-13 enseñó a no tomar del lado del
+  código** — la sección D fue editable un mes por adelantarse a una respuesta que llegó distinta.
+- **Alcance real hoy.** Un solo faltante lleva `detalle` en todo el formulario, el de la sección D.
+  Si una tanda futura agrega `detalle` a otros, la ficha crece: el tooltip pasaría a elegir entre
+  varios explicativos y `find` devolvería el primero por orden de sección, que puede no ser el más
+  útil. Vale releer esto antes de agregar el segundo `detalle`.
