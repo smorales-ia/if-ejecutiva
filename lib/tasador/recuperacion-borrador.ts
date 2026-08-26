@@ -22,22 +22,33 @@
  * ese blanco tapaba la hidratación completa. La hidratación de .A.1 sólo se
  * veía entrando directo a `/tasaciones/[id]` con el almacén limpio.
  *
- * ## El reparto — temporal y declarado
+ * ## El reparto — reducido en .A.4
  *
  * | Clase | Origen hoy | Quién gana |
  * |---|---|---|
- * | `fotosPredefinidas` · `categoriasCustom` · `documentosCargados` | **sólo el borrador** | el borrador |
- * | Secciones A–H | Airtable (`informeInicial`) | el servidor; el borrador se **ofrece** |
+ * | `documentosCargados` | **sólo el borrador** | el borrador |
+ * | `fotosPredefinidas` · `categoriasCustom` | Airtable (`lectura-fotos.ts`) | el servidor |
+ * | Secciones A–H | Airtable (`lectura-datos.ts`) | el servidor; el borrador se **ofrece** |
  *
- * Las fotos ganan porque **no están en ninguna otra parte**: `leerDatosCaptura`
- * no las devuelve y `fotos-screen` todavía no se hidrata server-side. Arrancar
- * el formulario sólo con `informeInicial` pondría el chip en «0 fotos
- * ingresadas» justo después de que el tasador subió doce.
+ * Hasta .A.3 las fotos también ganaban, porque **no estaban en ninguna otra
+ * parte**: `leerDatosCaptura` no las devuelve y `fotos-screen` no se hidrataba
+ * server-side. Arrancar el formulario sólo con `informeInicial` habría puesto el
+ * chip en «0 fotos ingresadas» justo después de que el tasador subió doce.
  *
- * ⚠ **Esto se cae en P7-TAS.A.4.** Cuando `fotos-screen` se hidrate desde
- * `GET /fotos`, `CLAVES_SOLO_BORRADOR` queda vacío y el reparto desaparece sin
- * tocar nada más. Es el único motivo por el que la lista es una constante
- * exportada y no está incrustada en la comparación.
+ * **P7-TAS.A.4 cerró ese hueco** (decisión D-1): `lib/tasador/lectura-fotos.ts`
+ * proyecta `TX_Adjuntos` y las dos páginas la vuelcan en `informeInicial`, así
+ * que las fotos ya no necesitan que se les ceda la precedencia — y cedérsela
+ * ahora sería peor que inútil: un borrador viejo taparía fotos que otra sesión
+ * subió de verdad.
+ *
+ * ## Lo que queda, y por qué no se borró la lista entera
+ *
+ * `documentosCargados` sigue sin proyección: lo persiste el pipeline de adjuntos
+ * de IF-02 y ninguna lectura de IF-03 lo devuelve. **Su fuente es RF-TAS-10**,
+ * que todavía no está escrita. Mientras tanto el reparto conserva una entrada y
+ * la maquinaria completa —`soloClavesDeBorrador`, las omisiones de
+ * `difiereEnSecciones` y de `borradorAportaContenido`— sigue siendo necesaria,
+ * no vestigial.
  */
 
 import type { InformeData } from "@/lib/tasador/tasaciones"
@@ -46,16 +57,22 @@ import { hayCambiosSinSincronizar, type MetaBorrador } from "@/lib/tasador/tasad
 /**
  * Claves de `InformeData` cuyo único origen hoy es el borrador local.
  *
- * No son «las fotos» por casualidad: son exactamente las tres que
- * `GET /api/tasaciones/[id]/datos` **no** proyecta —persisten por `/fotos` y
- * por el pipeline de adjuntos— y que por lo tanto no viajan en
- * `informeInicial`.
+ * **Una sola desde P7-TAS.A.4** (decisión D-4). `fotosPredefinidas` y
+ * `categoriasCustom` salieron de la lista porque ya tienen proyección
+ * server-side (`lib/tasador/lectura-fotos.ts`) y viajan en `informeInicial`
+ * como cualquier otra sección.
+ *
+ * `documentosCargados` se queda porque **su fuente todavía no existe**: lo
+ * persiste el pipeline de adjuntos de IF-02 y ninguna lectura de IF-03 lo
+ * devuelve. Sale de acá cuando **RF-TAS-10** traiga su proyección; ése es el
+ * único cambio que vacía la lista, y entonces el reparto entero se puede
+ * retirar.
+ *
+ * Sigue siendo una constante exportada y no un literal incrustado en las
+ * comparaciones justamente por eso: el día que quede vacía, tiene que haber un
+ * solo sitio que tocar.
  */
-export const CLAVES_SOLO_BORRADOR = [
-  "fotosPredefinidas",
-  "categoriasCustom",
-  "documentosCargados",
-] as const
+export const CLAVES_SOLO_BORRADOR = ["documentosCargados"] as const
 
 type Registro = Record<string, unknown>
 
@@ -115,9 +132,10 @@ function tieneContenido(valor: unknown): boolean {
 /**
  * Las claves del borrador que no tienen otra fuente.
  *
- * Lo usa «Descartar»: el botón tira las secciones A–H y **resiembra las fotos**,
- * porque descartarlas borraría archivos ya subidos que ninguna otra lectura
- * repone hasta .A.4.
+ * Lo usa «Descartar»: el botón tira las secciones A–H y **resiembra lo que
+ * ninguna lectura repone**. Hasta .A.3 eso eran las fotos —descartarlas borraba
+ * de la vista archivos ya subidos—; desde .A.4 las fotos vuelven solas desde
+ * Airtable y lo único que hay que resembrar es `documentosCargados`.
  */
 export function soloClavesDeBorrador(borrador: InformeData): Partial<InformeData> {
   const salida: Registro = {}

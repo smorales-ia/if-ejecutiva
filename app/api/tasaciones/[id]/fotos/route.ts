@@ -4,6 +4,14 @@
  * RF-TAS-14 · §2.6. Tanda P2-TAS · plan §3.1. **Reescrito en P5-TAS (batch B3)
  * para cerrar CI-052.**
  *
+ * ## La lectura ya no vive acá — P7-TAS.A.4
+ *
+ * El `GET` delega en `lib/tasador/lectura-fotos.ts`, que es la proyección que
+ * las páginas consumen **directo** desde el servidor (decisión D-1). La ruta
+ * sigue existiendo y sigue devolviendo lo mismo byte a byte: la consumen
+ * `leerFotosDeVisita()` tras cada subida y el drenaje de la cola offline, que
+ * son cliente y no pueden llamar a la proyección. El `PATCH` no se movió.
+ *
  * ## El binario no pasa por acá, y la fila tampoco se crea acá
  *
  * Esta ruta gestiona **metadatos** en `TX_Adjuntos`. El archivo sube por el
@@ -59,31 +67,20 @@
 
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { getRecord, isValidRecordId, listRecords, updateRecord } from '@/lib/airtable-client'
+import { getRecord, isValidRecordId, updateRecord } from '@/lib/airtable-client'
 import { autorizarSolicitud } from '@/lib/tasador/auth-guard'
 import { auditar } from '@/lib/tasador/auditoria'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
+import {
+  proyectarFotosCaptura,
+  SUBIDO_POR_TASADOR,
+  type AdjuntoFotoFields,
+} from '@/lib/tasador/lectura-fotos'
 import { MENSAJES } from '@/lib/tasador/mensajes'
 import { desdeExcepcion, desdeGuard, error, ok } from '@/lib/tasador/respuestas'
 import { parsearCuerpo } from '@/lib/tasador/validators'
 
 export const dynamic = 'force-dynamic'
-
-/**
- * Valor de `TX_Adjuntos.subido_por` que marca una foto como del tasador.
- *
- * **La capitalización no es cosmética.** El `GET` de abajo filtra por este
- * literal exacto, y el `singleSelect` de Airtable tiene hoy **dos** opciones
- * que sólo difieren en la mayúscula —`Tasador` y `tasador`, esta última ya
- * presente en filas reales—. Con `typecast: true`, escribir la minúscula no da
- * error: crea (o reutiliza) la otra opción y la foto **desaparece del `GET`
- * para siempre**, sin señal de que algo salió mal.
- *
- * Por eso el PATCH lo reescribe server-side en vez de confiar en el
- * `subido_por` que el cliente mandó al endpoint de subida, cuyo valor por
- * defecto es además `'Ejecutivo'` (`lib/adjuntos-uploader.ts`).
- */
-const SUBIDO_POR_TASADOR = 'Tasador'
 
 /**
  * Valor de `tipo_adjunto` para toda foto del organizador.
@@ -118,20 +115,21 @@ const categorizarSchema = z.object({
   thumbnailUrl: z.string().url().optional(),
 })
 
-interface AdjuntoFields {
-  nombre_archivo?: string
-  tipo_adjunto?: string
-  descripcion?: string
-  url_dropbox?: string
-  thumbnail_url?: string
-  tamanio_kb?: number
-  orden?: number
-  subido_por?: string
-  subido_en?: string
-  hash_md5?: string
-  solicitud?: string[]
-}
-
+/**
+ * `GET` — el listado que consume el organizador.
+ *
+ * **Desde P7-TAS.A.4 no proyecta nada por su cuenta**: delega en
+ * `proyectarFotosCaptura`, que es la misma función que
+ * `app/tasaciones/[id]/fotos/page.tsx` llama server-side sin pasar por HTTP
+ * (decisión D-1). La respuesta es idéntica byte a byte a la que la ruta
+ * devolvía antes —mismas claves, mismo orden, mismos fallbacks—; lo que
+ * desapareció es la segunda implementación de la misma lectura.
+ *
+ * El `!codigo` que antes cortaba acá vive ahora dentro de la proyección, que
+ * devuelve la captura vacía sin consultar Airtable por la misma razón: el Link
+ * `solicitud` se evalúa contra el primary field y una cadena vacía traería la
+ * tabla entera.
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -141,43 +139,8 @@ export async function GET(
   const guard = await autorizarSolicitud(id)
   if (!guard.ok) return desdeGuard(guard)
 
-  const codigo = String(guard.fields.codigo_solicitud ?? '')
-
   try {
-    if (!codigo) return ok({ id, fotos: [], porCategoria: {}, total: 0 })
-
-    const registros = await listRecords<AdjuntoFields>(TABLE_IDS.adjuntos, {
-      filterByFormula: `AND({solicitud}="${codigo.replace(/"/g, '\\"')}",{subido_por}="${SUBIDO_POR_TASADOR}")`,
-      'sort[0][field]': 'orden',
-      'sort[0][direction]': 'asc',
-    })
-
-    const fotos = registros.map((r) => ({
-      id: r.id,
-      // La categoría real vive en `descripcion` cuando es personalizada; el
-      // vocabulario cerrado de `tipo_adjunto` no admite nombres libres.
-      categoria: r.fields.descripcion || r.fields.tipo_adjunto || 'otro',
-      nombre: r.fields.nombre_archivo ?? '',
-      url: r.fields.url_dropbox ?? null,
-      thumbnailUrl: r.fields.thumbnail_url ?? null,
-      orden: r.fields.orden ?? null,
-      subidoEn: r.fields.subido_en ?? null,
-      /**
-       * Se expone porque es la **salvaguarda de integridad del borrado**
-       * (§8.6.3): `DELETE /api/adjuntos/[id]` la reenvía a
-       * `SC-Adjuntos-Delete`, que se niega a destruir nada si el registro
-       * apuntado por el record ID ya no tiene ese hash. Sin él la pantalla
-       * puede listar fotos pero no borrarlas.
-       */
-      hashMd5: r.fields.hash_md5 ?? null,
-    }))
-
-    const porCategoria = fotos.reduce<Record<string, number>>((acc, f) => {
-      acc[f.categoria] = (acc[f.categoria] ?? 0) + 1
-      return acc
-    }, {})
-
-    return ok({ id, fotos, porCategoria, total: fotos.length })
+    return ok({ id, ...(await proyectarFotosCaptura(guard.fields)) })
   } catch (err) {
     return desdeExcepcion('GET /api/tasaciones/[id]/fotos', err)
   }
@@ -217,7 +180,7 @@ export async function PATCH(
      * por la misma razón que en `auth-guard.ts`: distinguirlos le confirmaría a
      * un tercero que el adjunto existe.
      */
-    const adjunto = await getRecord<AdjuntoFields>(TABLE_IDS.adjuntos, d.adjuntoId)
+    const adjunto = await getRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, d.adjuntoId)
     if (!adjunto || !(adjunto.fields.solicitud ?? []).includes(id)) {
       return error(MENSAJES.adjuntoNoDisponible, 404)
     }
@@ -235,7 +198,7 @@ export async function PATCH(
      * un `""` sobre un campo `number` o `url` con `typecast` no es lo mismo que
      * no tocarlo.
      */
-    await updateRecord<AdjuntoFields>(TABLE_IDS.adjuntos, d.adjuntoId, {
+    await updateRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, d.adjuntoId, {
       tipo_adjunto: TIPO_ADJUNTO_FOTO,
       descripcion: d.categoria,
       subido_por: SUBIDO_POR_TASADOR,

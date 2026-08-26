@@ -7,13 +7,13 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, ArrowRight, Camera, CloudOff, FileText } from "lucide-react"
 import { toast } from "sonner"
 import {
-  resolverInforme,
   type Tasacion,
   type FotoAdjunta,
   type InformeData,
   type FotoCategoriaCustom,
 } from "@/lib/tasador/tasaciones"
 import { readPayload, writePayload } from "@/lib/tasador/tasador-store"
+import { combinarConBorrador } from "@/lib/tasador/recuperacion-borrador"
 import {
   eliminarFotoDeVisita,
   leerFotosDeVisita,
@@ -65,12 +65,48 @@ function desdeCola(registro: FotoEnCola): FotoAdjunta {
   }
 }
 
-export function FotosScreen({ tasacion }: { tasacion: Tasacion }) {
+export function FotosScreen({
+  tasacion,
+  informeInicial,
+}: {
+  tasacion: Tasacion
+  /**
+   * El informe ya hidratado desde Airtable por el Server Component: fotos
+   * repartidas más las secciones A–H (P7-TAS.A.4 · D-1).
+   *
+   * No es opcional a propósito. Un default a `resolverInforme(tasacion)` dejaría
+   * el camino viejo vivo y silencioso: la pantalla seguiría compilando si una
+   * página futura olvidara pasarlo, y el fallo reaparecería como mínimos en cero
+   * (**H-1**) sin que nada lo señalara.
+   */
+  informeInicial: InformeData
+}) {
   const router = useRouter()
   const d = tasacion.datos
 
-  const [form, setForm] = useState<InformeData>(
-    () => readPayload(tasacion.id) ?? resolverInforme(tasacion),
+  /**
+   * Estado inicial · **H-5 cerrado**.
+   *
+   * Hasta .A.4 esto era `readPayload(tasacion.id) ?? resolverInforme(tasacion)`,
+   * y era el origen del daño que documenta `recuperacion-borrador.ts`: como el
+   * flujo canónico es *coordinar → fotos → lectura → formulario*, esta pantalla
+   * **sembraba un borrador en blanco** —el `writePayload` de abajo escribe el
+   * `InformeData` entero en cada cambio— antes de que el formulario se abriera
+   * por primera vez. Ese blanco tapaba la hidratación de .A.1 en todas las
+   * secciones A–H.
+   *
+   * Ahora se parte de lo hidratado y el borrador sólo aporta lo que no tiene
+   * otra fuente, que tras vaciar `CLAVES_SOLO_BORRADOR` es `documentosCargados`
+   * y nada más. Es el **mismo** `combinarConBorrador` que usa `tasacion-form`:
+   * dos pantallas que escriben el mismo almacén no pueden aplicar dos reglas de
+   * precedencia distintas.
+   *
+   * `readPayload` se lee una sola vez y dentro del inicializador perezoso: en el
+   * render de servidor `localStorage` no existe y devuelve `null`, que es
+   * exactamente `informeInicial` tal cual.
+   */
+  const [form, setForm] = useState<InformeData>(() =>
+    combinarConBorrador(informeInicial, readPayload(tasacion.id)),
   )
 
   // Sincroniza los cambios de fotos con el store compartido.

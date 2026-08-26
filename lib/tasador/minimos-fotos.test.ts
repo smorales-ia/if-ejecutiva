@@ -107,3 +107,63 @@ describe('minimoCategoriaPersonalizada · RF-TAS-14', () => {
     expect(minimoCategoriaPersonalizada()).toBe(0)
   })
 })
+
+/* -------------------------------------------------------------------------
+ * Candado sobre H-1 · el cableado, no la función
+ * ---------------------------------------------------------------------- */
+
+/**
+ * P7-TAS.A.4 · **H-1**.
+ *
+ * `resolverMinimo` nunca estuvo mal: los tests de arriba lo prueban desde
+ * P5-TAS. Lo que estaba mal era **de dónde salían los declarados**.
+ *
+ * `app/tasaciones/[id]/fotos/page.tsx` no hidrataba nada, así que `FotosScreen`
+ * montaba con `resolverInforme(tasacion)` —`dormitorios: ''`— y el `declarados`
+ * que arma con `Number(form.dormitorios) || 0` valía **0**. Con mínimo 0 la
+ * categoría «Habitaciones» nacía completa: **una casa de cinco dormitorios se
+ * daba por cubierta sin una sola foto**, que es exactamente la evidencia de
+ * terreno que el organizador existe para asegurar.
+ *
+ * Este bloque prueba la **cadena entera** —`informeInicial` hidratado → el
+ * `declarados` que la pantalla deriva → `resolverMinimo`— porque el defecto
+ * vivía en la junta y ninguna de las piezas lo delataba por separado.
+ */
+describe('H-1 · el mínimo se resuelve contra el informe hidratado', () => {
+  /** El `declarados` tal como lo deriva `FotosScreen`, literalmente. */
+  const declaradosDeFormulario = (form: {
+    dormitorios: string
+    banos: string
+    estacionamientos: string
+  }): DeclaradosSeccionB => ({
+    dorm: Number(form.dormitorios) || 0,
+    banos: Number(form.banos) || 0,
+    estac: Number(form.estacionamientos) || 0,
+  })
+
+  it('con `informeInicial` hidratado a 5 dormitorios exige 5, no 0', () => {
+    const hidratado = { dormitorios: '5', banos: '3', estacionamientos: '2' }
+    const d = declaradosDeFormulario(hidratado)
+
+    expect(resolverMinimo('habitaciones', d)).toBe(5)
+    expect(resolverMinimo('banos', d)).toBe(3)
+    expect(resolverMinimo('estacionamientos', d)).toBe(2)
+  })
+
+  it('sin hidratar valdría 0 — el defecto que .A.4 cierra', () => {
+    // Ésta es la forma que devolvía `resolverInforme(tasacion)` a secas, y es
+    // lo que la pantalla usaba hasta .A.4. Se deja explícito para que quede
+    // claro qué se rompió y por qué la página tiene que pasar `informeInicial`.
+    const sinHidratar = { dormitorios: '', banos: '', estacionamientos: '' }
+
+    expect(resolverMinimo('habitaciones', declaradosDeFormulario(sinHidratar))).toBe(0)
+  })
+
+  it('las tres categorías dinámicas siguen siendo dinámicas', () => {
+    // Si alguien fija los mínimos en `MINIMOS_DINAMICOS`, este test cae junto
+    // con los de A-16 de arriba: es el aviso, no un obstáculo a rodear.
+    expect(esMinimoDinamico('habitaciones')).toBe(true)
+    expect(esMinimoDinamico('banos')).toBe(true)
+    expect(esMinimoDinamico('estacionamientos')).toBe(true)
+  })
+})

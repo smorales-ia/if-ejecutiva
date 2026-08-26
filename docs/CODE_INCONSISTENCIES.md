@@ -1998,3 +1998,114 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
   Si una tanda futura agrega `detalle` a otros, la ficha crece: el tooltip pasaría a elegir entre
   varios explicativos y `find` devolvería el primero por orden de sección, que puede no ser el más
   útil. Vale releer esto antes de agregar el segundo `detalle`.
+
+---
+
+## CI-060 · El mínimo de 3 fotos de «Ofertas / Comparables» ya no mide lo que dice medir
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-060 |
+| **Archivo:línea** | `lib/tasador/tasaciones.ts` — `CATEGORIAS_FOTO`, entrada `ofertas_comparables` (`min: 3`) · evaluado por `lib/tasador/minimos-fotos.ts` → `resolverMinimo()` |
+| **Síntoma** | La categoría exige **3 fotos** para darse por completa, pero desde A-13 la unidad de medida real de la sección D son **filas leídas del cuadro**, no fotos. Las dos magnitudes se desacoplaron: la única foto real del tasador contiene *todas* las ofertas, de modo que **3 filas pueden venir de 1 foto** y **3 fotos pueden rendir 0 filas legibles**. El organizador puede quedar en verde sin ningún comparable utilizable, y en ámbar con el cuadro entero ya leído. |
+| **Causa** | El `min: 3` se escribió en P5-TAS espejando el umbral de RF-12 —«mínimo 3 comparables»— cuando la sección D todavía era **editable** y el tasador tecleaba un comparable por foto. **A-13 cambió el sujeto de RF-12** (ver CI-058): la sección pasó a sólo lectura y su origen pasó a ser el cuadro fotografiado. El umbral de la *sección* se actualizó; el umbral de la *categoría de fotos* no, porque vive en otro módulo y nadie lo señaló. Plan v1.3 §6.1 sigue exigiendo 3 y es literal normativo. |
+| **Impacto** | **Bajo y acotado a la señalización.** El mínimo no bloquea «Calcular Tasación» —eso lo decide RF-12 sobre `form.comparables.length` (CI-058)— sólo pinta el contador de la categoría. El daño es de confianza: un tasador que ve la categoría completa asume que el cuadro quedó cubierto, y puede no estarlo. En sentido inverso, quien fotografía el cuadro entero de una vez queda con la categoría en ámbar aunque haya hecho el trabajo correcto, y la única forma de apagarla es **duplicar la misma foto tres veces**, que es peor que el estado que corrige. |
+| **Resolución** | **Pendiente · no se decide unilateralmente.** Tres salidas y la elección es de producto: **(a)** dejar el 3 y documentar que mide fotos, no filas —lo que está en efecto hoy—; **(b)** bajar el mínimo a **1**, que es lo que el acto real del tasador produce; **(c)** hacerlo **dependiente de RF-12**: pedir foto sólo mientras `comparables.length < 3`, lo que alinea las dos magnitudes al precio de que una categoría de fotos consulte un dato de otra sección. **Siguiente paso concreto:** plantearlo a Héctor junto al resto del comportamiento de la sección D post-A-13. |
+| **Dueño** | Héctor |
+| **Fecha objetivo** | — |
+| **Estado** | **abierta** · no bloqueante |
+| **Origen** | P7-TAS.A.4 (26-ago-2026), decisión **D-2 · opción A**: al hidratar las fotos server-side se revisó `CATEGORIAS_FOTO` y se constató que el `min` de esta categoría quedó huérfano de A-13. |
+
+**Notas:**
+
+- **No se tocó `CATEGORIAS_FOTO.ofertas_comparables.min`.** Es literal normativo de plan v1.3 §6.1
+  y cambiarlo desde el código repetiría exactamente el error que A-13 enseñó a no cometer: la
+  sección D fue editable un mes por adelantarse a una respuesta que llegó distinta.
+- **Es la misma familia que CI-058, no la misma ficha.** CI-058 documenta el umbral de **RF-12**
+  —cuántos comparables habilitan el cálculo— y está cerrada. Ésta documenta el umbral de la
+  **categoría de fotos** que alimenta ese cuadro. Cerrar una no cierra la otra: viven en módulos
+  distintos y las decidió gente distinta en momentos distintos.
+- **Dónde mirar si se opta por (c).** `resolverMinimo()` recibe hoy `DeclaradosSeccionB`, que sólo
+  conoce `dorm · banos · estac`. La opción (c) exige ampliar esa forma con el conteo de
+  comparables, y con ello el módulo pasa a depender de la sección D. Es el único punto de cambio,
+  por diseño de A-16.
+
+---
+
+## CI-061 · La categorización de fotos del tasador PATCHea el autoNumber `adjunto_id` donde la ruta exige un record ID: 404 siempre
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-061 |
+| **Archivo:línea** | `lib/tasador/fotos.ts:169` — `const adjuntoId = String(subida.adjunto_id)` · `app/api/tasaciones/[id]/fotos/route.ts` — `PATCH`, guard `isValidRecordId(d.adjuntoId)` · `app/api/adjuntos/upload/route.ts:88,308` — `adjunto_id?: string \| number` propagado tal cual |
+| **Síntoma** | El registro `TX_Adjuntos` **`recY2P0Ju0n5FAN62`** (solicitud **VP-2026-0061**, archivo `Foto REF Ofertas y REF CBR.JPG`, 2026-08-24) quedó con **`descripcion`, `tipo_adjunto` y `orden` vacíos**. El binario **sí llegó a Dropbox** y la fila **sí** tiene `url_dropbox`, `hash_md5`, `subido_por = Tasador` y el Link `solicitud` poblado. Lo único que falta es la categoría. La foto aparece en el organizador bajo `otro` gracias al fallback de la proyección. |
+| **Causa** | **CONFIRMADA (26-ago-2026).** `TX_Adjuntos` tiene **dos** identificadores y el contrato de subida devuelve el que no sirve. `SC-Adjuntos-Upload v1.2` responde `adjunto_id` = **autoNumber `fldVt7Lk1ptvmgbtT`** (valor `40` en esta fila), no el record ID `rec…`. `POST /api/adjuntos/upload` lo acepta —su tipo es `string \| number`— y lo propaga en el 200. `subirFotoDeVisita()` hace `String(subida.adjunto_id)` → `"40"` y se lo pasa a `categorizarFoto()`. El `PATCH` corta en su primera guarda —`isValidRecordId("40")` → `false`— y devuelve **404 `adjuntoNoDisponible`** sin tocar Airtable. **El PATCH nunca llegó a ejecutarse.** |
+| **Impacto** | **Alto y sistémico, con muestra de 1.** El fallo es **determinista**: no depende de red, carga ni timing, así que **ninguna foto del tasador puede categorizarse jamás** por este camino. Hoy hay exactamente **una** fila con `subido_por = Tasador` en toda la base —la de esta ficha—, de modo que la tasa de fallo observada es 1/1. Agrava el cuadro que `subirFotoDeVisita()` devuelve `reintentable: true` ante este 404: la cola offline reintenta indefinidamente una operación que **no puede tener éxito**, porque la subida se deduplica por `hash_md5` y Make vuelve a responder el mismo `40`. Los archivos **no se pierden** —están en Dropbox y su fila existe—; lo que se pierde es toda la clasificación, y con ella los mínimos por categoría de RF-TAS-14. |
+| **Resolución** | **Pendiente · el fix NO va en P7-TAS.A.4** (confirmado por Sergio). Tres puntos posibles y hay que elegir uno: **(a)** que `SC-Adjuntos-Upload` devuelva el record ID en `adjunto_id` —Make ya lo conoce, lo escribe en su propio log: *«TX_Adjuntos: recY2P0Ju0n5FAN62 (adjunto_id 40)»*—; **(b)** que `POST /api/adjuntos/upload` resuelva el autoNumber → record ID antes de responder; **(c)** que el `PATCH` acepte el autoNumber y busque la fila. **Recomendada la (a)**: es la que deja un solo identificador circulando y no añade una lectura por subida. Requiere tocar el blueprint de Make, así que **necesita aprobación explícita** antes de ejecutarse. Aparte, y sea cual sea la elegida: reclasificar ese 404 como **no reintentable** en `subirFotoDeVisita()`, para que la cola offline deje de reintentar lo imposible. |
+| **Dueño** | Sergio |
+| **Fecha objetivo** | — |
+| **Estado** | **abierta** · causa confirmada · fix pendiente de decisión |
+| **Origen** | P7-TAS.A.4 (26-ago-2026), hallazgo **H-3** del diagnóstico previo: se detectó al inventariar `TX_Adjuntos` para escribir la proyección server-side de fotos. Causa cerrada el mismo día con `LogEscenarios`. |
+
+**Notas:**
+
+- **Las dos hipótesis iniciales quedaron refutadas, y conviene dejar dicho por qué.** La (b)
+  —guard de pertenencia— cae porque el Link `solicitud` de `recY2P0Ju0n5FAN62` está poblado y
+  apunta a `rec9qf3DchOY5Lk2N`: el guard habría pasado. La (a) —Make 200 sin `adjunto_id`— cae por
+  el log de Make: sí devolvió uno. **El fallo no está en que faltara el dato, sino en que el dato
+  era el identificador equivocado**, que es un modo de fallo que ninguna de las dos contemplaba.
+- **La evidencia es `LogEscenarios` (`tblR4VWpUHw1CSyIS`), no `A_ErroresMake`.** Dos filas del
+  2026-08-24 lo cierran: `recU6QA4C86Fd2ajC` (19:14:00, escrita por Make · `SC-Adjuntos-Upload
+  v1.2`) dice *«Alta limpia… TX_Adjuntos: recY2P0Ju0n5FAN62 (adjunto_id 40)»*, y
+  `recvEIckX61uqLZNA` (19:14:03, escrita por `postToMake`) marca la subida **`✓ OK`** en 10.639 ms.
+  No hay tercera fila porque el `PATCH` escribe directo a Airtable y no pasa por `postToMake` — su
+  ausencia no es evidencia de nada.
+- **⚠ `A_ErroresMake` (`tbl46Q0BcfD57LWyQ`) está muerto: no lo escribe ningún código del repo.**
+  `grep -rn "tbl46Q0BcfD57LWyQ\|A_ErroresMake" app/ lib/` no devuelve nada, y la tabla tiene **una
+  sola fila**, del 2026-06-01, ajena a IF-03. **Buscar ahí y no encontrar nada no prueba nada**, y
+  el checklist de diagnóstico de esta ficha decía originalmente lo contrario. Vale corregir esa
+  expectativa en cualquier runbook que la haya heredado.
+- **El repo ya documentaba el contrato correcto, en IF-02 y por escrito.**
+  `app/api/adjuntos/[id]/route.ts:64` («*Identificador: record ID, no `adjunto_id`*») y
+  `components/console/document-checklist.tsx:101` («*El `adjunto_id` que devuelve la subida es el
+  autoNumber (`fldVt7Lk1ptvmgbtT`)*») lo dicen explícitamente, porque el borrado tropezó con lo
+  mismo antes. La cadena de IF-03 se escribió en P5-TAS (B3, cierre de CI-052) **sin leer esa
+  nota**. La lección no es sobre Make: es que un contrato ya documentado en otro módulo del mismo
+  repo no se vuelve a derivar de cero.
+- **Por qué los tests no lo atraparon.** `app/api/tasaciones/[id]/fotos/route.test.ts` usa
+  `ADJUNTO = 'recFOTO1234567890'.slice(0, 17)` — un id con forma de record ID. El caso numérico
+  nunca se ejerció. Un test con `adjuntoId: "40"` que espere 404 documentaría el defecto; el fix
+  correcto es que ese valor no llegue nunca hasta ahí.
+- **Por qué el candado de lectura de .A.4 va igual aunque el fix sea ajeno.** La proyección nueva
+  es el único punto por el que estas filas llegan a la pantalla. Que una foto sin `descripcion`
+  desaparezca de la lista convertiría este fallo de categorización en un fallo de **pérdida
+  aparente de evidencia**, mucho peor de diagnosticar en terreno. El fallback
+  `descripcion || tipo_adjunto || 'otro'` ya existía en el `GET`; lo que no existía era un test que
+  lo fijara, y ahora está en `lib/tasador/lectura-fotos.test.ts`.
+
+---
+
+## CI-062 · `informe-preview.tsx` repite el patrón `readPayload ?? resolverInforme` que .A.1 y .A.4 ya retiraron
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-062 |
+| **Archivo:línea** | `components/tasador/informe-preview.tsx:143` |
+| **Síntoma** | El componente inicializa su estado con `readPayload(id) ?? resolverInforme(tasacion)`: el borrador de `localStorage` **shadowea** cualquier hidratación, y sin borrador se cae a los defaults. Es la **tercera pantalla** con la misma forma. `tasacion-form.tsx` la perdió en P7-TAS.A.1 (hidratación server-side + `combinarConBorrador`), `fotos-screen.tsx` la pierde en P7-TAS.A.4. Consecuencia concreta: la vista previa del informe puede pintar el formulario en blanco que sembró otra pantalla en vez de lo que Airtable tiene guardado. |
+| **Causa** | El patrón es el original del v0, donde `localStorage` era la **única** fuente y no había nada que hidratar. Cada tanda que introdujo una proyección server-side lo retiró de *su* pantalla; ninguna barrió el árbol, porque el retiro exige tener la proyección correspondiente escrita primero. P9-TAS es la tanda que trae la de esta pantalla. |
+| **Impacto** | **Medio.** Es una vista de **sólo lectura** —no guarda, así que no puede destruir datos— pero es la pantalla donde el tasador **verifica** lo que va a quedar en el informe. Mostrar ahí un estado que no es el del servidor es exactamente el error que la pantalla existe para evitar. |
+| **Resolución** | **Asignada a P7-TAS.A.5** (cross-tanda P9-TAS, ya declarada en la memoria del proyecto). Alcance previsto: extender la proyección server-side a `informe-preview` **y** a `ExpedienteSheet`, que comparten la misma dependencia del borrador. **Fuera del alcance de .A.4 por decisión D-5**: la tanda .A.4 es cross-tanda con P5-TAS (fotos) y meter una tercera pantalla la volvería irrevisable. |
+| **Dueño** |  |
+| **Fecha objetivo** | P7-TAS.A.5 |
+| **Estado** | **abierta** · no bloqueante |
+| **Origen** | P7-TAS.A.4 (26-ago-2026), decisión **D-5**: al retirar el patrón de `fotos-screen` se buscó el resto de ocurrencias en el árbol y quedó ésta. |
+
+**Notas:**
+
+- **No se arregló de paso.** Retirar el patrón sin la proyección detrás deja la pantalla peor que
+  antes: pasaría de mostrar un borrador desactualizado a mostrar los defaults de
+  `resolverInforme`, que no son de nadie.
+- **`ExpedienteSheet` va en el mismo lote y por eso no tiene ficha propia.** `expediente-sheet.tsx`
+  no se tocó en .A.4 (decisión **D-4**) precisamente para no partir el cambio en dos tandas.
+- **Cómo verificar que quedó cerrada.** `grep -rn "readPayload(.*) ?? resolverInforme" components/`
+  debe salir vacío al terminar .A.5.

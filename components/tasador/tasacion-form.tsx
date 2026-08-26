@@ -130,13 +130,17 @@ export function TasacionForm({
   }, [borradorInicial])
 
   /**
-   * Descarta las secciones A–H y vuelve a lo hidratado, **resembrando las
-   * fotos**: son lo único que no está en ninguna otra parte hasta .A.4, y
-   * borrarlas se llevaría archivos ya subidos a Dropbox.
+   * Descarta las secciones A–H y vuelve a lo hidratado, **resembrando lo que
+   * ninguna lectura repone**.
+   *
+   * Hasta .A.3 eso eran las fotos, que no estaban en ninguna otra parte. Desde
+   * .A.4 las fotos vienen hidratadas en `informeInicial` y `CLAVES_SOLO_BORRADOR`
+   * se redujo a `documentosCargados` — la mecánica no cambia, sólo qué
+   * sobrevive al descarte.
    */
   const descartarBorrador = useCallback(() => {
-    const soloFotos = borradorInicial ? soloClavesDeBorrador(borradorInicial) : {}
-    const limpio = { ...informeInicial, ...soloFotos }
+    const soloBorrador = borradorInicial ? soloClavesDeBorrador(borradorInicial) : {}
+    const limpio = { ...informeInicial, ...soloBorrador }
 
     clearPayload(tasacion.id)
     writePayload(tasacion.id, limpio)
