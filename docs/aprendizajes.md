@@ -1237,3 +1237,88 @@ tanda— también daba 404, lo que descartó el código propio; la verificación
 **Prevención futura:** en este repo `curl` **no sirve** para verificar pantallas: sólo para
 `/api/health` y `/sign-in`. Y no correr `tsc` con el dev server arriba — si falla en algo bajo
 `.next/`, bajar el servidor y limpiar `.next/dev/types` antes de creerle al error.
+
+### 2026-08-26 — P7-TAS.A.4 · hidratación server-side de fotos (cross-tanda P5-TAS)
+
+**Contexto:** decisión D-1 · opción A: extraer la proyección del `GET /fotos` a
+`lib/tasador/lectura-fotos.ts` y consumirla desde los dos Server Components, más D-4 (vaciar
+`CLAVES_SOLO_BORRADOR` salvo `documentosCargados`).
+
+**Inconveniente:** los dos recordIds de `TX_Solicitudes` que traía el encargo para la reasignación
+del tasador mock —`rec8IZCGuxOJrLK4K` (VP-2026-0003) y `reck842xTvwgjqDSb` (VP-2026-0038)— **no
+existen en la base**. Una consulta por `recordIds` a `tblaHTyMHYfmy7Fg6` devolvió cero registros,
+sin error: el filtro por record ID inexistente es indistinguible de un filtro que no casa.
+
+**Causa raíz:** los IDs venían de una nota previa, no de una lectura de la base. Nadie los verificó
+al escribirlos, y un `list_records_for_table` con `recordIds` que no existen responde `200` con
+`records: []`, que se lee como «la consulta está mal armada» y no como «esos registros no están».
+
+**Solución aplicada:** se resolvieron los registros por `codigo_solicitud` (`fldDXEE1ejMNVDlpB`),
+que es el identificador humano y es inequívoco: VP-2026-0003 → `reclzOOmRHH5LLa8x`, VP-2026-0038 →
+`recRjyT3kg0vYGcEH`. La reasignación se aplicó **en modo append** sobre `fldlgriK1jP5906wE`,
+conservando el tasador previo de cada una y agregando `recSR3RxY6rsLb8k7`.
+
+**Prevención futura:** en este repo un recordId copiado de una nota **no es una fuente**. Resolver
+siempre por `codigo_solicitud` antes de escribir, y ante un `records: []` con `recordIds`, no
+depurar el filtro: comprobar primero que los registros existen. Y para toda escritura sobre un Link
+`multipleRecordLinks`, leer el valor actual y hacer append explícito — Airtable reemplaza el array
+completo, no fusiona.
+
+**Contexto:** misma sesión, al aplicar D-4 sobre `lib/tasador/recuperacion-borrador.ts`.
+
+**Inconveniente:** vaciar `CLAVES_SOLO_BORRADOR` de tres entradas a una tumbó **cuatro tests** de
+`recuperacion-borrador.test.ts` que el encargo no anticipaba —sólo señalaba las líneas 85-100—, y
+uno de ellos (`CANDADO · no ofrece recuperar el borrador en blanco de fotos-screen`) pasó de `false`
+a `true`, que es un cambio de comportamiento visible para el tasador.
+
+**Causa raíz:** la constante se usa para **dos** cosas que hasta ahora coincidían: qué claves gana
+el borrador en `combinarConBorrador` (precedencia) y qué claves se omiten en `difiereEnSecciones` /
+`borradorAportaContenido` (comparación del banner). Sacar `fotosPredefinidas` de la lista no sólo le
+quita la precedencia: la mete en la comparación del banner. Con una foto en la cola offline —que
+vive sólo en el borrador— el banner de recuperación ahora se enciende.
+
+**Solución aplicada:** se siguió D-4 tal como fue aprobada y se **invirtieron** los tests afectados
+en vez de relajarlos, cada uno rotulado `INVERTIDO EN .A.4` con la razón. Se añadió un test que fija
+el efecto nuevo (`.A.4 · una foto sólo local sí lo enciende, y es correcto`) y se separó el
+andamiaje en `borradorEnBlanco()` —A–H vacías, fotos iguales al servidor— para que el candado
+original siga aislando lo que protegía. El efecto se juzgó aceptable: «Recuperar» restaura el
+borrador entero, que desde .A.4 ya viene hidratado, así que es ruido acotado y no pérdida de datos.
+
+**Prevención futura:** antes de tocar una constante que gobierna dos comportamientos distintos,
+buscar **todos** sus consumidores y no fiarse del rango de líneas que señala el encargo. Acá bastó
+`grep -n CLAVES_SOLO_BORRADOR` para ver que la misma lista alimenta la precedencia y la comparación.
+Si el día que se retire `documentosCargados` (RF-TAS-10) el reparto sigue vivo, conviene partirla en
+dos constantes antes que seguir usándola para ambas cosas.
+
+**Contexto:** misma sesión, al cerrar la causa raíz de CI-061 y reescribir su ficha.
+
+**Inconveniente:** dos cosas. (1) El diagnóstico previsto en el plan de verificación era inútil:
+decía «si hay error en `A_ErroresMake` → hipótesis (a); si no hay nada → tercera vía», y **ninguna
+de las dos ramas era decidible ahí**. (2) Al reescribir la ficha, un `Edit` y luego un
+`open(path,"w")` de Python sobre `/mnt/c` fallaron con `EIO` / `OSError: [Errno 5]`, y el segundo
+**truncó `docs/CODE_INCONSISTENCIES.md` a mitad de una línea**, perdiendo CI-061 y CI-062 enteras.
+
+**Causa raíz:** (1) `A_ErroresMake` (`tbl46Q0BcfD57LWyQ`) **no lo escribe ningún código del repo**
+—`grep -rn` sobre `app/` y `lib/` no devuelve nada— y tiene una sola fila, de junio, ajena a IF-03.
+La tabla figura en `CLAUDE.md` como destino de errores Make, pero eso describe una intención, no el
+runtime. El log real es `LogEscenarios`, que sí escribe `postToMake()` en cada llamada, con éxito y
+con error. (2) El filesystem `9p` de WSL sobre `/mnt/c` devuelve `EIO` intermitente en escrituras
+grandes de un solo golpe; un `open(...,"w")` trunca **antes** de escribir, así que un fallo a mitad
+deja el archivo mutilado, no intacto.
+
+**Solución aplicada:** (1) se reorientó el diagnóstico a `LogEscenarios` (`tblR4VWpUHw1CSyIS`) y dos
+filas del 24-ago lo cerraron: Make devolvió `adjunto_id: 40` —el autoNumber `fldVt7Lk1ptvmgbtT`, no
+el record ID— y la ruta de subida marcó `✓ OK`. El `PATCH` de categorización murió en
+`isValidRecordId("40")` → 404. Ambas hipótesis previas quedaron refutadas. (2) `git checkout --` lo
+bloqueó el clasificador de permisos, pero no hacía falta: `git diff --stat` mostraba sólo `+13`, así
+que las 2000 líneas commiteadas seguían intactas. Se reconstruyó con `head -n 2000` hacia el
+scratchpad, se verificó con `diff` contra `git show HEAD:<path>`, se reapendieron las tres fichas con
+`cat >>` y se copió de vuelta con un solo `cp`, verificando integridad después.
+
+**Prevención futura:** para el diagnóstico, **`A_ErroresMake` no es fuente**: mirar `LogEscenarios` y,
+antes de citar cualquier tabla de log, comprobar con `grep` que algo del repo la escriba — una tabla
+declarada en `CLAUDE.md` puede no tener escritor. Para las escrituras, en este repo **no reescribir un
+archivo grande de `docs/` con un `open(...,"w")` ni con un `Edit` de bloque enorme**: construir en el
+scratchpad (`/tmp`, ext4, sin `9p` de por medio), verificar con `diff`, y copiar con un `cp` final.
+Los `cat >>` incrementales no fallaron ni una vez. Y ante un fallo de escritura, **medir el daño con
+`git diff --stat` antes de intentar restaurar**: puede que no haya nada que restaurar.
