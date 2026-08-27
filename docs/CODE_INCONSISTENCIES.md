@@ -2094,10 +2094,10 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Síntoma** | El componente inicializa su estado con `readPayload(id) ?? resolverInforme(tasacion)`: el borrador de `localStorage` **shadowea** cualquier hidratación, y sin borrador se cae a los defaults. Es la **tercera pantalla** con la misma forma. `tasacion-form.tsx` la perdió en P7-TAS.A.1 (hidratación server-side + `combinarConBorrador`), `fotos-screen.tsx` la pierde en P7-TAS.A.4. Consecuencia concreta: la vista previa del informe puede pintar el formulario en blanco que sembró otra pantalla en vez de lo que Airtable tiene guardado. |
 | **Causa** | El patrón es el original del v0, donde `localStorage` era la **única** fuente y no había nada que hidratar. Cada tanda que introdujo una proyección server-side lo retiró de *su* pantalla; ninguna barrió el árbol, porque el retiro exige tener la proyección correspondiente escrita primero. P9-TAS es la tanda que trae la de esta pantalla. |
 | **Impacto** | **Medio.** Es una vista de **sólo lectura** —no guarda, así que no puede destruir datos— pero es la pantalla donde el tasador **verifica** lo que va a quedar en el informe. Mostrar ahí un estado que no es el del servidor es exactamente el error que la pantalla existe para evitar. |
-| **Resolución** | **Asignada a P7-TAS.A.5** (cross-tanda P9-TAS, ya declarada en la memoria del proyecto). Alcance previsto: extender la proyección server-side a `informe-preview` **y** a `ExpedienteSheet`, que comparten la misma dependencia del borrador. **Fuera del alcance de .A.4 por decisión D-5**: la tanda .A.4 es cross-tanda con P5-TAS (fotos) y meter una tercera pantalla la volvería irrevisable. |
+| **Resolución** | ✅ **CERRADA en P7-TAS.A.5 (26-ago-2026).** `informe/page.tsx` hidrata server-side con `Promise.all([leerTasacion, leerDatosCaptura, leerFotosCaptura])` y arma `informeInicial`; `informe-preview.tsx:143` pasó de `readPayload(id) ?? resolverInforme(tasacion)` a `combinarConBorrador(informeInicial, readPayload(id))` —el mismo reparto de `tasacion-form` y `fotos-screen`—. `ExpedienteSheet` recibe el mismo `d` ya hidratado (D-2: no se tocó su código). **Lo que queda no es esto:** que el preview lea el modelo *cliente* y no el *canónico* del motor es **CI-063**, deuda de P9-TAS. |
 | **Dueño** |  |
 | **Fecha objetivo** | P7-TAS.A.5 |
-| **Estado** | **abierta** · no bloqueante |
+| **Estado** | ✅ **cerrada** (P7-TAS.A.5) · no bloqueante |
 | **Origen** | P7-TAS.A.4 (26-ago-2026), decisión **D-5**: al retirar el patrón de `fotos-screen` se buscó el resto de ocurrencias en el árbol y quedó ésta. |
 
 **Notas:**
@@ -2109,3 +2109,26 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
   no se tocó en .A.4 (decisión **D-4**) precisamente para no partir el cambio en dos tandas.
 - **Cómo verificar que quedó cerrada.** `grep -rn "readPayload(.*) ?? resolverInforme" components/`
   debe salir vacío al terminar .A.5.
+
+## CI-063 · `informe-preview` consume el modelo cliente, no el `bloques[]` canónico de `GET /api/tasaciones/[id]/informe`
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-063 |
+| **Archivo:línea** | `app/api/tasaciones/[id]/informe/route.ts` (productor, sin consumidor) · `components/tasador/informe-preview.tsx` |
+| **Síntoma** | La ruta `GET /api/tasaciones/[id]/informe` expone el **modelo canónico** del informe —los `bloques[]` de §10.1: override, **cap rate**, valor homogeneizado, conteo real de fotos por categoría—, pero `informe-preview.tsx` **no la consume**. Tras P7-TAS.A.5 el preview sigue armando su vista con el modelo cliente (`resolverInforme` + `leerDatosCaptura` + `leerFotosCaptura` + `combinarConBorrador`). Las dos fuentes pueden **divergir**: lo que el tasador ve en el preview no es necesariamente lo que el PDF final de Carbone imprime. |
+| **Causa** | Decisión **D-1 · opción A** de P7-TAS.A.5: espejar exactamente el patrón de hidratación de `.A.4` (`page.tsx` con `Promise.all` de las tres lecturas) y **no** cablear el `/informe` route, que queda huérfano. Cablearlo es trabajo de construcción de **P9-TAS**, no de esta tanda de hidratación. El caso más visible de la divergencia es el **cap rate**: el modelo cliente no puede computarlo porque su denominador `valorReferenciaClp` no tiene columna destino (**CI-023 §1**) y queda «—»; el modelo canónico **sí** lo trae en `bloques[]`. |
+| **Impacto** | **Medio.** El preview es de sólo lectura y no destruye datos, pero es la pantalla donde el tasador **verifica** lo que enviará al visador. Una divergencia entre el preview y el PDF impreso es exactamente el error que la pantalla existe para evitar. Acotado mientras el preview y el PDF se alimenten de la misma captura de Airtable; se agrava si el motor (`bloques[]`) aplica una regla que el modelo cliente no replica. |
+| **Resolución** | **Asignada a P9-TAS.** Alcance previsto: `informe-preview` (y `ExpedienteSheet`) consumen `GET /api/tasaciones/[id]/informe` como fuente del preview, y el modelo cliente queda sólo para el borrador editable del formulario. Cierra de paso el cap rate: el denominador llega desde `bloques[]` sin depender de que CI-023 dé columna a `valorReferenciaClp`. |
+| **Dueño** |  |
+| **Fecha objetivo** | P9-TAS |
+| **Estado** | **abierta** · no bloqueante |
+| **Origen** | P7-TAS.A.5 (26-ago-2026), decisión **D-1 · opción A**: al hidratar el preview server-side se dejó el `/informe` route sin cablear a propósito y se registró aquí la divergencia. |
+
+**Notas:**
+
+- **No es duplicado de CI-062.** CI-062 registra que el preview *shadoweaba* la hidratación con el
+  borrador local (cerrada por .A.5). CI-063 registra que, ya hidratado, el preview lee el **modelo
+  equivocado**: el cliente en vez del canónico del motor.
+- **Depende de, pero no bloquea, CI-023.** El cap rate en «—» tiene dos salidas: darle columna a
+  `valorReferenciaClp` (CI-023) o cablear `bloques[]` (esta ficha). P9-TAS toma la segunda.

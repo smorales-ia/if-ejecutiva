@@ -166,3 +166,55 @@ describe('candado CI-056 · la sección D llega hidratada a la pantalla', () => 
     expect(tablas).toContain(TABLE_IDS.comparables)
   })
 })
+
+describe('proyección sección H · candado del cap rate', () => {
+  /**
+   * P7-TAS.A.5 · D-1 · opción A. El preview hidratado (`informe-preview.tsx`)
+   * arma el bloque 2 —valor destacado y cap rate— con estas tres claves. El
+   * candado fija las dos mitades del hueco de CI-023:
+   *
+   * - El **numerador** (`arriendo_mensual`, `gasto_anual`) y el **override**
+   *   (`valor_final_override`) **sí** se proyectan: tienen columna destino.
+   * - El **denominador** `valorReferenciaClp` **no** se proyecta: está en
+   *   `CAMPOS_SIN_DESTINO` (CI-023 §1), sin columna en `TX_DatosTasacion`, así
+   *   que `proyectarDatosCaptura` no lo emite y el cap rate del preview queda en
+   *   «—» a propósito. Si algún día gana columna, este test rompe y obliga a
+   *   revisar el preview (deuda registrada en **CI-063**).
+   */
+  function airtableConDatos(datos: Record<string, unknown>) {
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.datosTasacion ? [fila('recDatos00000001', datos)] : []
+    )
+  }
+
+  it('proyecta arriendo_mensual y gasto_anual (numerador del cap rate)', async () => {
+    airtableConDatos({ arriendo_mensual: 850000, gasto_anual: 1200000 })
+
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.arriendoBrutoClp).toBe('850000')
+    expect(datos.gastoAnualClp).toBe('1200000')
+  })
+
+  it('proyecta valor_final_override de la solicitud a valorSugeridoOverride', async () => {
+    const { datos } = await proyectarDatosCaptura({
+      codigo_solicitud: CODIGO,
+      valor_final_override: 5200,
+    })
+
+    expect(datos.valorSugeridoOverride).toBe('5200')
+  })
+
+  it('deja valorReferenciaClp sin proyectar: no tiene columna (CI-023 §1 · candado CI-063)', async () => {
+    airtableConDatos({ arriendo_mensual: 850000, gasto_anual: 1200000 })
+
+    const { datos } = await proyectarDatosCaptura({
+      codigo_solicitud: CODIGO,
+      // Aunque la solicitud trajera un valor de referencia, no hay ruta que lo
+      // proyecte: la clave no aparece en la salida.
+      valor_referencia: 90000000,
+    })
+
+    expect('valorReferenciaClp' in datos).toBe(false)
+  })
+})

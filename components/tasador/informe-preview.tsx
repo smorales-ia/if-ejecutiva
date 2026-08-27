@@ -16,11 +16,11 @@ import {
   CATEGORIAS_FOTO,
   marcarPdfListo,
   guardarObservacionRechazo,
-  resolverInforme,
   type Tasacion,
   type InformeData,
 } from "@/lib/tasador/tasaciones"
 import { readPayload } from "@/lib/tasador/tasador-store"
+import { combinarConBorrador } from "@/lib/tasador/recuperacion-borrador"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
 import { ExpedienteSheet } from "@/components/tasador/expediente-sheet"
@@ -108,7 +108,21 @@ function Dato({ k, v }: { k: string; v: React.ReactNode }) {
   )
 }
 
-export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
+export function InformePreview({
+  tasacion,
+  informeInicial,
+}: {
+  tasacion: Tasacion
+  /**
+   * El informe ya hidratado desde Airtable por el Server Component: secciones
+   * A–H de `leerDatosCaptura` más las fotos repartidas (P7-TAS.A.5 · D-1).
+   *
+   * No es opcional a propósito, mismo criterio que `FotosScreen`: un default a
+   * `resolverInforme(tasacion)` dejaría vivo y silencioso el camino viejo —el
+   * preview sólo con borrador local— si una página futura olvidara pasarlo.
+   */
+  informeInicial: InformeData
+}) {
   const router = useRouter()
   const { estado } = useEstadoTasador(tasacion.id)
 
@@ -136,11 +150,21 @@ export function InformePreview({ tasacion }: { tasacion: Tasacion }) {
   const obsValida = obs.trim().length >= MIN_OBS
 
   /*
-   * Sin borrador local no hay nada que previsualizar todavía: se cae al
-   * formulario en blanco en vez de reventar. El preview con datos del servidor
-   * es de P9-TAS, que lo lee de `GET /api/tasaciones/[id]/informe`.
+   * Estado inicial hidratado desde Airtable (P7-TAS.A.5 · D-1). Se parte de
+   * `informeInicial` y el borrador local sólo aporta lo que no tiene otra
+   * fuente —tras vaciar `CLAVES_SOLO_BORRADOR` en .A.4, eso es
+   * `documentosCargados` y nada más—. Es el **mismo** `combinarConBorrador` que
+   * usan `tasacion-form` y `fotos-screen`: tres pantallas que leen el mismo
+   * almacén no pueden aplicar tres reglas de precedencia distintas.
+   *
+   * El preview no muta `d`, así que no necesita `useState`; `readPayload`
+   * devuelve `null` en el render de servidor (no hay `localStorage`), que es
+   * exactamente `informeInicial` tal cual.
    */
-  const d: InformeData = readPayload(tasacion.id) ?? resolverInforme(tasacion)
+  const d: InformeData = combinarConBorrador(
+    informeInicial,
+    readPayload(tasacion.id),
+  )
   const esNuevo = tasacion.tipoPropiedad === "nuevo"
 
   /* Valor de tasación (UF) y cap rate */
