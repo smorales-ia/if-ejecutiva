@@ -2948,7 +2948,7 @@ Estados de excepción: `cancelada`, `requiere_atencion`. **El estado `devuelta` 
 | SC07 | Extracción de documentos (Claude API) | Upload documento en §2.6 | Extrae atributos según `D_TipoDocumentoAtributo`; guarda JSON en `TX_Adjuntos.atributos_obtenidos`; propaga por cardinalidad a `TX_DatosTasacion` o `TX_Unidades` (§4 del spec) |
 | SC08 | Motor de cálculo | `estado = visitada` | Ejecuta AT03 (DAG de ~15 cálculos); escribe `TX_Calculos`; transita a `calculada` |
 | AT03 | Ejecutar DAG de fórmulas | `estado = visitada` | Corre cálculos en orden topológico con snapshot |
-| AT04 | Validar rangos de valor | `TX_Calculos` insert | Compara con rangos por zona (`M_Comunas`); marca `flag_revision` si sale de rango; puede llevar a `requiere_atencion` |
+| AT04 | Validar rangos de valor (fuera de scope IF-03) | `TX_Calculos` insert | Compara con rangos por zona (`M_Comunas`); marca `flag_revision` si sale de rango; puede llevar a `requiere_atencion` |
 | SC09 | Generación de PDF (Carbone) | `estado = calculada` | Genera PDF final; deposita en Dropbox; transita a `pdf_listo` |
 | AT05 / SC13 | Notificar visador | `estado = pdf_listo` | SC13 envía email al visador con plantilla `email_asignacion_visador`. Aplica constraint blanda `(solicitud_id, fecha_respuesta_truncada_al_minuto)` para evitar doble disparo (mitigación R-2 del ADR) |
 | SC13 (coord. confirmada) | Email coordinación confirmada | Fila en `TX_CoordinacionVisita` con `estado_coordinacion = confirmada` y `email_enviado_status = pendiente` | Envía correo a la ejecutiva con plantilla `email_coordinacion_confirmada` dentro del hilo `email_thread_id` |
@@ -4718,6 +4718,8 @@ TX_Calculos con snapshot inmutable de version y expresion.
                                                                                         A_Eventos
   ---------------------------------------------------------------------------------------------------------------
 
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila en la tabla de automations anterior se conserva como referencia histórica.*
+
 Nota v1.9.4 sobre AT03. El trigger de AT03_ejecutar_dag_formulas era
 `estado=capturada` hasta v1.9.3. Se corrige a `estado=visitada` conforme
 a la máquina de estados oficial de §2.11: el estado `capturada` queda
@@ -4744,8 +4746,13 @@ correcto; la divergencia era interna de esta Especificación.
   -------------------------------------------------------------------------
 
   -------------------------------------------------------------------------
-  **RF-27**         **Validación de rangos por zona**
+  **RF-27**         **Validación de rangos por zona (fuera de scope IF-03)**
   ----------------- -------------------------------------------------------
+  **⛔ Alcance**    FUERA DE SCOPE IF-03 · decisión 27-ago-2026: AT04 no se
+                    implementa en el proyecto. La descripción siguiente se
+                    conserva como referencia histórica; ningún componente de
+                    IF-03 la ejecuta.
+
   **Descripción**   AT04 compara cada valor calculado contra los rangos de
                     M_Comunas (rango_min_uf_m2, rango_max_uf_m2). Si el
                     valor cae fuera de rango, marca flag_revision=TRUE y el

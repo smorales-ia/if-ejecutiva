@@ -1852,8 +1852,10 @@ para revisión"** y el stepper queda íntegramente completo.
 | `EN_CALCULO` | Backend transita `visitada → calculada` |
 | `INFORME_DISPONIBLE` | `calculada` o `pdf_listo` |
 
-**Ruta de excepción.** AT04 valida rangos de valor contra `M_Comunas` y puede marcar
-`flag_revision` y llevar a `requiere_atencion`. Si el polling encuentra ese estado, la pantalla lo
+**Ruta de excepción.** [Fuera de scope IF-03 · 27-ago-2026] La validación de rangos de valor
+contra `M_Comunas` —que marcaba `flag_revision` y podía llevar a `requiere_atencion`— queda fuera
+del proyecto IF-03, de modo que esa ruta ya no se origina desde el cálculo. Si aun así el polling
+encontrara `requiere_atencion` (p. ej. proveniente de IF-02), la pantalla lo
 comunica con un mensaje humano y **no** deja "Continuar a vista previa" habilitado. No se inventa
 una pantalla nueva para ese caso: mensaje en la misma, y la solicitud sigue en la cola.
 
@@ -1887,7 +1889,7 @@ técnico en texto visible.
 - [ ] "Volver atrás" devuelve al formulario **en modo consulta** y **no cancela** el cálculo.
 - [ ] Durante toda esta pantalla, "Calcular Tasación" de la Pantalla 5 está bloqueado (RF-TAS-07).
 - [ ] Los skeletons usan animación `pulse` durante `EN_CALCULO`.
-- [ ] `requiere_atencion` se comunica con mensaje humano y **no** habilita el avance.
+- [ ] `requiere_atencion` se comunica con mensaje humano y **no** habilita el avance. · N/A por A-46 (AT04 fuera de scope): este estado ya no llega al polling de la Pantalla 6 por la vía del cálculo.
 - [ ] **Regla T-C:** la auditoría `grep` devuelve **cero** coincidencias. No se nombra AT03, SC08
       ni "el motor" en texto visible.
 - [ ] Verificado a 375×812. `pnpm tsc --noEmit`, `pnpm build`, `pnpm test` verdes. `git status`

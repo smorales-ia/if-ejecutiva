@@ -3847,6 +3847,8 @@ completo.
                                                                A_Eventos
   -----------------------------------------------------------------------------------------
 
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila en la tabla de automations anterior se conserva como referencia histórica.*
+
   ----------------------------------------------------------------------------------------
   **Campo**              **Tipo Airtable**  **Clave**   **Detalle / lógica de negocio**
   ---------------------- ------------------ ----------- ----------------------------------
@@ -5991,6 +5993,8 @@ escenario.
   Mindicador                       cambio)**             
   ------------------------------------------------------------------------------
 
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila «Validación de rangos» en la tabla anterior se conserva como referencia histórica.*
+
 ## 11.2 Catálogo de escenarios Make
 
 Veinte escenarios cubren todo el ciclo. Cada uno tiene una sola
@@ -6046,6 +6050,8 @@ Next.js, Claude API, Carbone, Dropbox, Gmail, Mindicador).
                                                              si thumbnail_url ya está
                                                              poblado.
   ------------------------------------------------------------------------------------
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; la referencia a AT04 en la tabla anterior (SC07 «AT04+estado=calculada») se conserva como referencia histórica.*
 
 *Adenda v2.6.2 · SC10_generar_thumbnails (Especificación v1.4 §8.5).
 Escenario Make nuevo que se dispara al insertarse una fila en
@@ -6115,6 +6121,8 @@ SC13_entregar_por_gmail.*
 | validación) sigue funcionando en Airtable. Make solo falla cuando se necesita cruzar hacia la app    |
 | Next.js (notificaciones), Claude API, Carbone, Dropbox, Gmail o Mindicador.                          |
 +------------------------------------------------------------------------------------------------------+
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila en la tabla comparativa de automations anterior se conserva como referencia histórica.*
 
 ## 11.3 Manejo de errores y reintentos
 

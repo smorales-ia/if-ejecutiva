@@ -2457,7 +2457,7 @@ Programa por nivel, E5 Terminaciones por recinto, E6 Documentos legales.
                                            Airtable, el cambio de estado
                                            lanza AT03 (DAG) y SC07 (Claude)
                                            en paralelo. Saneamiento corre
-                                           antes. AT04 valida rangos.
+                                           antes. [AT04 valida rangos: fuera de scope IF-03.]
                                            Estado destino: calculada.
 
   Marcar requiere      asignada →          Si saneamiento detecta datos no
@@ -4042,6 +4042,8 @@ ningún campo de la UI carece de origen en la capa de datos.
   IF-13     A_Eventos · A_Accesos · A_Cambios AT09 + AT10 (purga)  Transversal          Retención por tabla
             · A_DecisionesMotor (R)           · SC16                                    (RN-29); append-only.
   -----------------------------------------------------------------------------------------------------------
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su mención en la fila IF-03 / F3 de la tabla anterior se conserva como referencia histórica.*
 
 *Convención: (W) escribe · (R) lee.*
 

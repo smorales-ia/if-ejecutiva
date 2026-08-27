@@ -172,8 +172,8 @@ funcionales v1.0. La conclusión general es:
     terreno). Es el ingreso humano dominante: \~60% de los campos del
     informe.
 
-5.  **C · Calculado por el motor** (AT03 + AT04, ejecutados como
-    Airtable Scripts) o **Resuelto desde catálogos** (M_Comunas,
+5.  **C · Calculado por el motor** (AT03; AT04 fuera de scope IF-03 · 27-ago-2026), ejecutado como
+    Airtable Script, o **Resuelto desde catálogos** (M_Comunas,
     M_Zonificacion, C_PreciosUnitarios, C_VidaUtil, C_Factores,
     M_Clientes, M_Tasadores, M_Visadores, H_PreciosUF).
 

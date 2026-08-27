@@ -3249,6 +3249,8 @@ paquete.*
   nocturno              Automation                        
   --------------------- ------------------ -------------- ---------------------------------
 
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor, fila «SC08 validar rangos») no se implementa en este proyecto; se conserva en la tabla anterior como referencia histórica.*
+
   -----------------------------------------------------------------------
   **Regla de oro Make v2.4: Si al describir un escenario Make debes
   mencionar Airtable más de dos veces (origen + destino), el escenario

@@ -11,7 +11,7 @@
 
 Motor de Cálculo Parametrizado
 
-AT01 · AT02 · AT03 · AT04\
+AT01 · AT02 · AT03 · AT04 (fuera de scope IF-03)\
 Flujos operacionales · Arquitectura · Automations AT08--AT10
 
 **Sistema:** VProperty v2.5 · Airtable (Team)
@@ -64,6 +64,8 @@ Ninguna lógica de negocio vive en Make.
   AT10     AT10_archivado_nocturno          Scheduled          cron nocturno      TX_Solicitudes           H_Solicitudes_Cerradas,
                                                                                                            A_Eventos
   ----------------------------------------------------------------------------------------------------------------------------------
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila en la tabla anterior se conserva como referencia histórica.*
 
 **Anti-patrones explícitamente prohibidos (v2.4)**
 
@@ -150,6 +152,8 @@ Ninguna lógica de negocio vive en Make.
   Scheduled         Cron job programado                  AT08, AT09, AT10
   ------------------------------------------------------------------------
 
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila en la tabla anterior se conserva como referencia histórica.*
+
 **3. Flujo Completo de una Tasación**
 
 **3.1 Triggers por estado de solicitud**
@@ -174,6 +178,8 @@ alcanza TX_Solicitudes:
 
   aprobada               AT07_chequear_aprobacion_final
   -----------------------------------------------------------------------
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila en la tabla anterior se conserva como referencia histórica.*
 
 **3.2 Flujo detallado --- Parte 1: Creación a visita en terreno**
 
@@ -236,8 +242,8 @@ y registra datos en TX_DatosTasacion.
 **3.3 Flujo detallado --- Parte 2: Cálculo y generación de PDF**
 
 Una vez registrada la visita (estado = visitada), AT03 ejecuta el DAG
-completo de fórmulas. AT04 valida los rangos del valor calculado. Si
-todo está dentro del rango, SC07+SC09 generan el PDF y AT05 notifica al
+completo de fórmulas. [Fuera de scope IF-03 · 27-ago-2026] La validación de rangos del valor
+calculado queda fuera del proyecto. Cuando el valor está dentro de rango, SC07+SC09 generan el PDF y AT05 notifica al
 visador.
 
 > AT03_ejecutar_dag_formulas
@@ -254,7 +260,7 @@ visador.
 >
 > ▼
 >
-> AT04_validar_rangos_valor (valida resultados de TX_Calculos)
+> AT04_validar_rangos_valor (valida resultados de TX_Calculos) — fuera de scope IF-03
 >
 > │
 >
@@ -360,6 +366,8 @@ tasado:
                                           verifica rangos  INSERT        (si aplica) ·
                                           de M_Comunas                   Make SC07+SC09
   ---------------------------------------------------------------------------------------
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su fila en la tabla anterior se conserva como referencia histórica.*
 
 **State machine de TX_Solicitudes:**
 
@@ -697,7 +705,7 @@ trabajo de cada tasador.
   Prerequisito        AT01 y AT02 completados · Tasador completó Next.js
                       IF-03 (estado = visitada)
 
-  Siguiente paso      AT04 se dispara por TX_Calculos INSERT
+  Siguiente paso      TX_Calculos INSERT (AT04, fuera de scope IF-03)
   -----------------------------------------------------------------------
 
 **Qué es un DAG y por qué se usa Kahn**
@@ -817,7 +825,7 @@ antes de que sus dependencias estén resueltas.
 >
 > TX_Solicitudes.estado = \'calculada\'
 >
-> (esto dispara AT04 via TX_Calculos INSERT)
+> (TX_Calculos INSERT — AT04 fuera de scope IF-03)
 
 **Reglas de negocio vinculadas a ítems**
 
@@ -841,6 +849,9 @@ antes de que sus dependencias estén resueltas.
   ------------------------------------------------------------------------
 
 **8. AT04 · Validar Rangos de Valor**
+
+> **⛔ FUERA DE SCOPE IF-03 · decisión 27-ago-2026.** AT04 no se implementa en este proyecto.
+> Contenido conservado como referencia histórica.
 
 ![](media/image7.png){width="6.3in" height="5.507638888888889in"}
 
@@ -1003,7 +1014,7 @@ seguros sin duplicar PDFs, emails ni registros.
 
 **10. Orden de Carga de CSVs Consolidado**
 
-Este es el orden maestro para todos los AT01--AT04. Cada capa puede
+Este es el orden maestro para todos los AT01--AT03 (AT04 fuera de scope IF-03). Cada capa puede
 cargarse en paralelo entre sus tablas; el orden entre capas es estricto.
 
 **Capa 1 · M\_ Maestros**
@@ -1031,6 +1042,8 @@ cargarse en paralelo entre sus tablas; el orden entre capas es estricto.
 
 > *⚠️ M_Tasadores va siempre después de M_Comunas. El campo disponible
 > es una fórmula calculada por Airtable --- no cargarlo manualmente.*
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su presencia en la tabla de carga anterior (M_Comunas / M_Clientes «crítica para AT04») se conserva como referencia histórica.*
 
 **Capa 2 · C\_ Configuración**
 
@@ -1125,6 +1138,8 @@ cargarse en paralelo entre sus tablas; el orden entre capas es estricto.
 
   Siguiente paso  AT02                Make SC03       AT04              Make SC07+SC09
   -------------------------------------------------------------------------------------
+
+*[Fuera de scope IF-03 · 27-ago-2026] AT04 (validar rangos de valor) no se implementa en este proyecto; su columna en la tabla comparativa anterior se conserva como referencia histórica.*
 
 **12. Automations Independientes de Estado (AT08--AT10)**
 

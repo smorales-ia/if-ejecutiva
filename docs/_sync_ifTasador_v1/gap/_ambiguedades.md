@@ -1823,3 +1823,49 @@ escenario Make de extracción—, no en una ruta que sirve a una UI de sólo lec
 
 **Registro asociado:** **CI-056** (ejecución del cierre de A-13). El `POST` y el `DELETE` retirados
 quedan en git y su protocolo de resurrección es el mismo que declaró **A-18**.
+
+## A-46 · AT04 (validar rangos de valor) fuera de scope IF-03 — **CERRADA POR DECISIÓN**
+
+**Estado** — CERRADA por decisión de producto · 27-ago-2026 · impacto acotado · no bloqueante.
+
+AT04 (`AT04_validar_rangos_valor`: compara el valor calculado contra los rangos
+`rango_min_uf_m2`/`rango_max_uf_m2` de `M_Comunas` y marca `flag_revision`) **no se implementa en
+el proyecto IF-03**. Las secciones que lo describen en las specs canónicas se **conservan** bajo un
+encabezado «⛔ FUERA DE SCOPE IF-03», no se eliminan (regla de oro §1.2: cero pérdida de contenido).
+
+**Consecuencias:**
+
+- **`requiere_atencion` conserva su otro productor.** El estado sigue vigente en el enum y en el
+  código: lo produce IF-02 para una solicitud sin tasador asignado (`lib/solicitudes.ts`, vista
+  `por_asignar`; `lib/console-data.ts`; `lib/tasador/tasaciones.ts`). No se borra de ningún enum ni
+  fórmula.
+- **`flag_revision` queda sin productor en el proyecto.** Sólo AT04 lo escribía; sin AT04, ningún
+  componente de IF-03 lo produce ni lo consume. No aparece en código (sólo en `docs/**.md`).
+- **P8-TAS · §9.3 criterio 7:** deja de aplicar. `requiere_atencion` ya no llega al polling de la
+  Pantalla 6 por la vía del cálculo (era la cadena AT04 → `flag_revision` → `requiere_atencion`). El
+  checkbox se anota «N/A por A-46», no se elimina.
+
+**Alcance de esta entrada (hits que quedan LEAVE — cubiertos aquí, sin edición hit por hit):**
+
+- Análisis histórico de la colisión de numeración SC08↔AT04 (registro de A-10), que se conserva
+  intacto por ser registro y no spec viva de AT04:
+  - `_sync_ifTasador_v1/gap/_ambiguedades.md`: líneas **267, 270, 272, 278, 292**.
+  - `_sync_ifTasador_v1/RESUME.md`: líneas **101, 103, 106, 127, 150**.
+- Menciones de `requiere_atencion` (estado vigente por productor IF-02, ajenas a AT04), ratificadas
+  sin cambio:
+  - `plan_ejecucion_UItasador_v1.3.md`: **1870, 1890** (1890 recibe el sufijo «N/A por A-46»).
+  - `_sync_ifTasador_v1/gap/_ambiguedades.md`: **329** (A-11).
+  - `_sync_ifTasador_v1/RESUME.md`: **305** (máquina de estados oficial).
+  - `_sync_ifTasador_v1/gap/VProperty_Motor_Calculo_AT01_AT10_v2_6.md`: **43**.
+  - `_sync_ifTasador_v1/01_clasificacion.md`: **93**.
+
+**Fuera de esta entrada (se editan aparte, mapa de edición 27-ago-2026):** las secciones y menciones
+de AT04 en las specs canónicas del Grupo B (`VProperty_Motor_Calculo_AT01_AT10_v2_6.md`,
+`VProperty_Especificacion_Proyecto_v1_9_15.md`, `VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md`,
+`Arquitectura_Enterprise_VProperty_v2_9.md`, `VProperty_Blueprint_Interfaces_v2_10.md`,
+`VProperty_Origen_Datos_Informe_v1.1.md`), que reciben encabezado FUERA DE SCOPE o anotación.
+
+**Pendiente externo:** `plan-ejecucion-if02-v1_9.md` (4 hits AT04, territorio IF-02 · R5) — requiere
+autorización de Óscar; ver nota M4.
+
+**Registro asociado:** barrido de consistencia P8-TAS y mapa de edición por archivo (27-ago-2026).
