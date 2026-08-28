@@ -20,6 +20,7 @@ import {
   type InformeData,
 } from "@/lib/tasador/tasaciones"
 import { readPayload } from "@/lib/tasador/tasador-store"
+import type { ValorDestacado } from "@/lib/tasador/lectura-informe"
 import { combinarConBorrador } from "@/lib/tasador/recuperacion-borrador"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
@@ -111,6 +112,7 @@ function Dato({ k, v }: { k: string; v: React.ReactNode }) {
 export function InformePreview({
   tasacion,
   informeInicial,
+  valorCanonico,
 }: {
   tasacion: Tasacion
   /**
@@ -122,6 +124,24 @@ export function InformePreview({
    * preview sólo con borrador local— si una página futura olvidara pasarlo.
    */
   informeInicial: InformeData
+  /**
+   * Bloque 2 (valor + cap rate) desde el modelo **canónico** de `lecturaInforme`
+   * (P9-TAS · **CI-063**). `null` si el guard del canónico falló → estado vacío.
+   *
+   * ## Por qué sólo el bloque 2 y no todo el informe
+   *
+   * El frente CI-063 tiene alcance **mínimo**: sólo se cablea acá el valor
+   * destacado y el cap rate, cuyo cómputo cliente estaba roto —el denominador
+   * `valorReferenciaClp` no tiene columna (CI-023 §1) y el cap rate salía «—»—.
+   * El resto del preview sigue con el modelo cliente `d`:
+   *
+   * - Bloques 4 (avalúo SII) y 8 (antecedentes legales) → **P9-TAS.B**.
+   * - Bloque 6 (comparables): la grilla `SeccionComparables` mantiene su promedio
+   *   **simple** de forma **deliberada**. No se alinea al homogeneizado del
+   *   canónico porque esa divergencia es **CI-057**, abierta y condicionada a
+   *   **A-44** (Héctor).
+   */
+  valorCanonico: ValorDestacado | null
 }) {
   const router = useRouter()
   const { estado } = useEstadoTasador(tasacion.id)
@@ -167,15 +187,24 @@ export function InformePreview({
   )
   const esNuevo = tasacion.tipoPropiedad === "nuevo"
 
-  /* Valor de tasación (UF) y cap rate */
-  const overrideUf = Number(d.valorSugeridoOverride.replace(/[^\d.]/g, "")) || 0
-  const valorUf = overrideUf || tasacion.valorEstimadoUf || 0
-  const arriendoMensual = Number(d.arriendoBrutoClp.replace(/\D/g, "")) || 0
-  const gastoAnual = Number(d.gastoAnualClp.replace(/\D/g, "")) || 0
-  const valorReferenciaClp = Number(d.valorReferenciaClp.replace(/\D/g, "")) || 0
-  const netoAnual = arriendoMensual * 12 - gastoAnual
+  /*
+   * Bloque 2 · valor destacado + cap rate — desde el modelo CANÓNICO (CI-063).
+   *
+   * Hasta P9-TAS este bloque calculaba el cap rate en el cliente como
+   * `(arriendo·12 − gasto) / valorReferenciaClp`. Ese denominador está en
+   * `CAMPOS_SIN_DESTINO` (CI-023 §1): nunca se hidrataba, quedaba 0 y el cap rate
+   * salía «—». Ahora llega ya resuelto desde `lecturaInforme` —cap rate
+   * ALMACENADO (`tasa_cap_rate_override ?? tasa_cap_rate`)— vía `valorCanonico`.
+   * El cómputo cliente (`netoAnual` / `valorReferenciaClp`) se retiró por completo.
+   */
+  const valorUf = valorCanonico?.valorUf ?? null
   const capRate =
-    valorReferenciaClp > 0 ? ((netoAnual / valorReferenciaClp) * 100).toFixed(2) : null
+    valorCanonico?.capRate != null ? valorCanonico.capRate.toFixed(2) : null
+  const esOverrideValor = valorCanonico?.esOverride ?? false
+
+  /* `overrideUf` (borrador) sigue vivo: el bloque 8 lista los overrides desde el
+   * modelo cliente, que queda fuera del alcance de CI-063 (→ P9-TAS.B). */
+  const overrideUf = Number(d.valorSugeridoOverride.replace(/[^\d.]/g, "")) || 0
 
   /* Unidades / SII */
   const unidades = tasacion.unidades ?? []
@@ -324,7 +353,7 @@ export function InformePreview({
                   "—"
                 )}
               </p>
-              {overrideUf > 0 && (
+              {esOverrideValor && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   Ajuste manual del tasador
                   {d.motivoOverride ? `: ${d.motivoOverride}` : ""}
