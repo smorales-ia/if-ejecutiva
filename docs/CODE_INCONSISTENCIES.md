@@ -2134,3 +2134,34 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
   equivocado**: el cliente en vez del canónico del motor.
 - **Depende de, pero no bloquea, CI-023.** El cap rate en «—» tiene dos salidas: darle columna a
   `valorReferenciaClp` (CI-023) o cablear `bloques[]` (esta ficha). P9-TAS toma la segunda.
+
+## CI-064 · Filas huérfanas en TX_DatosTasacion (cap rate sin solicitud)
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-064 |
+| **Archivo:línea** | (dato, no código) `TX_DatosTasacion` (`tbl…`) · campo `tasa_cap_rate` poblado, link a solicitud vacío |
+| **Síntoma** | 6 filas de `TX_DatosTasacion` tienen `tasa_cap_rate` poblado (rango observado 0.045–0.06) pero el campo de link a la solicitud **vacío**. Con los datos actuales, **ninguna** solicitud renderiza un cap rate real en el **bloque 2** del informe: `lecturaInforme` casa `TX_DatosTasacion` por `{solicitud}=codigo`, y sin ese link las filas son inalcanzables desde cualquier solicitud. |
+| **Causa (hipótesis)** | Siembra parcial durante el setup de tandas previas (**P3-TAS** o **P5-TAS**): AT03 nunca corrió sobre estas filas, o el link a la solicitud se perdió tras crearlas. No confirmado. |
+| **Impacto** | **Bloqueante para la validación end-to-end del motor AT03 sobre datos reales** (no hay ninguna fila enlazada con la que probar el camino cap-rate → bloque 2). **No bloqueante para P9-TAS**: el fix de CI-063 ya cerró como *ausencia honesta* (el preview muestra «—» cuando no hay cap rate almacenado, sin romper). |
+| **Decisión pendiente** | Escalar a **Héctor**. Tres salidas en evaluación: (a) **purgar** las 6 filas huérfanas; (b) **re-linkearlas** a solicitudes existentes; (c) **dejarlas** como evidencia de un bug histórico. Ninguna se ejecuta sin autorización. |
+| **Dueño** | Héctor (decisión) · Claude Code (ejecución tras OK) |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟡 **abierta** · pendiente autorización de Héctor |
+| **Origen** | Diagnóstico **P9-TAS** (28-ago-2026), durante la verificación de **CI-063**: al buscar una solicitud con cap rate real para la demo del bloque 2 se detectaron las 6 filas con `tasa_cap_rate` poblado y link a solicitud vacío. |
+
+## CI-065 · Botón "Agregar comparable" en Sección D (duplicado de CI-056)
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-065 |
+| **Archivo:línea** | `components/tasador/seccion-comparables.tsx` (100% presentacional) |
+| **Síntoma** | Pendiente heredado en la cola de trabajo: remover el botón «Agregar comparable» de la Sección D tras convertirla en solo-lectura. |
+| **Diagnóstico** | Al verificar el árbol: **0 coincidencias** del literal en `components/`, `app/` y `lib/`; handler inexistente (el componente no tiene `onClick`/`set*`/`<Button>`, recibe solo `form`); ruta API `app/api/tasaciones/[id]/comparables/route.ts` **sin `POST`/`DELETE`** (solo `GET`); tests sin mención. El componente ya no tiene botón desde **CI-056** — su docblock lo confirma en las líneas 9-15. |
+| **Causa** | El pendiente sobrevivió en la cola de trabajo aunque ya estaba ejecutado: trazabilidad incompleta en el cierre de **CI-056**. |
+| **Impacto** | Ninguno. El código ya está en el estado deseado. |
+| **Resolución** | ✅ Cerrada como **duplicada de CI-056** (24-ago-2026, punto **(a)** de su resolución: grilla de sólo lectura, sin «Agregar comparable», sin borrado por fila, sin `input`). No requiere cambios de código. |
+| **Dueño** | — (duplicado) |
+| **Fecha objetivo** | — (cerrada) |
+| **Estado** | 🟢 **cerrada** · duplicado |
+| **Origen** | Verificación del 28-ago-2026 tras **P9-TAS**: al abrir el frente de remoción se detectó que el botón ya no existía en el árbol. |
