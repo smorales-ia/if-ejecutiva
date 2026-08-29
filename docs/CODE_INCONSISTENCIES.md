@@ -2165,3 +2165,18 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Fecha objetivo** | — (cerrada) |
 | **Estado** | 🟢 **cerrada** · duplicado |
 | **Origen** | Verificación del 28-ago-2026 tras **P9-TAS**: al abrir el frente de remoción se detectó que el botón ya no existía en el árbol. |
+
+## CI-066 · TX_DocumentosLegales vacía en toda la base (bloque 8 legal sin datos verificables)
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-066 |
+| **Archivo:línea** | (dato, no código) `TX_DocumentosLegales` (`tbl7qIg5x4Y0tOiLk`) — totalRecordCount = 0 |
+| **Síntoma** | La tabla `TX_DocumentosLegales` no tiene ninguna fila en toda la base. El sub-bloque «Antecedentes legales» del bloque 8 del informe (`fojas`, `numero_inscripcion`, `ano_inscripcion`, `permiso_edificacion_numero`, `recepcion_final_numero`) renderiza 5 «—» para **cualquier** solicitud, no sólo la seed. |
+| **Causa (hipótesis)** | No existe pipeline / automatización que pueble `TX_DocumentosLegales`. Los 6 nombres de campo **existen en el schema** (validados en la verificación P9-TAS.B · Paso 1), pero nunca se materializaron filas. Posible: la fuente (Conservador de Bienes Raíces / Municipalidad / OCR de escrituras) todavía no está integrada, o AT03 no genera esas filas. No confirmado. |
+| **Impacto** | **Bloqueante para la validación end-to-end del sub-bloque legal del informe.** **No bloqueante para P9-TAS.B**: el cableado es correcto y muestra «—» honesto (RO-34 · §10.1 «no se omite»). |
+| **Decisión pendiente** | Escalar a **Héctor**. Tres salidas en evaluación: (a) confirmar que el pipeline llega en una tanda futura y dejar esta ficha como tracking; (b) sembrar datos manuales para al menos un record de demo; (c) omitir el sub-bloque legal del informe hasta que exista fuente de datos (contradice §10.1). |
+| **Dueño** | Héctor (decisión) · pendiente asignar owner del pipeline |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟡 **abierta** · pendiente autorización de Héctor |
+| **Origen** | Verificación **P9-TAS.B · Paso 1** (28-ago-2026, hallazgo H2) durante la lectura MCP contra VP-2026-0005 (`recPx0yiK9k4oPG4V`). |
