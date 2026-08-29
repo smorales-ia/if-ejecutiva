@@ -2194,7 +2194,7 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Decisión pendiente (implementación)** | Antes de codear hay que **verificar cómo se distingue «usada» vs «nueva»** en la base. Candidato principal (pre-verificado): `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`, singleSelect `nuevo · usado`); alternativa a descartar: un subtipo en `TX_Unidades` u otro campo. Confirmar además la fuente del rol SII por unidad (campo en `TX_Unidades`) antes de escribir código. |
 | **Dueño** | Héctor (decisión de producto, tomada) · Claude Code (ejecución tras OK y verificación de schema) |
 | **Fecha objetivo** | (pendiente) |
-| **Estado** | 🟡 **abierta** · requerimiento definido · **BLOQUEADA por 6 ambigüedades escaladas a Héctor (29-ago-2026)** |
+| **Estado** | 🟢 **decisión completa · lista para implementación** · 6 ambigüedades resueltas por Héctor (29-ago-2026) — ver «Resolución» al pie |
 | **Origen** | Revisión UI Tasador con Héctor (28-ago-2026). Sustituye el enfoque de CI-025 (códigos SII) por rol SII por unidad. |
 
 ### Ambigüedades bloqueantes (29-ago-2026)
@@ -2225,5 +2225,81 @@ y renderizado en `informe-preview.tsx:453`); rol a nivel bloque `TX_Solicitudes.
   unidad no tiene sujeto. ¿El bloque muestra **sólo el rol de solicitud**, o **"Sin unidades
   registradas" como hoy**?
 
-**Estado de estas ambigüedades:** 🔴 **bloquean la implementación de CI-067.** Pendientes de decisión
-de Héctor. El diff de código no se redacta hasta cerrarlas.
+**Estado de estas ambigüedades:** 🟢 **resueltas por Héctor (29-ago-2026).** Ver «Resolución» abajo.
+
+### Resolución (29-ago-2026, respuestas de Héctor)
+
+Héctor cerró las 6 ambigüedades bloqueantes. Respuestas literales:
+
+- **A · Discriminador VACÍO:** temporal → tratar como **«nuevo»** hasta que **CI-069** normalice la
+  data. Post-CI-069 el caso no existirá porque **CI-068** hará obligatorio el campo en el formulario.
+- **B · Dos niveles de rol:** la regla aplica **tanto al rol de bloque como al rol por unidad**.
+- **C · "EN TRAMITE":** tratar como **ausente**, mostrar el literal.
+- **D · Literal final:** **«Rol SII pendiente»** (mayúscula inicial, sin punto).
+- **E · USADA con rol vacío:** mismo literal **«Rol SII pendiente»**.
+- **F · Sin unidades:** omitir la tabla de unidades, mostrar sólo el rol general de bloque.
+
+**Regla implementable consolidada:**
+
+```
+valor = rol crudo del campo
+if (valor == null || valor.trim() == "" || valor == "EN TRAMITE"):
+    mostrar "Rol SII pendiente"
+else:
+    mostrar valor
+```
+
+Aplica igual a **rol de bloque** y a **rol por unidad**. Si no hay unidades: **no renderizar la
+tabla `porUnidad`**.
+
+> El literal **«Rol SII pendiente»** (respuesta D) **sustituye** al tentativo «no se tiene rol» que
+> figura en la fila «Requerimiento nuevo (Héctor)» de esta misma ficha.
+
+> ⚠ La respuesta 1 de Héctor abre 3 requerimientos que exceden CI-067 y se separan como **CI-068**
+> (form: campo obligatorio), **CI-069** (migración nulls → «nuevo») y **CI-070** (filtro de adjuntos
+> por tipo de propiedad).
+
+## CI-068 · Formulario nueva solicitud: campo `tipo_propiedad_nuevo_usado` debe ser obligatorio
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-068 |
+| **Archivo:línea** | (por localizar) formulario de creación de solicitud — territorio por confirmar (IF-02 «nueva solicitud» vs IF-03) |
+| **Síntoma** | Hoy el formulario de nueva solicitud permite crear sin definir usado/nuevo. **VP-2026-0005** y otros records quedaron con `tipo_propiedad_nuevo_usado` vacío. |
+| **Requerimiento** | Forzar la selección de usado/nuevo al momento de crear la solicitud (campo obligatorio en el form). |
+| **Impacto** | **Alto** — afecta la pantalla de creación de solicitud en IF-02 (posible **R5** con Óscar). |
+| **Pendiente antes de codear** | Verificar si el form vive en **IF-02** (R5) o **IF-03** (territorio). |
+| **Origen** | Respuesta **1.1** de Héctor (29-ago-2026), derivada de la resolución de CI-067 · ambigüedad A. |
+| **Dueño** | (por asignar) |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟡 **abierta** · requerimiento definido · pendiente asignación de tanda |
+
+## CI-069 · Normalizar `tipo_propiedad_nuevo_usado` en registros existentes (nulls → «nuevo»)
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-069 |
+| **Archivo:línea** | (dato, no código) `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`) |
+| **Síntoma** | N solicitudes en `TX_Solicitudes` con `tipo_propiedad_nuevo_usado = null`. Rompe consistencia y obliga a la regla transitoria de CI-067 (ambigüedad A). |
+| **Requerimiento** | Escritura masiva en Airtable para poblar todos los `null` con el valor **«nuevo»**. |
+| **Impacto** | **Solo datos, no código.** |
+| **Pendiente antes de ejecutar** | Contar cuántos records afectados (inventario). |
+| **Origen** | Respuesta **1.2** de Héctor (29-ago-2026), derivada de la resolución de CI-067 · ambigüedad A. |
+| **Dueño** | (por asignar) · ejecución requiere escritura autorizada en base productiva |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟡 **abierta** · pendiente inventario + escritura autorizada |
+
+## CI-070 · Filtro de documentos adjuntos según tipo de propiedad (usada/nueva)
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-070 |
+| **Archivo:línea** | (por localizar) módulo de adjuntos/fotos del tasador · catálogo `D_TipoDocumento` (campo `tipo_propiedad`) |
+| **Síntoma** | La funcionalidad de adjuntos hoy no distingue qué documentos mostrar según el tipo de propiedad. La tabla `D_TipoDocumento` tiene un campo `tipo_propiedad` que indica a qué tipo aplica cada documento. |
+| **Requerimiento** | El módulo de adjuntos debe filtrar el catálogo de documentos exigibles según `TX_Solicitudes.tipo_propiedad_nuevo_usado` de la solicitud versus `D_TipoDocumento.tipo_propiedad`. |
+| **Impacto** | **Medio** — afecta la pantalla de fotos/adjuntos del tasador. |
+| **Pendiente antes de codear** | Verificar la estructura de `D_TipoDocumento.tipo_propiedad` (valores posibles, cardinalidad, mapeo). |
+| **Origen** | Respuesta **1.3** de Héctor (29-ago-2026), derivada de la resolución de CI-067 · ambigüedad A. |
+| **Dueño** | (por asignar) |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟡 **abierta** · requerimiento definido · pendiente verificación de schema |
