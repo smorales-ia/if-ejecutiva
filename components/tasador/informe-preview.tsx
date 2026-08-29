@@ -20,7 +20,11 @@ import {
   type InformeData,
 } from "@/lib/tasador/tasaciones"
 import { readPayload } from "@/lib/tasador/tasador-store"
-import type { ValorDestacado } from "@/lib/tasador/lectura-informe"
+import type {
+  ValorDestacado,
+  DatosSii,
+  ObservacionesBloque,
+} from "@/lib/tasador/lectura-informe"
 import { combinarConBorrador } from "@/lib/tasador/recuperacion-borrador"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
@@ -54,6 +58,23 @@ function num(v: string) {
 }
 function txt(v: string | undefined) {
   return v && v.trim() ? v : "—"
+}
+/** Número canónico (`number | null`) → texto, o «—» si es null (RO-34). */
+function numN(v: number | null, dec?: number) {
+  if (v == null) return "—"
+  return dec != null
+    ? v.toLocaleString("es-CL", {
+        minimumFractionDigits: dec,
+        maximumFractionDigits: dec,
+      })
+    : nf.format(v)
+}
+/** Un override canónico con su unidad según el campo (P9-TAS.B). */
+function fmtOverride(campo: string, valor: number) {
+  if (campo === "Tasa cap rate") return `${valor}%`
+  if (campo === "Vida útil") return `${valor} años`
+  if (campo === "Valor final") return `${nfUf.format(valor)} UF`
+  return String(valor)
 }
 
 /* ---------- Bloques de presentación ---------- */
@@ -113,6 +134,8 @@ export function InformePreview({
   tasacion,
   informeInicial,
   valorCanonico,
+  siiCanonico,
+  observacionesCanonico,
 }: {
   tasacion: Tasacion
   /**
@@ -133,15 +156,28 @@ export function InformePreview({
    * El frente CI-063 tiene alcance **mínimo**: sólo se cablea acá el valor
    * destacado y el cap rate, cuyo cómputo cliente estaba roto —el denominador
    * `valorReferenciaClp` no tiene columna (CI-023 §1) y el cap rate salía «—»—.
-   * El resto del preview sigue con el modelo cliente `d`:
+   * El resto del preview sigue con el modelo cliente `d`, salvo:
    *
-   * - Bloques 4 (avalúo SII) y 8 (antecedentes legales) → **P9-TAS.B**.
+   * - Bloques 4 (avalúo SII) y 8 (antecedentes legales), cableados al canónico
+   *   en **P9-TAS.B** vía `siiCanonico` / `observacionesCanonico`.
    * - Bloque 6 (comparables): la grilla `SeccionComparables` mantiene su promedio
    *   **simple** de forma **deliberada**. No se alinea al homogeneizado del
    *   canónico porque esa divergencia es **CI-057**, abierta y condicionada a
    *   **A-44** (Héctor).
    */
   valorCanonico: ValorDestacado | null
+  /**
+   * Bloque 4 (SII/avalúo) desde el modelo canónico (P9-TAS.B). `null` si el
+   * guard del canónico falló → estado vacío. Reemplaza el origen cliente
+   * `tasacion.unidades`, que sólo traía la grilla de unidades sin el avalúo.
+   */
+  siiCanonico: DatosSii | null
+  /**
+   * Bloque 8 (observaciones + overrides + antecedentes legales) desde el modelo
+   * canónico (P9-TAS.B). `null` si el guard falló. Los antecedentes legales sólo
+   * existen acá: el modelo cliente nunca los proyectó.
+   */
+  observacionesCanonico: ObservacionesBloque | null
 }) {
   const router = useRouter()
   const { estado } = useEstadoTasador(tasacion.id)
@@ -202,13 +238,17 @@ export function InformePreview({
     valorCanonico?.capRate != null ? valorCanonico.capRate.toFixed(2) : null
   const esOverrideValor = valorCanonico?.esOverride ?? false
 
-  /* `overrideUf` (borrador) sigue vivo: el bloque 8 lista los overrides desde el
-   * modelo cliente, que queda fuera del alcance de CI-063 (→ P9-TAS.B). */
-  const overrideUf = Number(d.valorSugeridoOverride.replace(/[^\d.]/g, "")) || 0
+  /* Bloque 4 · unidades + avalúo SII — canónico (P9-TAS.B). Reemplaza el origen
+   * cliente `tasacion.unidades`, que sólo traía la grilla sin el avalúo. */
+  const unidadesSii = siiCanonico?.porUnidad ?? []
+  const supTotalUnidades = unidadesSii.reduce((a, u) => a + (u.supM2 ?? 0), 0)
 
-  /* Unidades / SII */
-  const unidades = tasacion.unidades ?? []
-  const supTotalUnidades = unidades.reduce((a, u) => a + (u.superficieM2 || 0), 0)
+  /* Bloque 8 · observaciones + overrides + antecedentes legales — canónico
+   * (P9-TAS.B). Los overrides ya vienen filtrados a los no nulos desde el lib. */
+  const overrides = observacionesCanonico?.overrides ?? []
+  const obsTasador = observacionesCanonico?.observacionesTasador ?? ""
+  const obsRechazo = observacionesCanonico?.observacionRechazo ?? ""
+  const legales = observacionesCanonico?.antecedentesLegales ?? null
 
   /* Fotos */
   const totalFotos =
@@ -378,48 +418,67 @@ export function InformePreview({
             </DataGrid>
           </ReportSection>
 
-          {/* 4 · Datos SII / avalúo */}
+          {/* 4 · Datos SII / avalúo — canónico (P9-TAS.B) */}
           <ReportSection titulo="Datos SII / avalúo" numero={4} listo={listo}>
-            {unidades.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-left text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-xs text-muted-foreground">
-                      <th className="py-2 pr-3 font-semibold">Unidad</th>
-                      <th className="py-2 pr-3 font-semibold">Rol SII</th>
-                      <th className="py-2 text-right font-semibold">Sup. (m²)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {unidades.map((u) => (
-                      <tr key={u.rolSii} className="border-b border-border/60">
-                        <td className="py-2 pr-3 font-medium text-foreground">
-                          {txt(u.numero)}
-                        </td>
-                        <td className="py-2 pr-3 tabular-nums text-foreground">
-                          {txt(u.rolSii)}
-                        </td>
-                        <td className="py-2 text-right tabular-nums text-foreground">
-                          {nf.format(u.superficieM2)}
-                        </td>
+            <div className="flex flex-col gap-4">
+              <DataGrid>
+                <Dato k="Rol SII" v={txt(siiCanonico?.rolSii)} />
+                <Dato k="Avalúo total" v={numN(siiCanonico?.avaluoTotal ?? null)} />
+                <Dato k="Avalúo fiscal (UF)" v={numN(siiCanonico?.avaluoFiscalUf ?? null, 2)} />
+                <Dato k="Avalúo exento" v={numN(siiCanonico?.avaluoExento ?? null)} />
+                <Dato k="Contribución anual" v={numN(siiCanonico?.contribucionAnual ?? null)} />
+                <Dato k="Calidad SII" v={txt(siiCanonico?.calidadSii)} />
+                <Dato k="Destino SII" v={txt(siiCanonico?.destinoSii)} />
+              </DataGrid>
+
+              {unidadesSii.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-xs text-muted-foreground">
+                        <th className="py-2 pr-3 font-semibold">Unidad</th>
+                        <th className="py-2 pr-3 font-semibold">Rol SII</th>
+                        <th className="py-2 pr-3 font-semibold">Subtipo</th>
+                        <th className="py-2 pr-3 text-right font-semibold">Sup. (m²)</th>
+                        <th className="py-2 text-right font-semibold">Avalúo (UF)</th>
                       </tr>
-                    ))}
-                    <tr className="font-semibold text-foreground">
-                      <td className="py-2 pr-3" colSpan={2}>
-                        Total
-                      </td>
-                      <td className="py-2 text-right tabular-nums">
-                        {nf.format(supTotalUnidades)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Sin unidades registradas.
-              </p>
-            )}
+                    </thead>
+                    <tbody>
+                      {unidadesSii.map((u) => (
+                        <tr key={u.id} className="border-b border-border/60">
+                          <td className="py-2 pr-3 font-medium text-foreground">
+                            {txt(u.numeroUnidad)}
+                          </td>
+                          <td className="py-2 pr-3 tabular-nums text-foreground">
+                            {txt(u.rolSii)}
+                          </td>
+                          <td className="py-2 pr-3 text-foreground">{txt(u.subtipo)}</td>
+                          <td className="py-2 pr-3 text-right tabular-nums text-foreground">
+                            {numN(u.supM2)}
+                          </td>
+                          <td className="py-2 text-right tabular-nums text-foreground">
+                            {numN(u.avaluoUf, 2)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="font-semibold text-foreground">
+                        <td className="py-2 pr-3" colSpan={3}>
+                          Total
+                        </td>
+                        <td className="py-2 pr-3 text-right tabular-nums">
+                          {nf.format(supTotalUnidades)}
+                        </td>
+                        <td className="py-2" />
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Sin unidades registradas.
+                </p>
+              )}
+            </div>
           </ReportSection>
 
           {/* 5 · Cuadro de valoración */}
@@ -493,41 +552,66 @@ export function InformePreview({
             </div>
           </ReportSection>
 
-          {/* 8 · Observaciones y overrides */}
+          {/* 8 · Observaciones y overrides — canónico (P9-TAS.B) */}
           <ReportSection titulo="Observaciones y overrides" numero={8} listo={listo}>
-            <div className="flex flex-col gap-3">
-              {d.observacionesTasador ? (
+            <div className="flex flex-col gap-4">
+              {obsTasador ? (
                 <div>
                   <p className="text-xs text-muted-foreground">
                     Observaciones del tasador
                   </p>
                   <p className="whitespace-pre-line text-sm text-foreground">
-                    {d.observacionesTasador}
+                    {obsTasador}
                   </p>
                 </div>
               ) : null}
-              {overrideUf > 0 || d.tasaCapRateOverride || d.vidaUtilOverride ? (
+              {obsRechazo ? (
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Observación de rechazo
+                  </p>
+                  <p className="whitespace-pre-line text-sm text-foreground">
+                    {obsRechazo}
+                  </p>
+                </div>
+              ) : null}
+              {overrides.length > 0 ? (
                 <DataGrid>
-                  {overrideUf > 0 && (
-                    <Dato k="Valor sugerido (override)" v={`${nfUf.format(overrideUf)} UF`} />
+                  {overrides.map((o) => (
+                    <Dato
+                      key={o.campo}
+                      k={`${o.campo} (override)`}
+                      v={fmtOverride(o.campo, o.valor)}
+                    />
+                  ))}
+                  {observacionesCanonico?.motivoOverride && (
+                    <Dato
+                      k="Motivo del ajuste"
+                      v={txt(observacionesCanonico.motivoOverride)}
+                    />
                   )}
-                  {d.tasaCapRateOverride && (
-                    <Dato k="Cap rate (override)" v={`${d.tasaCapRateOverride}%`} />
+                  {observacionesCanonico?.autorOverride && (
+                    <Dato k="Autor del ajuste" v={txt(observacionesCanonico.autorOverride)} />
                   )}
-                  {d.vidaUtilOverride && (
-                    <Dato k="Vida útil (override)" v={`${d.vidaUtilOverride} años`} />
-                  )}
-                  {d.motivoOverride && <Dato k="Motivo del ajuste" v={txt(d.motivoOverride)} />}
                 </DataGrid>
               ) : null}
-              {!d.observacionesTasador &&
-                overrideUf === 0 &&
-                !d.tasaCapRateOverride &&
-                !d.vidaUtilOverride && (
-                  <p className="text-sm text-muted-foreground">
-                    Sin observaciones ni ajustes manuales.
-                  </p>
-                )}
+
+              {/* Antecedentes legales — siempre visible, «—» donde falte (§10.1 · RO-34). */}
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">
+                  Antecedentes legales
+                </p>
+                <DataGrid>
+                  <Dato k="Fojas" v={txt(legales?.fojas)} />
+                  <Dato k="N° inscripción" v={txt(legales?.numeroInscripcion)} />
+                  <Dato
+                    k="Año inscripción"
+                    v={legales?.anoInscripcion != null ? String(legales.anoInscripcion) : "—"}
+                  />
+                  <Dato k="Permiso de edificación" v={txt(legales?.permisoEdificacion)} />
+                  <Dato k="Recepción final" v={txt(legales?.recepcionFinal)} />
+                </DataGrid>
+              </div>
             </div>
           </ReportSection>
         </div>

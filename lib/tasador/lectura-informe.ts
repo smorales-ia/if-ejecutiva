@@ -100,6 +100,63 @@ export interface ValorDestacado {
   ufDiaVisita: number | null
 }
 
+/** Una unidad del bloque 4 (SII/avalúo). Espejo de `bloques[3].datos.porUnidad[n]`. */
+export interface UnidadSii {
+  id: string
+  numeroUnidad: string
+  rolSii: string
+  subtipo: string
+  supM2: number | null
+  avaluoUf: number | null
+}
+
+/**
+ * Bloque 4 tipado (SII y avalúo · P9-TAS.B). Espejo de `bloques[3].datos`,
+ * expuesto aparte para que la page no dependa del índice del array —mismo
+ * patrón que `ValorDestacado` (CI-063)—. Es un `type` (no `interface`) para
+ * que sea asignable a `Bloque.datos` (`Record<string, unknown>`) sin cast.
+ */
+export type DatosSii = {
+  /** ⚠ Siempre `null`: `cod_sii_*` no existen en la base (CI-025). */
+  codigosSii: { comuna: string | null; manzana: string | null; predio: string | null }
+  rolSii: string
+  avaluoTotal: number | null
+  avaluoFiscalUf: number | null
+  avaluoExento: number | null
+  contribucionAnual: number | null
+  calidadSii: string
+  destinoSii: string
+  porUnidad: UnidadSii[]
+}
+
+/** Un override manual del tasador, ya filtrado a los no nulos. */
+export interface OverrideItem {
+  campo: string
+  valor: number
+}
+
+/** Antecedentes legales (TX_DocumentosLegales). Vacíos si la tabla no tiene fila. */
+export interface AntecedentesLegales {
+  fojas: string
+  numeroInscripcion: string
+  anoInscripcion: number | null
+  permisoEdificacion: string
+  recepcionFinal: string
+}
+
+/**
+ * Bloque 8 tipado (observaciones + overrides + antecedentes legales · P9-TAS.B).
+ * Espejo de `bloques[7].datos`. `type` por la misma razón que `DatosSii`.
+ */
+export type ObservacionesBloque = {
+  observacionesTasador: string
+  observacionRechazo: string
+  overrides: OverrideItem[]
+  motivoOverride: string
+  autorOverride: string
+  antecedentesLegales: AntecedentesLegales
+}
+
 export interface InformeCanonico {
   id: string
   codigo: string
@@ -107,6 +164,10 @@ export interface InformeCanonico {
   versionVigente: VersionVigente | null
   /** Bloque 2 tipado. Lo que CI-063 cablea al preview en esta tanda. */
   valorDestacado: ValorDestacado
+  /** Bloque 4 tipado (SII/avalúo). Cableado al preview en P9-TAS.B. */
+  datosSii: DatosSii
+  /** Bloque 8 tipado (observaciones + legales). Cableado al preview en P9-TAS.B. */
+  observaciones: ObservacionesBloque
   bloques: Bloque[]
 }
 
@@ -238,7 +299,49 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
     { campo: 'Tasa cap rate', valor: numeroONull(s.tasa_cap_rate_override) },
     { campo: 'Vida útil', valor: numeroONull(s.vida_util_override) },
     { campo: 'Valor final', valor: numeroONull(s.valor_final_override) },
-  ].filter((o) => o.valor !== null)
+  ].filter((o): o is OverrideItem => o.valor !== null)
+
+  /*
+   * Bloques 4 y 8 tipados (P9-TAS.B). Se calculan una sola vez y se usan en DOS
+   * lugares: dentro de `bloques[]` (contrato del route, sin cambios) y como
+   * campos top-level de `InformeCanonico` para que el preview los consuma sin
+   * depender del índice del array —mismo trato que `valorDestacado` en CI-063—.
+   */
+  const datosSii: DatosSii = {
+    // ⚠ Vacío por CI-025: `cod_sii_*` no existen en la base. Se emite `null`
+    // explícito para que la UI muestre «—», no para que deje de renderizar.
+    codigosSii: { comuna: null, manzana: null, predio: null },
+    rolSii: texto(s.rol_sii),
+    avaluoTotal: numeroONull(d.avaluo_total),
+    avaluoFiscalUf: numeroONull(d.avaluo_fiscal_uf),
+    avaluoExento: numeroONull(d.avaluo_exento),
+    contribucionAnual: numeroONull(d.contribucion_anual),
+    calidadSii: texto(d.calidad_sii),
+    destinoSii: texto(d.destino_sii),
+    porUnidad: unidades.map((u) => ({
+      id: u.id,
+      numeroUnidad: texto(u.fields.numero_unidad),
+      rolSii: texto(u.fields.rol_sii),
+      subtipo: texto(u.fields.subtipo),
+      supM2: numeroONull(u.fields.sup_m2),
+      avaluoUf: numeroONull(u.fields.avaluo_uf),
+    })),
+  }
+
+  const observaciones: ObservacionesBloque = {
+    observacionesTasador: texto(d.observaciones_tasador),
+    observacionRechazo: texto(s.observacion_rechazo_tasador),
+    overrides,
+    motivoOverride: texto(s.override_motivo),
+    autorOverride: texto(s.override_autor),
+    antecedentesLegales: {
+      fojas: texto(l.fojas),
+      numeroInscripcion: texto(l.numero_inscripcion),
+      anoInscripcion: numeroONull(l.ano_inscripcion),
+      permisoEdificacion: texto(l.permiso_edificacion_numero),
+      recepcionFinal: texto(l.recepcion_final_numero),
+    },
+  }
 
   const bloques: Bloque[] = [
     {
@@ -298,30 +401,7 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       id: 'sii',
       titulo: 'Datos SII y avalúo',
       vacio: unidades.length === 0 && datos.length === 0,
-      datos: {
-        /**
-         * ⚠ Vacío por CI-025: `cod_sii_comuna`, `cod_sii_manzana` y
-         * `cod_sii_predio` no existen en la base. Se emite la clave con
-         * `null` —y no se omite— para que la UI muestre el estado vacío que
-         * §10.1 exige en lugar de dejar de renderizar el sub-bloque.
-         */
-        codigosSii: { comuna: null, manzana: null, predio: null },
-        rolSii: texto(s.rol_sii),
-        avaluoTotal: numeroONull(d.avaluo_total),
-        avaluoFiscalUf: numeroONull(d.avaluo_fiscal_uf),
-        avaluoExento: numeroONull(d.avaluo_exento),
-        contribucionAnual: numeroONull(d.contribucion_anual),
-        calidadSii: texto(d.calidad_sii),
-        destinoSii: texto(d.destino_sii),
-        porUnidad: unidades.map((u) => ({
-          id: u.id,
-          numeroUnidad: texto(u.fields.numero_unidad),
-          rolSii: texto(u.fields.rol_sii),
-          subtipo: texto(u.fields.subtipo),
-          supM2: numeroONull(u.fields.sup_m2),
-          avaluoUf: numeroONull(u.fields.avaluo_uf),
-        })),
-      },
+      datos: datosSii,
     },
     {
       numero: 5,
@@ -382,20 +462,7 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       id: 'observaciones',
       titulo: 'Observaciones y overrides',
       vacio: overrides.length === 0 && !texto(d.observaciones_tasador),
-      datos: {
-        observacionesTasador: texto(d.observaciones_tasador),
-        observacionRechazo: texto(s.observacion_rechazo_tasador),
-        overrides,
-        motivoOverride: texto(s.override_motivo),
-        autorOverride: texto(s.override_autor),
-        antecedentesLegales: {
-          fojas: texto(l.fojas),
-          numeroInscripcion: texto(l.numero_inscripcion),
-          anoInscripcion: numeroONull(l.ano_inscripcion),
-          permisoEdificacion: texto(l.permiso_edificacion_numero),
-          recepcionFinal: texto(l.recepcion_final_numero),
-        },
-      },
+      datos: observaciones,
     },
   ]
 
@@ -405,6 +472,8 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
     estado: texto(s.estado),
     versionVigente,
     valorDestacado,
+    datosSii,
+    observaciones,
     bloques,
   }
 }

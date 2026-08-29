@@ -50,6 +50,15 @@ function bloqueValor(bloques: Bloque[]) {
   return bloques.find((b) => b.id === 'valor')!
 }
 
+function bloquePorId(bloques: Bloque[], id: string) {
+  return bloques.find((b) => b.id === id)!
+}
+
+/** Puebla las tablas hijas indicadas por TABLE_ID; el resto queda vacío. */
+function airtableCon(porTabla: Partial<Record<string, ReturnType<typeof fila>[]>>) {
+  listRecords.mockImplementation(async (tableId: string) => porTabla[tableId] ?? [])
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   airtableVacio()
@@ -161,5 +170,129 @@ describe('construirInforme · valor destacado (bloque 2)', () => {
 
     expect(informe.valorDestacado.valorUf).toBeNull()
     expect(bloqueValor(informe.bloques).vacio).toBe(true)
+  })
+})
+
+describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
+  it('proyecta avalúo desde TX_DatosTasacion y lo expone top-level', async () => {
+    airtableCon({
+      [TABLE_IDS.datosTasacion]: [
+        fila('recD1', {
+          avaluo_total: 45000000,
+          avaluo_fiscal_uf: 1200.5,
+          avaluo_exento: 30000000,
+          contribucion_anual: 350000,
+          calidad_sii: 'B',
+          destino_sii: 'Habitacional',
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      rol_sii: '658-128',
+    })
+
+    expect(informe.datosSii.avaluoTotal).toBe(45000000)
+    expect(informe.datosSii.avaluoFiscalUf).toBe(1200.5)
+    expect(informe.datosSii.rolSii).toBe('658-128')
+    expect(informe.datosSii.calidadSii).toBe('B')
+    // El top-level y bloques[] son el MISMO objeto (contrato del route intacto).
+    expect(bloquePorId(informe.bloques, 'sii').datos).toBe(informe.datosSii)
+  })
+
+  it('mapea TX_Unidades a porUnidad[]', async () => {
+    airtableCon({
+      [TABLE_IDS.unidades]: [
+        fila('recU1', {
+          numero_unidad: 'Depto 101',
+          rol_sii: '658-128',
+          subtipo: 'Departamento',
+          sup_m2: 62.5,
+          avaluo_uf: 900,
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.datosSii.porUnidad).toHaveLength(1)
+    expect(informe.datosSii.porUnidad[0]).toMatchObject({
+      id: 'recU1',
+      numeroUnidad: 'Depto 101',
+      subtipo: 'Departamento',
+      supM2: 62.5,
+      avaluoUf: 900,
+    })
+  })
+
+  it('codigosSii es null en las tres claves (CI-025)', async () => {
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.datosSii.codigosSii).toEqual({
+      comuna: null,
+      manzana: null,
+      predio: null,
+    })
+  })
+
+  it('bloque sii vacío sin unidades ni datos (ausencia honesta · RO-34)', async () => {
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(bloquePorId(informe.bloques, 'sii').vacio).toBe(true)
+    expect(informe.datosSii.porUnidad).toEqual([])
+    expect(informe.datosSii.avaluoTotal).toBeNull()
+  })
+})
+
+describe('construirInforme · bloque 8 (observaciones + legales · P9-TAS.B)', () => {
+  it('mapea antecedentes legales desde TX_DocumentosLegales', async () => {
+    airtableCon({
+      [TABLE_IDS.documentosLegales]: [
+        fila('recL1', {
+          fojas: '1234',
+          numero_inscripcion: '567',
+          ano_inscripcion: 2019,
+          permiso_edificacion_numero: 'PE-88',
+          recepcion_final_numero: 'RF-90',
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.observaciones.antecedentesLegales).toEqual({
+      fojas: '1234',
+      numeroInscripcion: '567',
+      anoInscripcion: 2019,
+      permisoEdificacion: 'PE-88',
+      recepcionFinal: 'RF-90',
+    })
+    expect(bloquePorId(informe.bloques, 'observaciones').datos).toBe(
+      informe.observaciones,
+    )
+  })
+
+  it('overrides[] filtra los nulos y conserva los presentes', async () => {
+    const informe = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      tasa_cap_rate_override: 5.1,
+      valor_final_override: 5200,
+      // vida_util_override ausente → no aparece en el array
+    })
+
+    expect(informe.observaciones.overrides).toEqual([
+      { campo: 'Tasa cap rate', valor: 5.1 },
+      { campo: 'Valor final', valor: 5200 },
+    ])
+  })
+
+  it('bloque observaciones vacío sin observaciones ni overrides', async () => {
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(bloquePorId(informe.bloques, 'observaciones').vacio).toBe(true)
+    expect(informe.observaciones.overrides).toEqual([])
+    // Antecedentes legales vacíos: la tabla no tiene fila (ausencia honesta).
+    expect(informe.observaciones.antecedentesLegales.fojas).toBe('')
   })
 })

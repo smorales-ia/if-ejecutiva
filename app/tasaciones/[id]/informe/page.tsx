@@ -73,11 +73,24 @@ export default async function InformePage({
    */
   const valorCanonico = resInforme.ok ? resInforme.informe.valorDestacado : null
 
+  /*
+   * Bloques 4 (SII/avalúo) y 8 (observaciones + antecedentes legales) desde el
+   * mismo modelo canónico — P9-TAS.B. Misma degradación que `valorCanonico`: si
+   * el guard del canónico falla se pasa `null` y el preview cae a su estado
+   * vacío. No hay lectura extra: `lecturaInforme` ya trae todo en el Promise.all.
+   */
+  const siiCanonico = resInforme.ok ? resInforme.informe.datosSii : null
+  const observacionesCanonico = resInforme.ok
+    ? resInforme.informe.observaciones
+    : null
+
   return (
     <InformePreview
       tasacion={tasacion}
       informeInicial={informeInicial}
       valorCanonico={valorCanonico}
+      siiCanonico={siiCanonico}
+      observacionesCanonico={observacionesCanonico}
     />
   )
 }
