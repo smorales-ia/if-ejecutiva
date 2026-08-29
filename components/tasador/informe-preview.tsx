@@ -422,7 +422,9 @@ export function InformePreview({
           <ReportSection titulo="Datos SII / avalúo" numero={4} listo={listo}>
             <div className="flex flex-col gap-4">
               <DataGrid>
-                <Dato k="Rol SII" v={txt(siiCanonico?.rolSii)} />
+                {/* Rol SII ya trae el sentinel «Rol SII pendiente» del productor
+                    (CI-067): no aplicar el fallback «—» de txt(). */}
+                <Dato k="Rol SII" v={siiCanonico?.rolSii ?? "Rol SII pendiente"} />
                 <Dato k="Avalúo total" v={numN(siiCanonico?.avaluoTotal ?? null)} />
                 <Dato k="Avalúo fiscal (UF)" v={numN(siiCanonico?.avaluoFiscalUf ?? null, 2)} />
                 <Dato k="Avalúo exento" v={numN(siiCanonico?.avaluoExento ?? null)} />
@@ -431,7 +433,9 @@ export function InformePreview({
                 <Dato k="Destino SII" v={txt(siiCanonico?.destinoSii)} />
               </DataGrid>
 
-              {unidadesSii.length > 0 ? (
+              {/* Sin unidades: no se renderiza la tabla ni el mensaje «Sin
+                  unidades registradas»; sólo queda el rol de bloque (CI-067). */}
+              {unidadesSii.length > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-left text-sm">
                     <thead>
@@ -450,7 +454,7 @@ export function InformePreview({
                             {txt(u.numeroUnidad)}
                           </td>
                           <td className="py-2 pr-3 tabular-nums text-foreground">
-                            {txt(u.rolSii)}
+                            {u.rolSii}
                           </td>
                           <td className="py-2 pr-3 text-foreground">{txt(u.subtipo)}</td>
                           <td className="py-2 pr-3 text-right tabular-nums text-foreground">
@@ -473,10 +477,6 @@ export function InformePreview({
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Sin unidades registradas.
-                </p>
               )}
             </div>
           </ReportSection>

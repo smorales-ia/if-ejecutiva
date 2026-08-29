@@ -117,8 +117,6 @@ export interface UnidadSii {
  * que sea asignable a `Bloque.datos` (`Record<string, unknown>`) sin cast.
  */
 export type DatosSii = {
-  /** ⚠ Siempre `null`: `cod_sii_*` no existen en la base (CI-025). */
-  codigosSii: { comuna: string | null; manzana: string | null; predio: string | null }
   rolSii: string
   avaluoTotal: number | null
   avaluoFiscalUf: number | null
@@ -194,6 +192,20 @@ function numeroONull(valor: unknown): number | null {
 
 function texto(valor: unknown): string {
   return valor === null || valor === undefined ? '' : String(valor)
+}
+
+/**
+ * Rol SII con sentinel de ausencia (CI-067 · regla aprobada por Héctor
+ * 29-ago-2026). Vacío, sólo espacios o el marcador `EN TRAMITE` → literal
+ * «Rol SII pendiente» (RO-34: literal explícito, no «—»). Se aplica igual al
+ * rol de bloque (nivel solicitud) y al rol por unidad; Héctor consolidó una
+ * sola regla, sin ramificar por nuevo/usado. El discriminador
+ * `tipo_propiedad_nuevo_usado == null` se trata como «nuevo» de forma
+ * transitoria hasta CI-069, pero no altera este sentinel.
+ */
+function rolSiiConSentinel(valor: string | null): string {
+  const v = (valor ?? '').trim()
+  return v === '' || v === 'EN TRAMITE' ? 'Rol SII pendiente' : v
 }
 
 /**
@@ -308,10 +320,7 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
    * depender del índice del array —mismo trato que `valorDestacado` en CI-063—.
    */
   const datosSii: DatosSii = {
-    // ⚠ Vacío por CI-025: `cod_sii_*` no existen en la base. Se emite `null`
-    // explícito para que la UI muestre «—», no para que deje de renderizar.
-    codigosSii: { comuna: null, manzana: null, predio: null },
-    rolSii: texto(s.rol_sii),
+    rolSii: rolSiiConSentinel(texto(s.rol_sii)),
     avaluoTotal: numeroONull(d.avaluo_total),
     avaluoFiscalUf: numeroONull(d.avaluo_fiscal_uf),
     avaluoExento: numeroONull(d.avaluo_exento),
@@ -321,7 +330,7 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
     porUnidad: unidades.map((u) => ({
       id: u.id,
       numeroUnidad: texto(u.fields.numero_unidad),
-      rolSii: texto(u.fields.rol_sii),
+      rolSii: rolSiiConSentinel(texto(u.fields.rol_sii)),
       subtipo: texto(u.fields.subtipo),
       supM2: numeroONull(u.fields.sup_m2),
       avaluoUf: numeroONull(u.fields.avaluo_uf),

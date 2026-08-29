@@ -226,14 +226,36 @@ describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
     })
   })
 
-  it('codigosSii es null en las tres claves (CI-025)', async () => {
+  it.each([
+    [null, 'Rol SII pendiente'],
+    ['', 'Rol SII pendiente'],
+    ['   ', 'Rol SII pendiente'],
+    ['EN TRAMITE', 'Rol SII pendiente'],
+    ['658-128', '658-128'],
+  ])(
+    'rol de bloque: rol_sii=%j → %j (CI-067 · Héctor 29-ago-2026)',
+    async (entrada, esperado) => {
+      const informe = await construirInforme(ID, {
+        codigo_solicitud: CODIGO,
+        rol_sii: entrada,
+      })
+
+      expect(informe.datosSii.rolSii).toBe(esperado)
+    },
+  )
+
+  it('rol por unidad: aplica el mismo sentinel que el rol de bloque', async () => {
+    airtableCon({
+      [TABLE_IDS.unidades]: [
+        fila('recU1', { numero_unidad: 'Depto 101', rol_sii: 'EN TRAMITE' }),
+        fila('recU2', { numero_unidad: 'Depto 102', rol_sii: '658-128' }),
+      ],
+    })
+
     const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
 
-    expect(informe.datosSii.codigosSii).toEqual({
-      comuna: null,
-      manzana: null,
-      predio: null,
-    })
+    expect(informe.datosSii.porUnidad[0].rolSii).toBe('Rol SII pendiente')
+    expect(informe.datosSii.porUnidad[1].rolSii).toBe('658-128')
   })
 
   it('bloque sii vacío sin unidades ni datos (ausencia honesta · RO-34)', async () => {
