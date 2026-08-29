@@ -1980,10 +1980,10 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Síntoma** | El tooltip del botón deshabilitado y la barra ámbar del pie eligen **el primer faltante que trae `detalle`** —hoy sólo el de la sección D—, mientras `scrollAFaltante()` sigue saltando a **`faltantes[0]`**, el primero en orden de aparición. Cuando el único faltante con `detalle` es «Comparables del cuadro» y hay faltantes previos —el caso normal: «Fecha real de visita» encabeza la lista—, el tooltip dice *«Del cuadro se leyeron 0 de 3 comparables. Vuelve a fotografiar el cuadro completo desde Editar fotos.»*, el tasador pulsa, y **aterriza en la sección A**. |
 | **Causa** | El selector del tooltip cambió el 24-ago-2026, después de CI-056, para cumplir el criterio de §8.3 —*«con menos de 3 comparables el botón está deshabilitado con tooltip explicativo»*—, que no condiciona el tooltip a que ése sea el faltante más urgente. Con `faltantes[0]` el literal **no aparecía nunca**: la sección D es la cuarta de la lista y siempre hay algo antes. `scrollAFaltante()` no se tocó: su regla de orden es la de **§8.1** (*«el foco aterriza en el primero en orden de aparición con su sección desplegada»*). Las dos reglas son correctas por separado y ninguna contempló a la otra. |
 | **Impacto** | **Bajo, y no es un defecto de corrección.** Son **dos trabajos distintos**: el tooltip explica *por qué* el botón está bloqueado, con el contexto que le sirve al tasador; el scroll obedece la regla de orden que el plan fija para el foco. La incoherencia es de expectativa, no de estado. **Y hay un matiz que la vuelve menos grave de lo que parece:** la acción correctiva que el tooltip nombra —«Editar fotos»— es un control del **header**, fuera del formulario, así que ni siquiera existe un destino de scroll dentro del form al que el botón pudiera llevar. Alinearlos no sería mover el scroll a la sección D: sería sacar al tasador del formulario. |
-| **Resolución** | **Pendiente · no se decide unilateralmente.** Hay al menos tres salidas y la elección es de producto: (a) dejarlo como está y documentar que tooltip y foco responden preguntas distintas; (b) que el scroll siga al faltante que el tooltip nombró, lo que en el caso de la sección D significa llevar a «Editar fotos» y abandonar el formulario; (c) que el tooltip enumere el faltante más urgente **y** el explicativo, a costa de un literal más largo. **Siguiente paso concreto:** plantearlo a Héctor junto al resto del comportamiento de bloqueo de «Calcular Tasación». |
-| **Dueño** |  |
-| **Fecha objetivo** | — |
-| **Estado** | **abierta** · no bloqueante |
+| **Resolución** | ✅ **DECISIÓN DE HÉCTOR (28-ago-2026, revisión UI Tasador) — opción (b): alinear.** `scrollAFaltante()` debe seguir al **faltante que el tooltip prioriza** (el `find` con `.detalle`), en lugar de saltar a `faltantes[0]`. Con ello el tooltip y el foco responden la misma pregunta. **Implementación pendiente en tanda futura.** |
+| **Dueño** | Héctor (decisión) · Claude Code (ejecución tras OK) |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟢 **decisión tomada** · implementación pendiente en tanda futura |
 | **Origen** | Fix del tooltip de RF-12, 24-ago-2026, posterior a CI-056. Detectada al aplicar el cambio, no en revisión. |
 
 **Notas:**
@@ -2012,10 +2012,10 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Síntoma** | La categoría exige **3 fotos** para darse por completa, pero desde A-13 la unidad de medida real de la sección D son **filas leídas del cuadro**, no fotos. Las dos magnitudes se desacoplaron: la única foto real del tasador contiene *todas* las ofertas, de modo que **3 filas pueden venir de 1 foto** y **3 fotos pueden rendir 0 filas legibles**. El organizador puede quedar en verde sin ningún comparable utilizable, y en ámbar con el cuadro entero ya leído. |
 | **Causa** | El `min: 3` se escribió en P5-TAS espejando el umbral de RF-12 —«mínimo 3 comparables»— cuando la sección D todavía era **editable** y el tasador tecleaba un comparable por foto. **A-13 cambió el sujeto de RF-12** (ver CI-058): la sección pasó a sólo lectura y su origen pasó a ser el cuadro fotografiado. El umbral de la *sección* se actualizó; el umbral de la *categoría de fotos* no, porque vive en otro módulo y nadie lo señaló. Plan v1.3 §6.1 sigue exigiendo 3 y es literal normativo. |
 | **Impacto** | **Bajo y acotado a la señalización.** El mínimo no bloquea «Calcular Tasación» —eso lo decide RF-12 sobre `form.comparables.length` (CI-058)— sólo pinta el contador de la categoría. El daño es de confianza: un tasador que ve la categoría completa asume que el cuadro quedó cubierto, y puede no estarlo. En sentido inverso, quien fotografía el cuadro entero de una vez queda con la categoría en ámbar aunque haya hecho el trabajo correcto, y la única forma de apagarla es **duplicar la misma foto tres veces**, que es peor que el estado que corrige. |
-| **Resolución** | **Pendiente · no se decide unilateralmente.** Tres salidas y la elección es de producto: **(a)** dejar el 3 y documentar que mide fotos, no filas —lo que está en efecto hoy—; **(b)** bajar el mínimo a **1**, que es lo que el acto real del tasador produce; **(c)** hacerlo **dependiente de RF-12**: pedir foto sólo mientras `comparables.length < 3`, lo que alinea las dos magnitudes al precio de que una categoría de fotos consulte un dato de otra sección. **Siguiente paso concreto:** plantearlo a Héctor junto al resto del comportamiento de la sección D post-A-13. |
-| **Dueño** | Héctor |
-| **Fecha objetivo** | — |
-| **Estado** | **abierta** · no bloqueante |
+| **Resolución** | ✅ **DECISIÓN DE HÉCTOR (28-ago-2026, revisión UI Tasador) — opción (b): bajar a 1.** El cuadro llega en **una sola foto con las 3 filas**, de modo que el mínimo de la categoría de fotos baja a **1**. La validación real de suficiencia no vive en el conteo de fotos sino en las **3 filas leídas del cuadro** (RF-12). **Implementación pendiente en tanda futura.** |
+| **Dueño** | Héctor (decisión) · Claude Code (ejecución tras OK) |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟢 **decisión tomada** · implementación pendiente en tanda futura |
 | **Origen** | P7-TAS.A.4 (26-ago-2026), decisión **D-2 · opción A**: al hidratar las fotos server-side se revisó `CATEGORIAS_FOTO` y se constató que el `min` de esta categoría quedó huérfano de A-13. |
 
 **Notas:**
@@ -2144,10 +2144,10 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Síntoma** | 6 filas de `TX_DatosTasacion` tienen `tasa_cap_rate` poblado (rango observado 0.045–0.06) pero el campo de link a la solicitud **vacío**. Con los datos actuales, **ninguna** solicitud renderiza un cap rate real en el **bloque 2** del informe: `lecturaInforme` casa `TX_DatosTasacion` por `{solicitud}=codigo`, y sin ese link las filas son inalcanzables desde cualquier solicitud. |
 | **Causa (hipótesis)** | Siembra parcial durante el setup de tandas previas (**P3-TAS** o **P5-TAS**): AT03 nunca corrió sobre estas filas, o el link a la solicitud se perdió tras crearlas. No confirmado. |
 | **Impacto** | **Bloqueante para la validación end-to-end del motor AT03 sobre datos reales** (no hay ninguna fila enlazada con la que probar el camino cap-rate → bloque 2). **No bloqueante para P9-TAS**: el fix de CI-063 ya cerró como *ausencia honesta* (el preview muestra «—» cuando no hay cap rate almacenado, sin romper). |
-| **Decisión pendiente** | Escalar a **Héctor**. Tres salidas en evaluación: (a) **purgar** las 6 filas huérfanas; (b) **re-linkearlas** a solicitudes existentes; (c) **dejarlas** como evidencia de un bug histórico. Ninguna se ejecuta sin autorización. |
+| **Decisión pendiente** | ✅ **RESUELTA por Héctor (28-ago-2026, revisión UI Tasador) — opción (b): re-linkear.** Analizar las 6 filas una a una y re-conectarlas a solicitudes existentes. **Requiere análisis 1-a-1 antes de cualquier escritura en Airtable**; ninguna fila se toca sin ese análisis. |
 | **Dueño** | Héctor (decisión) · Claude Code (ejecución tras OK) |
 | **Fecha objetivo** | (pendiente) |
-| **Estado** | 🟡 **abierta** · pendiente autorización de Héctor |
+| **Estado** | 🟡 **resolución acordada, pendiente ejecución** (Héctor, 28-ago-2026) |
 | **Origen** | Diagnóstico **P9-TAS** (28-ago-2026), durante la verificación de **CI-063**: al buscar una solicitud con cap rate real para la demo del bloque 2 se detectaron las 6 filas con `tasa_cap_rate` poblado y link a solicitud vacío. |
 
 ## CI-065 · Botón "Agregar comparable" en Sección D (duplicado de CI-056)
@@ -2175,8 +2175,24 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Síntoma** | La tabla `TX_DocumentosLegales` no tiene ninguna fila en toda la base. El sub-bloque «Antecedentes legales» del bloque 8 del informe (`fojas`, `numero_inscripcion`, `ano_inscripcion`, `permiso_edificacion_numero`, `recepcion_final_numero`) renderiza 5 «—» para **cualquier** solicitud, no sólo la seed. |
 | **Causa (hipótesis)** | No existe pipeline / automatización que pueble `TX_DocumentosLegales`. Los 6 nombres de campo **existen en el schema** (validados en la verificación P9-TAS.B · Paso 1), pero nunca se materializaron filas. Posible: la fuente (Conservador de Bienes Raíces / Municipalidad / OCR de escrituras) todavía no está integrada, o AT03 no genera esas filas. No confirmado. |
 | **Impacto** | **Bloqueante para la validación end-to-end del sub-bloque legal del informe.** **No bloqueante para P9-TAS.B**: el cableado es correcto y muestra «—» honesto (RO-34 · §10.1 «no se omite»). |
-| **Decisión pendiente** | Escalar a **Héctor**. Tres salidas en evaluación: (a) confirmar que el pipeline llega en una tanda futura y dejar esta ficha como tracking; (b) sembrar datos manuales para al menos un record de demo; (c) omitir el sub-bloque legal del informe hasta que exista fuente de datos (contradice §10.1). |
-| **Dueño** | Héctor (decisión) · pendiente asignar owner del pipeline |
+| **Decisión pendiente** | ✅ **RESUELTA por Héctor (28-ago-2026, revisión UI Tasador) — opción (b): sembrar demo.** Cargar datos legales manuales para al menos **VP-2026-0005** (record demo canónico, `recPx0yiK9k4oPG4V`). El **pipeline productivo** que pueble `TX_DocumentosLegales` de forma automática queda como **frente separado, sin fecha**. |
+| **Dueño** | Héctor (decisión) · Claude Code (ejecución seed tras OK) · pendiente asignar owner del pipeline productivo |
 | **Fecha objetivo** | (pendiente) |
-| **Estado** | 🟡 **abierta** · pendiente autorización de Héctor |
+| **Estado** | 🟡 **resolución acordada, pendiente ejecución** (Héctor, 28-ago-2026) |
 | **Origen** | Verificación **P9-TAS.B · Paso 1** (28-ago-2026, hallazgo H2) durante la lectura MCP contra VP-2026-0005 (`recPx0yiK9k4oPG4V`). |
+
+## CI-067 · Bloque 4 del informe: retirar sub-bloque «códigos SII» y agregar rol SII por unidad con lógica usada/nueva
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-067 |
+| **Archivo:línea** | (por localizar) bloque 4 del informe — sub-bloque «códigos SII» (comuna / manzana / predio) en el productor canónico (`lib/tasador/lectura-informe.ts`) y su render en `components/tasador/informe-preview.tsx` |
+| **Síntoma** | El bloque 4 arrastra un sub-bloque de **tres códigos SII** (comuna, manzana, predio) que **no existen en Airtable** (los campos SII declarados en `schema-airtable.md` §20.6 nunca se crearon — ver **CI-025**), de modo que renderiza vacío. Falta, en cambio, el dato que Héctor sí quiere ver: el **rol SII por unidad**. |
+| **Causa** | Decisión de producto de Héctor (28-ago-2026, revisión UI Tasador): **NO** implementar los tres códigos SII (comuna/manzana/predio) —quedan definitivamente descartados por inexistencia en base (CI-025)— y **sustituirlos** por el rol SII de cada unidad. |
+| **Impacto** | **Medio.** El bloque 4 hoy promete un dato que la base no puede dar (códigos SII) y omite el que el negocio necesita (rol por unidad). No bloquea el resto del informe. |
+| **Requerimiento nuevo (Héctor)** | Retirar el sub-bloque «códigos SII» del bloque 4 y agregar **rol SII por unidad** con lógica según estado de uso: <br>· Propiedad **USADA**: mostrar el rol SII de **cada unidad**. <br>· Propiedad **NUEVA**: mostrar el rol SII **sólo si existe**; si no, el texto literal **«no se tiene rol»**. |
+| **Decisión pendiente (implementación)** | Antes de codear hay que **verificar cómo se distingue «usada» vs «nueva»** en la base. Candidato principal (pre-verificado): `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`, singleSelect `nuevo · usado`); alternativa a descartar: un subtipo en `TX_Unidades` u otro campo. Confirmar además la fuente del rol SII por unidad (campo en `TX_Unidades`) antes de escribir código. |
+| **Dueño** | Héctor (decisión de producto, tomada) · Claude Code (ejecución tras OK y verificación de schema) |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟡 **abierta** · requerimiento definido · pendiente verificación de schema + implementación |
+| **Origen** | Revisión UI Tasador con Héctor (28-ago-2026). Sustituye el enfoque de CI-025 (códigos SII) por rol SII por unidad. |

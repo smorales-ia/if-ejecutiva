@@ -1739,8 +1739,14 @@ propios? Si es lo primero, son 4 combinaciones más de sembrado y una correcció
 
 ## A-44 · Los tres factores de homogeneización ratificados no aparecen en el flujo real
 
-**Estado** — abierta · **no bloqueante** · impacto medio. **Dueños: Héctor + visador titular.**
+**Estado** — **resolución acordada (Héctor · 28-ago-2026), pendiente ejecución** · no bloqueante · impacto medio. **Dueños: Héctor + visador titular.**
 Registrada como **D-23** en spec §15. Ligada a **A-35** y sucesora del residuo de **A-18**.
+
+> **Resolución de Héctor (28-ago-2026, revisión UI Tasador) — opción (a).** Adaptar el sistema
+> a los factores que aparecen en la **foto real del cuadro** y actualizar el plan en consecuencia:
+> `plan_ejecucion_UItasador_v1_3.md` §4.4 se reescribe para reflejar los factores efectivamente
+> presentes en el rango fotografiado, no los tres teóricos de RF-TAS-08/D-21. **Requiere inspección
+> de la foto real del cuadro antes de codear.** Implementación pendiente en tanda futura.
 
 **La contradicción, en dos hechos que hoy conviven.**
 
@@ -1783,9 +1789,16 @@ consumidor en IF-03.
 
 ## A-45 · Re-fotografiado del cuadro: ¿la extracción acumula filas en `TX_Comparables` o reemplaza el conjunto?
 
-**Estado** — abierta · **no bloqueante** · impacto medio. **Dueño: Héctor.**
+**Estado** — **resolución acordada (Héctor · 28-ago-2026), pendiente ejecución** · no bloqueante · impacto medio. **Dueño: Héctor.**
 Registrada el 24-ago-2026 al ejecutar el cierre de **A-13** en P7-TAS. Ligada a **A-13** y a
 **CI-056**.
+
+> **Resolución de Héctor (28-ago-2026, revisión UI Tasador) — opción (a): reemplaza.** Cuando el
+> tasador vuelve a fotografiar el cuadro, la nueva foto **pisa el conjunto anterior**: el sistema se
+> queda con las filas de la última foto, no con la unión. Requiere un **mecanismo de purga** que
+> reponga la funcionalidad de desligado retirada en **CI-056** (el `DELETE` de
+> `app/api/tasaciones/[id]/comparables/route.ts`), implementado donde corresponde —el escenario Make
+> de extracción, no la ruta de sólo lectura—. Implementación pendiente.
 
 **El hecho que la abre.** A-13 dejó la foto del cuadro `[Excel: Portada!B28:AX44]` como **única
 entrada** de comparables al sistema, y la corrección del tasador ante un cuadro mal leído es
