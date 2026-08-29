@@ -2194,5 +2194,36 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Decisión pendiente (implementación)** | Antes de codear hay que **verificar cómo se distingue «usada» vs «nueva»** en la base. Candidato principal (pre-verificado): `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`, singleSelect `nuevo · usado`); alternativa a descartar: un subtipo en `TX_Unidades` u otro campo. Confirmar además la fuente del rol SII por unidad (campo en `TX_Unidades`) antes de escribir código. |
 | **Dueño** | Héctor (decisión de producto, tomada) · Claude Code (ejecución tras OK y verificación de schema) |
 | **Fecha objetivo** | (pendiente) |
-| **Estado** | 🟡 **abierta** · requerimiento definido · pendiente verificación de schema + implementación |
+| **Estado** | 🟡 **abierta** · requerimiento definido · **BLOQUEADA por 6 ambigüedades escaladas a Héctor (29-ago-2026)** |
 | **Origen** | Revisión UI Tasador con Héctor (28-ago-2026). Sustituye el enfoque de CI-025 (códigos SII) por rol SII por unidad. |
+
+### Ambigüedades bloqueantes (29-ago-2026)
+
+La verificación MCP previa a la implementación (solo lectura · código + base real) destapó **6
+casos límite que la decisión original de Héctor (28-ago-2026) no cubre**. Cada uno exige una regla
+explícita antes de escribir código; ninguno se decide del lado del código. Evidencia de contexto:
+discriminador `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`, `nuevo`/`usado`);
+rol por unidad `TX_Unidades.rol_sii` (`fldC5yUYC2wTTLJBV`, ya expuesto en `lectura-informe.ts:324`
+y renderizado en `informe-preview.tsx:453`); rol a nivel bloque `TX_Solicitudes.rol_sii`
+(`fldznAL2SuCpfUUtg`, renderizado en `informe-preview.tsx:425`); vacío rinde `"—"` vía `txt()`
+(`informe-preview.tsx:60`).
+
+- **A · Discriminador VACÍO** (VP-2026-0005 `recPx0yiK9k4oPG4V` y otros): si
+  `tipo_propiedad_nuevo_usado` es `null`, ¿qué rama aplica? ¿Se trata como **usada**, como **nueva**,
+  o se muestra `"—"`? *(El record demo canónico VP-2026-0005 tiene el discriminador vacío.)*
+- **B · Dos niveles de rol**: bloque (desde solicitud, `informe-preview.tsx:425`) vs por unidad
+  (tabla, `informe-preview.tsx:453`). ¿El literal `"no se tiene rol"` aplica **sólo a la columna por
+  unidad**, **sólo al bloque**, o **a ambos**? ¿Se conserva el `"Rol SII"` de bloque?
+- **C · "EN TRAMITE"** (valor real observado en el rol de solicitud de las propiedades nuevas —
+  VP-2026-0047/0046/0044/0050): ¿cuenta como **"existe"** (se muestra tal cual) o es el **sentinel**
+  de `"no se tiene rol"`?
+- **D · Literal exacto**: ¿`"no se tiene rol"` tal cual, en minúscula, sin punto final? Confirmar
+  contra **§6.1 del Blueprint** (estilo de literales).
+- **E · Vacío en USADA**: para propiedad **USADA** con rol vacío (caso VP-2026-0005: discriminador
+  vacío + unidad sin rol), ¿`"—"` o algún literal específico?
+- **F · Solicitud sin unidades** (caso VP-2026-0063 `recdBwN9OimaCcL9T`, 0 unidades): la lógica por
+  unidad no tiene sujeto. ¿El bloque muestra **sólo el rol de solicitud**, o **"Sin unidades
+  registradas" como hoy**?
+
+**Estado de estas ambigüedades:** 🔴 **bloquean la implementación de CI-067.** Pendientes de decisión
+de Héctor. El diff de código no se redacta hasta cerrarlas.
