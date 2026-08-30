@@ -875,7 +875,7 @@ export interface CategoriaFoto {
  * inventa uno.
  */
 export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
-  { id: 'ofertas_comparables', label: 'Ofertas / Comparables', min: 3, max: null },
+  { id: 'ofertas_comparables', label: 'Ofertas / Comparables', min: 1, max: null },
   { id: 'habitaciones', label: 'Habitaciones', min: 'dorm', max: null },
   { id: 'banos', label: 'Baños', min: 'banos', max: null },
   { id: 'estacionamientos', label: 'Estacionamientos', min: 'estac', max: null },

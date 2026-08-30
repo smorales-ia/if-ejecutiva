@@ -38,7 +38,7 @@ describe('resolverMinimo · A-16 · mínimos dinámicos', () => {
 
   it('mantiene fijos los cinco mínimos que no dependen de lo declarado', () => {
     const d = declarados(9, 9, 9)
-    expect(resolverMinimo('ofertas_comparables', d)).toBe(3)
+    expect(resolverMinimo('ofertas_comparables', d)).toBe(1)
     expect(resolverMinimo('mapa_ubicacion', d)).toBe(1)
     expect(resolverMinimo('fachada_exterior', d)).toBe(1)
     expect(resolverMinimo('cocina', d)).toBe(1)

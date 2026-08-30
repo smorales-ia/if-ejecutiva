@@ -231,7 +231,7 @@ export function TasacionForm({
 
   // Scroll suave + foco en el primer campo faltante (§5.5).
   const scrollAFaltante = () => {
-    const first = faltantes[0]
+    const first = faltantes.find((f) => f.detalle) ?? faltantes[0]
     if (!first) return
     setOpenSections((prev) => ({ ...prev, [first.seccion]: true }))
     setTimeout(() => {
