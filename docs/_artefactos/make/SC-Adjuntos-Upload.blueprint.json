@@ -1,5 +1,5 @@
 {
-    "name": "SC-Adjuntos-Upload v1.3 - Path v1.9.6 desde payload",
+    "name": "SC-Adjuntos-Upload v1.4 - adjunto_record_id aditivo (CI-061)",
     "flow": [
         {
             "id": 1,
@@ -676,7 +676,7 @@
                             "version": 1,
                             "parameters": {},
                             "mapper": {
-                                "body": "{\"ok\": true, \"modo\": \"reused\", \"adjunto_id\": \"{{2.adjunto_id}}\", \"url_dropbox\": \"{{2.url_dropbox}}\", \"nombre_archivo\": \"{{2.nombre_archivo}}\", \"tamanio_kb\": {{2.tamanio_kb}}, \"reused\": true}",
+                                "body": "{\"ok\": true, \"modo\": \"reused\", \"adjunto_id\": \"{{2.adjunto_id}}\", \"adjunto_record_id\": \"{{2.id}}\", \"url_dropbox\": \"{{2.url_dropbox}}\", \"nombre_archivo\": \"{{2.nombre_archivo}}\", \"tamanio_kb\": {{2.tamanio_kb}}, \"reused\": true}",
                                 "status": "200",
                                 "headers": [
                                     {
@@ -1755,7 +1755,7 @@
                             "version": 1,
                             "parameters": {},
                             "mapper": {
-                                "body": "{\"ok\": true, \"modo\": \"reemplazo\", \"adjunto_id\": \"{{15.adjunto_id}}\", \"adjunto_previo_id\": \"{{11.id}}\", \"url_dropbox\": \"{{14.path_display}}\", \"nombre_archivo\": \"{{1.nombre_archivo}}\", \"tamanio_kb\": {{1.tamanio_kb}}, \"reused\": false}",
+                                "body": "{\"ok\": true, \"modo\": \"reemplazo\", \"adjunto_id\": \"{{15.adjunto_id}}\", \"adjunto_record_id\": \"{{15.id}}\", \"adjunto_previo_id\": \"{{11.id}}\", \"url_dropbox\": \"{{14.path_display}}\", \"nombre_archivo\": \"{{1.nombre_archivo}}\", \"tamanio_kb\": {{1.tamanio_kb}}, \"reused\": false}",
                                 "status": "200",
                                 "headers": [
                                     {
@@ -2520,7 +2520,7 @@
                             "version": 1,
                             "parameters": {},
                             "mapper": {
-                                "body": "{\"ok\": true, \"modo\": \"nuevo\", \"adjunto_id\": \"{{8.adjunto_id}}\", \"url_dropbox\": \"{{6.path_display}}\", \"nombre_archivo\": \"{{1.nombre_archivo}}\", \"tamanio_kb\": {{1.tamanio_kb}}, \"reused\": false}",
+                                "body": "{\"ok\": true, \"modo\": \"nuevo\", \"adjunto_id\": \"{{8.adjunto_id}}\", \"adjunto_record_id\": \"{{8.id}}\", \"url_dropbox\": \"{{6.path_display}}\", \"nombre_archivo\": \"{{1.nombre_archivo}}\", \"tamanio_kb\": {{1.tamanio_kb}}, \"reused\": false}",
                                 "status": "200",
                                 "headers": [
                                     {
