@@ -2147,8 +2147,47 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Decisión pendiente** | ✅ **RESUELTA por Héctor (28-ago-2026, revisión UI Tasador) — opción (b): re-linkear.** Analizar las 6 filas una a una y re-conectarlas a solicitudes existentes. **Requiere análisis 1-a-1 antes de cualquier escritura en Airtable**; ninguna fila se toca sin ese análisis. |
 | **Dueño** | Héctor (decisión) · Claude Code (ejecución tras OK) |
 | **Fecha objetivo** | (pendiente) |
-| **Estado** | 🟡 **resolución acordada, pendiente ejecución** (Héctor, 28-ago-2026) |
+| **Estado** | 🟢 **cerrada · decisión documental (30-ago-2026)**. Supera la resolución (b) de Héctor: no se re-linkea. |
 | **Origen** | Diagnóstico **P9-TAS** (28-ago-2026), durante la verificación de **CI-063**: al buscar una solicitud con cap rate real para la demo del bloque 2 se detectaron las 6 filas con `tasa_cap_rate` poblado y link a solicitud vacío. |
+
+**Resolución (Sergio · 30-ago-2026):**
+
+Tras el diagnóstico 1-a-1 de las 6 filas (lectura MCP · 30-ago-2026), **se decide dejarlas
+como están: no borrar, no re-linkear.** Quedan documentadas como un **batch de import
+conocido y desligado** del 2026-06-09. Esta decisión **supera** la resolución (b) de Héctor
+(28-ago, "re-linkear"): el análisis 1-a-1 mostró que no hay dato que ate ninguna fila a una
+solicitud concreta, de modo que re-linkear sería adivinar.
+
+**Confianza de mapeo 1-a-1: BAJA en las 6.**
+
+**Evidencia técnica (por qué es un batch de import, no data de producción con dueña perdida):**
+
+- Todas creadas el **2026-06-09** (entre 03:50 y 22:03 UTC).
+- **Marca de import Excel**: los `singleSelect` traen las variantes EN MAYÚSCULA "importadas"
+  (`BUENO`, `HORMIGON ARMADO`, `NUEVO - S/USO`, `8 A 10 MESES`), no las minúsculas que
+  escribe la app.
+- **cap rate en campo alterno**: pueblan `fldbBiAvrsphpdLRK`; las filas sanas (con link) usan
+  `fldkvdvRm7jbJuSNI` y además traen rol identificador (p. ej. `658-128`).
+- **`last_modified` común**: `2026-07-05T23:04:29Z` en las 6 (un único toque en lote).
+- **Sin identificadores**: link `solicitud`, `rol_sii`, `direccion`, `comuna`,
+  `observaciones_tasador` y `origen_dato` **vacíos** en las 6.
+- **Sin dueña por proximidad**: ninguna solicitud fue creada en ±24h (nada entre 2026-06-07 y
+  2026-07-07; los códigos 0009–0023 no existen). Las cercanas VP-2026-0003..0008 (06-06) ya
+  tienen su propia fila de datos linkeada.
+
+**Los 6 recordIds documentados (`TX_DatosTasacion` · `tblMoK3mFuwN8Yr1A`):**
+
+| # | recordId | sup. constr. | año | avalúo fiscal | valor motor | cap rate |
+|---|---|---|---|---|---|---|
+| H1 | `recE3rdo1xMqnztOo` | 41 m² | 2026 | 0 | 640k | 0.045 |
+| H2 | `recJhzUKUyobFCV2B` | 1.402 m² | 2024 | 340M | 3,3M | 0.045 |
+| H3 | `recLYcNd07LCXRViR` | 41 m² | 2018 | 50,6M | 320k | 0.060 |
+| H4 | `recWhlLJSeA4Ql851` | 27 m² | 2015 | 27,0M | 250k | 0.055 |
+| H5 | `recnZHcYa1tEo8GqP` | 102 m² | 1998 | 115,5M | 710k | 0.045 |
+| H6 | `recsnTHCff5rRvcsm` | 40 m² | 1994 | 16,6M | 200k | 0.045 |
+
+**Nota operativa:** si en el futuro se crea un mecanismo de limpieza de *import batches* en
+Airtable, estas 6 filas son **candidatas explícitas** a purga.
 
 ## CI-065 · Botón "Agregar comparable" en Sección D (duplicado de CI-056)
 
