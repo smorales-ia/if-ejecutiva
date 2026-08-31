@@ -56,6 +56,8 @@ import { autorizarSolicitud, type SolicitudFields } from './auth-guard'
 import { telefonosPrioritarios } from './contactos-cola'
 import { TABLE_IDS } from './field-ids'
 import { getUsuarioTasador, mockTasadorConfigurado } from './mock-user'
+// CI-070 Fase 1: normalización de género del eje nuevo/usado (paliativo P-5).
+import { normalizarTipoPropiedad } from './tipo-propiedad'
 
 /**
  * Estados que el tasador ve en su cola.
@@ -354,9 +356,14 @@ export function proyectarTasacion(
      * `tipo_propiedad_nuevo_usado` decide la forma del formulario. El dominio
      * real es `nuevo · usado`; cualquier otra cosa —vacío incluido— cae a
      * `usado`, que es el caso mayoritario y el que no muestra el bloque de
-     * proyecto. Mismo criterio que `lib/solicitudes.ts:717` en IF-02.
+     * proyecto. Mismo criterio que `lib/solicitudes.ts` en IF-02.
+     *
+     * CI-070 Fase 1: `normalizarTipoPropiedad` tolera ambos géneros (masculino
+     * hoy, femenino tras el cutover de Fase 2). El DTO se mantiene en masculino
+     * hasta Fase 3; la lectura del tasador no escribe este campo.
      */
-    tipoPropiedad: f['tipo_propiedad_nuevo_usado'] === 'nuevo' ? 'nuevo' : 'usado',
+    tipoPropiedad:
+      normalizarTipoPropiedad(f['tipo_propiedad_nuevo_usado']) === 'nueva' ? 'nuevo' : 'usado',
     direccion,
     cliente,
     producto: nombreDeLink(f['producto'], maestros.productos),

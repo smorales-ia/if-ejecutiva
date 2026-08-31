@@ -60,6 +60,41 @@ export function desdeTipoPropiedadNuevoUsado(
 }
 
 /**
+ * **Puente CI-070 · Fase 1 (lectura tolerante).** Lleva cualquier valor del eje
+ * nuevo/usado —venga en masculino (`TX_Solicitudes`, dominio actual) o en
+ * femenino (`D_TipoDocumento`, y `TX_Solicitudes` tras el cutover de Fase 2)— a
+ * la forma **femenina** que Héctor fijó como canónica del sistema el
+ * 30-ago-2026 (`nueva` · `usada` · `ambas`).
+ *
+ * Su única razón de ser es que las **lecturas** comparen sin depender del género
+ * que Airtable tenga en cada momento, ANTES de renombrar las opciones (Fase 2).
+ * **No** cambia con qué género el sistema **escribe** el campo: la escritura
+ * sigue en masculino hasta el cutover. Cuando ambos dominios queden en femenino,
+ * esta tolerancia y buena parte de este archivo se retiran en Fase 3.
+ *
+ * Acepta `unknown` a propósito: los `singleSelect` de Airtable llegan tipados de
+ * forma laxa (`SolicitudFields` los expone como `unknown`). Cualquier no-string,
+ * `null`, vacío, sólo-espacios o valor fuera del eje → `null`.
+ */
+export function normalizarTipoPropiedad(
+  valor: unknown,
+): 'nueva' | 'usada' | 'ambas' | null {
+  switch (typeof valor === 'string' ? normalizar(valor) : '') {
+    case 'nuevo':
+    case 'nueva':
+      return 'nueva'
+    case 'usado':
+    case 'usada':
+      return 'usada'
+    case 'ambos':
+    case 'ambas':
+      return 'ambas'
+    default:
+      return null
+  }
+}
+
+/**
  * ¿Aplica este tipo de documento a la condición de la propiedad?
  *
  * Es el predicado que RF-TAS-06 necesita para filtrar el checklist documental.

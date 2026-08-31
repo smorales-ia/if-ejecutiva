@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { aSolicitudParaSheet } from './adaptador-solicitud'
-import { documentoAplicaA, desdeTipoPropiedadNuevoUsado } from './tipo-propiedad'
+import {
+  documentoAplicaA,
+  desdeTipoPropiedadNuevoUsado,
+  normalizarTipoPropiedad,
+} from './tipo-propiedad'
 import type { Tasacion } from '@/lib/tasador/tasaciones'
 
 /**
@@ -88,5 +92,43 @@ describe('filtro de RF-TAS-06 · el sheet no debe salir vacío (P-5)', () => {
   it('un documento sin condición declarada no se cuela', () => {
     expect(filtro('usado')(null)).toBe(false)
     expect(filtro('usado')('')).toBe(false)
+  })
+})
+
+describe('normalizarTipoPropiedad · puente CI-070 Fase 1 (lectura tolerante)', () => {
+  it('nuevo y nueva colapsan a `nueva`', () => {
+    expect(normalizarTipoPropiedad('nuevo')).toBe('nueva')
+    expect(normalizarTipoPropiedad('nueva')).toBe('nueva')
+  })
+
+  it('usado y usada colapsan a `usada`', () => {
+    expect(normalizarTipoPropiedad('usado')).toBe('usada')
+    expect(normalizarTipoPropiedad('usada')).toBe('usada')
+  })
+
+  it('ambos y ambas colapsan a `ambas`', () => {
+    expect(normalizarTipoPropiedad('ambos')).toBe('ambas')
+    expect(normalizarTipoPropiedad('ambas')).toBe('ambas')
+  })
+
+  it('null, vacío y sólo-espacios → null', () => {
+    expect(normalizarTipoPropiedad(null)).toBeNull()
+    expect(normalizarTipoPropiedad(undefined)).toBeNull()
+    expect(normalizarTipoPropiedad('')).toBeNull()
+    expect(normalizarTipoPropiedad('   ')).toBeNull()
+  })
+
+  it('cualquier otro valor fuera del eje → null', () => {
+    expect(normalizarTipoPropiedad('otra cosa')).toBeNull()
+    expect(normalizarTipoPropiedad('depto')).toBeNull()
+    // No-strings (Airtable llega como `unknown`) también caen a null.
+    expect(normalizarTipoPropiedad(42)).toBeNull()
+    expect(normalizarTipoPropiedad({})).toBeNull()
+  })
+
+  it('es indiferente a mayúsculas y espacios de borde', () => {
+    expect(normalizarTipoPropiedad('  NUEVO ')).toBe('nueva')
+    expect(normalizarTipoPropiedad('Usada')).toBe('usada')
+    expect(normalizarTipoPropiedad('AMBAS')).toBe('ambas')
   })
 })

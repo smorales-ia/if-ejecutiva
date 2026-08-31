@@ -18,6 +18,8 @@ import {
 // escribir la misma duración con el mismo formato (RO-05).
 import { duracionCorta } from '@/lib/sla-cronologia'
 import { desdeSantiago } from '@/lib/sla-habil'
+// CI-070 Fase 1: normalización de género del eje nuevo/usado (paliativo P-5).
+import { normalizarTipoPropiedad } from '@/lib/tasador/tipo-propiedad'
 // `lib/sla-etapas.ts` importa `TX_SOLICITUDES` de este módulo, así que esto
 // cierra un ciclo de imports. Es seguro y deliberado: ninguno de los dos lados
 // evalúa un binding del otro en tiempo de carga —`TX_SOLICITUDES` se lee dentro
@@ -720,7 +722,11 @@ export function mapRecord(
     // `tipo_propiedad_nuevo_usado` (fldHxx1P1ao33PWrl) sí existe desde el
     // 24-jul-2026 (§21.4 del schema). El hardcode a 'usado' venía de cuando no
     // existía y falseaba la forma del formulario en las propiedades nuevas.
-    tipoPropiedadNuevoUsado: f['tipo_propiedad_nuevo_usado'] === 'nuevo' ? 'nuevo' : 'usado',
+    // CI-070 Fase 1: la lectura tolera ambos géneros vía `normalizarTipoPropiedad`
+    // (masculino hoy, femenino tras el cutover de Fase 2). El DTO se mantiene en
+    // masculino porque la escritura sigue en masculino hasta Fase 2/3.
+    tipoPropiedadNuevoUsado:
+      normalizarTipoPropiedad(f['tipo_propiedad_nuevo_usado']) === 'nueva' ? 'nuevo' : 'usado',
     banco: f['banco'] ?? '—',
     producto: f['producto'] ?? '—',
     direccion: f['direccion'] ?? '—',
