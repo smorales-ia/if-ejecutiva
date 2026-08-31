@@ -81,9 +81,8 @@ describe('filtro de RF-TAS-06 · el sheet no debe salir vacío (P-5)', () => {
   })
 
   it('produce coincidencias no vacías (tras CI-070 ambos dominios son femeninos)', () => {
-    // Criterio de §6.3. Tras el cutover CI-070 Fase 2 ambos dominios ya son
-    // femeninos; `normalizarTipoPropiedad` mantiene el filtro robusto para filas
-    // históricas que aún vinieran en masculino.
+    // Criterio de §6.3. Tras CI-070 ambos dominios son femeninos, así que el
+    // filtro compara sin traducción de género.
     const catalogo = ['nueva', 'usada', 'ambas', null]
     const visibles = catalogo.filter(filtro('usada'))
     expect(visibles.length).toBeGreaterThan(0)
@@ -96,20 +95,23 @@ describe('filtro de RF-TAS-06 · el sheet no debe salir vacío (P-5)', () => {
   })
 })
 
-describe('normalizarTipoPropiedad · puente CI-070 Fase 1 (lectura tolerante)', () => {
-  it('nuevo y nueva colapsan a `nueva`', () => {
-    expect(normalizarTipoPropiedad('nuevo')).toBe('nueva')
+describe('normalizarTipoPropiedad · saneamiento de entrada (CI-070 Fase 3)', () => {
+  it('acepta el femenino canónico `nueva`', () => {
     expect(normalizarTipoPropiedad('nueva')).toBe('nueva')
   })
 
-  it('usado y usada colapsan a `usada`', () => {
-    expect(normalizarTipoPropiedad('usado')).toBe('usada')
+  it('acepta el femenino canónico `usada`', () => {
     expect(normalizarTipoPropiedad('usada')).toBe('usada')
   })
 
-  it('ambos y ambas colapsan a `ambas`', () => {
-    expect(normalizarTipoPropiedad('ambos')).toBe('ambas')
+  it('acepta el femenino canónico `ambas`', () => {
     expect(normalizarTipoPropiedad('ambas')).toBe('ambas')
+  })
+
+  it('rechaza el masculino (Fase 3 retiró la traducción de género) → null', () => {
+    expect(normalizarTipoPropiedad('nuevo')).toBeNull()
+    expect(normalizarTipoPropiedad('usado')).toBeNull()
+    expect(normalizarTipoPropiedad('ambos')).toBeNull()
   })
 
   it('null, vacío y sólo-espacios → null', () => {
@@ -128,7 +130,7 @@ describe('normalizarTipoPropiedad · puente CI-070 Fase 1 (lectura tolerante)', 
   })
 
   it('es indiferente a mayúsculas y espacios de borde', () => {
-    expect(normalizarTipoPropiedad('  NUEVO ')).toBe('nueva')
+    expect(normalizarTipoPropiedad('  NUEVA ')).toBe('nueva')
     expect(normalizarTipoPropiedad('Usada')).toBe('usada')
     expect(normalizarTipoPropiedad('AMBAS')).toBe('ambas')
   })

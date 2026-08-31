@@ -722,9 +722,9 @@ export function mapRecord(
     // `tipo_propiedad_nuevo_usado` (fldHxx1P1ao33PWrl) sí existe desde el
     // 24-jul-2026 (§21.4 del schema). El hardcode a 'usado' venía de cuando no
     // existía y falseaba la forma del formulario en las propiedades nuevas.
-    // CI-070 Fase 2: el DTO habla femenino canónico. La lectura sigue tolerando
-    // ambos géneros vía `normalizarTipoPropiedad` (cubre filas históricas sin
-    // migrar). El default a 'usada' preserva la semántica previa de «no
+    // CI-070: el DTO habla femenino canónico. `normalizarTipoPropiedad` sanea la
+    // entrada (mayúsculas/espacios/valores fuera de eje → null); ya no traduce
+    // género (Fase 3). El default a 'usada' preserva la semántica previa de «no
     // declarado → usado»; distinguir el null es alcance de CI-069, no de CI-070.
     tipoPropiedadNuevoUsado:
       normalizarTipoPropiedad(f['tipo_propiedad_nuevo_usado']) === 'nueva' ? 'nueva' : 'usada',
