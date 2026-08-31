@@ -318,3 +318,78 @@ describe('construirInforme · bloque 8 (observaciones + legales · P9-TAS.B)', (
     expect(informe.observaciones.antecedentesLegales.fojas).toBe('')
   })
 })
+
+describe('construirInforme · bloque 6 (comparables · A-44 fórmula directa)', () => {
+  /** `datos` del bloque 6 con la forma que produce construirInforme. */
+  function datosComparables(bloques: Bloque[]) {
+    return bloquePorId(bloques, 'comparables').datos as {
+      comparables: { id: string; ufM2Construccion: number | null }[]
+      promedioUfM2: number | null
+      usadosEnPromedio: number
+      cumpleMinimo: boolean
+    }
+  }
+
+  it('caso normal: uf_m2_c = (precio_uf - uf_m2_terreno_f*sup_t - oo_cc_uf) / sup_c', async () => {
+    airtableCon({
+      [TABLE_IDS.comparables]: [
+        fila('recC1', {
+          precio_uf: 12500,
+          sup_terreno_m2: 100,
+          sup_construccion_m2: 80,
+          uf_m2_terreno_f: 5,
+          oo_cc_uf: 300,
+        }),
+      ],
+    })
+
+    const { bloques } = await construirInforme(ID, { codigo_solicitud: CODIGO })
+    const datos = datosComparables(bloques)
+
+    // (12500 - 5*100 - 300) / 80 = 11700 / 80 = 146.25
+    expect(datos.comparables[0].ufM2Construccion).toBe(146.25)
+    expect(datos.promedioUfM2).toBe(146.25)
+    expect(datos.usadosEnPromedio).toBe(1)
+  })
+
+  it('oo_cc_uf ausente (null) se trata como 0', async () => {
+    airtableCon({
+      [TABLE_IDS.comparables]: [
+        fila('recC1', {
+          precio_uf: 12500,
+          sup_terreno_m2: 100,
+          sup_construccion_m2: 80,
+          uf_m2_terreno_f: 5,
+          oo_cc_uf: null,
+        }),
+      ],
+    })
+
+    const { bloques } = await construirInforme(ID, { codigo_solicitud: CODIGO })
+    const datos = datosComparables(bloques)
+
+    // (12500 - 5*100 - 0) / 80 = 12000 / 80 = 150
+    expect(datos.comparables[0].ufM2Construccion).toBe(150)
+  })
+
+  it('sup_construccion_m2 = 0 → uf_m2_c null y fuera del promedio (sin división por cero)', async () => {
+    airtableCon({
+      [TABLE_IDS.comparables]: [
+        fila('recC1', {
+          precio_uf: 12500,
+          sup_terreno_m2: 100,
+          sup_construccion_m2: 0,
+          uf_m2_terreno_f: 5,
+          oo_cc_uf: 300,
+        }),
+      ],
+    })
+
+    const { bloques } = await construirInforme(ID, { codigo_solicitud: CODIGO })
+    const datos = datosComparables(bloques)
+
+    expect(datos.comparables[0].ufM2Construccion).toBeNull()
+    expect(datos.usadosEnPromedio).toBe(0)
+    expect(datos.promedioUfM2).toBeNull()
+  })
+})

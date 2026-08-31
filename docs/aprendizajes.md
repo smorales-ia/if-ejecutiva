@@ -1322,3 +1322,27 @@ archivo grande de `docs/` con un `open(...,"w")` ni con un `Edit` de bloque enor
 scratchpad (`/tmp`, ext4, sin `9p` de por medio), verificar con `diff`, y copiar con un `cp` final.
 Los `cat >>` incrementales no fallaron ni una vez. Y ante un fallo de escritura, **medir el daño con
 `git diff --stat` antes de intentar restaurar**: puede que no haya nada que restaurar.
+
+### 2026-08-31 — A-44 · fórmula directa del informe · divergencia de nombre de campo
+**Contexto:** Tanda 1 de A-44 en `lib/tasador/lectura-informe.ts` (bloque 6): reemplazar la
+homogenización por factores (`factor_sup·factor_edad·factor_distancia`) por la fórmula directa del
+Excel `uf_m2_c = (precio_uf − uf_m2_terreno_f·sup_t − oo_cc) / sup_c`, agregando la lectura de OO.CC.
+**Inconveniente:** el diseño pedía leer `oo_cc_uf`, pero el código existente (`lectura-datos.ts:78`)
+documentaba la columna de TX_Comparables como `oo_cc`. Además la fórmula necesitaba un `uf_m2_terreno_f`
+por comparable que no aparecía en ningún tipo del repo. Escribir `numeroONull(f.oo_cc)` /
+`f.uf_m2_terreno_f` sobre nombres equivocados no rompe: devuelve `undefined → null → (?? 0)`, y la
+fórmula degrada en silencio a `(precio_uf − 0 − 0)/sup_c`. Un resultado incorrecto disfrazado de
+correcto, sin crash ni error de tipos (los campos se leen sobre `Fields = Record<string, unknown>`).
+**Causa raíz:** el nombre `oo_cc` es anterior a la configuración D_; el canónico es `oo_cc_uf`. La
+verdad del nombre de campo destino no vive en el código TS —que puede arrastrar nombres viejos— sino
+en `D_TipoDocumentoAtributo.uso_campo_destino`.
+**Solución aplicada:** la pausa-total de Fase 1 (leer y reportar antes de ejecutar) detectó la
+discrepancia y la elevó como bloqueo en vez de codificarla a ciegas. Confirmados los nombres por MCP
+contra `D_TipoDocumentoAtributo` (`oo_cc_uf`, `uf_m2_terreno_f`, precision 4), recién ahí se ejecutó
+Fase 2. `uf_m2_terreno_f` llega null hoy (AT03-Ext hace skip de `muchas_por_solicitud`), así que el
+`?? 0` es el comportamiento correcto acordado, no un parche.
+**Prevención futura:** ante cualquier discrepancia entre el nombre de un campo en el código y el
+nombre en la config D_, la fuente canónica es **`D_TipoDocumentoAtributo.uso_campo_destino`**
+(verificable por MCP), no el identificador que arrastre el TS. Y cuando una lectura de campo cae sobre
+un `Record<string, unknown>`, un nombre equivocado no falla en compilación ni en runtime: degrada a
+`?? 0`/`null` en silencio — por eso el nombre se confirma antes de escribir la fórmula, no después.

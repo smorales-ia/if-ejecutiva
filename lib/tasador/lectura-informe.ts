@@ -262,39 +262,46 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
     ufDiaVisita: numeroONull(s.uf_dia_visita),
   }
 
-  /* --- Bloque 6 · comparables y promedio homogeneizado --------------- */
+  /* --- Bloque 6 · comparables y UF/m² de construcción (A-44) --------- */
   const filasComparables = comparables.map((c) => {
     const f = c.fields
     const supConstruida = numeroONull(f.sup_construccion_m2)
+    const supTerreno = numeroONull(f.sup_terreno_m2)
     const precioUf = numeroONull(f.precio_uf)
-    const ufM2 = supConstruida && precioUf ? precioUf / supConstruida : null
+    const ufM2TerrenoF = numeroONull(f.uf_m2_terreno_f)
+    const ooCcUf = numeroONull(f.oo_cc_uf)
 
-    const factor =
-      (numeroONull(f.factor_sup) ?? 1) *
-      (numeroONull(f.factor_edad) ?? 1) *
-      (numeroONull(f.factor_distancia) ?? 1)
+    // A-44 · fórmula directa del Excel (decisión Héctor 23-ago-2026)
+    // uf_m2_c = (precio_uf - uf_m2_terreno_f*sup_t - oo_cc) / sup_c
+    // Reemplaza la homogenización por factores (factor_sup/edad/distancia), que
+    // no existen en el cuadro que el tasador fotografía. sup_construccion_m2 = 0
+    // o null → null (evita división por cero); terreno/OO.CC. ausentes → 0.
+    const ufM2Construccion =
+      supConstruida && precioUf !== null
+        ? (precioUf - (ufM2TerrenoF ?? 0) * (supTerreno ?? 0) - (ooCcUf ?? 0)) /
+          supConstruida
+        : null
 
     return {
       id: c.id,
       direccion: texto(f.direccion),
       comuna: texto(f.comuna_comparable),
-      supTerreno: numeroONull(f.sup_terreno_m2),
+      supTerreno,
       supConstruida,
       precioUf,
       anio: numeroONull(f.anio),
       tipoReferencia: texto(f.tipo_referencia),
-      ufM2,
-      ufM2Homogeneizado: ufM2 === null ? null : ufM2 * factor,
+      ufM2Construccion,
     }
   })
 
-  const homogeneizados = filasComparables
-    .map((c) => c.ufM2Homogeneizado)
+  const ufM2Validos = filasComparables
+    .map((c) => c.ufM2Construccion)
     .filter((v): v is number => v !== null)
 
   const promedioUfM2 =
-    homogeneizados.length > 0
-      ? homogeneizados.reduce((a, b) => a + b, 0) / homogeneizados.length
+    ufM2Validos.length > 0
+      ? ufM2Validos.reduce((a, b) => a + b, 0) / ufM2Validos.length
       : null
 
   /* --- Bloque 7 · conteo real por categoría -------------------------- */
@@ -439,13 +446,13 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       vacio: filasComparables.length === 0,
       datos: {
         comparables: filasComparables,
-        promedioUfM2Homogeneizado: promedioUfM2,
+        promedioUfM2,
         /**
          * Cuántos comparables entraron en el promedio. Puede ser menor que
          * el total: los que no tienen superficie o precio quedan fuera del
          * cálculo pero **sí** se listan en la grilla.
          */
-        usadosEnPromedio: homogeneizados.length,
+        usadosEnPromedio: ufM2Validos.length,
         /** RF-12 exige un mínimo de 3. Se informa; no se bloquea acá. */
         cumpleMinimo: filasComparables.length >= 3,
       },
