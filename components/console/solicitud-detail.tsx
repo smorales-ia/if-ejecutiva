@@ -171,7 +171,7 @@ function datosMinimosFaltantes(s: Solicitud): string[] {
   if (!hayContactoConTelefono)
     faltan.push("Al menos un contacto de visita con teléfono")
 
-  const esNuevo = s.tipoPropiedadNuevoUsado === "nuevo"
+  const esNuevo = s.tipoPropiedadNuevoUsado === "nueva"
   const rolPendiente = s.unidades.some(
     (u) => u.conRol && !u.rolSii && !(u.rolEnTramite && esNuevo),
   )
@@ -740,7 +740,7 @@ function DatosTab({
   onVerEmail: () => void
   onReenviar: () => void
 }) {
-  const esNuevo = s.tipoPropiedadNuevoUsado === "nuevo"
+  const esNuevo = s.tipoPropiedadNuevoUsado === "nueva"
   const sii = mockDatosSii(s)
   const legales = mockAntecedentesLegales(s)
   const tieneTasador = tasador !== SIN_TASADOR && tasador.trim() !== ""
@@ -799,7 +799,7 @@ function DatosTab({
         <DataRow label="Cliente">{s.cliente}</DataRow>
         <DataRow label="Tipo de informe">{s.tipoInforme}</DataRow>
         <DataRow label="Tipo de propiedad">
-          {s.tipoPropiedad} · {esNuevo ? "Nuevo" : "Usado"}
+          {s.tipoPropiedad} · {esNuevo ? "Nueva" : "Usada"}
         </DataRow>
         <DataRow label="Banco">{s.banco}</DataRow>
         <DataRow label="Producto">{s.producto}</DataRow>

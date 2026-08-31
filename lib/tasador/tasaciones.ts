@@ -336,8 +336,9 @@ export interface Tasacion {
   comuna: string
   /** Clase de inmueble (`tipo_propiedad` → `M_TiposPropiedad`). Ej.: "Casa". */
   tipo: string
-  /** Condición de la propiedad (`tipo_propiedad_nuevo_usado`). Ver P-5. */
-  tipoPropiedad: 'nuevo' | 'usado'
+  /** Condición de la propiedad (`tipo_propiedad_nuevo_usado`). Femenino canónico
+   *  desde CI-070 Fase 2 (antes `'nuevo' | 'usado'`). Ver P-5. */
+  tipoPropiedad: 'nueva' | 'usada'
   direccion: string
   cliente: string
   producto: string

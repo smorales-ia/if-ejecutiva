@@ -84,7 +84,7 @@ function Campo({ label, children }: { label: string; children: React.ReactNode }
 export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
   const router = useRouter()
   const d = tasacion.datosEjecutiva
-  const esNuevo = tasacion.tipoPropiedad === "nuevo"
+  const esNuevo = tasacion.tipoPropiedad === "nueva"
   const unidades = tasacion.unidades ?? []
   /**
    * `ordenPrioridad` es opcional en `ContactoVisita`: los contactos sin
@@ -262,7 +262,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                   esNuevo ? "bg-accent-orange text-white" : "bg-muted text-foreground",
                 )}
               >
-                {esNuevo ? "Nuevo" : "Usado"}
+                {esNuevo ? "Nueva" : "Usada"}
               </span>
             </div>
             <div className="divide-y divide-border">

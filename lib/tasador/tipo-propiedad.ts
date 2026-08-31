@@ -7,27 +7,24 @@
  *
  * | Alias de código (§22.2) | Nombre de datos | Tabla | Dominio real |
  * |---|---|---|---|
- * | `tipoPropiedadNuevoUsado` | `tipo_propiedad_nuevo_usado` | `TX_Solicitudes` | `nuevo` · `usado` (masculino) |
+ * | `tipoPropiedadNuevoUsado` | `tipo_propiedad_nuevo_usado` | `TX_Solicitudes` | `nueva` · `usada` (femenino, desde CI-070 Fase 2) |
  * | `condicionPropiedadAplicable` | `tipo_propiedad` | `D_TipoDocumento` | `nueva` · `usada` · `ambas` (femenino) |
  *
- * RF-TAS-06 los compara para filtrar el checklist documental. **Con los
- * dominios actuales la comparación literal nunca coincide y el sheet
- * documental sale vacío** (`docs/schema-airtable.md` §26.4).
+ * RF-TAS-06 los compara para filtrar el checklist documental.
  *
- * ## Qué es esto y qué no es
+ * ## Estado tras CI-070 Fase 2 (cutover 31-ago-2026)
  *
- * Esto es un **paliativo declarado**, no la solución. La corrección real es
- * alinear el dominio en Airtable, que es trabajo fuera del repo y requiere
- * sign-off de negocio. Mientras tanto, este módulo concentra la traducción en
- * **un solo lugar server-side**, de modo que alinear el dominio después sea
- * borrar este archivo y no perseguir comparaciones sueltas por el árbol.
- *
- * Ninguna comparación de género ocurre en el cliente. Ningún componente
- * hardcodea `'nueva'` ni `'usado'`.
+ * Héctor unificó el sistema en **femenino** y se renombraron las opciones de
+ * `TX_Solicitudes` (`nuevo`→`nueva`, `usado`→`usada`), así que **ambos dominios
+ * ya coinciden**: el desajuste de género que originó P-5 quedó cerrado. Este
+ * módulo se conserva porque sigue centralizando la lectura tolerante
+ * (`normalizarTipoPropiedad`) y la forma canónica neutra; su simplificación /
+ * retiro es trabajo de **Fase 3**. La lectura sigue tolerando ambos géneros para
+ * cubrir cualquier fila histórica que no haya migrado.
  */
 
 /** Dominio de `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`). */
-export type TipoPropiedadNuevoUsado = 'nuevo' | 'usado'
+export type TipoPropiedadNuevoUsado = 'nueva' | 'usada'
 
 /** Dominio de `D_TipoDocumento.tipo_propiedad` (`fldIfdcjsr8KeNRCx`). */
 export type CondicionPropiedadAplicable = 'nueva' | 'usada' | 'ambas'
@@ -49,10 +46,13 @@ export type CondicionPropiedad = 'nueva_construccion' | 'usada_construccion'
 export function desdeTipoPropiedadNuevoUsado(
   valor: string | null | undefined,
 ): CondicionPropiedad | null {
-  switch (normalizar(valor)) {
-    case 'nuevo':
+  // Se apoya en `normalizarTipoPropiedad` para tolerar ambos géneros: el DTO
+  // llega en femenino tras CI-070 Fase 2, pero una fila histórica podría venir
+  // aún en masculino. `ambas` no aplica a una propiedad → cae a `null`.
+  switch (normalizarTipoPropiedad(valor)) {
+    case 'nueva':
       return 'nueva_construccion'
-    case 'usado':
+    case 'usada':
       return 'usada_construccion'
     default:
       return null

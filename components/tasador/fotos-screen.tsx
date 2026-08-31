@@ -358,10 +358,11 @@ export function FotosScreen({
    * Filtro de RF-TAS-06: sólo los documentos cuyo `tipo_propiedad` case con la
    * condición de la solicitud, o sea `ambas`.
    *
-   * El predicado vive en `lib/tasador/tipo-propiedad.ts` — **paliativo de P-5**,
-   * porque los dos dominios de Airtable difieren en género (`nuevo`/`usado` en
-   * `TX_Solicitudes`, `nueva`/`usada`/`ambas` en `D_TipoDocumento`) y la
-   * comparación literal no casa nunca. Ningún literal de género aparece acá.
+   * El predicado vive en `lib/tasador/tipo-propiedad.ts`. Tras el cutover CI-070
+   * Fase 2 ambos dominios de Airtable son femeninos (`nueva`/`usada` en
+   * `TX_Solicitudes`, `nueva`/`usada`/`ambas` en `D_TipoDocumento`), así que el
+   * desajuste de género que originó P-5 quedó cerrado; el módulo se conserva por
+   * la lectura tolerante y la forma canónica. Ningún literal de género aparece acá.
    */
   const condicion = useMemo(
     () => desdeTipoPropiedadNuevoUsado(tasacion.tipoPropiedad),

@@ -221,7 +221,7 @@ export function InformePreview({
     informeInicial,
     readPayload(tasacion.id),
   )
-  const esNuevo = tasacion.tipoPropiedad === "nuevo"
+  const esNuevo = tasacion.tipoPropiedad === "nueva"
 
   /*
    * Bloque 2 · valor destacado + cap rate — desde el modelo CANÓNICO (CI-063).
@@ -360,7 +360,7 @@ export function InformePreview({
                       : "bg-amber-50 text-warning",
                   )}
                 >
-                  {esNuevo ? "Nuevo" : "Usado"}
+                  {esNuevo ? "Nueva" : "Usada"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {tasacion.codigo}

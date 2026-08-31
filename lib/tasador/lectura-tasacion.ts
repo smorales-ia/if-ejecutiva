@@ -358,12 +358,13 @@ export function proyectarTasacion(
      * `usado`, que es el caso mayoritario y el que no muestra el bloque de
      * proyecto. Mismo criterio que `lib/solicitudes.ts` en IF-02.
      *
-     * CI-070 Fase 1: `normalizarTipoPropiedad` tolera ambos géneros (masculino
-     * hoy, femenino tras el cutover de Fase 2). El DTO se mantiene en masculino
-     * hasta Fase 3; la lectura del tasador no escribe este campo.
+     * CI-070 Fase 2: el DTO habla femenino canónico; `normalizarTipoPropiedad`
+     * sigue tolerando ambos géneros para filas históricas sin migrar. El default
+     * a 'usada' preserva la semántica previa de «no declarado → usado» (el
+     * tratamiento fino del null es alcance de CI-069).
      */
     tipoPropiedad:
-      normalizarTipoPropiedad(f['tipo_propiedad_nuevo_usado']) === 'nueva' ? 'nuevo' : 'usado',
+      normalizarTipoPropiedad(f['tipo_propiedad_nuevo_usado']) === 'nueva' ? 'nueva' : 'usada',
     direccion,
     cliente,
     producto: nombreDeLink(f['producto'], maestros.productos),

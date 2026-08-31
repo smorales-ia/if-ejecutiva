@@ -286,7 +286,7 @@ export function toMakeSnakePayload(
   datos: NuevaSolicitudInternaValues,
   opciones: OpcionesPayloadSC01,
 ): PayloadSC01 {
-  const esNuevo = datos.tipoPropiedadNuevoUsado === "nuevo"
+  const esNuevo = datos.tipoPropiedadNuevoUsado === "nueva"
 
   const campos: Record<string, unknown> = {
     // ── Constantes de canal y autoría ──────────────────────────────────────

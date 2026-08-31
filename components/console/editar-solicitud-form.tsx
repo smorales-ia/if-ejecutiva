@@ -148,7 +148,7 @@ export function EditarSolicitudForm({
   guardando?: boolean
 }) {
   const [d, setD] = React.useState<Solicitud>(() => clonar(solicitud))
-  const esNuevo = d.tipoPropiedadNuevoUsado === "nuevo"
+  const esNuevo = d.tipoPropiedadNuevoUsado === "nueva"
 
   const comunasRegion = COMUNAS_POR_REGION[d.region] ?? []
 

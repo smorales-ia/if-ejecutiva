@@ -93,7 +93,7 @@ import {
 import { useCatalogos } from "@/lib/use-catalogos"
 
 type Modo = "documentos" | "manual" | ""
-type TipoNU = "nuevo" | "usado" | ""
+type TipoNU = "nueva" | "usada" | ""
 
 // Campos que el mock "extrae" de los documentos, con el documento de origen.
 const EXTRACCION_MOCK: Partial<Record<keyof NuevaSolicitudInternaValues, string>> =
@@ -919,7 +919,7 @@ export function NewRequestSheet({
   const vendedorCoincide = watch("vendedorCoincideComprador")
   const unidadesWatch = watch("unidades")
 
-  const esNuevo = tipoNuevoUsado === "nuevo"
+  const esNuevo = tipoNuevoUsado === "nueva"
   const comunas = region ? COMUNAS_POR_REGION[region] ?? [] : []
   const requiereBanco = productoEnLista(producto, PRODUCTOS_CON_BANCO)
   const vendedorCoincidePermitido = productoEnLista(
@@ -996,7 +996,7 @@ export function NewRequestSheet({
     initialized.current = false
   }
 
-  function irAFormulario(tipo: "nuevo" | "usado") {
+  function irAFormulario(tipo: "nueva" | "usada") {
     if (!initialized.current) {
       initialized.current = true
       const base: NuevaSolicitudInternaValues = {
@@ -1299,7 +1299,7 @@ export function NewRequestSheet({
                 <Sparkles className="mt-0.5 size-4 shrink-0 text-brand" />
                 <div className="flex flex-col gap-0.5">
                   <p className="text-sm font-medium text-foreground">
-                    Sugerencia: Nuevo
+                    Sugerencia: Nueva
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Basado en: nombre de proyecto detectado, dominio del correo de
@@ -1315,14 +1315,14 @@ export function NewRequestSheet({
                 onChange={(v) => setTipoNU(v as TipoNU)}
                 options={[
                   {
-                    value: "nuevo",
-                    label: "Nuevo",
+                    value: "nueva",
+                    label: "Nueva",
                     description:
                       "Propiedad de primera transferencia (proyecto inmobiliario).",
                   },
                   {
-                    value: "usado",
-                    label: "Usado",
+                    value: "usada",
+                    label: "Usada",
                     description: "Propiedad de segunda o posterior transferencia.",
                   },
                 ]}
@@ -2255,7 +2255,7 @@ export function NewRequestSheet({
           {phase === 2 && (
             <Button
               type="button"
-              onClick={() => irAFormulario(tipoNU as "nuevo" | "usado")}
+              onClick={() => irAFormulario(tipoNU as "nueva" | "usada")}
               disabled={tipoNU === ""}
               className="bg-brand text-brand-foreground hover:bg-brand/90"
             >

@@ -17,8 +17,9 @@ export type Prioridad = "normal" | "urgente" | "critico"
 /** Catálogo cerrado de prioridades (para filtros P5). */
 export const PRIORIDAD = ["normal", "urgente", "critico"] as const
 
-/** Clasificación estructural de la propiedad. Controla la forma del formulario. */
-export type NuevoUsado = "nuevo" | "usado"
+/** Clasificación estructural de la propiedad. Controla la forma del formulario.
+ *  Femenino canónico desde CI-070 Fase 2 (antes `"nuevo" | "usado"`). */
+export type NuevoUsado = "nueva" | "usada"
 
 /** Estado del correo de asignación (SC13). */
 export type EstadoCorreo = "enviado" | "pendiente" | "error"
@@ -564,7 +565,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "María Espinoza",
     tipoInforme: "Tasación hipotecaria",
     tipoPropiedad: "Departamento",
-    tipoPropiedadNuevoUsado: "usado",
+    tipoPropiedadNuevoUsado: "usada",
     banco: "Banco Santander",
     producto: "Crédito hipotecario",
     direccion: "Av. Apoquindo 3500, Dpto 72-B",
@@ -619,7 +620,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "María Espinoza",
     tipoInforme: "Tasación hipotecaria",
     tipoPropiedad: "Casa",
-    tipoPropiedadNuevoUsado: "usado",
+    tipoPropiedadNuevoUsado: "usada",
     banco: "Banco de Chile",
     producto: "Crédito hipotecario",
     direccion: "Los Leones 1240",
@@ -672,7 +673,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "María Espinoza",
     tipoInforme: "Tasación comercial",
     tipoPropiedad: "Local comercial",
-    tipoPropiedadNuevoUsado: "nuevo",
+    tipoPropiedadNuevoUsado: "nueva",
     banco: "BCI",
     producto: "Crédito comercial",
     direccion: "Av. Irarrázaval 4521",
@@ -747,7 +748,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "Javier Mora",
     tipoInforme: "Tasación hipotecaria",
     tipoPropiedad: "Departamento",
-    tipoPropiedadNuevoUsado: "usado",
+    tipoPropiedadNuevoUsado: "usada",
     banco: "Banco Estado",
     producto: "Crédito hipotecario",
     direccion: "Av. Pajaritos 2890, Dpto 304",
@@ -801,7 +802,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "Ana Contreras",
     tipoInforme: "Tasación hipotecaria",
     tipoPropiedad: "Casa",
-    tipoPropiedadNuevoUsado: "usado",
+    tipoPropiedadNuevoUsado: "usada",
     banco: "Scotiabank",
     producto: "Crédito hipotecario",
     direccion: "Alonso de Córdova 4100",
@@ -854,7 +855,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "María Espinoza",
     tipoInforme: "Tasación hipotecaria",
     tipoPropiedad: "Departamento",
-    tipoPropiedadNuevoUsado: "nuevo",
+    tipoPropiedadNuevoUsado: "nueva",
     banco: "Banco Santander",
     producto: "Crédito hipotecario",
     direccion: "Av. Vicuña Mackenna 7100, Dpto 1502",
@@ -918,7 +919,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "María Espinoza",
     tipoInforme: "Tasación hipotecaria",
     tipoPropiedad: "Departamento",
-    tipoPropiedadNuevoUsado: "usado",
+    tipoPropiedadNuevoUsado: "usada",
     banco: "Itaú",
     producto: "Crédito hipotecario",
     direccion: "Av. Providencia 2330, Dpto 88",
@@ -969,7 +970,7 @@ export const SOLICITUDES: Solicitud[] = [
     modificadoPor: "Javier Mora",
     tipoInforme: "Tasación hipotecaria",
     tipoPropiedad: "Casa",
-    tipoPropiedadNuevoUsado: "usado",
+    tipoPropiedadNuevoUsado: "usada",
     banco: "Banco de Chile",
     producto: "Crédito hipotecario",
     direccion: "Gran Avenida 5400",
@@ -1641,12 +1642,12 @@ export interface AntecedentesLegales {
 
 export function mockAntecedentesLegales(s: Solicitud): AntecedentesLegales {
   return {
-    permisoEdificacion: s.tipoPropiedadNuevoUsado === "nuevo" ? "N° 214-2024" : "N° 108-2009",
-    fechaPermiso: s.tipoPropiedadNuevoUsado === "nuevo" ? "12 mar 2024" : "05 ago 2009",
-    recepcionFinal: s.tipoPropiedadNuevoUsado === "nuevo" ? "Pendiente" : "N° 76-2010",
+    permisoEdificacion: s.tipoPropiedadNuevoUsado === "nueva" ? "N° 214-2024" : "N° 108-2009",
+    fechaPermiso: s.tipoPropiedadNuevoUsado === "nueva" ? "12 mar 2024" : "05 ago 2009",
+    recepcionFinal: s.tipoPropiedadNuevoUsado === "nueva" ? "Pendiente" : "N° 76-2010",
     fojas: "12.345",
     numeroInscripcion: "8.901",
-    anioInscripcion: s.tipoPropiedadNuevoUsado === "nuevo" ? "2024" : "2010",
+    anioInscripcion: s.tipoPropiedadNuevoUsado === "nueva" ? "2024" : "2010",
   }
 }
 

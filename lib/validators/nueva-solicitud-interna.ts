@@ -116,7 +116,7 @@ export type ContactoVisitaFormulario = z.infer<typeof contactoVisitaSchema>
 export const nuevaSolicitudInternaSchema = z
   .object({
     // ── Contexto del wizard ──────────────────────────────────────────────
-    tipoPropiedadNuevoUsado: z.enum(["nuevo", "usado"]),
+    tipoPropiedadNuevoUsado: z.enum(["nueva", "usada"]),
 
     /**
      * Hito de inicio del SLA (§5.2.2 · RF-53). Campo **oculto**: no tiene
@@ -222,7 +222,7 @@ export const nuevaSolicitudInternaSchema = z
 
     // Proyecto obligatorio en propiedades nuevas.
     if (
-      data.tipoPropiedadNuevoUsado === "nuevo" &&
+      data.tipoPropiedadNuevoUsado === "nueva" &&
       data.proyecto.trim() === ""
     ) {
       ctx.addIssue({
@@ -293,7 +293,7 @@ export function nuevoContacto(): ContactoVisitaFormulario {
 }
 
 export const nuevaSolicitudInternaDefaults: NuevaSolicitudInternaValues = {
-  tipoPropiedadNuevoUsado: "usado",
+  tipoPropiedadNuevoUsado: "usada",
   // Vacío en los defaults y estampado al montar la Fase 1: un `new Date()` aquí
   // se evaluaría **una sola vez**, al cargar el módulo, y todas las solicitudes
   // de la sesión compartirían el instante en que se abrió la consola.

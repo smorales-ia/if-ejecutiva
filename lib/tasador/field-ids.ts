@@ -89,7 +89,8 @@ export const FIELD_IDS_SOLICITUD = Object.freeze({
 
   /** `tipo_propiedad` · Link → M_TiposPropiedad. Alias §22.2. */
   tipoPropiedad: 'fld701TB0LXovvQmt',
-  /** `tipo_propiedad_nuevo_usado` · singleSelect `nuevo · usado`. Alias §22.2. */
+  /** `tipo_propiedad_nuevo_usado` · singleSelect `nueva · usada` (femenino desde
+   *  CI-070 Fase 2). Alias §22.2. */
   tipoPropiedadNuevoUsado: 'fldHxx1P1ao33PWrl',
   /** `estado_conservacion` · singleSelect. No confundir con `estado`. */
   estadoConservacion: 'flde0ExWfB1dhkp4t',

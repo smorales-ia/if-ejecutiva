@@ -20,7 +20,7 @@ const tasacion = (over: Partial<Tasacion> = {}): Tasacion =>
     estado: 'asignada',
     comuna: 'Providencia',
     tipo: 'Departamento',
-    tipoPropiedad: 'usado',
+    tipoPropiedad: 'usada',
     direccion: 'Av. Siempre Viva 742',
     cliente: 'Banco de Chile',
     producto: 'Refinanciamiento',
@@ -61,37 +61,38 @@ describe('aSolicitudParaSheet · adaptador Tasacion → sheet de IF-02', () => {
 
 describe('filtro de RF-TAS-06 · el sheet no debe salir vacío (P-5)', () => {
   /** El predicado tal como lo arma `FotosScreen`. */
-  const filtro = (tipoPropiedad: 'nuevo' | 'usado') => {
+  const filtro = (tipoPropiedad: 'nueva' | 'usada') => {
     const condicion = desdeTipoPropiedadNuevoUsado(tipoPropiedad)
     return (tipoDocumento: string | null) => documentoAplicaA(tipoDocumento, condicion)
   }
 
   it('una propiedad usada ve los documentos `usada` y los `ambas`', () => {
-    const aplica = filtro('usado')
+    const aplica = filtro('usada')
     expect(aplica('usada')).toBe(true)
     expect(aplica('ambas')).toBe(true)
     expect(aplica('nueva')).toBe(false)
   })
 
   it('una propiedad nueva ve los documentos `nueva` y los `ambas`', () => {
-    const aplica = filtro('nuevo')
+    const aplica = filtro('nueva')
     expect(aplica('nueva')).toBe(true)
     expect(aplica('ambas')).toBe(true)
     expect(aplica('usada')).toBe(false)
   })
 
-  it('produce coincidencias no vacías pese al desajuste de género de P-5', () => {
-    // Éste es el criterio de §6.3: sin la normalización, `'usado' === 'usada'`
-    // es falso y el sheet saldría vacío para toda solicitud.
+  it('produce coincidencias no vacías (tras CI-070 ambos dominios son femeninos)', () => {
+    // Criterio de §6.3. Tras el cutover CI-070 Fase 2 ambos dominios ya son
+    // femeninos; `normalizarTipoPropiedad` mantiene el filtro robusto para filas
+    // históricas que aún vinieran en masculino.
     const catalogo = ['nueva', 'usada', 'ambas', null]
-    const visibles = catalogo.filter(filtro('usado'))
+    const visibles = catalogo.filter(filtro('usada'))
     expect(visibles.length).toBeGreaterThan(0)
     expect(visibles).toEqual(['usada', 'ambas'])
   })
 
   it('un documento sin condición declarada no se cuela', () => {
-    expect(filtro('usado')(null)).toBe(false)
-    expect(filtro('usado')('')).toBe(false)
+    expect(filtro('usada')(null)).toBe(false)
+    expect(filtro('usada')('')).toBe(false)
   })
 })
 

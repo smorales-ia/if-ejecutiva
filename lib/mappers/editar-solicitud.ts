@@ -174,7 +174,7 @@ export function mapearEdicionSolicitud(
   original: Solicitud,
 ): CambiosEdicion {
   const d = actualizada
-  const esNuevo = d.tipoPropiedadNuevoUsado === "nuevo"
+  const esNuevo = d.tipoPropiedadNuevoUsado === "nueva"
   const esInmobiliaria = d.vendedor.esInmobiliaria
 
   const cambios: Record<string, unknown> = {
