@@ -2043,10 +2043,10 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
 | **Síntoma** | El registro `TX_Adjuntos` **`recY2P0Ju0n5FAN62`** (solicitud **VP-2026-0061**, archivo `Foto REF Ofertas y REF CBR.JPG`, 2026-08-24) quedó con **`descripcion`, `tipo_adjunto` y `orden` vacíos**. El binario **sí llegó a Dropbox** y la fila **sí** tiene `url_dropbox`, `hash_md5`, `subido_por = Tasador` y el Link `solicitud` poblado. Lo único que falta es la categoría. La foto aparece en el organizador bajo `otro` gracias al fallback de la proyección. |
 | **Causa** | **CONFIRMADA (26-ago-2026).** `TX_Adjuntos` tiene **dos** identificadores y el contrato de subida devuelve el que no sirve. `SC-Adjuntos-Upload v1.2` responde `adjunto_id` = **autoNumber `fldVt7Lk1ptvmgbtT`** (valor `40` en esta fila), no el record ID `rec…`. `POST /api/adjuntos/upload` lo acepta —su tipo es `string \| number`— y lo propaga en el 200. `subirFotoDeVisita()` hace `String(subida.adjunto_id)` → `"40"` y se lo pasa a `categorizarFoto()`. El `PATCH` corta en su primera guarda —`isValidRecordId("40")` → `false`— y devuelve **404 `adjuntoNoDisponible`** sin tocar Airtable. **El PATCH nunca llegó a ejecutarse.** |
 | **Impacto** | **Alto y sistémico, con muestra de 1.** El fallo es **determinista**: no depende de red, carga ni timing, así que **ninguna foto del tasador puede categorizarse jamás** por este camino. Hoy hay exactamente **una** fila con `subido_por = Tasador` en toda la base —la de esta ficha—, de modo que la tasa de fallo observada es 1/1. Agrava el cuadro que `subirFotoDeVisita()` devuelve `reintentable: true` ante este 404: la cola offline reintenta indefinidamente una operación que **no puede tener éxito**, porque la subida se deduplica por `hash_md5` y Make vuelve a responder el mismo `40`. Los archivos **no se pierden** —están en Dropbox y su fila existe—; lo que se pierde es toda la clasificación, y con ella los mínimos por categoría de RF-TAS-14. |
-| **Resolución** | **Pendiente · el fix NO va en P7-TAS.A.4** (confirmado por Sergio). Tres puntos posibles y hay que elegir uno: **(a)** que `SC-Adjuntos-Upload` devuelva el record ID en `adjunto_id` —Make ya lo conoce, lo escribe en su propio log: *«TX_Adjuntos: recY2P0Ju0n5FAN62 (adjunto_id 40)»*—; **(b)** que `POST /api/adjuntos/upload` resuelva el autoNumber → record ID antes de responder; **(c)** que el `PATCH` acepte el autoNumber y busque la fila. **Recomendada la (a)**: es la que deja un solo identificador circulando y no añade una lectura por subida. Requiere tocar el blueprint de Make, así que **necesita aprobación explícita** antes de ejecutarse. Aparte, y sea cual sea la elegida: reclasificar ese 404 como **no reintentable** en `subirFotoDeVisita()`, para que la cola offline deje de reintentar lo imposible. |
+| **Resolución** | **Opción D** (Sergio · 30-ago-2026, autorización Óscar R5). Combina el fix raíz en el blueprint con un puente transitorio en IF-03 mientras v1.4 no esté verificada en producción. <br>**· PASO 0** — 404 de categorización marcado **no reintentable** en `lib/tasador/fotos.ts` (L133-134, L138). Comentario `// CI-061` explícito. <br>**· PASO 1** — **puente** autoNumber → record ID en `app/api/tasaciones/[id]/fotos/route.ts` (`resolverAdjuntoRecordId` L168-177, `filterByFormula` L172, uso en `PATCH` L196-199). Marcado como **transitorio** (`// [PUENTE CI-061 · REMOVER TRAS VERIFICAR v1.4 EN PROD]` L150-152 y L193-195). Tests: `describe [PUENTE CI-061]` en `route.test.ts` L170, cobertura de 404 con autoNumber inexistente + resolución exitosa + id no válido. <br>**· PASO 2** — blueprint `SC-Adjuntos-Upload v1.4` con `adjunto_record_id` **aditivo** en los 3 caminos de `WebhookRespond`. Commit pusheado el 30-ago-2026. **Pendiente import manual en Make** (Sergio). <br>**· PASO 3** (limpieza, futuro) — retirar el puente + migrar IF-02 a `adjunto_record_id` → ver **CI-061a**, **CI-061b**, **CI-061c**. <br>*(La reclasificación del 404 como no reintentable —contemplada en el análisis original— quedó cubierta por el PASO 0.)* |
 | **Dueño** | Sergio |
 | **Fecha objetivo** | — |
-| **Estado** | **abierta** · causa confirmada · fix pendiente de decisión |
+| **Estado** | 🟡 **en curso** · fix raíz aplicado en blueprint (v1.4 · commit pusheado) · puente aplicado en IF-03 · **pendiente import manual en Make** |
 | **Origen** | P7-TAS.A.4 (26-ago-2026), hallazgo **H-3** del diagnóstico previo: se detectó al inventariar `TX_Adjuntos` para escribir la proyección server-side de fotos. Causa cerrada el mismo día con `LogEscenarios`. |
 
 **Notas:**
@@ -2084,6 +2084,52 @@ dueño de E1/E2/E3. La evidencia nueva **no es** base suficiente para crear sche
   aparente de evidencia**, mucho peor de diagnosticar en terreno. El fallback
   `descripcion || tipo_adjunto || 'otro'` ya existía en el `GET`; lo que no existía era un test que
   lo fijara, y ahora está en `lib/tasador/lectura-fotos.test.ts`.
+
+---
+
+## CI-061a · Contrato versionado del endpoint `/api/adjuntos/upload`
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-061a |
+| **Archivo:línea** | `app/api/adjuntos/upload/route.ts:88` (tipo de la respuesta) · `route.ts:308` (propagación) · `docs/schema-airtable.md` · header/JSDoc del route |
+| **Detalle** | Introducir `adjunto_record_id` como **clave canónica** en la respuesta del endpoint compartido de subida (`route.ts:88` tipo, `route.ts:308` propagación) y en la documentación (`schema-airtable.md`, header del route). `adjunto_id` (autoNumber) queda en **deprecación durante una versión** por backwards-compat: se sigue devolviendo, pero deja de ser el identificador que los consumidores nuevos usan para mutar. |
+| **Territorio** | `/api/adjuntos/upload` (**R5 · Óscar**) — autorización ya obtenida en CI-061. |
+| **Dueño** | Sergio |
+| **Fecha objetivo** | — |
+| **Estado** | 🟠 **abierta** · post-import v1.4 en Make |
+| **Origen** | CI-061 análisis experto (30-ago-2026). |
+
+---
+
+## CI-061b · Mismatch latente en IF-02 (checklist de documentos)
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-061b |
+| **Archivo:línea** | `components/console/document-checklist.tsx:249` (escritura) · `document-checklist.tsx:58` (campo tipado como record ID) |
+| **Detalle** | `document-checklist.tsx:249` escribe el **autoNumber** en un campo tipado como **record ID** (`:58`). Es el **mismo defecto de clase** que CI-061. Hoy es **inocuo** porque el borrado usa el record ID de la **relectura**, no el de la subida; se **activa** en cuanto algún consumidor futuro mute con ese valor. Fix: migrar a `adjunto_record_id` tras verificar v1.4 en runtime. |
+| **Territorio** | IF-02 (**R5 · Óscar**) — autorización ya obtenida en CI-061. |
+| **Dueño** | Sergio |
+| **Fecha objetivo** | — |
+| **Estado** | 🟠 **abierta** |
+| **Origen** | CI-061 análisis experto (30-ago-2026). |
+
+---
+
+## CI-061c · Retiro del puente (c) en IF-03
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-061c |
+| **Archivo:línea** | `app/api/tasaciones/[id]/fotos/route.ts` — JSDoc L150-152 + inline L193-195 + función `resolverAdjuntoRecordId` L168-177 · `app/api/tasaciones/[id]/fotos/route.test.ts` — `describe [PUENTE CI-061]` L170 |
+| **Detalle** | Remover el bloque marcado `// [PUENTE CI-061 · REMOVER TRAS VERIFICAR v1.4 EN PROD]` en `app/api/tasaciones/[id]/fotos/route.ts` (JSDoc L150-152 + inline L193-195 + función `resolverAdjuntoRecordId` L168-177). Sustituir por **lectura directa** de `adjunto_record_id` del payload. Ajustar tests (`route.test.ts`, `describe [PUENTE CI-061]` L170). |
+| **Precondición** | **v1.4 verificada en `LogEscenarios` de producción**: la respuesta del webhook `SC-Adjuntos-Upload` contiene `adjunto_record_id` con un `rec…`. |
+| **Territorio** | IF-03. |
+| **Dueño** | Sergio |
+| **Fecha objetivo** | — |
+| **Estado** | 🟠 **abierta** · bloqueada por verificación v1.4 en Make |
+| **Origen** | CI-061 PASO 1 (30-ago-2026). |
 
 ---
 

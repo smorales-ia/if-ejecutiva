@@ -115,7 +115,7 @@ export async function categorizarFoto(
   adjuntoId: string,
   categoria: string,
   orden?: number,
-): Promise<{ ok: boolean; mensaje?: string }> {
+): Promise<{ ok: boolean; mensaje?: string; reintentable?: boolean }> {
   try {
     const res = await fetch(`/api/tasaciones/${solicitudId}/fotos`, {
       method: "PATCH",
@@ -130,7 +130,13 @@ export async function categorizarFoto(
         adjuntoId,
         status: res.status,
       })
-      return { ok: false, mensaje: cuerpo.error ?? MSG_ERROR_RED }
+      // CI-061: 404 de categorización es determinista (autoNumber vs recXXX) —
+      // no reintentable hasta que entre el fix aditivo de adjunto_record_id.
+      return {
+        ok: false,
+        mensaje: cuerpo.error ?? MSG_ERROR_RED,
+        reintentable: res.status !== 404,
+      }
     }
 
     return { ok: true }
@@ -151,6 +157,11 @@ export async function categorizarFoto(
  * justo lo que el tasador acaba de tomar. Se devuelve el fallo como
  * reintentable, y reintentar es barato: la subida se deduplica por `hash_md5`
  * (no vuelve a viajar el binario) y el `PATCH` es idempotente.
+ *
+ * **Excepción CI-061:** un 404 de categorización no es reintentable. Es
+ * determinista (el id no resuelve a una fila de esta solicitud) y reintentarlo
+ * sólo cuelga la cola offline sobre algo que nunca va a cambiar. Ese caso viaja
+ * como `reintentable: false` desde {@link categorizarFoto}.
  */
 export async function subirFotoDeVisita(
   p: ParametrosSubida,
@@ -178,7 +189,9 @@ export async function subirFotoDeVisita(
     return {
       ok: false,
       mensaje: categorizada.mensaje ?? MSG_ERROR_RED,
-      reintentable: true,
+      // CI-061: el 404 viaja como reintentable:false desde categorizarFoto; el
+      // resto (red, 5xx) conserva la política reintentable por defecto.
+      reintentable: categorizada.reintentable !== false,
     }
   }
 

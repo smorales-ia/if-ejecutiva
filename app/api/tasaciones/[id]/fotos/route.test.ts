@@ -143,11 +143,12 @@ describe('guard de pertenencia', () => {
     })
   })
 
-  it('un id sin forma de record ID no llega a Airtable', async () => {
+  it('un id sin forma de record ID ni de autoNumber no llega a Airtable', async () => {
     const res = await patch({ adjuntoId: 'no-es-un-record-id', categoria: 'cocina' })
 
     expect(res.status).toBe(404)
     expect(getRecord).not.toHaveBeenCalled()
+    expect(listRecords).not.toHaveBeenCalled()
     expect(updateRecord).not.toHaveBeenCalled()
   })
 
@@ -161,6 +162,36 @@ describe('guard de pertenencia', () => {
     const res = await patch({ adjuntoId: ADJUNTO, categoria: 'cocina' })
 
     expect(res.status).toBe(403)
+    expect(getRecord).not.toHaveBeenCalled()
+    expect(updateRecord).not.toHaveBeenCalled()
+  })
+})
+
+describe('[PUENTE CI-061] autoNumber → record ID', () => {
+  it('resuelve un adjunto_id autoNumber a su record ID y categoriza', async () => {
+    // Mientras SC-Adjuntos-Upload v1.4 no esté en Make, la subida devuelve el
+    // autoNumber ("40"); el puente lo resuelve por filterByFormula.
+    listRecords.mockResolvedValue([adjuntoDe([ID])])
+
+    const res = await patch({ adjuntoId: '40', categoria: 'cocina' })
+
+    expect(res.status).toBe(200)
+    const [, params] = listRecords.mock.calls[0]
+    expect(params.filterByFormula).toContain('{adjunto_id} = 40')
+    // Escribe sobre el record ID resuelto, nunca sobre el autoNumber.
+    expect(updateRecord).toHaveBeenCalledWith(
+      TABLA_ADJUNTOS,
+      ADJUNTO,
+      expect.objectContaining({ descripcion: 'cocina' }),
+    )
+  })
+
+  it('404 si el autoNumber no existe en la tabla', async () => {
+    listRecords.mockResolvedValue([])
+
+    const res = await patch({ adjuntoId: '999', categoria: 'cocina' })
+
+    expect(res.status).toBe(404)
     expect(getRecord).not.toHaveBeenCalled()
     expect(updateRecord).not.toHaveBeenCalled()
   })

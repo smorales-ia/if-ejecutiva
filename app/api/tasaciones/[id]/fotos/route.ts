@@ -67,7 +67,7 @@
 
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { getRecord, isValidRecordId, updateRecord } from '@/lib/airtable-client'
+import { getRecord, isValidRecordId, listRecords, updateRecord } from '@/lib/airtable-client'
 import { autorizarSolicitud } from '@/lib/tasador/auth-guard'
 import { auditar } from '@/lib/tasador/auditoria'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
@@ -146,6 +146,35 @@ export async function GET(
   }
 }
 
+/**
+ * [PUENTE CI-061 · REMOVER TRAS VERIFICAR v1.4 EN PROD]
+ * Acepta autoNumber (adjunto_id) resolviéndolo a record ID.
+ * Ver CI-061c en CODE_INCONSISTENCIES.md.
+ *
+ * Hasta que `SC-Adjuntos-Upload v1.4` (que agrega `adjunto_record_id`) esté
+ * importado en Make, la subida devuelve el autoNumber `adjunto_id` (p. ej.
+ * "40"), no el record ID `rec…`, y el `PATCH` lo rechazaba con 404 (CI-061). El
+ * puente distingue tres casos:
+ *
+ * - id con forma de record ID → se usa tal cual (sin lectura extra);
+ * - id con forma de autoNumber (sólo dígitos) → se resuelve a su `rec…` por
+ *   `filterByFormula`;
+ * - cualquier otra cosa → basura, no llega a Airtable (mismo criterio de coste
+ *   que el guard `isValidRecordId` original).
+ *
+ * Cuando v1.4 corra en producción el cliente mandará siempre el record ID y esta
+ * función podrá borrarse, dejando de nuevo el guard `isValidRecordId` directo.
+ */
+async function resolverAdjuntoRecordId(adjuntoId: string): Promise<string | null> {
+  if (isValidRecordId(adjuntoId)) return adjuntoId
+  if (!/^\d+$/.test(adjuntoId)) return null
+  const filas = await listRecords<AdjuntoFotoFields>(TABLE_IDS.adjuntos, {
+    filterByFormula: `{adjunto_id} = ${adjuntoId}`,
+    maxRecords: '1',
+  })
+  return filas[0]?.id ?? null
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -160,13 +189,15 @@ export async function PATCH(
 
   const d = cuerpo.datos
 
-  // Un id con forma inválida no llega a Airtable: mismo criterio que el guard
-  // de solicitudes, y evita gastar la lectura.
-  if (!isValidRecordId(d.adjuntoId)) {
-    return error(MENSAJES.adjuntoNoDisponible, 404)
-  }
-
   try {
+    // [PUENTE CI-061 · REMOVER TRAS VERIFICAR v1.4 EN PROD]
+    // Acepta autoNumber (adjunto_id) resolviéndolo a record ID.
+    // Ver CI-061c en CODE_INCONSISTENCIES.md.
+    const recordId = await resolverAdjuntoRecordId(d.adjuntoId)
+    if (!recordId) {
+      return error(MENSAJES.adjuntoNoDisponible, 404)
+    }
+
     /**
      * **Guard de pertenencia.** `autorizarSolicitud` prueba que la solicitud es
      * del usuario, no que este adjunto sea de esta solicitud. Sin esta segunda
@@ -180,7 +211,7 @@ export async function PATCH(
      * por la misma razón que en `auth-guard.ts`: distinguirlos le confirmaría a
      * un tercero que el adjunto existe.
      */
-    const adjunto = await getRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, d.adjuntoId)
+    const adjunto = await getRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, recordId)
     if (!adjunto || !(adjunto.fields.solicitud ?? []).includes(id)) {
       return error(MENSAJES.adjuntoNoDisponible, 404)
     }
@@ -198,7 +229,7 @@ export async function PATCH(
      * un `""` sobre un campo `number` o `url` con `typecast` no es lo mismo que
      * no tocarlo.
      */
-    await updateRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, d.adjuntoId, {
+    await updateRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, recordId, {
       tipo_adjunto: TIPO_ADJUNTO_FOTO,
       descripcion: d.categoria,
       subido_por: SUBIDO_POR_TASADOR,
@@ -214,12 +245,12 @@ export async function PATCH(
         registroNombre: String(guard.fields.codigo_solicitud ?? ''),
         campo: 'fotos',
         valorAnterior: categoriaPrevia,
-        valorNuevo: `${d.adjuntoId} · ${d.categoria} · ${nombre}`,
+        valorNuevo: `${recordId} · ${d.categoria} · ${nombre}`,
         razon: 'Categorización de foto de la visita desde IF-03 (RF-TAS-14)',
       },
     ])
 
-    return ok({ id: d.adjuntoId, categoria: d.categoria, nombre })
+    return ok({ id: recordId, categoria: d.categoria, nombre })
   } catch (err) {
     return desdeExcepcion('PATCH /api/tasaciones/[id]/fotos', err)
   }
