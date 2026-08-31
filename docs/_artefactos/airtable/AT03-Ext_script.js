@@ -261,8 +261,11 @@ for (const r of tdaQuery.records) {
 //                          (ej. "TX_Unidades.rol_sii") contra el propio batch
 //                          de items extraídos, o por TX_Adjuntos.unidad si ya
 //                          viene ligado.
-//   - muchas_por_solicitud / PENDIENTE_VALIDACION → sin semántica definida
-//     todavía (real en el schema pero no en la Especificación) — se omite.
+//   - muchas_por_solicitud → tabla destino (TX_Comparables), N filas por
+//     solicitud agrupadas por `fila` (metadato por item, no un codigo_atributo);
+//     upsert idempotente por clave_natural `${codigo_ext}|COMP-NN`. Ver §3d.
+//   - PENDIENTE_VALIDACION → sin semántica definida todavía (real en el schema
+//     pero no en la Especificación) — se omite.
 //
 // Política de conflicto: sobrescribir SOLO si el destino está vacío (salvo
 // NO REGISTRA, que siempre setea avaluo_no_registra + avaluo_total_raw).
@@ -489,6 +492,13 @@ async function resolverUnidad(campoLinkUnidad) {
   return unidadId
 }
 
+// --- 3b-bis. Bucket muchas_por_solicitud ------------------------------------
+// Los N atributos de un mismo comparable NO se escriben dentro del loop: hay que
+// agruparlos por `fila` y materializarlos juntos en UNA fila de la tabla destino
+// (TX_Comparables). Se acumulan aquí y se procesan post-loop (sección 3d).
+const muchasItems = [] // { tablaDestino, campoDestino, item, fila }
+let muchasBucketInvalido = false // anti-merge: un item muchas SIN fila lo activa
+
 // --- 3c. Loop principal ------------------------------------------------------
 // TODO el cuerpo del loop va dentro de un try/catch porque Airtable Scripts, al
 // rechazar un valor en updateRecordAsync, deshabilita TODAS las siguientes
@@ -543,8 +553,20 @@ for (const item of conValor) {
       }
       const unidadRow = await tUnidades.selectRecordAsync(unidadId)
       await escribirDestino(tUnidades, TABLES.TX_UNIDADES, unidadRow, campoDestino, item)
+    } else if (cardinalidad === 'muchas_por_solicitud') {
+      // No se escribe aquí: se acumula para agrupar por `fila` post-loop (3d).
+      // Guard anti-merge: un item muchas SIN fila válida ENVENENA el bucket
+      // entero. Nunca fusionar 13 atributos de comparables distintos en una
+      // sola fila por un `fila` faltante — mejor no escribir ningún comparable.
+      const filaNum = Number(item.fila)
+      if (!Number.isFinite(filaNum) || filaNum < 1) {
+        muchasBucketInvalido = true
+        propLog.push(`${item.codigo_atributo}: muchas_por_solicitud SIN fila válida (fila="${item.fila}") — se ANULA el bucket muchas completo (anti-merge)`)
+        continue
+      }
+      muchasItems.push({ tablaDestino, campoDestino, item, fila: Math.trunc(filaNum) })
     } else {
-      propLog.push(`${item.codigo_atributo}: cardinalidad "${cardinalidad}" sin semántica definida (muchas_por_solicitud/PENDIENTE_VALIDACION) — skip`)
+      propLog.push(`${item.codigo_atributo}: cardinalidad "${cardinalidad}" sin semántica definida (PENDIENTE_VALIDACION u otra) — skip`)
       propSkip++
     }
   } catch (e) {
@@ -558,6 +580,104 @@ for (const item of conValor) {
       propLog.push('(Airtable congeló la corrida por un update anterior rechazado; se omite el resto de items)')
       console.warn('AT03-Ext: Airtable congeló la corrida — se omite el resto de items.')
       break
+    }
+  }
+}
+
+// --- 3d. muchas_por_solicitud → TX_Comparables (N filas por solicitud) ------
+// Cada comparable extraído se materializa como UNA fila, agrupando por `fila`.
+// La clave natural `${codigo_ext}|COMP-NN` hace la operación idempotente: volver
+// a correr la automation no duplica comparables, solo upsertea (y escribirDestino
+// respeta "solo si vacío", así que no pisa datos ya presentes).
+
+const filaMuchasCache = new Map() // `${tabla}|${fila}` -> record | null
+
+/**
+ * Resuelve (o crea) la fila de un comparable en `destTable`, upserteando por
+ * clave_natural = `${solicitudCodigoExt}|COMP-NN`. Devuelve el record o null.
+ *
+ * TODO(A-45): purga de comparables huérfanos. Si una corrida anterior escribió
+ * más comparables (COMP-01..COMP-05) que la actual (COMP-01..COMP-03), las filas
+ * COMP-04/COMP-05 sobrantes quedan colgando: este helper solo inserta/actualiza,
+ * NUNCA borra. La política de purga (borrar huérfanos vs. marcarlos) está
+ * pendiente de decisión de Héctor — ver A-45 en docs/aprendizajes.md. No
+ * implementar hasta que se defina.
+ */
+async function resolverFilaMuchas(destTable, tablaDestinoNombre, fila) {
+  const cacheKey = `${tablaDestinoNombre}|${fila}`
+  if (filaMuchasCache.has(cacheKey)) return filaMuchasCache.get(cacheKey)
+
+  const claveField = getFieldByName(destTable, 'clave_natural')
+  if (!claveField) {
+    propLog.push(`(muchas: "${tablaDestinoNombre}" no tiene campo clave_natural — no se puede upsertear el comparable fila ${fila})`)
+    filaMuchasCache.set(cacheKey, null)
+    return null
+  }
+  if (!getFieldByName(destTable, 'solicitud')) {
+    propLog.push(`(muchas: "${tablaDestinoNombre}" no tiene link 'solicitud' — no se puede enlazar el comparable fila ${fila})`)
+    filaMuchasCache.set(cacheKey, null)
+    return null
+  }
+
+  const claveNatural = `${solicitudCodigoExt}|COMP-${String(fila).padStart(2, '0')}`
+  const q = await destTable.selectRecordsAsync({ fields: ['clave_natural', 'solicitud'] })
+  const existente = q.records.find((r) => r.getCellValueAsString('clave_natural') === claveNatural)
+
+  let row
+  if (existente) {
+    row = existente
+  } else {
+    const nuevaId = await destTable.createRecordAsync({
+      clave_natural: claveNatural,
+      solicitud: [{ id: solicitudId }],
+    })
+    row = await destTable.selectRecordAsync(nuevaId)
+    propLog.push(`(creada fila ${tablaDestinoNombre} ${nuevaId} · ${claveNatural})`)
+  }
+  filaMuchasCache.set(cacheKey, row)
+  return row
+}
+
+if (muchasItems.length > 0 && muchasBucketInvalido) {
+  // Anti-merge: al menos un item muchas llegó sin fila. No se escribe NINGÚN
+  // comparable — la alternativa (fusionar) corrompería datos en silencio.
+  propError++
+  propLog.push('muchas_por_solicitud: bucket ANULADO por item(s) sin fila — 0 comparables escritos (anti-merge)')
+  console.warn('AT03-Ext: bucket muchas_por_solicitud anulado por falta de fila — no se escribe ningún comparable.')
+} else if (muchasItems.length > 0) {
+  // Agrupar por (tabla destino, fila): cada grupo es un comparable.
+  const grupos = new Map() // `${tabla}|${fila}` -> { tablaDestino, fila, entradas: [] }
+  for (const entrada of muchasItems) {
+    const k = `${entrada.tablaDestino}|${entrada.fila}`
+    if (!grupos.has(k)) grupos.set(k, { tablaDestino: entrada.tablaDestino, fila: entrada.fila, entradas: [] })
+    grupos.get(k).entradas.push(entrada)
+  }
+
+  let cortado = false
+  for (const grupo of grupos.values()) {
+    if (cortado) break
+    // Try/catch POR GRUPO: un comparable que falla no arrastra a los demás,
+    // salvo el congelamiento global de Airtable ("Request processing is disabled").
+    try {
+      const destTable = base.getTable(grupo.tablaDestino)
+      const destRow = await resolverFilaMuchas(destTable, grupo.tablaDestino, grupo.fila)
+      if (!destRow) {
+        propError++
+        propLog.push(`muchas: no se pudo resolver la fila del comparable ${grupo.fila} en ${grupo.tablaDestino} — grupo omitido`)
+        continue
+      }
+      for (const entrada of grupo.entradas) {
+        await escribirDestino(destTable, grupo.tablaDestino, destRow, entrada.campoDestino, entrada.item)
+      }
+    } catch (e) {
+      propError++
+      propLog.push(`muchas: grupo fila ${grupo.fila} (${grupo.tablaDestino}) falló — ${e.message}`)
+      console.warn(`AT03-Ext: grupo muchas fila ${grupo.fila} falló: ${e.message}`)
+      if (String(e.message).includes('Request processing is disabled')) {
+        propLog.push('(Airtable congeló la corrida durante muchas_por_solicitud; se omite el resto de comparables)')
+        console.warn('AT03-Ext: Airtable congeló la corrida — se omite el resto de comparables.')
+        cortado = true
+      }
     }
   }
 }

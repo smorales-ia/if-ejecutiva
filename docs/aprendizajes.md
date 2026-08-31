@@ -538,6 +538,27 @@ Lo que sigue vigente como regla vive abajo, destilado.
   `pnpm build` con un `pnpm dev` vivo sobre el mismo directorio.
   Costó una sesión entera de diagnóstico la primera vez, persiguiendo una ruta de
   `/sign-in` que existía y funcionaba. Vigente desde el 22-ago-2026.
+- **RO-42 · SC-RF09 no reestructura el JSON de Claude — un campo nuevo del
+  contrato de extracción sólo exige editar el prompt.** El escenario
+  `SC-RF09-ExtraccionClaude` **no** tiene en ninguna parte un `data-structure`
+  que describa la forma de los items extraídos, así que buscarlo para agregarle
+  un campo es perseguir algo que no existe. La cadena es de paso: el **módulo 25**
+  (`json:ParseJSON`) parsea la respuesta **sin** estructura declarada, y el
+  **módulo 22** (`airtable:ActionUpdateRecords`) escribe en
+  `TX_Adjuntos.atributos_obtenidos` el **texto crudo** de Claude
+  (`{{trim(replace(replace(get(last(11.content); "text"); "```json"; ); "```"; ))}}`),
+  sin recomponer campo por campo. Consecuencia: cualquier clave nueva que Claude
+  emita en cada item viaja de punta a punta —del prompt al JSON de la celda— **sin
+  tocar los módulos 22 ni 25**, y del otro lado la consume `AT03-Ext_script.js`,
+  que hace `JSON.parse` sobre el texto y lee las claves directo.
+  **Regla:** para sumar un campo al contrato de extracción (p. ej. `fila` para
+  comparables `muchas_por_solicitud`), editar **sólo el prompt del módulo 10**
+  (`http:ActionSendData` → Anthropic) declarándolo en el formato del item, bumpear
+  el `name`/versión del blueprint y reimportar; **no** buscar un data-structure en
+  el blueprint. Si el consumidor aguas abajo necesita el campo, el trabajo está en
+  el script de Airtable, no en Make. Comprobado en la Fase 2 de AT03-Ext + SC-RF09
+  al agregar `fila`; artefacto: `docs/_artefactos/make/SC-RF09-ExtraccionClaude.blueprint.json`.
+  Vigente desde el 31-ago-2026.
 
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 
