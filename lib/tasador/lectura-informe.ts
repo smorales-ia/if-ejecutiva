@@ -210,7 +210,7 @@ function rolSiiConSentinel(valor: string | null): string {
 
 /**
  * Productor puro: dada la solicitud ya autorizada, arma el modelo canónico. No
- * hace guard —eso es `lecturaInforme`— para que el test lo ejercite mockeando
+ * hace guard —eso es `lecturaInforme`— para que el test lo ejercite sustituyendo
  * sólo `listRecords`, igual que el candado de `lectura-datos.test.ts`.
  */
 export async function construirInforme(id: string, s: Fields): Promise<InformeCanonico> {
@@ -496,8 +496,8 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
 
 /**
  * Lectura autorizada del informe canónico. Hace el guard de RF-09
- * (`clerk_user_id === TX_Solicitudes.tasador`, con `mockUserTasador` hasta
- * P11-TAS) y delega en `construirInforme`. El route traduce `{ ok: false }` a la
+ * (`clerk_user_id === TX_Solicitudes.tasador`, resuelto desde la sesión Clerk)
+ * y delega en `construirInforme`. El route traduce `{ ok: false }` a la
  * respuesta HTTP con `desdeGuard`; la page trata el fallo como ausencia.
  */
 export async function lecturaInforme(id: string): Promise<ResultadoInforme> {

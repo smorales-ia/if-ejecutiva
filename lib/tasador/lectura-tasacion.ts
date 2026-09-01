@@ -55,7 +55,7 @@ import {
 import { autorizarSolicitud, type SolicitudFields } from './auth-guard'
 import { telefonosPrioritarios } from './contactos-cola'
 import { TABLE_IDS } from './field-ids'
-import { getUsuarioTasador, mockTasadorConfigurado } from './mock-user'
+import { getUsuarioTasador } from './usuario'
 // CI-070 Fase 1: normalización de género del eje nuevo/usado (paliativo P-5).
 import { normalizarTipoPropiedad } from './tipo-propiedad'
 
@@ -632,18 +632,15 @@ export async function leerTasacion(id: string): Promise<Tasacion | null> {
  * el Link `tasador` se evalúa contra el primary field de `M_Tasadores`, no
  * contra el recordId (lección E-018).
  *
- * Devuelve `[]` si el mock no está configurado, tras loguearlo. La cola vacía
- * es un estado que la pantalla ya sabe renderizar; una excepción acá tumbaría
- * el Server Component entero.
+ * Devuelve `[]` si la sesión no corresponde a ningún tasador, tras loguearlo.
+ * La cola vacía es un estado que la pantalla ya sabe renderizar; una excepción
+ * acá tumbaría el Server Component entero.
  */
 export async function leerCola(): Promise<Tasacion[]> {
-  const usuario = getUsuarioTasador()
+  const usuario = await getUsuarioTasador()
 
-  if (!mockTasadorConfigurado()) {
-    console.error(
-      '[leerCola] TASADOR_MOCK_RECORD_ID no está definida. ' +
-        'Definirla en .env.local con un registro real de M_Tasadores.'
-    )
+  if (!usuario) {
+    console.warn('[leerCola] la sesión no corresponde a ningún tasador; cola vacía')
     return []
   }
 

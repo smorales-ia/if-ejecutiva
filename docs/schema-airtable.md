@@ -221,6 +221,7 @@ Los FIELD_IDs marcados con ✅ fueron verificados vía MCP (04-jul-2026). Los ma
 | `casos_en_curso` | Count link | ⚙ **Crear** (H-05). COUNT(TX_Solicitudes WHERE tasador=this AND estado IN [asignada, visitada, calculada]) |
 | `disponible` | Formula | ⚙ **Crear** (H-05). `IF(casos_en_curso < capacidad_activa, TRUE, FALSE)` |
 | `activo` | Checkbox | Solo activos aparecen en asignación |
+| `clerk_user_id` | Single line text | ✅ Creado 01-sep-2026 (P11-TAS · FIELD_ID `fldIu5izeAtkFXMJO`). ID de usuario Clerk del tasador; **llave real de RF-09** (`TX_Solicitudes.tasador` ↔ este campo). ⚠ El campo `email` NO sirve de llave: es un placeholder repetido en masa (`njaimes@valueproperty.cl`). |
 
 ---
 

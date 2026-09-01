@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { ColaTasaciones } from "@/components/tasador/cola-tasaciones"
 import { leerCola } from "@/lib/tasador/lectura-tasacion"
-import { nombreVisibleTasador } from "@/lib/tasador/mock-user"
+import { nombreVisibleTasador } from "@/lib/tasador/usuario"
 
 /**
  * Pantalla 1 · cola personal del tasador (RF-TAS-01 · RF-TAS-02).

@@ -56,6 +56,18 @@ vi.mock('@/lib/tasador/schema-airtable', () => ({
   opcionesDeSingleSelect: (...args: unknown[]) => opcionesDeSingleSelect(...args),
 }))
 
+// La ruta resuelve la identidad Clerk directamente (para `autor_clerk_id`),
+// aparte del guard. Sin este mock, `getUsuarioTasador()` llamaría a `auth()` de
+// Clerk, que lanza fuera de un request. El `usuarioId` no se asevera en ningún
+// test; sólo importa que la identidad resuelva y la ruta no devuelva 403.
+vi.mock('@/lib/tasador/usuario', () => ({
+  getUsuarioTasador: vi.fn().mockResolvedValue({
+    usuarioId: 'user_test_coord',
+    recordId: 'recSR3RxY6rsLb8k7',
+    nombre: 'Tasador Test',
+  }),
+}))
+
 import { POST } from './route'
 import { MENSAJES } from '@/lib/tasador/mensajes'
 

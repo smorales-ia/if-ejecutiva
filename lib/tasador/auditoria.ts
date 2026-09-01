@@ -37,7 +37,7 @@
 
 import { createRecord } from '@/lib/airtable-client'
 import { TABLA_ORIGEN, TABLE_IDS } from './field-ids'
-import { getUsuarioTasador } from './mock-user'
+import { getUsuarioTasador } from './usuario'
 
 /**
  * Valor de `A_Cambios.tabla_origen` para las filas de solicitudes.
@@ -84,7 +84,11 @@ function aTexto(valor: unknown): string {
 export async function auditar(cambios: CambioAuditado[]): Promise<number> {
   if (cambios.length === 0) return 0
 
-  const usuario = getUsuarioTasador()
+  const usuario = await getUsuarioTasador()
+  if (!usuario) {
+    console.error('[auditoria] sin tasador en sesión; no se audita el cambio')
+    return 0
+  }
   const ahora = new Date().toISOString()
   let escritas = 0
 

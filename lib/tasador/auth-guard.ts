@@ -4,12 +4,13 @@
  * Tanda P2-TAS · plan §3.1. **Una sola implementación**; ninguna ruta reimplementa
  * el guard ni lee la identidad por otro camino.
  *
- * ## Por qué existe ahora y no en P11-TAS
+ * ## Fuente de identidad
  *
- * La fuente de identidad es `mockUserTasador` hasta P11-TAS (R2), pero **el
- * guard se escribe y funciona desde ya**. P11-TAS sustituye de dónde sale el
- * usuario, no inventa la comprobación: si la capa naciera con Clerk, entre
- * ahora y entonces cualquier ruta serviría solicitudes ajenas.
+ * Desde P11-TAS la identidad sale de la sesión Clerk resuelta contra
+ * `M_Tasadores` (`getUsuarioTasador`). El guard ya existía y funcionaba antes
+ * del cierre de R2: la tanda sustituyó de dónde sale el usuario, no inventó la
+ * comprobación. Si la capa hubiera nacido con Clerk, entre medio cualquier ruta
+ * habría servido solicitudes ajenas.
  *
  * ## Qué comprueba
  *
@@ -26,7 +27,7 @@
  */
 
 import { AirtableError, getRecord, isValidRecordId } from '@/lib/airtable-client'
-import { getUsuarioTasador, mockTasadorConfigurado } from './mock-user'
+import { getUsuarioTasador } from './usuario'
 import { TABLE_IDS } from './field-ids'
 import { MENSAJES } from './mensajes'
 
@@ -55,16 +56,13 @@ export async function autorizarSolicitud(id: string): Promise<ResultadoGuard> {
     return { ok: false, status: 404, mensaje: MENSAJES.solicitudNoDisponible }
   }
 
-  const usuario = getUsuarioTasador()
+  const usuario = await getUsuarioTasador()
 
-  if (!mockTasadorConfigurado()) {
-    // Falla visible y accionable en vez de un 403 que parecería un problema de
-    // permisos. Se retira en P11-TAS junto con el mock.
-    console.error(
-      '[auth-guard] TASADOR_MOCK_RECORD_ID no está definida o no tiene forma de recordId. ' +
-        'Definirla en .env.local con un registro real de M_Tasadores.'
-    )
-    return { ok: false, status: 500, mensaje: MENSAJES.errorGenerico }
+  if (!usuario) {
+    // Sesión válida pero sin tasador vinculado (o identidad irresoluble). Es un
+    // no-acceso, no un fallo de sistema: mismo cuerpo que una solicitud ajena,
+    // sin filtrar si existe. Denegar ante la duda es la postura de RF-09.
+    return { ok: false, status: 403, mensaje: MENSAJES.solicitudNoDisponible }
   }
 
   let registro

@@ -16,7 +16,7 @@
  * **`solicitud_record_id`** (`fldYNKk5cyfWLxwqD`), que expone el recordId de la
  * solicitud como texto: toda la cola se resuelve en **un** request, no en N.
  * Y la aproximación estaba fallando en el único caso real: la solicitud de la
- * cola del tasador mock (VP-2026-0058) **no tiene `vendedor_telefono`** y sí
+ * cola del tasador de prueba (VP-2026-0058) **no tiene `vendedor_telefono`** y sí
  * tiene contacto de prioridad 1 con teléfono, así que la card renderizaba un
  * `href="tel:"` vacío teniendo el número en la base.
  *

@@ -45,7 +45,8 @@
  * `resolverInforme` (puras), `marcarVisitada` y `guardarObservacionRechazo`
  * (`fetch` a las rutas de IF-03) y `marcarPdfListo` (**stub declarado**: no
  * existe ruta backend para esa transición). `getTasacion` se renombró a
- * `leerTasacion` al mudarse; el mock `TASACIONES` se sustituyó por `leerCola`.
+ * `leerTasacion` al mudarse; la constante `TASACIONES` de prueba se sustituyó
+ * por `leerCola`.
  */
 
 import type { ContactoVisita, SlaEtapaSolicitud } from '../console-data'

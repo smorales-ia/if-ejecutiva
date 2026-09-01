@@ -52,7 +52,7 @@ import { MENSAJES } from '@/lib/tasador/mensajes'
 import { desdeExcepcion, desdeGuard, error, ok } from '@/lib/tasador/respuestas'
 import { opcionesDeSingleSelect } from '@/lib/tasador/schema-airtable'
 import { coordinacionSchema, parsearCuerpo } from '@/lib/tasador/validators'
-import { getUsuarioTasador } from '@/lib/tasador/mock-user'
+import { getUsuarioTasador } from '@/lib/tasador/usuario'
 
 export const dynamic = 'force-dynamic'
 
@@ -156,7 +156,8 @@ export async function POST(
 
     const codigo = String(guard.fields.codigo_solicitud ?? '')
     const intentoNumero = previas.length + 1
-    const usuario = getUsuarioTasador()
+    const usuario = await getUsuarioTasador()
+    if (!usuario) return error(MENSAJES.solicitudNoDisponible, 403)
 
     /**
      * `fecha_respuesta` es un **instante** y va en ISO completo (RO-36).
@@ -186,10 +187,9 @@ export async function POST(
        * fila puede aportar a la auditoría**: cuál de las cuentas humanas
        * registró el resultado del llamado.
        *
-       * El nombre del campo dice `clerk_id` porque desde **P11-TAS** lo poblará
-       * la sesión real de Clerk. Hasta entonces lo puebla `mockUserTasador`
-       * (**R2**), y `getUsuarioTasador()` conserva esta firma justamente para
-       * que el cambio no toque este sitio.
+       * El nombre del campo dice `clerk_id` porque desde **P11-TAS** lo puebla
+       * la sesión real de Clerk: `usuario.usuarioId` es el `clerk_user_id`
+       * autenticado del tasador.
        */
       autor_clerk_id: usuario.usuarioId,
       email_enviado_status: 'pendiente',

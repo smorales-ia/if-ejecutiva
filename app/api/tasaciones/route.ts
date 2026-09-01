@@ -33,7 +33,7 @@
  */
 
 import { MENSAJES } from '@/lib/tasador/mensajes'
-import { mockTasadorConfigurado } from '@/lib/tasador/mock-user'
+import { getUsuarioTasador } from '@/lib/tasador/usuario'
 import { desdeExcepcion, error, ok } from '@/lib/tasador/respuestas'
 import { leerCola } from '@/lib/tasador/lectura-tasacion'
 
@@ -42,18 +42,14 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   /**
    * La comprobación se repite acá aunque `leerCola()` también la haga, porque
-   * las dos capas deben degradar distinto: el Server Component necesita una
-   * cola vacía —una excepción tumbaría la pantalla entera— y el API necesita
-   * un 500 visible, que es lo que hace accionable un `.env.local` incompleto.
-   * Sin esto, un mock mal configurado devolvería 200 con cero solicitudes y
-   * parecería una cola legítimamente vacía.
+   * las dos capas degradan distinto: el Server Component necesita una cola
+   * vacía —una excepción tumbaría la pantalla entera— y el API necesita un 403
+   * visible cuando la cuenta autenticada no está vinculada a ningún tasador.
+   * Sin esto, esa cuenta vería un 200 con cero solicitudes, indistinguible de
+   * una cola legítimamente vacía.
    */
-  if (!mockTasadorConfigurado()) {
-    console.error(
-      '[GET /api/tasaciones] TASADOR_MOCK_RECORD_ID no está definida. ' +
-        'Definirla en .env.local con un registro real de M_Tasadores.'
-    )
-    return error(MENSAJES.errorGenerico, 500)
+  if (!(await getUsuarioTasador())) {
+    return error(MENSAJES.solicitudNoDisponible, 403)
   }
 
   try {
