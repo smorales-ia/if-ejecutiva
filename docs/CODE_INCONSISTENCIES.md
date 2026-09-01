@@ -2388,3 +2388,19 @@ tabla `porUnidad`**.
 | **Dueño** | (por asignar) |
 | **Fecha objetivo** | (pendiente) |
 | **Estado** | 🟡 **abierta** · requerimiento definido · pendiente verificación de schema |
+
+---
+
+## CI-071 · La subida de fotos al cuadro «Ofertas / Comparables» no escribe `clave_adjunto` → RF-09 hace skip y no hay comparables
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-071 |
+| **Archivo:línea** | `app/api/tasaciones/[id]/fotos/route.ts:233-234` (el PATCH escribe `tipo_adjunto='foto_interior'` y `descripcion=<categoria>`, **nunca** `clave_adjunto`) · `lib/tasador/fotos.ts:124` (`categorizarFoto` envía `{adjuntoId, categoria, orden}`, sin `clave_adjunto`) · consumidor aguas abajo `docs/_artefactos/airtable/AT-RF09-Trigger_script.js:226-233` (rama "skipped sin tipo") |
+| **Síntoma / Evidencia** | `TX_Adjuntos` **rec8WypPYugEYaicK** (VP-2026-0060, 2026-09-01T20:29:15Z): `clave_adjunto` **vacío**, `tipo` vacío, `tipo_adjunto=foto_interior`, `descripcion=ofertas_comparables`, `estado_extraccion=skipped`. **Sin fila RF-09** en `LogEscenarios` (`tblR4VWpUHw1CSyIS`) — las 10 últimas son `ADJUNTOS_UPLOAD*` ✓ OK. `TX_Comparables` (`tbllbTuhb0waWIbRo`) → **0 filas** con `clave_natural` `VP-2026-0060|COMP-xx`. |
+| **Causa** | La categorización del organizador de fotos (§2.6) escribe únicamente `descripcion` + `tipo_adjunto`. `clave_adjunto` —el `codigo` de `D_TipoDocumento`, que es la llave que `AT-RF09-Trigger` lee para rutear a RF-09— nunca se puebla. Sin `clave_adjunto`, el trigger cae en la rama "skipped sin tipo", marca `estado_extraccion=skipped` y **no dispara el webhook**. Sin extracción no corre AT03-Ext → no se generan filas en `TX_Comparables`. |
+| **Impacto** | **Alto para el flujo del tasador.** «D. Comparables» queda en **0/N**. Como RF-12 habilita «Calcular» sobre `form.comparables.length` (CI-058), sin comparables **el cálculo no se puede lanzar**, y aguas abajo **no hay preview** (Pantallas 5→9 bloqueadas). |
+| **Relación** | **Aguas arriba de CI-002**: reparar el webhook RF-09 **no** resuelve este síntoma — el skip ocurre antes del webhook, por falta de `clave_adjunto`. **No es duplicado de CI-061**: en CI-061 la categorización 404-eaba por autoNumber y dejaba `descripcion/tipo_adjunto` vacíos; aquí la categorización tuvo éxito (ambos poblados, el puente de CI-061 funcionó) y `clave_adjunto` queda vacío por diseño del payload. Vecino de CI-060 (mínimo de fotos del mismo cuadro). |
+| **Estado** | **ABIERTO** — se difiere a fase post-P12-TAS. |
+| **Dueño** | Sergio (prioriza/asigna) |
+| **Origen** | P12-TAS · diagnóstico de deploy verification (2026-09-01): foto real de comparables subida en prod a VP-2026-0060 no pobló «D. Comparables». |
