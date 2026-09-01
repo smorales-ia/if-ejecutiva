@@ -16,8 +16,15 @@
  * redacción pura; la lectura vive en `lib/historial-airtable.ts`.
  */
 
-/** De qué tabla salió la fila. Determina el icono y la forma del título. */
-export type OrigenHistorial = 'evento' | 'cambio'
+/**
+ * De qué tabla salió la fila. Determina el icono y la forma del título.
+ *
+ * `'coordinacion'` se agregó en C4 (RF-TAS-05): son las filas de
+ * `TX_CoordinacionVisita`, que escribe IF-03 y que hasta entonces no llegaban al
+ * riel. Su redacción vive en `lib/coordinacion.ts` —no acá— porque el
+ * conocimiento de las dos ramas de una coordinación ya está en ese módulo.
+ */
+export type OrigenHistorial = 'evento' | 'cambio' | 'coordinacion'
 
 export interface ItemHistorial {
   id: string
@@ -43,6 +50,8 @@ export type IconoHistorial =
   | 'mail'
   | 'upload'
   | 'edit'
+  /** Coordinación de la visita: es un llamado telefónico, no un correo. */
+  | 'phone'
 
 export const MSG_SIN_HISTORIAL =
   'Todavía no hay eventos registrados para esta solicitud.'

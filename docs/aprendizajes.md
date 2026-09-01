@@ -50,6 +50,15 @@ Lo que sigue vigente como regla vive abajo, destilado.
     y no debe reutilizarse.
   - 🔴 **Tanda F sigue bloqueada**, por un motivo distinto y anterior: el patrón de disparo de
     `AT08_Alertas_SLA`. Ver la entrada de abajo. Estas respuestas no lo tocan.
+- ✅ **2026-08-21 — FRENTE C CERRADO (C1 → C2 → C3 → C4) · RF-TAS-05 completo, en producción.**
+  La coordinación de visita que el tasador registra en `TX_CoordinacionVisita` ya es visible
+  para la Ejecutiva en las dos superficies que §1.3.2 y §1.3.3 piden: la sección *Coordinación
+  de la visita* de la pestaña Datos y el ítem del riel de la pestaña Historial. Mergeado a
+  `main`, deployado en Railway y **verificado visualmente en producción** con `VP-2026-0061`.
+  452 tests verdes, `tsc` limpio, `build` compila. Detalle de bloques, commits y dudas en
+  `docs/_notas/plan-frente-C.md`.
+
+  **Próximo trabajo: por definir.** No hay tanda abierta a continuación del Frente C.
 
 - 🔴 **2026-08-11 — TANDA F BLOQUEADA · decisión arquitectónica pendiente antes de arrancar: patrón de disparo de `AT08_Alertas_SLA`.** Dos opciones detectadas el 11-ago-2026:
   - **(A) Fila observada en `TX_Notificaciones`** — patrón del script existente `docs/_artefactos/airtable/AT08_Alertas_SLA.js` (702 líneas, commit `bd5768d`). Evita el problema del secreto HMAC en Airtable Automations pero acopla a polling en Make.
@@ -559,6 +568,82 @@ Lo que sigue vigente como regla vive abajo, destilado.
   el script de Airtable, no en Make. Comprobado en la Fase 2 de AT03-Ext + SC-RF09
   al agregar `fila`; artefacto: `docs/_artefactos/make/SC-RF09-ExtraccionClaude.blueprint.json`.
   Vigente desde el 31-ago-2026.
+
+- **RO-38 · Los endpoints hermanos de un mismo dominio uniforman el shape de la
+  respuesta.** En `app/api/solicitudes/**` el contrato es `{ data: … }` y no el
+  payload al ras. No es estética: cada ruta tiene su hook cliente
+  (`use-historial-solicitud.ts`, `use-decision-motor.ts`, `use-cronologia-sla.ts`)
+  y todos desenvuelven igual, de modo que **el hook siguiente se escribe copiando
+  el anterior**. Una ruta que responde distinto obliga a leer su implementación
+  antes de consumirla, y esa lectura es justo la que no se hace cuando el patrón
+  parecía obvio. C2·B1 sirvió el payload al ras siguiendo su propuesta aprobada y
+  hubo que revertirlo en un bloque propio (**C2·B1.5**) antes de cablear la UI:
+  el coste de uniformar después es mayor que el de decidirlo al escribir la
+  primera línea. Corolario: al abrir una ruta nueva, mirar a sus hermanas de
+  carpeta **antes** de fijar el contrato, no después.
+  Vigente desde el 21-ago-2026, sesión Frente C · C2.
+
+- **RO-39 · Los tipos que cruzan la frontera server/cliente viven en un módulo
+  puro, sin un solo import de `airtable-client`.** Un tipo que el Route Handler y
+  un componente `"use client"` comparten no puede declararse en el módulo que
+  hace la lectura: aunque `import type` se borre en compilación, deja al
+  componente apuntando a un archivo que arrastra el cliente REST y la lectura de
+  `AIRTABLE_TOKEN`, y basta que alguien convierta ese `import type` en un import
+  de valor para que el token quede a un paso del bundle del navegador. El patrón
+  es **dos módulos**: uno puro con tipos, literales de pantalla y mapeo
+  (`lib/decision-motor.ts`, `lib/sla-cronologia.ts`, `lib/historial.ts`), y otro
+  con la lectura (`lib/decision-motor-airtable.ts`). Aplicado en **C3·B1**
+  separando `lib/coordinacion.ts` de `lib/coordinacion-airtable.ts`; los tipos se
+  re-exportan desde el módulo `-airtable` para no romper a los llamadores
+  server-side que ya los importaban de ahí. Corolario: si un tipo lo necesitan los
+  dos lados, **nace en el módulo puro**, no se muda después.
+  Vigente desde el 21-ago-2026, sesión Frente C · C3.
+
+- **RO-40 · Una fecha `date` de Airtable (`YYYY-MM-DD`) se parsea con regex,
+  nunca con `new Date()`.** `new Date("2026-08-25")` la interpreta como
+  medianoche **UTC**, que en Santiago (GMT−4/−3) es **el 24 a las 20:00**: la
+  fecha se muestra un día antes de la real, en silencio y sin error. En una fecha
+  de visita eso no es cosmético — manda al tasador el día equivocado. La regla
+  distingue dos cosas que el tipo `string` confunde: un **`dateTime`** es un
+  instante absoluto y se formatea con `timeZone: 'America/Santiago'`
+  (`partesEnSantiago`, `Intl.DateTimeFormat`); una **`date`** es una fecha de
+  calendario sin huso, y convertirla a instante es el error. Precedente:
+  `_fechaVisible` en `lib/tasador/lectura-tasacion.ts`, que ancla al mediodía
+  local por el mismo motivo (**RO-36**). Aplicado en **C3·B1** con
+  `fechaCalendarioVisible()`, que parte el string y no construye ningún `Date`, y
+  con un test que verifica que el 25 no se muestre como 24.
+  Vigente desde el 21-ago-2026, sesión Frente C · C3.
+
+- **RO-41 · En una lectura fundida de varias fuentes, un fallo parcial se
+  propaga; no degrada a lista vacía.** `fetchHistorialSolicitud` lee `A_Eventos`,
+  `A_Cambios` y `TX_CoordinacionVisita` en paralelo y funde los tres en un riel.
+  Si una falla, **falla la función entera**. La tentación es servir lo que sí se
+  leyó, y es exactamente lo que no hay que hacer: un timeline al que le falta un
+  tercio **se ve idéntico a uno completo**, y quien lo mira no tiene forma de
+  saber que le falta algo — mientras que un error visible se reintenta. El
+  corolario de diseño importa tanto como la regla: **un solo criterio de fallo
+  por función**. Tener una fuente que propaga y otra que degrada dentro del mismo
+  `Promise.all` significa que el criterio laxo terminará aplicándose por costumbre
+  a la fuente que no lo admitía. Consecuencia asumida al agregar la tercera
+  lectura en **C4·B1**: `TX_CoordinacionVisita` ilegible deja el timeline entero
+  en error, y hay un test que lo fija para que nadie lo "arregle" después.
+  Vigente desde el 21-ago-2026, sesión Frente C · C4.
+
+- **RO-42 · La redacción de un ítem del historial vive en el módulo del dominio,
+  no en el del historial.** Es **RO-05** aplicado a la capa de presentación: el
+  módulo del historial sabe *ordenar y pintar*; el del dominio sabe *qué significa
+  cada rama del dato*. `tituloDeCoordinacion()` y `detalleDeCoordinacion()` viven
+  en `lib/coordinacion.ts` y no en `lib/historial.ts`, porque ahí ya están las dos
+  ramas de una coordinación, el passthrough de `motivo` que **A-17** exige y el
+  formateo de fecha de **RO-40**. Duplicarlos del lado del historial crearía la
+  segunda fuente de verdad que RO-05 prohíbe: el día que cambie la redacción de
+  una rama cambiaría en un sitio y no en el otro, y nada lo notaría. Lo único que
+  el módulo del historial aprende es que existe un tercer origen — en **C4·B1**,
+  dos literales: `'coordinacion'` en `OrigenHistorial` y `'phone'` en
+  `IconoHistorial`. Corolario para estimar: agregar una fuente al riel es un
+  cambio de dos literales más un mapper en el dominio, no una reescritura del
+  timeline.
+  Vigente desde el 21-ago-2026, sesión Frente C · C4.
 
 ### Enmienda a OV-4 (18-ago-2026 · P2-TAS.B)
 
@@ -1367,3 +1452,861 @@ nombre en la config D_, la fuente canónica es **`D_TipoDocumentoAtributo.uso_ca
 (verificable por MCP), no el identificador que arrastre el TS. Y cuando una lectura de campo cae sobre
 un `Record<string, unknown>`, un nombre equivocado no falla en compilación ni en runtime: degrada a
 `?? 0`/`null` en silencio — por eso el nombre se confirma antes de escribir la fórmula, no después.
+
+### 2026-08-10 — Tres decisiones de negocio sobre §9.6 (plan v1.9 → v1.10)
+
+**Contexto:** incorporación al plan de las Decisiones 1 (matriz por etapa como dato cerrado), 2 (baseline del SLA agregado) y 3 (reproceso diferido), que reordenan M-11 sin tocar la estructura de §9.6.
+
+**Inconveniente:** la Decisión 2 llegó expresada con tres nombres de campo —`sla_dias`, `umbral_ambar_dias`, `umbral_verde_dias`— que no son ejecutables sobre `C_SLA`. `sla_dias` es justamente la familia que el mismo checkpoint M-11 manda borrar, así que la instrucción se contradecía a sí misma; y los otros dos no existen en la tabla (12 campos verificados por MCP), de modo que cargarlos habría exigido crear estructura nueva, contra el enunciado explícito de la decisión. Segundo problema, más silencioso: la fila «global default» pedía `cliente = *` y `tipo_informe = *`, pero ambos son `multipleRecordLinks` y no admiten un literal `*`.
+
+**Causa raíz:** la decisión se formuló en vocabulario de negocio (compromiso, ámbar, verde) y alguien lo tradujo a nombres de campo plausibles sin abrir el schema. Los nombres plausibles chocaron con dos hechos ya decididos en v1.9 —qué familia sobrevive— y con el tipo real de tres campos.
+
+**Solución aplicada:** se conservaron los **valores** y se tradujeron los **nombres**, registrando la traducción como decisión greppable **§9.6-R4** en `docs/_md/plan-ejecucion-if02-v1_9.md`: `dias_totales = 3`, `dias_alerta_amarilla = 2`, `dias_alerta_roja = 3`, y verde sin campo por ser derivado (todo lo que está bajo el ámbar). El comodín se define como **link vacío**, no como `*`. Y como la fila `SLA_METLIFE_Refinanciamiento` (`dias_totales = 4`, umbrales vacíos) sobrevive junto a la default, se fijó precedencia **campo a campo**: gana la fila más específica que empareje y cada campo vacío se resuelve contra la default — así MetLife conserva sus 4 días sin que nadie tenga que completar su fila. M-11 se partió en **M-11.a** (carga en `C_SLA` + borrado de la familia perdedora) y **M-11.b** (ratificación de las 7 filas de §5.2.4, que carga A-1).
+
+**Prevención futura:** una decisión de negocio que nombra campos se contrasta contra el schema **antes** de escribirla en el plan, y si los nombres no existen se traduce explícitamente en vez de crear campos para que calcen. La señal de alarma barata: si un mismo checkpoint dice *cargar X* y *borrar X*, el problema no es el orden de las instrucciones sino que dos vocabularios distintos se están usando como si fueran uno.
+
+---
+
+### 2026-08-10 — Ejecución de Tanda A de §9.6: esquema + carga + script AT08
+
+**Contexto:** pase único que creó `C_SLA_Etapas`, los 3 campos de `C_SLA` y los 20 campos SLA de `TX_Solicitudes` vía MCP, cargó la fila default y las 7 filas de §5.2.4, y dejó escrito `docs/_artefactos/airtable/AT08_Alertas_SLA.js`.
+
+**Inconveniente:** el paso 4.3 del encargo pedía linkear `matriz_etapas` de `SLA_DEFAULT_GLOBAL` a las 7 filas recién creadas, pero §9.6-R4 define ese campo como **vacío = matriz global · poblado = override del par**. Poblarlo en la fila comodín invierte la convención: la fila que representa "sin override" queda con override declarado.
+
+**Causa raíz:** dos lecturas razonables del mismo campo. Una lo entiende como navegación (dejar la matriz alcanzable desde la fila de SLA) y otra como bandera semántica (poblado = este par negocia plazos distintos). El plan fijó la segunda; el encargo asumió la primera.
+
+**Solución aplicada:** se ejecutó el link como se pidió —es reversible en un clic y hoy es funcionalmente inerte, porque apunta exactamente a las 7 filas globales y el motor todavía no existe (Tanda B)— y se dejó el conflicto anotado para que Sergio elija: vaciar la celda, o ampliar la redacción de §9.6-R4 a "poblado = matriz explícita" y distinguir el override real por otra vía.
+
+**Prevención futura:** cuando un campo es a la vez enlace navegable y bandera de comportamiento, la bandera pierde. Conviene separar los dos roles —`matriz_etapas` para el override y un lookup o una vista para navegar— antes de que exista el primer override real, porque después no hay forma de distinguir una fila que "usa la global explícitamente" de una que "negoció la misma matriz".
+
+**Hallazgo aparte, que corrige el plan:** §9.6 · M-13 afirma que *"el MCP no crea ni modifica fórmulas"*. Ya no es cierto: `create_field` de este MCP acepta `type: "formula"` con `options.formula`. `sla_semaforo_etapa` no se creó en este pase porque el encargo lo excluía explícitamente, pero M-13 puede automatizarse y dejar de ser un paso manual. Antes de darlo por hecho conviene probarlo contra los 14 timestamps ya creados, porque una fórmula mal escrita que emita una mayúscula de más deja el filtro de la Tanda C en cero filas sin avisar.
+
+---
+
+### 2026-08-10 — El MCP sí crea fórmulas: una incapacidad supuesta costó un checkpoint manual
+
+**Contexto:** cierre de las tres correcciones abiertas de §9.6 (plan v1.10 → v1.11): vaciar `matriz_etapas` de la fila default, crear `sla_semaforo_etapa` y alinear la precisión de `sla_revision_horas`.
+
+**Inconveniente:** el plan declaraba en la fila M-13, como si fuera un hecho verificado, que *"el MCP no crea ni modifica fórmulas"*. Sobre esa premisa M-13 existía como turno manual de Sergio en la UI de Airtable, y además **bloqueaba la Tanda C entera**. La premisa era falsa: `create_field` acepta `type: "formula"` con `options.formula`, y devuelve el campo con `isValid`, `referencedFieldIds` y `result.type` resueltos. `sla_semaforo_etapa` quedó creado en un tool call (`fldB6gJ3clZUPgaZk`).
+
+**Causa raíz:** la afirmación entró al plan como inferencia —el `CLAUDE.md` lista un alcance del MCP centrado en lectura de schema y búsqueda de registros— y nunca se probó. Una vez escrita, sobrevivió tres bumps de versión copiándose de una tabla de checkpoints a la siguiente, ganando apariencia de dato verificado por el solo hecho de repetirse.
+
+**Solución aplicada:** se creó la fórmula por MCP con el texto literal de §9.6.1, se cerró M-13 y se registró el hallazgo como **§9.6-R5** en `docs/_md/plan-ejecucion-if02-v1_9.md`, junto con las dos incapacidades que **sí** están verificadas y siguen en pie: el MCP no borra campos y no lee el estado activo/inactivo de una Airtable Automation.
+
+**Prevención futura:** **verificar la capacidad real del MCP antes de declararla ausente en el plan; una ausencia asumida cuesta un turno manual que no era necesario.** La prueba vale un tool call y se hace una vez. Corolario del mismo tamaño: `isValid: true` en una fórmula sólo dice que la expresión compila, no qué cadena emite — la verificación de contrato de los cuatro literales sigue siendo obligatoria y se hace mirando filas reales, no metadata.
+
+---
+
+### 2026-08-10 — Tanda B del motor de SLA: tres cosas que no estaban donde parecía
+
+**Contexto:** construcción de `lib/sla-habil.ts`, `lib/feriados.ts` y `lib/sla-etapas.ts` con sus tests (plan §9.6.2 · B-1 a B-4), sobre el esquema que la Tanda A dejó cargado.
+
+**Inconveniente 1 — el alias `@/` no existe en vitest.** El primer test de `sla-etapas` falló con `Cannot find package '@/lib/airtable-client'`. El repo no tenía `vitest.config`, así que el alias declarado en `tsconfig.compilerOptions.paths` no llegaba al runner. Los tres tests previos (`dropbox-path`, `adjuntos-destino`, `clerk-response`) no lo notaban porque sólo importan módulos hoja con rutas relativas; en cuanto un test alcanza un módulo de `lib/` que importa con `@/`, revienta.
+**Causa raíz:** el alias vivía sólo en tsconfig, que Next resuelve por su cuenta. Nadie lo había necesitado en tests.
+**Solución aplicada:** `vitest.config.mts` con `resolve.alias` apuntando `@` a la raíz. Extensión **`.mts`**, no `.ts`: con `.ts` Vite carga el archivo como CommonJS y `import.meta.url` dispara un warning de sintaxis ESM en cada corrida.
+**Prevención futura:** el alias de tsconfig no es infraestructura compartida hasta que el runner también lo conoce. Cualquier test nuevo que toque un módulo con dependencias transitivas lo va a descubrir; mejor tenerlo resuelto.
+
+**Inconveniente 2 — el recálculo encadenado leía un estado que todavía no existía.** `marcarFinEtapa(3)` debe abrir la etapa 4 y recalcular sus umbrales. La primera versión hacía que el recálculo **releyera** la solicitud, y el test mostró que en ese momento la marca recién escrita no estaba visible: con `persistir: false` no está en la base por definición, y con `persistir: true` una relectura inmediata tras el `PATCH` tampoco la garantiza. El efecto era que `etapaVigente` devolvía `null` y el motor **borraba** los umbrales en vez de calcular los de la etapa 4.
+**Causa raíz:** mezclar "estado de negocio ya decidido" con "estado leído de la base". Son lo mismo sólo si la escritura ya se confirmó y la lectura es consistente; ninguna de las dos cosas está garantizada.
+**Solución aplicada:** todas las funciones que marcan una etapa proyectan el campo escrito sobre el objeto en memoria y le pasan esa **solicitud proyectada** al recálculo, en los dos modos de persistencia.
+**Prevención futura:** cuando una operación escribe y después necesita leer lo que escribió, proyectar en memoria y no releer. Una relectura inmediata a una API remota es un read-after-write que a veces funciona, y ésos son los peores.
+
+**Inconveniente 3 — la jornada rinde 9 horas, no 8.** Las expectativas de dos casos del encargo estaban mal calculadas por asumir jornada de 8 h y, en un caso, que 24 h hábiles equivalen a un día. Con ventana 9:00–18:00 el día rinde **540 minutos**: 24 h hábiles desde un martes 10:00 vencen el **jueves a las 16:00**, no el miércoles a las 10:00. Corregido en el test, que ahora asienta el número real.
+**Prevención futura:** los umbrales de §5.2.4 están en horas hábiles y la ventana es de nueve; cualquier expectativa escrita "a ojo" con días de ocho horas queda corrida. El test de invariante `minutosHabilesEntre(t, sumarHorasHabiles(t, h)) === h * 60` (**RO-06**, 42 combinaciones) es lo que impide que un error así entre sin que nadie lo note.
+
+---
+
+### 2026-08-10 (b) — Un criterio de aceptación por `grep` que no podía dar verde
+
+**Contexto:** apertura de la Tanda C de §9.6. Antes de arrancar se corrió el criterio de aceptación de la Tanda B, ya cerrada con 186 tests verdes.
+
+**Inconveniente:** el criterio pedía «cero constantes de §5.2.4 en el código» y lo verificaba con `grep -n "\b48\b\|\b0\.5\b"` sobre `lib/sla-*.ts`. Devolvía coincidencias, o sea declaraba incumplida una tanda que cumple.
+
+**Causa raíz:** el glob `lib/sla-*.ts` incluye `lib/sla-habil.test.ts` y `lib/sla-etapas.test.ts`, y ahí los catorce números de §5.2.4 aparecen **legítimamente**: un test que verifica que una etapa de `0.5` h vence donde debe tiene que escribir `0.5`. El criterio medía la suma de dos poblaciones con reglas opuestas —en producción el literal es un defecto, en un fixture es el instrumento— y por construcción no podía dar verde.
+
+**Solución aplicada:** se corrigió el criterio, no el código. Hicieron falta **dos** correcciones, y la primera es la lección:
+
+1. `| grep -v '\.test\.ts$'` — escrito sin ejecutarlo, **no excluye nada**. `$` ancla al final de la *línea*, y las líneas que `grep` emite terminan en el contenido (`lib/sla-etapas.test.ts:  e5: { … }`), no en el nombre del archivo. Colaba las 106 coincidencias de los tests intactas. La exclusión correcta ancla en el separador: `'\.test\.ts:'`.
+2. Con la exclusión ya operativa apareció el problema de fondo: **cuatro de los siete literales tienen uso legítimo permanente en el motor**. `2`, `3`, `4` y `6` están en `export type NumeroEtapa = 1 | 2 | 3 | 4 | 5 | 6 | 7`, en `ETAPAS`, en los puntajes de `resolverSlaDelPar` y en `diasSemana: [1,2,3,4,5]`. Son números de etapa y de día de la semana, no plazos. Los inequívocos son tres: `0.5`, `24` y `48`.
+
+Criterio final: `grep -nE '\b(0\.5|24|48)\b' lib/sla-*.ts | grep -v '\.test\.ts:' | grep -vE '^[^:]+:[0-9]+: *(//|\*|/\*)'`, vacío sobre `lib/` y sobre `app/api`. Registrado como **§9.6-R6** en `docs/_md/plan-ejecucion-if02-v1_9.md` (plan v1.12), junto con la ratificación de los dos entregables de infraestructura que la Tanda B produjo y v1.11 no declaraba (`vitest.config.mts` y `updateRecord`). La Tanda B no se reabrió.
+
+**Prevención futura:** dos reglas, y la segunda salió de equivocarse en la primera pasada.
+
+1. **Todo criterio de aceptación basado en `grep` declara sus exclusiones dentro del propio comando, y el comando se corre antes de darlo por escrito.** Un literal en un fixture es correcto y no debe hacer fallar el criterio. Es **RO-02** por el otro extremo: allí el `grep` era la fuente de verdad de la cobertura y el riesgo era no correrlo; acá se corre y lo que está mal es su definición. Un criterio de aceptación es código —tiene sintaxis, tiene bugs y falla en silencio— y se prueba como código; una corrección de criterio escrita "de memoria" hereda el mismo defecto que venía a arreglar.
+2. **Un criterio se escribe sobre las señales inequívocas, no sobre todas.** Ampliar el patrón a `2|3|4|6` no lo hace más estricto: lo hace inservible, porque obliga a ignorarlo siempre, y un criterio que grita todos los días no distingue nada.
+
+La señal de alarma barata: si un criterio falla sobre código que se acaba de revisar y se sabe correcto, revisar primero el criterio.
+
+**Regla operativa concreta que deja:** `grep -v` con anclaje `$` falla sobre `filename:linenumber:content`; usar `:` como delimitador. Es decir, para excluir un archivo del resultado de un `grep` se escribe `grep -v '\.test\.ts:'`, nunca `grep -v '\.test\.ts$'` — `$` ancla al final de la línea emitida, que termina en el contenido, no en el nombre del archivo. El modo de fallo es silencioso en la dirección peor: el filtro no excluye nada y parece que sí.
+
+---
+
+### 2026-08-10 (c) — Cierre de Tanda C: verificación por REST API y dos deudas anotadas
+
+**Contexto:** cierre de la Tanda C de §9.6 (read-layer del reloj por etapa, endpoint de cronología, blueprints y wizard). Las tres verificaciones de contrato contra Airtable se corrieron **sin MCP**, con `AIRTABLE_TOKEN` de `.env.local` y `curl` contra la REST API.
+
+**Hallazgo 1 · el MCP no es la única vía de verificación de schema, y a veces no es la más barata.** `GET /v0/meta/bases/{baseId}/tables` devuelve el schema completo con FIELD_IDs, tipos y `options.timeZone`, que es exactamente lo que hacía falta para contrastar `FIELD_IDS_SLA` contra la base. Salió: 21 de 21 campos `sla_*` coinciden con el código, y los 18 `dateTime` están en `America/Santiago`, ninguno en `client`. Cuando el MCP no está autorizado, la sesión no tiene por qué detenerse: el token server-side ya está en el repo y el endpoint de metadata es de sólo lectura. **Nota de entorno: `jq` no está instalado en esta máquina** — el parseo se hizo con `python3`, que sí está.
+
+**Hallazgo 2 · un contrato de fórmula sólo se puede verificar sobre filas que existan.** `sla_semaforo_etapa` devolvió `"sin_dato"` en las 39 filas de `TX_Solicitudes`, y ninguna tiene `sla_etapa_actual` poblado porque **el backfill A-5 tampoco corrió**. Eso confirma un literal de los cuatro —en minúscula, sin emoji, sin adornos— y deja `verde`/`ambar`/`rojo` sin observar hasta el E2E de la Tanda G. La lección de método es la de §9.6-R5 aplicada de nuevo: `isValid: true` dice que la fórmula compila, y una lectura sobre base cruda dice qué emite **en el caso que la base tiene**, no en los cuatro. Marcar "verificado" con un solo literal observado sería el mismo optimismo que RO-02 castiga.
+
+**Deuda 1 · A-6 no se ejecutó.** `docs/schema-airtable.md` no tiene `C_SLA_Etapas` ni los 21 campos `sla_*`, pese a que el plan lo declaraba como el único ítem de su tabla de impacto que **no** quedaba diferido. Registrada como **CI-008**, con fecha objetivo condicional a la Tanda D —que es donde empieza a costar, porque D-1/D-4 derivan tipos de esos campos—. No se rehace la Tanda A: el esquema está bien creado; lo que falta es documentarlo.
+
+**Deuda 2 · higiene de placeholders en blueprints.** `SC-Asignar` m8 lleva la URL literal del webhook de SC05 (`hook.eu1.make.com/…`) mientras el secreto HMAC del mismo archivo sí usa `REEMPLAZAR_CON_MAKE_HMAC_SECRET`. La convención existe y está aplicada a medias. **No se tocó en esta tanda a propósito:** el reimport de M-14 tiene que ser idéntico a lo probado, y cambiar la URL por un placeholder obliga a restaurarla a mano en el import —y olvidarla deja al tasador sin correo, con Make reportando Success—. Corresponde hacerlo como tanda propia de higiene, sobre todos los blueprints a la vez y con el checklist de restauración escrito.
+
+**Prevención futura:** cuando una tanda declare un paso documental como "no diferido" (aquí A-6), verificarlo en el cierre de esa misma tanda con el `grep` correspondiente, no en la siguiente. Un paso que se declara excepción y no se ejecuta pierde las dos cosas: no se hace y deja de estar en la lista de lo diferido.
+
+---
+
+### 2026-08-10 (d) — A-5: el backfill del SLA y el campo deprecado que resultó ser la única fuente
+
+**Contexto:** ejecución de **A-5** de §9.6.2 (backfill de `sla_e1_inicio_ts` y timestamps SLA sobre las 39 solicitudes existentes de `TX_Solicitudes`), última pieza pendiente de la Tanda A antes de arrancar la Tanda D.
+
+**Inconveniente:** el paso, tal como lo escribe el plan —*"si `fecha_asignacion_ts` está poblada, `sla_e1_fin_ts = sla_e2_inicio_ts = fecha_asignacion_ts`"*—, produce el resultado exactamente invertido sobre la cartera real. Al contrastar los 39 registros: las **9** solicitudes en `estado = asignada` tienen `fecha_asignacion_ts` **vacío** y el `fecha_asignacion` deprecado (`fldiaj4mwd17g25n1`, date · §21.4-d) poblado; y la **única** fila con `fecha_asignacion_ts` poblado —`VP-2026-0043`— está en `estado = creada`, sin tasador, sin visador y sin fecha de visita. La lectura literal habría dejado las 9 asignadas reales en etapa 1 y habría movido a etapa 2 la única que no lo está, con lo que el criterio de aceptación de la Tanda E (*"una asignada muestra e1 completada y e2 en curso"*) se habría vuelto inalcanzable sin que nada fallara.
+
+**Causa raíz:** el plan se escribió sobre el campo **canónico** (`fecha_asignacion_ts`, creado el 24-jul-2026 por §21.4-d) y la cartera histórica es toda **anterior** a esa creación, así que su dato de asignación vive en el campo que la migración dejó deprecado. El campo nuevo existe, está bien tipado y no tiene datos; el campo viejo está marcado para retiro y es el único que sabe algo. Un backfill es, por definición, el punto donde esa inversión se paga.
+
+**Solución aplicada:** `scripts/backfill-sla-a5.ts`, que compone la fila proyectada y delega el cálculo en `recalcularSla()` en modo `persistir: false` —el motor calcula, el script hace un único `PATCH` por fila—, con las reglas que aprobó Sergio:
+
+- cierra e1 **sólo** si `estado = 'asignada'`; la fuente es `fecha_asignacion_ts` y, si está vacío, el `fecha_asignacion` deprecado;
+- un `date` sin hora se ancla a las **17:00 de Santiago** (cierre de jornada), no a medianoche: la hipótesis conservadora es que una asignación fechada ese día ocurrió dentro de la jornada;
+- `VP-2026-0043` queda en etapa 1 y su `_ts` huérfano **no se toca** — registrado como **CI-009**.
+
+Resultado: 39 filas escritas · 0 con `_ts` · **9 con fallback** · 30 con e1 abierta · 30 en etapa 1 y 9 en etapa 2. **Excepción que queda registrada:** el backfill A-5 aceptó `fecha_asignacion` (date deprecado) como fuente de `sla_e1_fin_ts` para las 9 filas históricas anteriores a la creación de `fecha_asignacion_ts`; el deprecado de §21.4-d queda para retirar en migración posterior, **no aquí** — y esa migración tiene ahora un consumidor más del que hacerse cargo.
+
+**Efecto sobre la verificación V3, que la entrada (c) había dejado abierta.** Aquella decía que `verde`/`ambar`/`rojo` quedaban sin observar hasta el E2E de la Tanda G, con `sin_dato` como único literal confirmado. Tras el backfill, el conjunto observado sobre las mismas 39 filas es **`['rojo', 'verde']`** — 38 y 1—, así que van **tres de los cuatro**. El `verde` es `VP-2026-0048` y apareció **solo**, por efecto del ancla a 17:00 sobre una asignación fechada hoy: su e2 vence mañana. Falta `ambar`, y no falta por defecto de la fórmula sino por aritmética —exige `NOW()` dentro de una ventana de 1 h en e1 o 2 h en e2, sobre una cartera con todos los vencimientos en el pasado salvo uno—. La lección de método corrige a la (c) por el lado optimista: **un contrato de fórmula no se cierra observando los casos que la base regala, pero tampoco hace falta esperar al E2E para cobrar los que sí aparecen**; se reporta el conjunto observado y se nombra el que falta con su razón, que es distinto de dejar los tres en "pendiente".
+
+**Hallazgo de entorno · cómo correr TypeScript del repo fuera de Next, con Node 20 y sin agregar dependencias.** No hay `tsx` ni `ts-node`, y Node 20.20 no hace type-stripping. Lo que funcionó, sin tocar `package.json` ni el lockfile (RO-07): compilar con el `tsc` ya instalado usando un `tsconfig` aparte —fuera del repo, en el scratchpad— con `module: commonjs` y `outDir` propio, y ejecutar con `node --env-file=.env.local`. **La trampa:** `tsc` **no reescribe** `compilerOptions.paths`, así que el `.js` emitido conserva `require("@/lib/…")` y revienta en runtime. Se resuelve con un hook de 10 líneas cargado con `node -r` que parchea `Module._resolveFilename` para el prefijo `@/`. Ni `vitest` ni `pnpm dlx` hicieron falta: correr un backfill de producción como si fuera un test viola la regla de `CLAUDE.md` de no escribir a Airtable desde los tests, y no hay por qué acercarse a esa frontera.
+
+La receta completa, para no re-derivarla la próxima vez. El `tsconfig` lleva `baseUrl`/`rootDir` apuntando a la **raíz del repo** en absoluto, `paths: {"@/*": ["./*"]}`, `outDir` en el scratchpad y `include` con el script; el hook es:
+
+```js
+// alias.cjs — tsc no reescribe `paths`; esto lo resuelve en runtime.
+const path = require('node:path'); const Module = require('node:module')
+const RAIZ = path.join(__dirname, 'a5-out')            // el outDir
+const original = Module._resolveFilename
+Module._resolveFilename = function (request, ...resto) {
+  if (request.startsWith('@/')) return original.call(this, path.join(RAIZ, request.slice(2)), ...resto)
+  return original.call(this, request, ...resto)
+}
+```
+
+```bash
+node_modules/.bin/tsc -p <scratchpad>/tsconfig.a5.json
+node --env-file=.env.local -r <scratchpad>/alias.cjs <scratchpad>/a5-out/scripts/backfill-sla-a5.js
+```
+
+Dos detalles que costaron un intento cada uno: `tsc` emite `error TS2688: Cannot find type definition file for 'node'` porque el `tsconfig` vive fuera del repo y `typeRoots` deja de resolver — **es inocuo, el emit igual sale** y no vale la pena pelearlo para un script de una vez; y `set -a; . ./.env.local` para exportar el token a `curl` falla en la línea 23 del archivo (`completar: command not found`), porque hay un valor placeholder sin comillas — tampoco bloquea, el resto de las variables carga.
+
+**Prevención futura:** antes de ejecutar cualquier paso de datos que un plan describa por nombre de campo, **contar las filas que efectivamente cumplen la condición**, no asumir que el campo canónico es el que tiene el dato. Un `SELECT` de dos columnas —la condición del plan y el estado que debería acompañarla— cuesta un minuto y es lo que distinguió "9 filas asignadas" de "1 fila con el timestamp". La versión general: **cuando existe un par campo-nuevo / campo-deprecado, todo backfill sobre datos históricos debe mirar los dos y declarar cuál usó**, porque la migración que creó el par casi nunca movió los datos viejos. Y el corolario de proceso: una desviación de la letra del plan sobre datos de producción se lleva a decisión explícita del dueño **antes** de escribir, con los dos resultados contados sobre la tabla real, no con la desviación ya aplicada.
+
+---
+
+### 2026-08-10 (e) — Tanda D: la lista compartida entre servidor y cliente, la vista que quedó saturada y la tercera copia que no llegó a existir
+
+**Contexto:** Tanda D de §9.6.2 completa — píldora de etapa en `SLABadge` con unión discriminada (D-1), su render en `FilaSolicitud` (D-2), el selector `?sla_etapa=` con el contador de la unión (D-3) y la píldora en la cabecera del detalle (D-4). Se sumó, pedido por Sergio en el mismo lote, la apertura automática del panel de filtros.
+
+**Inconveniente 1 · una lista cerrada que dos capas necesitan, y sólo una puede importarla.** El selector de la bandeja tenía que ofrecer los valores válidos de `?sla_etapa=`, que la Tanda C había declarado en `lib/solicitudes.ts` (`SLA_ETAPA_FILTROS_VALIDOS`). Pero `solicitud-list.tsx` es `"use client"`, y `lib/solicitudes.ts` importa `lib/airtable-client.ts`: **importar el valor —no el tipo— habría arrastrado el cliente de Airtable al bundle del navegador**. Hasta ahora el componente importaba de ese módulo sólo `type Vista`, que TypeScript borra en compilación, así que el problema nunca se había manifestado.
+
+**Causa raíz:** la frontera server/client de Next no la marca el archivo que declara el dato sino el que lo importa, y un `import type` y un `import` se ven casi iguales en el diff. Una lista de dos strings no parece código de servidor, pero vive en un módulo que sí lo es.
+
+**Solución aplicada:** la lista canónica (`SLA_ETAPA_FILTROS`) y sus rótulos (`SLA_ETAPA_FILTRO_LABELS`) se trasladaron a `lib/console-data.ts`, que no tiene dependencias de servidor y que el componente ya importaba; `lib/solicitudes.ts` la importa desde ahí y **conserva su export `SLA_ETAPA_FILTROS_VALIDOS`** para no romper a sus consumidores. La alternativa —declararla dos veces— es la que RO-05 prohíbe, así que quedó un test que compara las dos referencias (`toEqual`) y otro que exige rótulo para cada valor y ninguno de más. Verificado además de forma empírica, que es lo que cierra el punto: tras `next build`, `grep -rl 'api\.airtable\.com' .next/static/` y `grep -rl 'AIRTABLE_TOKEN' .next/static/` devuelven **0 archivos**.
+
+**Inconveniente 2 · la vista "SLA en riesgo" pasó de 7 a 38 de 39 filas.** Medido contra la base real con las tres fórmulas por separado: agregado (`semaforo_sla`) **7**, etapa (`sla_semaforo_etapa`) **38**, unión **38** — o sea las 7 del agregado son subconjunto de las 38, y la vista dejó de discriminar.
+
+**Causa raíz:** no es un bug de la fórmula ni del filtro. El backfill A-5 ancló `sla_e1_inicio_ts` a `fecha_solicitud` sobre una cartera de mayo a julio, y la etapa 1 tiene un SLA máximo de **3 horas hábiles**. Aplicar retroactivamente un reloj en horas a solicitudes de hace dos meses las deja todas vencidas, y eso es aritméticamente cierto: son 30 solicitudes que llevan semanas en "Ingreso". El dato no miente; lo que deja de servir es la vista, porque una pestaña que marca el 97 % de la cartera no responde "qué tengo que mirar hoy".
+
+**Solución aplicada:** ninguna en código — se reporta y la decisión es de negocio (confirmado por Sergio el 10-ago-2026: **no se toca el filtro**). **No se tocó el filtro para disimularlo**, que era la salida tentadora y la equivocada: bajar el umbral o excluir lo antiguo desde la UI sería inventar una regla de negocio en la capa que tiene prohibido decidir.
+
+**Se autocorrige con datos vivos post-M-14, pero sólo por un lado y conviene ser exacto.** Una vez reimportados SC01 y SC-Asignar, toda solicitud nueva arranca su reloj en el momento real del hito (§5.2.2) y entra a la bandeja en verde, así que el flujo entrante deja de contribuir al rojo. Lo que **no** se corrige solo son las **30 filas históricas que quedaron en etapa 1**: nadie cierra su e1 salvo una asignación, de modo que seguirán en rojo mientras sigan en `creada`. La proporción mejora conforme la cartera rote —no porque el dato viejo cambie, sino porque deja de ser mayoría—. Si hiciera falta antes, la palanca correcta no es el filtro sino los datos: cerrar o cancelar lo que ya no está vivo. Volver a correr la medición de abajo es lo que dirá cuándo la pestaña recuperó su utilidad.
+
+**La medición, para repetirla tal cual.** Son los tres conteos que dieron 7 / 38 / 38:
+
+```bash
+set -a; . ./.env.local; set +a
+q() { curl -s -G -H "Authorization: Bearer $AIRTABLE_TOKEN" \
+  --data-urlencode "filterByFormula=$1" --data-urlencode "fields[]=codigo_ext" \
+  "https://api.airtable.com/v0/app9G7lLkIV3CpeLa/tblaHTyMHYfmy7Fg6" \
+  | python3 -c "import sys,json; print(len(json.load(sys.stdin)['records']))"; }
+
+q 'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0)'   # agregado
+q 'OR({sla_semaforo_etapa}="ambar",{sla_semaforo_etapa}="rojo")'              # etapa
+q 'OR(FIND("VENCIDO",{semaforo_sla})>0,FIND("EN RIESGO",{semaforo_sla})>0,{sla_semaforo_etapa}="ambar",{sla_semaforo_etapa}="rojo")'  # unión = la vista
+```
+
+**Prevención futura:** **un backfill retroactivo de un reloj operacional satura toda vista construida sobre ese reloj, y hay que medirlo en el mismo lote en que se backfillea, no descubrirlo en pantalla.** La comprobación son los tres conteos de arriba, y distingue "el filtro funciona" de "el filtro funciona y sigue siendo útil". Son dos preguntas distintas y sólo la primera la contesta un test.
+
+**Inconveniente 3 · el auto-expand del panel de filtros iba a ser la tercera copia de la misma lista.** Sergio pidió que el panel se abriera solo cuando hubiera filtros activos —una línea— porque un deep link como `?vista=sla_riesgo&sla_etapa=rojo` llegaba mostrando una lista recortada sin ninguna señal visible de qué la estaba recortando. Al escribirla apareció que las claves de filtro ya estaban enumeradas **dos veces** en `solicitud-list.tsx`: en `filtrosActivos` y en `limpiarFiltros`. El auto-expand era la tercera.
+
+**Causa raíz:** las tres listas se escriben en momentos distintos y ninguna falla si otra se queda corta. El síntoma del drift es silencioso y de la peor especie: un filtro aplicado que el botón "Limpiar filtros" **no limpia**, o que no cuenta como activo y deja el panel cerrado. Nada revienta; la pantalla simplemente miente. Ya había pasado a medias en esta misma tanda — `sla_etapa` hubo que agregarlo a mano a las dos listas existentes, y olvidarse de una habría sido invisible.
+
+**Solución aplicada:** `CLAVES_FILTRO` como constante de módulo, consumida por los tres (`filtrosActivos` con `.some()`, `limpiarFiltros` con `Object.fromEntries(...map(k => [k, null]))`, y el inicializador del `useState`). Es más que la línea pedida, y se avisó como tal antes de darlo por cerrado.
+
+Dos detalles de implementación que no son cosméticos. El estado usa **inicializador perezoso** (`useState(() => …)`), **no** un `useEffect`: con efecto, cerrar el panel a mano teniendo filtros puestos lo reabriría en el render siguiente, y el usuario perdería la pelea contra su propia UI. Y `vista`, `orden`, `page` y `solicitud` **no** entran en la lista: son estado de navegación, no filtros; incluirlos habría dejado el panel abierto siempre, que es lo mismo que no tener la función.
+
+**Prevención futura:** **cuando una constante se enumera por segunda vez en el mismo archivo, extraerla ahí, no la tercera.** La regla barata para detectarlo sin pensar: si agregar un elemento obliga a tocar dos sitios y olvidarse de uno no rompe nada, ya es una fuente duplicada aunque todavía no haya divergido (RO-05). Y el corolario de esta tanda: la lista quedó sin test porque vive en un componente `"use client"` y el repo no tiene runner de DOM — la única defensa es que sea una sola, así que la extracción no es higiene opcional sino lo que sustituye al test que no se puede escribir.
+
+---
+
+### 2026-08-11 — Tanda E: la cronología de etapas, el color que no existe para las etapas cerradas y un `&&` que no cortó nada
+
+**Contexto:** Tanda E de §9.6.2 completa — `HistorialItem` generalizado (E-1), sección "Cronología de etapas (SLA)" al inicio de la pestaña Historial alimentada por `GET /api/solicitudes/[id]/sla` (E-2), `Alert` ámbar/rojo sobre las pestañas con los dos literales de §9.6.1 (E-3) y estado vacío honesto (E-4). 278/278 tests, `pnpm build` y `tsc --noEmit` limpios.
+
+**Inconveniente 1 · el endpoint no expone tono por etapa, y la tentación era calcularlo.** La cronología muestra las siete etapas, pero `sla_semaforo_etapa` —la fórmula de Airtable— sólo habla de la **etapa vigente**: para una etapa ya cerrada no existe semáforo en la base. Comparar `minutosHabiles` contra `slaIdealHoras`/`slaMaxHoras` en el cliente para pintarlas era una línea de código y habría quedado bien en pantalla.
+
+**Causa raíz:** el endpoint devuelve los hechos (minutos consumidos, umbrales, entrada/salida) pero no el juicio, porque el juicio es de la fórmula. Derivarlo en el cliente crea un segundo semáforo que nadie sincroniza con el primero: divergiría de la píldora de la cabecera y de la bandeja el día que la fórmula cambie de umbral, sin que ningún test lo note.
+
+**Solución aplicada:** el color vive **sólo** en la etapa vigente y llega ya decidido en `Solicitud.slaEtapa.tono` (`components/console/solicitud-detail.tsx` · `CronologiaEtapasSection`), con un guard extra: si la fila y la cronología discrepan sobre cuál es la vigente, no se pinta ninguna. Las cerradas muestran el hecho crudo —`"3h 20m de 2h / 3h"`, vía `resumenTiempoEtapa`— que deja ver el desborde sin inventar un color. Mismo criterio en el `Alert`: sin `venceTs` no se emite, porque un literal de §9.6.1 con la fecha en blanco es peor que ningún literal.
+
+**Prevención futura:** **cuando una capa devuelve hechos y no juicios, es a propósito.** Antes de derivar un color/estado en el cliente, buscar quién lo emite hoy; si ya hay un emisor, el cliente lo consume o no lo muestra — nunca lo recalcula (RO-05).
+
+**Inconveniente 2 · `duracionCorta` estaba privada en `lib/solicitudes.ts`, que es servidor.** La cronología del detalle necesita el mismo formato de duración (`"4h 10m"`) que la píldora de la bandeja, y el detalle es `"use client"`: importar de `lib/solicitudes.ts` arrastra `lib/airtable-client.ts` al bundle. Es la **misma frontera** del Inconveniente 1 de la Tanda D, ahora en sentido inverso (antes era una lista de dos strings; ahora un formateador de nueve líneas).
+
+**Solución aplicada:** `duracionCorta` se mudó a `lib/sla-cronologia.ts` —módulo puro, sin `fetch`, sin Airtable, sin Clerk— y `lib/solicitudes.ts` la **importa** desde ahí en vez de conservar su copia. `lib/sla-cronologia.ts` es también donde viven los dos literales de alerta y los formatos de instante, todos en hora de Santiago explícita (`ZONA_VPROPERTY`), con 23 tests que comparan los literales por igualdad exacta: son canónicos y un refactor no puede reescribirlos en silencio.
+
+**Prevención futura:** la pregunta antes de escribir un helper de formato es "¿esto lo va a necesitar el cliente?". Si la respuesta es sí o quizás, nace en un módulo puro. Mover después cuesta un commit; duplicar cuesta un bug que nadie ve.
+
+**Inconveniente 3 · `components/ui/alert.tsx` no tenía variante ámbar.** Sólo `default` y `destructive`. El rojo de E-3 usa `destructive` tal cual, pero el ámbar de §9.6.1 no tenía dónde apoyarse, y la salida fácil —usar el naranja de marca `#F5A213`— está expresamente prohibida por §4.4: el ámbar operacional (`#D97706`) significa "esto se está atrasando" y el naranja es identidad; colisionarlos vacía de sentido al primero.
+
+**Solución aplicada:** variante `warning` agregada al `cva` existente, con el **mismo hex** que ya declara `SLA_CLASSES.amber` en `lib/console-data.ts`. Cero colores nuevos: la paleta sigue declarada en un solo sitio. Mismo criterio en la fila de la cronología, que reusa `SLA_CLASSES` por su `text-*` y deja que `tailwind-merge` descarte el fondo — el truco que ya usaba `EtapaPill`.
+
+**Inconveniente 4 · `pnpm lint && pnpm build` lanzó dos builds simultáneos y el segundo murió con "Another next build process is already running".** El comando era `pnpm lint 2>&1 | tail -20 && pnpm build …`.
+
+**Causa raíz:** dos cosas a la vez. (a) **`pnpm lint` no funciona en este repo**: `eslint` no está en `devDependencies` —es deuda diferida anotada el 22-jul-2026 en el «Estado de tareas» de este mismo archivo— y el script falla con `sh: 1: eslint: not found`. (b) El `&&` no lo detuvo porque el exit status de un *pipeline* es el del **último** comando: `tail` devuelve 0 aunque `eslint` reviente. Así que el build arrancó igual, y un segundo `pnpm build` lanzado creyendo que el primero nunca había corrido chocó con el lock de `.next/`.
+
+**Solución aplicada:** esperar al build en curso (`until ! ps aux | grep -q "[n]ext build"; do sleep 5; done`) y leer su salida — salió limpio. No se tocó el lock: borrarlo a mano con un build vivo corrompe `.next/`.
+
+**Prevención futura:** dos reglas. **No encadenar `pnpm lint` en este repo** —no existe—; la compuerta antes del commit es `pnpm build` + `pnpm typecheck` + `pnpm test`. Y **`cmd | tail && otro` no es un `&&` condicional**: si hace falta la condición, o se quita el pipe, o se usa `set -o pipefail`. Un comando que "no falló" porque su salida pasó por `tail` es exactamente la clase de verde que no significa nada.
+
+---
+
+### 2026-08-11 (b) — `cellFormat=string` no devuelve ISO con `T`, y el fixture inventado dejó pasar el bug dos tandas
+
+**Contexto:** verificación en pantalla de la Tanda E. Sergio bloqueó el commit con dos bugs: la píldora de etapa mostraba **"Sin datos de etapa" en toda la cartera** pese a tener el punto de color correcto, y el `Alert` de etapa desbordada no aparecía nunca. Reproducidos en `VP-2026-0048` (e2 verde) y `VP-2026-0056` (e2 rojo).
+
+**Inconveniente:** un solo bug con dos síntomas. `parseInstante` (`lib/solicitudes.ts`) devolvía `null` para **todos** los `dateTime` del prefijo `sla_`, de modo que `slaEtapa.venceTs` quedaba vacío; de ahí el fallback `'Sin datos de etapa'` de `etiquetaEtapa` y el corte en el guard "sin `venceTs` no hay alerta" de `mensajeAlertaEtapa`. El tono sobrevivía porque `sla_semaforo_etapa` es texto plano y no pasa por el parser: **color correcto con texto mentiroso**, que es la peor combinación posible porque parece que el dato llegó.
+
+**Causa raíz:** `cellFormat=string` con `timeZone=America/Santiago` y `userLocale=es-CL` devuelve, para un `dateTime` cuyo campo está configurado con formato de fecha **ISO**, la forma `"2026-08-11 14:00"` — orden ISO, **separador espacio, sin `T`, sin zona** — y no `"11-08-2026 14:00"` como suponía el docblock. La variante am/pm existe también: `fecha_solicitud` llega como `"2026-07-27 12:00am"`. `parseInstante` cubría tres formas (ISO con `T`, ISO sin hora, reloj es-CL `D/M/YYYY`) y ninguna matchea: la primera exige la `T` y la tercera empieza por día, así que `\d{1,2}` no puede comerse `2026`. Caía al `return null` final.
+
+Dos funciones del mismo archivo parsean fechas y **sólo una era tolerante**, que es la razón de que nadie lo notara antes: `parseDate` comprueba el prefijo `^\d{4}-\d{2}-\d{2}` y corta con `substring(0,10)`, así que los campos viejos funcionan hace meses con el mismo formato raro.
+
+**Y por qué los tests daban verde.** El fixture de la Tanda C era `'12-08-2026 13:00'`: **el formato del contrato documentado, no el del wire**. Se testeó lo que creíamos que Airtable manda. Es RO-13 —"filtrar por el formato real que emite la fuente"— aplicado al parseo, y el corolario es que un test escrito desde el docblock hereda el error del docblock en vez de detectarlo.
+
+**Solución aplicada:** rama nueva en `parseInstante`, entre la de ISO sin hora y la de reloj es-CL:
+
+```ts
+const isoConEspacio = v.match(
+  /^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2})(?::\d{2})?\s*(?:([ap])\.?\s?m\.?)?$/i
+)
+```
+
+resuelta con **`desdeSantiago`, nunca `new Date`**: el texto no trae zona y su hora es la de Santiago porque es la que se pidió en `timeZone`; leerlo con `new Date` lo interpretaría en la zona del proceso —UTC en Railway— y correría cada vencimiento cuatro horas. La rama de ISO con `T` se queda primera y sin tocar: **mismo prefijo, semántica opuesta** —con `T` y `Z` el texto ya es un instante absoluto y pasarlo por `desdeSantiago` lo correría igual—. La normalización am/pm y la validación de rango se extrajeron a `instanteDePartes`, compartida por las dos ramas de reloj de pared: duplicarla era garantizar que una se arreglara sin la otra.
+
+Los fixtures se rehicieron **copiados de la respuesta HTTP**, con el JSON real pegado en el docblock del bloque de tests, y `'12-08-2026 13:00'` bajó de caso principal a caso secundario —sigue siendo válido para los campos con formato local—. 286/286 tests.
+
+**Prevención futura:** tres reglas, en orden de utilidad.
+
+1. **El fixture de un parser se copia del wire, no del documento.** Antes de escribir el primer `expect`, hacer el `curl` con **los mismos parámetros que usa el código** (`cellFormat`, `timeZone`, `userLocale`) y pegar la respuesta literal en el test. Si el formato no se observó, no se testea: se supone.
+2. **Un `null` de parseo nunca debe ser silencioso en un campo que la UI muestra.** Acá el `null` degradaba a un literal legítimo ("Sin datos de etapa") que existe para un caso real, así que el fallo se disfrazó de dato. Cuando un fallback es también un estado válido de negocio, hay que poder distinguirlos — aunque sea con un `console.warn` en el mapper.
+3. **Cuando dos funciones del mismo módulo parsean lo mismo con rigores distintos, la laxa está tapando el bug de la estricta.** `parseDate` toleraba el formato desde siempre; esa asimetría era la pista y estaba a doce líneas de distancia.
+
+---
+
+### 2026-08-11 (c) — El watcher de `next dev` no ve `/mnt/c`: un ciclo de verificación entero persiguiendo un bug ya arreglado
+
+**Contexto:** verificación en pantalla del fix de `parseInstante` (entrada (b) de hoy). Los tests daban verde contra el JSON del wire y el pipeline real de `fetchSolicitudes` devolvía `etiqueta: "Vence en 3h 40m"`, pero el navegador seguía mostrando **"Sin datos de etapa"** en las 39 filas después de `Ctrl+Shift+R`. Sergio bloqueó el commit por segunda vez, con razón.
+
+**Inconveniente:** el código correcto en disco y el navegador mostrando el anterior, sin ningún error en ninguna parte.
+
+**Causa raíz:** el repo vive en `/mnt/c/Users/...`, un montaje **drvfs** de Windows dentro de WSL2, donde los eventos `inotify` no se propagan de forma fiable. El watcher de `next dev` nunca vio las escrituras, así que el servidor siguió sirviendo **el grafo de módulos compilado al arrancar**. Está medido en el log del propio servidor, y ésta es la evidencia que conviene saber reproducir:
+
+```
+09:31  ○ Compiling /consola ...        ← única compilación en toda su vida
+10:04  lib/solicitudes.ts modificado   ← el fix
+10:15  GET /consola?solicitud=... 200  ← refrescos servidos con el grafo de 09:31
+```
+
+No hay una segunda línea `Compiling /consola` después de las 10:04 y sin embargo respondió 200. **`Ctrl+Shift+R` no podía arreglarlo**: invalida la caché del navegador, y lo obsoleto estaba en el servidor. Los otros dos archivos de la tanda (09:44) quedaron igual de congelados, y por eso tampoco aparecía el `Alert`.
+
+**Solución aplicada:** **reinicio en frío** — `rm -rf .next && pnpm exec next dev`. Es lo único que garantiza que el servidor en curso sirva lo que hay en disco: un arranque compila desde el fuente, sin depender del watcher. No hay arreglo de raíz disponible; la mitigación es operativa y hay que aplicarla a mano tras cada edición de un módulo de servidor.
+
+**⚠ Lo que NO funciona, probado en esta misma sesión.** `watchOptions.pollIntervalMs: 1000` en `next.config.mjs` parece la respuesta obvia —la opción existe y está soportada en Next 16.2.6, verificada en `node_modules/next/dist/server/config-shared.d.ts:1239`— y **cuelga el servidor**. El sondeo recorre el árbol completo, `node_modules` incluido, sobre un filesystem de Windows: `curl` a `/` devolvió `HTTP 000` a los 25 s en dos intentos seguidos y el log acumuló 23 `watch error … NotFound`. Next no expone patrón de exclusión para esa opción, así que no hay forma de acotar el sondeo al código propio. Se revirtió en el acto y quedó un comentario de advertencia en `next.config.mjs` para que el próximo que sufra el HMR no lo reintente. **Cambiar un watcher que no ve cambios por un servidor que no atiende es peor negocio.**
+
+**Prevención futura:** cinco reglas.
+
+1. **Un test verde no prueba que el runtime corre ese código.** Prueban cosas distintas y esta sesión gastó un ciclo completo confundiéndolas. Cuando la pantalla contradice al test, el sospechoso número uno es el **artefacto servido**, no la lógica.
+2. **La evidencia está en el log del dev server, y es de lectura directa:** `grep -E "Compiling|Compiled"` contra su salida. Si el `mtime` del fuente es posterior a la última compilación de esa ruta, el navegador está viendo código viejo — sin ambigüedad y sin discusión.
+3. **Tras editar un módulo de servidor con el repo en `/mnt/c`, reiniciar `pnpm dev`.** No confiar en el HMR para `lib/**` ni para Server Components: en drvfs no es que sea lento, es que puede no enterarse nunca. Para componentes cliente suele funcionar, pero no vale la pena adivinar cuál es cuál.
+4. **Nunca correr `pnpm build` con `pnpm dev` arriba.** Comparten `.next`; el build lo reescribe bajo los pies del servidor vivo. Hoy pasó dos veces y enturbió el diagnóstico —parecía caché del navegador— aunque no fuera la causa raíz. Si hay que buildear, bajar el dev primero.
+5. **`pkill -f "next dev"` se mata a sí mismo.** El patrón matchea la propia línea de comando del `bash -c` que lo ejecuta, que contiene el literal `next dev`; el shell muere antes de llegar al `pnpm dev` siguiente y el comando "no hace nada" con un exit code raro (144). Usar un patrón que no se auto-matchee (`pkill -f "node.*next"`) o separar el kill del arranque en dos comandos.
+
+**Corolario de método, que es lo que de verdad hay que llevarse:** una mitigación de entorno se verifica **midiendo el servicio**, no leyendo la documentación de la opción. El polling estaba bien documentado, bien tipado y era la recomendación estándar para WSL2; bastó un `curl -w "%{http_code} %{time_total}"` para ver que dejaba el servidor inservible. Treinta segundos de medición contra un diagnóstico equivocado que el usuario habría descubierto refrescando.
+
+---
+
+### 2026-08-11 (d) — Fase 2 del cableado del Detalle: nueve reglas reutilizables
+
+Entrada de **patrones**, no de bitácora: las diez tareas de la fase están en el commit y no se
+narran acá. Lo que sigue es lo que sirve para la próxima vez, en orden de coste evitado.
+
+**1 · Un módulo `lib/` que importa `airtable-client` no puede exportar literales que consuma un
+componente cliente.** El import arrastra el cliente REST —y su lectura de `AIRTABLE_TOKEN`— al
+bundle del navegador. Partir en dos: `lib/x.ts` con el tipo, los literales de pantalla y el
+mapeo puro (cliente-safe, sin imports de Airtable) y `lib/x-airtable.ts` con el `listRecords`.
+El molde ya existía en `sla-cronologia` / `sla-etapas` y se replicó en `decision-motor`,
+`historial` y `documentos-generados`. `import type` sí es seguro: se borra en compilación.
+Nada falla al escribirlo — el bundle simplemente crece y el token viaja.
+
+**2 · Un campo Link puede existir y estar vacío, y eso rompe el filtro igual que E-076.** En
+`A_DecisionesMotor` (43 filas) y `TX_DocumentosGenerados` (1 fila) el campo `solicitud` existe en
+el schema y **no está poblado en ninguna fila**; la referencia real vive en un texto plano
+(`solicitud_codigo`, `clave_natural`). Filtrar por el link devuelve cero filas, y cero filas se
+lee como "no hay datos". Es un modo de fallo distinto de E-076 —allí el link existe pero se
+evalúa contra el primary field— y comparte con él que **es silencioso**. Regla: antes de escribir
+un `filterByFormula` sobre un Link, contar cuántas filas lo tienen poblado, no sólo comprobar que
+el campo está en el schema. Un `curl` con `pageSize=100` y un `filter(x => x.fields.link?.length)`
+lo resuelve en un minuto.
+
+**3 · Verificar población, no existencia, también vale para los campos que la UI muestra.**
+`A_Eventos.actor_nombre` está vacío en las 66 filas de la tabla mientras `actor` trae el
+`clerk_user_id` crudo. Construir la fila del timeline sobre `actor_nombre` compila, pasa los tests
+y no muestra autor nunca. Corolario de estilo: si lo único disponible es un identificador técnico,
+**se omite el dato** — un `user_3GBF4Jp…` en pantalla incumple §6.1 y es peor que el hueco.
+
+**4 · Reconciliar UI optimista con el servidor se hace comparando, no esperando.** Tras asignar,
+la entrada fabricada en el navegador convive con las que escribe Make en `A_Eventos`. La regla es
+una comparación —descartar las optimistas cuyo `timestamp` ya alcanzó el del evento de servidor
+más reciente— y no un `setTimeout` con una ventana adivinada. Se autocorrige tarde o temprano sin
+carrera que perder ni duplicado permanente si Make se demora.
+
+**5 · Estado activo de navegación: calculado, nunca `active: true`.** Sale de `pathname` +
+`useSearchParams`. Y cuando dos entradas apuntan a la **misma ruta** con distinto `?vista=`, la
+general tiene que restar la específica (`activo = enBase && !enHijo`); sin la resta se encienden
+las dos a la vez, que se lee peor que ninguna.
+
+**6 · Tras crear, la certeza "creo → veo" gana a conservar los filtros.** Una solicitud nueva nace
+en `estado = creada` y sin tasador: con `?vista=aprobadas` o un rango de fechas puesto **no entra
+en el conjunto**, y la pantalla respondería que no existe justo después de crearla. Navegar a la
+ruta canónica sin parámetros (`/consola?solicitud=<id>`). Y `push` **más** `refresh`: si la URL
+destino coincide con la actual, el Router Cache serviría el árbol anterior sin la fila nueva.
+
+**7 · No forzar una agrupación sobre un campo que el schema no tiene.** §1.3.4 pide agrupar
+adjuntos por versión del informe, pero `TX_Adjuntos` no tiene campo de versión y no es un olvido:
+sus filas son antecedentes *de entrada* que no pertenecen a ninguna versión. Las versiones están
+en `TX_DocumentosGenerados`. Dos secciones separadas, cada una con la verdad de su tabla y estado
+vacío honesto, antes que inventar la clave de pertenencia. Aplica igual al dato que no existe:
+el valor en UF por versión no se pinta porque el que hay es el actual, y ponerlo junto a la v1
+afirmaría algo falso.
+
+**8 · Al retirar un mock, dejar el hueco explicado.** Comentario corto en el sitio: adónde se fue
+y por qué estaba mal. `mockDecisionMotor` describía asignación de tasador por cobertura y carga
+—o sea AT02, fuera de alcance desde v1.9— y sin la nota la próxima sesión lo reintroduce al ver
+el vacío. Vale doble cuando el mock contradecía la spec, porque entonces el hueco es la
+corrección.
+
+**9 · `Button` renderizado como `<a>` necesita `nativeButton={false}`.** §4.4 pide `render` prop en
+vez de `asChild`; lo que no estaba escrito es que Base UI sigue tratando el elemento como botón
+nativo salvo que se le diga lo contrario. No había precedente en el repo (`grep -rn nativeButton
+components/` daba cero) y el tipo lo admite sin quejarse.
+
+*Recordatorio, no hallazgo:* un componente cliente con `useSearchParams` va envuelto en
+`Suspense` o Next fuerza render dinámico de **toda la ruta** que lo monte. El patrón ya estaba en
+`console-shell.tsx`; se repitió al extraer `NavPrincipal` y `BuscadorSolicitudes` del header, que
+queda como server shell.
+
+---
+
+### 2026-08-11 (e) — Fase 3: bump normativo, correlativos y el hábito de documentar de memoria
+
+Entrada de **patrones**. Tres de estos se proponen como reglas permanentes
+(**RO-24**, **RO-25**, **RO-26**) y esperan aprobación explícita por RO-03; los
+demás se quedan acá.
+
+**1 · Un bump de spec tiene dos clases de referencia y se tratan al revés.**
+`grep` devuelve las dos mezcladas y hay que separarlas a mano antes de tocar
+nada:
+
+- **Punteros vivos** —rutas de archivo, cabeceras de "fuentes canónicas", citas
+  del tipo "Spec vX §Y" en código y en CI abiertas— **se actualizan**. Si no,
+  apuntan a un archivo que ya no existe.
+- **Afirmaciones históricas** —"Desde v1.9.7…", "§5.2 (nueva en v1.9.7)", las
+  filas del changelog anterior, todo `docs/_archivo/` y `docs/aprendizajes.md`—
+  **quedan intactas**. Subirles el número convierte un registro en una
+  afirmación falsa.
+
+El caso mixto existe y no se resuelve con `sed`: una frase que decía "no están
+definidos en la spec v1.9.7" pasó a ser falsa al escribir §1.0 en v1.9.8, así
+que había que **reescribirla**, no renumerarla. Y otra que decía "no se
+re-verificaron contra v1.9.7" se amplió a "ni contra v1.9.8", porque seguía
+siendo cierta y además seguía siendo deuda. → propuesta **RO-24**.
+
+**2 · El changelog anuncia lo que ya está en el cuerpo, nunca al revés.** El
+encargo de esta fase pedía "una línea de changelog"; cumplirlo al pie habría
+producido un changelog que anuncia siete cambios de §1 que el cuerpo no tenía.
+El orden correcto es integrar primero y redactar la tabla de cambios después,
+leyendo lo integrado. → parte de **RO-24**.
+
+**3 · Antes de asignar un correlativo, leer todos los existentes.** Asigné
+RO-17..RO-21 sobre RO-17 y RO-18 que ya existían, porque en la lectura inicial
+abrí las primeras 140 líneas del archivo y la sección de reglas seguía más
+abajo. El coste de evitarlo es un comando:
+
+```bash
+grep -n '^- \*\*RO-' docs/aprendizajes.md | tail -3
+```
+
+Aplica igual a CI, RF, RN, SC y AT, donde además rige la regla de oro de no
+renumerar: un correlativo duplicado no se puede arreglar después sin romper
+punteros. → propuesta **RO-25**.
+
+**4 · Un snapshot de schema se levanta de la base, nunca de un documento de
+diseño.** Es la causa raíz de CI-010 y CI-011: `docs/schema-airtable.md` §10
+describía `A_Cambios` con un `solicitud` (Link) y un `cambio_id` (PK) que **no
+existen**, porque se escribió desde la Capa de Datos v2.6.5 en vez de desde un
+pase contra Airtable. Cuesta un minuto comprobarlo:
+
+```bash
+curl -s -H "Authorization: Bearer $AIRTABLE_TOKEN" \
+  "https://api.airtable.com/v0/meta/bases/$AIRTABLE_BASE_ID/tables"
+```
+
+→ propuesta **RO-26**.
+
+**5 · Es la tercera vez que aparece el mismo meta-patrón, y conviene nombrarlo.**
+RO-13 dice filtrar por el formato que **emite** la fórmula, no por el literal
+humano. El fixture de un parser se copia del **wire**, no del docblock
+(2026-08-11 b). Y ahora: el schema se levanta de la **base**, no del documento
+de diseño. Las tres son la misma regla —*derivar de la fuente de verdad, no de
+un documento que habla sobre ella*— y las tres se descubrieron por separado
+pagando el mismo precio. Ante cualquier artefacto derivado (filtro, fixture,
+tipo, snapshot), la pregunta es de dónde salió el dato con el que se escribió.
+
+**6 · Un contrato repetido en tres sitios se corrige en los tres.** Pasar
+`A_Cambios` de "sin uso" a "read" tocaba la tabla de contratos de `CLAUDE.md`,
+la línea de **Entradas** y las advertencias por CI. Corregir sólo la fila —que
+era lo pedido— habría dejado el mismo documento diciendo que las entradas son
+cinco tablas y la tabla de contratos diciendo que son ocho. Es el corolario de
+**RO-05** para prosa: cuando la fuente única no es posible porque el dato vive
+en un documento narrativo, la obligación pasa a ser encontrar todas sus
+apariciones antes de tocar una.
+
+**7 · `mv` y `git mv` producen la misma historia.** Git detecta el rename por
+similitud de contenido al commitear, así que un `mv` de toda la vida deja el
+mismo resultado que `git mv` y **no requiere reversión ni comando compensatorio**.
+Importa porque la regla del repo prohíbe ejecutar git desde Claude Code y el
+procedimiento de bump de `CLAUDE.md` está redactado con `git mv`: la vía
+correcta es `mv`, y no hay nada que arreglar después.
+
+---
+
+### 2026-08-12 — Manual de pruebas v2 en PDF (guía para la Ejecutiva)
+
+**Contexto:** generación de `docs/_md/Manual_Usuario_Prueba1_v2.pdf` — reescritura del
+manual de prueba como guía de casos (15 CP) con las imágenes del PDF original.
+
+**Inconveniente 1 · No había forma de instalar paquetes Python.** El sistema trae Python
+3.14.4 sin `pip`, sin `ensurepip`, sin `venv` utilizable y sin `uv`/`pipx`; `sudo` pide
+contraseña interactiva.
+**Causa raíz:** distro Debian con PEP 668 (`externally-managed-environment`) y el paquete
+`python3-pip` no instalado.
+**Solución aplicada:** `curl bootstrap.pypa.io/get-pip.py` y
+`python3 get-pip.py --user --break-system-packages`, luego
+`python3 -m pip install --user --break-system-packages pymupdf reportlab`. Todo queda en
+`~/.local/lib/python3.14/site-packages`, sin tocar el Python del sistema. Nota: los
+ejecutables caen en `~/.local/bin`, que no está en el PATH — invocar siempre con
+`python3 -m`.
+**Prevención futura:** en esta máquina, cualquier tarea que necesite una librería Python
+parte por esos dos comandos; no perder tiempo probando `venv` ni `pip3`.
+
+**Inconveniente 2 · El índice del PDF quedó desfasado una página.** Las entradas del
+índice apuntaban a la página anterior a la del caso, a partir del sexto caso.
+**Causa raíz:** el ancla (`bookmarkPage`) se emitía como flowable de altura cero *antes*
+del `KeepTogether` de la cabecera del caso. Cuando el grupo no cabía y saltaba de página,
+el ancla se quedaba dibujada al final de la página anterior y registraba ese número.
+**Solución aplicada:** mover el `Anchor` **dentro** del `KeepTogether`, como primer
+elemento del grupo (`build_manual_v2.py`, función `bloque_caso`). El número del índice se
+resuelve en una primera pasada a un buffer en memoria y se escribe en la segunda.
+**Prevención futura:** en reportlab, un ancla vive donde está el contenido que nombra; si
+el contenido está en un `KeepTogether`, el ancla también.
+
+**Inconveniente 3 · Media página en blanco cada vez que un caso traía captura.** Con una
+página por caso y la figura al final, las cuatro figuras dejaban páginas casi vacías.
+**Causa raíz:** las figuras a ancho de caja (174 mm → 98 mm de alto) no caben en el
+remanente de una página ya ocupada por los cinco bloques, y una tabla con imagen no se
+puede partir.
+**Solución aplicada:** figura a 148 mm justo bajo la banda del caso (el lector ve primero
+la pantalla que va a probar) y casos que fluyen uno tras otro en vez de una página por
+caso. 26 → 21 páginas sin quitar contenido.
+**Prevención futura:** en documentos con capturas anchas, decidir primero el ancho de
+figura y después el ritmo de página; forzar salto por sección es lo que genera el blanco.
+
+**Hallazgo de producto (no es un bug de esta sesión).** `components/console/app-header.tsx:41`
+pinta un `Avatar` con las iniciales fijas `"ME"`: no hay `UserButton` de Clerk ni ninguna
+vía de cerrar sesión desde la UI. El caso CP-15 del manual se redactó contra esa realidad
+—verifica que `/consola` en incógnito redirige al login— y la ausencia del botón se
+declara como limitación conocida para que la Ejecutiva no la reporte como falla.
+
+### 2026-08-12 — Simulación de costos de la API de Claude (dos hallazgos sobre RF-09)
+
+**Contexto:** informe de costos para el cliente (`docs/_md/SimulacionCostos_Uso_ApiClaude.pdf`),
+modelando el consumo de la API en la extracción documental de RF-09.
+
+**Hallazgo 1 · El descuento por caché de prompts no se activaría con el bloque actual.**
+El almacenamiento en caché sólo opera sobre prefijos que superan un mínimo por modelo:
+**1.024 tokens en `claude-sonnet-5`** (4.096 en `claude-haiku-4-5`). El prompt de sistema de
+la extracción es más corto, así que hoy se pagaría a precio de entrada completo y sin aviso
+—no hay error, simplemente `cache_creation_input_tokens` queda en 0—. La corrección es
+incorporar el catálogo de atributos a extraer al bloque fijo para superar el mínimo.
+Impacto medido en el escenario de 400 tasaciones/mes: US$ 3,94 mensuales.
+**Prevención futura:** al diseñar cualquier prompt que se repita, verificar el mínimo del
+modelo antes de asumir el ahorro, y comprobar `cache_read_input_tokens` en runtime.
+
+**Hallazgo 2 · `claude-sonnet-5` razona por omisión, y eso se paga como salida.**
+A diferencia de los modelos anteriores de la línea Sonnet, omitir el parámetro `thinking`
+en Sonnet 5 **activa** el razonamiento adaptativo. El blueprint de
+`SC-RF09-ExtraccionClaude` envía `{"model":"claude-sonnet-5","max_tokens":4096}` sin ese
+parámetro: para una extracción estructurada eso alarga la respuesta sin mejorar el
+resultado, y la salida cuesta cinco veces más que la entrada. Además `max_tokens` acota
+razonamiento **y** respuesta juntos, así que 4.096 puede truncar.
+Impacto estimado si no se corrige: +49 % sobre el costo mensual (US$ 28,35 → US$ 42,25).
+**Prevención futura:** en llamadas de extracción fijar `thinking: {"type":"disabled"}` con
+esfuerzo bajo, y revisar este parámetro en cada cambio de modelo.
+
+**Nota metodológica:** los precios del informe salen exclusivamente de
+`docs/_md/PRECIOS_USO_API_CLAUDE.txt`; el generador calcula el modelo de costos en Python
+para que los cruces (mensual × 12 = anual, por-tasación × volumen = mensual) sean exactos
+por construcción y no cifras escritas a mano.
+
+---
+
+### 2026-08-13 — Lote 7: sync de §2 (UI Tasador) contra un diseño externo, y bump v1.9.8 → v1.9.9
+
+Entrada de **patrones**. Dos quedaron como reglas permanentes (**RO-27**, **RO-28**) y una
+como enmienda a **RO-24**; las tres **vigentes desde 13-ago-2026**, aprobadas por RO-03 e
+integradas en «Reglas operativas aprendidas».
+
+**1 · Un diseño externo que contradice al spec manda sólo en su propia sección.**
+El diseño v4 exige la coordinación de visita (§2.3); §1.3.2, §1.3.3, §1.4 y RN-59 la habían
+retirado por decisión propia en la misma versión, apoyadas en CI-012. Corregir §1 «para que
+cuadre» habría ejecutado por la puerta de atrás una decisión de negocio abierta —crear
+`TX_CoordinacionVisita`— que no es del ejecutor. El procedimiento aplicado:
+
+- Alinear **sólo** la sección local con el diseño.
+- Declarar la contradicción **in situ**, con nota visible al inicio de la sección y puntero
+  a la CI que gobierna la decisión (`⚠ Inconsistencia declarada con §1 — ver CI-012`).
+- Marcar los RF afectados como pendientes de esa CI **en su descripción**, no en una nota al
+  pie, y fijar en su criterio de aceptación que no se liberan antes del cierre.
+- Registrar en la sección local qué haría falta reponer si la CI cierra en el otro sentido
+  (acá: la excepción acotada a RN-59, retirada de §1.4).
+
+Un documento que se contradice de forma **declarada** es auditable; uno reconciliado a la
+fuerza esconde qué decisión se tomó y quién la tomó. → **RO-27**, vigente desde 13-ago-2026.
+
+**2 · Un PDF entregado como «diseño» puede traer una auditoría de código dentro.**
+`Imagenes_IF_Tasador_v4.pdf` tiene 30 páginas: pp. 1–16 son un prompt de auditoría y su
+respuesta sobre el repo v0 —`package.json`, árbol de rutas, componentes—, y pp. 17–30 son la
+sección `3-PANTALLAS`, que es lo único que especifica diseño. Tratar el archivo entero como
+fuente de verdad visual habría canonizado como requisito lo que la propia auditoría marca
+como deuda: el contador «N de 3 usados» que §2 ya había retirado (CI-015). Separar las dos
+partes en el inventario **antes** de tratar cualquiera como fuente, y anotar en el reporte qué
+páginas son cuáles. La parte de auditoría sirve como **evidencia de código** para fichas CI;
+sólo la parte de diseño es fuente de verdad visual. → **RO-28**, vigente desde 13-ago-2026.
+
+**3 · Enmienda a RO-24: dos clases de referencia que el enunciado no nombraba.**
+RO-24 ya separa punteros vivos de afirmaciones históricas y se aplicó sin fricción a las 36
+referencias del bump. Faltaban dos casos que aparecieron acá:
+
+- **Punteros vivos en código.** Los comentarios de cabecera que citan «Spec vX §Y» en
+  `.ts`/`.tsx`/`.js`/`.py` **se actualizan**: tras un `git mv` apuntan a un archivo
+  inexistente. Son cambio de comentario, no de comportamiento, y por eso no violan la regla
+  de «sólo documentación» — pero se declaran como desviación en la bitácora del lote (C-10).
+- **Huellas históricas adicionales.** La línea `SUPERSEDED` de la cabecera, las filas del
+  changelog interno (`Cambios vX → vY`, `vX (anterior)`) y toda construcción del tipo
+  «hasta vX.Y», «entre vX.Y y vX.Z» **quedan intactas**: son enunciados sobre el pasado y
+  subirles el número los vuelve falsos.
+
+Comando de cierre del bump, que debe salir sin punteros vivos:
+
+```bash
+grep -rn "v1_9_8\|v1\.9\.8" --exclude-dir=node_modules --exclude-dir=.git . \
+  | grep -v "aprendizajes.md\|docs/_notas/\|docs/_archivo/"
+```
+
+→ **enmienda a RO-24, vigente desde 13-ago-2026**, sin correlativo nuevo: crear uno
+duplicaría una regla viva, que es justo el fallo que RO-25 previene.
+
+**Nota de correlativos.** Verificado con `grep -n '^- \*\*RO-' docs/aprendizajes.md | tail -3`
+antes de asignar: último vivo **RO-26**. Igual verificación para CI (último **CI-012** → se
+usó CI-013…CI-021) y para A-XX en `gap/_ambiguedades.md` (último **A-11** → A-12…A-17).
+RO-25 aplicada, sin incidentes.
+
+**Desviación C-13 · el lote se consolida en un único commit.** El cierre planificaba tres
+commits secuenciados —contenido, bump y bitácora—, y el `SYNC_LOG` quedó redactado con esa
+granularidad y tres marcadores `<sha …>` distintos. El usuario decidió consolidar los 17
+archivos en **un solo commit**. Consecuencias asumidas, todas registradas:
+
+- Los 12 marcadores pasan al placeholder único `pendiente-single-commit`; el sha real se
+  escribe en una edición posterior al push, que produce un archivo modificado más y se
+  commitea en la tanda siguiente, **no en ésta**.
+- La agrupación por commit de los tres bloques del `SYNC_LOG` **se conserva como agrupación
+  lógica**: sigue diciendo qué cambia junto con qué, aunque el historial de git no lo separe.
+- Precedente ya existente en este mismo registro: los lotes 2 y 3 compartieron el commit
+  `ae5202e` con la bitácora. La regla de oro "un commit por lote" cede ante la decisión del
+  usuario y **la trazabilidad se sostiene por el `SYNC_LOG`, no por el historial de git**.
+
+Lo que no se hace: dejar el placeholder sin fecha de reemplazo. Un marcador que nadie sustituye
+convierte la bitácora en un registro que apunta a nada, y es el modo de fallo que C-13 asume
+explícitamente en vez de descubrirlo meses después.
+
+### 2026-08-18 — P2-TAS.A retomada: el mapeo de captura contra el schema real
+
+**Contexto:** retomar P2-TAS.A desde `docs/_notas/snapshot-P2-TAS-A-en-curso.md` para escribir las 2 rutas que faltaban (`/datos` e `/informe`) y los 3 tests. La sesión arrancó bajando el schema de las 6 tablas de captura, que el repo no documentaba.
+
+**Inconveniente:** `lib/airtable-client.ts` no exporta `deleteRecord`, y el sync destructivo de las 4 tablas hijas de `/datos` (RO-31) lo necesita. Sus helpers `request` y `postRequest` son privados, así que tampoco se podía componer desde fuera.
+
+**Causa raíz:** el cliente REST de IF-02 se construyó para el perfil de uso de IF-02 —leer cartera, actualizar campos derivados del motor de SLA— y ahí nunca hizo falta borrar: las bajas de IF-02 pasan por Make (`SC-Adjuntos-Delete`), no por el cliente. IF-03 es el primer consumidor que borra directo contra la API REST.
+
+**Solución aplicada:** se creó `lib/tasador/airtable-writes.ts` con un único export `deleteRecords()`, en territorio IF-03, importando `AirtableError` de `lib/airtable-client.ts` y replicando sus convenciones (`API_BASE`, reintento 3× en 429/5xx, `typecast`). **No se editó `lib/airtable-client.ts`**, que es territorio IF-02 y lo prohíbe R5.
+
+**Prevención futura:** **revisión de OV-8** (`docs/_notas/inventario-tasador.md`). OV-8 declaró innecesario el envoltorio `lib/tasador/airtable-writes.ts` que el plan §0.4·nota 3 proponía, con el fundamento de que `createRecord` y `listRecords` **ya existían** — y en eso acierta. El matiz es que **evaluó sólo las dos funciones que el plan nombraba**: `deleteRecord` no estaba en esa lista y no existe. OV-8 sigue vigente para create/list; la excepción es el DELETE, y por eso el envoltorio se creó igual. Regla que se generaliza: un override que declara innecesario un módulo debe enumerar **qué** funciones verificó, porque «el módulo no hace falta» y «las dos funciones que miré ya estaban» no son la misma afirmación.
+
+**Inconveniente (2):** `CLAUDE.md` declaraba *«tests unitarios (vitest cuando esté)»* y por esa línea se llegó a evaluar diferir los 3 tests de la tanda a una tanda propia, por creer que montar el runner tocaba `package.json` — territorio IF-02 vedado por R5.
+
+**Causa raíz:** la frase se escribió cuando era cierta y nadie la actualizó al agregar vitest en `1bf7c67` ("Tanda B: motor SLA … + vitest config · 186/186 tests"). La documentación propia envejeció sin aviso.
+
+**Solución aplicada:** diagnóstico antes de asumir. Resultado: **vitest 4.1.10 instalado**, `vitest.config.mts` con el alias `@/` ya resuelto, 10 archivos y 286 tests verdes, y dos precedentes de test de Route Handler. Cero dependencias que instalar. Se corrigió la línea del `CLAUDE.md`.
+
+**Prevención futura:** verificar antes de asumir la documentación, **incluida la propia**. Es el mismo mecanismo de CI-025, donde §21 del schema declara una verificación que no cubrió lo que dice cubrir: una doc que miente no es neutra — apaga la comprobación que habría detectado el problema. Registrado además como observación ajena: `"test:e2e": "playwright test"` es un **script huérfano** (sin `playwright.config.*` ni el paquete); no se tocó, por R5 y por alcance.
+
+**Inconveniente (3):** dos patrones de test que parecían equivalentes a su versión ingenua y no lo son.
+
+**Causa raíz:** una aserción puede pasar por la razón equivocada. (a) Un test del 409 que sólo comprueba «estado `visitada` → 409» prueba la condición, no el escenario: pasa igual aunque la primera llamada haya escrito dos veces. (b) Un test que afirma «tras un 403 no se llamó a nada» lo satisface una ruta rota que nunca llama a nada.
+
+**Solución aplicada:** (a) el test de `/calcular` **ejecuta la secuencia real** del doble tap —200 y transición, el guard pasa a leer `visitada`, 409— y afirma el **efecto acumulado**: `updateRecord` una sola vez. Eso es lo que garantiza que AT03 se dispare una vez. (b) el test del guard cierra con dos **controles negativos**: con el guard en verde, el GET sí lee y el PATCH sí escribe.
+
+**Prevención futura:** para transiciones irreversibles, el test recorre la secuencia y afirma el número de escrituras, no el status de cada paso. Y **todo test cuya aserción principal sea una ausencia necesita un caso gemelo que demuestre la presencia**.
+
+### 2026-08-19 — P3-TAS: la Pantalla 1 contra datos reales
+
+**Contexto:** tanda P3-TAS (.A capa de datos, .B pantalla) sobre `feat/tasador-ui`. Cola personal
+del tasador: chips, card, semáforo de SLA y contacto telefónico.
+
+**Inconveniente:** la card pintaba **"En plazo · 0h" en todas las filas**, con la cartera entera
+emitiendo `sla_semaforo_etapa = "rojo"`.
+**Causa raíz:** `Tasacion.slaStatus` y `horasRestantes` eran opcionales y **ninguna capa los
+poblaba**; la card caía a `?? "en_plazo"` y `?? 0`. El tipo venía del v0, donde el store en memoria
+los traía cargados a mano, y al cablear contra Airtable nadie ocupó el hueco. Compilaba, así que
+nada lo señaló.
+**Solución aplicada:** se retiró el `SlaStatus` propio y se reexportó `SlaEtapaSolicitud` de IF-02;
+`proyectarSlaEtapa()` en `lib/tasador/lectura-tasacion.ts` lo arma desde `sla_etapa_actual`,
+`sla_semaforo_etapa`, `sla_etapa_alerta_ts` y `sla_etapa_vence_ts`, y la card usa el `SLABadge`
+importado de `components/console/status-badges.tsx` (R7). Sin `slaEtapa` no se pinta píldora.
+**Prevención futura:** un campo opcional que nadie escribe **y** un `??` en el consumidor son, en
+conjunto, un valor inventado con apariencia de dato. Cuando el `??` aporta un valor de negocio —un
+color, un plazo, un estado— la pregunta a hacerse es quién lo escribe, no si compila.
+
+**Inconveniente:** la visita sembrada el **18-08** se mostraba **17-08** en la card.
+**Causa raíz:** `fecha_visita_programada` es un campo `date` de Airtable y llega sin hora;
+`new Date("2026-08-18")` es medianoche **UTC** y al formatear en huso chileno retrocede un día.
+**Solución aplicada:** `fechaVisible()` ancla a `T12:00:00` local, igual que `parseDate` de
+`lib/solicitudes.ts:419` en IF-02. Cuatro casos nuevos en `lib/tasador/lectura-tasacion.test.ts`,
+incluido el primero de mes, donde el error salta de mes además de día. Auditados los otros tres
+`new Date(...)` de IF-03: los dos restantes leen instantes `_ts` con hora real y están bien.
+**Prevención futura:** **RO-36**. Y el hallazgo de método: apareció al mirar un dato *conocido* en
+pantalla, no leyendo código. Los fixtures previos usaban fechas con hora y por eso ningún test lo
+cazó.
+
+**Inconveniente:** no se pudo hacer la verificación visual de §4.2 paso 8 de la forma prevista.
+**Causa raíz:** `middleware.ts` protege todo salvo `/sign-in` y `/api/health` con `auth.protect()`
+de Clerk, así que `/tasaciones` responde **404** a cualquier petición sin sesión. IF-03 usa
+`mockUserTasador` para la identidad (R2) pero **igual vive detrás del Clerk de IF-02**.
+**Solución aplicada:** verificación equivalente sin navegador, con dos scripts en el scratchpad
+—fuera del repo— corridos con `vitest --config` y un symlink a `node_modules`: uno ejecuta
+`leerCola()` contra Airtable real y vuelca la proyección; otro renderiza las `TasacionCard` con
+`renderToStaticMarkup` y vuelca el HTML, del que se extraen textos y `href`. Así se comprobaron los
+ocho elementos de §4.1, su orden, las tres omisiones y el `tel:`. **La comprobación de píxeles a
+375×812 sigue pendiente y es de Sergio.**
+**Prevención futura:** anotar en el plan que toda pantalla de IF-03 necesita sesión Clerk para
+abrirse, y que P11-TAS tiene que reconciliar el guard de Clerk con la identidad mock.
+
+### 2026-08-19 (b) — Q5 resuelta: quién cierra la etapa 2, y la etapa 3 que ya estaba especificada
+
+**Contexto:** cierre de P3-TAS. El chip "Por coordinar" quedó definido como `asignada` con la etapa 2
+abierta, y la tanda lo entregó con una deuda declarada: **nadie escribe `sla_e2_fin_ts`**, así que
+una solicitud asignada no sale nunca del chip y su semáforo termina en rojo. Se derivó a Héctor
+como **Q5**.
+
+**Respuesta oficial de Héctor (vía Sergio, 19-ago-2026) — Q5 CERRADA:**
+
+- **La etapa 2 la cierra el tasador**, registrando en el sistema el resultado del llamado: día y
+  hora de visita coordinada, o incidencia (no contesta, foro malo, etc.). No la cierra la Ejecutiva
+  ni una automatización de tiempo.
+- **SLA de la etapa 2: 4 h ideal / 6 h máximo.**
+- **El "informe post-llamado" es una etapa 3 propia, con SLA de 30 minutos**, y corre del tasador a
+  Control y Seguimiento inmediatamente después del llamado.
+
+**Hallazgo al verificar la respuesta:** las tres afirmaciones **ya estaban especificadas y
+configuradas** desde antes. `docs/_md/VProperty_SLA_Negocio_v1.1.md` está trackeado en el repo
+desde el commit `dfddb37` (07-ago-2026) y fue absorbido al normativo en el bump v1.9.7 (§5.2.4 ·
+RF-53 · D-16); `C_SLA_Etapas` (`tbl05zu5RLhH3u6pl`) tiene sus **7 filas completas** con los catorce
+umbrales exactos, incluida `e3 · Informe post-llamado · 0.5 / 0.5 · tasador`. Lo que Q5 aporta no es
+la definición sino **la confirmación del actor que cierra e2**, que la matriz no explicita.
+
+**Lo que Q5 deja al descubierto, y es lo que importa:** el problema nunca fue de configuración sino
+de **escritores**. En todo el repo hay **un solo punto** que mueve el reloj por etapa —
+`marcarFinEtapa(id, 1, …)` en `app/api/solicitudes/[id]/asignar/route.ts:132`, que cierra e1 y abre
+e2— más la apertura de e1 en el alta. **Las etapas 3, 4, 5, 6 y 7 no tienen escritor alguno**, y
+`pausar()` / `reanudar()` (RN-54) no tienen ningún llamador. La configuración estaba lista hace
+diez días; lo que falta es el código que la use.
+
+**Prevención futura:** cuando una regla de negocio llega con su tabla de configuración ya poblada,
+la pregunta útil no es *«¿está definido?»* sino ***«¿quién lo escribe y cuándo?»***. Una matriz
+completa en Airtable y un motor con API pública dan la impresión de una funcionalidad terminada;
+`grep` de los llamadores dice la verdad en una línea.
+
+
+**Cierre parcial de Q5 (19-ago-2026), a la luz de la revisión de Héctor del diseño v4.**
+Cierre e2/e3 fusionado en un solo click ("Confirmar coordinación" o "Devolver a ejecutiva")
+según revisión del diseño v4, Pantalla 2. La etapa e3 (0.5h post-llamado) queda absorbida
+por e2 en la UX. El motor sigue con las 7 filas de `C_SLA_Etapas`, pero el escritor marca
+fin de e2 y fin de e3 en el mismo evento.
+
+Consecuencia para quien escriba el código: **no se busca una segunda interacción de UI que
+cierre e3.** No existe y no se va a diseñar — el "informe post-llamado" de 30 minutos es,
+en la interfaz real, el mismo formulario de Pantalla 2 que el tasador ya envió. El escritor
+de P4-TAS emite dos `marcarFinEtapa` consecutivos (e2 y e3) desde el handler de
+coordinación, y abre e4. Lo que **no** cierra esto es el resto de CI-037: las etapas 4, 5, 6
+y 7 siguen sin escritor.
+
+---
+
+### 2026-08-19 (c) — RO-29 anulada: CI-012 reabierta y cerrada en sentido opuesto
+
+RO-29 anulada · CI-012 reabierta y cerrada en sentido opuesto por revisión Héctor diseño v4
+Pantalla 2 puntos 1-4. Lección: antes de borrar código bajo un aprendizaje reciente, esperar
+confirmación del cliente.
+
+**Contexto:** ingesta de `docs/_md/Imagenes_IF_Tasador_v4.pdf` devuelto anotado por Héctor
+(pp. 17-30 · 7 pantallas · 22 imágenes extraídas a `docs/_md/img_hector_v4/`). Paso 2 de la
+tanda de reconciliación previa a P4-TAS.
+
+**Inconveniente:** los cuatro puntos de Pantalla 2 piden exactamente la funcionalidad que
+**RO-29** había retirado dos días antes. Para entonces ya se había ejecutado la retirada:
+`TX_CoordinacionVisita` no se creó (P0.5-TAS), los tipos `CoordinacionVisita`,
+`MotivoNoContacto`, `MOTIVOS_DEVOLUCION`, `intento_numero` y `AccionCard` no se escribieron
+(P1-TAS), y `coordinar-visita.tsx` con su `page.tsx` se **borraron** (CI-027, 18-ago-2026).
+
+**Causa raíz:** RO-29 se dictó el 17-ago-2026 como decisión de producto tomada **sin la
+revisión del cliente sobre el diseño**, y de forma deliberadamente irreversible —"canónica y
+no se vuelve a consultar", "no existe y no existirá"—. La consulta a Héctor/Óscar estaba
+enviada desde el 11-ago-2026 y sin responder; se decidió sin esperarla. La respuesta llegó
+el 19-ago-2026 y dice lo contrario. El error no fue decidir rápido: fue **ejecutar
+destructivamente** sobre una decisión cuya contraparte estaba pendiente de responder.
+
+**Solución aplicada:**
+- `docs/CODE_INCONSISTENCIES.md` → **CI-012** reabierta y cerrada en sentido positivo con
+  fecha 19-ago-2026, con la **cita literal** de los cuatro puntos de Pantalla 2 (pp. 18-19
+  del PDF) transcrita tal cual, erratas del original incluidas.
+- `docs/CODE_INCONSISTENCIES.md` → **nota de anulación de RO-29**, con justificación
+  ("revisión Héctor diseño v4 revierte la decisión") y la lista literal de lo que hay que
+  reponer: `TX_CoordinacionVisita` en el schema, los componentes borrados
+  (`coordinar-visita.tsx` + `confirmarCoordinacion`, `devolverCoordinacion`,
+  `MOTIVOS_DEVOLUCION`) y los tipos que P1-TAS omitió a propósito.
+- En este archivo, **RO-29 queda marcada 🚫 ANULADA** en su propio punto de la lista de
+  reglas destiladas. El texto original se conserva por la regla de sólo-append, pero
+  encabezado de forma que nadie lo lea como regla viva.
+- La **reposición no se ejecutó**: queda registrada como primera acción de **P4-TAS**.
+
+**Prevención futura:** **antes de borrar código bajo un aprendizaje reciente, esperar
+confirmación del cliente.** Una decisión de producto tomada internamente mientras una
+consulta al cliente sigue abierta es provisional, por muy fundada que esté, y **no habilita
+operaciones destructivas**. El código que iba a borrarse por RO-29 no molestaba a nadie
+salvo por 13 errores de `tsc`; dejarlo excluido dos días habría costado una línea de
+`tsconfig` y habría ahorrado la reposición completa que ahora paga P4-TAS. Regla operativa:
+si un aprendizaje tiene menos de una semana **y** existe una consulta abierta a la
+contraparte que podría revertirlo, se marca como **provisional** y sólo autoriza cambios
+reversibles.
+
+### 2026-08-21 — C1 · coordinacion_vigente no puede ser rollup; se computa server-side
+**Contexto:** Frente C · RF-TAS-05. C1 pretendía convertir `TX_Solicitudes.coordinacion_vigente`
+(hoy singleSelect escrito por la ruta del tasador) en un campo derivado que reflejara el desenlace
+de la última coordinación, para que IF-02 leyera una única fuente. La expresión de la spec §2.12 es
+`LAST(TX_CoordinacionVisita.estado_coordinacion ORDER BY fecha_respuesta DESC)`.
+
+**Inconveniente:** Airtable **no puede expresar esa fórmula**. Dos límites técnicos aparecieron en la
+ejecución, uno detrás del otro:
+1. El MCP de Airtable **no expone `delete_field`** — no se puede borrar una columna por API; solo desde
+   la UI web. El "borrar y recrear" del plan no era ejecutable, así que se intentó rename + create.
+2. Al crear el rollup con agregación `LAST(values)`, Airtable devolvió `422: Unknown function names:
+   LAST`. Las funciones de agregación de rollup **no incluyen `LAST`/`FIRST` ni acceso posicional**. El
+   set válido es: SUM, MAX, MIN, AVERAGE, AND, OR, XOR, CONCATENATE, ARRAYJOIN, ARRAYUNIQUE,
+   ARRAYCOMPACT, COUNT/COUNTA/COUNTALL. Ninguna devuelve "el último appended". Tampoco hay formulas
+   cross-table. Así que "el estado de la coordinación más reciente" **no es derivable en el schema**.
+
+**Causa raíz:** la spec describió la vigencia como una fórmula `LAST(... ORDER BY ...)` que es sintaxis
+conceptual, no un mecanismo real de Airtable. Airtable no ordena dentro de un rollup ni indexa arrays.
+
+**Solución aplicada:** se descartó tocar el schema. Se revirtió el rename vía MCP
+(`coordinacion_vigente_legacy` → `coordinacion_vigente`, field_id `fldI4Dv0jpRQvbdHl` intacto, singleSelect
+con choices `confirmada`/`rechazada`) — la base quedó **idéntica al pre-C1**. La vigencia se computará
+**server-side en C2**: el Route Handler lee `TX_CoordinacionVisita` filtrando por solicitud y ordenando
+por `fecha_respuesta DESC`; el desenlace vigente es el `estado_coordinacion` de la fila más reciente (o
+`null` si no hay filas). El singleSelect `coordinacion_vigente` en `TX_Solicitudes` **no se toca ni se lee
+desde IF-02**: queda como redundancia inofensiva del lado tasador (que lo sigue escribiendo). No se
+modificó código, tests ni field-ids: `tsc` + `build` + `test` (415) siguen verdes. Plan de C2/C3/C4
+reescrito en `docs/_notas/plan-frente-C.md`.
+
+**Prevención futura:** cualquier "vigencia temporal" (último X, más reciente Y) **se computa server-side**
+en el Route Handler leyendo la tabla source ordenada por su campo temporal explícito — **no** se intenta
+derivar en el schema de Airtable. Y al planificar un cambio de schema, verificar primero que la operación
+existe en el MCP (`delete_field` **no** existe) y que la función pretendida es válida para el tipo de campo
+(rollup **no** tiene `LAST`), antes de comprometer un plan que las dé por hechas.
+
+### 2026-08-21 (b) — Cierre del Frente C: cuatro patrones que salieron de construir la misma lectura tres veces
+**Contexto:** Frente C completo (C1 → C2 B1+B1.5 → C3 B1 → C4 B1), RF-TAS-05. La coordinación
+que el tasador escribe en `TX_CoordinacionVisita` desde IF-03 tenía que llegar a dos superficies
+de IF-02: el bloque *Coordinación* de §1.3.2 (pestaña Datos) y el riel de §1.3.3 (pestaña
+Historial). Cerrado, mergeado, deployado y verificado en producción con `VP-2026-0061`.
+
+**Inconveniente:** cuatro cosas que no se sabían al empezar y que costaron un bloque extra o
+estuvieron a punto de costarlo.
+
+1. **El contrato de la respuesta se fijó mirando la propuesta y no a las rutas hermanas.** C2·B1
+   sirvió `{ coordinacionVigente, intentos }` al ras, tal como decía su propuesta aprobada,
+   mientras `eventos/`, `sla/` y `decision-motor/` responden `{ data: … }`. Se detectó al
+   escribir el docblock —no al escribir el código— y hubo que revertirlo en un bloque propio
+   (**C2·B1.5**) antes de que el hook de C3 se cableara contra el shape equivocado.
+2. **Los tipos del contrato nacieron en el módulo que lee Airtable.** `IntentoCoordinacion` y
+   `CoordinacionSolicitud` se declararon en `lib/coordinacion-airtable.ts`, que importa
+   `listRecords`. Cuando C3 necesitó consumirlos desde un componente `"use client"`, la opción
+   fácil era un `import type` —que se borra en compilación y habría funcionado— y la correcta
+   era mudarlos.
+3. **`new Date("2026-08-25")` muestra el 24.** Medianoche UTC es 20:00 del día anterior en
+   Santiago. Sobre una fecha de visita eso no es un detalle de formato: es mandar al tasador el
+   día equivocado, sin error y sin que ningún test genérico lo note.
+4. **Agregar una tercera fuente al riel puso en evidencia un criterio de fallo ambiguo.**
+   `fetchHistorialSolicitud` propagaba los fallos de sus dos lecturas; al sumar la tercera había
+   que decidir si la coordinación merecía trato distinto por ser "secundaria".
+
+**Causa raíz:** las cuatro son la misma clase de omisión — **decidir un contrato mirando el
+requisito y no el vecindario donde va a vivir**. El shape correcto estaba a un archivo de
+distancia; la separación server/cliente estaba documentada en `lib/decision-motor.ts`; el
+desfase de huso ya tenía precedente en `_fechaVisible` de IF-03; y el criterio de fallo estaba
+escrito en el propio docblock de la función que había que ampliar. Ninguna exigió investigación:
+exigían leer lo que ya estaba.
+
+**Solución aplicada:** se destilaron como **RO-38** (shape uniforme `{ data }` entre endpoints
+hermanos), **RO-39** (tipos compartidos server/cliente en módulo puro, sin `airtable-client`),
+**RO-40** (`date` puro se parsea con regex, nunca `new Date()`) y **RO-41** (fallo parcial de una
+lectura fundida se propaga, y un solo criterio de fallo por función). Se agregó además **RO-42**,
+que no salió de un error sino de una decisión que funcionó: la redacción del ítem del riel
+(`tituloDeCoordinacion`) vive en el módulo del dominio y no en el del historial, de modo que
+sumar una fuente al timeline cuesta dos literales y un mapper. Verificación final: 452 tests
+verdes (441 + 11), `tsc` limpio, `build` compila, deploy activo en Railway.
+
+**Prevención futura:** al abrir una ruta, un tipo compartido o una lectura fundida, **leer
+primero a sus hermanos de carpeta y el docblock de la función que se amplía**, y recién después
+fijar el contrato. Y una nota de método sobre el formato de trabajo: los cuatro hallazgos
+aparecieron en la fase de propuesta o al redactar el docblock, no ejecutando — el bloque de
+propuesta previa a cada tanda es lo que los cazó, y el único que se escapó (**RO-38**) fue el que
+la propuesta dio por sentado sin ir a mirar.
