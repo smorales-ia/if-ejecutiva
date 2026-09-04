@@ -5588,14 +5588,23 @@ vez. Si el negocio llegara a exigirlo, este módulo pasa a (hash +
 solicitud + tipo).
 
 **Módulo 2b · Verificación de existencia física en Dropbox (VP-2026-0060).**
-Sólo corre si el módulo 2 encontró fila (`{{2.id}}` existe). Consulta los
-metadatos del archivo en la ruta `{{2.url_dropbox}}` (Dropbox · *Get a
-file* / metadata). El manejador de error del módulo se configura en modo
-*resume*: un `path_not_found` **no detiene el escenario**, deja la salida
-vacía y habilita la ramificación. Con esto, la premisa que rompió
-VP-2026-0060 —«si la fila existe en Airtable, el binario está en
-Dropbox»— deja de darse por supuesta y pasa a verificarse en cada
-reutilización. Dos desenlaces:
+Comprueba si el binario del path guardado en `{{2.url_dropbox}}` sigue
+existiendo en Dropbox. Se implementa con **Dropbox · Make an API Call**
+(`POST /2/files/get_metadata`, cuerpo `{"path": "{{2.url_dropbox}}"}`), no
+con un módulo de metadata dedicado: la app oficial de Dropbox en Make **no
+expone** ninguna acción `getFileMetadata`, y usar ese identificador rompe
+el import con *Module Not Found* (v1.5 → v1.6). El manejador de error del
+módulo se configura en modo *resume*: cuando el archivo no está, Dropbox
+responde `409 path/not_found`, el módulo entra en error y el *resume* **no
+detiene el escenario** —deja la salida vacía (`statusCode` ausente) y
+habilita la ramificación—. En el camino feliz, `get_metadata` responde
+`200` y `statusCode` queda presente. El módulo corre siempre; la condición
+«sólo cuando hay match» no se pone como filtro del módulo (un filtro en un
+módulo lineal previo al Router cortaría también las ramas de alta y
+reemplazo), sino en los filtros de las ramas, sobre `{{2.id}}`. Con esto,
+la premisa que rompió VP-2026-0060 —«si la fila existe en Airtable, el
+binario está en Dropbox»— deja de darse por supuesta y pasa a verificarse
+en cada reutilización. Dos desenlaces:
 
 - **El archivo existe** → la reutilización es legítima; sigue la rama de
   reutilización.

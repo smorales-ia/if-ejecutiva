@@ -1,5 +1,5 @@
 {
-    "name": "SC-Adjuntos-Upload v1.5 - verificacion Dropbox (modulo 2b) + rama huerfano (VP-2026-0060)",
+    "name": "SC-Adjuntos-Upload v1.6 - modulo 2b via makeAnAPICall get_metadata + rama huerfano (VP-2026-0060)",
     "flow": [
         {
             "id": 1,
@@ -590,13 +590,22 @@
         },
         {
             "id": 19,
-            "module": "dropbox:getFileMetadata",
-            "version": 5,
+            "module": "dropbox:makeAnAPICall",
+            "version": 1,
             "parameters": {
                 "__IMTCONN__": 7553318
             },
             "mapper": {
-                "path": "{{2.url_dropbox}}"
+                "url": "/2/files/get_metadata",
+                "method": "POST",
+                "headers": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "qs": [],
+                "body": "{\"path\": \"{{2.url_dropbox}}\"}"
             },
             "onerror": [
                 {
@@ -618,6 +627,18 @@
                     "y": -300
                 },
                 "restore": {
+                    "expect": {
+                        "method": {
+                            "mode": "chose",
+                            "label": "POST"
+                        },
+                        "headers": {
+                            "mode": "chose"
+                        },
+                        "qs": {
+                            "mode": "chose"
+                        }
+                    },
                     "parameters": {
                         "__IMTCONN__": {
                             "data": {
@@ -638,42 +659,48 @@
                 ],
                 "expect": [
                     {
-                        "name": "path",
+                        "name": "url",
                         "type": "text",
-                        "label": "Path",
+                        "label": "URL",
                         "required": true
+                    },
+                    {
+                        "name": "method",
+                        "type": "select",
+                        "label": "Method",
+                        "required": true
+                    },
+                    {
+                        "name": "headers",
+                        "type": "array",
+                        "label": "Headers"
+                    },
+                    {
+                        "name": "qs",
+                        "type": "array",
+                        "label": "Query String"
+                    },
+                    {
+                        "name": "body",
+                        "type": "any",
+                        "label": "Body"
                     }
                 ],
                 "interface": [
                     {
-                        "name": "id",
-                        "type": "text",
-                        "label": "ID"
-                    },
-                    {
-                        "name": "name",
-                        "type": "text",
-                        "label": "Name"
-                    },
-                    {
-                        "name": "path_lower",
-                        "type": "text",
-                        "label": "Path Lower"
-                    },
-                    {
-                        "name": "path_display",
-                        "type": "text",
-                        "label": "Path"
-                    },
-                    {
-                        "name": "size",
+                        "name": "statusCode",
                         "type": "number",
-                        "label": "Size"
+                        "label": "Status code"
                     },
                     {
-                        "name": "rev",
-                        "type": "text",
-                        "label": "Revision"
+                        "name": "headers",
+                        "type": "collection",
+                        "label": "Headers"
+                    },
+                    {
+                        "name": "body",
+                        "type": "any",
+                        "label": "Body"
                     }
                 ]
             }
@@ -757,7 +784,7 @@
                                             "o": "exist"
                                         },
                                         {
-                                            "a": "{{19.id}}",
+                                            "a": "{{19.statusCode}}",
                                             "o": "exist"
                                         }
                                     ]
@@ -823,7 +850,7 @@
                                             "o": "exist"
                                         },
                                         {
-                                            "a": "{{19.id}}",
+                                            "a": "{{19.statusCode}}",
                                             "o": "notexist"
                                         }
                                     ]

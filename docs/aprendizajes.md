@@ -2357,3 +2357,23 @@ módulo dentro de una ruta del router, o se deja correr siempre con `Resume` y s
 de las ramas. Nunca un filtro gatillo en un módulo lineal pre-router. Pendiente: no se pudo verificar
 contra Make la clave/versión exacta de `dropbox:getFileMetadata` ni de `builtin:Resume` (el MCP no
 alcanza Make); quedaron señalados en claude-out.txt para confirmar en la UI tras importar.
+
+### 2026-09-04 — v1.5→v1.6: `dropbox:getFileMetadata` no existe; usar `makeAnAPICall`
+**Contexto:** al importar el v1.5 en Make, el módulo 2b falló con "Module Not Found:
+dropbox:getFileMetadata".
+**Inconveniente:** ese identificador fue *inventado* por analogía (deleteFile/uploadLargeFile v5),
+sin verificarlo. La app oficial de Dropbox en Make no tiene ninguna acción de metadata dedicada.
+**Causa raíz:** asumir un nombre de módulo Make sin contrastarlo contra la spec oficial de la app.
+Es exactamente lo que CLAUDE.md advierte al auditar módulos escritos a mano.
+**Solución aplicada:** verificado en la doc oficial (apps.make.com/dropbox) que existen "Make an API
+Call", "Download a File", "Search Files/Folders" y "Get Files/Folders", pero **ningún** getMetadata.
+Elegida la opción (a): módulo 2b = `dropbox:makeAnAPICall` (v1) con `POST /2/files/get_metadata`,
+cuerpo `{"path":"{{2.url_dropbox}}"}`, header `Content-Type: application/json`, y `builtin:Resume`
+ante el `409 path/not_found`. El test de existencia pasó de `{{19.id}}` a `{{19.statusCode}}`
+(presente=200 → reused; ausente por resume → huérfano). Reusa la conexión Dropbox 7553318. JSON
+revalidado: OK, IDs únicos, 4 ramas, sin residuos de `getFileMetadata` ni `{{19.id}}`.
+**Prevención futura:** NUNCA escribir un identificador de módulo Make sin verificarlo contra la spec
+oficial de la app (apps.make.com/<app>) o un blueprint real. Ante dudas de existencia de un módulo,
+preferir "Make an API Call" (universal, siempre presente) apuntando al endpoint REST del proveedor:
+elimina la clase entera de errores "Module Not Found". Descartadas (b) List Folder (parseo/paginación)
+y (c) Get a File (descarga el binario) por más costosas o frágiles.
