@@ -2310,3 +2310,29 @@ fijar el contrato. Y una nota de método sobre el formato de trabajo: los cuatro
 aparecieron en la fase de propuesta o al redactar el docblock, no ejecutando — el bloque de
 propuesta previa a cada tanda es lo que los cazó, y el único que se escapó (**RO-38**) fue el que
 la propuesta dio por sentado sin ir a mirar.
+
+### 2026-09-04 — VP-2026-0060: adjunto huérfano por `reused` sin verificar Dropbox
+**Contexto:** incidente confirmado. El usuario borró a mano en Dropbox la foto de
+Ofertas/Comparables de VP-2026-0060 y la re-subió por la UI. SC-Adjuntos-Upload encontró el
+`hash_md5` en TX_Adjuntos (módulo 2) y respondió `reused: true` sin re-subir a Dropbox: fila viva
+apuntando a un path inexistente, UI en OK y Dropbox vacío.
+**Inconveniente:** el escenario opera "según diseño"; la falla no es un bug de código sino un
+supuesto tácito del módulo 2: "si existe la fila (hash+solicitud), el binario está en Dropbox".
+Deja de ser cierto cuando alguien borra el archivo fuera de la aplicación.
+**Causa raíz:** la reutilización se decidía sólo por el índice de Airtable, sin comprobar la
+existencia física del binario. Un borrado externo (manual, sincronización, limpieza) rompe la
+premisa sin que el escenario lo note.
+**Solución aplicada:** (1) Fila huérfana identificada para eliminación manual: `rec8WypPYugEYaicK`
+(única fila de la solicitud; categoría en `descripcion=ofertas_comparables`, `clave_adjunto`
+vacío). (2) Fix definitivo = opción (a): se reescribió §8.6.2 de la spec normativa
+(`VProperty_Especificacion_Proyecto_v1_9_15.md`) agregando el **Módulo 2b · Verificación de
+existencia física en Dropbox** (Get file metadata sobre `{{2.url_dropbox}}`, error `path_not_found`
+en modo *resume*) y separando el router en cuatro ramas: **reutilización** (fila + archivo
+presente), **re-subida por huérfano** (fila presente + archivo ausente → borra fila, re-sube, crea
+fila nueva, evento `adjunto_resubido`, responde `modo:"nuevo"`), reemplazo y alta. El contrato
+§8.6.1 no cambia y el cliente no requiere cambios.
+**Prevención futura:** ante una decisión de idempotencia sobre un recurso externo (Dropbox, S3,
+etc.), no confiar sólo en el índice interno; verificar la existencia real antes de "reutilizar".
+Descartada la opción (b) —cerrar permisos— por no reparar huérfanos existentes ni cubrir otras
+causas de desaparición. Falta llevar el cambio al blueprint ejecutable de Make (SC-Adjuntos-Upload,
+hoy v1.4) y reimportar.

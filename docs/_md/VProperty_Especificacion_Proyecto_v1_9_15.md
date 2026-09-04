@@ -5567,8 +5567,10 @@ se reprovisiona: el despliegue de v1.2 es transparente para la aplicación.
 **Módulo 2 · Search Records por (hash + solicitud).** Tabla TX_Adjuntos,
 límite 1, fórmula ya en producción desde v1.1:
 `AND({hash_md5} = "{{1.hash_md5}}", ARRAYJOIN({solicitud}) = "{{1.codigo_ext}}")`.
-Si encuentra, responde `reused: true`, `modo: "reused"` y termina, sin
-tocar Dropbox ni crear filas.
+Encontrar la fila es condición **necesaria pero no suficiente** para
+reutilizar: la reutilización sólo es legítima si el binario sigue
+existiendo físicamente en Dropbox. Por eso el módulo 2 ya **no responde
+`reused` por sí solo**; deriva la decisión al módulo 2b.
 
 > **Dependencia frágil a vigilar.** `ARRAYJOIN({solicitud})` rinde el
 > *primary field* del registro vinculado, que es `codigo_solicitud`
@@ -5584,6 +5586,22 @@ binario ya está cargado en otro tipo de la misma solicitud, se devuelve
 no aporta— pero implica que un archivo no puede figurar en dos tipos a la
 vez. Si el negocio llegara a exigirlo, este módulo pasa a (hash +
 solicitud + tipo).
+
+**Módulo 2b · Verificación de existencia física en Dropbox (VP-2026-0060).**
+Sólo corre si el módulo 2 encontró fila (`{{2.id}}` existe). Consulta los
+metadatos del archivo en la ruta `{{2.url_dropbox}}` (Dropbox · *Get a
+file* / metadata). El manejador de error del módulo se configura en modo
+*resume*: un `path_not_found` **no detiene el escenario**, deja la salida
+vacía y habilita la ramificación. Con esto, la premisa que rompió
+VP-2026-0060 —«si la fila existe en Airtable, el binario está en
+Dropbox»— deja de darse por supuesta y pasa a verificarse en cada
+reutilización. Dos desenlaces:
+
+- **El archivo existe** → la reutilización es legítima; sigue la rama de
+  reutilización.
+- **El archivo no existe** → la fila de TX_Adjuntos es huérfana (el
+  binario fue borrado fuera de la aplicación, p. ej. a mano en Dropbox).
+  No se reutiliza: se repara con una re-subida.
 
 **Módulo 3 · Search Records por (solicitud + tipo_documento).** Sólo se
 ejecuta si el módulo 2 no encontró nada. Tabla TX_Adjuntos, límite 1,
@@ -5603,6 +5621,27 @@ aplica** y la rama de reemplazo debe quedar inhibida: si no,
 `{clave_adjunto} = ""` haría match contra los adjuntos sueltos de la
 solicitud y el primero sería borrado. La rama exige `tipo_documento` no
 vacío como condición explícita.
+
+**Rama de reutilización (`reused`).** Filtro: `{{2.id}}` existe **y** el
+módulo 2b confirmó el archivo en Dropbox. Responde `modo: "reused"`,
+`reused: true` y termina, sin tocar Dropbox ni crear filas. Es el camino
+feliz de siempre, ahora condicionado a la existencia real del binario.
+
+**Rama de re-subida por huérfano (auto-reparación · VP-2026-0060).**
+Filtro: `{{2.id}}` existe **y** el módulo 2b **no** halló el archivo en
+Dropbox. Repara la fila mentirosa espejando la rama de reemplazo, salvo
+el borrado en Dropbox —innecesario, el binario ya no está—: (1) Airtable
+· Delete record de la fila huérfana `{{2.id}}`. (2) Dropbox · Upload del
+binario recibido a `{{1.dropbox_path}}`. (3) Airtable · Create record de
+la fila nueva y correcta, con el `path_display` real. (4) A_Eventos:
+evento `adjunto_resubido` con la ruta previa y la nueva, para dejar traza
+de la reparación. (5) Responde `modo: "nuevo"`, `reused: false`. El
+contrato §8.6.1 no cambia: una re-subida por huérfano es, para el
+cliente, un alta. Si el upload falla, responde
+`{ ok: false, reintentable: true }`; como el borrado de la fila huérfana
+precede al upload y esa fila ya no apuntaba a nada, un fallo deja la
+solicitud sin adjunto de ese binario —estado honesto— y nunca una segunda
+fila mentirosa.
 
 **Rama de reemplazo.** (1) Get record del previo, recuperando
 `url_dropbox` y `hash_md5`. (2) Dropbox · Delete a file del previo. (3)
@@ -5629,10 +5668,13 @@ en v1.1. Responde `modo: "nuevo"`.
 
 **Filtro explícito en todas las ramas.** En Make, una ruta de Router sin
 filtro se ejecuta siempre y en paralelo a las demás; no es un "si no".
-Con tres ramas el riesgo se triplica respecto del defecto corregido en
-v1.1: cada una lleva su filtro explícito y mutuamente excluyente,
-construido con el par `exist` / `notexist` sobre los identificadores de
-los dos Search Records.
+Con cuatro ramas —reutilización, re-subida por huérfano, reemplazo y
+alta— el riesgo se cuadruplica respecto del defecto corregido en v1.1:
+cada una lleva su filtro explícito y mutuamente excluyente. Los filtros
+se construyen con el par `exist` / `notexist` sobre los identificadores
+de los dos Search Records (`{{2.id}}`, `{{11.id}}`) y, para separar
+reutilización de re-subida cuando `{{2.id}}` existe, sobre la salida del
+módulo 2b (archivo presente → reutilización; ausente → re-subida).
 
 **Log.** Escritura en LogEscenarios con el mapper poblado, registrando el
 `modo` resuelto. Los módulos de log de v1.1 tienen el mapper vacío y
