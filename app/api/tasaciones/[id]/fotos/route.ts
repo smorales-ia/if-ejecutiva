@@ -78,6 +78,7 @@ import {
 } from '@/lib/tasador/lectura-fotos'
 import { MENSAJES } from '@/lib/tasador/mensajes'
 import { desdeExcepcion, desdeGuard, error, ok } from '@/lib/tasador/respuestas'
+import { claveAdjuntoDeCategoria } from '@/lib/tasador/tipo-documento-foto'
 import { parsearCuerpo } from '@/lib/tasador/validators'
 
 export const dynamic = 'force-dynamic'
@@ -229,10 +230,25 @@ export async function PATCH(
      * un `""` sobre un campo `number` o `url` con `typecast` no es lo mismo que
      * no tocarlo.
      */
+    /**
+     * `clave_adjunto` para la foto del cuadro de comparables — vía robusta de
+     * RF-09.
+     *
+     * La extracción RF-09 sólo corre si `AT-RF09-Trigger` encuentra
+     * `clave_adjunto` no vacío (RN-25). Esa clave la escribe `SC-Adjuntos-Upload`
+     * desde el `tipo_documento` del payload de subida, pero esa vía depende de
+     * que el cliente lo mande y de que el webhook de Make parsee el campo. Aquí
+     * la reescribimos **directo en Airtable**, sin pasar por Make, para que la
+     * fila quede con la llave correcta aunque la subida la haya creado vacía.
+     * Para el resto de las categorías es `undefined` y no se toca.
+     */
+    const claveAdjunto = claveAdjuntoDeCategoria(d.categoria)
+
     await updateRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, recordId, {
       tipo_adjunto: TIPO_ADJUNTO_FOTO,
       descripcion: d.categoria,
       subido_por: SUBIDO_POR_TASADOR,
+      ...(claveAdjunto ? { clave_adjunto: claveAdjunto } : {}),
       ...(d.orden !== undefined ? { orden: d.orden } : {}),
       ...(d.thumbnailUrl ? { thumbnail_url: d.thumbnailUrl } : {}),
     })

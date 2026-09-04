@@ -197,6 +197,25 @@ describe('[PUENTE CI-061] autoNumber → record ID', () => {
   })
 })
 
+describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
+  it('escribe clave_adjunto=foto_ofertas_comparables server-side para el cuadro', async () => {
+    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+
+    // Sin esta llave AT-RF09-Trigger salta la extracción (RN-25) y la sección D
+    // queda en «0 de 3 comparables leídos». Se escribe directo en Airtable, sin
+    // depender de que Make/el cliente hayan mandado tipo_documento en la subida.
+    const [, , campos] = updateRecord.mock.calls[0]
+    expect(campos.clave_adjunto).toBe('foto_ofertas_comparables')
+  })
+
+  it('no escribe clave_adjunto para una foto de registro normal', async () => {
+    await patch({ adjuntoId: ADJUNTO, categoria: 'cocina' })
+
+    const [, , campos] = updateRecord.mock.calls[0]
+    expect(campos).not.toHaveProperty('clave_adjunto')
+  })
+})
+
 describe('subido_por · la bisagra del GET', () => {
   it('se reescribe siempre con la capitalización exacta', async () => {
     await patch({ adjuntoId: ADJUNTO, categoria: 'cocina' })

@@ -49,6 +49,7 @@
 
 import { uploadConReintentos, type UploadResult } from "@/lib/adjuntos-uploader"
 import type { FotoAdjunta } from "@/lib/tasador/tasaciones"
+import { claveAdjuntoDeCategoria } from "@/lib/tasador/tipo-documento-foto"
 
 /** Literal §6.1 para el fallo que no sabemos explicar al usuario. */
 const MSG_ERROR_RED =
@@ -62,28 +63,6 @@ const MSG_ERROR_RED =
  * sin dejar rastro. No se escribe este literal a mano en ningún otro sitio.
  */
 export const SUBIDO_POR_TASADOR = "Tasador"
-
-/**
- * Categorías de foto que son en realidad un **documento a extraer**, no una
- * foto de registro.
- *
- * La foto del cuadro de comparables (`ofertas_comparables`) es hoy la única: al
- * subirla debe viajar como `tipo_documento` el `codigo` de `D_TipoDocumento`
- * (`foto_ofertas_comparables`, spec §8.6.1), que `SC-Adjuntos-Upload` persiste
- * en `TX_Adjuntos.clave_adjunto` (`fldaLLtzAaEn1O8IW`).
- *
- * **Sin ese código la extracción no corre.** `AT-RF09-Trigger` exige
- * `clave_adjunto` no vacío (RN-25): si llega vacío marca la foto como
- * `estado_extraccion = 'skipped'` y retorna **sin llamar al webhook de RF-09**,
- * por lo que el escenario `SC-RF09-ExtraccionClaude` no registra ninguna
- * ejecución, `TX_Comparables` no se puebla y la sección D queda en «0 de 3
- * comparables leídos del cuadro». Las demás categorías son fotos de registro y
- * no disparan extracción: para ellas el valor es `undefined` y `tipo_documento`
- * se omite, igual que antes.
- */
-const TIPO_DOCUMENTO_POR_CATEGORIA: Record<string, string> = {
-  ofertas_comparables: "foto_ofertas_comparables",
-}
 
 export interface DatosSolicitudFoto {
   /** Record ID de `TX_Solicitudes`. */
@@ -194,9 +173,10 @@ export async function subirFotoDeVisita(
     codigo_ext: p.codigoExt,
     // Declara el tipo de documento sólo para la foto del cuadro de comparables,
     // que es lo que dispara RF-09 vía `clave_adjunto`. Para el resto de las
-    // categorías es `undefined` y el campo se omite (ver
-    // TIPO_DOCUMENTO_POR_CATEGORIA).
-    tipo_documento: TIPO_DOCUMENTO_POR_CATEGORIA[p.categoria],
+    // categorías es `undefined` y el campo se omite. El servidor lo reescribe
+    // igual en el PATCH (vía robusta), así que esto es la ruta rápida, no la
+    // única (ver claveAdjuntoDeCategoria).
+    tipo_documento: claveAdjuntoDeCategoria(p.categoria),
     subido_por: SUBIDO_POR_TASADOR,
     signal: p.signal,
     onProgress: p.onProgress,

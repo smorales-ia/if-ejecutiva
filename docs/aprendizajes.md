@@ -2431,3 +2431,32 @@ con su `tipo_documento`/`clave_adjunto`, que es la llave con la que AT-RF09-Trig
 Al depurar «webhook Make no ejecuta», descartar primero el disparador aguas arriba (¿la fila trae la
 clave que la automation exige?) antes de sospechar de Make. Nota: si `clave_adjunto` ya viene poblado
 y Make sigue sin ejecutar, el pendiente es CI-002 (URL/HMAC de la automation).
+
+### 2026-09-04 — RF-09 comparables (2ª vuelta): el fix de cliente no bastó; se movió al servidor
+**Contexto:** tras el fix anterior (tasador manda `tipo_documento` en la subida), en producción la
+fila nueva de TX_Adjuntos seguía con `clave_adjunto` vacío, `tipo_adjunto="foto_interior"`,
+`descripcion="ofertas_comparables"`, y Make SC-RF09 sin ejecuciones nuevas.
+**Inconveniente:** el fix estaba commiteado (7687782) y era correcto de punta a punta, pero no surtía
+efecto en runtime.
+**Causa raíz:** la cadena código→Make estaba bien (verificado línea por línea: fotos-categorizadas.tsx
+pasa "ofertas_comparables"; fotos.ts lo mapea a "foto_ofertas_comparables"; adjuntos-uploader lo pone
+en el body; upload/route lo reenvía; el webhook del blueprint declara `tipo_documento` y CreateRecord
+escribe `clave_adjunto = {{1.tipo_documento}}`). Que `clave_adjunto` llegara vacío significa que el
+`tipo_documento` no viajó en runtime — bundle viejo en el navegador del tasador (deploy/caché) o el
+webhook en vivo sin el campo. Ambas son runtime/config, no bug de fuente. La debilidad de fondo: el
+fix dependía 100% de que el cliente mandara el dato y de que Make lo parseara. Pista de que Make sí
+funciona: logs de agosto con `clave_adjunto="foto_ofertas_comparables"` (subido por la Ejecutiva).
+**Solución aplicada:** se dejó de depender del cliente. El PATCH server-side de
+`app/api/tasaciones/[id]/fotos/route.ts` ahora escribe `clave_adjunto="foto_ofertas_comparables"`
+DIRECTO en Airtable (sin pasar por Make) para la categoría `ofertas_comparables`. Como la automation
+`recordCreated` de Airtable dispara con segundos de retraso y el PATCH corre ~1s tras la subida,
+`clave_adjunto` queda poblado antes de que la automation lea la fila, incluso con cliente stale. Se
+creó `lib/tasador/tipo-documento-foto.ts` como fuente única del mapa categoría→código (lo usan el
+cliente en la subida y el servidor en el PATCH), se agregó `clave_adjunto` a `AdjuntoFotoFields`, y
+tests en ambos archivos. 35/35 verde; typecheck sólo con los 2 errores preexistentes de coordinacion*.
+**Prevención futura:** cuando un dato es la llave de un disparador (aquí `clave_adjunto` para
+AT-RF09-Trigger), escribirlo por la vía que NO dependa del bundle del cliente ni del parseo del
+webhook — el servidor, que siempre corre el último deploy y escribe directo en Airtable. Si el mismo
+valor lo necesitan cliente y servidor, un módulo compartido sin "use client" evita que se desincronicen.
+Diagnóstico exprés para «Make no ejecuta»: DevTools→Network→payload de /api/adjuntos/upload muestra al
+instante si el campo viajó (stale bundle) o no (config Make).

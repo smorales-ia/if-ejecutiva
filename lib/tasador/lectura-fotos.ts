@@ -70,6 +70,13 @@ export const SUBIDO_POR_TASADOR = 'Tasador'
 export interface AdjuntoFotoFields {
   nombre_archivo?: string
   tipo_adjunto?: string
+  /**
+   * `clave_adjunto` (`fldaLLtzAaEn1O8IW`) — el `codigo` de `D_TipoDocumento`.
+   * Es la llave con la que `AT-RF09-Trigger` decide disparar la extracción
+   * RF-09; el `PATCH` la reescribe server-side para la foto del cuadro de
+   * comparables (ver la ruta de fotos y `tipo-documento-foto.ts`).
+   */
+  clave_adjunto?: string
   descripcion?: string
   url_dropbox?: string
   thumbnail_url?: string
