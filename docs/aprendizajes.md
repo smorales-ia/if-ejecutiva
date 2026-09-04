@@ -2377,3 +2377,32 @@ oficial de la app (apps.make.com/<app>) o un blueprint real. Ante dudas de exist
 preferir "Make an API Call" (universal, siempre presente) apuntando al endpoint REST del proveedor:
 elimina la clase entera de errores "Module Not Found". Descartadas (b) List Folder (parseo/paginación)
 y (c) Get a File (descarga el binario) por más costosas o frágiles.
+
+### 2026-09-04 — REGLA DE MÉTODO: identificadores de módulo Make se COPIAN, no se deducen
+**Contexto:** el módulo 2b de SC-Adjuntos-Upload falló al importar dos veces seguidas.
+**Inconveniente:** v1.5 usó `dropbox:getFileMetadata` (inventado por analogía) → "Module Not Found".
+v1.6 usó `dropbox:makeAnAPICall` (deducido de doc/web, no del repo) → "Module Not Found" otra vez.
+El consejo del propio aprendizaje anterior ("preferir Make an API Call") era también una deducción.
+**Causa raíz:** escribir identificadores de módulo Make por deducción (analogía, doc oficial, búsqueda
+web) en vez de copiarlos de un artefacto real y funcionando. La doc/web no garantiza el identificador
+interno exacto ni su versión para ESTE cliente.
+**Regla (obligatoria de aquí en adelante):** ningún identificador de módulo Make se escribe por
+deducción. Se COPIA LITERAL desde un blueprint real y funcionando del repo del cliente
+(`docs/_artefactos/make/*.json` y `docs/_artefactos/produccion-actual/*.json`). Si no aparece en
+ninguno de esos blueprints, no se usa. Antes de escribir un blueprint, inventariar el catálogo de
+identificadores presentes y elegir SOLO de ahí; al terminar, cross-check de que cada `"module"` usado
+aparece textualmente en otro blueprint del repo.
+**Solución aplicada (v1.7):** inventariado el catálogo real (9 blueprints). Módulos Dropbox proven:
+`dropbox:deleteFile` v5, `dropbox:uploadLargeFile` v5, `dropbox:getFile` v5. Directivas de error
+proven: `builtin:Ignore` (SC-Asignar), `builtin:Commit` (SC-Adjuntos-Delete) — `builtin:Resume` NO
+estaba en ningún blueprint real, así que también se descartó. HTTP genérico proven: `http:ActionSendData`
+v3, pero autentica con API key literal en header (SC-RF09 con Claude); contra Dropbox exigiría un Bearer
+que caduca → inviable. Elegido 2b = `dropbox:getFile` v5 (copiado literal de SC-RF09 id 9: mapper
+`path` + `select:"map"`, conexión OAuth 7553318). Como `Ignore`/`Commit` cortan el flujo ante error, la
+sonda no puede ir antes del Router (rompería alta/reemplazo): se movió DENTRO de la rama reused como
+primer módulo, con la reparación huérfano en su `onerror` cerrada con `builtin:Commit` (patrón del
+módulo 12 de este mismo blueprint). Router quedó en 3 ramas + bifurcación éxito/error de la sonda.
+Cross-check automático: los 10 módulos de v1.7 aparecen en otros blueprints del repo. Acepta el coste
+de que `getFile` descargue el binario (sólo en el caso reused, archivos pequeños).
+**Prevención futura:** la regla de arriba. Y guardar en el repo los backups de producción
+(`docs/_artefactos/produccion-actual/`) como catálogo de referencia vivo.

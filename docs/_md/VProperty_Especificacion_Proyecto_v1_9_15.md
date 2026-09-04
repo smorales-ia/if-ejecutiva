@@ -5587,30 +5587,39 @@ no aporta— pero implica que un archivo no puede figurar en dos tipos a la
 vez. Si el negocio llegara a exigirlo, este módulo pasa a (hash +
 solicitud + tipo).
 
-**Módulo 2b · Verificación de existencia física en Dropbox (VP-2026-0060).**
+**Módulo 2b · Sonda de existencia física en Dropbox (VP-2026-0060).**
 Comprueba si el binario del path guardado en `{{2.url_dropbox}}` sigue
-existiendo en Dropbox. Se implementa con **Dropbox · Make an API Call**
-(`POST /2/files/get_metadata`, cuerpo `{"path": "{{2.url_dropbox}}"}`), no
-con un módulo de metadata dedicado: la app oficial de Dropbox en Make **no
-expone** ninguna acción `getFileMetadata`, y usar ese identificador rompe
-el import con *Module Not Found* (v1.5 → v1.6). El manejador de error del
-módulo se configura en modo *resume*: cuando el archivo no está, Dropbox
-responde `409 path/not_found`, el módulo entra en error y el *resume* **no
-detiene el escenario** —deja la salida vacía (`statusCode` ausente) y
-habilita la ramificación—. En el camino feliz, `get_metadata` responde
-`200` y `statusCode` queda presente. El módulo corre siempre; la condición
-«sólo cuando hay match» no se pone como filtro del módulo (un filtro en un
-módulo lineal previo al Router cortaría también las ramas de alta y
-reemplazo), sino en los filtros de las ramas, sobre `{{2.id}}`. Con esto,
-la premisa que rompió VP-2026-0060 —«si la fila existe en Airtable, el
-binario está en Dropbox»— deja de darse por supuesta y pasa a verificarse
-en cada reutilización. Dos desenlaces:
+existiendo en Dropbox. Se implementa con **Dropbox · Get a File**
+(`dropbox:getFile`), el único módulo Dropbox del catálogo real del cliente
+que detecta un archivo ausente usando la conexión OAuth gestionada —sin
+manejar tokens ni exponer secretos—. Regla de método aplicada tras dos
+imports rotos: **todo identificador de módulo Make se copia literal de un
+blueprint real y funcionando del repo; si no aparece en ninguno, no se
+usa** (ver `docs/aprendizajes.md`). Por esa regla se descartaron un módulo
+de metadata dedicado (`getFileMetadata` no existe en la app oficial de
+Dropbox de Make → *Module Not Found* en v1.5) y `Make an API Call`
+(`makeAnAPICall`, roto igual en v1.6 y ausente de todo blueprint del
+cliente; además una llamada HTTP genérica a la API de Dropbox exigiría un
+Bearer estático que caduca y vive en el repo). La sonda **no va en el flujo
+principal antes del Router**: las únicas directivas de error del catálogo
+son `Ignore` y `Commit`, y ambas, ante un error, cortan el resto del flujo
+—el Router no correría y las ramas de alta y reemplazo quedarían sin
+ejecutar—. Por eso la sonda vive **dentro de la rama de reutilización**,
+como primer módulo, y su desenlace se decide por éxito o error del propio
+`getFile` mediante su manejador de error (`onerror`):
 
-- **El archivo existe** → la reutilización es legítima; sigue la rama de
-  reutilización.
-- **El archivo no existe** → la fila de TX_Adjuntos es huérfana (el
-  binario fue borrado fuera de la aplicación, p. ej. a mano en Dropbox).
-  No se reutiliza: se repara con una re-subida.
+- **El archivo existe** → `getFile` responde OK; la rama sigue y responde
+  `reused`.
+- **El archivo no existe** → `getFile` da `path_not_found` y dispara su
+  `onerror`, que ejecuta la reparación de huérfano (abajo). La fila de
+  TX_Adjuntos era huérfana: el binario fue borrado fuera de la aplicación.
+
+El coste asumido es que `getFile` descarga el binario para comprobarlo; se
+acepta porque sólo ocurre cuando hay match de hash (el caso de
+reutilización), sobre archivos pequeños, y a cambio de no inventar
+identificadores ni introducir secretos. La premisa que rompió VP-2026-0060
+—«si la fila existe en Airtable, el binario está en Dropbox»— deja de darse
+por supuesta y se verifica en cada reutilización.
 
 **Módulo 3 · Search Records por (solicitud + tipo_documento).** Sólo se
 ejecuta si el módulo 2 no encontró nada. Tabla TX_Adjuntos, límite 1,
@@ -5631,26 +5640,24 @@ aplica** y la rama de reemplazo debe quedar inhibida: si no,
 solicitud y el primero sería borrado. La rama exige `tipo_documento` no
 vacío como condición explícita.
 
-**Rama de reutilización (`reused`).** Filtro: `{{2.id}}` existe **y** el
-módulo 2b confirmó el archivo en Dropbox. Responde `modo: "reused"`,
-`reused: true` y termina, sin tocar Dropbox ni crear filas. Es el camino
-feliz de siempre, ahora condicionado a la existencia real del binario.
+**Rama de reutilización (`reused`) y sonda.** Filtro de la rama: `{{2.id}}`
+existe. Su primer módulo es la sonda `getFile` (módulo 2b). Si el archivo
+está, la rama continúa: log y respuesta `modo: "reused"`, `reused: true`,
+sin tocar Dropbox ni crear filas. Es el camino feliz de siempre, ahora
+condicionado a la existencia real del binario.
 
-**Rama de re-subida por huérfano (auto-reparación · VP-2026-0060).**
-Filtro: `{{2.id}}` existe **y** el módulo 2b **no** halló el archivo en
-Dropbox. Repara la fila mentirosa espejando la rama de reemplazo, salvo
-el borrado en Dropbox —innecesario, el binario ya no está—: (1) Airtable
-· Delete record de la fila huérfana `{{2.id}}`. (2) Dropbox · Upload del
-binario recibido a `{{1.dropbox_path}}`. (3) Airtable · Create record de
-la fila nueva y correcta, con el `path_display` real. (4) A_Eventos:
-evento `adjunto_resubido` con la ruta previa y la nueva, para dejar traza
-de la reparación. (5) Responde `modo: "nuevo"`, `reused: false`. El
-contrato §8.6.1 no cambia: una re-subida por huérfano es, para el
-cliente, un alta. Si el upload falla, responde
-`{ ok: false, reintentable: true }`; como el borrado de la fila huérfana
-precede al upload y esa fila ya no apuntaba a nada, un fallo deja la
-solicitud sin adjunto de ese binario —estado honesto— y nunca una segunda
-fila mentirosa.
+**Reparación por huérfano (auto-reparación · VP-2026-0060).** No es una
+rama del Router: vive en el `onerror` de la sonda `getFile` y se dispara
+cuando el archivo no está. Espeja la rama de reemplazo, salvo el borrado
+en Dropbox —innecesario, el binario ya no está—: (1) Airtable · Delete
+record de la fila huérfana `{{2.id}}`. (2) Dropbox · Upload del binario
+recibido a `{{1.dropbox_path}}` con `overwrite: true` (idempotente ante un
+falso negativo de la sonda). (3) Airtable · Create record de la fila nueva
+y correcta, con el `path_display` real. (4) A_Eventos: evento
+`adjunto_resubido` con la ruta previa y la nueva, para dejar traza de la
+reparación. (5) Responde `modo: "nuevo"`, `reused: false`. (6) `Commit`
+cierra el manejador. El contrato §8.6.1 no cambia: una re-subida por
+huérfano es, para el cliente, un alta.
 
 **Rama de reemplazo.** (1) Get record del previo, recuperando
 `url_dropbox` y `hash_md5`. (2) Dropbox · Delete a file del previo. (3)
@@ -5675,15 +5682,14 @@ subida: upload del nuevo binario y creación de la fila. (5) Responde
 **Rama de alta.** Sin previo: upload a Dropbox y creación de fila, como
 en v1.1. Responde `modo: "nuevo"`.
 
-**Filtro explícito en todas las ramas.** En Make, una ruta de Router sin
-filtro se ejecuta siempre y en paralelo a las demás; no es un "si no".
-Con cuatro ramas —reutilización, re-subida por huérfano, reemplazo y
-alta— el riesgo se cuadruplica respecto del defecto corregido en v1.1:
-cada una lleva su filtro explícito y mutuamente excluyente. Los filtros
-se construyen con el par `exist` / `notexist` sobre los identificadores
-de los dos Search Records (`{{2.id}}`, `{{11.id}}`) y, para separar
-reutilización de re-subida cuando `{{2.id}}` existe, sobre la salida del
-módulo 2b (archivo presente → reutilización; ausente → re-subida).
+**Ramas explícitas.** En Make, una ruta de Router sin filtro se ejecuta
+siempre y en paralelo a las demás; no es un "si no". El Router tiene **tres**
+ramas mutuamente excluyentes por el par `exist` / `notexist` sobre los dos
+Search Records: reutilización (`{{2.id}}` existe), reemplazo (`{{2.id}}` no
+existe, `{{11.id}}` existe, `tipo_documento` no vacío) y alta (`{{2.id}}` y
+`{{11.id}}` no existen). La cuarta situación —huérfano— **no** es una rama
+del Router sino la bifurcación éxito/error de la sonda `getFile` dentro de
+la rama de reutilización, resuelta por su `onerror`.
 
 **Log.** Escritura en LogEscenarios con el mapper poblado, registrando el
 `modo` resuelto. Los módulos de log de v1.1 tienen el mapper vacío y
