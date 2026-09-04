@@ -2406,3 +2406,28 @@ Cross-check automático: los 10 módulos de v1.7 aparecen en otros blueprints de
 de que `getFile` descargue el binario (sólo en el caso reused, archivos pequeños).
 **Prevención futura:** la regla de arriba. Y guardar en el repo los backups de producción
 (`docs/_artefactos/produccion-actual/`) como catálogo de referencia vivo.
+
+### 2026-09-04 — RF-09 comparables: cero ejecuciones porque la foto sube sin tipo_documento
+**Contexto:** el tasador fotografía el cuadro de comparables, la foto sube bien a Dropbox y a
+TX_Adjuntos, pero SC-RF09-ExtraccionClaude v2.0 (hook 3393157) tiene el escenario ON y cero
+ejecuciones en History; la UI queda en «0 de 3 comparables leídos del cuadro».
+**Inconveniente:** el webhook de RF-09 nunca se llamaba y no había pista en Make (History sólo con
+«Scenario was edited»).
+**Causa raíz:** el disparo de RF-09 depende de la automation `AT-RF09-Trigger`, que sólo hace el POST
+al webhook si la fila de TX_Adjuntos trae `clave_adjunto` (código de D_TipoDocumento). SC-Adjuntos-Upload
+escribe `clave_adjunto = {{1.tipo_documento}}`, pero `subirFotoDeVisita` (lib/tasador/fotos.ts) subía
+las fotos de la visita **sin** `tipo_documento`. Con `clave_adjunto` vacío la automation aplica RN-25
+(«sin tipo declarado»), marca `estado_extraccion = 'skipped'` y retorna sin llamar al webhook → cero
+ejecuciones + TX_Comparables sin poblar. La spec §8.6.1 ya definía el código correcto:
+`foto_ofertas_comparables`.
+**Solución aplicada:** en `lib/tasador/fotos.ts` se agregó `TIPO_DOCUMENTO_POR_CATEGORIA`
+(`ofertas_comparables → foto_ofertas_comparables`) y `subirFotoDeVisita` ahora envía ese
+`tipo_documento` a `uploadConReintentos` sólo para la foto del cuadro; el resto de categorías sigue
+subiendo con `tipo_documento` undefined (sin cambio). Dos tests nuevos en `fotos.test.ts`
+(16/16 verde). No se tocó ningún blueprint ni el script de la automation: el diseño ya esperaba
+`clave_adjunto`; faltaba que la app lo mandara.
+**Prevención futura:** una foto que dispara extracción no es sólo una «foto de visita» — debe viajar
+con su `tipo_documento`/`clave_adjunto`, que es la llave con la que AT-RF09-Trigger decide disparar.
+Al depurar «webhook Make no ejecuta», descartar primero el disparador aguas arriba (¿la fila trae la
+clave que la automation exige?) antes de sospechar de Make. Nota: si `clave_adjunto` ya viene poblado
+y Make sigue sin ejecutar, el pendiente es CI-002 (URL/HMAC de la automation).

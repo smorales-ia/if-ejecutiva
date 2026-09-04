@@ -79,6 +79,33 @@ describe('subirFotoDeVisita · la cadena completa', () => {
     expect(SUBIDO_POR_TASADOR).toBe('Tasador')
   })
 
+  it('la foto del cuadro de comparables declara tipo_documento para disparar RF-09', async () => {
+    await subirFotoDeVisita({
+      file: archivo(),
+      solicitudId: SOLICITUD,
+      codigoExt: CODIGO,
+      categoria: 'ofertas_comparables',
+    })
+
+    // Sin este código `TX_Adjuntos.clave_adjunto` queda vacío y AT-RF09-Trigger
+    // salta la extracción (RN-25): el webhook nunca se llama y la sección D
+    // queda en «0 de 3 comparables leídos».
+    const [params] = uploadConReintentos.mock.calls[0]
+    expect(params.tipo_documento).toBe('foto_ofertas_comparables')
+  })
+
+  it('una foto de registro normal no declara tipo_documento', async () => {
+    await subirFotoDeVisita({
+      file: archivo(),
+      solicitudId: SOLICITUD,
+      codigoExt: CODIGO,
+      categoria: 'cocina',
+    })
+
+    const [params] = uploadConReintentos.mock.calls[0]
+    expect(params.tipo_documento).toBeUndefined()
+  })
+
   it('no manda destino de unidad: el backend lo auto-deriva', async () => {
     await subirFotoDeVisita({
       file: archivo(),
