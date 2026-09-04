@@ -1,5 +1,5 @@
 {
-    "name": "SC-Adjuntos-Upload v1.4 - adjunto_record_id aditivo (CI-061)",
+    "name": "SC-Adjuntos-Upload v1.5 - verificacion Dropbox (modulo 2b) + rama huerfano (VP-2026-0060)",
     "flow": [
         {
             "id": 1,
@@ -589,6 +589,96 @@
             }
         },
         {
+            "id": 19,
+            "module": "dropbox:getFileMetadata",
+            "version": 5,
+            "parameters": {
+                "__IMTCONN__": 7553318
+            },
+            "mapper": {
+                "path": "{{2.url_dropbox}}"
+            },
+            "onerror": [
+                {
+                    "id": 26,
+                    "module": "builtin:Resume",
+                    "version": 1,
+                    "mapper": {},
+                    "metadata": {
+                        "designer": {
+                            "x": 600,
+                            "y": -150
+                        }
+                    }
+                }
+            ],
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": -300
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "data": {
+                                "scoped": "true",
+                                "connection": "dropbox"
+                            },
+                            "label": "My Dropbox connection (nutricionsaludketo@gmail.com)"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:dropbox",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "path",
+                        "type": "text",
+                        "label": "Path",
+                        "required": true
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "id",
+                        "type": "text",
+                        "label": "ID"
+                    },
+                    {
+                        "name": "name",
+                        "type": "text",
+                        "label": "Name"
+                    },
+                    {
+                        "name": "path_lower",
+                        "type": "text",
+                        "label": "Path Lower"
+                    },
+                    {
+                        "name": "path_display",
+                        "type": "text",
+                        "label": "Path"
+                    },
+                    {
+                        "name": "size",
+                        "type": "number",
+                        "label": "Size"
+                    },
+                    {
+                        "name": "rev",
+                        "type": "text",
+                        "label": "Revision"
+                    }
+                ]
+            }
+        },
+        {
             "id": 3,
             "module": "builtin:BasicRouter",
             "version": 1,
@@ -659,11 +749,15 @@
                                 ]
                             },
                             "filter": {
-                                "name": "Ya existe (mismo hash + misma solicitud)",
+                                "name": "Reused (fila + archivo presente en Dropbox)",
                                 "conditions": [
                                     [
                                         {
                                             "a": "{{2.id}}",
+                                            "o": "exist"
+                                        },
+                                        {
+                                            "a": "{{19.id}}",
                                             "o": "exist"
                                         }
                                     ]
@@ -689,6 +783,402 @@
                                 "designer": {
                                     "x": 1200,
                                     "y": -150
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "text",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "type": "array",
+                                        "label": "Headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 20,
+                            "module": "airtable:ActionDeleteRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "filter": {
+                                "name": "Huerfano (fila presente + archivo ausente en Dropbox)",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{2.id}}",
+                                            "o": "exist"
+                                        },
+                                        {
+                                            "a": "{{19.id}}",
+                                            "o": "notexist"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblur71x1oItbmKZc",
+                                "id": "{{2.id}}",
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 900,
+                                    "y": -300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "mode": "chose",
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "mode": "chose",
+                                            "label": "TX_Adjuntos (tblur71x1oItbmKZc)"
+                                        },
+                                        "useColumnId": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "base",
+                                        "type": "select",
+                                        "label": "Base",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useColumnId",
+                                        "type": "boolean",
+                                        "label": "Use Column ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "table",
+                                        "type": "select",
+                                        "label": "Table",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "Record ID",
+                                        "required": true
+                                    }
+                                ],
+                                "interface": [
+                                    {
+                                        "name": "id",
+                                        "type": "text",
+                                        "label": "ID"
+                                    },
+                                    {
+                                        "name": "deleted",
+                                        "type": "boolean",
+                                        "label": "Deleted"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 21,
+                            "module": "dropbox:uploadLargeFile",
+                            "version": 5,
+                            "parameters": {
+                                "__IMTCONN__": 7553318
+                            },
+                            "mapper": {
+                                "data": "{{toBinary(1.contenido_base64; \"base64\")}}",
+                                "path": "{{1.dropbox_path}}",
+                                "filename": "{{1.nombre_archivo}}",
+                                "overwrite": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": -300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "path": {
+                                            "mode": "chose"
+                                        },
+                                        "overwrite": {
+                                            "mode": "chose"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "dropbox"
+                                            },
+                                            "label": "My Dropbox connection (nutricionsaludketo@gmail.com)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:dropbox",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "path",
+                                        "type": "folder",
+                                        "label": "Folder",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "filename",
+                                        "type": "filename",
+                                        "label": "File Name",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "data",
+                                        "type": "buffer",
+                                        "label": "Data",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "overwrite",
+                                        "type": "boolean",
+                                        "label": "Overwrite an existing file",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 22,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblur71x1oItbmKZc",
+                                "record": {
+                                    "fld54epvDJ7YdJIYD": "idle",
+                                    "fld9shmoBhZyNTK8x": "{{1.hash_md5}}",
+                                    "fldEccoUrOjV7oKZ5": "{{21.path_display}}",
+                                    "fldLgyE0fdGOvuFAy": "{{1.tamanio_kb}}",
+                                    "fldZTVpXDRtXXPjyv": [
+                                        "{{1.solicitud_id}}"
+                                    ],
+                                    "fldaLLtzAaEn1O8IW": "{{1.tipo_documento}}",
+                                    "fldhnCIY8yPHW8XEj": "{{1.nombre_archivo}}",
+                                    "fldqAZk4Jf0C5Z4uH": "{{1.subido_por}}",
+                                    "fldyhpVhzD5eVfbRZ": "{{1.mime_type}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": -300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "TX_Adjuntos (tblur71x1oItbmKZc)"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 23,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblMKmDg2KrO5fMn8",
+                                "record": {
+                                    "fldZQdDQq8Ks5DkLN": "adjunto_resubido",
+                                    "fld0wMJTtEQjo6VX3": "{{now}}",
+                                    "fldNlOw4cCNruTFeo": "TX_Adjuntos",
+                                    "fldVCWfHcWcfPi0q7": "{{22.id}}",
+                                    "fldpl0xV9vjcXR4yK": [
+                                        "{{1.solicitud_id}}"
+                                    ],
+                                    "fldP9mj66Qx9y1LOe": "{{1.subido_por}}",
+                                    "fldA4UrctU1pnHh9u": "Adjunto re-subido por huerfano en Dropbox: la fila apuntaba a un path inexistente y se regenero el binario. Tipo {{1.tipo_documento}}: {{1.nombre_archivo}}.",
+                                    "fldrCJijKJTe8Nffa": "{\"adjunto_previo_id\": \"{{2.id}}\", \"adjunto_nuevo_id\": \"{{22.id}}\", \"url_previa\": \"{{2.url_dropbox}}\", \"url_nueva\": \"{{21.path_display}}\", \"tipo_documento\": \"{{1.tipo_documento}}\", \"subido_por\": \"{{1.subido_por}}\", \"motivo\": \"dropbox_path_not_found\"}"
+                                },
+                                "typecast": true,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": -300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "A_Eventos (tblMKmDg2KrO5fMn8)"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 24,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblR4VWpUHw1CSyIS",
+                                "record": {
+                                    "fldOLYPMstZl1cct6": "ADJUNTOS_UPLOAD_V2 · resubido (huerfano) · {{1.codigo_ext}}",
+                                    "fldGRchH2Cc82fO4b": "{{now}}",
+                                    "fldPktGeTzNCRQ319": "ADJUNTOS_UPLOAD_V2",
+                                    "fldTzSpyzbj1EOa7F": "✓ OK",
+                                    "fldvgIczpgBQJe2Lx": "SC-Adjuntos-Upload v1.5",
+                                    "fldv9dn00kM8kNjDL": "Auto-reparacion de fila huerfana. El binario no existia en Dropbox (modulo 2b) y se re-subio.\nhash_md5: {{1.hash_md5}}\nprevio: {{2.id}} (adjunto_id {{2.adjunto_id}}) · {{2.url_dropbox}}\nnuevo: {{22.id}} (adjunto_id {{22.adjunto_id}}) · {{21.path_display}}\ntipo_documento: {{1.tipo_documento}}",
+                                    "fldLHWGlkTZNTESOF": "{{1.codigo_ext}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": -300
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "base": {
+                                            "label": "VProperty (app9G7lLkIV3CpeLa)"
+                                        },
+                                        "table": {
+                                            "label": "LogEscenarios (tblR4VWpUHw1CSyIS)"
+                                        }
+                                    },
+                                    "parameters": {
+                                        "__IMTCONN__": {
+                                            "data": {
+                                                "scoped": "true",
+                                                "connection": "airtable2"
+                                            },
+                                            "label": "Airtable VProperty"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "__IMTCONN__",
+                                        "type": "account:airtable3,airtable2",
+                                        "label": "Connection",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 25,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "body": "{\"ok\": true, \"modo\": \"nuevo\", \"adjunto_id\": \"{{22.adjunto_id}}\", \"adjunto_record_id\": \"{{22.id}}\", \"adjunto_previo_id\": \"{{2.id}}\", \"url_dropbox\": \"{{21.path_display}}\", \"nombre_archivo\": \"{{1.nombre_archivo}}\", \"tamanio_kb\": {{1.tamanio_kb}}, \"reused\": false}",
+                                "status": "200",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2400,
+                                    "y": -300
                                 },
                                 "parameters": [
                                     {

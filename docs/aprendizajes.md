@@ -2336,3 +2336,24 @@ etc.), no confiar sólo en el índice interno; verificar la existencia real ante
 Descartada la opción (b) —cerrar permisos— por no reparar huérfanos existentes ni cubrir otras
 causas de desaparición. Falta llevar el cambio al blueprint ejecutable de Make (SC-Adjuntos-Upload,
 hoy v1.4) y reimportar.
+
+### 2026-09-04 — SC-Adjuntos-Upload v1.4→v1.5: implementación del módulo 2b en el blueprint
+**Contexto:** materializar en el blueprint ejecutable de Make el módulo 2b (verificación Dropbox) y
+la rama huérfano diseñados en §8.6.2.
+**Inconveniente:** el primer diseño ponía un filtro `{{2.id}} exist` en el propio módulo 2b para que
+sólo corriera "cuando hay match". Pero el módulo 2b va en el flujo principal, ANTES del router.
+**Causa raíz:** en Make, un filtro sobre un módulo lineal bloquea TODO lo que va después de él en esa
+ruta. Si el filtro de 2b fallaba (caso alta/reemplazo, sin match), el router entero quedaba sin
+ejecutarse → sin upload ni respuesta → la app colgaba.
+**Solución aplicada:** el módulo 2b (id 19, `dropbox:getFileMetadata` v5) se deja SIN filtro, corre
+siempre; con `{{2.url_dropbox}}` vacío (sin match) Dropbox devuelve error y la directiva `builtin:Resume`
+(id 26) lo resuelve a salida vacía sin detener el flujo. La condición "cuando hay match" se traslada a
+los filtros de las ramas del router: reused = `{{2.id}}` exist AND `{{19.id}}` exist; huérfano =
+`{{2.id}}` exist AND `{{19.id}}` notexist. La rama huérfano (ids 20-25) espeja a reemplazo salvo el
+delete de Dropbox, y sube con `overwrite:true` para ser idempotente ante un falso negativo del metadata.
+Validado con `python3 -c json.load`: JSON OK, IDs únicos `[…,11,19,26,3,4,5,20-25,12,…]`, 4 ramas.
+**Prevención futura:** en Make, para condicionar un módulo sin cortar el resto del flujo, o se mete el
+módulo dentro de una ruta del router, o se deja correr siempre con `Resume` y se decide en los filtros
+de las ramas. Nunca un filtro gatillo en un módulo lineal pre-router. Pendiente: no se pudo verificar
+contra Make la clave/versión exacta de `dropbox:getFileMetadata` ni de `builtin:Resume` (el MCP no
+alcanza Make); quedaron señalados en claude-out.txt para confirmar en la UI tras importar.
