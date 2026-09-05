@@ -26,3 +26,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 docs/_md/archivo_ejemplo/Formato Informe VProperty Enero2026.xlsm
+docs/_artefactos/make/_backup/SC-RF09-ExtraccionClaude v2.0_backup_2026-09-04.json

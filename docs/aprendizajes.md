@@ -2485,3 +2485,33 @@ keychain en Make al reimportar y **rotar la key** en console.anthropic.com (estu
 que lo causó; hay que reponerlo explícitamente a un estado no-terminal para que el trigger de update
 vuelva a evaluar. Y ningún secreto va en el `mapper` de un módulo HTTP: el módulo `*ApiKeyAuth` con
 keychain existe precisamente para eso.
+
+### 2026-09-04 — SC-RF09 v2.1: "Module Not Found" al importar y modelo inexistente
+**Contexto:** el blueprint v2.1 del commit 317d73d no importaba en Make: "Module Not Found" en el
+módulo 10 (llamada HTTP a Anthropic).
+**Inconveniente:** el fix anterior cambió el módulo 10 de `http:ActionSendData` a
+`http:ActionSendDataApiKeyAuth` creyendo que era la variante HTTP con keychain. **Ese módulo no
+existe** en Make: la app HTTP sólo trae `ActionSendData`, `ActionSendDataBasicAuth` y
+`ActionSendDataOAuth2` — no hay un `ApiKeyAuth`. Al importar, Make no resuelve el nombre y aborta el
+módulo. Segundo hallazgo, colateral: el blueprint commiteado traía `"model": "claude-sonnet-5"`, que
+**no es un ID de modelo válido** de Anthropic (los reales son `claude-sonnet-4-6`, `claude-opus-4-8`,
+`claude-fable-5`, `claude-haiku-4-5-*`); habría fallado con error de modelo aunque el import pasara.
+**Causa raíz:** se inventó un tipo de módulo por analogía con los de Airtable/Dropbox (que sí ligan
+`__IMTCONN__`), sin verificarlo contra los tipos reales de la app HTTP. `http:ActionSendData` **no
+soporta connection ni keychain**: es una petición cruda y el secreto se ingresa en el propio campo del
+header dentro de la UI de Make. No hay forma connection-based para un HTTP crudo.
+**Solución aplicada:** se reconstruyó el blueprint desde el backup probado
+(`_backup/SC-RF09-ExtraccionClaude v2.0_backup_2026-09-04.json`) con `cp`, preservando el flujo
+completo (webhook 3393157, Airtable search/update/create, Dropbox, router, ramas huérfano, JSON
+parsers, respuestas). Sólo se tocaron dos cosas: `name` → v2.1 y el valor del header `x-api-key`, que
+pasó de la key en claro a un placeholder `PEGA-AQUI-LA-API-KEY-NUEVA-EN-MAKE`. El módulo 10 vuelve a
+ser `http:ActionSendData` (importa OK) y la reconstrucción restaura de paso `claude-sonnet-4-6`.
+Validación: `grep sk-ant`=0, header `x-api-key` presente sin valor real, `python -m json.tool` OK, y
+los 10 tipos de módulo del v2.0 intactos. Sergio pega la key nueva en el header del módulo 10 tras
+reimportar (la key vieja ya la rotó).
+**Prevención futura:** antes de cambiar el `module` de un blueprint, verificar que el tipo existe en un
+blueprint que YA importó en Make; no derivar el nombre por analogía. Para un HTTP crudo con secreto, el
+patrón real no es "connection" —`http:ActionSendData` no la soporta— sino pegar el valor en el campo
+del header en la UI y mantener el placeholder en git. Y todo `model` de una llamada a Anthropic se
+contrasta contra la lista vigente de IDs antes de commitear (ver skill claude-api): `claude-sonnet-5`
+no existe.
