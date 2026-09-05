@@ -77,6 +77,12 @@ export interface AdjuntoFotoFields {
    * comparables (ver la ruta de fotos y `tipo-documento-foto.ts`).
    */
   clave_adjunto?: string
+  /**
+   * `estado_extraccion` (`fld54epvDJ7YdJIYD`) — avance del pipeline RF-09.
+   * El `PATCH` lo repone a `idle` cuando rescata una foto de comparables que el
+   * disparo en `recordCreated` dejó en `skipped` (ver la ruta de fotos).
+   */
+  estado_extraccion?: string
   descripcion?: string
   url_dropbox?: string
   thumbnail_url?: string

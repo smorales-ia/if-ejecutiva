@@ -244,11 +244,33 @@ export async function PATCH(
      */
     const claveAdjunto = claveAdjuntoDeCategoria(d.categoria)
 
+    /**
+     * Rescate del `skipped` — sin esto, escribir `clave_adjunto` no basta.
+     *
+     * `AT-RF09-Trigger` corre en `recordCreated`. Si la fila se creó con
+     * `clave_adjunto` vacío (el caso normal: el `tipo_documento` de la subida no
+     * siempre llega), la automation aplica RN-25 —«sin tipo declarado»— y deja
+     * la fila en `estado_extraccion='skipped'`, un estado **terminal**. Cuando
+     * este PATCH repone `clave_adjunto` después, el `recordUpdated` vuelve a
+     * evaluar, pero encuentra `skipped` y no hay nada que reactivar: la
+     * extracción no vuelve a intentarse y la sección D queda en «0 de 3».
+     *
+     * Reponer `estado_extraccion='idle'` en el mismo update devuelve la fila al
+     * único estado no-terminal desde el que el pipeline vuelve a arrancar, ahora
+     * con `clave_adjunto` ya poblado. Se hace **sólo** cuando (a) escribimos una
+     * `clave_adjunto` —es la foto de comparables, la única que dispara RF-09— y
+     * (b) la fila está justamente en `skipped`: no se pisa un `listo`, un
+     * `extrayendo` en curso ni un `error` que el operador quiera diagnosticar.
+     */
+    const rescataSkipped =
+      claveAdjunto !== undefined && adjunto.fields.estado_extraccion === 'skipped'
+
     await updateRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, recordId, {
       tipo_adjunto: TIPO_ADJUNTO_FOTO,
       descripcion: d.categoria,
       subido_por: SUBIDO_POR_TASADOR,
       ...(claveAdjunto ? { clave_adjunto: claveAdjunto } : {}),
+      ...(rescataSkipped ? { estado_extraccion: 'idle' } : {}),
       ...(d.orden !== undefined ? { orden: d.orden } : {}),
       ...(d.thumbnailUrl ? { thumbnail_url: d.thumbnailUrl } : {}),
     })

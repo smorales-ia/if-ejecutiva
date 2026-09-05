@@ -214,6 +214,41 @@ describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
     const [, , campos] = updateRecord.mock.calls[0]
     expect(campos).not.toHaveProperty('clave_adjunto')
   })
+
+  it('rescata el skipped: repone estado_extraccion=idle al reponer la llave', async () => {
+    // El disparo en recordCreated dejó la fila en `skipped` (RN-25, sin llave).
+    // Reponer clave_adjunto no basta: `skipped` es terminal. Hay que devolverla
+    // a `idle` para que recordUpdated re-evalúe con la llave ya poblada.
+    getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: 'skipped' }))
+
+    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+
+    const [, , campos] = updateRecord.mock.calls[0]
+    expect(campos.clave_adjunto).toBe('foto_ofertas_comparables')
+    expect(campos.estado_extraccion).toBe('idle')
+  })
+
+  it('no toca estado_extraccion si la foto de comparables no venía en skipped', async () => {
+    // La fila ya se creó con la llave (recordCreated la vio) y quedó en `listo`.
+    // No la pisamos: reactivar una extracción ya resuelta sería un falso reintento.
+    getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: 'listo' }))
+
+    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+
+    const [, , campos] = updateRecord.mock.calls[0]
+    expect(campos).not.toHaveProperty('estado_extraccion')
+  })
+
+  it('no repone estado_extraccion para una categoría que no dispara RF-09', async () => {
+    // `skipped` en una foto de registro normal es su desenlace correcto: no hay
+    // nada que extraer. Sin clave_adjunto no se rescata.
+    getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: 'skipped' }))
+
+    await patch({ adjuntoId: ADJUNTO, categoria: 'cocina' })
+
+    const [, , campos] = updateRecord.mock.calls[0]
+    expect(campos).not.toHaveProperty('estado_extraccion')
+  })
 })
 
 describe('subido_por · la bisagra del GET', () => {

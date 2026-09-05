@@ -2460,3 +2460,28 @@ webhook — el servidor, que siempre corre el último deploy y escribe directo e
 valor lo necesitan cliente y servidor, un módulo compartido sin "use client" evita que se desincronicen.
 Diagnóstico exprés para «Make no ejecuta»: DevTools→Network→payload de /api/adjuntos/upload muestra al
 instante si el campo viajó (stale bundle) o no (config Make).
+
+### 2026-09-04 — RF-09 comparables: rescate del `skipped` + key hardcodeada en SC-RF09
+**Contexto:** continuación del fix de comparables. Aun escribiendo `clave_adjunto` server-side (fix
+del 04-09 anterior), la extracción RF-09 seguía sin correr y `TX_Comparables` quedaba vacía.
+**Inconveniente:** dos bugs distintos. (1) Timing real, no el supuesto ayer: `AT-RF09-Trigger` corre en
+`recordCreated` cuando `clave_adjunto` todavía está vacío → aplica RN-25 → deja la fila en
+`estado_extraccion='skipped'`, que es **terminal**. El PATCH repone `clave_adjunto` después, pero el
+`recordUpdated` encuentra `skipped` y no reactiva nada: la extracción no se reintenta nunca. (2)
+Seguridad: el módulo 10 (HTTP a `api.anthropic.com`) del blueprint `SC-RF09-ExtraccionClaude v2.0`
+tenía la **API key de Anthropic hardcodeada** en el header `x-api-key`, versionada en git.
+**Causa raíz:** (1) reponer `clave_adjunto` no basta si la fila ya cayó en un estado terminal; falta
+devolverla al único estado no-terminal (`idle`) para que `recordUpdated` la re-evalúe con la llave ya
+poblada. (2) el HTTP crudo (`http:ActionSendData`) no liga connection y alguien puso la key en claro.
+**Solución aplicada:** (a) en `PATCH /api/tasaciones/[id]/fotos` se repone `estado_extraccion='idle'`
+en el mismo `updateRecord`, **sólo** cuando se escribe una `clave_adjunto` (foto de comparables) Y la
+fila está en `skipped` — no se pisa `listo`/`extrayendo`/`error`. Se agregó `estado_extraccion` a
+`AdjuntoFotoFields` y 3 tests (rescata skipped, no toca listo, no rescata categoría sin RF-09); 22/22
+verde. (b) blueprint bumpeado a `v2.1`: módulo 10 pasa de `http:ActionSendData` a
+`http:ActionSendDataApiKeyAuth` con `__IMTCONN__` (keychain Anthropic), header `x-api-key` eliminado
+del mapper; JSON válido, `grep sk-ant` = 0. Pendiente operativo del usuario: crear la connection
+keychain en Make al reimportar y **rotar la key** en console.anthropic.com (estuvo expuesta en git).
+**Prevención futura:** un estado terminal (`skipped`, `error`) no se auto-recupera al corregir el dato
+que lo causó; hay que reponerlo explícitamente a un estado no-terminal para que el trigger de update
+vuelva a evaluar. Y ningún secreto va en el `mapper` de un módulo HTTP: el módulo `*ApiKeyAuth` con
+keychain existe precisamente para eso.
