@@ -2544,3 +2544,30 @@ cerrado. Un `recordCreated` no ve cambios posteriores; si el dato se completa po
 automation `recordUpdated`. Diagnóstico exprés: `get_automation` sobre la automation muestra
 `trigger.type` real en una línea. Para replicar un script complejo en una segunda automation, duplicar
 en la UI (fiel) en vez de recrear por MCP (transcripción).
+
+### 2026-09-04 — La gemela recordUpdated tampoco dispara: watch field frágil + prueba con dedup
+**Contexto:** creada y activada la gemela `AT-RF09-Trigger-Update` (recordUpdated watching
+estado_extraccion), su historial seguía VACÍO tras subir la foto de comparables ~23:03.
+**Inconveniente:** la gemela nunca corrió pese a estar bien configurada.
+**Causa raíz (evidencia MCP):** dos cosas se sumaron. (1) La fila más nueva de comparables leída vía
+`search_records` seguía siendo la de las 20:49 (`recps2S7A7xTB66ha`, VP-2026-0060, estado=idle,
+clave=foto_ofertas_comparables): **no se creó fila nueva a las 23:03** → la re-subida fue del mismo
+archivo y `SC-Adjuntos-Upload` la deduplicó por `hash_md5`, sin crear ni cambiar nada → ningún
+recordUpdated → la gemela no tenía qué disparar (prueba inconcluyente). (2) Aun con una subida nueva,
+vigilar `estado_extraccion` es frágil: la fila hace `idle→skipped→idle` en ~1-2 s (recordCreated pone
+skipped, el PATCH rescata idle) y Airtable puede coalescer ambos writes dentro de su ventana de
+debounce viendo un NETO idle→idle (sin cambio) → la gemela no dispara nunca. Confirmado además que
+`estado_extraccion` es singleSelect **sin default** (via `get_table_schema`).
+**Solución aplicada:** (a) la gemela debe vigilar **`clave_adjunto`** (fldaLLtzAaEn1O8IW), que pasa
+vacío→"foto_ofertas_comparables" en una sola transición limpia sin rebote — disparo confiable; añadir
+estado_extraccion al watch sólo como extra para el reproceso. (b) Código: en `PATCH
+/api/tasaciones/[id]/fotos` se amplió el rescate: repone `estado_extraccion='idle'` cuando el estado
+actual es re-extraíble (`''`, `skipped`, `error`), no sólo `skipped`; protege `extrayendo` y `listo`.
+Así, cuando la gemela dispara por el cambio de clave, la fila garantiza `idle` y el guard del script
+(`=== 'idle'`) pasa aunque el campo llegara vacío. `route.test.ts` 24/24 verde (tests para error, vacío,
+y protección de listo/extrayendo). (c) Documentado en el docblock del script que al probar hay que subir
+una foto NUEVA (hash distinto) para no caer en el dedup.
+**Prevención futura:** para disparar una automation `recordUpdated`, elegir un campo con una transición
+ÚNICA y monótona (empty→value), no uno que rebote (idle→skipped→idle) porque el debounce de Airtable
+puede anular el neto. Y al probar pipelines con dedup por hash, usar siempre un binario nuevo: reusar el
+archivo enmascara el fix como si no funcionara.

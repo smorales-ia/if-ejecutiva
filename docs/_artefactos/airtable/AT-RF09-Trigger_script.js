@@ -16,15 +16,30 @@
  *     1) AT-RF09-Trigger        · trigger "recordCreated"  (documento con
  *        clave_adjunto ya presente al crearse — subidas de IF-02).
  *     2) AT-RF09-Trigger-Update · trigger "recordUpdated" watching
- *        estado_extraccion (fld54epvDJ7YdJIYD) — la foto de comparables de
- *        IF-03, cuya clave_adjunto la escribe el PATCH server-side DESPUÉS de
- *        crear la fila, dejándola en 'idle' tras rescatar el 'skipped'.
+ *        clave_adjunto (fldaLLtzAaEn1O8IW) — la foto de comparables de IF-03,
+ *        cuya clave_adjunto la escribe el PATCH server-side DESPUÉS de crear la
+ *        fila. Añadir estado_extraccion (fld54epvDJ7YdJIYD) al watch cubre además
+ *        el reproceso (SC-Adjuntos-Reemplazar), pero el campo PRINCIPAL a vigilar
+ *        es clave_adjunto.
  *   Durante meses SOLO estaba desplegada la (1): la foto de comparables
  *   quedaba en 'idle'+clave pero nada re-evaluaba el update, el webhook Make
  *   nunca se llamaba y la sección D quedaba en "0 de 3". El guard
  *   `estado_extraccion === 'idle'` de abajo hace ambos triggers idempotentes
  *   (los cambios idle→extrayendo→listo re-disparan el update pero salen sin
  *   acción), así que tener las dos gemelas no duplica el POST.
+ *
+ *   ⚠ POR QUÉ clave_adjunto Y NO estado_extraccion COMO WATCH PRINCIPAL: la fila
+ *   hace idle→skipped→idle en ~1-2 s (recordCreated pone 'skipped', el PATCH lo
+ *   rescata a 'idle'). Airtable puede coalescer esos dos writes dentro de su
+ *   ventana de debounce y ver un NETO idle→idle (sin cambio) → una gemela que
+ *   vigile estado_extraccion podría no dispararse NUNCA. clave_adjunto en cambio
+ *   pasa vacío→"foto_ofertas_comparables" en una sola transición limpia, sin
+ *   rebote: es el disparo confiable. El PATCH escribe clave + 'idle' en el mismo
+ *   update, así que cuando la gemela lee la fila ve 'idle' y el guard pasa.
+ *
+ *   ⚠ AL PROBAR: subir SIEMPRE una foto NUEVA (hash distinto). Reusar el mismo
+ *   archivo hace que SC-Adjuntos-Upload deduplique por hash_md5, no cree fila y
+ *   no cambie nada → ningún recordUpdated → la gemela no dispara (falso negativo).
  *
  * Reemplaza el diseño de docs/_notas/rf09_diseno.md (que proponía un
  * Route Handler Next.js POST /api/extraccion/iniciar como disparador) — el

@@ -245,32 +245,40 @@ export async function PATCH(
     const claveAdjunto = claveAdjuntoDeCategoria(d.categoria)
 
     /**
-     * Rescate del `skipped` — sin esto, escribir `clave_adjunto` no basta.
+     * Deja la fila en `estado_extraccion='idle'` para que RF-09 arranque.
      *
-     * `AT-RF09-Trigger` corre en `recordCreated`. Si la fila se creó con
-     * `clave_adjunto` vacío (el caso normal: el `tipo_documento` de la subida no
-     * siempre llega), la automation aplica RN-25 —«sin tipo declarado»— y deja
-     * la fila en `estado_extraccion='skipped'`, un estado **terminal**. Cuando
-     * este PATCH repone `clave_adjunto` después, el `recordUpdated` vuelve a
-     * evaluar, pero encuentra `skipped` y no hay nada que reactivar: la
-     * extracción no vuelve a intentarse y la sección D queda en «0 de 3».
+     * `AT-RF09-Trigger` corre en `recordCreated` y, si la fila se creó sin
+     * `clave_adjunto` (el caso normal: el `tipo_documento` de la subida no
+     * siempre llega), aplica RN-25 y la deja en `skipped`. Este PATCH repone
+     * `clave_adjunto` después, vía un **update** que la automation gemela
+     * `AT-RF09-Trigger-Update` (recordUpdated) debe capturar.
      *
-     * Reponer `estado_extraccion='idle'` en el mismo update devuelve la fila al
-     * único estado no-terminal desde el que el pipeline vuelve a arrancar, ahora
-     * con `clave_adjunto` ya poblado. Se hace **sólo** cuando (a) escribimos una
-     * `clave_adjunto` —es la foto de comparables, la única que dispara RF-09— y
-     * (b) la fila está justamente en `skipped`: no se pisa un `listo`, un
-     * `extrayendo` en curso ni un `error` que el operador quiera diagnosticar.
+     * **Por qué reponemos `idle` desde varios estados, no sólo `skipped`.** El
+     * guard del script de la automation es `estado_extraccion === 'idle'`. Si al
+     * momento de escribir la llave la fila trae `skipped`, `error` o el estado
+     * vacío (Airtable no da default a este singleSelect), el guard fallaría y la
+     * extracción no correría. Reponer `idle` en el mismo update garantiza que la
+     * fila quede en el único estado desde el que el pipeline arranca, con la
+     * llave ya poblada. Se protegen `extrayendo` (en curso) y `listo` (ya
+     * extraído): esos NO se pisan.
+     *
+     * La gemela vigila **`clave_adjunto`** (vacío→valor es una transición limpia
+     * y única, sin el rebote `idle→skipped→idle` que Airtable puede coalescer y
+     * perder). Este update escribe llave + `idle` juntos, así que cuando la
+     * gemela dispara y lee la fila, ve `idle` + llave y hace el POST. Ver el
+     * docblock de despliegue en `AT-RF09-Trigger_script.js`.
      */
-    const rescataSkipped =
-      claveAdjunto !== undefined && adjunto.fields.estado_extraccion === 'skipped'
+    const ESTADOS_REEXTRAIBLES = new Set(['', 'skipped', 'error'])
+    const reactivaExtraccion =
+      claveAdjunto !== undefined &&
+      ESTADOS_REEXTRAIBLES.has(adjunto.fields.estado_extraccion ?? '')
 
     await updateRecord<AdjuntoFotoFields>(TABLE_IDS.adjuntos, recordId, {
       tipo_adjunto: TIPO_ADJUNTO_FOTO,
       descripcion: d.categoria,
       subido_por: SUBIDO_POR_TASADOR,
       ...(claveAdjunto ? { clave_adjunto: claveAdjunto } : {}),
-      ...(rescataSkipped ? { estado_extraccion: 'idle' } : {}),
+      ...(reactivaExtraccion ? { estado_extraccion: 'idle' } : {}),
       ...(d.orden !== undefined ? { orden: d.orden } : {}),
       ...(d.thumbnailUrl ? { thumbnail_url: d.thumbnailUrl } : {}),
     })

@@ -228,15 +228,38 @@ describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
     expect(campos.estado_extraccion).toBe('idle')
   })
 
-  it('no toca estado_extraccion si la foto de comparables no venía en skipped', async () => {
-    // La fila ya se creó con la llave (recordCreated la vio) y quedó en `listo`.
-    // No la pisamos: reactivar una extracción ya resuelta sería un falso reintento.
-    getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: 'listo' }))
+  it('reactiva desde error: repone estado_extraccion=idle', async () => {
+    // Un intento previo que erró debe poder reintentarse al recategorizar.
+    getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: 'error' }))
 
     await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
 
     const [, , campos] = updateRecord.mock.calls[0]
-    expect(campos).not.toHaveProperty('estado_extraccion')
+    expect(campos.estado_extraccion).toBe('idle')
+  })
+
+  it('reactiva desde estado vacío: repone estado_extraccion=idle', async () => {
+    // estado_extraccion es singleSelect sin default en Airtable: la fila puede
+    // llegar sin valor. Sin reponer idle, el guard del script (=== 'idle')
+    // fallaría y RF-09 nunca correría para la foto de comparables.
+    getRecord.mockResolvedValue(adjuntoDe([ID]))
+
+    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+
+    const [, , campos] = updateRecord.mock.calls[0]
+    expect(campos.estado_extraccion).toBe('idle')
+  })
+
+  it('no pisa una extracción ya resuelta (listo) ni una en curso (extrayendo)', async () => {
+    for (const estado of ['listo', 'extrayendo']) {
+      updateRecord.mockClear()
+      getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: estado }))
+
+      await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+
+      const [, , campos] = updateRecord.mock.calls[0]
+      expect(campos).not.toHaveProperty('estado_extraccion')
+    }
   })
 
   it('no repone estado_extraccion para una categoría que no dispara RF-09', async () => {
