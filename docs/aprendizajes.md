@@ -2515,3 +2515,32 @@ patrón real no es "connection" —`http:ActionSendData` no la soporta— sino p
 del header en la UI y mantener el placeholder en git. Y todo `model` de una llamada a Anthropic se
 contrasta contra la lista vigente de IDs antes de commitear (ver skill claude-api): `claude-sonnet-5`
 no existe.
+
+### 2026-09-04 — RF-09 nunca dispara: AT-RF09-Trigger sólo escucha recordCreated
+**Contexto:** con el PATCH server-side (rescate skipped→idle) y el blueprint v2.1 ya arreglados, la
+extracción de comparables seguía sin correr: Make History no mostraba ningún run tipo Webhook.
+**Inconveniente:** la fila de TX_Adjuntos quedaba en el estado correcto pero el webhook jamás se
+llamaba. Verificado vía MCP en la fila real `recps2S7A7xTB66ha` (VP-2026-0060, 2026-09-04 20:49):
+`clave_adjunto="foto_ofertas_comparables"` ✓ y `estado_extraccion="idle"` ✓ — exactamente el estado
+que debería disparar RF-09, y aun así nada.
+**Causa raíz:** la automation `AT-RF09-Trigger` (`wflIEucD1MxxcNXH8`) tiene **un solo trigger,
+`recordCreated`** (confirmado con `get_automation`: `trigger.type="recordCreated"`). Pero para la foto
+de comparables la `clave_adjunto` y el `idle` los escribe el PATCH server-side vía **update**, segundos
+DESPUÉS de crear la fila. El `recordCreated` ya pasó (con la llave vacía → RN-25 → skipped) y **no hay
+ninguna automation con `recordUpdated`** enganchada a `estado_extraccion` (la única recordUpdated sobre
+la tabla es AT03-Ext, que vigila otro campo, `fldeCH15RrL8f4TZk`). El docblock del script SIEMPRE dijo
+"recordCreated O recordUpdated watching estado_extraccion", pero la segunda gemela nunca se desplegó.
+Todo el diseño de rescate del PATCH dependía de un trigger de update que no existía.
+**Solución aplicada:** se documenta y se pide desplegar la automation gemela `AT-RF09-Trigger-Update`
+(mismo script, mismos inputs/secrets) con trigger `recordUpdated` watching `estado_extraccion`. Se
+decidió NO crearla vía MCP: `customScript` es creable pero exige reinyectar ~9 KB de script inline
+(riesgo de transcripción en producción); la vía fiel es **duplicar** la automation en la UI de Airtable
+(copia script+inputs+secrets exactos) y cambiar sólo el trigger. Sin cambio de código de app: la fila
+ya quedaba en idle+clave; el hueco era 100% de configuración de la automation. Breadcrumb de despliegue
+agregado al docblock de `AT-RF09-Trigger_script.js`.
+**Prevención futura:** cuando un fix server-side corrige un dato "para que un trigger re-evalúe",
+verificar que ESE trigger existe y escucha el evento correcto (create vs update) ANTES de dar el fix por
+cerrado. Un `recordCreated` no ve cambios posteriores; si el dato se completa por update, hace falta una
+automation `recordUpdated`. Diagnóstico exprés: `get_automation` sobre la automation muestra
+`trigger.type` real en una línea. Para replicar un script complejo en una segunda automation, duplicar
+en la UI (fiel) en vez de recrear por MCP (transcripción).

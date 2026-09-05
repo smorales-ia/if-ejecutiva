@@ -10,6 +10,22 @@
  *   Input variable: pasar el record id disparador como "adjuntoId" en
  *   input.config() (Dynamic Reference del trigger).
  *
+ * ⚠ DESPLIEGUE — SON DOS AUTOMATIONS, NO UNA (bug 2026-09-04):
+ *   Airtable permite UN solo trigger por automation, así que este MISMO script
+ *   debe vivir en DOS automations gemelas sobre TX_Adjuntos:
+ *     1) AT-RF09-Trigger        · trigger "recordCreated"  (documento con
+ *        clave_adjunto ya presente al crearse — subidas de IF-02).
+ *     2) AT-RF09-Trigger-Update · trigger "recordUpdated" watching
+ *        estado_extraccion (fld54epvDJ7YdJIYD) — la foto de comparables de
+ *        IF-03, cuya clave_adjunto la escribe el PATCH server-side DESPUÉS de
+ *        crear la fila, dejándola en 'idle' tras rescatar el 'skipped'.
+ *   Durante meses SOLO estaba desplegada la (1): la foto de comparables
+ *   quedaba en 'idle'+clave pero nada re-evaluaba el update, el webhook Make
+ *   nunca se llamaba y la sección D quedaba en "0 de 3". El guard
+ *   `estado_extraccion === 'idle'` de abajo hace ambos triggers idempotentes
+ *   (los cambios idle→extrayendo→listo re-disparan el update pero salen sin
+ *   acción), así que tener las dos gemelas no duplica el POST.
+ *
  * Reemplaza el diseño de docs/_notas/rf09_diseno.md (que proponía un
  * Route Handler Next.js POST /api/extraccion/iniciar como disparador) — el
  * prompt de la sesión de construcción decidió que el trigger vive
