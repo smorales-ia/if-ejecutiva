@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { resolverAvanceLectura } from '@/lib/tasador/avance-lectura'
 
 /**
- * P6-TAS · el gate del botón «Continuar con datos de la visita» (§7.3).
+ * P6-TAS · el gate del botón «Continuar con datos de la visita».
  *
- * `EstadoProcesando` deriva dos cosas distintas del mismo avance y **no hay que
- * confundirlas**: `completado` mueve el aspecto de la pantalla —círculo, título,
- * stepper— y `puedeContinuar` habilita el botón. Con `error` o
- * `delegado_visador` el proceso terminó (el stepper llega a «Datos listos») pero
- * el botón sigue cerrado.
+ * `EstadoProcesando` deriva del avance: `completado` mueve el aspecto de la
+ * pantalla —círculo, título, stepper— y `puedeContinuar` habilita el botón. En
+ * `lectura` **coinciden** (D-2026-09-04): el botón se abre en cuanto nada sigue
+ * en curso. Con `error`/`delegado_visador` el proceso terminó y el botón habilita
+ * —el aviso ámbar informa qué completar—; antes bloqueaban (§7.3) y atrapaban al
+ * tasador con «Datos listos» + «completa a mano» + botón gris.
  *
  * El componente es cliente y el repo no tiene `jsdom` ni `@testing-library`
  * —las instrucciones del repo cierran la puerta a agregarlos—, así que se prueba
@@ -55,21 +56,21 @@ describe('al completarse los tres pasos', () => {
   })
 })
 
-describe('los dos desenlaces que terminan sin habilitar', () => {
-  it('`error`: el stepper completa pero el botón no', () => {
+describe('los desenlaces con aviso también habilitan (D-2026-09-04)', () => {
+  it('`error`: el stepper completa y el botón habilita (el aviso informa)', () => {
     const g = gate({ listo: 2, error: 1 })
     expect(g.completado).toBe(true)
     expect(g.fase).toBe(2)
-    expect(g.puedeContinuar).toBe(false)
+    expect(g.puedeContinuar).toBe(true)
   })
 
   it('`delegado_visador`: mismo tratamiento', () => {
     const g = gate({ listo: 1, delegado_visador: 1 })
     expect(g.completado).toBe(true)
-    expect(g.puedeContinuar).toBe(false)
+    expect(g.puedeContinuar).toBe(true)
   })
 
-  it('`skipped` y `no_corresponde` sí habilitan: no son fallos', () => {
+  it('`skipped` y `no_corresponde` habilitan: no son fallos', () => {
     expect(gate({ skipped: 1, no_corresponde: 1 }).puedeContinuar).toBe(true)
   })
 })

@@ -123,10 +123,12 @@ export function EstadoProcesando({
 
   /**
    * `completado` mueve el aspecto de la pantalla; `puedeContinuar` habilita el
-   * botón. **No son lo mismo en la variante `lectura`**: `error` y
-   * `delegado_visador` son terminales —el proceso acabó y el stepper lo
-   * refleja— pero no autorizan a seguir (§7.3). En `calculo` coinciden, que es
-   * el comportamiento que esa pantalla siempre tuvo.
+   * botón. En la variante `lectura` ahora **coinciden** (D-2026-09-04): en
+   * cuanto todo llegó a un estado terminal el tasador puede seguir, aun con
+   * `error`/`delegado_visador` —esos ya no bloquean, sólo pintan el aviso ámbar
+   * de abajo—. Antes bloqueaban (§7.3) y la pantalla se contradecía: «Datos
+   * listos» + «completa a mano» + botón gris. En `calculo` coinciden desde
+   * siempre.
    */
   const completado = esCalculo ? calculoListo : (avance?.completo ?? false)
   const puedeContinuar = esCalculo ? calculoListo : (avance?.puedeContinuar ?? false)
@@ -269,13 +271,15 @@ export function EstadoProcesando({
       {/* Botones */}
       <div className="mt-8 flex w-full flex-col gap-3">
         {/*
-          §7.3 · «Continuar» **no es accionable ni por teclado ni por doble
-          toque** mientras el proceso no autorice a seguir. Se renderiza como
-          `<button disabled>` y no como enlace: un `<a>` deshabilitado no existe
-          —sigue siendo focalizable y activable con Enter—, así que la variante
-          bloqueada tiene que ser un botón nativo. Y el gate es `puedeContinuar`,
-          no `completado`: con `error` o `delegado_visador` el proceso terminó
-          pero el botón sigue cerrado.
+          «Continuar» **no es accionable ni por teclado ni por doble toque**
+          mientras el proceso siga corriendo. Se renderiza como `<button
+          disabled>` y no como enlace: un `<a>` deshabilitado no existe —sigue
+          siendo focalizable y activable con Enter—, así que la variante cerrada
+          tiene que ser un botón nativo. El gate es `puedeContinuar`, que en
+          `lectura` equivale a `completado` (D-2026-09-04): sólo se cierra
+          mientras haya algo en `idle`/`extrayendo`. Con `error`/`delegado_visador`
+          el proceso terminó y el botón se abre —el aviso ámbar informa qué
+          completar—.
         */}
         {puedeContinuar ? (
           <Button

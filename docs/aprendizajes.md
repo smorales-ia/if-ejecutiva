@@ -2571,3 +2571,32 @@ una foto NUEVA (hash distinto) para no caer en el dedup.
 ÚNICA y monótona (empty→value), no uno que rebote (idle→skipped→idle) porque el debounce de Airtable
 puede anular el neto. Y al probar pipelines con dedup por hash, usar siempre un binario nuevo: reusar el
 archivo enmascara el fix como si no funcionara.
+
+### 2026-09-04 — Pantalla de lectura: «Datos listos» + aviso + botón gris (contradicción) y BUG-3 falso positivo
+**Contexto:** RF-09 ya corría end-to-end (gemela + Make v2.1 success, 7 comparables extraídos). Quedaban
+tres avisos en la pantalla `/tasaciones/[id]/lectura` y en el run de Make.
+**Inconvenientes y causa raíz (evidencia MCP):**
+- **BUG 1+2 (mismo origen).** La pantalla mostraba a la vez «Datos listos» (stepper verde), el aviso
+  «No pudimos leer algunos documentos. Puedes completar esos datos a mano.» y el botón «Continuar»
+  DESHABILITADO. Causa: en `lib/tasador/avance-lectura.ts`, `puedeContinuar = completo && bloqueados===0`
+  con `bloqueados = error + delegado_visador` (§7.3). Un adjunto en `error` es terminal (→ stepper
+  completo, fase 2) pero bloqueaba el botón, mientras el copy invitaba a completar a mano: el tasador
+  quedaba atrapado. Leída la tasación `rec75VXoWvRImjd0f` (VP-2026-0060) vía MCP: hoy tiene UN solo
+  adjunto (la foto de comparables, `estado_extraccion=listo`), así que ahora mismo no hay doc fallido;
+  el aviso que vio Sergio fue de un intento previo con un doc en `error`. La contradicción vive en el
+  código y es reproducible con cualquier `error`.
+- **BUG 3 (falso positivo).** En el run de Make e385735083, el módulo 13 "Airtable Update" mostró
+  «The bundle did not pass through the filter». Es una rama de router ESPERADA: su filtro es
+  `length(25.items) == 0` («Mismatch: 0 atributos extraidos», hijo módulo 15 → `estado_extraccion=error`).
+  El run extrajo 7 items (`≠ 0`), así que esa rama de error correctamente no pasó; la rama gemela
+  (`items != 0`) creó los comparables y respondió el webhook. Nada quedó sin escribir.
+**Solución aplicada:** decisión de producto (D-2026-09-04, **diverge de §7.3**): todo estado terminal
+habilita continuar. `puedeContinuar` pasó a ser `= completo`; se removió `bloqueados`/`BLOQUEANTES`.
+`error`/`delegado_visador` siguen exponiéndose por `hayError`/`hayDelegado` para el aviso ámbar, pero ya
+no cierran el botón. Actualizados docblocks de `avance-lectura.ts` y `estado-procesando.tsx`, y ambos
+tests (`avance-lectura.test.ts` con el caso pedido «datos-listos con doc no leído → botón habilitado»,
+`estado-procesando.test.ts`). 39/39 verde. BUG 3 no requirió cambio: documentado como rama esperada.
+**Prevención futura:** si un copy dice «puedes continuar / completar a mano», el gate del botón no puede
+ser más estricto que ese mensaje —copy y estado habilitante se derivan de la misma verdad—. Y un módulo
+Make con «did not pass through the filter» dentro de un router es diseño, no falla: contrastar el filtro
+de la rama gemela antes de tratarlo como bug. Pendiente: reconciliar §7.3 en la spec con esta decisión.

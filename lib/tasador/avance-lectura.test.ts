@@ -10,11 +10,10 @@ import {
  * P6-TAS · el mapeo de los 7 valores de `estado_extraccion` a los 3 pasos del
  * stepper (RF-TAS-15 · §7.2 paso 3 · §7.3 criterio 5).
  *
- * Lo que se protege es la distinción que el criterio hace explícita: **terminal
- * no es lo mismo que «puede continuar»**. Cinco estados son terminales y sólo
- * tres autorizan a avanzar. Confundirlos deja al tasador entrando al formulario
- * con datos que nunca se leyeron —el caso de `error`— o bloqueado sin poder
- * hacer nada —el caso de `skipped`—.
+ * Lo que se protege: **todo estado terminal deja continuar** (D-2026-09-04).
+ * `error`/`delegado_visador` ya no bloquean el botón; sólo avisan por
+ * `hayError`/`hayDelegado`. Antes bloqueaban (§7.3) y producían la pantalla
+ * contradictoria «Datos listos» + «completa a mano» + botón gris.
  *
  * Antes de P6-TAS no había nada que probar: la pantalla avanzaba con dos
  * `setTimeout` y llegaba a «Datos listos» a los 8 segundos pasara lo que pasara.
@@ -50,26 +49,27 @@ describe('qué habilita «Continuar» y qué no', () => {
   )
 
   it.each(['error', 'delegado_visador'])(
-    '%s es terminal pero NO deja continuar (§7.3)',
+    '%s es terminal y SÍ deja continuar; sólo avisa (D-2026-09-04)',
     (estado) => {
       const avance = resolverAvanceLectura({ [estado]: 1 })
-      // Terminal: ya no hay nada que esperar…
       expect(avance.completo).toBe(true)
-      // …pero el botón sigue bloqueado.
-      expect(avance.puedeContinuar).toBe(false)
+      // El botón se abre: el desenlace informa, no bloquea.
+      expect(avance.puedeContinuar).toBe(true)
     }
   )
 
-  it('un solo `error` entre varios `listo` basta para bloquear', () => {
+  it('datos-listos con un doc no leído (error): botón habilitado, con aviso', () => {
+    // El caso del bug: la pantalla decía «Datos listos» + «completa a mano» y
+    // el botón salía gris. Ahora habilita y el aviso (hayError) coexiste.
     const avance = resolverAvanceLectura(conteo({ listo: 5, error: 1 }))
     expect(avance.completo).toBe(true)
-    expect(avance.puedeContinuar).toBe(false)
+    expect(avance.puedeContinuar).toBe(true)
     expect(avance.hayError).toBe(true)
   })
 
-  it('un solo `delegado_visador` entre varios `listo` también bloquea', () => {
+  it('un `delegado_visador` entre varios `listo` habilita y avisa', () => {
     const avance = resolverAvanceLectura(conteo({ listo: 4, delegado_visador: 1 }))
-    expect(avance.puedeContinuar).toBe(false)
+    expect(avance.puedeContinuar).toBe(true)
     expect(avance.hayDelegado).toBe(true)
   })
 })
@@ -109,12 +109,13 @@ describe('fase del stepper · sale del dato, no del reloj', () => {
     expect(resolverAvanceLectura(conteo({ listo: 3 })).fase).toBe(2)
   })
 
-  it('la fase llega a 2 aunque el desenlace bloquee', () => {
-    // El proceso terminó: el stepper lo refleja. Lo que no se habilita es el
-    // botón — son dos cosas distintas y el componente las lee por separado.
+  it('la fase llega a 2 y el botón habilita aunque el desenlace sea error', () => {
+    // El proceso terminó: el stepper lo refleja y el botón se abre. El aviso de
+    // hayError coexiste, pero no atrapa al tasador.
     const avance = resolverAvanceLectura(conteo({ error: 2 }))
     expect(avance.fase).toBe(2)
-    expect(avance.puedeContinuar).toBe(false)
+    expect(avance.puedeContinuar).toBe(true)
+    expect(avance.hayError).toBe(true)
   })
 })
 

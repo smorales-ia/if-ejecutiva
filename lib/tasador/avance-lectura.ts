@@ -15,11 +15,14 @@
  * tasador puede avanzar, y eso se prueba sin montar React. No importa nada de
  * servidor (RO-19): lo consume un componente cliente.
  *
- * ## Terminal no es lo mismo que «puede continuar»
+ * ## Terminal habilita continuar · el desenlace sólo informa (D-2026-09-04)
  *
- * Cinco de los siete estados son terminales, pero sólo tres autorizan a seguir.
- * La distinción es el corazón del criterio de §7.3: *«`error` y
- * `delegado_visador` tienen tratamiento propio y no habilitan el botón»*.
+ * Todo estado terminal deja continuar. `error` y `delegado_visador` ya no
+ * bloquean el botón: **surfacean un aviso** («puedes completar esos datos a
+ * mano» / «los completa el visador») pero el tasador decide seguir con lo que
+ * hay. Es la corrección de una contradicción real de la pantalla: mostraba
+ * «Datos listos» + «puedes completar a mano» y a la vez el botón gris, dejando
+ * al tasador atrapado sin salida.
  *
  * | Estado | ¿Terminal? | ¿Deja continuar? | Qué significa |
  * |---|---|---|---|
@@ -28,12 +31,13 @@
  * | `listo` | sí | **sí** | datos obtenidos |
  * | `skipped` | sí | **sí** | no había nada que leer en este documento |
  * | `no_corresponde` | sí | **sí** | el documento no aplica a esta tasación |
- * | `error` | sí | **no** | falló la lectura |
- * | `delegado_visador` | sí | **no** | quedó para que lo resuelva el visador |
+ * | `error` | sí | **sí** (con aviso) | falló la lectura; se completa a mano |
+ * | `delegado_visador` | sí | **sí** (con aviso) | lo resuelve el visador |
  *
- * `skipped` y `no_corresponde` dejan pasar a propósito: son desenlaces normales
- * —«acá no había nada que leer»— y bloquear por ellos dejaría al tasador
- * atascado sin nada que pueda hacer al respecto.
+ * `error`/`delegado_visador` siguen exponiéndose por `hayError`/`hayDelegado`
+ * para que el componente pinte el aviso ámbar; lo que cambió es que ya no
+ * cierran el botón. **Diverge de §7.3** (que pedía bloquear): decisión de
+ * producto del 04-09-2026, pendiente de reconciliar en la spec.
  */
 
 /** Los siete valores del `singleSelect`, verificados vía meta API el 05-ago-2026. */
@@ -58,14 +62,6 @@ const TERMINALES: ReadonlySet<string> = new Set([
   'delegado_visador',
 ])
 
-/**
- * Terminales que **no** autorizan a continuar. Es la lista corta y explícita
- * que exige §7.3; cualquier estado nuevo que aparezca en Airtable se comporta
- * por omisión como «deja continuar», que es la degradación segura: bloquear por
- * un valor que nadie definió dejaría la pantalla muerta sin diagnóstico.
- */
-const BLOQUEANTES: ReadonlySet<string> = new Set(['error', 'delegado_visador'])
-
 /** Conteo por estado tal como lo devuelve `GET /api/tasaciones/[id]/lectura`. */
 export type ConteoPorEstado = Partial<Record<EstadoExtraccion, number>> &
   Record<string, number | undefined>
@@ -76,10 +72,10 @@ export interface AvanceLectura {
   /** Todos los adjuntos alcanzaron un estado terminal. */
   completo: boolean
   /**
-   * Habilita «Continuar con datos de la visita».
-   *
-   * Es `completo` **menos** los terminales bloqueantes. Nunca se deriva de un
-   * temporizador ni del tiempo transcurrido.
+   * Habilita «Continuar con datos de la visita». Es **igual a `completo`**
+   * (D-2026-09-04): en cuanto ningún adjunto sigue en curso, el tasador puede
+   * avanzar —aun con `error`/`delegado_visador`, que sólo avisan—. Nunca se
+   * deriva de un temporizador ni del tiempo transcurrido.
    */
   puedeContinuar: boolean
   hayError: boolean
@@ -113,14 +109,13 @@ export function resolverAvanceLectura(conteo: ConteoPorEstado): AvanceLectura {
 
   const hayError = (conteo.error ?? 0) > 0
   const hayDelegado = (conteo.delegado_visador ?? 0) > 0
-  const bloqueados = sumar(conteo, BLOQUEANTES)
 
   const completo = total === 0 || terminados === total
 
   return {
     fase: completo ? 2 : terminados > 0 ? 1 : 0,
     completo,
-    puedeContinuar: completo && bloqueados === 0,
+    puedeContinuar: completo,
     hayError,
     hayDelegado,
     total,
