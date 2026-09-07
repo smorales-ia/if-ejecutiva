@@ -90,16 +90,29 @@ describe('aComparable · una fila de TX_Comparables → Comparable', () => {
   })
 
   /**
-   * A-18 y A-44: las columnas existen y se leen, pero el cuadro fotografiado no
-   * las trae y la grilla no las pinta. El test fija que se proyectan —no que
-   * tengan valor—, que es lo que D-5 decidió conservar.
+   * P13-TAS: la grilla espeja el cuadro cuadro-a-cuadro. La proyección lee las
+   * columnas crudas de la foto —fecha, OO.CC. y los dos UF/m² sin recalcular— y
+   * las normaliza a texto (D-5). Ausentes → cadena vacía, no `null`.
    */
-  it('proyecta los tres factores aunque la sección D no los muestre', () => {
-    const c = aComparable('rec1', { factor_sup: 1.05, factor_edad: 0.9 })
+  it('proyecta las columnas crudas del cuadro', () => {
+    const c = aComparable('rec1', {
+      fecha_publicacion: '2026-04-01',
+      oo_cc_uf: 750,
+      uf_m2_terreno_f: 2.2,
+      uf_m2_construccion_f: 34.05,
+    })
 
-    expect(c.factorSup).toBe('1.05')
-    expect(c.factorEdad).toBe('0.9')
-    expect(c.factorDistancia).toBe('')
+    expect(c.fechaPublicacion).toBe('2026-04-01')
+    expect(c.ooCcUf).toBe('750')
+    expect(c.ufM2TerrenoF).toBe('2.2')
+    expect(c.ufM2ConstruccionF).toBe('34.05')
+  })
+
+  it('deja en vacío las columnas crudas que la foto no trajo', () => {
+    const c = aComparable('rec1', {})
+
+    expect(c.ooCcUf).toBe('')
+    expect(c.ufM2ConstruccionF).toBe('')
   })
 })
 

@@ -273,9 +273,10 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
 
     // A-44 · fórmula directa del Excel (decisión Héctor 23-ago-2026)
     // uf_m2_c = (precio_uf - uf_m2_terreno_f*sup_t - oo_cc) / sup_c
-    // Reemplaza la homogenización por factores (factor_sup/edad/distancia), que
-    // no existen en el cuadro que el tasador fotografía. sup_construccion_m2 = 0
-    // o null → null (evita división por cero); terreno/OO.CC. ausentes → 0.
+    // Es la fórmula del propio cuadro `[Excel: Portada!AX29]`, sin coeficientes
+    // de homogeneización —P13-TAS los sacó del modelo de IF-03 (R-COMP-1) y el
+    // cuadro fotografiado no los trae—. sup_construccion_m2 = 0 o null → null
+    // (evita división por cero); terreno/OO.CC. ausentes → 0.
     const ufM2Construccion =
       supConstruida && precioUf !== null
         ? (precioUf - (ufM2TerrenoF ?? 0) * (supTerreno ?? 0) - (ooCcUf ?? 0)) /

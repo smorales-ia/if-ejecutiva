@@ -2609,3 +2609,35 @@ bloquean. Archivos actualizados y renombrados: la especificación normativa pas�
 viñeta del botón + RF-TAS-15 + nota CI-013 + changelog) y el plan de UI Tasador pasó a **v1.4**
 (§7.1/§7.2/§7.3 + bloque de versión). Se barrieron las referencias vivas a los nombres anteriores en
 el repo. Motivo: cerrar el pendiente "reconciliar §7.3 con la decisión" anotado el 04-sep-2026.
+
+### 2026-09-07 — P13-TAS · Sección D comparables cuadro-a-cuadro
+**Contexto:** replicar el cuadro `[Excel: Portada!B28:AX44]` en la Sección D del Tasador (dos bloques
+OFERTAS/CBR con sus tres renglones de resumen), sin factores de homogeneización (R-COMP-1).
+**Inconveniente:** (1) la grilla mostraba `UF/m² = totalUf / supConstruida` (daba 83,7) cuando el
+cuadro trae 34,05; (2) el docblock de `comparables.ts` afirmaba que `informe/route.ts` "sí homogeneiza
+con factor_sup×edad×distancia" (CI-057), lo que sugería tener que desfactorizar el cálculo del informe.
+**Causa raíz:** (1) el UF/m² del cuadro es un valor CRUDO extraído (`uf_m2_construccion_f`), calculado
+en origen con `(totalUF − uf_m2_terreno_f×sup_terreno − oo_cc)/sup_constr` `[Excel: Portada!AX29]`, no
+`precio/sup`; (2) la nota CI-057 estaba STALE: `lectura-informe.ts` (Bloque 6) ya usaba esa misma
+fórmula directa A-44 y NO multiplicaba por factores. El único factor en el informe era un comentario.
+**Solución aplicada:** la grilla pinta las columnas crudas (`uf_m2_terreno_f`/`uf_m2_construccion_f`);
+`comparables.ts` se reescribió a promedios simples por columna + V/S; se quitaron `factor*` del tipo
+`Comparable`, del mapeo `lectura-datos.ts` y de los tests; se reescribió el comentario de
+`lectura-informe.ts` (cálculo intacto). Las tablas `D_TipoDocumentoAtributo` YA tenían los 13
+atributos crudos vigentes (tasador+motor), así que no hubo escrituras en Airtable.
+**Prevención futura:** antes de "desfactorizar" un cálculo, verificar el CÓDIGO y no la nota — un
+docblock puede describir un estado ya superado. Y para columnas "UF/m²" de un cuadro extraído,
+comprobar si son valores crudos de la fuente antes de recalcularlos en la UI.
+
+### 2026-09-07 — P13-TAS · Conflicto de versionado spec vs R-COMP-4
+**Contexto:** la tanda pedía "nueva versión dejando el archivo anterior en su sitio" (R-COMP-4) para
+los 4 docs, incluida la especificación.
+**Inconveniente:** para el spec eso choca con CLAUDE.md ("fuente única", PROHÍBE archivos paralelos de
+spec, exige `git mv` + actualizar refs).
+**Causa raíz:** dos reglas con destinos opuestos para el mismo archivo.
+**Solución aplicada:** se llevó a OK-Gate (F-1). El spec fue por `git mv` v1_9_16→v1_9_17 + barrido de
+refs vivas (CLAUDE.md, CODE_INCONSISTENCIES, SLA, RESUME.md); plan/motor/origen por copia+bump dejando
+el anterior. Los refs en docs claramente históricos (plan v1.4, plan-if02-v1_9, _sync annotations) se
+dejaron congelados por la excepción de CLAUDE.md.
+**Prevención futura:** cuando una regla de tanda toque el spec normativo, contrastar siempre con la
+sección "Fuente única de especificación" de CLAUDE.md y resolver en gate antes de ejecutar.

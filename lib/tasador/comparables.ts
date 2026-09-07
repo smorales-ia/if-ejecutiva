@@ -1,46 +1,40 @@
 /**
  * Aritmética de la sección D · comparables de mercado (RF-12).
  *
- * ## Sucesor del módulo de factores, purgado en CI-056 (cierra OV-6 · CI-031)
+ * ## Espeja el cuadro `[Excel: Portada!B28:AX44]` cuadro-a-cuadro (P13-TAS)
  *
- * El módulo al que reemplaza existía para dos cosas —fabricar un comparable en
- * blanco y homogeneizar por tres factores— y **A-13 se llevó las dos**: con la
- * sección D de sólo lectura no hay alta que fabricar, y con el cuadro
- * fotografiado sin columnas de factor no hay nada que homogeneizar en este
- * flujo (**A-44**). La ficha **CI-056** tiene el detalle y el nombre del
- * archivo retirado.
+ * El tasador **fotografía** el cuadro de la plantilla operativa —ejemplo
+ * canónico en `docs/_referencias/ejemplo-comparables-cuadro.JPG`— y esta capa
+ * reproduce sus renglones de resumen sin inventar números. El cuadro trae dos
+ * bloques (REF. OFERTAS · REF. C.B.R.), cada uno con tres renglones:
+ * `PROMEDIO DE LA MUESTRA`, `TASACION` y `TASACION V/S PROMEDIO DE LA MUESTRA`.
  *
- * El nombre importa, y era el defecto de fondo: aquél prometía defaults que
- * nunca tuvo —**OV-6**, y RF-TAS-08 los prohíbe— y factores que A-18 disolvió.
- * Este archivo dice lo que hace: aritmética de comparables. Cero valores por
- * defecto, cero lectura de configuración, cero red.
+ * ## Todo es promedio simple, sin homogeneización
  *
- * ## Por qué el promedio es simple y no homogeneizado
+ * `PROMEDIO DE LA MUESTRA` es el promedio **simple columna-a-columna** de las
+ * filas del bloque. No hay factores de homogeneización en este flujo: el cuadro
+ * fotografiado —única entrada de comparables desde A-13— no los trae (**A-44**)
+ * y P13-TAS los sacó del modelo de IF-03 (**R-COMP-1**). Los UF/m² que se
+ * promedian son los **valores crudos** de las columnas `UF/m² T.` y `UF/m² C.`
+ * del cuadro, que ya vienen calculados de la fuente con la fórmula directa
+ * `(total UF − UF/m² terreno × sup. terreno − OO.CC.) / sup. construida`
+ * `[Excel: Portada!AX29]`. Unitarizar aquí como `precio / sup` daría un número
+ * distinto al que muestra el cuadro.
  *
- * La plantilla operativa vigente calcula el unitario de cada comparable **sin
- * multiplicar por coeficientes** `[Excel: Portada!AX29]`, y el cuadro que el
- * tasador fotografía no trae los tres factores que D-21 ratificó (**A-44**).
- * Homogeneizar acá inventaría un número que el cuadro de origen no contiene.
- *
- * ⚠ **Divergencia conocida · CI-057.** `app/api/tasaciones/[id]/informe/route.ts`
- * sí homogeneiza: multiplica por `factor_sup × factor_edad × factor_distancia`
- * leídos de Airtable, tratando el factor ausente como `1`. Los dos promedios
- * pueden diferir para la misma solicitud. Está registrado como deuda técnica y
- * **no se resuelve desde acá**: alinearlos es una decisión de producto sobre
- * qué hacer con los factores ya almacenados en filas históricas.
+ * `TASACION` son los valores del **inmueble sujeto**, que produce el motor
+ * AT03; esta capa **no los calcula**. `TASACION V/S PROMEDIO` es su cociente
+ * contra el promedio del bloque, y sólo se puede formar cuando la tasación del
+ * sujeto está disponible.
  */
 
 import type { Comparable } from '@/lib/tasador/tasaciones'
 
 /**
- * Lee un campo numérico del comparable.
- *
- * Todo llega como `string`: la hidratación de `lectura-datos.ts` normaliza a
- * texto lo que Airtable devuelve como `number | null` (**D-5**), de modo que
- * este módulo ve un solo tipo. Devuelve `null` ante vacío o no-numérico —la
- * señal de «falta el dato», distinta de un `0` legítimo—.
+ * Lee un campo numérico crudo (todo llega como `string`, D-5). Devuelve `null`
+ * ante vacío o no-numérico —la señal de «falta el dato», distinta de un `0`
+ * legítimo—.
  */
-function numero(valor: string): number | null {
+export function numeroDe(valor: string): number | null {
   const limpio = valor.trim()
   if (limpio === '') return null
 
@@ -49,36 +43,65 @@ function numero(valor: string): number | null {
 }
 
 /**
- * UF/m² construido de un comparable: `precio_uf / sup_construccion_m2`.
- *
- * Devuelve `null` si falta cualquiera de los dos, y también si la superficie es
- * `0`: dividir por cero daría `Infinity`, que se propagaría al promedio y lo
- * volvería `Infinity` entero. Un comparable sin superficie no es un comparable
- * de valor infinito; es un comparable que no se puede unitarizar.
+ * UF/m² de construcción de un comparable, **tal como vino del cuadro**
+ * (`uf_m2_construccion_f`). Es el valor que el tasador contrasta contra su foto;
+ * no se recalcula desde `precio / sup` (ver docblock del módulo). `null` si la
+ * celda vino vacía o ilegible.
  */
-export function ufM2(c: Comparable): number | null {
-  const precio = numero(c.totalUf)
-  const sup = numero(c.supConstruida)
+export function ufM2Construccion(c: Comparable): number | null {
+  return numeroDe(c.ufM2ConstruccionF)
+}
 
-  if (precio === null || sup === null || sup === 0) return null
-
-  return precio / sup
+/** UF/m² de terreno crudo del comparable (`uf_m2_terreno_f`). */
+export function ufM2Terreno(c: Comparable): number | null {
+  return numeroDe(c.ufM2TerrenoF)
 }
 
 /**
- * Promedio simple de los UF/m² que se pueden calcular.
- *
- * Los comparables sin precio o sin superficie **quedan fuera del promedio pero
- * siguen listados** en la grilla: son filas que el cuadro trajo incompletas, y
- * ocultarlas escondería justamente la evidencia de que la foto salió mal. Con
- * ninguno calculable devuelve `null`, que la grilla pinta como «—».
+ * Las seis columnas numéricas que el renglón `PROMEDIO DE LA MUESTRA` promedia,
+ * en el orden del cuadro. Cada selector devuelve el valor crudo de la columna.
  */
-export function promedioUfM2(comparables: Comparable[]): number | null {
+const COLUMNAS_PROMEDIO = {
+  totalUf: (c: Comparable) => numeroDe(c.totalUf),
+  supTerreno: (c: Comparable) => numeroDe(c.supTerreno),
+  supConstruida: (c: Comparable) => numeroDe(c.supConstruida),
+  ooCcUf: (c: Comparable) => numeroDe(c.ooCcUf),
+  ufM2Terreno,
+  ufM2Construccion,
+} as const
+
+export type PromedioMuestra = Record<keyof typeof COLUMNAS_PROMEDIO, number | null>
+
+/** Promedio simple de una columna; los valores ausentes quedan fuera. `null` si ninguno es calculable. */
+function promedioSimple(comparables: Comparable[], selector: (c: Comparable) => number | null): number | null {
   const valores = comparables
-    .map(ufM2)
+    .map(selector)
     .filter((v): v is number => v !== null)
 
   if (valores.length === 0) return null
 
   return valores.reduce((a, b) => a + b, 0) / valores.length
+}
+
+/**
+ * `PROMEDIO DE LA MUESTRA` de un bloque: promedio simple de cada columna sobre
+ * las filas del bloque. Las filas que el cuadro trajo incompletas siguen
+ * listadas pero no arrastran su columna vacía al promedio.
+ */
+export function promedioMuestra(comparables: Comparable[]): PromedioMuestra {
+  const salida = {} as PromedioMuestra
+  for (const clave of Object.keys(COLUMNAS_PROMEDIO) as (keyof typeof COLUMNAS_PROMEDIO)[]) {
+    salida[clave] = promedioSimple(comparables, COLUMNAS_PROMEDIO[clave])
+  }
+  return salida
+}
+
+/**
+ * `TASACION V/S PROMEDIO DE LA MUESTRA`: `(tasacion − promedio) / promedio`, en
+ * fracción (la UI lo pinta como porcentaje). `null` si falta cualquiera de los
+ * dos o el promedio es `0` —sin base contra la que comparar—.
+ */
+export function tasacionVsPromedio(tasacion: number | null, promedio: number | null): number | null {
+  if (tasacion === null || promedio === null || promedio === 0) return null
+  return (tasacion - promedio) / promedio
 }

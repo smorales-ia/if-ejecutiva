@@ -1,21 +1,28 @@
 import { describe, expect, it } from 'vitest'
 
 /**
- * Aritmética de la sección D — CI-056, cierre de A-13.
+ * Aritmética de la sección D — P13-TAS, el cuadro-a-cuadro.
  *
- * El módulo bajo prueba sucede al de factores purgado en la misma tanda
- * (**CI-056**), que **no tenía test propio**. Estos casos existen sobre todo por
- * las dos ramas que un promedio se come en silencio: la superficie `0` y el
- * comparable a medias. Ninguna de las dos lanza; las dos envenenan el número
- * que el tasador ve si nadie las corta.
+ * El módulo espeja los renglones de resumen del cuadro `[Excel: Portada!B28:AX44]`
+ * sin inventar números: `PROMEDIO DE LA MUESTRA` (promedio simple columna a
+ * columna, sobre valores **crudos** de la foto) y `TASACION V/S PROMEDIO`
+ * (cociente contra el promedio). Los casos cubren las dos ramas que un promedio
+ * se come en silencio —la celda vacía y la base `0` de un porcentaje—, y que el
+ * cuadro produce cada vez que la foto corta una columna.
  */
 
-import { promedioUfM2, ufM2 } from './comparables'
+import {
+  numeroDe,
+  promedioMuestra,
+  tasacionVsPromedio,
+  ufM2Construccion,
+  ufM2Terreno,
+} from './comparables'
 import type { Comparable } from './tasaciones'
 
 /**
  * Comparable con los campos que la aritmética mira. El resto del tipo se
- * completa vacío: `ufM2` sólo lee `totalUf` y `supConstruida`, y fijar aquí un
+ * completa vacío: los helpers leen columnas crudas puntuales, y fijar aquí un
  * comparable completo ataría los tests a claves que no participan.
  */
 function comparable(campos: Partial<Comparable> = {}): Comparable {
@@ -28,9 +35,10 @@ function comparable(campos: Partial<Comparable> = {}): Comparable {
     totalUf: '',
     anio: '',
     fuente: 'oferta',
-    factorSup: '',
-    factorEdad: '',
-    factorDistancia: '',
+    fechaPublicacion: '',
+    ooCcUf: '',
+    ufM2TerrenoF: '',
+    ufM2ConstruccionF: '',
     telefonoContacto: '',
     foja: '',
     numero: '',
@@ -38,84 +46,94 @@ function comparable(campos: Partial<Comparable> = {}): Comparable {
   }
 }
 
-describe('ufM2 · unitario de un comparable', () => {
-  it('divide precio por superficie construida', () => {
-    expect(ufM2(comparable({ totalUf: '5000', supConstruida: '100' }))).toBe(50)
+describe('numeroDe · lectura de una celda cruda', () => {
+  it('lee un número y tolera espacios', () => {
+    expect(numeroDe(' 34.05 ')).toBeCloseTo(34.05, 5)
   })
 
-  it('acepta decimales y espacios alrededor', () => {
-    expect(ufM2(comparable({ totalUf: ' 4520.5 ', supConstruida: ' 90.41 ' }))).toBeCloseTo(50, 5)
+  it('devuelve null ante vacío o texto no numérico', () => {
+    expect(numeroDe('')).toBeNull()
+    expect(numeroDe('consultar')).toBeNull()
   })
 
-  it('devuelve null sin precio', () => {
-    expect(ufM2(comparable({ supConstruida: '100' }))).toBeNull()
-  })
-
-  it('devuelve null sin superficie', () => {
-    expect(ufM2(comparable({ totalUf: '5000' }))).toBeNull()
-  })
-
-  it('devuelve null ante texto no numérico', () => {
-    expect(ufM2(comparable({ totalUf: 'consultar', supConstruida: '100' }))).toBeNull()
-  })
-
-  /**
-   * El candado que motiva el módulo: sin este corte, `5000 / 0` sería
-   * `Infinity` y `promedioUfM2` devolvería `Infinity` para toda la grilla.
-   */
-  it('devuelve null con superficie 0, no Infinity', () => {
-    expect(ufM2(comparable({ totalUf: '5000', supConstruida: '0' }))).toBeNull()
-  })
-
-  it('respeta un precio 0 tecleado: es un valor, no un dato ausente', () => {
-    expect(ufM2(comparable({ totalUf: '0', supConstruida: '100' }))).toBe(0)
+  it('respeta un 0 legítimo', () => {
+    expect(numeroDe('0')).toBe(0)
   })
 })
 
-describe('promedioUfM2 · fila resumen de la grilla', () => {
-  it('promedia los comparables calculables', () => {
+describe('UF/m² crudos · se muestran tal como vinieron de la foto', () => {
+  it('devuelve el UF/m² de construcción crudo, no precio/sup', () => {
+    // El cuadro trae 34,05 aunque precio/sup daría 20000/239 ≈ 83,7.
+    expect(
+      ufM2Construccion(comparable({ totalUf: '20000', supConstruida: '239', ufM2ConstruccionF: '34.05' })),
+    ).toBeCloseTo(34.05, 5)
+  })
+
+  it('devuelve el UF/m² de terreno crudo', () => {
+    expect(ufM2Terreno(comparable({ ufM2TerrenoF: '2.20' }))).toBeCloseTo(2.2, 5)
+  })
+
+  it('devuelve null cuando la celda cruda vino vacía', () => {
+    expect(ufM2Construccion(comparable({ totalUf: '20000', supConstruida: '239' }))).toBeNull()
+  })
+})
+
+describe('promedioMuestra · renglón PROMEDIO DE LA MUESTRA', () => {
+  it('promedia cada columna de forma simple', () => {
     const filas = [
-      comparable({ id: 'a', totalUf: '5000', supConstruida: '100' }), // 50
-      comparable({ id: 'b', totalUf: '6000', supConstruida: '100' }), // 60
-      comparable({ id: 'c', totalUf: '7000', supConstruida: '100' }), // 70
+      comparable({ totalUf: '20000', supTerreno: '5000', supConstruida: '200', ooCcUf: '600', ufM2TerrenoF: '2.00', ufM2ConstruccionF: '30' }),
+      comparable({ totalUf: '22000', supTerreno: '5100', supConstruida: '300', ooCcUf: '700', ufM2TerrenoF: '2.40', ufM2ConstruccionF: '36' }),
     ]
 
-    expect(promedioUfM2(filas)).toBe(60)
+    const p = promedioMuestra(filas)
+    expect(p.totalUf).toBe(21000)
+    expect(p.supTerreno).toBe(5050)
+    expect(p.supConstruida).toBe(250)
+    expect(p.ooCcUf).toBe(650)
+    expect(p.ufM2Terreno).toBeCloseTo(2.2, 5)
+    expect(p.ufM2Construccion).toBe(33)
   })
 
   /**
-   * Una fila incompleta **no baja el promedio a cero**: queda fuera del
-   * divisor. Es la diferencia entre «este comparable vale 0» y «este
-   * comparable no se puede unitarizar», y el cuadro fotografiado produce la
-   * segunda cada vez que la foto corta una columna.
+   * Verifica el promedio de UF/m² C. contra el ejemplo canónico del JPG (bloque
+   * REF. OFERTAS): mean(34,05; 35,19; 35,71; 31,45; 31,82) = 33,64.
    */
-  it('excluye del promedio las filas sin precio o sin superficie', () => {
+  it('reproduce el promedio UF/m² C. del cuadro de referencia', () => {
+    const filas = ['34.05', '35.19', '35.71', '31.45', '31.82'].map((v, i) =>
+      comparable({ id: `o${i}`, ufM2ConstruccionF: v }),
+    )
+
+    expect(promedioMuestra(filas).ufM2Construccion).toBeCloseTo(33.64, 2)
+  })
+
+  it('excluye del promedio las celdas vacías, sin bajarlo a cero', () => {
     const filas = [
-      comparable({ id: 'a', totalUf: '5000', supConstruida: '100' }), // 50
-      comparable({ id: 'b', totalUf: '7000', supConstruida: '100' }), // 70
-      comparable({ id: 'c', supConstruida: '100' }), // fuera
-      comparable({ id: 'd', totalUf: '9000' }), // fuera
+      comparable({ ufM2ConstruccionF: '30' }),
+      comparable({ ufM2ConstruccionF: '40' }),
+      comparable({ ufM2ConstruccionF: '' }), // fuera del divisor
     ]
 
-    expect(promedioUfM2(filas)).toBe(60)
+    expect(promedioMuestra(filas).ufM2Construccion).toBe(35)
   })
 
-  it('devuelve null con la grilla vacía', () => {
-    expect(promedioUfM2([])).toBeNull()
+  it('devuelve null por columna cuando ninguna fila la trae', () => {
+    expect(promedioMuestra([]).ufM2Construccion).toBeNull()
+    expect(promedioMuestra([comparable()]).totalUf).toBeNull()
+  })
+})
+
+describe('tasacionVsPromedio · renglón TASACION V/S PROMEDIO', () => {
+  it('calcula el cociente (tasacion - promedio) / promedio', () => {
+    // Ejemplo del JPG: 32,64 vs 33,64 ≈ -3%.
+    expect(tasacionVsPromedio(32.64, 33.64)).toBeCloseTo(-0.0297, 3)
   })
 
-  it('devuelve null cuando ninguna fila es calculable', () => {
-    const filas = [comparable({ id: 'a' }), comparable({ id: 'b', totalUf: '5000' })]
-
-    expect(promedioUfM2(filas)).toBeNull()
+  it('devuelve null si falta la tasación del sujeto', () => {
+    expect(tasacionVsPromedio(null, 33.64)).toBeNull()
   })
 
-  it('una superficie 0 no contamina el promedio de las demás', () => {
-    const filas = [
-      comparable({ id: 'a', totalUf: '5000', supConstruida: '100' }), // 50
-      comparable({ id: 'b', totalUf: '5000', supConstruida: '0' }), // fuera
-    ]
-
-    expect(promedioUfM2(filas)).toBe(50)
+  it('devuelve null si el promedio es 0 o ausente: no hay base', () => {
+    expect(tasacionVsPromedio(32.64, 0)).toBeNull()
+    expect(tasacionVsPromedio(32.64, null)).toBeNull()
   })
 })

@@ -577,30 +577,33 @@ export interface Comparable {
    */
   fuente: 'oferta' | 'cbr'
   /**
-   * Los tres factores de homogeneización · **se conservan, no se muestran**
-   * (D-5 · CI-056).
+   * Columnas crudas del cuadro `[Excel: Portada!B28:AX44]` que la grilla espeja
+   * cuadro-a-cuadro (P13-TAS). Todas son **valores leídos de la foto**, no
+   * calculados por la UI.
    *
-   * Las columnas existen en `TX_Comparables` y la proyección las lee, pero la
-   * sección D **no las pinta** y nada las escribe: **A-18** cerró por
-   * disolución —sin campo editable no hay nada que precargar— y **A-44** dejó
-   * registrado que el cuadro que el tasador fotografía
-   * `[Excel: Portada!B28:AX44]` no las trae. En la práctica llegan vacías.
+   * - `fechaPublicacion`: mes/año de la oferta o inscripción (ej. `abr-26`).
+   * - `ooCcUf`: obras complementarias en UF (`OO.CC.`).
+   * - `ufM2TerrenoF` · `ufM2ConstruccionF`: UF/m² de terreno y construcción
+   *   **crudos desde la fuente** (columnas `UF/m² T.` y `UF/m² C.`). La UI los
+   *   pinta tal cual: el unitario de construcción del cuadro se obtiene con la
+   *   fórmula directa `(total UF − UF/m² terreno × sup. terreno − OO.CC.) /
+   *   sup. construida` `[Excel: Portada!AX29]`, **no** como `precio/sup`. Por
+   *   eso el componente no recalcula: mostraría un número distinto al del
+   *   cuadro.
    *
-   * Quitarlas del tipo obligaría a tocar la proyección de `lectura-datos.ts`
-   * sin ganar nada: el criterio de A-13 es que la UI no las ofrezca, no que el
-   * dato histórico se pierda. Si alguna vez vuelven a capturarse, lo que revive
-   * primero es **A-18**.
-   *
-   * ⚠ `app/api/tasaciones/[id]/informe/route.ts` **sí** los usa para su propio
-   * promedio homogeneizado, que por eso puede diferir del de la grilla. Es
-   * **CI-057**, deuda abierta.
+   * Los tres factores de homogeneización (`factor_*`) **salieron del modelo de
+   * la UI** en P13-TAS (R-COMP-1): no se usan, no se muestran y no se calculan
+   * en ninguna capa de IF-03. El cuadro fotografiado —única entrada de
+   * comparables desde A-13— no los trae (**A-44**), y `lectura-informe.ts` ya
+   * calcula su promedio con la fórmula directa de arriba, sin factores.
    */
-  factorSup: string
-  factorEdad: string
-  factorDistancia: string
+  fechaPublicacion: string
+  ooCcUf: string
+  ufM2TerrenoF: string
+  ufM2ConstruccionF: string
   /** Sólo aplica cuando `fuente === 'oferta'`. */
   telefonoContacto: string
-  /** Sólo aplican cuando `fuente === 'cbr'`. */
+  /** Sólo aplican cuando `fuente === 'cbr'`. Se pintan unidas como `foja-numero`. */
   foja: string
   numero: string
 }

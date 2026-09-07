@@ -86,9 +86,10 @@ export interface ComparableFields {
   precio_uf?: unknown
   anio?: unknown
   tipo_referencia?: unknown
-  factor_sup?: unknown
-  factor_edad?: unknown
-  factor_distancia?: unknown
+  fecha_publicacion?: unknown
+  oo_cc_uf?: unknown
+  uf_m2_terreno_f?: unknown
+  uf_m2_construccion_f?: unknown
   telefono_contacto?: unknown
   foja?: unknown
   numero?: unknown
@@ -119,12 +120,13 @@ const DESDE_TIPO_REFERENCIA: Record<string, Comparable['fuente']> = {
  * hidratar la grilla desde acá el desajuste sí llegaría a la UI, así que la
  * normalización ocurre en este borde, una sola vez.
  *
- * ## Los tres factores se leen aunque no se muestren
+ * ## Columnas crudas del cuadro (P13-TAS)
  *
- * `factorSup`, `factorEdad` y `factorDistancia` siguen en el tipo por **D-5** y
- * se proyectan por completitud, pero **la sección D no los pinta** (A-18 ·
- * A-44) y el cuadro fotografiado no los trae, así que en la práctica llegan
- * vacíos. Quien los quiera vivos, que reabra A-18 primero.
+ * `fechaPublicacion`, `ooCcUf`, `ufM2TerrenoF` y `ufM2ConstruccionF` se
+ * proyectan como los demás campos: texto crudo de la foto. La grilla pinta los
+ * dos UF/m² tal cual vinieron —el cuadro `[Excel: Portada!AX29]` los calcula de
+ * forma directa, no como `precio/sup`—. Los factores de homogeneización
+ * `factor_*` **ya no se proyectan** (R-COMP-1): salieron del modelo de IF-03.
  *
  * ## `fuente` ante un valor desconocido
  *
@@ -146,9 +148,10 @@ export function aComparable(id: string, f: ComparableFields): Comparable {
     totalUf: texto(f.precio_uf),
     anio: texto(f.anio),
     fuente: DESDE_TIPO_REFERENCIA[texto(f.tipo_referencia)] ?? 'oferta',
-    factorSup: texto(f.factor_sup),
-    factorEdad: texto(f.factor_edad),
-    factorDistancia: texto(f.factor_distancia),
+    fechaPublicacion: texto(f.fecha_publicacion),
+    ooCcUf: texto(f.oo_cc_uf),
+    ufM2TerrenoF: texto(f.uf_m2_terreno_f),
+    ufM2ConstruccionF: texto(f.uf_m2_construccion_f),
     telefonoContacto: texto(f.telefono_contacto),
     foja: texto(f.foja),
     numero: texto(f.numero),

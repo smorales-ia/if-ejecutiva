@@ -625,7 +625,7 @@ construcción. Todo lo demás de esta ronda es documental y está cerrado.
 
 ### Punteros vigentes
 
-- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md`.
+- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_17.md`.
 - **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.4.md`.
 - **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.4.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
   con versión interna **v1.15** (el nombre no se renombra · **C-14**).
@@ -870,7 +870,7 @@ solicitud real**, ahora que encuentra configuración donde antes no encontraba n
 
 ### Punteros vigentes
 
-- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md`.
+- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_17.md`.
 - **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.4.md`.
 - **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.4.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
   con versión interna **v1.15**.

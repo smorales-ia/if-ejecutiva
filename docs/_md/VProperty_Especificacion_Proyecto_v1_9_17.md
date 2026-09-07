@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.16** — sucede a `VProperty_Especificacion_Proyecto_v1_9_15.md`, que queda marcado SUPERSEDED.
+> **v1.9.17** — sucede a `VProperty_Especificacion_Proyecto_v1_9_16.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,22 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.16 · 07-sep-2026 · §2.7 · Reconcilia RF-09 /
+  **Versión**         1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
+                      Sección D de comparables espeja el cuadro
+                      `[Excel: Portada!B28:AX44]` cuadro-a-cuadro: dos
+                      bloques (REF. OFERTAS · REF. C.B.R.), cada uno con
+                      sus columnas crudas (Fecha, Total UF, Sup. Terreno,
+                      Sup. Constr., OO.CC., UF/m² T., UF/m² C.) y tres
+                      renglones resumen (`PROMEDIO DE LA MUESTRA`,
+                      `TASACION`, `TASACION V/S PROMEDIO DE LA MUESTRA`,
+                      promedios simples sin homogeneización). Se retira
+                      `comuna` del grid (el cuadro no la trae; sigue viva
+                      en el modelo · R-COMP-6) y el UF/m² pasa de calculado
+                      a crudo de la fuente. Los factores `factor_*` salen
+                      por completo del modelo de IF-03 (R-COMP-1). Sucede a
+                      1.9.16, que queda SUPERSEDED.
+
+                      1.9.16 · 07-sep-2026 · §2.7 · Reconcilia RF-09 /
                       CI-013 con la decisión de producto del 04-sep-2026
                       (Sergio): alcanzado "Datos listos", el botón
                       «Continuar con datos de la visita» se habilita
@@ -2647,11 +2662,11 @@ Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formul
 
 **Origen de los comparables.** La foto corresponde al rango `[Excel: Portada!B28:AX44]` del libro `Formato Informe VProperty Enero2026.xlsm`; el ejemplo canónico de esa foto está versionado en `docs/_referencias/ejemplo-comparables-cuadro.JPG`. El cuadro trae dos bloques —**REF. OFERTAS** y **REF. C.B.R.**—, cada uno con sus filas de muestra y sus renglones de `PROMEDIO DE LA MUESTRA`, `TASACION` y `TASACION V/S PROMEDIO DE LA MUESTRA`.
 
-- Grilla tabular densa **de sólo lectura**, no formulario acordeón. Una fila por comparable, columnas por atributo.
-- Header fijo y scroll horizontal en móvil, con la primera columna (N° / dirección) sticky. El scroll horizontal vive dentro de la grilla; el body de la página nunca scrollea en horizontal.
-- Orden de columnas, espejando el cuadro de origen: N°, dirección, comuna, `sup_terreno_m2`, `sup_construccion_m2`, `precio_uf`, `uf_m2` (calculado), año, tipo de referencia (badge Oferta / CBR).
-- Campos condicionales: en Oferta se muestra `telefono_contacto`; en CBR, `foja` y `numero`.
-- Fila resumen final con el promedio de `uf_m2_construccion` que alimenta el cálculo.
+- Grilla tabular densa **de sólo lectura**, no formulario acordeón. Una fila por comparable, columnas por atributo. **Dos bloques** con su cabecera propia —**REF. OFERTAS** y **REF. C.B.R.**—, discriminados por `tipo_referencia`; sólo se pinta el bloque que tenga al menos una fila.
+- Header fijo y scroll horizontal en móvil, con la primera columna (N° · dirección) sticky. El scroll horizontal vive dentro de la grilla; el body de la página nunca scrollea en horizontal.
+- Orden de columnas, espejando el cuadro de origen: N° · dirección (sticky), `fecha_publicacion`, `anio`, columna de contacto (ver siguiente viñeta), `precio_uf` (Total UF), `sup_terreno_m2`, `sup_construccion_m2`, `oo_cc_uf` (OO.CC.), `uf_m2_terreno_f` (UF/m² T.), `uf_m2_construccion_f` (UF/m² C.). Los dos UF/m² se muestran **crudos, tal como vinieron de la foto** —no se recalculan como `precio / sup`: el cuadro los obtiene con la fórmula directa `(total UF − UF/m² terreno × sup. terreno − OO.CC.) / sup. construida` `[Excel: Portada!AX29]`—. **`comuna` sale del grid** (el cuadro no la trae; el atributo sigue vivo y vigente en el modelo, lo consume el informe · R-COMP-6). **Sin columnas de `factor_*`** (R-COMP-1 · A-44).
+- Columna de contacto condicional por bloque: en **REF. OFERTAS** se muestra `telefono_contacto`; en **REF. C.B.R.**, `foja` y `numero` unidas como `foja-numero`.
+- **Tres renglones de resumen por bloque**, espejando el cuadro: `PROMEDIO DE LA MUESTRA` (promedio **simple** columna a columna, sin homogeneización, derivado en la UI), `TASACION` (valores del inmueble sujeto que produce el motor AT03 — la UI los muestra, no los calcula; mientras `InformeData` no los traiga, se pintan «—») y `TASACION V/S PROMEDIO DE LA MUESTRA` (`(tasacion − promedio) / promedio` sobre UF/m² C., «—» sin base).
 - **No hay botón "Agregar comparable" ni acción de eliminar por fila.** El tasador no captura, no corrige y no borra: si el conjunto extraído está mal o incompleto, vuelve a fotografiar el cuadro.
 - La validación de mínimo 3 de **RF-12** se conserva y **pasa a recaer sobre el origen**, no sobre la captura.
 
