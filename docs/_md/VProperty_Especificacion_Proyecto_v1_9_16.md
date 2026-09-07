@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.15** — sucede a `VProperty_Especificacion_Proyecto_v1_9_14.md`, que queda marcado SUPERSEDED.
+> **v1.9.16** — sucede a `VProperty_Especificacion_Proyecto_v1_9_15.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,19 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.15 · 23-ago-2026 · Baja la segunda tanda de
+  **Versión**         1.9.16 · 07-sep-2026 · §2.7 · Reconcilia RF-09 /
+                      CI-013 con la decisión de producto del 04-sep-2026
+                      (Sergio): alcanzado "Datos listos", el botón
+                      «Continuar con datos de la visita» se habilita
+                      siempre, con independencia de que algún documento
+                      quede en `error` o `delegado_visador`; esos estados
+                      sólo muestran aviso ámbar y no bloquean. Actualiza
+                      la viñeta del botón y RF-TAS-15 en §2.7 y añade nota
+                      a CI-013. Sin cambios de código: la regla ya está
+                      implementada (39/39 verde). Sucede a 1.9.15, que
+                      queda SUPERSEDED.
+
+                      1.9.15 · 23-ago-2026 · Baja la segunda tanda de
                       respuestas del cliente y cierra con ella siete
                       ambigüedades. §2.8 · **la sección D de comparables pasa
                       a sólo lectura**: los comparables llegan por extracción
@@ -2566,14 +2578,16 @@ Muestra el progreso asincrónico de la extracción SC07 sobre los documentos sub
 - **Sin lenguaje de IA** en la UI: el tasador ve "Leyendo datos de la visita" y "Procesando archivos de la visita…", nunca una mención al medio técnico con que se resuelve. Política transversal del proyecto.
 - **Mientras procesa**, la pantalla muestra el indicador de actividad, el stepper con el paso en curso resaltado, un tiempo estimado y una barra de avance.
 - **Al terminar**, el título cambia a "Datos listos" con el mensaje "Los datos están listos para completar el formulario" y el stepper queda íntegramente completo.
-- **Botón "Continuar con datos de la visita"** — deshabilitado mientras el stepper no llegue a "Datos listos"; a partir de ahí abre §2.8. Hasta v1.9.8 esta sección permitía continuar sin esperar; el diseño v4 lo bloquea, y la divergencia queda registrada como **CI-013**.
+- **Botón "Continuar con datos de la visita"** — deshabilitado mientras el stepper no llegue a "Datos listos"; **al llegar a "Datos listos" se habilita siempre** y abre §2.8, con independencia de que algún documento haya quedado en `error` o `delegado_visador`. Esos estados terminales **no bloquean**: sólo disparan un aviso ámbar para que el tasador sepa qué completar a mano. Hasta v1.9.8 esta sección permitía continuar sin esperar; el diseño v4 introdujo la espera del stepper (**CI-013**), y desde la decisión de producto del 04-sep-2026 el botón deja de condicionarse a que todos los documentos se hayan leído (ver nota CI-013).
 - **Botón "Volver"** — regresa a Fotos en cualquier momento. SC07 sigue en background y no se cancela desde la UI.
 - Los datos extraídos se pueblan según `D_TipoDocumentoAtributo` (comportamiento vigente en §4 del spec).
 
-| **RF-TAS-15** | **Progreso de lectura con stepper y continuación bloqueada** |
+| **RF-TAS-15** | **Progreso de lectura con stepper y continuación al alcanzar «Datos listos»** |
 |---|---|
-| **Descripción** | La pantalla de avance muestra un stepper de tres pasos (Archivos listos · Procesando archivos · Datos listos) con tiempo estimado y barra de avance mientras procesa, y el mensaje "Datos listos" al completarse. El botón "Continuar con datos de la visita" permanece deshabilitado hasta que el tercer paso se complete; "Volver" está disponible en todo momento y no cancela el proceso en background. Ningún texto de esta pantalla menciona el medio técnico de la extracción. |
-| **Criterio de aceptación** | Con la extracción en curso, el botón de continuar no es accionable ni por teclado ni por doble toque. Al completarse el tercer paso queda habilitado sin recargar la pantalla. Pulsar "Volver" y regresar encuentra el progreso donde estaba, no reiniciado. |
+| **Descripción** | La pantalla de avance muestra un stepper de tres pasos (Archivos listos · Procesando archivos · Datos listos) con tiempo estimado y barra de avance mientras procesa, y el mensaje "Datos listos" al completarse. El botón "Continuar con datos de la visita" permanece deshabilitado hasta que el tercer paso se complete; **al completarse se habilita siempre**, aunque algún documento haya quedado en `error` o `delegado_visador` —esos casos muestran un aviso ámbar que no bloquea el botón—. "Volver" está disponible en todo momento y no cancela el proceso en background. Ningún texto de esta pantalla menciona el medio técnico de la extracción. |
+| **Criterio de aceptación** | Con la extracción en curso, el botón de continuar no es accionable ni por teclado ni por doble toque. Al completarse el tercer paso queda habilitado sin recargar la pantalla, incluso si uno o más documentos terminaron en `error` o `delegado_visador`; en ese caso se muestra además el aviso ámbar correspondiente. Pulsar "Volver" y regresar encuentra el progreso donde estaba, no reiniciado. |
+
+> **Nota CI-013 — evolución de la regla (04-sep-2026).** CI-013 registró en v1.9.9 la divergencia entre esta sección (que hasta v1.9.8 permitía continuar sin esperar) y el diseño v4 (que exige llegar a "Datos listos"). Esa parte se mantiene: la espera del stepper sigue vigente. Lo que cambia por **decisión de producto de Sergio (04-sep-2026)** es el alcance del bloqueo posterior: alcanzado "Datos listos", el botón **se habilita siempre**, y los documentos en `error` o `delegado_visador` dejan de impedir la continuación —pasan a comunicarse con un aviso ámbar—. El histórico de CI-013 en `docs/CODE_INCONSISTENCIES.md` no se reescribe; esta nota lo complementa.
 
 ---
 

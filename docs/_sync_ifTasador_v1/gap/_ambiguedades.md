@@ -1919,7 +1919,7 @@ encabezado «⛔ FUERA DE SCOPE IF-03», no se eliminan (regla de oro §1.2: cer
   - `_sync_ifTasador_v1/RESUME.md`: líneas **101, 103, 106, 127, 150**.
 - Menciones de `requiere_atencion` (estado vigente por productor IF-02, ajenas a AT04), ratificadas
   sin cambio:
-  - `plan_ejecucion_UItasador_v1.3.md`: **1870, 1890** (1890 recibe el sufijo «N/A por A-46»).
+  - `plan_ejecucion_UItasador_v1.4.md`: **1870, 1890** (1890 recibe el sufijo «N/A por A-46»).
   - `_sync_ifTasador_v1/gap/_ambiguedades.md`: **329** (A-11).
   - `_sync_ifTasador_v1/RESUME.md`: **305** (máquina de estados oficial).
   - `_sync_ifTasador_v1/gap/VProperty_Motor_Calculo_AT01_AT10_v2_6.md`: **43**.
@@ -1927,7 +1927,7 @@ encabezado «⛔ FUERA DE SCOPE IF-03», no se eliminan (regla de oro §1.2: cer
 
 **Fuera de esta entrada (se editan aparte, mapa de edición 27-ago-2026):** las secciones y menciones
 de AT04 en las specs canónicas del Grupo B (`VProperty_Motor_Calculo_AT01_AT10_v2_6.md`,
-`VProperty_Especificacion_Proyecto_v1_9_15.md`, `VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md`,
+`VProperty_Especificacion_Proyecto_v1_9_16.md`, `VProperty_Diseno_Capa_Datos_Enterprise_v2_6_5.md`,
 `Arquitectura_Enterprise_VProperty_v2_9.md`, `VProperty_Blueprint_Interfaces_v2_10.md`,
 `VProperty_Origen_Datos_Informe_v1.1.md`), que reciben encabezado FUERA DE SCOPE o anotación.
 

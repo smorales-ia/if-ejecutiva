@@ -625,9 +625,9 @@ construcción. Todo lo demás de esta ronda es documental y está cerrado.
 
 ### Punteros vigentes
 
-- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md`.
+- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md`.
 - **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.4.md`.
-- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.3.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
+- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.4.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
   con versión interna **v1.15** (el nombre no se renombra · **C-14**).
 - **Rama activa:** `feat/tasador-ui`.
 
@@ -870,9 +870,9 @@ solicitud real**, ahora que encuentra configuración donde antes no encontraba n
 
 ### Punteros vigentes
 
-- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md`.
+- **Documento normativo:** `docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md`.
 - **Insumo de negocio del SLA:** `VProperty_SLA_Negocio_v1.4.md`.
-- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.3.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
+- **Planes:** IF-03 → `plan_ejecucion_UItasador_v1.4.md` · IF-02 → `plan-ejecucion-if02-v1_9.md`
   con versión interna **v1.15**.
 - **Referencias del cliente versionadas:** `docs/_referencias/Formato-Informe-VProperty-Enero2026.xlsm`
   y `docs/_referencias/ejemplo-comparables-cuadro.JPG`.

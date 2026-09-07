@@ -1,7 +1,7 @@
 /**
  * Tipos de dominio y catálogos de IF-03 · Interfaz Tasador (CU-003).
  *
- * Tanda P1-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.3.md` §2
+ * Tanda P1-TAS del plan `docs/_md/plan_ejecucion_UItasador_v1.4.md` §2
  * (creado bajo la v1.0 del plan; la cita se actualiza al bumpear · CI-049).
  *
  * ## Ubicación: **R5 · IF-03**

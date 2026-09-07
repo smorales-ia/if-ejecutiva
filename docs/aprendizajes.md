@@ -2600,3 +2600,12 @@ tests (`avance-lectura.test.ts` con el caso pedido «datos-listos con doc no le�
 ser más estricto que ese mensaje —copy y estado habilitante se derivan de la misma verdad—. Y un módulo
 Make con «did not pass through the filter» dentro de un router es diseño, no falla: contrastar el filtro
 de la rama gemela antes de tratarlo como bug. Pendiente: reconciliar §7.3 en la spec con esta decisión.
+
+### 2026-09-07 — Reconciliación documental de RF-09 / CI-013 (P6-TAS)
+Ajuste puramente documental (sin tocar código ni tests). Se reconció la spec y el plan con la
+decisión de producto del 04-sep-2026: al llegar el stepper a "Datos listos" el botón "Continuar con
+datos de la visita" se habilita siempre; `error` y `delegado_visador` sólo muestran aviso ámbar y no
+bloquean. Archivos actualizados y renombrados: la especificación normativa pasó a **v1.9.16** (§2.7
+viñeta del botón + RF-TAS-15 + nota CI-013 + changelog) y el plan de UI Tasador pasó a **v1.4**
+(§7.1/§7.2/§7.3 + bloque de versión). Se barrieron las referencias vivas a los nombres anteriores en
+el repo. Motivo: cerrar el pendiente "reconciliar §7.3 con la decisión" anotado el 04-sep-2026.

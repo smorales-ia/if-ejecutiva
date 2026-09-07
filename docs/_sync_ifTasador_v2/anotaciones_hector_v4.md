@@ -308,4 +308,4 @@ Consecuencias sobre lo que este acta registraba:
 tres factores de homogeneización que **D-21** ratificó como vigentes un día antes. No bloquea.
 
 Detalle en `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` y en
-`docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` §2.8.
+`docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md` §2.8.

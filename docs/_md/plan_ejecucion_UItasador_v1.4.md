@@ -1,5 +1,13 @@
-# Plan de Ejecución IF-03 · UI Tasador v1.3 — Guía maestra para Claude Code
+# Plan de Ejecución IF-03 · UI Tasador v1.4 — Guía maestra para Claude Code
 
+> **Versión del plan: v1.4** (07-sep-2026). Cambio respecto de v1.3: **reconciliación documental de
+> P6-TAS / RF-09 con la decisión de producto del 04-sep-2026** (Sergio). Sin tandas nuevas, sin rutas
+> nuevas, sin cambios de orden. Al llegar el stepper a "Datos listos", el botón "Continuar con datos
+> de la visita" **se habilita en los siete valores terminales de `estado_extraccion`**; `error` y
+> `delegado_visador` disparan **aviso ámbar** pero **no bloquean** el botón. §7.1, §7.2 y §7.3 se
+> ajustan para reflejarlo (antes fijaban un comportamiento "bloqueante"). La regla ya está
+> implementada en código (39/39 verde); ver CI-013 y `docs/aprendizajes.md`.
+>
 > **Versión del plan: v1.3** (23-ago-2026). Cambio respecto de v1.2: **el cliente respondió la
 > segunda tanda de consultas y una de las respuestas cambia el alcance de P7-TAS**. No hay tandas
 > nuevas ni rutas nuevas; hay una sección que se construye distinto.
@@ -99,7 +107,7 @@
 > hasta P11-TAS se trabaja con `mockUserTasador`; **(3)** IF-03 es **mobile-first** (375×812),
 > mientras IF-02 es una consola de escritorio.
 >
-> **Precedencia.** Ante contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md`
+> **Precedencia.** Ante contradicción con `docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md`
 > u otros documentos, mandan las **Reglas T-A, T-B y T-C** de §0.3 y las **Reglas duras R1–R12**
 > de §0.2 de este archivo. Ante contradicción con el plan de IF-02, manda el plan de IF-02 en
 > todo lo que sea código ya construido de la Ejecutiva: IF-03 **no gobierna** ese territorio.
@@ -115,11 +123,11 @@
 
 ### §0.1 Archivos a leer al iniciar sesión (en este orden)
 
-1. `docs/_md/plan_ejecucion_UItasador_v1.3.md` (este archivo, completo)
+1. `docs/_md/plan_ejecucion_UItasador_v1.4.md` (este archivo, completo)
 2. `docs/_notas/inventario-tasador.md` (generado en P0-TAS — **obligatorio a partir de P1-TAS**)
 3. `docs/_notas/inventario-if02.md` (inventario del rol Ejecutiva — **fuente de las rutas reales
    de todo lo que IF-03 reutiliza**; se lee, nunca se edita)
-4. `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` — **§2 completa** (§2.1 a §2.16),
+4. `docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md` — **§2 completa** (§2.1 a §2.16),
    incluida **§2.8.1** (pre-llenado de la hoja de antecedentes · RF-TAS-23). Es la fuente
    normativa de todos los RF-TAS. Léase además **§5.2.8** y **§5.2.9**, que gobiernan los
    recordatorios y los reportes que P10-TAS verifica.
@@ -1431,8 +1439,10 @@ parsear el string.
 > **🟡 Contrato de comportamiento:** **pausa-en-comandos**. Dispara el pipeline de extracción
 > existente; la UI es de polling.
 
-> **Inconsistencia declarada: CI-013**, ya resuelta en la documentación. Esta tanda construye el
-> comportamiento **bloqueante** que fija RF-TAS-15, no el permisivo de versiones anteriores.
+> **Inconsistencia declarada: CI-013**, ya resuelta en la documentación. Esta tanda construye la
+> espera del stepper que fija RF-TAS-15 (no el permisivo pre-v4 que continuaba sin esperar). Por
+> **decisión de producto del 04-sep-2026** (Sergio), alcanzado "Datos listos" el botón se habilita
+> **siempre**: `error` y `delegado_visador` muestran aviso ámbar pero **no** lo bloquean.
 > **Regla T-C (R8) es el criterio dominante de esta pantalla.**
 
 ### §7.1 Diseño
@@ -1449,8 +1459,10 @@ compromiso normativo: el tiempo estimado se calcula o se omite, no se hardcodea 
 para completar el formulario"**, y el stepper queda íntegramente completo.
 
 **Botón "Continuar con datos de la visita"** — **deshabilitado** mientras el stepper no llegue a
-"Datos listos". No accionable **ni por teclado ni por doble toque**. A partir de ahí abre §2.8
-(P7-TAS). Se habilita **sin recargar la pantalla**.
+"Datos listos". No accionable **ni por teclado ni por doble toque**. **Al llegar a "Datos listos" se
+habilita siempre** —en los siete valores terminales de `estado_extraccion`—, aunque algún documento
+haya quedado en `error` o `delegado_visador`: esos estados disparan un **aviso ámbar** que no
+bloquea. A partir de ahí abre §2.8 (P7-TAS). Se habilita **sin recargar la pantalla**.
 
 **Botón "Volver"** — regresa a Fotos en cualquier momento. **La extracción sigue en background y no
 se cancela desde la UI.** Volver y regresar encuentra el progreso **donde estaba, no reiniciado**.
@@ -1478,7 +1490,8 @@ proveedor.
    delegado_visador` (7 opciones, verificadas el 05-ago-2026).
 3. Mapear los 7 valores del pipeline a los **3 pasos** del stepper, en una función explícita. Los
    estados terminales que no son `listo` (`error`, `delegado_visador`) tienen su propio tratamiento
-   de UI y **no** dejan el botón habilitado.
+   de UI —**aviso ámbar**— pero, alcanzado "Datos listos", **no** bloquean el botón: éste queda
+   habilitado en los siete valores terminales.
 4. Crear la pantalla con el stepper, la barra y los dos botones.
 5. Implementar el polling con intervalo razonable y **cancelación al desmontar** (no al pulsar
    "Volver": el proceso backend sigue).
@@ -1502,8 +1515,9 @@ proveedor.
 - [ ] Al completarse el tercer paso, el botón queda habilitado **sin recargar** la pantalla.
 - [ ] "Volver" está disponible en todo momento y **no cancela** el proceso; regresar encuentra el
       progreso donde estaba.
-- [ ] Los 7 valores de `estado_extraccion` están mapeados explícitamente; `error` y
-      `delegado_visador` tienen tratamiento propio y no habilitan el botón.
+- [ ] Los 7 valores de `estado_extraccion` están mapeados explícitamente; alcanzado "Datos listos"
+      el botón queda habilitado en los siete valores terminales, y `error` y `delegado_visador`
+      disparan aviso ámbar pero **no** bloquean el botón.
 - [ ] **Regla T-C:** la auditoría `grep` de §7.2 paso 8 devuelve **cero** coincidencias en texto
       visible. Los literales son los canónicos de §7.1.
 - [ ] El error se comunica con el mensaje humano, sin exponer el error técnico.
@@ -2559,7 +2573,7 @@ este plan.** Quedan listados para que Sergio decida cuáles corregir y cuándo.
 | `docs/construccion.md` | Guía de construcción **por RF de IF-02**. No tiene ninguna sección para los RF-TAS, y su tabla de avance no contempla la secuencia `P{n}-TAS`. Si se quiere una vista única del avance del proyecto, hay que decidir si IF-03 entra ahí o mantiene sus snapshots aparte (este plan opta por lo segundo: §14.3). |
 | `docs/diseno.md` | Diseño funcional **de IF-02**. Su §3 describe la bandeja y el detalle de la Ejecutiva sin mencionar que dos de sus componentes (`FileUploadZone` y el sheet documental) pasan a tener un segundo consumidor. Más relevante: no registra que el visor de adjuntos de §1.3.4 **no está extraído como componente reutilizable**, que es la causa de la excepción R5-E. |
 | `docs/aprendizajes.md` | Bitácora de sólo-append **compartida**. A partir de P0-TAS convivirán dos secuencias de tandas en `docs/_archivo/`, distinguidas sólo por el sufijo `-TAS`. Conviene una nota al inicio que lo declare, para que quien busque "la última tanda" sepa que hay dos respuestas. El archivo ya está cerca del umbral de archivado que fija `CLAUDE.md` (~1500 líneas): archivarlo es una tanda propia y **no** debe hacerse a mitad de una sesión de IF-03. |
-| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_15.md` | Fuente canónica, **no editable**. Cinco divergencias que este plan introduce o hereda, a registrar en el próximo bump normativo: **(1)** §2.11 atribuye los correos de coordinación a **SC13 (Make)**; **R3 los reasigna a una Automation de Airtable**. **(2)** §2.12 ubica las dos plantillas en `C_Plantillas`, que **no tiene campo para cuerpo HTML** — la fuente de runtime real es `C_NotificacionesConfig` (misma divergencia que IF-02 ya registró para SC05). **(3)** §2.12 declara `intento_numero` como fórmula y `coordinacion_vigente` con `LAST(... ORDER BY ...)`: ninguna de las dos es expresable en Airtable tal como está escrita. **(4)** §2.12 declara `D_TipoDocumento.tipo_propiedad` como alta nueva y **ya existía** desde antes del 25-jul-2026 (A-05). **(5)** §2.13 nombra `EstadoBadge`; el repo exporta `StateBadge`. |
+| `docs/_md/VProperty_Especificacion_Proyecto_v1_9_16.md` | Fuente canónica, **no editable**. Cinco divergencias que este plan introduce o hereda, a registrar en el próximo bump normativo: **(1)** §2.11 atribuye los correos de coordinación a **SC13 (Make)**; **R3 los reasigna a una Automation de Airtable**. **(2)** §2.12 ubica las dos plantillas en `C_Plantillas`, que **no tiene campo para cuerpo HTML** — la fuente de runtime real es `C_NotificacionesConfig` (misma divergencia que IF-02 ya registró para SC05). **(3)** §2.12 declara `intento_numero` como fórmula y `coordinacion_vigente` con `LAST(... ORDER BY ...)`: ninguna de las dos es expresable en Airtable tal como está escrita. **(4)** §2.12 declara `D_TipoDocumento.tipo_propiedad` como alta nueva y **ya existía** desde antes del 25-jul-2026 (A-05). **(5)** §2.13 nombra `EstadoBadge`; el repo exporta `StateBadge`. |
 | `docs/CODE_INCONSISTENCIES.md` | **CI-012** cambia de naturaleza al abrirse IF-03: deja de ser deuda documental y pasa a ser bloqueante activo con una tanda detenida por su causa (P4-TAS). Corresponde actualizar su estado y su fecha objetivo, que hoy dice *"condicional a la apertura de la tanda de IF-03"* — la tanda queda abierta con este plan. **CI-013 a CI-020** están declaradas "pendientes en el código de IF-03"; cada una queda cubierta por la tanda que indica §0.4-bis y su estado debería seguir el avance. **CI-021** sigue abierta y **no cierra sin CI-005**. |
 | `docs/_sync_ifTasador_v1/gap/_ambiguedades.md` | **A-09** (`TX_CoordinacionVisita` no existe) se resuelve materialmente en P0.5-TAS, pero **no por decisión de negocio**: la tabla se crea y CI-012 sigue abierta. Corresponde anotar esa distinción para que nadie lea la existencia de la tabla como el cierre de la ambigüedad. **A-12 a A-17** siguen abiertas y este plan las respeta una por una; sus fichas podrían anotar qué tanda las declara. |
 | `docs/_md/VProperty_Blueprint_Interfaces_v2_10.md` | Registra `DEP-EXT:A-09` como *"pendiente creación Airtable · no verificada 2026-07-25"*. Tras P0.5-TAS deja de ser exacto. Conviene además verificar si replica el **árbol de ocho rutas** que CI-020 corrigió a siete; **no se verificó** al redactar este plan. |
