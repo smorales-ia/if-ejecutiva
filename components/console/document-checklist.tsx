@@ -131,8 +131,10 @@ interface DocumentRowProps {
   onQuitar: (codigo: string) => void
   /** Se invoca tras una subida confirmada, para releer `TX_Adjuntos`. */
   onSubido: () => void
-  /** Borrado real. Resuelve `true` sólo si la relectura confirma la desaparición. */
-  onEliminar: (adjuntoRecordId: string) => Promise<boolean>
+  /** Borrado real. `ok` es `true` sólo si la relectura confirma la desaparición. */
+  onEliminar: (
+    adjuntoRecordId: string,
+  ) => Promise<{ ok: boolean; mensaje?: string }>
 }
 
 function DocumentRow({
@@ -315,8 +317,8 @@ function DocumentRow({
     if (!persistido) return
     try {
       const borrado = await onEliminar(persistido.id)
-      if (!borrado) {
-        toast.error(MSG_ERROR_RED)
+      if (!borrado.ok) {
+        toast.error(borrado.mensaje ?? MSG_ERROR_RED)
         return
       }
       // El tipo sólo se marca vacío si la relectura confirmó la desaparición
@@ -599,7 +601,9 @@ interface DocumentChecklistProps {
   /** Record ID del adjunto con borrado en vuelo, o `null`. */
   eliminandoId?: string | null
   onSubido: () => void
-  onEliminar: (adjuntoRecordId: string) => Promise<boolean>
+  onEliminar: (
+    adjuntoRecordId: string,
+  ) => Promise<{ ok: boolean; mensaje?: string }>
 }
 
 export function DocumentChecklist({

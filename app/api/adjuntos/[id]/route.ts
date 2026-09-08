@@ -135,30 +135,20 @@ export async function DELETE(
   }
 
   /**
-   * RN-59 en dos capas (§8.6.5). El checklist ni siquiera renderiza el control
-   * en modo consulta, pero eso es feedback, no control de acceso: la petición
-   * puede llegar desde otra pestaña abierta antes de la asignación, o
-   * directamente contra el endpoint.
+   * Sólo se conserva el guard de existencia de la solicitud (404). El gate
+   * RN-59 `modo_consulta` se retiró de este handler para alinearlo con
+   * `POST /api/adjuntos/upload`, que tampoco lo aplica: el tasador (IF-03)
+   * gestiona sus documentos justamente cuando la solicitud ya salió de `creada`
+   * y tiene tasador asignado —estado en el que `esModoConsulta` es siempre
+   * verdadero y RN-59 bloqueaba el 100% de sus borrados—. La protección de la
+   * Ejecutiva frente al borrado tras el hand-off sigue en la UI: el checklist no
+   * renderiza el control en modo consulta (§8.6.5), el mismo nivel de garantía
+   * que ya tenía la subida.
    */
   try {
     const rn59 = await verificarRN59(payload.solicitud_id)
     if (rn59.tipo === 'no_encontrada') {
       return NextResponse.json({ ok: false, error: 'Solicitud no encontrada.' }, { status: 404 })
-    }
-    if (rn59.tipo === 'modo_consulta') {
-      console.warn('[ADJUNTOS-DELETE] rechazado por RN-59', {
-        solicitud_id: payload.solicitud_id,
-        estado: rn59.estado,
-      })
-      return NextResponse.json(
-        {
-          ok: false,
-          error: 'conflicto_negocio',
-          motivo:
-            'La solicitud está en modo consulta: no se pueden eliminar documentos.',
-        },
-        { status: 409 }
-      )
     }
   } catch (err) {
     const status = err instanceof AirtableError ? 502 : 500

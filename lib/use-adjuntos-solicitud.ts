@@ -50,13 +50,21 @@ export interface EstadoAdjuntos {
    * Borrado real del adjunto (RF-52 · §8.6.3): `DELETE /api/adjuntos/[id]` →
    * `SC-Adjuntos-Delete` → Dropbox + `TX_Adjuntos`.
    *
-   * Devuelve `true` sólo si la relectura posterior confirma que la fila
+   * `ok` es `true` sólo si la relectura posterior confirma que la fila
    * desapareció. §8.6.4 lo exige: «En el desmarcado, el tipo sólo se marca como
    * vacío si la relectura confirma la desaparición». No se confía en el estado
    * local — si el borrado fue parcial, el checklist debe reflejar la verdad de
    * la base y no el optimismo del cliente.
+   *
+   * `mensaje` trae el texto humano que devolvió el backend cuando falló (p. ej.
+   * "Solicitud no encontrada.") para que el consumidor lo muestre en vez del
+   * genérico. Queda `undefined` cuando no hay mensaje aprovechable; entonces el
+   * consumidor cae al literal genérico de §6.
    */
-  eliminar: (adjuntoRecordId: string, codigoExt: string) => Promise<boolean>
+  eliminar: (
+    adjuntoRecordId: string,
+    codigoExt: string,
+  ) => Promise<{ ok: boolean; mensaje?: string }>
   /** Record ID del adjunto que se está borrando ahora mismo, o `null`. */
   eliminandoId: string | null
 }
@@ -85,7 +93,10 @@ export function useAdjuntosSolicitud(
   adjuntosRef.current = adjuntos
 
   const eliminar = React.useCallback(
-    async (adjuntoRecordId: string, codigoExt: string): Promise<boolean> => {
+    async (
+      adjuntoRecordId: string,
+      codigoExt: string,
+    ): Promise<{ ok: boolean; mensaje?: string }> => {
       const previo = adjuntosRef.current.find((a) => a.id === adjuntoRecordId)
       setEliminandoId(adjuntoRecordId)
       try {
@@ -103,14 +114,23 @@ export function useAdjuntosSolicitud(
           }),
         })
 
-        const body = (await res.json().catch(() => ({}))) as { ok?: boolean }
+        const body = (await res.json().catch(() => ({}))) as {
+          ok?: boolean
+          error?: string
+        }
         if (!res.ok || !body.ok) {
           console.error("[useAdjuntosSolicitud.eliminar]", {
             adjuntoRecordId,
             status: res.status,
             deClerk: esRespuestaDeClerkSinSesion(res),
           })
-          return false
+          // El backend ya emite mensajes humanos (§6); se surfacean para no
+          // ocultar la causa tras el genérico. `undefined` si viene vacío.
+          const mensaje =
+            typeof body.error === "string" && body.error.trim() !== ""
+              ? body.error
+              : undefined
+          return { ok: false, mensaje }
         }
 
         // Relectura obligatoria: el retorno describe la base, no la respuesta.
@@ -119,16 +139,16 @@ export function useAdjuntosSolicitud(
         })
         if (!relectura.ok) {
           setVersion((v) => v + 1)
-          return false
+          return { ok: false }
         }
         const data = ((await relectura.json()) as { data?: Adjunto[] }).data ?? []
         setAdjuntos(data)
         setError(false)
         setSesionExpirada(false)
-        return !data.some((a) => a.id === adjuntoRecordId)
+        return { ok: !data.some((a) => a.id === adjuntoRecordId) }
       } catch (err) {
         console.error("[useAdjuntosSolicitud.eliminar]", err)
-        return false
+        return { ok: false }
       } finally {
         // Regla D: el reset va en `finally`, nunca sólo en el `catch`. Un throw
         // síncrono o un fallo de parseo dejaría la fila muerta el resto de la
