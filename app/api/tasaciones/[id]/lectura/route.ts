@@ -28,7 +28,7 @@ import {
 } from '@/lib/tasador/avance-lectura'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { desdeExcepcion, desdeGuard, ok } from '@/lib/tasador/respuestas'
-import { getTiposDocumento } from '@/lib/tipos-documento'
+import { getAtributosPorTipo, getTiposDocumento } from '@/lib/tipos-documento'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,18 +39,53 @@ interface AdjuntoFields {
   // declarado al subir (RN-25); lo que permite mostrar el nombre del tipo y no
   // sólo el del archivo. Un adjunto suelto lo trae vacío.
   clave_adjunto?: string
+  // `atributos_obtenidos` (`fldeCH15RrL8f4TZk`) — JSON `{items, no_extraidos}`
+  // que deja RF-09. Sólo se usa para saber qué `codigo_atributo` sí se obtuvo;
+  // vacío en un fallo total. **No se expone** al cliente (regla T-C).
+  atributos_obtenidos?: string
   solicitud?: string[]
 }
 
+/** `codigo_atributo` presentes en `items[]` de `atributos_obtenidos`. */
+function codigosObtenidos(atributosObtenidos?: string): Set<string> {
+  if (!atributosObtenidos) return new Set()
+  try {
+    const parsed = JSON.parse(atributosObtenidos) as { items?: { codigo_atributo?: string }[] }
+    const items = Array.isArray(parsed.items) ? parsed.items : []
+    return new Set(items.map((it) => (it.codigo_atributo ?? '').trim()).filter(Boolean))
+  } catch {
+    return new Set()
+  }
+}
+
+/** ¿El JSON declara `no_extraidos` con al menos un código? */
+function tieneNoExtraidos(atributosObtenidos?: string): boolean {
+  if (!atributosObtenidos) return false
+  try {
+    const parsed = JSON.parse(atributosObtenidos) as { no_extraidos?: unknown[] }
+    return Array.isArray(parsed.no_extraidos) && parsed.no_extraidos.length > 0
+  } catch {
+    return false
+  }
+}
+
 /**
- * Resuelve el nombre legible de cada adjunto a partir de su `clave_adjunto`,
- * cruzando contra el catálogo `D_TipoDocumento` (campo real `nombre`, sin
- * transformar el `codigo`).
+ * Proyecta cada adjunto al detalle de P6-TAS: nombre legible del tipo y, cuando
+ * el documento terminó sin aportar sus datos obligatorios, la lista de nombres
+ * faltantes.
  *
- * Sólo lee el catálogo si algún adjunto trae `clave_adjunto`: los adjuntos
- * sueltos no lo necesitan y así el polling de 4 s no gasta una segunda lectura
- * por nada. Un fallo del catálogo no puede tumbar el avance —es el dato que
- * habilita «Continuar»—, así que degrada al nombre del archivo.
+ * ## Dos lecturas de catálogo, ambas acotadas
+ *
+ * 1. `D_TipoDocumento` (nombre del tipo) — sólo si algún adjunto trae
+ *    `clave_adjunto`.
+ * 2. `D_TipoDocumentoAtributo` (nombres de los datos) — sólo para los tipos de
+ *    los adjuntos con **evidencia de faltantes**: estado `error`, o un
+ *    `no_extraidos` no vacío. Un `listo` que trajo todo no gatilla ninguna
+ *    lectura. Además el polling se detiene al completar (todos terminales), así
+ *    que el número de lecturas está acotado, y las dos van con caché de 5 min.
+ *
+ * Ningún fallo de catálogo tumba el avance: degrada al nombre del archivo y a
+ * una lista de faltantes vacía.
  */
 async function proyectarAdjuntos(
   filas: { id: string; fields: AdjuntoFields }[]
@@ -67,14 +102,46 @@ async function proyectarAdjuntos(
     }
   }
 
+  // Tipos que necesitan resolver nombres de datos faltantes.
+  const clavesConFaltantes = new Set<string>()
+  for (const f of filas) {
+    const clave = (f.fields.clave_adjunto ?? '').trim()
+    if (!clave) continue
+    const estado = f.fields.estado_extraccion ?? 'idle'
+    if (estado === 'error' || tieneNoExtraidos(f.fields.atributos_obtenidos)) {
+      clavesConFaltantes.add(clave)
+    }
+  }
+
+  const atributosPorClave = new Map<string, Awaited<ReturnType<typeof getAtributosPorTipo>>>()
+  for (const clave of clavesConFaltantes) {
+    try {
+      atributosPorClave.set(clave, await getAtributosPorTipo(clave))
+    } catch (err) {
+      console.error('[GET /api/tasaciones/[id]/lectura] atributos no disponibles', { clave, err })
+    }
+  }
+
   return filas.map((f) => {
     const codigo = (f.fields.clave_adjunto ?? '').trim()
     const nombreArchivo = (f.fields.nombre_archivo ?? '').trim()
+    const estado = f.fields.estado_extraccion ?? 'idle'
+
+    let nombres_datos_faltantes: string[] = []
+    if (clavesConFaltantes.has(codigo)) {
+      const esperados = atributosPorClave.get(codigo) ?? []
+      const obtenidos = codigosObtenidos(f.fields.atributos_obtenidos)
+      nombres_datos_faltantes = esperados
+        .filter((a) => a.obligatorio && !obtenidos.has(a.codigo_atributo))
+        .map((a) => a.nombre_atributo)
+    }
+
     return {
       id: f.id,
       codigo,
       nombre: (codigo && nombrePorCodigo.get(codigo)) || nombreArchivo || codigo || 'Documento',
-      estado: f.fields.estado_extraccion ?? 'idle',
+      estado,
+      nombres_datos_faltantes,
     }
   })
 }
@@ -132,7 +199,7 @@ export async function GET(
 
     const adjuntos = await listRecords<AdjuntoFields>(TABLE_IDS.adjuntos, {
       filterByFormula: `{solicitud}="${codigo.replace(/"/g, '\\"')}"`,
-      fields: ['nombre_archivo', 'estado_extraccion', 'clave_adjunto'],
+      fields: ['nombre_archivo', 'estado_extraccion', 'clave_adjunto', 'atributos_obtenidos'],
     })
 
     // Un adjunto sin `estado_extraccion` cuenta como `idle`: el pipeline lo

@@ -84,6 +84,14 @@ export interface AdjuntoAvance {
   codigo: string
   nombre: string
   estado: string
+  /**
+   * Nombres legibles de los datos obligatorios que el documento **no** aportó
+   * (P14 · RF-TAS-15). Vacío cuando el documento entregó todo lo obligatorio o
+   * cuando aún no terminó. Los emite el servidor ya resueltos contra
+   * `D_TipoDocumentoAtributo.nombre_atributo`; la UI los lista tal cual, sin
+   * transformar. Regla T-C: son nombres de datos, no del medio que los leyó.
+   */
+  nombres_datos_faltantes: string[]
 }
 
 export interface AvanceLectura {

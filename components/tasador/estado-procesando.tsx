@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { esTerminal } from "@/lib/tasador/avance-lectura"
+import { mensajeDatosFaltantes } from "@/lib/tasador/mensaje-datos-faltantes"
 import {
   MSG_LECTURA_FALLIDA,
   useAvanceLectura,
@@ -18,24 +19,15 @@ type Variante = "lectura" | "calculo"
 /**
  * Marca de estado por documento en la lista de P6-TAS.
  *
- * ✓ verde sólo cuando el documento quedó `listo` (§7.2). El resto de estados
- * terminales —`skipped`, `no_corresponde`, `error`, `delegado_visador`— no son
- * un éxito de lectura pero tampoco algo que el tasador deba resolver acá: el
- * aviso ámbar de la pantalla ya explica los que importan, así que la fila lleva
- * un punto neutro. Lo que sigue en curso muestra el spinner. Regla T-C: el icono
- * no nombra ningún medio técnico.
+ * ✓ verde para **todo documento terminal** (D-2026-09-08): el documento terminó
+ * de procesarse, y si le faltan datos obligatorios eso lo dice la línea «Sin los
+ * datos…» debajo, no un ícono distinto —así el tasador no tiene que descifrar
+ * dos señales para el mismo hecho—. Lo que sigue en curso muestra el spinner.
+ * Regla T-C: el ícono no nombra ningún medio técnico.
  */
 function IconoEstadoDocumento({ estado }: { estado: string }) {
-  if (estado === "listo") {
-    return <Check className="h-4 w-4 shrink-0 text-success" strokeWidth={3} aria-hidden="true" />
-  }
   if (esTerminal(estado)) {
-    return (
-      <span
-        className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground"
-        aria-hidden="true"
-      />
-    )
+    return <Check className="h-4 w-4 shrink-0 text-success" strokeWidth={3} aria-hidden="true" />
   }
   return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-brand" aria-hidden="true" />
 }
@@ -168,15 +160,21 @@ export function EstadoProcesando({
         : 0
     : (avance?.fase ?? 0)
 
-  /** Aviso humano de la variante `lectura`. Regla T-C: nunca el error técnico. */
+  /**
+   * Aviso humano de la variante `lectura`. Regla T-C: nunca el error técnico.
+   *
+   * El banner genérico de `hayError` («No pudimos leer algunos documentos») se
+   * retiró en P14: cuando un documento termina sin sus datos, el detalle vive
+   * ahora **por documento** en la lista de abajo («Sin los datos: … Completar a
+   * mano.»), que dice cuál y qué falta. Aquí quedan sólo los dos avisos que no
+   * son por-documento: el fallo de red/sondeo y la delegación al visador.
+   */
   const avisoLectura = !esCalculo
     ? errorLectura || agotado
       ? MSG_LECTURA_FALLIDA
-      : avance?.hayError
-        ? "No pudimos leer algunos documentos. Puedes completar esos datos a mano."
-        : avance?.hayDelegado
-          ? "Algunos datos quedaron para que los complete el visador."
-          : null
+      : avance?.hayDelegado
+        ? "Algunos datos quedaron para que los complete el visador."
+        : null
     : null
 
   const pasos: { label: string; estado: "done" | "active" | "pending" }[] = [
@@ -295,24 +293,30 @@ export function EstadoProcesando({
       )}
 
       {/*
-        Detalle por documento (P6-TAS · RF-TAS-15). Muestra el nombre del tipo de
-        documento y una marca que se vuelve ✓ cuando ese documento quedó `listo`.
-        Sólo en la variante `lectura` y sólo si la solicitud trae adjuntos —una
-        lista vacía no aporta nada—. El nombre viene ya resuelto del servidor
-        (`D_TipoDocumento.nombre`); la pantalla no lee catálogos ni transforma
-        códigos. Regla T-C: ni la lista ni las marcas nombran el medio técnico.
+        Detalle por documento (P6-TAS · RF-TAS-15 · P14). Cada documento terminal
+        lleva ✓ y su nombre de tipo; si terminó sin sus datos obligatorios, debajo
+        aparece qué datos faltan y qué hacer. Sólo en la variante `lectura` y sólo
+        si la solicitud trae adjuntos. Nombre del tipo y nombres de datos vienen ya
+        resueltos del servidor (`D_TipoDocumento.nombre` y
+        `D_TipoDocumentoAtributo.nombre_atributo`); la pantalla no lee catálogos ni
+        transforma códigos. Regla T-C: ni la lista ni las marcas nombran el medio
+        técnico.
       */}
       {!esCalculo && adjuntos.length > 0 && (
         <ul className="mt-6 w-full space-y-2 text-left">
           {adjuntos.map((a) => (
-            <li
-              key={a.id}
-              className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2.5"
-            >
-              <IconoEstadoDocumento estado={a.estado} />
-              <span className="flex-1 text-sm leading-tight text-foreground">
-                {a.nombre}
-              </span>
+            <li key={a.id} className="rounded-lg bg-muted px-3 py-2.5">
+              <div className="flex items-center gap-3">
+                <IconoEstadoDocumento estado={a.estado} />
+                <span className="flex-1 text-sm leading-tight text-foreground">
+                  {a.nombre}
+                </span>
+              </div>
+              {a.nombres_datos_faltantes.length > 0 && (
+                <p className="mt-1.5 pl-7 text-sm leading-snug text-warning">
+                  {mensajeDatosFaltantes(a.nombres_datos_faltantes)}
+                </p>
+              )}
             </li>
           ))}
         </ul>

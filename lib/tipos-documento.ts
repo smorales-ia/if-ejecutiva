@@ -148,16 +148,84 @@ export async function getTiposDocumento(): Promise<TipoDocumento[]> {
   return tipos
 }
 
-// TODO (RF-09 · Fase Adjuntos 2): `getAtributosPorTipo(codigo)` contra
-// `D_TipoDocumentoAtributo` (`tbldI86ieVKpjpL7E`). Devuelve los atributos
-// declarados para un tipo con sus 10 campos consolidados (codigo_atributo,
-// nombre_atributo, tipo_dato, unidad_medida, obligatorio, ejemplo_atributo,
-// uso_tabla_destino, uso_campo_destino, uso_cardinalidad_destino,
-// uso_campo_link_unidad) — la lectura única que RN-25 pide para construir el
-// prompt de Claude y enrutar el resultado por cardinalidad. No implementar
-// hasta que RF-09 esté en alcance: hoy no hay consumidor.
-
 /** Invalida la caché. Sólo para tests. */
 export function _resetCacheTiposDocumento(): void {
   cache = null
+}
+
+/** `D_TipoDocumentoAtributo` — verificada vía MCP (`tbldI86ieVKpjpL7E`). */
+const TABLA_ATRIBUTOS_DOCUMENTO = 'tbldI86ieVKpjpL7E'
+
+/**
+ * Un atributo declarado para un tipo de documento. Es el subconjunto que
+ * consume P6-TAS para nombrar los datos faltantes; no trae los 19 campos del
+ * enrutamiento por cardinalidad porque esa parte la resuelve RF-09/Make, no la
+ * UI.
+ *
+ * `nombre_atributo` es el nombre presentable (ej. «N° Permiso de Edificación»),
+ * idéntico a `etiqueta_local` en el catálogo actual. **No se transforma el
+ * `codigo_atributo`**: el snake_case nunca llega a pantalla.
+ */
+export interface AtributoTipo {
+  codigo_atributo: string
+  nombre_atributo: string
+  obligatorio: boolean
+  orden: number
+}
+
+interface FilaAtributoTipo {
+  codigo_atributo?: string
+  nombre_atributo?: string
+  etiqueta_local?: string
+  obligatorio?: boolean | string
+  orden?: number
+}
+
+/** Caché por `codigo` de tipo, mismo TTL y criterio que el catálogo de tipos. */
+const atributosCache = new Map<string, { valor: AtributoTipo[]; expira: number }>()
+
+/**
+ * Atributos declarados para un tipo de documento, ordenados por `orden`.
+ *
+ * El filtro es el mismo `FIND(codigo, ARRAYJOIN({tipo_documento}))` que usa
+ * SC-RF09 (módulo 4): el Link `tipo_documento` se evalúa contra el primary field
+ * de `D_TipoDocumento`, que es `codigo` — así que casa por el slug y no por el
+ * record ID. Sin `codigo` no hay nada que buscar y se devuelve `[]`.
+ */
+export async function getAtributosPorTipo(codigo: string): Promise<AtributoTipo[]> {
+  const clave = codigo.trim()
+  if (!clave) return []
+
+  const ahora = Date.now()
+  const hit = atributosCache.get(clave)
+  if (hit && hit.expira > ahora) return hit.valor
+
+  const registros = await listRecords<FilaAtributoTipo>(TABLA_ATRIBUTOS_DOCUMENTO, {
+    fields: ['codigo_atributo', 'nombre_atributo', 'etiqueta_local', 'obligatorio', 'orden'],
+    filterByFormula: `FIND(${JSON.stringify(clave)}, ARRAYJOIN({tipo_documento}))`,
+  })
+
+  const atributos: AtributoTipo[] = []
+  for (const r of registros) {
+    const codAtr = r.fields.codigo_atributo?.trim()
+    if (!codAtr) continue
+    atributos.push({
+      codigo_atributo: codAtr,
+      // `obligatorio` es un checkbox en el schema (llega `true`/ausente); se
+      // tolera el string 'true' por si el snapshot lo serializó como texto.
+      nombre_atributo:
+        r.fields.nombre_atributo?.trim() || r.fields.etiqueta_local?.trim() || codAtr,
+      obligatorio: r.fields.obligatorio === true || r.fields.obligatorio === 'true',
+      orden: typeof r.fields.orden === 'number' ? r.fields.orden : 0,
+    })
+  }
+
+  atributos.sort((a, b) => a.orden - b.orden)
+  atributosCache.set(clave, { valor: atributos, expira: ahora + TTL_MS })
+  return atributos
+}
+
+/** Invalida la caché de atributos. Sólo para tests. */
+export function _resetCacheAtributosPorTipo(): void {
+  atributosCache.clear()
 }

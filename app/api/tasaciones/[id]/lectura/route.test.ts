@@ -20,6 +20,7 @@ const listRecords = vi.fn()
 const createRecord = vi.fn()
 const updateRecord = vi.fn()
 const getTiposDocumento = vi.fn()
+const getAtributosPorTipo = vi.fn()
 
 vi.mock('@/lib/tasador/auth-guard', () => ({
   autorizarSolicitud: (...args: unknown[]) => autorizarSolicitud(...args),
@@ -27,6 +28,7 @@ vi.mock('@/lib/tasador/auth-guard', () => ({
 
 vi.mock('@/lib/tipos-documento', () => ({
   getTiposDocumento: (...args: unknown[]) => getTiposDocumento(...args),
+  getAtributosPorTipo: (...args: unknown[]) => getAtributosPorTipo(...args),
 }))
 
 vi.mock('@/lib/airtable-client', async (importOriginal) => {
@@ -76,6 +78,7 @@ beforeEach(() => {
   autorizarSolicitud.mockResolvedValue(guardOk())
   listRecords.mockResolvedValue([])
   getTiposDocumento.mockResolvedValue([])
+  getAtributosPorTipo.mockResolvedValue([])
 })
 
 describe('desglose por estado', () => {
@@ -180,7 +183,13 @@ describe('lectura filtrada y guard', () => {
 })
 
 describe('detalle por documento · adjuntos[]', () => {
-  type AdjDetalle = { id: string; codigo: string; nombre: string; estado: string }
+  type AdjDetalle = {
+    id: string
+    codigo: string
+    nombre: string
+    estado: string
+    nombres_datos_faltantes: string[]
+  }
 
   function detalle(cuerpo: { data: Record<string, never> }): AdjDetalle[] {
     return cuerpo.data.adjuntos as unknown as AdjDetalle[]
@@ -210,6 +219,7 @@ describe('detalle por documento · adjuntos[]', () => {
         codigo: 'permiso_edificacion',
         nombre: 'Permiso de Edificación',
         estado: 'listo',
+        nombres_datos_faltantes: [],
       },
     ])
   })
@@ -230,6 +240,7 @@ describe('detalle por documento · adjuntos[]', () => {
       codigo: '',
       nombre: 'foto.jpg',
       estado: 'idle',
+      nombres_datos_faltantes: [],
     })
     // Sin `clave_adjunto` no hay nada que resolver contra el catálogo.
     expect(getTiposDocumento).not.toHaveBeenCalled()
@@ -276,6 +287,99 @@ describe('detalle por documento · adjuntos[]', () => {
     const { cuerpo } = await llamar()
 
     expect(detalle(cuerpo)).toEqual([])
+  })
+})
+
+describe('nombres_datos_faltantes', () => {
+  type AdjDetalle = { estado: string; nombres_datos_faltantes: string[] }
+  function detalle(cuerpo: { data: Record<string, never> }): AdjDetalle[] {
+    return cuerpo.data.adjuntos as unknown as AdjDetalle[]
+  }
+
+  // Los 4 obligatorios de la Escritura, en orden, con su nombre legible.
+  const ATRIBUTOS_ESCRITURA = [
+    { codigo_atributo: 'numero_permiso_edificacion', nombre_atributo: 'N° Permiso de Edificación', obligatorio: true, orden: 1 },
+    { codigo_atributo: 'fecha_permiso_edificacion', nombre_atributo: 'Fecha Permiso de Edificación', obligatorio: true, orden: 2 },
+    { codigo_atributo: 'numero_recepcion_final', nombre_atributo: 'N° Recepción Final', obligatorio: true, orden: 3 },
+    { codigo_atributo: 'fecha_recepcion_final', nombre_atributo: 'Fecha Recepción Final', obligatorio: true, orden: 4 },
+  ]
+
+  it('un documento en error sin datos lista todos los obligatorios como faltantes', async () => {
+    getTiposDocumento.mockResolvedValue([
+      { id: 'recT', codigo: 'escritura_compraventa', nombre: 'Escritura de Compraventa Original' },
+    ])
+    getAtributosPorTipo.mockResolvedValue(ATRIBUTOS_ESCRITURA)
+    listRecords.mockResolvedValue([
+      {
+        id: 'recESC',
+        createdTime: '',
+        // atributos_obtenidos vacío: el fallo total no dejó JSON.
+        fields: { nombre_archivo: 'Escritura.pdf', estado_extraccion: 'error', clave_adjunto: 'escritura_compraventa' },
+      },
+    ])
+
+    const { cuerpo } = await llamar()
+
+    expect(getAtributosPorTipo).toHaveBeenCalledWith('escritura_compraventa')
+    expect(detalle(cuerpo)[0].nombres_datos_faltantes).toEqual([
+      'N° Permiso de Edificación',
+      'Fecha Permiso de Edificación',
+      'N° Recepción Final',
+      'Fecha Recepción Final',
+    ])
+  })
+
+  it('excluye de faltantes los codigo_atributo ya obtenidos', async () => {
+    getAtributosPorTipo.mockResolvedValue(ATRIBUTOS_ESCRITURA)
+    listRecords.mockResolvedValue([
+      {
+        id: 'recESC',
+        createdTime: '',
+        fields: {
+          nombre_archivo: 'Escritura.pdf',
+          estado_extraccion: 'listo',
+          clave_adjunto: 'escritura_compraventa',
+          // Trajo dos, faltan dos: no_extraidos no vacío gatilla el cálculo.
+          atributos_obtenidos: JSON.stringify({
+            items: [
+              { codigo_atributo: 'numero_permiso_edificacion', valor: '60', confianza: 1, fila: 1 },
+              { codigo_atributo: 'fecha_permiso_edificacion', valor: '1996-09-02', confianza: 1, fila: 1 },
+            ],
+            no_extraidos: ['numero_recepcion_final', 'fecha_recepcion_final'],
+          }),
+        },
+      },
+    ])
+
+    const { cuerpo } = await llamar()
+
+    expect(detalle(cuerpo)[0].nombres_datos_faltantes).toEqual([
+      'N° Recepción Final',
+      'Fecha Recepción Final',
+    ])
+  })
+
+  it('un listo que trajo todo no consulta atributos ni marca faltantes', async () => {
+    getTiposDocumento.mockResolvedValue([
+      { id: 'recT', codigo: 'foto_ofertas_comparables', nombre: 'Foto comparables' },
+    ])
+    listRecords.mockResolvedValue([
+      {
+        id: 'recFOTO',
+        createdTime: '',
+        fields: {
+          nombre_archivo: 'foto.jpg',
+          estado_extraccion: 'listo',
+          clave_adjunto: 'foto_ofertas_comparables',
+          atributos_obtenidos: JSON.stringify({ items: [{ codigo_atributo: 'x', valor: 'y', confianza: 1, fila: 1 }], no_extraidos: [] }),
+        },
+      },
+    ])
+
+    const { cuerpo } = await llamar()
+
+    expect(detalle(cuerpo)[0].nombres_datos_faltantes).toEqual([])
+    expect(getAtributosPorTipo).not.toHaveBeenCalled()
   })
 })
 
