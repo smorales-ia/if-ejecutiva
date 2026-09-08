@@ -2665,3 +2665,27 @@ sin política especial. Sin tocar SC-RF09, sin `codigoADisplay`, sin `ordinal`. 
 **Prevención futura:** ante un brief de tanda, la FASE 1 de recon manda: verificar qué existe en el repo
 antes de tratar el brief como lista de construcción, y llevar las divergencias al gate en vez de
 ejecutarlas.
+
+### 2026-09-08 — P14-TAS-CASCADE: purga de comparables al borrar un adjunto
+**Contexto:** DELETE /api/adjuntos/[id] borraba el archivo pero dejaba huérfanos los
+comparables que RF-09 extrajo de esa foto (TX_Comparables). Se creó el campo
+`TX_Comparables.adjunto_origen` (link → TX_Adjuntos) y se construyó el cascade.
+**Inconveniente 1 (orden vs Make):** el diseño natural "buscar por adjunto_origen tras
+data.ok de Make" no funciona: al borrar el adjunto, Airtable retira automáticamente ese
+record del link `adjunto_origen` de las filas hijas, así que buscar después encuentra 0 —un
+no-op silencioso—.
+**Causa raíz:** auto-clear de links al eliminar el registro apuntado.
+**Solución aplicada:** partir el cascade en dos y ordenarlo alrededor de Make —
+`capturarComparablesDeAdjunto()` (READ) antes de `postToMake`, con el adjunto aún vivo, y
+`purgarComparablesCapturados()` (WRITE) sólo tras `data.ok`—. Es correcto haya o no
+auto-clear, así que es la opción segura. En `lib/adjuntos-cascade.ts`.
+**Inconveniente 2 (filtro por solicitud):** en TX_Comparables ni `{solicitud}="VP-..."` ni
+`FIND(cod, ARRAYJOIN({solicitud}))` matchean (devuelven 0).
+**Causa raíz:** el primary de TX_Solicitudes es `codigo_solicitud` (fórmula); la comparación
+de un link contra texto no coacciona igual cuando el primary es fórmula.
+**Solución aplicada:** scope server-side por `SEARCH(codigoExt, {clave_natural})` (clave_natural
+= `{codigo}|COMP-NN`) y precisión en memoria por `adjunto_origen.includes(adjuntoId)` —el
+filtro JS no da falsos positivos aunque el SEARCH sobre-devuelva—.
+**Prevención futura:** ante un link cuya tabla destino tiene primary de tipo fórmula, no
+filtrar por `{link}=texto`; usar un campo de texto propio de la tabla como scope y afinar en
+memoria por el array de record ids que devuelve la REST.

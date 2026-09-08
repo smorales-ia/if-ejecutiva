@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@clerk/nextjs/server'
 import { AirtableError, isValidRecordId } from '@/lib/airtable-client'
+import {
+  capturarComparablesDeAdjunto,
+  purgarComparablesCapturados,
+  type ComparableCascade,
+} from '@/lib/adjuntos-cascade'
 import { postToMake } from '@/lib/make-client'
 import { verificarRN59 } from '@/lib/rn59'
 
@@ -162,6 +167,24 @@ export async function DELETE(
     )
   }
 
+  /**
+   * Se capturan los comparables derivados de este adjunto **antes** de que Make
+   * lo borre: al eliminar el registro, Airtable retira su record del link
+   * `adjunto_origen`, y buscarlos después sería un no-op silencioso. La purga
+   * real ocurre más abajo, sólo si Make confirma el borrado (`data.ok`). Un fallo
+   * de esta lectura no aborta el borrado: se registra y se sigue sin cascade.
+   */
+  let comparablesACascada: ComparableCascade[] = []
+  try {
+    comparablesACascada = await capturarComparablesDeAdjunto(id, payload.codigo_ext)
+  } catch (err) {
+    console.error('[ADJUNTOS-CASCADE-ORPHAN] no se pudieron capturar comparables antes del borrado', {
+      adjunto_record_id: id,
+      codigo_ext: payload.codigo_ext,
+      detalle: err instanceof Error ? err.message : String(err),
+    })
+  }
+
   let makeRes: Response
   try {
     makeRes = await postToMake(
@@ -208,6 +231,29 @@ export async function DELETE(
         codigo_ext: payload.codigo_ext,
       })
     }
+
+    /**
+     * Cascade (P14-TAS): el adjunto se borró, así que se purga la data derivada
+     * que quedó huérfana. Envuelto en try/catch como cinturón-y-tirantes —el
+     * helper ya no re-lanza—: nada de esto puede cambiar el 200 que el usuario
+     * recibe por un borrado que sí ocurrió.
+     */
+    try {
+      const cascade = await purgarComparablesCapturados(comparablesACascada)
+      if (cascade.borrados || cascade.desligados || cascade.errores) {
+        console.log('[ADJUNTOS-CASCADE] comparables purgados', {
+          adjunto_record_id: id,
+          codigo_ext: payload.codigo_ext,
+          ...cascade,
+        })
+      }
+    } catch (err) {
+      console.error('[ADJUNTOS-CASCADE-ORPHAN] fallo inesperado al purgar comparables', {
+        adjunto_record_id: id,
+        detalle: err instanceof Error ? err.message : String(err),
+      })
+    }
+
     return NextResponse.json(
       {
         ok: true,
