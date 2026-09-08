@@ -2641,3 +2641,27 @@ el anterior. Los refs en docs claramente históricos (plan v1.4, plan-if02-v1_9,
 dejaron congelados por la excepción de CLAUDE.md.
 **Prevención futura:** cuando una regla de tanda toque el spec normativo, contrastar siempre con la
 sección "Fuente única de especificación" de CLAUDE.md y resolver en gate antes de ejecutar.
+
+### 2026-09-08 — P14-TAS-LECTURA: la tanda ya venía ~80% construida
+**Contexto:** brief P14 pedía sheet filtrado por tipo_propiedad, acciones Reemplazar/Eliminar, DELETE
+de adjuntos, upload con tipo_documento, helper `codigoADisplay`, campo `ordinal` y paralelismo 3 en
+SC-RF09.
+**Inconveniente:** ejecutar el brief al pie de la letra habría reconstruido código existente y añadido
+schema/riesgo Make innecesarios.
+**Causa raíz:** el brief se redactó sobre un estado anterior del repo. En la recon de FASE 1 casi todo
+ya existía: filtro por `tipo_propiedad` (`documentoAplicaA`, P-5 cerrada por CI-070 Fase 2),
+`document-checklist.tsx` con Reemplazar/Eliminar, `DELETE /api/adjuntos/[id]` con salvaguarda
+`hash_md5` + guard RN-59, upload seteando `tipo_documento`, y reemplazo idempotente (SC-Adjuntos-Upload
+v1.2 · RN-60). Además: `codigoADisplay` es redundante porque `D_TipoDocumento` ya tiene campo `nombre`;
+`TX_Adjuntos` **no** tiene `ordinal` (ese concepto vive sólo para unidades/path Dropbox); y SC-RF09 v2.1
+procesa **un adjunto por invocación** (no hay iterator donde meter paralelismo 3) y sólo escribe
+`TX_Adjuntos` + `LogEscenarios` + un update a `TX_Solicitudes` —sin fan-out a tablas hijas—, por lo que
+la "política de delete post-extracción" A/B/C carecía de sustancia hoy.
+**Solución aplicada:** OK-Gate con reality-check; Sergio aprobó ejecutar sólo el delta real. Se amplió
+`GET /api/tasaciones/[id]/lectura` con `adjuntos[]` (`id`, `codigo`=`clave_adjunto`, `nombre` resuelto
+server-side contra `D_TipoDocumento`, `estado`) —aditivo, sin tocar los agregados que consume el
+stepper— y P6-TAS (`EstadoProcesando`) ahora lista los documentos con ✓ cuando `estado='listo'`. Delete
+sin política especial. Sin tocar SC-RF09, sin `codigoADisplay`, sin `ordinal`. Tests 769→774.
+**Prevención futura:** ante un brief de tanda, la FASE 1 de recon manda: verificar qué existe en el repo
+antes de tratar el brief como lista de construcción, y llevar las divergencias al gate en vez de
+ejecutarlas.

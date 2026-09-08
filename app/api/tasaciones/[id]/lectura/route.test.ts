@@ -19,9 +19,14 @@ const autorizarSolicitud = vi.fn()
 const listRecords = vi.fn()
 const createRecord = vi.fn()
 const updateRecord = vi.fn()
+const getTiposDocumento = vi.fn()
 
 vi.mock('@/lib/tasador/auth-guard', () => ({
   autorizarSolicitud: (...args: unknown[]) => autorizarSolicitud(...args),
+}))
+
+vi.mock('@/lib/tipos-documento', () => ({
+  getTiposDocumento: (...args: unknown[]) => getTiposDocumento(...args),
 }))
 
 vi.mock('@/lib/airtable-client', async (importOriginal) => {
@@ -70,6 +75,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   autorizarSolicitud.mockResolvedValue(guardOk())
   listRecords.mockResolvedValue([])
+  getTiposDocumento.mockResolvedValue([])
 })
 
 describe('desglose por estado', () => {
@@ -170,6 +176,106 @@ describe('lectura filtrada y guard', () => {
 
     expect(status).toBe(403)
     expect(listRecords).not.toHaveBeenCalled()
+  })
+})
+
+describe('detalle por documento · adjuntos[]', () => {
+  type AdjDetalle = { id: string; codigo: string; nombre: string; estado: string }
+
+  function detalle(cuerpo: { data: Record<string, never> }): AdjDetalle[] {
+    return cuerpo.data.adjuntos as unknown as AdjDetalle[]
+  }
+
+  it('proyecta id, codigo, nombre del catálogo y estado', async () => {
+    getTiposDocumento.mockResolvedValue([
+      { id: 'recT1', codigo: 'permiso_edificacion', nombre: 'Permiso de Edificación' },
+    ])
+    listRecords.mockResolvedValue([
+      {
+        id: 'recADJ1',
+        createdTime: '',
+        fields: {
+          nombre_archivo: 'permiso.pdf',
+          estado_extraccion: 'listo',
+          clave_adjunto: 'permiso_edificacion',
+        },
+      },
+    ])
+
+    const { cuerpo } = await llamar()
+
+    expect(detalle(cuerpo)).toEqual([
+      {
+        id: 'recADJ1',
+        codigo: 'permiso_edificacion',
+        nombre: 'Permiso de Edificación',
+        estado: 'listo',
+      },
+    ])
+  })
+
+  it('un adjunto suelto cae al nombre del archivo, con codigo vacío y sin leer el catálogo', async () => {
+    listRecords.mockResolvedValue([
+      {
+        id: 'recADJ2',
+        createdTime: '',
+        fields: { nombre_archivo: 'foto.jpg', estado_extraccion: 'idle' },
+      },
+    ])
+
+    const { cuerpo } = await llamar()
+
+    expect(detalle(cuerpo)[0]).toEqual({
+      id: 'recADJ2',
+      codigo: '',
+      nombre: 'foto.jpg',
+      estado: 'idle',
+    })
+    // Sin `clave_adjunto` no hay nada que resolver contra el catálogo.
+    expect(getTiposDocumento).not.toHaveBeenCalled()
+  })
+
+  it('el estado ausente se normaliza a idle en el detalle', async () => {
+    listRecords.mockResolvedValue([
+      { id: 'recADJ3', createdTime: '', fields: { nombre_archivo: 'x.pdf' } },
+    ])
+
+    const { cuerpo } = await llamar()
+
+    expect(detalle(cuerpo)[0].estado).toBe('idle')
+  })
+
+  it('si el catálogo falla, degrada al nombre del archivo sin tumbar el avance', async () => {
+    getTiposDocumento.mockRejectedValue(new Error('catálogo caído'))
+    listRecords.mockResolvedValue([
+      {
+        id: 'recADJ4',
+        createdTime: '',
+        fields: {
+          nombre_archivo: 'permiso.pdf',
+          estado_extraccion: 'listo',
+          clave_adjunto: 'permiso_edificacion',
+        },
+      },
+    ])
+
+    const { cuerpo, status } = await llamar()
+
+    expect(status).toBe(200)
+    expect(detalle(cuerpo)[0].nombre).toBe('permiso.pdf')
+  })
+
+  it('sin código de solicitud devuelve adjuntos vacío', async () => {
+    autorizarSolicitud.mockResolvedValue({
+      ok: true,
+      solicitudId: ID,
+      usuarioRecordId: 'recSR3RxY6rsLb8k7',
+      fields: { codigo_solicitud: '', estado: 'visitada' },
+    })
+
+    const { cuerpo } = await llamar()
+
+    expect(detalle(cuerpo)).toEqual([])
   })
 })
 

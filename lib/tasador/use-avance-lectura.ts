@@ -4,6 +4,7 @@ import * as React from "react"
 
 import {
   resolverAvanceLectura,
+  type AdjuntoAvance,
   type AvanceLectura,
   type ConteoPorEstado,
 } from "@/lib/tasador/avance-lectura"
@@ -58,11 +59,18 @@ interface CuerpoLectura {
   total?: number
   terminados?: number
   porEstado?: ConteoPorEstado
+  adjuntos?: AdjuntoAvance[]
 }
 
 export interface EstadoAvanceLectura {
   /** Avance resuelto. `null` mientras no llegó la primera respuesta. */
   avance: AvanceLectura | null
+  /**
+   * Detalle por documento para la lista de P6-TAS. Vacío mientras no llegó la
+   * primera respuesta o si la solicitud no tiene adjuntos. Un backend anterior
+   * sin este campo lo deja en `[]`, así que la lista simplemente no se pinta.
+   */
+  adjuntos: AdjuntoAvance[]
   cargando: boolean
   /** `true` si la última lectura falló. El literal a mostrar es humano. */
   error: boolean
@@ -72,6 +80,7 @@ export interface EstadoAvanceLectura {
 
 export function useAvanceLectura(id: string): EstadoAvanceLectura {
   const [avance, setAvance] = React.useState<AvanceLectura | null>(null)
+  const [adjuntos, setAdjuntos] = React.useState<AdjuntoAvance[]>([])
   const [cargando, setCargando] = React.useState(true)
   const [error, setError] = React.useState(false)
   const [agotado, setAgotado] = React.useState(false)
@@ -124,6 +133,7 @@ export function useAvanceLectura(id: string): EstadoAvanceLectura {
 
         const resuelto = resolverAvanceLectura(conteo)
         setAvance(resuelto)
+        setAdjuntos(sobre.data.adjuntos ?? [])
         setError(false)
 
         // Terminó: no hay nada más que preguntar.
@@ -153,5 +163,5 @@ export function useAvanceLectura(id: string): EstadoAvanceLectura {
     }
   }, [id])
 
-  return { avance, cargando, error, agotado }
+  return { avance, adjuntos, cargando, error, agotado }
 }

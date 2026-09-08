@@ -66,6 +66,26 @@ const TERMINALES: ReadonlySet<string> = new Set([
 export type ConteoPorEstado = Partial<Record<EstadoExtraccion, number>> &
   Record<string, number | undefined>
 
+/**
+ * Un adjunto proyectado al detalle por documento que muestra P6-TAS.
+ *
+ * Lo emite `GET /api/tasaciones/[id]/lectura` junto a los agregados (RF-TAS-15).
+ * `codigo` es el `clave_adjunto` del adjunto (el `codigo` de `D_TipoDocumento`
+ * declarado al subir); `nombre` es el nombre legible de ese tipo, ya resuelto en
+ * el servidor contra el catálogo —el cliente no vuelve a leer Airtable—. Un
+ * adjunto suelto (sin `clave_adjunto`) cae al nombre del archivo. `estado` es el
+ * `estado_extraccion` normalizado, con `idle` cuando la fila aún no lo trae.
+ *
+ * Regla T-C: ningún campo nombra el medio técnico. `nombre` es el del documento,
+ * no el del proveedor de lectura.
+ */
+export interface AdjuntoAvance {
+  id: string
+  codigo: string
+  nombre: string
+  estado: string
+}
+
 export interface AvanceLectura {
   /** Fase del stepper: 0 procesando · 1 casi listo · 2 completo. */
   fase: 0 | 1 | 2

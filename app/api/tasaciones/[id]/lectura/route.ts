@@ -21,16 +21,62 @@
 import type { NextRequest } from 'next/server'
 import { listRecords } from '@/lib/airtable-client'
 import { autorizarSolicitud } from '@/lib/tasador/auth-guard'
-import { ESTADOS_EXTRACCION, esTerminal } from '@/lib/tasador/avance-lectura'
+import {
+  ESTADOS_EXTRACCION,
+  esTerminal,
+  type AdjuntoAvance,
+} from '@/lib/tasador/avance-lectura'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { desdeExcepcion, desdeGuard, ok } from '@/lib/tasador/respuestas'
+import { getTiposDocumento } from '@/lib/tipos-documento'
 
 export const dynamic = 'force-dynamic'
 
 interface AdjuntoFields {
   nombre_archivo?: string
   estado_extraccion?: string
+  // `clave_adjunto` (`fldaLLtzAaEn1O8IW`) es el `codigo` de `D_TipoDocumento`
+  // declarado al subir (RN-25); lo que permite mostrar el nombre del tipo y no
+  // sólo el del archivo. Un adjunto suelto lo trae vacío.
+  clave_adjunto?: string
   solicitud?: string[]
+}
+
+/**
+ * Resuelve el nombre legible de cada adjunto a partir de su `clave_adjunto`,
+ * cruzando contra el catálogo `D_TipoDocumento` (campo real `nombre`, sin
+ * transformar el `codigo`).
+ *
+ * Sólo lee el catálogo si algún adjunto trae `clave_adjunto`: los adjuntos
+ * sueltos no lo necesitan y así el polling de 4 s no gasta una segunda lectura
+ * por nada. Un fallo del catálogo no puede tumbar el avance —es el dato que
+ * habilita «Continuar»—, así que degrada al nombre del archivo.
+ */
+async function proyectarAdjuntos(
+  filas: { id: string; fields: AdjuntoFields }[]
+): Promise<AdjuntoAvance[]> {
+  const necesitaCatalogo = filas.some((f) => (f.fields.clave_adjunto ?? '').trim() !== '')
+
+  let nombrePorCodigo = new Map<string, string>()
+  if (necesitaCatalogo) {
+    try {
+      const tipos = await getTiposDocumento()
+      nombrePorCodigo = new Map(tipos.map((t) => [t.codigo, t.nombre]))
+    } catch (err) {
+      console.error('[GET /api/tasaciones/[id]/lectura] catálogo no disponible', err)
+    }
+  }
+
+  return filas.map((f) => {
+    const codigo = (f.fields.clave_adjunto ?? '').trim()
+    const nombreArchivo = (f.fields.nombre_archivo ?? '').trim()
+    return {
+      id: f.id,
+      codigo,
+      nombre: (codigo && nombrePorCodigo.get(codigo)) || nombreArchivo || codigo || 'Documento',
+      estado: f.fields.estado_extraccion ?? 'idle',
+    }
+  })
 }
 
 const EN_CURSO = 'extrayendo'
@@ -80,12 +126,13 @@ export async function GET(
         conError: 0,
         completo: true,
         porEstado: contarPorEstado([]),
+        adjuntos: [],
       })
     }
 
     const adjuntos = await listRecords<AdjuntoFields>(TABLE_IDS.adjuntos, {
       filterByFormula: `{solicitud}="${codigo.replace(/"/g, '\\"')}"`,
-      fields: ['nombre_archivo', 'estado_extraccion'],
+      fields: ['nombre_archivo', 'estado_extraccion', 'clave_adjunto'],
     })
 
     // Un adjunto sin `estado_extraccion` cuenta como `idle`: el pipeline lo
@@ -95,12 +142,18 @@ export async function GET(
     const enCurso = estados.filter((e) => e === EN_CURSO).length
     const conError = estados.filter((e) => e === 'error').length
 
+    // Detalle por documento para la lista de P6-TAS. Aditivo: los agregados de
+    // arriba siguen intactos, así que el stepper que sólo lee `porEstado` no se
+    // entera de este campo.
+    const detalleAdjuntos = await proyectarAdjuntos(adjuntos)
+
     return ok({
       id,
       total: estados.length,
       terminados,
       enCurso,
       conError,
+      adjuntos: detalleAdjuntos,
       /**
        * Desglose por estado, agregado en **P6-TAS**. Los agregados de arriba se
        * conservan por compatibilidad, pero no alcanzan para el criterio de

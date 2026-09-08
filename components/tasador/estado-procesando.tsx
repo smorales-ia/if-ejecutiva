@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
+import { esTerminal } from "@/lib/tasador/avance-lectura"
 import {
   MSG_LECTURA_FALLIDA,
   useAvanceLectura,
@@ -13,6 +14,31 @@ import {
 
 type Fase = 0 | 1 | 2 // 0: procesando, 1: casi listo, 2: completado
 type Variante = "lectura" | "calculo"
+
+/**
+ * Marca de estado por documento en la lista de P6-TAS.
+ *
+ * ✓ verde sólo cuando el documento quedó `listo` (§7.2). El resto de estados
+ * terminales —`skipped`, `no_corresponde`, `error`, `delegado_visador`— no son
+ * un éxito de lectura pero tampoco algo que el tasador deba resolver acá: el
+ * aviso ámbar de la pantalla ya explica los que importan, así que la fila lleva
+ * un punto neutro. Lo que sigue en curso muestra el spinner. Regla T-C: el icono
+ * no nombra ningún medio técnico.
+ */
+function IconoEstadoDocumento({ estado }: { estado: string }) {
+  if (estado === "listo") {
+    return <Check className="h-4 w-4 shrink-0 text-success" strokeWidth={3} aria-hidden="true" />
+  }
+  if (esTerminal(estado)) {
+    return (
+      <span
+        className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground"
+        aria-hidden="true"
+      />
+    )
+  }
+  return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-brand" aria-hidden="true" />
+}
 
 const COPY: Record<
   Variante,
@@ -83,7 +109,7 @@ export function EstadoProcesando({
    * marca este componente como compartido con P8-TAS y cualquier cambio en una
    * rama no debe alcanzar a la otra.
    */
-  const { avance, error: errorLectura, agotado } = useAvanceLectura(id)
+  const { avance, adjuntos, error: errorLectura, agotado } = useAvanceLectura(id)
 
   /*
    * ⚠ **El v0 disparaba el cálculo desde acá** si llegaba en `BORRADOR`, para
@@ -266,6 +292,30 @@ export function EstadoProcesando({
         <p className="mt-6 w-full rounded-xl bg-amber-50 px-4 py-3 text-sm text-warning">
           {avisoLectura}
         </p>
+      )}
+
+      {/*
+        Detalle por documento (P6-TAS · RF-TAS-15). Muestra el nombre del tipo de
+        documento y una marca que se vuelve ✓ cuando ese documento quedó `listo`.
+        Sólo en la variante `lectura` y sólo si la solicitud trae adjuntos —una
+        lista vacía no aporta nada—. El nombre viene ya resuelto del servidor
+        (`D_TipoDocumento.nombre`); la pantalla no lee catálogos ni transforma
+        códigos. Regla T-C: ni la lista ni las marcas nombran el medio técnico.
+      */}
+      {!esCalculo && adjuntos.length > 0 && (
+        <ul className="mt-6 w-full space-y-2 text-left">
+          {adjuntos.map((a) => (
+            <li
+              key={a.id}
+              className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2.5"
+            >
+              <IconoEstadoDocumento estado={a.estado} />
+              <span className="flex-1 text-sm leading-tight text-foreground">
+                {a.nombre}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
 
       {/* Botones */}
