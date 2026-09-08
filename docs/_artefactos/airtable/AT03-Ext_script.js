@@ -627,10 +627,18 @@ async function resolverFilaMuchas(destTable, tablaDestinoNombre, fila) {
   if (existente) {
     row = existente
   } else {
-    const nuevaId = await destTable.createRecordAsync({
+    const nuevaFila = {
       clave_natural: claveNatural,
       solicitud: [{ id: solicitudId }],
-    })
+    }
+    // adjunto_origen (fld4i271GJA1VHu6a, link → TX_Adjuntos): traza el adjunto
+    // del que salió este comparable, para poder purgarlos en cascada al borrar
+    // el adjunto (P14-TAS-CASCADE-DELETE). Se setea sólo al CREAR la fila —el
+    // upsert idempotente no repisa filas existentes— y sólo si el campo existe.
+    if (getFieldByName(destTable, 'adjunto_origen')) {
+      nuevaFila.adjunto_origen = [{ id: adjuntoId }]
+    }
+    const nuevaId = await destTable.createRecordAsync(nuevaFila)
     row = await destTable.selectRecordAsync(nuevaId)
     propLog.push(`(creada fila ${tablaDestinoNombre} ${nuevaId} · ${claveNatural})`)
   }
