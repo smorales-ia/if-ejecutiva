@@ -6,8 +6,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
  *
  * El desglose `porEstado` se agregó en esta tanda. Los agregados que ya había
  * —`terminados`, `conError`— no alcanzaban para el criterio de §7.3:
- * `delegado_visador` es terminal y **no** debe habilitar «Continuar», pero
- * contado dentro de `terminados` era indistinguible de un `listo`.
+ * `delegado_visador` es terminal y **sí** habilita «Continuar»
+ * (RF-09/CI-013 · D-2026-09-04): dispara un aviso ámbar, no bloquea. Aun así
+ * debe distinguirse de un `listo` en el desglose, porque contado dentro de
+ * `terminados` era indistinguible y el aviso no tendría de dónde salir.
  *
  * La ruta **sólo observa**: R7 exige que no dispare ni reintente nada. Hay un
  * test que lo afirma, porque agregar una escritura aquí no rompería ningún otro.
@@ -103,9 +105,11 @@ describe('desglose por estado', () => {
 
     // El agregado los mete en la misma bolsa…
     expect(d.terminados).toBe(2)
-    // …y el desglose es lo que permite bloquear el botón.
+    // …y el desglose es lo que permite el aviso ámbar sin bloquear el botón.
     expect(d.porEstado.delegado_visador).toBe(1)
-    expect(resolverAvanceLectura(d.porEstado).puedeContinuar).toBe(false)
+    const avance = resolverAvanceLectura(d.porEstado)
+    expect(avance.puedeContinuar).toBe(true)
+    expect(avance.hayDelegado).toBe(true)
   })
 
   it('un adjunto sin `estado_extraccion` cuenta como `idle`', async () => {
@@ -141,7 +145,7 @@ describe('el agregado `completo`', () => {
     expect(cuerpo.data.completo).toBe(false as never)
   })
 
-  it('es true con todo terminal, incluido el desenlace que bloquea', async () => {
+  it('es true con todo terminal, incluido el desenlace que sólo avisa', async () => {
     listRecords.mockResolvedValue(adjuntos('listo', 'error'))
     const { cuerpo } = await llamar()
     expect(cuerpo.data.completo).toBe(true as never)
