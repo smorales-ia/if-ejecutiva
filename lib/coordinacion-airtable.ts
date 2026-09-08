@@ -1,7 +1,7 @@
 import { isValidRecordId, listRecords } from '@/lib/airtable-client'
 import type { CoordinacionSolicitud, IntentoCoordinacion } from '@/lib/coordinacion'
 import { FIELD_IDS_COORDINACION_VISITA, TABLE_IDS } from '@/lib/tasador/field-ids'
-import type { EstadoCoordinacion } from '@/lib/tasaciones'
+import type { EstadoCoordinacion } from '@/lib/tasador/tasaciones'
 
 /**
  * Lectura server-side de `TX_CoordinacionVisita` para IF-02 (**RF-TAS-05** ·

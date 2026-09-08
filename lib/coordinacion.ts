@@ -15,7 +15,7 @@
  * llamadores server-side no cambiaron.
  */
 
-import type { CoordinacionVisita, EstadoCoordinacion } from '@/lib/tasaciones'
+import type { CoordinacionVisita, EstadoCoordinacion } from '@/lib/tasador/tasaciones'
 import { partesEnSantiago, ZONA_VPROPERTY } from '@/lib/sla-habil'
 
 /* -------------------------------------------------------------------------
