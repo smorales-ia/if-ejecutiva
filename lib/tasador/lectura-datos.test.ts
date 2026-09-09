@@ -25,7 +25,13 @@ vi.mock('@/lib/airtable-client', async (importOriginal) => {
   return { ...real, listRecords: (...args: unknown[]) => listRecords(...args) }
 })
 
-import { aComparable, comparablesDeSolicitud, proyectarDatosCaptura } from './lectura-datos'
+import {
+  aComparable,
+  calidadSiiANumero,
+  comparablesDeSolicitud,
+  materialSiiAPredominante,
+  proyectarDatosCaptura,
+} from './lectura-datos'
 import { TABLE_IDS } from './field-ids'
 
 const CODIGO = 'VP-2026-0060'
@@ -229,5 +235,85 @@ describe('proyección sección H · candado del cap rate', () => {
     })
 
     expect('valorReferenciaClp' in datos).toBe(false)
+  })
+})
+
+describe('P16-TAS · mapeos SII de sección B', () => {
+  it('calidad_sii "media inferior" → 2 (case-insensitive, trim)', () => {
+    expect(calidadSiiANumero('media inferior')).toBe(2)
+    expect(calidadSiiANumero('  Media Inferior ')).toBe(2)
+    expect(calidadSiiANumero('superior')).toBe(4)
+    expect(calidadSiiANumero('muy superior')).toBe(5)
+  })
+
+  it('calidad_sii fuera de dominio o vacía → 0', () => {
+    expect(calidadSiiANumero('excelentísima')).toBe(0)
+    expect(calidadSiiANumero('')).toBe(0)
+  })
+
+  it('tipo_material "albanileria" → "Albañilería" (case-insensitive)', () => {
+    expect(materialSiiAPredominante('albanileria')).toBe('Albañilería')
+    expect(materialSiiAPredominante('HORMIGON')).toBe('Hormigón')
+  })
+
+  it('tipo_material fuera de dominio o vacío → ""', () => {
+    expect(materialSiiAPredominante('ladrillo cocido')).toBe('')
+    expect(materialSiiAPredominante('')).toBe('')
+  })
+})
+
+describe('P16-TAS · fallback de sección B a fuentes SII', () => {
+  /**
+   * `listRecords` responde con `datos` para TX_DatosTasacion y `unidades` para
+   * TX_Unidades; el resto de tablas hijas devuelve vacío.
+   */
+  function airtableConDatosYUnidades(
+    datos: Record<string, unknown>,
+    unidades: ReturnType<typeof fila>[],
+  ) {
+    listRecords.mockImplementation(async (tableId: string) => {
+      if (tableId === TABLE_IDS.datosTasacion) return [fila('recDatos00000001', datos)]
+      if (tableId === TABLE_IDS.unidades) return unidades
+      return []
+    })
+  }
+
+  it('con genéricos vacíos, rellena B desde cg/calidad_sii/TX_Unidades', async () => {
+    airtableConDatosYUnidades(
+      { cg: 37, calidad_sii: 'media inferior' },
+      [fila('recU00000000001', { sup_terreno_m2: 162, anio_construccion: 1972, tipo_material: 'albanileria' })],
+    )
+
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.supConstruida).toBe('37')
+    expect(datos.supTerreno).toBe('162')
+    expect(datos.anioConstruccion).toBe('1972')
+    expect(datos.materialPredominante).toBe('Albañilería')
+    expect(datos.calidadConstruccion).toBe(2)
+  })
+
+  it('cuando la columna genérica trae dato, gana el genérico (el tasador editó)', async () => {
+    airtableConDatosYUnidades(
+      {
+        sup_construccion_m2: 120,
+        sup_terreno_m2: 500,
+        anio_construccion: 2010,
+        material_predominante: 'Hormigón',
+        calidad_construccion: 4,
+        // fuentes SII presentes pero NO deben usarse
+        cg: 37,
+        calidad_sii: 'media inferior',
+      },
+      [fila('recU00000000001', { sup_terreno_m2: 162, anio_construccion: 1972, tipo_material: 'madera' })],
+    )
+
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.supConstruida).toBe('120')
+    expect(datos.supTerreno).toBe('500')
+    expect(datos.anioConstruccion).toBe('2010')
+    expect(datos.materialPredominante).toBe('Hormigón')
+    expect(datos.calidadConstruccion).toBe(4)
   })
 })

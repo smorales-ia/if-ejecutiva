@@ -154,6 +154,20 @@ export function soloClavesDeBorrador(borrador: InformeData): Partial<InformeData
  *
  * Sin borrador devuelve `informeInicial` tal cual — el caso de la primera
  * visita, donde lo hidratado es todo lo que hay.
+ *
+ * ## Interacción con el fallback SII de sección B (P16-TAS)
+ *
+ * `lectura-datos.ts` ahora rellena los campos de sección B vacíos con fuentes
+ * SII (`cg`, `calidad_sii`, `TX_Unidades`) antes de que este módulo corra. La
+ * política pedida —«si el borrador está vacío en un campo B y el servidor trae
+ * valor, gana el servidor»— **ya la cumple este reparto sin cambios**: las
+ * secciones A–H salen siempre de `informeInicial` (el servidor, ya con
+ * fallback), y sólo `documentosCargados` viene del borrador
+ * (`CLAVES_SOLO_BORRADOR`). Un campo B vacío en el borrador **no puede** pisar
+ * el valor del servidor en el estado inicial. Cuando ambos traen valor, sigue
+ * decidiendo el tasador vía banner (`borradorAportaContenido` exige contenido
+ * del lado del borrador para ofrecerlo). Cuando sólo el borrador tiene valor,
+ * el banner se ofrece igual que antes.
  */
 export function combinarConBorrador(
   informeInicial: InformeData,

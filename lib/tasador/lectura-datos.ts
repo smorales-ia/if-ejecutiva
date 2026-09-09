@@ -216,6 +216,58 @@ export interface DatosCaptura {
 }
 
 /**
+ * Mapa `TX_Unidades.tipo_material` (dominio SII, minúsculas) → opción del
+ * singleSelect `TX_DatosTasacion.material_predominante` (P16-TAS). Fuera de
+ * dominio: se deja vacío y se loguea. Adivinable desde el catálogo SII; si en
+ * producción aparece un valor no listado, se agrega en una tanda siguiente.
+ */
+const MATERIAL_SII_A_PREDOMINANTE: Record<string, string> = {
+  albanileria: 'Albañilería',
+  hormigon: 'Hormigón',
+  madera: 'Madera',
+  mixto: 'Mixto',
+  acero: 'Acero',
+  adobe: 'Adobe',
+}
+
+export function materialSiiAPredominante(valor: string): string {
+  const clave = valor.trim().toLowerCase()
+  if (clave === '') return ''
+  const mapeado = MATERIAL_SII_A_PREDOMINANTE[clave]
+  if (mapeado === undefined) {
+    console.warn(`[P16-TAS] tipo_material SII sin mapeo a material_predominante: ${JSON.stringify(valor)}`)
+    return ''
+  }
+  return mapeado
+}
+
+/**
+ * Mapa `TX_DatosTasacion.calidad_sii` (texto SII) → escala 1..5 de
+ * `calidad_construccion` (P16-TAS). Fuera de dominio: `0` (vacío, igual que el
+ * default actual) y se loguea.
+ */
+const CALIDAD_SII_A_NUMERO: Record<string, number> = {
+  'muy inferior': 1,
+  inferior: 2,
+  'media inferior': 2,
+  media: 3,
+  'media superior': 4,
+  superior: 4,
+  'muy superior': 5,
+}
+
+export function calidadSiiANumero(valor: string): number {
+  const clave = valor.trim().toLowerCase()
+  if (clave === '') return 0
+  const mapeado = CALIDAD_SII_A_NUMERO[clave]
+  if (mapeado === undefined) {
+    console.warn(`[P16-TAS] calidad_sii sin mapeo a calidad_construccion: ${JSON.stringify(valor)}`)
+    return 0
+  }
+  return mapeado
+}
+
+/**
  * Proyecta la captura de terreno a partir de la solicitud ya autorizada.
  *
  * Recibe los `fields` que el guard leyó para no volver a pedir el registro: el
@@ -225,7 +277,7 @@ export interface DatosCaptura {
 export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<DatosCaptura> {
   const codigo = String(fields.codigo_solicitud ?? '')
 
-  const [datos, legales, items, ampliaciones, habitaciones, terminaciones, comparables] =
+  const [datos, legales, items, ampliaciones, habitaciones, terminaciones, comparables, unidades] =
     await Promise.all([
       filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
       filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
@@ -234,6 +286,7 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       filasDeSolicitud<Fields>(TABLE_IDS.habitacionesPorNivel, codigo),
       filasDeSolicitud<Fields>(TABLE_IDS.terminacionesPorRecinto, codigo),
       comparablesDeSolicitud(codigo),
+      filasDeSolicitud<Fields>(TABLE_IDS.unidades, codigo),
     ])
 
   const d = datos[0]?.fields ?? {}
@@ -266,6 +319,41 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     if (destino) porRecinto.get(nombre)![destino.campo] = texto(t.fields.descripcion)
   }
 
+  /*
+   * Fallback de sección B a fuentes SII (P16-TAS · Opción A · read-layer).
+   *
+   * El pipeline RF-09/SII escribe columnas SII-específicas (`cg`, `calidad_sii`)
+   * y `TX_Unidades`, pero el formulario de captura bindea a las columnas
+   * GENÉRICAS de `TX_DatosTasacion` (`sup_construccion_m2`, `material_predominante`,
+   * `calidad_construccion`, `anio_construccion`, `sup_terreno_m2`) que el pipeline
+   * no llena. Sin re-modelar ni tocar el pipeline (R7), la captura toma la fuente
+   * SII SÓLO cuando la columna genérica está vacía. La columna genérica siempre
+   * gana si trae dato (el tasador ya editó).
+   */
+  const primerNoVacio = (...vals: string[]) => vals.find((v) => v !== '') ?? ''
+  /** Primer valor no vacío del campo `campo` recorriendo las unidades. */
+  const primeraUnidadConDato = (campo: string) => {
+    for (const u of unidades) {
+      const v = texto(u.fields[campo])
+      if (v !== '') return v
+    }
+    return ''
+  }
+
+  const supTerreno = primerNoVacio(texto(d.sup_terreno_m2), primeraUnidadConDato('sup_terreno_m2'))
+  const supConstruida = primerNoVacio(texto(d.sup_construccion_m2), texto(d.cg))
+  const anioConstruccion = primerNoVacio(
+    texto(d.anio_construccion),
+    primeraUnidadConDato('anio_construccion'),
+  )
+  const materialPredominante = primerNoVacio(
+    texto(d.material_predominante),
+    materialSiiAPredominante(primeraUnidadConDato('tipo_material')),
+  )
+  const calidadGenerica = texto(d.calidad_construccion)
+  const calidadConstruccion =
+    calidadGenerica !== '' ? Number(calidadGenerica) : calidadSiiANumero(texto(d.calidad_sii))
+
   return {
     codigo,
     datos: {
@@ -273,15 +361,15 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       fechaPlanificadaVisita: texto(s.fecha_visita_programada),
       fechaVisitaReal: texto(s.fecha_visita),
       observacionesTasador: texto(d.observaciones_tasador),
-      /* --- B --- */
-      supTerreno: texto(d.sup_terreno_m2),
-      supConstruida: texto(d.sup_construccion_m2),
+      /* --- B (con fallback SII · P16-TAS) --- */
+      supTerreno,
+      supConstruida,
       supPrimerPiso: texto(d.sup_primer_piso_m2),
-      anioConstruccion: texto(d.anio_construccion),
+      anioConstruccion,
       estadoConservacion: texto(d.estado_conservacion),
       agrupacionPropiedad: texto(d.agrupacion_propiedad),
-      materialPredominante: texto(d.material_predominante),
-      calidadConstruccion: Number(d.calidad_construccion ?? 0),
+      materialPredominante,
+      calidadConstruccion,
       pisosPropiedad: texto(d.pisos),
       orientacion: d.orientacion ? [String(d.orientacion)] : [],
       numAscensores: texto(d.num_ascensores),

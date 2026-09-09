@@ -2785,3 +2785,35 @@ foja/numero/año **en blanco**, así que el E2E no poblará valores F — sólo 
 **Prevención futura:** para añadir choices a un singleSelect en esta base, usar `typecast:true` por
 Data API, no el meta PATCH. Y antes de prometer una constante en tabla hija, confirmar que existe
 un lever data-driven (no asumir que `uso_campo_destino`/`valor_por_defecto` la cubren).
+
+### 2026-09-09 — Tarea 4 · Fase 3 (P16-TAS): regresión "sección B vacía" en captura del tasador
+**Contexto:** tras subir `foto_fuente_sii.jpg` a VP-2026-0060, la sección B del FORMULARIO DE
+CAPTURA salía vacía y el progreso quedaba en 18%, pese a que el pipeline había corrido.
+**Inconveniente 1 (causa raíz · desajuste de capas):** SC07 corrió (`atributos_obtenidos`
+poblado) y AT03-Ext propagó los `una_por_solicitud` a `TX_DatosTasacion` en columnas
+SII-específicas (`cg`, `calidad_sii`, `destino_sii`…), pero el formulario de captura
+(`seccion-propiedad.tsx` vía `lectura-datos.ts`) bindea a las columnas GENÉRICAS
+(`sup_construccion_m2`, `material_predominante`, `calidad_construccion`, `anio_construccion`,
+`sup_terreno_m2`) que el pipeline no llena. FASE2/3/P15-TAS habían cableado el layer del INFORME
+(`informe-preview.tsx`), no el de captura.
+**Solución aplicada (Opción A · read-layer · R7 intacto):** fallback con "primer no vacío" en
+`lectura-datos.ts` sección B — `supConstruida ??cg`, `supTerreno/anioConstruccion ?? primera
+unidad con dato de TX_Unidades`, `materialPredominante ?? map(tipo_material)`, `calidadConstruccion
+?? map(calidad_sii→1..5)`. La columna genérica gana si trae dato (el tasador ya editó). Mapas
+`MATERIAL_SII_A_PREDOMINANTE` y `CALIDAD_SII_A_NUMERO` en el mismo archivo, con `console.warn` en
+valores fuera de dominio.
+**Inconveniente 2 (política de borrador · falso trabajo evitado):** el brief pedía "servidor gana
+si el borrador está vacío en B". Al leer `recuperacion-borrador.ts` resultó que YA lo cumple:
+`combinarConBorrador` toma A–H de `informeInicial` (servidor, ya con fallback) y sólo repone
+`documentosCargados`; `borradorAportaContenido` exige `tieneContenido` del lado del borrador para
+ofrecer el banner. No se tocó la lógica, sólo se documentó la interacción con el fallback.
+**Inconveniente 3 (no-op TX_Unidades · diagnóstico, sin fix):** los per-unit SII no aterrizan en
+`TX_Unidades` porque el JSON no emite `rol_sii` y el link exige `uso_campo_link_unidad =
+TX_Unidades.rol_sii`; además la foto trae manzana/predio (`2827/272`) que no casan con el rol de
+intake (`05271-00016`). Se dejó como PLANTEAMIENTO para OK-Gate (no se tocó pipeline/catálogo).
+**Inconveniente 4 (menor):** se coló `${valor!r}` (sintaxis Python) en un template literal JS;
+`pnpm typecheck` no lo marca porque `!` es non-null assertion válido. Corregido a
+`${JSON.stringify(valor)}` por `sed`.
+**Prevención futura:** ante "campo vacío en la UI" con el pipeline OK, contrastar las columnas que
+LEE el consumidor contra las que ESCRIBE el pipeline — el informe y la captura son layers distintos
+y pueden leer columnas distintas. Y ojo con la sintaxis Python en template literals JS.
