@@ -2689,3 +2689,38 @@ filtro JS no da falsos positivos aunque el SEARCH sobre-devuelva—.
 **Prevención futura:** ante un link cuya tabla destino tiene primary de tipo fórmula, no
 filtrar por `{link}=texto`; usar un campo de texto propio de la tabla como scope y afinar en
 memoria por el array de record ids que devuelve la REST.
+
+### 2026-09-09 — FASE2-lectura-sii: cierre de CI-025 y desvío de rama
+**Contexto:** tanda FASE2-lectura-sii — inventariar el documento SII (`foto_fuente_sii`),
+poblar D_TipoDocumento/D_TipoDocumentoAtributo y mostrar los datos en la UF del Tasador
+(Bloque 4). Gate aprobado con Opción A.
+**Inconveniente 1 (CI-025 · campos SII inexistentes):** el "bloque SII §20.6" de
+`TX_DatosTasacion` estaba documentado en `docs/schema-airtable.md` pero **nunca se había
+creado** en la base real, así que el productor `lib/tasador/lectura-informe.ts` emitía los
+códigos SII en `null` por ausencia de columna, y la foto `foto_fuente_sii.jpg` traía ~8
+campos sin destino donde persistir.
+**Causa raíz:** divergencia doc↔base — el schema documentó la intención (§20.6) sin
+ejecutar la creación; se detectó vía meta API contrastando nombres contra la tabla real.
+**Solución aplicada:** **CI-025 CERRADA.** Se crearon los 8 campos en `TX_DatosTasacion`
+(`cod_sii_comuna`/`cod_sii_manzana`/`cod_sii_predio`, `ubicacion_urbano_rural` select
+urbano|rural, `cg`/`ociv`/`oc`/`g`), se catalogaron/activaron en `D_TipoDocumentoAtributo`
+bajo `foto_fuente_sii` (recZ7UdIYi6aftB6T: 4 filas editadas + 14 creadas) y se cableó el
+Bloque 4 read-only en `components/tasador/informe-preview.tsx`. Doc de referencia:
+`docs/_md/VProperty_Origen_Datos_Informe_v1.4.md` §2.1.1.
+**Prevención futura:** antes de leer/escribir un campo que sólo aparece en el schema doc,
+verificarlo contra la base real (meta API `/meta/bases/{id}/tables`); un §"campos nuevos"
+en `schema-airtable.md` no garantiza que existan en Airtable.
+
+### 2026-09-09 — FASE2-lectura-sii: desvío de rama activa
+**Contexto:** misma tanda; el plan fijaba `feat/tasador-ui` como rama de trabajo.
+**Inconveniente:** la tanda se ejecutó sobre el working tree con HEAD en **`main`**, no en
+`feat/tasador-ui`. Las ediciones aplican al working tree igual, pero quedan en la rama
+equivocada.
+**Causa raíz:** no se verificó la rama activa en el Paso 0 de verificación previa; el
+contexto de reanudación asumía `feat/tasador-ui` sin comprobarlo.
+**Solución aplicada:** se detectó con `git branch --show-current`, se registró como anomalía
+en el cierre y en `claude-out.txt`, y **no se hizo `checkout`** (R12: nunca cambiar de rama
+sin OK). El traslado a `feat/tasador-ui` lo gestiona Sergio en GitHub Desktop.
+**Prevención futura:** al arrancar cualquier Fase 2, `git branch --show-current` como primer
+chequeo; si no coincide con la rama del plan, **avisar y detenerse antes de escribir**,
+nunca resolver con `checkout` por iniciativa propia.

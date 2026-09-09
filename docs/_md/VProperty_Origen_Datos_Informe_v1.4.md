@@ -26,15 +26,18 @@
                      Especialista en Extracción IA (Claude SC07) · QA
                      Lead
 
-  **Versión**        v1.2 · 07-sep-2026 · P13-TAS · Sección 4 (Comparables
-                     E2): se retira la fila de factores de homogeneización
-                     (`factor_sup · factor_edad · factor_distancia`) del
-                     mapeo y del Pre-paso 1; el Paso 1 (`uf_m2_promedio`)
-                     pasa a **promedio simple** de la muestra, sin
-                     homologación. El cuadro fotografiado no trae factores
-                     (A-44) y P13-TAS los saca del modelo de IF-03
-                     (R-COMP-1). Sucede a v1.1 (Julio 2026), que queda en
-                     su sitio como versión anterior.
+  **Versión**        v1.4 · 09-sep-2026 · FASE2-lectura-sii · Se inventaría
+                     el documento **`foto_fuente_sii`** (consulta de
+                     antecedentes del bien raíz · imagen fuente SII) como
+                     fuente documental propia en §2.1, con su cuadro de
+                     atributos catalogados y activos en
+                     D_TipoDocumentoAtributo bajo el doc foto_fuente_sii
+                     (recZ7UdIYi6aftB6T). Se cierra CI-025: el bloque SII
+                     §20.6 (cod_sii_comuna/_manzana/_predio,
+                     ubicacion_urbano_rural, cg/ociv/oc/g) se crea en
+                     TX_DatosTasacion (Opción A) y la UF del Tasador lo
+                     muestra read-only en el Bloque 4. Sucede a v1.3
+                     (07-sep-2026), que queda como versión anterior.
   -----------------------------------------------------------------------
 
 +-----------------------------------------------------------------------+
@@ -344,13 +347,19 @@ confianza_ia_pct.
                                             notaria, repertorio        repertorio C:
                                                                        15871912
 
-  N° Permiso de              Permiso de     TX_DatosTasacion ·         Ej. Avila: N°60
-  edificación + fecha        Edificación    n_permiso_edificacion,     02-09-1996
-                             municipal      fecha_permiso_edif         
+  N° Permiso de              Permiso de     TX_DocumentosLegales ·     Ej. Avila: N°60
+  edificación + fecha        Edificación    permiso_edificacion_       02-09-1996 ·
+                             municipal;     numero,                    cláusula 2ª
+                             también        permiso_edificacion_
+                             Escritura de   fecha
+                             compraventa
 
-  N° Certificado de          Recepción      TX_DatosTasacion ·         Ej. Avila: N°56
-  Recepción Final + fecha    final          n_recepcion_final,         28-12-1998
-                             municipal      fecha_recepcion_final      
+  N° Certificado de          Recepción      TX_DocumentosLegales ·     Ej. Avila: N°56
+  Recepción Final +          final          recepcion_final_           28-12-1998 ·
+  fecha                      municipal;     numero,                    cláusula 3ª
+                             también        recepcion_final_
+                             Escritura de   fecha
+                             compraventa
 
   Estado Sello SEC           Reporte SEC    TX_DatosTasacion ·         Ej. Avila: Verde, ID
   (Verde/Amarillo/Rojo/sin                  sello_sec                  1659813
@@ -384,6 +393,88 @@ confianza_ia_pct.
   aparecen en SERVIU                        long                       33°14\'04.5\"S
                                                                        70°40\'30.3\"W
   -----------------------------------------------------------------------------------------
+
+### 2.1.1 · Inventario del documento `foto_fuente_sii` (consulta de antecedentes del bien raíz)
+
+La imagen de la consulta de antecedentes del bien raíz del SII
+(`docs/_referencias/foto_fuente_sii.jpg`) es una **fuente documental propia**,
+catalogada en `D_TipoDocumento` como `foto_fuente_sii` (`recZ7UdIYi6aftB6T`,
+activo). Sus atributos quedan catalogados y **activos** en
+`D_TipoDocumentoAtributo` (doc `recZ7UdIYi6aftB6T`), con `uso_interfaz_tasador =
+TRUE` para que la UF del Tasador los muestre y `usado_motor_calculo = TRUE`
+donde el DAG de AT03 los consume. Este inventario es consistente con las tablas
+D_ y con el Bloque 4 «Datos SII / avalúo» de la UI del Tasador
+(`components/tasador/informe-preview.tsx`, proyectado por
+`lib/tasador/lectura-informe.ts`).
+
+  ----------------------------------------------------------------------------------------------
+  **Campo (foto)**              **codigo_atributo**       **Tabla · Campo destino**   **Motor**
+  ---------------------------- ------------------------- ---------------------------- ----------
+  Superficie Terreno (m²)       sup_terreno_m2            TX_Unidades · sup_terreno_m2 Sí
+
+  Superficie Construida (m²) ·  sup_m2                    TX_Unidades · sup_m2         Sí
+  detalle líneas edificación
+
+  Material Predominante         tipo_material             TX_Unidades · tipo_material  Sí
+  (Albañilería CG)
+
+  Año de Construcción (1985)    anio_construccion         TX_Unidades ·                Sí
+                                                          anio_construccion
+
+  Código Comuna SII (15128)     cod_sii_comuna            TX_DatosTasacion ·           No
+                                                          cod_sii_comuna
+
+  Código Manzana SII (2827)     cod_sii_manzana           TX_DatosTasacion ·           No
+                                                          cod_sii_manzana
+
+  Código Predio SII (272)       cod_sii_predio            TX_DatosTasacion ·           No
+                                                          cod_sii_predio
+
+  Ubicación (zona urbana)       ubicacion_urbano_rural    TX_DatosTasacion ·           No
+                                                          ubicacion_urbano_rural
+                                                          (urbano · rural)
+
+  Destino Predominante          destino_sii               TX_DatosTasacion ·           No
+  (Habitacional)                                          destino_sii
+
+  Calidad SII (media inferior)  calidad_sii               TX_DatosTasacion ·           Sí
+                                                          calidad_sii
+
+  Avalúo fiscal ($) (6.841.487) avaluo_fiscal_clp         TX_DatosTasacion ·           Sí
+                                                          avaluo_fiscal_clp
+
+  Avalúo exento ($)             avaluo_exento             TX_DatosTasacion ·           No
+                                                          avaluo_exento
+
+  Contribución (anual)          contribucion_anual        TX_DatosTasacion ·           No
+                                                          contribucion_anual
+
+  CG · construcciones           cg                        TX_DatosTasacion · cg        No
+  generales (m²) (37)
+
+  OCiv · obras civiles (m²)     ociv                      TX_DatosTasacion · ociv      No
+
+  OC · obras complementarias    oc                        TX_DatosTasacion · oc        No
+  (m²)
+
+  G · galpones (m²)             g                         TX_DatosTasacion · g         No
+
+  Rol SII                       rol_sii                   TX_DatosTasacion · rol_sii   No
+  -----------------------------------------------------------------------------------------
+
+> **Nota · contribución semestral ↔ anual.** El documento SII rotula el campo
+> como **«Contribución semestral ($)»**, pero la columna destino y la UF del
+> Tasador lo tratan como **`contribucion_anual`**. La conversión (×2) o la
+> re-etiqueta es responsabilidad del ingreso/lectura; el modelo persiste el
+> valor **anual**. Queda registrado para no colapsar ambos rótulos.
+
+> **Nota · CI-025 cerrada.** El bloque SII §20.6 de `TX_DatosTasacion`
+> (`cod_sii_comuna` · `cod_sii_manzana` · `cod_sii_predio` ·
+> `ubicacion_urbano_rural` · `cg` · `ociv` · `oc` · `g`) estaba documentado en
+> `docs/schema-airtable.md` pero **no existía** en la base real. Se crea en la
+> tanda FASE2-lectura-sii (Opción A) y con ello el productor
+> `lib/tasador/lectura-informe.ts` deja de emitir estos códigos en `null` por
+> ausencia de columna: ahora los lee por nombre.
 
 ## 2.2 · Datos del PDF que también se extraen pero NO van a campos estructurados
 
@@ -1123,5 +1214,44 @@ tres documentos de construcción:
 Quedamos disponibles para profundizar cualquiera de las secciones,
 generar la matriz tag-por-tag de la plantilla Carbone, o construir el
 prompt de SC07 con su schema JSON.
+
+# Changelog
+
+**v1.4 (09-sep-2026 · FASE2-lectura-sii)** — Sucede a **v1.3**, que queda
+en `docs/_md/VProperty_Origen_Datos_Informe_v1.3.md` como versión anterior.
+Cambios: **(1)** se agrega **§2.1.1**, que inventaría el documento
+`foto_fuente_sii` (consulta de antecedentes del bien raíz · imagen fuente SII,
+`docs/_referencias/foto_fuente_sii.jpg`) como fuente documental propia, con el
+cuadro completo de sus atributos catalogados y **activos** en
+`D_TipoDocumentoAtributo` bajo el doc `foto_fuente_sii` (`recZ7UdIYi6aftB6T`):
+4 atributos preexistentes (`sup_terreno_m2`, `sup_m2`, `tipo_material`,
+`anio_construccion`, ruteados a `TX_Unidades`) más 14 nuevos ruteados a
+`TX_DatosTasacion` (`una_por_solicitud`). **(2)** Se cierra **CI-025**: los 8
+campos del bloque SII §20.6 (`cod_sii_comuna` · `cod_sii_manzana` ·
+`cod_sii_predio` · `ubicacion_urbano_rural` · `cg` · `ociv` · `oc` · `g`) se
+crean en `TX_DatosTasacion` (Opción A) y la UF del Tasador los muestra
+**read-only** en el Bloque 4 «Datos SII / avalúo»
+(`components/tasador/informe-preview.tsx`, proyectado por
+`lib/tasador/lectura-informe.ts`). **(3)** Se documenta la divergencia de
+rótulo **contribución semestral ↔ anual**: el modelo persiste el valor anual.
+El documento queda consistente con las tablas D_ y con la UI del Tasador
+(Regla 1).
+
+**v1.3 (07-sep-2026 · P13-TAS-ESCRITURA)** — Sucede a **v1.2**, que queda
+en `docs/_md/VProperty_Origen_Datos_Informe_v1.2.md` como versión
+anterior. Cambio único: en §2.1 los atributos de **permiso de
+edificación** y **recepción final** se ruteaban a `TX_DatosTasacion`; se
+corrigen a `TX_DocumentosLegales`
+(`permiso_edificacion_numero` · `permiso_edificacion_fecha` ·
+`recepcion_final_numero` · `recepcion_final_fecha`), que es la tabla que
+el esquema real y la Sección F de la UI del Tasador
+(`components/tasador/form-sections/seccion-documentos.tsx`, proyectada por
+`lib/tasador/lectura-datos.ts`) consumen de hecho. Se nombra la
+**Escritura de Compraventa Original** como fuente documental de esos
+cuatro atributos (cláusulas segunda y tercera), catalogados y activos en
+`D_TipoDocumentoAtributo` bajo el documento `escritura_compraventa`
+(`recX5FJFzAzXTXpzF`). Los metadatos de portada de la escritura
+(notaría, repertorio, vendedor, comprador) **no** se catalogan aquí: su
+documento canónico es *Inscripción de Dominio CBR*.
 
 *--- Fin del documento ---*

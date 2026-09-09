@@ -56,8 +56,11 @@
  *
  * - `versionVigente: null` cuando no hay fila en `TX_DocumentosGenerados` que
  *   case por el Link `solicitud` (**CI-024**).
- * - Códigos SII vacíos: `cod_sii_*` no existen en la base (**CI-025**). Se emite
- *   la clave con `null` y no se omite.
+ * - Códigos SII (`cod_sii_comuna` · `cod_sii_manzana` · `cod_sii_predio`),
+ *   ubicación urbano/rural y el resumen de superficie construida
+ *   (`cg` · `ociv` · `oc` · `g`) ya existen en la base — **CI-025 cerrada**
+ *   (FASE2-lectura-sii, Opción A). Se leen por nombre desde `TX_DatosTasacion`
+ *   y se emiten como cadena; vacío degrada a `''` vía `texto()`, no se omite.
  * - Valor destacado prefiere el override y **nunca cae a cero**: `0` sería «0 UF»
  *   (una tasación de cero pesos), no un dato ausente.
  * - Registro fotográfico cuenta por `descripcion || tipo_adjunto`.
@@ -124,6 +127,18 @@ export type DatosSii = {
   contribucionAnual: number | null
   calidadSii: string
   destinoSii: string
+  /* Códigos catastrales SII y ubicación (FASE2-lectura-sii · CI-025 cerrada).
+     Texto porque las columnas destino son singleLineText. */
+  codComuna: string
+  codManzana: string
+  codPredio: string
+  ubicacionUrbanoRural: string
+  /* Resumen de superficie construida del documento SII. Texto: las columnas
+     `cg/ociv/oc/g` son singleLineText en TX_DatosTasacion (Opción A). */
+  cg: string
+  ociv: string
+  oc: string
+  g: string
   porUnidad: UnidadSii[]
 }
 
@@ -335,6 +350,14 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
     contribucionAnual: numeroONull(d.contribucion_anual),
     calidadSii: texto(d.calidad_sii),
     destinoSii: texto(d.destino_sii),
+    codComuna: texto(d.cod_sii_comuna),
+    codManzana: texto(d.cod_sii_manzana),
+    codPredio: texto(d.cod_sii_predio),
+    ubicacionUrbanoRural: texto(d.ubicacion_urbano_rural),
+    cg: texto(d.cg),
+    ociv: texto(d.ociv),
+    oc: texto(d.oc),
+    g: texto(d.g),
     porUnidad: unidades.map((u) => ({
       id: u.id,
       numeroUnidad: texto(u.fields.numero_unidad),

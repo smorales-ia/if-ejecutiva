@@ -302,6 +302,19 @@ export const FIELD_IDS_DATOS_TASACION = Object.freeze({
   /** El campo libre. El Link a `M_Zonificacion` es `zonificacion`; ver P7-TAS. */
   tipoZonaDescripcion: 'fldbrYbbvJThBaGwC',
 
+  /* --- Bloque SII (§20.6 · FASE2-lectura-sii, Opción A · cierra CI-025) ---
+     Creados el 09-sep-2026 en TX_DatosTasacion para inventariar el documento
+     `foto_fuente_sii`. `ubicacion_urbano_rural` es singleSelect (urbano|rural);
+     los demás singleLineText. */
+  codSiiComuna: 'fldTnTUIBVPPzJD88',
+  codSiiManzana: 'fldYdoX02XeRiQhyO',
+  codSiiPredio: 'fldsHicAwiB8hWQRC',
+  ubicacionUrbanoRural: 'fldHedbNfknDW3cP0',
+  cg: 'fldhC8Tsucipv4sT3',
+  ociv: 'fldlbvwpalCAnqHOu',
+  oc: 'fldkS3h1W8Q5UMw9J',
+  g: 'fldGM0Zl4fiptkLgL',
+
   /* --- F · fragmentos que viven acá y no en TX_DocumentosLegales --- */
   nCertNoExpropiacion: 'fldXEBNjeTRMROQmW',
   lat: 'fldr9hBhVfU5CS1hw',

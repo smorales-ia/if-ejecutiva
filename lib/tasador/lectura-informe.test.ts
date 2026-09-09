@@ -184,6 +184,15 @@ describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
           contribucion_anual: 350000,
           calidad_sii: 'B',
           destino_sii: 'Habitacional',
+          // Bloque SII catastral (FASE2-lectura-sii · CI-025 cerrada)
+          cod_sii_comuna: '15128',
+          cod_sii_manzana: '2827',
+          cod_sii_predio: '272',
+          ubicacion_urbano_rural: 'urbano',
+          cg: '37',
+          ociv: '',
+          oc: '',
+          g: '',
         }),
       ],
     })
@@ -197,6 +206,13 @@ describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
     expect(informe.datosSii.avaluoFiscalUf).toBe(1200.5)
     expect(informe.datosSii.rolSii).toBe('658-128')
     expect(informe.datosSii.calidadSii).toBe('B')
+    // Códigos catastrales SII y resumen de superficie construida.
+    expect(informe.datosSii.codComuna).toBe('15128')
+    expect(informe.datosSii.codManzana).toBe('2827')
+    expect(informe.datosSii.codPredio).toBe('272')
+    expect(informe.datosSii.ubicacionUrbanoRural).toBe('urbano')
+    expect(informe.datosSii.cg).toBe('37')
+    expect(informe.datosSii.ociv).toBe('')
     // El top-level y bloques[] son el MISMO objeto (contrato del route intacto).
     expect(bloquePorId(informe.bloques, 'sii').datos).toBe(informe.datosSii)
   })

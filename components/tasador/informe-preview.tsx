@@ -431,6 +431,16 @@ export function InformePreview({
                 <Dato k="Contribución anual" v={numN(siiCanonico?.contribucionAnual ?? null)} />
                 <Dato k="Calidad SII" v={txt(siiCanonico?.calidadSii)} />
                 <Dato k="Destino SII" v={txt(siiCanonico?.destinoSii)} />
+                {/* Códigos catastrales y ubicación (FASE2-lectura-sii · CI-025) */}
+                <Dato k="Código comuna SII" v={txt(siiCanonico?.codComuna)} />
+                <Dato k="Código manzana SII" v={txt(siiCanonico?.codManzana)} />
+                <Dato k="Código predio SII" v={txt(siiCanonico?.codPredio)} />
+                <Dato k="Ubicación" v={txt(siiCanonico?.ubicacionUrbanoRural)} />
+                {/* Resumen de superficie construida del documento SII */}
+                <Dato k="CG · construcciones generales (m²)" v={txt(siiCanonico?.cg)} />
+                <Dato k="OCiv · obras civiles (m²)" v={txt(siiCanonico?.ociv)} />
+                <Dato k="OC · obras complementarias (m²)" v={txt(siiCanonico?.oc)} />
+                <Dato k="G · galpones (m²)" v={txt(siiCanonico?.g)} />
               </DataGrid>
 
               {/* Sin unidades: no se renderiza la tabla ni el mensaje «Sin
