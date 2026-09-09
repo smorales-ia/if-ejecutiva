@@ -317,3 +317,100 @@ describe('P16-TAS · fallback de sección B a fuentes SII', () => {
     expect(datos.calidadConstruccion).toBe(4)
   })
 })
+
+describe('P17-TAS · fixes de lectura (DFL2, tipo de zona, fecha planificada)', () => {
+  /** Mock por tabla: datos → TX_DatosTasacion; coordinaciones → TX_CoordinacionVisita. */
+  function airtableCon({
+    datos = {},
+    coordinaciones = [],
+  }: {
+    datos?: Record<string, unknown>
+    coordinaciones?: ReturnType<typeof fila>[]
+  }) {
+    listRecords.mockImplementation(async (tableId: string) => {
+      if (tableId === TABLE_IDS.datosTasacion) return [fila('recDatos00000001', datos)]
+      if (tableId === TABLE_IDS.coordinacionVisita) return coordinaciones
+      return []
+    })
+  }
+
+  it('item 1 · dfl2="SI" en Airtable → datos.dfl2 === true', async () => {
+    airtableCon({ datos: { dfl2: 'SI' } })
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+    expect(datos.dfl2).toBe(true)
+  })
+
+  it('item 1 · dfl2="NO" o ausente → datos.dfl2 === false', async () => {
+    airtableCon({ datos: { dfl2: 'NO' } })
+    expect((await proyectarDatosCaptura({ codigo_solicitud: CODIGO })).datos.dfl2).toBe(false)
+    airtableCon({ datos: {} })
+    expect((await proyectarDatosCaptura({ codigo_solicitud: CODIGO })).datos.dfl2).toBe(false)
+  })
+
+  it('item 2a · tipo_zona_descripcion vacío → cae a ubicacion_urbano_rural', async () => {
+    airtableCon({ datos: { ubicacion_urbano_rural: 'urbano' } })
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+    expect(datos.tipoZona).toBe('urbano')
+  })
+
+  it('item 2a · tipo_zona_descripcion con dato gana sobre ubicacion_urbano_rural', async () => {
+    airtableCon({ datos: { tipo_zona_descripcion: 'Zona típica', ubicacion_urbano_rural: 'urbano' } })
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+    expect(datos.tipoZona).toBe('Zona típica')
+  })
+
+  it('item 3 · fecha_visita_programada vacía → cae a la coordinación confirmada', async () => {
+    airtableCon({
+      coordinaciones: [
+        fila('recCoord0000001', {
+          estado_coordinacion: 'confirmada',
+          fecha_visita_propuesta: '2026-09-05',
+          intento_numero: 1,
+        }),
+      ],
+    })
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+    expect(datos.fechaPlanificadaVisita).toBe('2026-09-05')
+  })
+
+  it('item 3 · toma la confirmada de mayor intento e ignora las no confirmadas', async () => {
+    airtableCon({
+      coordinaciones: [
+        fila('recCoord0000001', {
+          estado_coordinacion: 'confirmada',
+          fecha_visita_propuesta: '2026-09-05',
+          intento_numero: 1,
+        }),
+        fila('recCoord0000002', {
+          estado_coordinacion: 'rechazada',
+          fecha_visita_propuesta: '2026-09-09',
+          intento_numero: 2,
+        }),
+        fila('recCoord0000003', {
+          estado_coordinacion: 'confirmada',
+          fecha_visita_propuesta: '2026-09-12',
+          intento_numero: 3,
+        }),
+      ],
+    })
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+    expect(datos.fechaPlanificadaVisita).toBe('2026-09-12')
+  })
+
+  it('item 3 · fecha_visita_programada de la solicitud gana sobre la coordinación', async () => {
+    airtableCon({
+      coordinaciones: [
+        fila('recCoord0000001', {
+          estado_coordinacion: 'confirmada',
+          fecha_visita_propuesta: '2026-09-05',
+          intento_numero: 1,
+        }),
+      ],
+    })
+    const { datos } = await proyectarDatosCaptura({
+      codigo_solicitud: CODIGO,
+      fecha_visita_programada: '2026-08-30',
+    })
+    expect(datos.fechaPlanificadaVisita).toBe('2026-08-30')
+  })
+})

@@ -277,17 +277,27 @@ export function calidadSiiANumero(valor: string): number {
 export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<DatosCaptura> {
   const codigo = String(fields.codigo_solicitud ?? '')
 
-  const [datos, legales, items, ampliaciones, habitaciones, terminaciones, comparables, unidades] =
-    await Promise.all([
-      filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.itemsCuadroValoracion, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.ampliaciones, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.habitacionesPorNivel, codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.terminacionesPorRecinto, codigo),
-      comparablesDeSolicitud(codigo),
-      filasDeSolicitud<Fields>(TABLE_IDS.unidades, codigo),
-    ])
+  const [
+    datos,
+    legales,
+    items,
+    ampliaciones,
+    habitaciones,
+    terminaciones,
+    comparables,
+    unidades,
+    coordinaciones,
+  ] = await Promise.all([
+    filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
+    filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
+    filasDeSolicitud<Fields>(TABLE_IDS.itemsCuadroValoracion, codigo),
+    filasDeSolicitud<Fields>(TABLE_IDS.ampliaciones, codigo),
+    filasDeSolicitud<Fields>(TABLE_IDS.habitacionesPorNivel, codigo),
+    filasDeSolicitud<Fields>(TABLE_IDS.terminacionesPorRecinto, codigo),
+    comparablesDeSolicitud(codigo),
+    filasDeSolicitud<Fields>(TABLE_IDS.unidades, codigo),
+    filasDeSolicitud<Fields>(TABLE_IDS.coordinacionVisita, codigo),
+  ])
 
   const d = datos[0]?.fields ?? {}
   const l = legales[0]?.fields ?? {}
@@ -318,6 +328,21 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     const destino = CATEGORIAS_RECINTO.find((c) => c.categoria === t.fields.categoria)
     if (destino) porRecinto.get(nombre)![destino.campo] = texto(t.fields.descripcion)
   }
+
+  /*
+   * Fecha planificada de visita desde la coordinación confirmada (P17-TAS · item 3).
+   *
+   * `TX_Solicitudes.fecha_visita_programada` es la fuente canónica, pero cuando
+   * la visita se coordinó por sistema y esa columna no se propagó, la fecha vive
+   * en la fila `confirmada` de `TX_CoordinacionVisita` (`fecha_visita_propuesta`).
+   * Se toma la confirmada de mayor `intento_numero`. Read-layer: no reescribe la
+   * solicitud —el gap del flujo de coordinación queda anotado como pendiente—.
+   */
+  const fechaVisitaCoordinada = coordinaciones
+    .filter((c) => c.fields.estado_coordinacion === 'confirmada')
+    .sort((a, b) => Number(b.fields.intento_numero ?? 0) - Number(a.fields.intento_numero ?? 0))
+    .map((c) => texto(c.fields.fecha_visita_propuesta))
+    .find((v) => v !== '') ?? ''
 
   /*
    * Fallback de sección B a fuentes SII (P16-TAS · Opción A · read-layer).
@@ -358,7 +383,10 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     codigo,
     datos: {
       /* --- A --- */
-      fechaPlanificadaVisita: texto(s.fecha_visita_programada),
+      fechaPlanificadaVisita: primerNoVacio(
+        texto(s.fecha_visita_programada),
+        fechaVisitaCoordinada,
+      ),
       fechaVisitaReal: texto(s.fecha_visita),
       observacionesTasador: texto(d.observaciones_tasador),
       /* --- B (con fallback SII · P16-TAS) --- */
@@ -381,7 +409,14 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       rolesBodegas: texto(d.roles_bodegas),
       servidumbreM2: texto(d.servidumbre_m2),
       velocidadVenta: texto(d.velocidad_venta_estimada),
-      tipoZona: texto(d.tipo_zona_descripcion),
+      /* Tipo de zona (P17-TAS · item 2a): el formulario lee texto libre de
+         `tipo_zona_descripcion`; si está vacío, cae al urbano/rural que el SII
+         escribe en `ubicacion_urbano_rural`. */
+      tipoZona: primerNoVacio(texto(d.tipo_zona_descripcion), texto(d.ubicacion_urbano_rural)),
+      /* DFL2 (P17-TAS · item 1): `TX_DatosTasacion.dfl2` es fórmula ('SI'/'NO');
+         el switch es boolean. Se cablea acá. El PATCH no reescribe la fórmula
+         (no está en `camposDatosTasacion`). */
+      dfl2: texto(d.dfl2) === 'SI',
       /* --- C --- */
       items: items.map((i) => ({
         id: i.id,

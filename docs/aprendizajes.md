@@ -2817,3 +2817,27 @@ intake (`05271-00016`). Se dejó como PLANTEAMIENTO para OK-Gate (no se tocó pi
 **Prevención futura:** ante "campo vacío en la UI" con el pipeline OK, contrastar las columnas que
 LEE el consumidor contra las que ESCRIBE el pipeline — el informe y la captura son layers distintos
 y pueden leer columnas distintas. Y ojo con la sintaxis Python en template literals JS.
+
+### 2026-09-09 — P17-TAS: tres fixes de lectura (DFL2, tipo de zona, fecha planificada)
+**Contexto:** tres campos salían vacíos/OFF en la captura del tasador pese a tener el dato en Airtable.
+Todos resultaron el mismo patrón P16 (la UI lee una columna distinta de donde vive el dato).
+**Item 1 (DFL2 OFF):** la premisa "ON con contribución=0" era falsa. `TX_DatosTasacion.dfl2` es
+fórmula `IF({sup_construida_total} < 140, 'SI', 'NO')` y ya computaba `SI`. El switch bindea a
+`form.dfl2` (boolean, arranca `false`) que nunca se cableaba desde `derivados.dfl2`. Fix read-layer:
+`datos.dfl2 = (d.dfl2 === 'SI')` en `lectura-datos.ts` (el PATCH no reescribe la fórmula).
+**Item 2 (tipo de zona vacío):** el form "Tipo de zona" lee `tipo_zona_descripcion` mientras el SII
+escribe `ubicacion_urbano_rural` (singleSelect urbano|rural). Fix read-layer con fallback
+`tipoZona ← tipo_zona_descripcion ?? ubicacion_urbano_rural` + data recovery de 1 celda
+(`ubicacion_urbano_rural='urbano'` en recUb4FxZPdW2hQP3; el `ejemplo_atributo` del catálogo ya
+estaba bien, así que futuras extracciones aterrizan solas).
+**Item 3 (fecha planificada vacía):** `lectura-datos` leía `TX_Solicitudes.fecha_visita_programada`
+(None) y no la coordinación confirmada. Fix read-layer: se lee `TX_CoordinacionVisita` y
+`fechaPlanificadaVisita ← fecha_visita_programada ?? (confirmada de mayor intento).fecha_visita_propuesta`.
+**Tests:** `lectura-datos.test.ts` 20→27; suite 801→808; typecheck+build verdes.
+**PENDIENTES abiertos (NO ejecutados en esta tanda, por decisión de Sergio):**
+ - **DFL2 · regla de negocio:** con `sup_construida_total=0` (sin datos de construcción) la fórmula
+   da `SI` por defecto — posible falso positivo. Revisar si debe exigir `>0` o atarse a avalúo.
+   Es cambio de fórmula/schema → requiere OK-Gate.
+ - **Flujo de coordinación:** al confirmar una coordinación, `TX_Solicitudes.fecha_visita_programada`
+   no se está llenando; la fecha queda sólo en `TX_CoordinacionVisita`. El fix read-layer lo tapa en
+   la captura, pero la causa (SC/route de coordinación) queda por abordar aparte.
