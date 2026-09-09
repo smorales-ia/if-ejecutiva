@@ -2754,3 +2754,34 @@ PATCH; revertir incluso si el E2E falla a mitad.
 **Prevención futura:** para forzar dominios cerrados en extracción RF-09, usar
 `ejemplo_atributo` en D_ antes que tocar el prompt del blueprint; es más barato, versionable
 como dato y no rompe la genericidad de SC07/AT03-Ext.
+
+### 2026-09-09 — Tarea 4 · Fase 2 (Opción A): cierre gap F (Dominio SII) + C vía TX_Unidades
+**Contexto:** post-gate Opción A. B ya estaba completo y validado (FASE2/3). Sólo faltaban F
+(mapeo SII→TX_DocumentosLegales) y confirmar C (líneas de edificación) en la UI, que bajo
+Opción A viven en `TX_Unidades` (no en `TX_ItemsCuadroValoracion`).
+**Inconveniente 1 (meta API rechaza añadir opción a singleSelect):** el PATCH a
+`/meta/bases/{id}/tables/{t}/fields/{f}` para agregar la opción `"Dominio SII"` a
+`TX_DocumentosLegales.tipo_documento` devolvió `INVALID_REQUEST_UNKNOWN — Changing a field's
+type or number precision is not currently supported`, con o sin `type` y con las choices
+existentes por id.
+**Causa raíz:** la actualización de choices de un singleSelect por meta API es poco fiable en
+esta base; el endpoint interpreta el body como cambio de tipo.
+**Solución aplicada:** añadir la opción por **Data API con `typecast:true`** — POST de un
+registro throwaway con `tipo_documento:"Dominio SII"`, verificar que la choice quedó en el
+schema, y **DELETE** del throwaway. La choice persiste (es cambio de schema, independiente del
+registro). recVgRZqv58D0Lj6S creado y borrado.
+**Inconveniente 2 (no hay lever data-driven para la constante `tipo_documento`):** el brief pedía
+que las filas SII queden con `tipo_documento = "Dominio SII"`, pero el catálogo
+`D_TipoDocumentoAtributo` sólo mapea **valores extraídos** vía `uso_campo_destino`; una constante
+no tiene mecanismo. `valor_por_defecto` no lo usa **ninguna** fila (0/148), y el campo
+`tipo_documento` del catálogo es el **link al documento ORIGEN** (SII), no la columna destino.
+**Causa raíz:** confusión de dos conceptos homónimos «tipo_documento» (origen vs destino) y
+ausencia de un patrón probado para estampar constantes en la tabla hija.
+**Solución aplicada:** se hizo lo R7-safe (choice + 3 filas de mapeo foja/numero/año →
+fojas/numero_inscripcion/ano_inscripcion, `una_por_solicitud`) y se **planteó** la constante en el
+gate en vez de tocar AT03-Ext. Queda como decisión de Sergio: (a) tocar pipeline (needs OK, R7) o
+(b) que el tasador fije `tipo_documento` en la UI. Además: la muestra `foto_fuente_sii.jpg` trae
+foja/numero/año **en blanco**, así que el E2E no poblará valores F — sólo prueba routing.
+**Prevención futura:** para añadir choices a un singleSelect en esta base, usar `typecast:true` por
+Data API, no el meta PATCH. Y antes de prometer una constante en tabla hija, confirmar que existe
+un lever data-driven (no asumir que `uso_campo_destino`/`valor_por_defecto` la cubren).

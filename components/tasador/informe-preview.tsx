@@ -240,7 +240,11 @@ export function InformePreview({
 
   /* Bloque 4 · unidades + avalúo SII — canónico (P9-TAS.B). Reemplaza el origen
    * cliente `tasacion.unidades`, que sólo traía la grilla sin el avalúo. */
-  const unidadesSii = siiCanonico?.porUnidad ?? []
+  /* Ordenadas por `orden` (línea de edificación SII · Tarea 4 · Opción A). Las
+     filas sin `orden` van al final, preservando el orden de llegada. */
+  const unidadesSii = [...(siiCanonico?.porUnidad ?? [])].sort(
+    (a, b) => (a.orden ?? Number.POSITIVE_INFINITY) - (b.orden ?? Number.POSITIVE_INFINITY),
+  )
   const supTotalUnidades = unidadesSii.reduce((a, u) => a + (u.supM2 ?? 0), 0)
 
   /* Bloque 8 · observaciones + overrides + antecedentes legales — canónico
@@ -453,6 +457,8 @@ export function InformePreview({
                         <th className="py-2 pr-3 font-semibold">Unidad</th>
                         <th className="py-2 pr-3 font-semibold">Rol SII</th>
                         <th className="py-2 pr-3 font-semibold">Subtipo</th>
+                        <th className="py-2 pr-3 font-semibold">Material</th>
+                        <th className="py-2 pr-3 text-right font-semibold">Año</th>
                         <th className="py-2 pr-3 text-right font-semibold">Sup. (m²)</th>
                         <th className="py-2 text-right font-semibold">Avalúo (UF)</th>
                       </tr>
@@ -467,6 +473,10 @@ export function InformePreview({
                             {u.rolSii}
                           </td>
                           <td className="py-2 pr-3 text-foreground">{txt(u.subtipo)}</td>
+                          <td className="py-2 pr-3 text-foreground">{txt(u.material)}</td>
+                          <td className="py-2 pr-3 text-right tabular-nums text-foreground">
+                            {u.anioConstruccion != null ? String(u.anioConstruccion) : "—"}
+                          </td>
                           <td className="py-2 pr-3 text-right tabular-nums text-foreground">
                             {numN(u.supM2)}
                           </td>
@@ -476,7 +486,7 @@ export function InformePreview({
                         </tr>
                       ))}
                       <tr className="font-semibold text-foreground">
-                        <td className="py-2 pr-3" colSpan={3}>
+                        <td className="py-2 pr-3" colSpan={5}>
                           Total
                         </td>
                         <td className="py-2 pr-3 text-right tabular-nums">

@@ -111,6 +111,12 @@ export interface UnidadSii {
   subtipo: string
   supM2: number | null
   avaluoUf: number | null
+  /* Línea de edificación SII (Tarea 4 · Opción A): estos tres los escribe el
+     pipeline en TX_Unidades desde `foto_fuente_sii` (`orden`, `tipo_material`,
+     `anio_construccion`). Se muestran en la tabla por unidad del Bloque 4. */
+  orden: number | null
+  material: string
+  anioConstruccion: number | null
 }
 
 /**
@@ -365,6 +371,9 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       subtipo: texto(u.fields.subtipo),
       supM2: numeroONull(u.fields.sup_m2),
       avaluoUf: numeroONull(u.fields.avaluo_uf),
+      orden: numeroONull(u.fields.orden),
+      material: texto(u.fields.tipo_material),
+      anioConstruccion: numeroONull(u.fields.anio_construccion),
     })),
   }
 
