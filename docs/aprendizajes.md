@@ -2724,3 +2724,33 @@ sin OK). El traslado a `feat/tasador-ui` lo gestiona Sergio en GitHub Desktop.
 **Prevención futura:** al arrancar cualquier Fase 2, `git branch --show-current` como primer
 chequeo; si no coincide con la rama del plan, **avisar y detenerse antes de escribir**,
 nunca resolver con `checkout` por iniciativa propia.
+
+### 2026-09-09 — FASE3-escritura-sii: el write-path SII ya era genérico + E2E validado
+**Contexto:** verificar que al subir `foto_fuente_sii.jpg` los 8 campos SII quedaran escritos
+en `TX_DatosTasacion` y visibles en la UI del Tasador.
+**Hallazgo (no era un inconveniente, evitó trabajo):** el camino de escritura es **100%
+genérico y data-driven**, no requirió código nuevo. SC07 (`SC-RF09-ExtraccionClaude`) arma
+el prompt a Claude desde `D_TipoDocumentoAtributo` (módulo 7 `TextAggregator`) y guarda el
+JSON en `TX_Adjuntos.atributos_obtenidos`; la Automation `AT03-Ext` propaga por
+`uso_cardinalidad_destino` a `TX_DatosTasacion` (`una_por_solicitud`) / `TX_Unidades`
+(`una_por_unidad`). Como FASE2 catalogó los 18 atributos SII con su routing, el pipeline los
+cubre solo. R7 intacto: no se tocó ni el blueprint ni el script.
+**Inconveniente real (singleSelect):** `ubicacion_urbano_rural` es singleSelect (`urbano|rural`)
+y `AT03-Ext.valorParaSelect()` exige match EXACTO al nombre de la opción. El prompt no
+restringía el valor y Claude, leyendo "zona urbana" de la foto, podía devolver
+"urbana"/"zona urbana" → el campo se omitía sin escribir.
+**Causa raíz:** el dominio del select no se comunicaba a Claude; el prompt solo forzaba valor
+exacto para `tipo_referencia`.
+**Solución aplicada (Opción 1, respeta la decisión de NO tocar el blueprint):** se pobló
+`D_TipoDocumentoAtributo.ejemplo_atributo` de la fila `recLdXKaZqVw5xbBq` con
+`"urbano — dominio cerrado; responde EXACTAMENTE 'urbano' o 'rural'..."`. Ese campo viaja a
+Claude vía el módulo 7, así que el dominio se fija **como dato (D_ es el contrato)**, sin
+editar SC07. E2E real (VP-2026-0054): Claude devolvió `ubicacion_urbano_rural='urbano'`
+(conf 1) y AT03-Ext creó la fila `TX_DatosTasacion` con los 8 valores correctos.
+**Método operativo probado:** para un E2E que exige la cuenta Clerk de un tasador, **reasignar
+temporalmente** `TX_Solicitudes.tasador` a la cuenta de test (`recJPSCLckxLuf9nV`) y
+**revertir obligatoriamente** al owner original al cerrar. Guardar el valor original antes del
+PATCH; revertir incluso si el E2E falla a mitad.
+**Prevención futura:** para forzar dominios cerrados en extracción RF-09, usar
+`ejemplo_atributo` en D_ antes que tocar el prompt del blueprint; es más barato, versionable
+como dato y no rompe la genericidad de SC07/AT03-Ext.
