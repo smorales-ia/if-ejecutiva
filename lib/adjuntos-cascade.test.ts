@@ -101,11 +101,12 @@ describe('CASCADE_REGISTRY', () => {
     })
   })
 
-  it('incluye las 6 entradas de campos (a/c) derivadas del mapa §28', () => {
+  it('incluye las 7 entradas de campos (a/c) derivadas del mapa §28', () => {
     const campos = CASCADE_REGISTRY.filter((e) => e.patron !== 'b')
     // foto_fuente_sii(3) + certificado_avaluo_fiscal(2) + escritura_compraventa(1)
-    expect(campos).toHaveLength(6)
-    expect(CASCADE_REGISTRY).toHaveLength(7)
+    //   + permiso_edificacion(1)
+    expect(campos).toHaveLength(7)
+    expect(CASCADE_REGISTRY).toHaveLength(8)
   })
 })
 

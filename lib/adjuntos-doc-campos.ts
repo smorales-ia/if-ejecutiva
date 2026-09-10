@@ -83,9 +83,17 @@ export interface TablaDerivada {
  * Mapa `tipoDocumento → TablaDerivada[]`. Derivado literal de
  * `docs/schema-airtable.md` §28.
  *
- * Los tipos sin destino (`consulta_antecedentes_bien_raiz`, `permiso_edificacion`,
- * etc. · los 8 de §28 · Q5) simplemente no están: `camposLimpiablesDe()` los
- * devuelve como lista vacía y el cascade no purga nada para ellos (no-op).
+ * Los tipos sin destino (`consulta_antecedentes_bien_raiz`,
+ * `certificado_recepcion_final`, etc. · los 7 de §28 · Q5) simplemente no están:
+ * `camposLimpiablesDe()` los devuelve como lista vacía y el cascade no purga nada
+ * para ellos (no-op).
+ *
+ * ⚠ `permiso_edificacion` y `escritura_compraventa` comparten los dos campos de
+ * permiso en `TX_DocumentosLegales` (ambos son fuente legítima del par ·
+ * Origen v1.5 §2.1). Borrar cualquiera de los dos documentos limpia el par: es
+ * la política Q1 de Héctor (limpiar todo lo que el tipo pudo poblar), consistente
+ * con cómo ya se comportan los campos SII compartidos por `foto_fuente_sii` y
+ * `certificado_avaluo_fiscal`.
  */
 export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
   foto_fuente_sii: [
@@ -169,6 +177,23 @@ export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
         { fieldId: FIELD_IDS_DOC_LEGALES.permisoEdificacionFecha, label: 'Fecha permiso de edificación' },
         { fieldId: FIELD_IDS_DOC_LEGALES.recepcionFinalNumero, label: 'N° recepción final' },
         { fieldId: FIELD_IDS_DOC_LEGALES.recepcionFinalFecha, label: 'Fecha recepción final' },
+      ],
+    },
+  ],
+
+  // Documento canónico del par permiso (Origen v1.5 §2.1). Scope mínimo spec-fiel:
+  // sólo `permiso_edificacion_numero` · `permiso_edificacion_fecha` tienen destino
+  // real en `D_TipoDocumentoAtributo`; el resto del PDF (tipo_obra, superficie,
+  // DFL2, propietario…) quedó catalogado sin destino (brecha · ver el xlsx de
+  // diagnóstico). Comparte el par con `escritura_compraventa` (ver docblock ⚠).
+  permiso_edificacion: [
+    {
+      tabla: TABLE_IDS.documentosLegales,
+      tablaLabel: 'Documentos legales',
+      patron: 'a',
+      campos: [
+        { fieldId: FIELD_IDS_DOC_LEGALES.permisoEdificacionNumero, label: 'N° permiso de edificación' },
+        { fieldId: FIELD_IDS_DOC_LEGALES.permisoEdificacionFecha, label: 'Fecha permiso de edificación' },
       ],
     },
   ],

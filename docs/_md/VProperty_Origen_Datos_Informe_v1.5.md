@@ -26,18 +26,20 @@
                      Especialista en Extracción IA (Claude SC07) · QA
                      Lead
 
-  **Versión**        v1.4 · 09-sep-2026 · FASE2-lectura-sii · Se inventaría
-                     el documento **`foto_fuente_sii`** (consulta de
-                     antecedentes del bien raíz · imagen fuente SII) como
-                     fuente documental propia en §2.1, con su cuadro de
-                     atributos catalogados y activos en
-                     D_TipoDocumentoAtributo bajo el doc foto_fuente_sii
-                     (recZ7UdIYi6aftB6T). Se cierra CI-025: el bloque SII
-                     §20.6 (cod_sii_comuna/_manzana/_predio,
-                     ubicacion_urbano_rural, cg/ociv/oc/g) se crea en
-                     TX_DatosTasacion (Opción A) y la UF del Tasador lo
-                     muestra read-only en el Bloque 4. Sucede a v1.3
-                     (07-sep-2026), que queda como versión anterior.
+  **Versión**        v1.5 · 11-sep-2026 · IF-03-permiso-edificacion · Se
+                     inventaría el documento **`permiso_edificacion`**
+                     (Permiso de Edificación municipal · DOM) como fuente
+                     documental propia en §2.1.2, con su cuadro de atributos
+                     catalogados en D_TipoDocumentoAtributo bajo el doc
+                     permiso_edificacion (recibSR1tfKZKcnOA). Scope mínimo
+                     spec-fiel: sólo `numero_permiso` y `fecha_permiso`
+                     reciben destino real
+                     (TX_DocumentosLegales.permiso_edificacion_numero/_fecha,
+                     ya mostrados en la Sección F de la UF del Tasador); los
+                     otros 12 atributos quedan catalogados sin destino y
+                     obligatorio=FALSE como brecha de diseño. El borrado del
+                     documento limpia el par permiso (cascade §28). Sucede a
+                     v1.4 (09-sep-2026), que queda como versión anterior.
   -----------------------------------------------------------------------
 
 +-----------------------------------------------------------------------+
@@ -475,6 +477,51 @@ D_ y con el Bloque 4 «Datos SII / avalúo» de la UI del Tasador
 > tanda FASE2-lectura-sii (Opción A) y con ello el productor
 > `lib/tasador/lectura-informe.ts` deja de emitir estos códigos en `null` por
 > ausencia de columna: ahora los lee por nombre.
+
+### 2.1.2 · Inventario del documento `permiso_edificacion` (Permiso de Edificación municipal)
+
+El Permiso de Edificación de la Dirección de Obras Municipales
+(`docs/_referencias/permiso_edificacion.pdf` · Colina, N°319-2020, 09-09-2020,
+ROL S.I.I. 882-40) es una **fuente documental propia**, catalogada en
+`D_TipoDocumento` como `permiso_edificacion` (`recibSR1tfKZKcnOA`, activo, emisor
+DOM). Es el **documento canónico** del par permiso: §2.1 ya lo declara como
+origen de «N° Permiso de edificación + fecha» (también transcrito en la Escritura
+de compraventa). Sus atributos quedan catalogados en `D_TipoDocumentoAtributo`
+bajo el doc `permiso_edificacion`.
+
+**Scope mínimo spec-fiel (IF-03).** De los 14 atributos catalogados sólo **dos**
+reciben destino real —los que §2.1 sourcea canónicamente desde el Permiso—, con
+`uso_interfaz_tasador = TRUE`. Ya se muestran en la **Sección F** de la UF del
+Tasador (`components/tasador/form-sections/seccion-documentos.tsx`, editable) y en
+el preview del informe (`components/tasador/informe-preview.tsx`), ambos hidratados
+de `TX_DocumentosLegales` por `lib/tasador/lectura-datos.ts` /
+`lib/tasador/lectura-informe.ts` — **no hubo UI nueva**. El poblado al subir el PDF
+lo hace la pipeline genérica (AT03-Ext, fuera del repo) enrutando por
+`uso_campo_destino`; el borrado limpia el par vía el cascade de §28
+(`lib/adjuntos-doc-campos.ts`).
+
+  ----------------------------------------------------------------------------------------------
+  **Campo (permiso)**           **codigo_atributo**       **Tabla · Campo destino**    **Motor**
+  ---------------------------- ------------------------- ---------------------------- ----------
+  N° Permiso de Edificación     numero_permiso            TX_DocumentosLegales ·       No
+  (319-2020)                                              permiso_edificacion_numero
+
+  Fecha Permiso de Edificación  fecha_permiso             TX_DocumentosLegales ·       No
+  (09-09-2020)                                            permiso_edificacion_fecha
+  -----------------------------------------------------------------------------------------
+
+**Atributos catalogados sin destino (brecha de diseño · `obligatorio=FALSE`).** Los
+otros 12 —`comuna`, `direccion`, `tipo_obra`, `superficie_construida_m2`,
+`arquitecto_responsable`, `nombre_propietario`, `tipo_propiedad`,
+`tipo_agrupamiento`, `numero_pisos`, `numero_subterraneos`, `superficie_terreno_m2`,
+`ano_construccion`— no tienen columna destino en el esquema real y/o su fuente
+canónica es otra (SII para superficie/año/urbano-rural; la solicitud para comuna y
+dirección; el CBR para titularidad). El PDF además trae `tipo_obra` (Obra Nueva),
+el estado DFL2 («pierde beneficios del D.F.L.-N°2», derivado por fórmula en
+`TX_DatosTasacion.dfl2`) y datos administrativos (CIP N°1426, expediente
+PE-2582/2020) que no van a campos estructurados. El detalle de estas brechas está
+en `docs/_analisis/lectura_datos_permiso_edificacion_v1.xlsx` (hoja «Etapa Diseño»).
+No se crearon columnas nuevas en `TX_DocumentosLegales`.
 
 ## 2.2 · Datos del PDF que también se extraen pero NO van a campos estructurados
 
@@ -1216,6 +1263,25 @@ generar la matriz tag-por-tag de la plantilla Carbone, o construir el
 prompt de SC07 con su schema JSON.
 
 # Changelog
+
+**v1.5 (11-sep-2026 · IF-03-permiso-edificacion)** — Sucede a **v1.4**, que queda
+en `docs/_md/VProperty_Origen_Datos_Informe_v1.4.md` como versión anterior.
+Cambio único: se agrega **§2.1.2**, que inventaría el documento
+`permiso_edificacion` (Permiso de Edificación municipal · DOM,
+`docs/_referencias/permiso_edificacion.pdf`) como fuente documental propia y
+canónica del par permiso. Scope mínimo spec-fiel: de sus 14 atributos catalogados
+en `D_TipoDocumentoAtributo` (`recibSR1tfKZKcnOA`) sólo **`numero_permiso`** y
+**`fecha_permiso`** reciben destino real
+(`TX_DocumentosLegales.permiso_edificacion_numero` · `…_fecha`), con
+`uso_interfaz_tasador = TRUE`; ya se muestran en la Sección F de la UF del Tasador
+y en el preview del informe (sin UI nueva). Los otros 12 atributos quedan
+catalogados **sin destino** y `obligatorio=FALSE` como brecha de diseño (no hay
+columna destino; no se crearon columnas nuevas en `TX_DocumentosLegales`). El
+borrado del documento limpia el par permiso vía el cascade de §28
+(`lib/adjuntos-doc-campos.ts`); el par lo comparte con `escritura_compraventa`
+(política Q1). Brechas detalladas en
+`docs/_analisis/lectura_datos_permiso_edificacion_v1.xlsx`. El documento queda
+consistente con las tablas D_ y con la UI del Tasador (Regla 1).
 
 **v1.4 (09-sep-2026 · FASE2-lectura-sii)** — Sucede a **v1.3**, que queda
 en `docs/_md/VProperty_Origen_Datos_Informe_v1.3.md` como versión anterior.

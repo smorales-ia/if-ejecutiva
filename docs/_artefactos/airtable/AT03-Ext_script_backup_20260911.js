@@ -407,40 +407,33 @@ async function escribirDestino(destTable, tablaDestinoNombre, destRow, campoDest
   }
 }
 
-// --- 3a. una_por_solicitud → fila 1:1 por `solicitud`, en CUALQUIER tabla ---
-// v3 (11-sep-2026 · IF-03): generalizado de TX_DatosTasacion a cualquier
-// uso_tabla_destino. La cardinalidad una_por_solicitud ya no está atada a una
-// tabla concreta: se resuelve/crea la fila 1:1 por el link `solicitud` en la
-// tabla que declare D_TipoDocumentoAtributo (TX_DatosTasacion,
-// TX_DocumentosLegales, …). Antes el guard hardcodeaba TX_DatosTasacion y todo
-// destino distinto daba propError sin escribir — bug que dejaba sin propagar el
-// par permiso (permiso_edificacion / escritura_compraventa) y los campos de
-// dominio de foto_fuente_sii (numero_inscripcion / fojas / ano_inscripcion),
-// todos declarados en TX_DocumentosLegales. Cache por nombre de tabla.
+// --- 3a. una_por_solicitud → TX_DatosTasacion (fila 1:1 por `solicitud`) ---
 
-const filas1a1 = new Map() // tablaNombre -> record (fila 1:1 de la solicitud)
-async function resolverFila1a1(destTable, tablaNombre) {
-  if (filas1a1.has(tablaNombre)) return filas1a1.get(tablaNombre)
-  const q = await destTable.selectRecordsAsync({ fields: ['solicitud'] })
+let filaDatosTasacion = null
+async function resolverFilaDatosTasacion() {
+  if (filaDatosTasacion !== undefined && filaDatosTasacion !== null) return filaDatosTasacion
+  const q = await tDatosTasacion.selectRecordsAsync({ fields: ['solicitud'] })
   const existente = q.records.find((r) => {
     const link = r.getCellValue('solicitud')
     return Array.isArray(link) && link.some((l) => l.id === solicitudId)
   })
-  let row
   if (existente) {
-    // Re-seleccionar el record COMPLETO (mismo bug fix que la versión previa):
-    // selectRecordsAsync({fields:['solicitud']}) sólo expone `solicitud`; pasar
-    // ESE record a escribirDestino lanza "Field <x> isn't in this record" para
-    // cada campo destino → 0 escrituras cuando la fila YA EXISTÍA. selectRecordAsync
-    // (singular) carga el record entero.
-    row = await destTable.selectRecordAsync(existente.id)
+    // BUG FIX (Tarea 5 Post-Fase B · 10-sep-2026): re-seleccionar el record COMPLETO.
+    // `selectRecordsAsync({fields:['solicitud']})` sólo expone el campo `solicitud`;
+    // pasar ESE record a escribirDestino hace que `destRow.getCellValue(campoDestino)`
+    // lance "Field <x> isn't in this record. Make sure it was included in the
+    // QueryResult" para CADA campo destino → 0 escrituras. Sólo se manifestaba
+    // cuando la fila YA EXISTÍA (re-subida): en el alta la fila se crea con
+    // selectRecordAsync(id), que sí trae todos los campos. Fase B conserva la fila
+    // (Q2), así que la re-extracción siempre cae por esta rama. selectRecordAsync
+    // (singular) carga el record entero. Ver docs/aprendizajes.md CI de esta fecha.
+    filaDatosTasacion = await tDatosTasacion.selectRecordAsync(existente.id)
   } else {
-    const nuevaId = await destTable.createRecordAsync({ solicitud: [{ id: solicitudId }] })
-    row = await destTable.selectRecordAsync(nuevaId)
-    propLog.push(`(creada fila ${tablaNombre} ${nuevaId} para la solicitud)`)
+    const nuevaId = await tDatosTasacion.createRecordAsync({ solicitud: [{ id: solicitudId }] })
+    filaDatosTasacion = await tDatosTasacion.selectRecordAsync(nuevaId)
+    propLog.push(`(creada fila TX_DatosTasacion ${nuevaId} para la solicitud)`)
   }
-  filas1a1.set(tablaNombre, row)
-  return row
+  return filaDatosTasacion
 }
 
 // --- 3b. una_por_unidad → TX_Unidades, resuelta por uso_campo_link_unidad --
@@ -565,13 +558,13 @@ for (const item of conValor) {
     }
 
     if (cardinalidad === 'una_por_solicitud') {
-      // v3 (11-sep-2026 · IF-03): data-driven para cualquier tabla destino 1:1
-      // por `solicitud`, no sólo TX_DatosTasacion. base.getTable lanza si el
-      // nombre de uso_tabla_destino no existe → lo captura el try/catch del loop
-      // como propError, sin congelar la corrida.
-      const destTable = base.getTable(tablaDestino)
-      const destRow = await resolverFila1a1(destTable, tablaDestino)
-      await escribirDestino(destTable, tablaDestino, destRow, campoDestino, item)
+      if (tablaDestino !== TABLES.TX_DATOS_TASACION) {
+        propLog.push(`${item.codigo_atributo}: uso_tabla_destino="${tablaDestino}" con cardinalidad una_por_solicitud no es TX_DatosTasacion — revisar fila en D_TipoDocumentoAtributo`)
+        propError++
+        continue
+      }
+      const destRow = await resolverFilaDatosTasacion()
+      await escribirDestino(tDatosTasacion, TABLES.TX_DATOS_TASACION, destRow, campoDestino, item)
     } else if (cardinalidad === 'una_por_unidad') {
       if (tablaDestino !== TABLES.TX_UNIDADES || !campoLinkUnidad) {
         propLog.push(`${item.codigo_atributo}: cardinalidad una_por_unidad mal configurada (uso_tabla_destino/uso_campo_link_unidad) — skip`)
@@ -658,7 +651,7 @@ async function resolverFilaMuchas(destTable, tablaDestinoNombre, fila) {
 
   let row
   if (existente) {
-    // Mismo bug latente que resolverFila1a1: el record de la query
+    // Mismo bug latente que resolverFilaDatosTasacion: el record de la query
     // estrecha no expone los campos destino y escribirDestino fallaría con
     // "Field isn't in this record". Hoy se enmascara porque los comparables se
     // crean frescos (Fase B borra sus filas al borrar el adjunto), pero se

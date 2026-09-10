@@ -1685,6 +1685,18 @@ Fuente canónica: **`D_TipoDocumentoAtributo`** (`tbldI86ieVKpjpL7E`, 151 filas)
 (Airtable Automation, fuera del repo) enrutando `TX_Adjuntos.atributos_obtenidos` según esta tabla.
 Este mapa es el insumo del **cascade de borrado** (`lib/adjuntos-cascade.ts`).
 
+> **⚠ Límite del escritor AT03-Ext (11-sep-2026 · IF-03).** Hasta la v3 del script, la
+> cardinalidad `una_por_solicitud` **sólo escribe en `TX_DatosTasacion`**: la rama estaba
+> hardcodeada (`if (tablaDestino !== TX_DatosTasacion) { propError++; continue }`), así que
+> cualquier `una_por_solicitud` con destino `TX_DocumentosLegales` —el par permiso de
+> `permiso_edificacion` / `escritura_compraventa`, y los campos de dominio de `foto_fuente_sii`
+> (`numero_inscripcion` · `fojas` · `ano_inscripcion`)— **no propagaba** (error, 0 escrituras).
+> El fix v3 generaliza la rama a cualquier tabla 1:1 por link `solicitud` (`resolverFila1a1`);
+> script canónico en `docs/_artefactos/airtable/AT03-Ext_script.js` (original en `…_backup_20260911.js`).
+> **Pendiente de aplicación manual en Airtable UI**: los nodos `customScript` son read-only
+> por la API MCP. Mientras no se publique el v3, el cableado de `permiso_edificacion` está
+> correcto pero el dato no llega a `TX_DocumentosLegales`.
+
 **Patrones de borrado:** (a) mismo registro / satélite 1:1 → PATCH limpiando campos ·
 (b) tablas hijas (`muchas_por_solicitud`) → DELETE de filas · (c) merge por unidad
 (`una_por_unidad`, la fila la crea el intake) → PATCH de los campos SII, nunca DELETE de la fila.
@@ -1698,7 +1710,18 @@ Este mapa es el insumo del **cascade de borrado** (`lib/adjuntos-cascade.ts`).
 | `certificado_avaluo_fiscal` | `TX_DatosTasacion` | una_por_solicitud | avaluo_exento · contribucion_anual · destino_sii · calidad_sii · material_predominante | **a** |
 | `certificado_avaluo_fiscal` | `TX_Unidades` (link `TX_Unidades.rol_sii`) | una_por_unidad | rol_sii · sup_m2 · anio_construccion · avaluo_uf ← avaluo_total | **c** |
 | `escritura_compraventa` | `TX_DocumentosLegales` | una_por_solicitud | permiso_edificacion_numero · permiso_edificacion_fecha · recepcion_final_numero · recepcion_final_fecha | **a** |
-| `consulta_antecedentes_bien_raiz` · `permiso_edificacion` · `certificado_recepcion_final` · `inscripcion_dominio_cbr` · `certificado_deuda_tgr` · `informe_no_expropiacion_serviu` · `sello_verde_sec` · `plano_cuadro_superficies` | — (sin `uso_tabla_destino`) | — | (atributos declarados, sin destino mapeado) | no-op |
+| `permiso_edificacion` | `TX_DocumentosLegales` | una_por_solicitud | permiso_edificacion_numero · permiso_edificacion_fecha | **a** |
+| `consulta_antecedentes_bien_raiz` · `certificado_recepcion_final` · `inscripcion_dominio_cbr` · `certificado_deuda_tgr` · `informe_no_expropiacion_serviu` · `sello_verde_sec` · `plano_cuadro_superficies` | — (sin `uso_tabla_destino`) | — | (atributos declarados, sin destino mapeado) | no-op |
+
+> **`permiso_edificacion` (11-sep-2026 · IF-03).** Documento canónico del par permiso
+> (Origen v1.5 §2.1). De sus 14 atributos catalogados sólo `numero_permiso` y `fecha_permiso`
+> reciben destino real (`TX_DocumentosLegales.permiso_edificacion_numero` · `…_fecha`); los otros
+> 12 quedan catalogados **sin destino** y `obligatorio=FALSE` (tipo_obra, superficie, DFL2,
+> propietario… son brechas: no hay columna ni los piden Motor v2.7 / Origen v1.5 · ver
+> `docs/_analisis/lectura_datos_permiso_edificacion_v1.xlsx`). Comparte el par con
+> `escritura_compraventa`: borrar cualquiera de los dos limpia `permiso_edificacion_numero` y
+> `permiso_edificacion_fecha` (política Q1). La UI del Tasador ya muestra el par (Sección F editable
+> + preview del informe), hidratado de `TX_DocumentosLegales`; no hubo UI nueva.
 
 ### 28.1 Provenance por adjunto — qué se puede purgar hoy sin riesgo
 
