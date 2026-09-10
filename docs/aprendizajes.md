@@ -2984,3 +2984,18 @@ API — hay que pegar el script corregido en Airtable → Automations → AT03-E
 debe provenir de una query que incluya ESE campo, o cargarse con `selectRecordAsync(id)` (singular =
 record completo). Nunca pasar un record de `selectRecordsAsync({fields:[...]})` a un consumidor que
 lea campos fuera de esa proyección.
+
+### 2026-09-10 — Regla operativa: "Éxito" de una Automation ≠ escritura de datos
+**Contexto:** depuración del CI de AT03-Ext registrado arriba (misma sesión · Tarea 5 Post-Fase B).
+**Inconveniente:** el Historial de la Automation marcaba "Se ejecutó con éxito" en las corridas de
+las 10:48 y 11:11 sobre `recb7tNO42tAvLZ8V`, pero 0 campos se escribieron en TX_DatosTasacion ni
+TX_Unidades. Asumir "Éxito = datos escritos" atascó el diagnóstico varias vueltas.
+**Causa raíz:** el badge "Éxito" del Historial sólo significa "el script terminó sin lanzar una
+excepción no capturada". Los errores por campo (`getCellValue` sobre fields fuera de la query) se
+tragaban dentro del bucle de escritura sin propagar — el script terminaba limpio con 0 escrituras.
+**Solución aplicada:** verificar la escritura de verdad, no el badge: contar escrituras/errores en
+`LogEscenarios` (la corrida mostraba "0 ok · 0 skip · 12 err"), o consultar el estado real de las
+tablas destino vía MCP/curl. El badge "Éxito" nunca es evidencia de que hubo datos escritos.
+**Prevención futura:** ante cualquier "corrió bien pero no veo el dato", ir directo a `LogEscenarios`
+o a la tabla destino antes de dar por buena la Automation. Nunca cerrar un diagnóstico sobre la sola
+base del Historial de Airtable.
