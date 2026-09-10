@@ -1,11 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
- * P14-TAS-CASCADE · limpieza de comparables derivados al borrar un adjunto.
+ * P14-TAS-CASCADE · generalizado en Tarea 5 · Fase A — cascade genérico de
+ * limpieza de data derivada al borrar un adjunto.
  *
  * Se mockean las tres primitivas de Airtable que el helper compone —`listRecords`
  * (captura), `deleteRecords` (baja de hijos puros) y `updateRecord` (desligado
- * RO-31)— para verificar el enrutamiento sin tocar la base.
+ * RO-31)— para verificar el enrutamiento vía {@link CASCADE_REGISTRY} sin tocar
+ * la base. El registry tiene hoy una sola entrada (TX_Comparables), así que las
+ * aserciones van contra `TABLE_IDS.comparables`, pero el código ya es
+ * table-agnostic.
  */
 
 const listRecords = vi.fn()
@@ -26,14 +30,16 @@ vi.mock('@/lib/tasador/airtable-writes', () => ({
 }))
 
 import {
-  capturarComparablesDeAdjunto,
-  purgarComparablesCapturados,
+  CASCADE_REGISTRY,
+  capturarDerivadosDeAdjunto,
+  purgarDerivadosCapturados,
 } from '@/lib/adjuntos-cascade'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 
 const ADJUNTO = 'recADJ00000000001'
 const OTRO_ADJUNTO = 'recADJ00000000002'
 const CODIGO = 'VP-2026-0060'
+const COMPARABLES = TABLE_IDS.comparables
 
 function fila(id: string, adjuntoOrigen: string[] | undefined, aporta?: boolean) {
   return {
@@ -47,6 +53,11 @@ function fila(id: string, adjuntoOrigen: string[] | undefined, aporta?: boolean)
   }
 }
 
+/** Un derivado ya capturado, con la tabla que exige la nueva firma. */
+function derivado(id: string, aportaHistorico: boolean) {
+  return { id, tabla: COMPARABLES, aportaHistorico }
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
   listRecords.mockResolvedValue([])
@@ -54,8 +65,20 @@ beforeEach(() => {
   updateRecord.mockResolvedValue({ id: 'x', createdTime: '', fields: {} })
 })
 
-describe('capturarComparablesDeAdjunto', () => {
-  it('filtra por adjunto_origen: sólo los del adjunto, ignorando los de otro adjunto o sin link', async () => {
+describe('CASCADE_REGISTRY', () => {
+  it('hoy declara únicamente TX_Comparables con su historicoField (RO-31)', () => {
+    expect(CASCADE_REGISTRY).toHaveLength(1)
+    expect(CASCADE_REGISTRY[0]).toMatchObject({
+      tabla: COMPARABLES,
+      linkField: 'adjunto_origen',
+      historicoField: 'aporta_a_historico',
+      desligarField: 'solicitud',
+    })
+  })
+})
+
+describe('capturarDerivadosDeAdjunto', () => {
+  it('filtra por el link de provenance: sólo los del adjunto, ignorando otro adjunto o sin link', async () => {
     listRecords.mockResolvedValue([
       fila('recCOMP1', [ADJUNTO], false),
       fila('recCOMP2', [ADJUNTO], true),
@@ -63,92 +86,87 @@ describe('capturarComparablesDeAdjunto', () => {
       fila('recCOMP4', undefined, false), // sin adjunto_origen → fuera
     ])
 
-    const capturados = await capturarComparablesDeAdjunto(ADJUNTO, CODIGO)
+    const capturados = await capturarDerivadosDeAdjunto(ADJUNTO, CODIGO)
 
     expect(capturados).toEqual([
-      { id: 'recCOMP1', aportaHistorico: false },
-      { id: 'recCOMP2', aportaHistorico: true },
+      { id: 'recCOMP1', tabla: COMPARABLES, aportaHistorico: false },
+      { id: 'recCOMP2', tabla: COMPARABLES, aportaHistorico: true },
     ])
   })
 
-  it('scopea por clave_natural (no por el link solicitud, poco fiable en esta tabla)', async () => {
-    await capturarComparablesDeAdjunto(ADJUNTO, CODIGO)
+  it('scopea por la scopeFormula del registry (clave_natural, no el link solicitud)', async () => {
+    await capturarDerivadosDeAdjunto(ADJUNTO, CODIGO)
 
     const [tableId, params] = listRecords.mock.calls[0]
-    expect(tableId).toBe(TABLE_IDS.comparables)
+    expect(tableId).toBe(COMPARABLES)
     expect(params.filterByFormula).toBe(`SEARCH("${CODIGO}", {clave_natural})`)
+    // Lee link + historicoField para poder decidir RO-31 sin una segunda lectura.
+    expect(params.fields).toEqual(['adjunto_origen', 'aporta_a_historico'])
   })
 
-  it('sin coincidencias devuelve lista vacía', async () => {
+  it('adjunto que no pobló nada (cero filas en scope) → lista vacía (no-op)', async () => {
+    listRecords.mockResolvedValue([])
+    expect(await capturarDerivadosDeAdjunto(ADJUNTO, CODIGO)).toEqual([])
+  })
+
+  it('documento sin datos poblados en esta tabla (todo de otro adjunto) → lista vacía', async () => {
     listRecords.mockResolvedValue([fila('recCOMP9', [OTRO_ADJUNTO], false)])
-    expect(await capturarComparablesDeAdjunto(ADJUNTO, CODIGO)).toEqual([])
+    expect(await capturarDerivadosDeAdjunto(ADJUNTO, CODIGO)).toEqual([])
   })
 })
 
-describe('purgarComparablesCapturados', () => {
-  it('aporta_a_historico=false → borra (DELETE), no desliga', async () => {
+describe('purgarDerivadosCapturados', () => {
+  it('happy path patrón b: aportaHistorico=false → borra (DELETE), no desliga', async () => {
     deleteRecords.mockResolvedValue(2)
 
-    const r = await purgarComparablesCapturados([
-      { id: 'recA', aportaHistorico: false },
-      { id: 'recB', aportaHistorico: false },
-    ])
+    const r = await purgarDerivadosCapturados([derivado('recA', false), derivado('recB', false)])
 
-    expect(deleteRecords).toHaveBeenCalledWith(TABLE_IDS.comparables, ['recA', 'recB'])
+    expect(deleteRecords).toHaveBeenCalledWith(COMPARABLES, ['recA', 'recB'])
     expect(updateRecord).not.toHaveBeenCalled()
     expect(r).toEqual({ borrados: 2, desligados: 0, errores: 0 })
   })
 
-  it('aporta_a_historico=true → desliga (PATCH solicitud:[]), no borra (RO-31)', async () => {
-    const r = await purgarComparablesCapturados([
-      { id: 'recH1', aportaHistorico: true },
-      { id: 'recH2', aportaHistorico: true },
-    ])
+  it('aportaHistorico=true → desliga (PATCH solicitud:[]), no borra (RO-31)', async () => {
+    const r = await purgarDerivadosCapturados([derivado('recH1', true), derivado('recH2', true)])
 
     expect(deleteRecords).not.toHaveBeenCalled()
-    expect(updateRecord).toHaveBeenCalledWith(TABLE_IDS.comparables, 'recH1', { solicitud: [] })
-    expect(updateRecord).toHaveBeenCalledWith(TABLE_IDS.comparables, 'recH2', { solicitud: [] })
+    expect(updateRecord).toHaveBeenCalledWith(COMPARABLES, 'recH1', { solicitud: [] })
+    expect(updateRecord).toHaveBeenCalledWith(COMPARABLES, 'recH2', { solicitud: [] })
     expect(r).toEqual({ borrados: 0, desligados: 2, errores: 0 })
   })
 
   it('mezcla: borra los falsy y desliga los true', async () => {
     deleteRecords.mockResolvedValue(1)
 
-    const r = await purgarComparablesCapturados([
-      { id: 'recDel', aportaHistorico: false },
-      { id: 'recUnlink', aportaHistorico: true },
-    ])
+    const r = await purgarDerivadosCapturados([derivado('recDel', false), derivado('recUnlink', true)])
 
-    expect(deleteRecords).toHaveBeenCalledWith(TABLE_IDS.comparables, ['recDel'])
-    expect(updateRecord).toHaveBeenCalledWith(TABLE_IDS.comparables, 'recUnlink', { solicitud: [] })
+    expect(deleteRecords).toHaveBeenCalledWith(COMPARABLES, ['recDel'])
+    expect(updateRecord).toHaveBeenCalledWith(COMPARABLES, 'recUnlink', { solicitud: [] })
     expect(r).toEqual({ borrados: 1, desligados: 1, errores: 0 })
   })
 
-  it('lista vacía → no-op idempotente sin tocar Airtable', async () => {
-    const r = await purgarComparablesCapturados([])
+  it('idempotencia: lista vacía → {0,0,0} sin tocar Airtable', async () => {
+    const r = await purgarDerivadosCapturados([])
 
     expect(deleteRecords).not.toHaveBeenCalled()
     expect(updateRecord).not.toHaveBeenCalled()
     expect(r).toEqual({ borrados: 0, desligados: 0, errores: 0 })
   })
 
-  it('si el DELETE falla, cuenta el error y NO re-lanza', async () => {
+  it('borrado parcial: si el DELETE falla, cuenta el error y NO re-lanza', async () => {
     deleteRecords.mockRejectedValue(new Error('502 airtable'))
 
-    const r = await purgarComparablesCapturados([{ id: 'recA', aportaHistorico: false }])
+    const r = await purgarDerivadosCapturados([derivado('recA', false)])
 
     expect(r).toEqual({ borrados: 0, desligados: 0, errores: 1 })
   })
 
-  it('si un desligado falla, cuenta el error, sigue con el resto y NO re-lanza', async () => {
+  it('borrado parcial: si un desligado falla, cuenta el error, sigue con el resto y NO re-lanza', async () => {
     updateRecord
       .mockRejectedValueOnce(new Error('502 airtable'))
       .mockResolvedValueOnce({ id: 'recH2', createdTime: '', fields: {} })
 
-    const r = await purgarComparablesCapturados([
-      { id: 'recH1', aportaHistorico: true },
-      { id: 'recH2', aportaHistorico: true },
-    ])
+    const r = await purgarDerivadosCapturados([derivado('recH1', true), derivado('recH2', true)])
 
     expect(r).toEqual({ borrados: 0, desligados: 1, errores: 1 })
   })

@@ -12,8 +12,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const auth = vi.fn()
 const verificarRN59 = vi.fn()
 const postToMake = vi.fn()
-const capturarComparablesDeAdjunto = vi.fn()
-const purgarComparablesCapturados = vi.fn()
+const capturarDerivadosDeAdjunto = vi.fn()
+const purgarDerivadosCapturados = vi.fn()
 
 vi.mock('@clerk/nextjs/server', () => ({ auth: () => auth() }))
 
@@ -27,8 +27,8 @@ vi.mock('@/lib/make-client', async (importOriginal) => {
 })
 
 vi.mock('@/lib/adjuntos-cascade', () => ({
-  capturarComparablesDeAdjunto: (...args: unknown[]) => capturarComparablesDeAdjunto(...args),
-  purgarComparablesCapturados: (...args: unknown[]) => purgarComparablesCapturados(...args),
+  capturarDerivadosDeAdjunto: (...args: unknown[]) => capturarDerivadosDeAdjunto(...args),
+  purgarDerivadosCapturados: (...args: unknown[]) => purgarDerivadosCapturados(...args),
 }))
 
 import { DELETE } from './route'
@@ -59,31 +59,31 @@ beforeEach(() => {
   vi.stubEnv('MAKE_HMAC_SECRET', 'secreto-de-prueba')
   auth.mockResolvedValue({ userId: 'user_123' })
   verificarRN59.mockResolvedValue({ tipo: 'ok' })
-  capturarComparablesDeAdjunto.mockResolvedValue([])
-  purgarComparablesCapturados.mockResolvedValue({ borrados: 0, desligados: 0, errores: 0 })
+  capturarDerivadosDeAdjunto.mockResolvedValue([])
+  purgarDerivadosCapturados.mockResolvedValue({ borrados: 0, desligados: 0, errores: 0 })
   postToMake.mockResolvedValue(makeResponse(true, { ok: true, adjunto_id: '77', airtable_borrado: true }))
 })
 
 describe('cascade en el borrado', () => {
-  it('captura los comparables ANTES de llamar a Make', async () => {
+  it('captura los derivados ANTES de llamar a Make', async () => {
     await llamar()
 
-    expect(capturarComparablesDeAdjunto).toHaveBeenCalledWith(ID, CODIGO)
-    expect(capturarComparablesDeAdjunto.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(capturarDerivadosDeAdjunto).toHaveBeenCalledWith(ID, CODIGO)
+    expect(capturarDerivadosDeAdjunto.mock.invocationCallOrder[0]).toBeLessThan(
       postToMake.mock.invocationCallOrder[0]
     )
   })
 
   it('tras data.ok, purga lo capturado y responde 200', async () => {
     const capturados = [
-      { id: 'recCOMP1', aportaHistorico: false },
-      { id: 'recCOMP2', aportaHistorico: true },
+      { id: 'recCOMP1', tabla: 'tblComparables', aportaHistorico: false },
+      { id: 'recCOMP2', tabla: 'tblComparables', aportaHistorico: true },
     ]
-    capturarComparablesDeAdjunto.mockResolvedValue(capturados)
+    capturarDerivadosDeAdjunto.mockResolvedValue(capturados)
 
     const res = await llamar()
 
-    expect(purgarComparablesCapturados).toHaveBeenCalledWith(capturados)
+    expect(purgarDerivadosCapturados).toHaveBeenCalledWith(capturados)
     expect(res.status).toBe(200)
   })
 
@@ -93,11 +93,11 @@ describe('cascade en el borrado', () => {
     const res = await llamar()
 
     expect(res.status).toBe(409)
-    expect(purgarComparablesCapturados).not.toHaveBeenCalled()
+    expect(purgarDerivadosCapturados).not.toHaveBeenCalled()
   })
 
   it('un fallo del cascade NO cambia el 200', async () => {
-    purgarComparablesCapturados.mockRejectedValue(new Error('boom'))
+    purgarDerivadosCapturados.mockRejectedValue(new Error('boom'))
 
     const res = await llamar()
 
@@ -105,11 +105,23 @@ describe('cascade en el borrado', () => {
   })
 
   it('un fallo de la captura no aborta el borrado (sigue a Make y responde 200)', async () => {
-    capturarComparablesDeAdjunto.mockRejectedValue(new Error('lectura caída'))
+    capturarDerivadosDeAdjunto.mockRejectedValue(new Error('lectura caída'))
 
     const res = await llamar()
 
     expect(postToMake).toHaveBeenCalled()
     expect(res.status).toBe(200)
+  })
+
+  it('idempotencia: un segundo borrado (ya_no_existia) responde 200 y purga vacío', async () => {
+    // El primer borrado ya se llevó las filas derivadas; el segundo no captura
+    // nada y la purga es no-op. Make responde ok con `ya_no_existia`.
+    postToMake.mockResolvedValue(makeResponse(true, { ok: true, ya_no_existia: true }))
+    capturarDerivadosDeAdjunto.mockResolvedValue([])
+
+    const res = await llamar()
+
+    expect(res.status).toBe(200)
+    expect(purgarDerivadosCapturados).toHaveBeenCalledWith([])
   })
 })

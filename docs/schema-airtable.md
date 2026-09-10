@@ -1674,3 +1674,48 @@ no la definición.
 código sólo lo **lee** el read-layer (`lib/tasador/lectura-datos.ts`, `lectura-informe.ts`),
 traduciendo `'SI'`/`'NO'` → boolean; está en `FIELD_IDS_DATOS_TASACION_READONLY` (nunca se escribe).
 El único cambio de comportamiento observable es `sup=0` → `NO` en vez de `SI`. Sin cambio de código.
+
+---
+
+## 28. Mapa documental `tipo de documento → tabla/campo/patrón` (Tarea 5 · Fase A · 09-sep-2026)
+
+Fuente canónica: **`D_TipoDocumentoAtributo`** (`tbldI86ieVKpjpL7E`, 151 filas), campos
+`tipo_documento` (Link → `D_TipoDocumento`), `uso_tabla_destino`, `uso_campo_destino`,
+`uso_cardinalidad_destino` y `uso_campo_link_unidad`. El **poblado** lo hace `AT03-Ext`
+(Airtable Automation, fuera del repo) enrutando `TX_Adjuntos.atributos_obtenidos` según esta tabla.
+Este mapa es el insumo del **cascade de borrado** (`lib/adjuntos-cascade.ts`).
+
+**Patrones de borrado:** (a) mismo registro / satélite 1:1 → PATCH limpiando campos ·
+(b) tablas hijas (`muchas_por_solicitud`) → DELETE de filas · (c) merge por unidad
+(`una_por_unidad`, la fila la crea el intake) → PATCH de los campos SII, nunca DELETE de la fila.
+
+| tipo de documento | uso_tabla_destino | cardinalidad | campos destino | patrón |
+|---|---|---|---|---|
+| `foto_ofertas_comparables` | `TX_Comparables` | muchas_por_solicitud | numero · tipo_referencia · direccion · anio · foja · precio_uf · sup_terreno_m2 · sup_construccion_m2 · uf_m2_terreno_f · uf_m2_construccion_f · oo_cc_uf · telefono_contacto · fecha_publicacion | **b** |
+| `foto_fuente_sii` | `TX_DatosTasacion` | una_por_solicitud | rol_sii · cod_sii_comuna · cod_sii_manzana · cod_sii_predio · calidad_sii · destino_sii · ubicacion_urbano_rural · avaluo_fiscal_clp · avaluo_exento · contribucion_anual · cg · ociv · oc · g | **a** |
+| `foto_fuente_sii` | `TX_Unidades` (link `TX_Unidades.rol_sii`) | una_por_unidad | tipo_material · anio_construccion · sup_m2 · sup_terreno_m2 | **c** |
+| `foto_fuente_sii` | `TX_DocumentosLegales` | una_por_solicitud | numero_inscripcion ← numero_dominio · fojas ← foja_dominio · ano_inscripcion ← anio_dominio | **a** |
+| `certificado_avaluo_fiscal` | `TX_DatosTasacion` | una_por_solicitud | avaluo_exento · contribucion_anual · destino_sii · calidad_sii · material_predominante | **a** |
+| `certificado_avaluo_fiscal` | `TX_Unidades` (link `TX_Unidades.rol_sii`) | una_por_unidad | rol_sii · sup_m2 · anio_construccion · avaluo_uf ← avaluo_total | **c** |
+| `escritura_compraventa` | `TX_DocumentosLegales` | una_por_solicitud | permiso_edificacion_numero · permiso_edificacion_fecha · recepcion_final_numero · recepcion_final_fecha | **a** |
+| `consulta_antecedentes_bien_raiz` · `permiso_edificacion` · `certificado_recepcion_final` · `inscripcion_dominio_cbr` · `certificado_deuda_tgr` · `informe_no_expropiacion_serviu` · `sello_verde_sec` · `plano_cuadro_superficies` | — (sin `uso_tabla_destino`) | — | (atributos declarados, sin destino mapeado) | no-op |
+
+### 28.1 Provenance por adjunto — qué se puede purgar hoy sin riesgo
+
+El borrado en cascada necesita saber **qué fila creó cada adjunto**. Esa provenance existe sólo en:
+
+- **`TX_Comparables.adjunto_origen`** (`fld4i271GJA1VHu6a`, Link → `TX_Adjuntos`), que `AT03-Ext`
+  escribe al crear cada comparable. → patrón (b) auto-purgable. **Es la única entrada del
+  `CASCADE_REGISTRY`** en `lib/adjuntos-cascade.ts` hoy.
+
+No hay provenance por campo para los patrones (a) y (c):
+
+- `TX_DatosTasacion` y `TX_DocumentosLegales` no tienen Link a `TX_Adjuntos`; son satélites 1:1 y
+  varios campos los comparten **dos** tipos de documento (`avaluo_exento`, `contribucion_anual`,
+  `destino_sii`, `calidad_sii` salen de `foto_fuente_sii` **y** de `certificado_avaluo_fiscal`).
+- `TX_Unidades` sí tiene links a `TX_Adjuntos` (`TX_Adjuntos` auto y `respaldo_adjunto`
+  `fldDR6OEqyDe2XdE4`), pero son "respaldo", no provenance por campo; la fila nace en el intake
+  (el `rol_sii` lo tipea el usuario) y el SII sólo mergea campos.
+
+Limpiar (a)/(c) a ciegas destruiría dato humano o multi-fuente. Quedan **deferidos a la Fase B**
+(decisión de Héctor + probable cambio de schema/pipeline). Ver `docs/aprendizajes.md`.

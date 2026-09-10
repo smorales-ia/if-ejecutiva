@@ -2875,3 +2875,33 @@ tras subir el SII.
 **Prevención futura:** antes de asumir "problema de formato" en un match SII, verificar en
 `atributos_obtenidos` si el campo llave está en `no_extraidos` — el certificado SII rara vez trae
 `rol_sii`. Y recordar que el aterrizaje per-unit del SII es pipeline Airtable, no código IF-03.
+
+### 2026-09-09 — Tarea 5 Fase A: cascade genérico de borrado de adjuntos (registry)
+**Contexto:** al borrar un adjunto desde cualquier UI deben purgarse los datos que ese
+documento pobló en Airtable. Objetivo Fase A: generalizar el cascade sin cambiar comportamiento.
+**Solución aplicada:** `lib/adjuntos-cascade.ts` pasó de comparables-específico a un
+`CASCADE_REGISTRY` de `{ tabla, linkField, historicoField?, desligarField?, scopeFormula }`.
+Firmas nuevas `capturarDerivadosDeAdjunto` / `purgarDerivadosCapturados` (antes
+`…ComparablesDeAdjunto` / `…ComparablesCapturados`). El endpoint único
+`DELETE /api/adjuntos/[id]` —que YA usan Ejecutiva (`use-adjuntos-solicitud.ts`) y Tasador
+(`tasador/fotos.ts`); Visador no borra— consume las genéricas. Comportamiento externo idéntico:
+hoy el registry tiene UNA entrada (TX_Comparables, RO-31). Mapa completo en `schema-airtable.md` §28.
+**CI — sólo el patrón (b) es auto-purgable con seguridad hoy.** `TX_Comparables` tiene provenance
+por adjunto (`adjunto_origen` `fld4i271GJA1VHu6a`). Los patrones (a) —satélites `TX_DatosTasacion`/
+`TX_DocumentosLegales`— y (c) —merge por unidad en `TX_Unidades`— **no tienen provenance por campo**,
+y campos como `avaluo_exento`/`contribucion_anual`/`destino_sii`/`calidad_sii` los comparten dos
+tipos de documento (`foto_fuente_sii` y `certificado_avaluo_fiscal`). Limpiar a ciegas = pérdida de
+dato humano o multi-fuente. **Deferido a Fase B.**
+**Prevención futura:** para sumar una tabla al cascade basta una entrada en `CASCADE_REGISTRY`,
+pero sólo si esa tabla tiene un Link de provenance de vuelta al adjunto que creó la fila; si no lo
+tiene, el borrado no es seguro y es tema de Fase B, no de código.
+**PENDIENTE FORMAL PARA HÉCTOR (Fase B · 5 preguntas):**
+ - **Q1.** Satélites (`TX_DatosTasacion`, `TX_DocumentosLegales`): al borrar el adjunto fuente,
+   ¿limpiar los campos que pobló? ¿Qué pasa con campos compartidos por 2 tipos de documento o
+   editados por el tasador? (sin provenance por campo no es seguro).
+ - **Q2.** `TX_Unidades` per-unit SII: ¿limpiar sólo los campos SII conservando la fila + los datos
+   de intake, o dejar como está? (ligado a P18 Item 3: hoy casi no aterriza).
+ - **Q3.** ¿El borrado es reversible? (Airtable no tiene undo; el delete es permanente).
+ - **Q4.** Comparables con `aporta_a_historico=true`: hoy se **desliga**, no se borra (RO-31).
+   ¿Confirmado?
+ - **Q5.** Los 8 tipos sin `uso_tabla_destino`: ¿confirmar que hoy no deben purgar nada?

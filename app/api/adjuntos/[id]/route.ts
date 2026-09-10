@@ -3,9 +3,9 @@ import { z } from 'zod'
 import { auth } from '@clerk/nextjs/server'
 import { AirtableError, isValidRecordId } from '@/lib/airtable-client'
 import {
-  capturarComparablesDeAdjunto,
-  purgarComparablesCapturados,
-  type ComparableCascade,
+  capturarDerivadosDeAdjunto,
+  purgarDerivadosCapturados,
+  type DerivadoCascade,
 } from '@/lib/adjuntos-cascade'
 import { postToMake } from '@/lib/make-client'
 import { verificarRN59 } from '@/lib/rn59'
@@ -168,17 +168,18 @@ export async function DELETE(
   }
 
   /**
-   * Se capturan los comparables derivados de este adjunto **antes** de que Make
-   * lo borre: al eliminar el registro, Airtable retira su record del link
-   * `adjunto_origen`, y buscarlos después sería un no-op silencioso. La purga
-   * real ocurre más abajo, sólo si Make confirma el borrado (`data.ok`). Un fallo
-   * de esta lectura no aborta el borrado: se registra y se sigue sin cascade.
+   * Se capturan las filas derivadas de este adjunto **antes** de que Make lo
+   * borre: al eliminar el registro, Airtable retira su record del link de
+   * provenance (`adjunto_origen`), y buscarlas después sería un no-op silencioso.
+   * La purga real ocurre más abajo, sólo si Make confirma el borrado (`data.ok`).
+   * Un fallo de esta lectura no aborta el borrado: se registra y se sigue sin
+   * cascade. El qué-purgar lo declara el registry genérico de `adjuntos-cascade`.
    */
-  let comparablesACascada: ComparableCascade[] = []
+  let derivadosACascada: DerivadoCascade[] = []
   try {
-    comparablesACascada = await capturarComparablesDeAdjunto(id, payload.codigo_ext)
+    derivadosACascada = await capturarDerivadosDeAdjunto(id, payload.codigo_ext)
   } catch (err) {
-    console.error('[ADJUNTOS-CASCADE-ORPHAN] no se pudieron capturar comparables antes del borrado', {
+    console.error('[ADJUNTOS-CASCADE-ORPHAN] no se pudieron capturar derivados antes del borrado', {
       adjunto_record_id: id,
       codigo_ext: payload.codigo_ext,
       detalle: err instanceof Error ? err.message : String(err),
@@ -233,22 +234,22 @@ export async function DELETE(
     }
 
     /**
-     * Cascade (P14-TAS): el adjunto se borró, así que se purga la data derivada
-     * que quedó huérfana. Envuelto en try/catch como cinturón-y-tirantes —el
-     * helper ya no re-lanza—: nada de esto puede cambiar el 200 que el usuario
-     * recibe por un borrado que sí ocurrió.
+     * Cascade (P14-TAS · genérico desde Tarea 5): el adjunto se borró, así que se
+     * purga la data derivada que quedó huérfana. Envuelto en try/catch como
+     * cinturón-y-tirantes —el helper ya no re-lanza—: nada de esto puede cambiar
+     * el 200 que el usuario recibe por un borrado que sí ocurrió.
      */
     try {
-      const cascade = await purgarComparablesCapturados(comparablesACascada)
+      const cascade = await purgarDerivadosCapturados(derivadosACascada)
       if (cascade.borrados || cascade.desligados || cascade.errores) {
-        console.log('[ADJUNTOS-CASCADE] comparables purgados', {
+        console.log('[ADJUNTOS-CASCADE] derivados purgados', {
           adjunto_record_id: id,
           codigo_ext: payload.codigo_ext,
           ...cascade,
         })
       }
     } catch (err) {
-      console.error('[ADJUNTOS-CASCADE-ORPHAN] fallo inesperado al purgar comparables', {
+      console.error('[ADJUNTOS-CASCADE-ORPHAN] fallo inesperado al purgar derivados', {
         adjunto_record_id: id,
         detalle: err instanceof Error ? err.message : String(err),
       })
