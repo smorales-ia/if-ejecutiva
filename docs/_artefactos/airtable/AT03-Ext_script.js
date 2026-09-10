@@ -418,7 +418,16 @@ async function resolverFilaDatosTasacion() {
     return Array.isArray(link) && link.some((l) => l.id === solicitudId)
   })
   if (existente) {
-    filaDatosTasacion = existente
+    // BUG FIX (Tarea 5 Post-Fase B · 10-sep-2026): re-seleccionar el record COMPLETO.
+    // `selectRecordsAsync({fields:['solicitud']})` sólo expone el campo `solicitud`;
+    // pasar ESE record a escribirDestino hace que `destRow.getCellValue(campoDestino)`
+    // lance "Field <x> isn't in this record. Make sure it was included in the
+    // QueryResult" para CADA campo destino → 0 escrituras. Sólo se manifestaba
+    // cuando la fila YA EXISTÍA (re-subida): en el alta la fila se crea con
+    // selectRecordAsync(id), que sí trae todos los campos. Fase B conserva la fila
+    // (Q2), así que la re-extracción siempre cae por esta rama. selectRecordAsync
+    // (singular) carga el record entero. Ver docs/aprendizajes.md CI de esta fecha.
+    filaDatosTasacion = await tDatosTasacion.selectRecordAsync(existente.id)
   } else {
     const nuevaId = await tDatosTasacion.createRecordAsync({ solicitud: [{ id: solicitudId }] })
     filaDatosTasacion = await tDatosTasacion.selectRecordAsync(nuevaId)
@@ -449,20 +458,37 @@ async function resolverUnidad(campoLinkUnidad) {
   const partes = campoLinkUnidad.split('.')
   const campoClave = partes[partes.length - 1] // "TX_Unidades.rol_sii" -> "rol_sii"
   const valorClave = valorDeItemPorCodigo(campoClave)
-  if (valorClave === undefined) {
-    console.log(`AT03-Ext: no se encontró valor extraído para la clave de unidad "${campoClave}".`)
-    unidadCache.set(campoLinkUnidad, null)
-    return null
-  }
 
   // Comparar con getCellValueAsString: si campoClave es un select o un link,
   // getCellValue devuelve un objeto y String() lo convierte en
   // "[object Object]" — nunca haría match y crearía unidades duplicadas.
   const q = await tUnidades.selectRecordsAsync({ fields: [campoClave, 'solicitud'] })
-  const match = q.records.find((r) => {
-    const enSolicitud = (r.getCellValue('solicitud') || []).some((l) => l.id === solicitudId)
-    return enSolicitud && r.getCellValueAsString(campoClave) === String(valorClave)
-  })
+  const deLaSolicitud = q.records.filter((r) =>
+    (r.getCellValue('solicitud') || []).some((l) => l.id === solicitudId)
+  )
+
+  if (valorClave === undefined) {
+    // BUG FIX (Tarea 5 Post-Fase B · 10-sep-2026): la clave de unidad (p.ej.
+    // rol_sii) NO viene en la extracción de foto_fuente_sii, así que antes se
+    // salía con null y los campos de merge por unidad (tipo_material,
+    // anio_construccion, sup_m2, sup_terreno_m2) NUNCA se escribían. Fallback:
+    // si la solicitud tiene EXACTAMENTE una unidad, es el destino inequívoco —
+    // la fila la creó el intake con su rol_sii. Con 0 o >1 unidades no se puede
+    // desambiguar sin la clave, así que ahí sí se omite.
+    if (deLaSolicitud.length === 1) {
+      unidadCache.set(campoLinkUnidad, deLaSolicitud[0].id)
+      return deLaSolicitud[0].id
+    }
+    console.log(
+      `AT03-Ext: clave de unidad "${campoClave}" no extraída y hay ${deLaSolicitud.length} unidades en la solicitud — no se puede desambiguar, skip.`
+    )
+    unidadCache.set(campoLinkUnidad, null)
+    return null
+  }
+
+  const match = deLaSolicitud.find(
+    (r) => r.getCellValueAsString(campoClave) === String(valorClave)
+  )
 
   let unidadId
   if (match) {
@@ -625,7 +651,12 @@ async function resolverFilaMuchas(destTable, tablaDestinoNombre, fila) {
 
   let row
   if (existente) {
-    row = existente
+    // Mismo bug latente que resolverFilaDatosTasacion: el record de la query
+    // estrecha no expone los campos destino y escribirDestino fallaría con
+    // "Field isn't in this record". Hoy se enmascara porque los comparables se
+    // crean frescos (Fase B borra sus filas al borrar el adjunto), pero se
+    // corrige por robustez. selectRecordAsync (singular) trae el record completo.
+    row = await destTable.selectRecordAsync(existente.id)
   } else {
     const nuevaFila = {
       clave_natural: claveNatural,

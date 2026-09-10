@@ -2945,3 +2945,42 @@ nativo para eliminar categoría, y el nuevo diálogo compartido vive en `fotos-s
 (fuente canónica); documentada en §28.2 la obligación de sincronizarlo en el mismo commit que cualquier
 cambio de `AT03-Ext`. Para verificar nombres de campo antes de PATCHear a ciegas, la meta API es el
 respaldo cuando el MCP no está autenticado — schema read-only, nunca escritura a prod.
+
+### 2026-09-10 — CI · AT03-Ext no re-puebla TX_DatosTasacion en re-subidas (getCellValue sobre query estrecha)
+**Contexto:** tras Fase B, re-subir `foto_fuente_sii` a VP-2026-0060 dejaba los 14 campos SII de
+TX_DatosTasacion y los de TX_Unidades vacíos, pese a `estado_extraccion='listo'` y
+`atributos_obtenidos` poblado. Diagnóstico end-to-end del pipeline (extracción + enrutamiento).
+**Etapa culpable: ENRUTAMIENTO (AT03-Ext).** La extracción (RF-09/Make/Claude) corrió bien —
+`LogEscenarios` muestra "RF-09 extraccion exitosa … 12 atributo(s)". Se refutó la hipótesis de
+caché por hash: dos TX_Adjuntos con el MISMO `hash_md5` (VP-2026-0060 y VP-2026-0054) tienen
+`atributos_obtenidos` DISTINTOS (1150 vs 1099 bytes) — cada solicitud extrajo lo suyo.
+**Causa raíz (línea exacta):** `resolverFilaDatosTasacion()` obtenía la fila existente con
+`tDatosTasacion.selectRecordsAsync({ fields: ['solicitud'] })` y pasaba ESE record a
+`escribirDestino`, que hace `destRow.getCellValue(campoDestino)` para la política "solo si vacío".
+El Scripting API de Airtable sólo expone en el record los campos pedidos en la query; leer cualquier
+otro lanza **`Field "<x>" isn't in this record. Make sure it was included in the QueryResult`**. Con
+9 campos destino → 9 errores → 0 escrituras (visible en `LogEscenarios`: "AT03-Ext · propagación
+(0 ok · 0 skip · 12 err)"). Sólo se manifestaba con la fila YA existente: en el alta la fila se crea
+con `selectRecordAsync(id)` (record completo), por eso funcionó UNA vez el 09-sep ("8 ok") y nunca
+más. **Fase B conserva la fila (Q2), así que toda re-extracción cae por la rama del bug.** Bug
+gemelo latente en `resolverFilaMuchas` (comparables), enmascarado porque sus filas se crean frescas.
+**Bug secundario:** `resolverUnidad` resolvía la unidad por el valor extraído de `rol_sii`, que la
+foto SII NO extrae → nunca encontraba la unidad (existente, del intake) → los campos de merge por
+unidad jamás se escribían.
+**Fix aplicado (`docs/_artefactos/airtable/AT03-Ext_script.js`):**
+1. `resolverFilaDatosTasacion`: la rama de fila existente re-selecciona con
+   `selectRecordAsync(existente.id)` (record completo) antes de escribir.
+2. `resolverFilaMuchas`: mismo re-select completo en la rama existente (robustez).
+3. `resolverUnidad`: fallback — si la clave de unidad no viene en la extracción y la solicitud tiene
+   EXACTAMENTE una unidad, se usa esa (destino inequívoco); con 0 o >1 se omite.
+**Idempotencia:** la política "solo si vacío" de `escribirDestino` ya evita doble escritura al
+re-disparar el mismo adjunto; NO se agregó guard por `procesado_por_ia` en AT03-Ext porque ese campo
+lo escribe RF-09/Make ANTES de que corra el enrutamiento — un skip por `procesado_por_ia=true` en
+AT03-Ext bloquearía TODO el enrutamiento.
+**Despliegue (pendiente · sólo Sergio):** los scripts de Airtable Automations no se despliegan por
+API — hay que pegar el script corregido en Airtable → Automations → AT03-Ext → acción "Run a script"
+→ Editar código. El repo tiene el espejo; Airtable refleja el último pegado.
+**Prevención futura:** en Airtable Scripts, todo record que se vaya a leer con `getCellValue(campo)`
+debe provenir de una query que incluya ESE campo, o cargarse con `selectRecordAsync(id)` (singular =
+record completo). Nunca pasar un record de `selectRecordsAsync({fields:[...]})` a un consumidor que
+lea campos fuera de esa proyección.
