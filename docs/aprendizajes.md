@@ -2905,3 +2905,43 @@ tiene, el borrado no es seguro y es tema de Fase B, no de código.
  - **Q4.** Comparables con `aporta_a_historico=true`: hoy se **desliga**, no se borra (RO-31).
    ¿Confirmado?
  - **Q5.** Los 8 tipos sin `uso_tabla_destino`: ¿confirmar que hoy no deben purgar nada?
+
+### 2026-09-10 — Tarea 5 Fase B: cascade (a)/(c) + diálogo de confirmación de borrado
+**Contexto:** implementar la limpieza de datos derivados de los patrones (a) satélite 1:1 y
+(c) merge por unidad al borrar un adjunto, más el diálogo Q3 que avisa qué datos se limpiarán.
+Aprobado por Héctor (Q1..Q5) y por el equipo (P-A..P-D del cierre de Fase 1).
+**Hallazgo que destrabó la Fase B:** la premisa de Fase A —"(a)/(c) no se pueden purgar con
+seguridad por falta de provenance por campo"— era incompleta. El adjunto **sí tiene provenance
+por TIPO**: `TX_Adjuntos.clave_adjunto` (`fldaLLtzAaEn1O8IW`) guarda el `codigo` de
+`D_TipoDocumento` (RN-25). Con Q1 (limpiar todo lo que el documento pobló, aunque el campo sea
+compartido o editado a mano) el tipo basta y no hace falta provenance por campo. El cascade lee
+`clave_adjunto` del adjunto vivo antes del borrado y pone a null los campos de ese tipo,
+conservando la fila (Q2). Q1..Q5 quedan **cerradas: Héctor respondió SÍ a todas.**
+**Solución aplicada:**
+- `lib/adjuntos-cascade.ts`: `CascadeEntry` pasó a unión discriminada por `patron` (`a`|`b`|`c`).
+  (b) TX_Comparables intacto (RO-31); (a)/(c) derivadas del mapa curado. `DerivadoCascade` es
+  ahora unión `{op:'baja'}` | `{op:'limpiar', campos}`; `capturar` recibe `ctx={codigoExt,solicitudId}`
+  y lee la clave con `getRecord`; `purgar` suma la rama `op:'limpiar'` (PATCH campos→null, no DELETE).
+- `lib/adjuntos-doc-campos.ts` (nuevo, client-safe): mapa `tipoDocumento→{tabla,campos:{fieldId,label}}`,
+  espejo curado de §28. Lo consumen el cascade (servidor) y el diálogo (cliente) — una sola fuente.
+- `components/shared/confirmar-borrado-adjunto-dialog.tsx` (nuevo): diálogo compartido por checklist
+  (Ejecutiva+Tasador) y fotos-screen. P-A: aparece SIEMPRE; lista de campos sólo si el tipo purga algo.
+- `app/api/adjuntos/[id]/route.ts`: pasa `ctx` a la captura. Contrato externo intacto (200/degradado/no-fatal).
+**Inconveniente 1 · PATCH por FIELD_ID, no por nombre.** `TX_DatosTasacion` tiene el homónimo
+`anio_construccion`/`anno_construccion` y `TX_DocumentosLegales` un rename (`numero_inscripcion ←
+numero_dominio`). Limpiar por nombre podía tocar la columna equivocada en silencio. Se PATCHea por
+FIELD_ID (Airtable acepta ambos como clave del body); un FIELD_ID inexistente devuelve 422 y el
+cascade lo cuenta como error sin destruir nada, en vez de fallar callado.
+**Inconveniente 2 · faltaban FIELD_IDs en el curado (P-C).** `rol_sii`, `calidad_sii`, `destino_sii`,
+`avaluo_fiscal_clp`, `avaluo_exento`, `contribucion_anual` (DatosTasacion) y `sup_m2`, `avaluo_uf`,
+`tipo_material`, `anio_construccion` (Unidades) no estaban en `lib/tasador/field-ids.ts`. Se
+verificaron y agregaron **antes** de escribir el mapa, vía **meta API read-only** (MCP no autenticado
+en la sesión: sólo exponía los tools de OAuth interactivo; RO-30 admite el respaldo declarando el
+motivo). El token salió de `.env.local` (no hay `.env`), sin imprimirlo.
+**Inconveniente 3 · doble confirmación en fotos.** `fotos-categorizadas.tsx` tenía un `window.confirm`
+nativo para eliminar categoría, y el nuevo diálogo compartido vive en `fotos-screen.tsx`. Se retiró el
+`window.confirm` para no pedir dos confirmaciones ni mezclar el confirm nativo con el `AlertDialog` base-ui.
+**Prevención futura:** el mapa `adjuntos-doc-campos.ts` es espejo curado de `D_TipoDocumentoAtributo`
+(fuente canónica); documentada en §28.2 la obligación de sincronizarlo en el mismo commit que cualquier
+cambio de `AT03-Ext`. Para verificar nombres de campo antes de PATCHear a ciegas, la meta API es el
+respaldo cuando el MCP no está autenticado — schema read-only, nunca escritura a prod.

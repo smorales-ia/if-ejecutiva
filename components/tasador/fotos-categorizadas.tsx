@@ -309,14 +309,11 @@ export function FotosCategorizadas({
       { id: `cat-${Date.now()}`, nombre, minimo: minimoCategoriaPersonalizada(), fotos: [] },
     ])
 
+  // La confirmación (incluido el aviso de que hay fotos) la centraliza el
+  // diálogo compartido `ConfirmarBorradoAdjuntoDialog` en `fotos-screen`, para no
+  // pedir dos confirmaciones ni mezclar el `window.confirm` nativo con el diálogo
+  // base-ui del resto del borrado (Q3 · Tarea 5 · Fase B).
   const eliminarCategoria = async (id: string) => {
-    const cat = custom.find((c) => c.id === id)
-    if (cat && cat.fotos.length > 0) {
-      const ok = window.confirm(
-        `La categoría "${cat.nombre}" tiene ${cat.fotos.length} foto(s). ¿Eliminarla de todos modos?`,
-      )
-      if (!ok) return
-    }
     await onEliminarCategoria(id)
   }
 

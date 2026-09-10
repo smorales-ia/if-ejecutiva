@@ -159,6 +159,16 @@ export const FIELD_IDS_UNIDADES = Object.freeze({
   rolSii: 'fldC5yUYC2wTTLJBV',
   /** `numero_unidad` · singleLineText. ⚠ Texto libre, vacío en la mayoría de las filas. */
   numeroUnidad: 'fldJGXS8jGDKZDdWM',
+
+  /* --- Merge SII por unidad (patrón c del cascade · Tarea 5 · Fase B · P-C) ---
+     Campos que `foto_fuente_sii` y `certificado_avaluo_fiscal` mergean en cada
+     fila de TX_Unidades (§28). El cascade los pone a null CONSERVANDO la fila
+     (Q2). IDs verificados vía meta API el 10-sep-2026. Sin homónimo en esta
+     tabla (a diferencia de TX_DatosTasacion). */
+  supM2: 'fldZLvJKuXuWhRV8P',
+  avaluoUf: 'fld3fwTUt4GN8pYXf',
+  tipoMaterial: 'fldnG1nEod0V1IkKZ',
+  anioConstruccion: 'fldM46x4ECE9B0pfM',
 } as const)
 
 export const FIELD_IDS_TIPO_DOCUMENTO = Object.freeze({
@@ -305,7 +315,14 @@ export const FIELD_IDS_DATOS_TASACION = Object.freeze({
   /* --- Bloque SII (§20.6 · FASE2-lectura-sii, Opción A · cierra CI-025) ---
      Creados el 09-sep-2026 en TX_DatosTasacion para inventariar el documento
      `foto_fuente_sii`. `ubicacion_urbano_rural` es singleSelect (urbano|rural);
-     los demás singleLineText. */
+     los demás singleLineText.
+
+     Los seis últimos (rol_sii..contribucion_anual) se agregaron al curado en
+     Tarea 5 · Fase B (P-C · 10-sep-2026): el cascade de borrado de
+     `foto_fuente_sii`/`certificado_avaluo_fiscal` los pone a null y PATCHea por
+     FIELD_ID (no por nombre) para no rozar el homónimo `anno_construccion` de
+     esta tabla. IDs verificados vía meta API. `material_predominante` (arriba)
+     también entra en la limpieza de `certificado_avaluo_fiscal`. */
   codSiiComuna: 'fldTnTUIBVPPzJD88',
   codSiiManzana: 'fldYdoX02XeRiQhyO',
   codSiiPredio: 'fldsHicAwiB8hWQRC',
@@ -314,6 +331,17 @@ export const FIELD_IDS_DATOS_TASACION = Object.freeze({
   ociv: 'fldlbvwpalCAnqHOu',
   oc: 'fldkS3h1W8Q5UMw9J',
   g: 'fldGM0Zl4fiptkLgL',
+  /** `rol_sii` · singleLineText. **Homónimo** de `TX_Solicitudes.rol_sii` y
+   *  `TX_Unidades.rol_sii`: éste es el de TX_DatosTasacion. */
+  rolSii: 'fldhZkbSjLlXlbjlF',
+  calidadSii: 'fldfpJlqAx6uqMNvl',
+  destinoSii: 'fldXcPz00Qf2ZVMJa',
+  /** `avaluo_fiscal_clp` · number. */
+  avaluoFiscalClp: 'fldE4t7FzB47FKTui',
+  /** `avaluo_exento` · currency. Compartido con `certificado_avaluo_fiscal`. */
+  avaluoExento: 'fld1Rl4AYBwic2VN3',
+  /** `contribucion_anual` · currency. Compartido con `certificado_avaluo_fiscal`. */
+  contribucionAnual: 'fldiIzlfnMnZCyixS',
 
   /* --- F · fragmentos que viven acá y no en TX_DocumentosLegales --- */
   nCertNoExpropiacion: 'fldXEBNjeTRMROQmW',

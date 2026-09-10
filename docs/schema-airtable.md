@@ -1717,5 +1717,32 @@ No hay provenance por campo para los patrones (a) y (c):
   `fldDR6OEqyDe2XdE4`), pero son "respaldo", no provenance por campo; la fila nace en el intake
   (el `rol_sii` lo tipea el usuario) y el SII sólo mergea campos.
 
-Limpiar (a)/(c) a ciegas destruiría dato humano o multi-fuente. Quedan **deferidos a la Fase B**
+Limpiar (a)/(c) a ciegas destruiría dato humano o multi-fuente. Quedaban **deferidos a la Fase B**
 (decisión de Héctor + probable cambio de schema/pipeline). Ver `docs/aprendizajes.md`.
+
+### 28.2 Fase B — (a)/(c) implementados vía `clave_adjunto` (10-sep-2026)
+
+Lo que Fase A difirió "por falta de provenance por campo" se resolvió sin cambiar schema: el
+adjunto **sí tiene provenance por TIPO**. `TX_Adjuntos.clave_adjunto` (`fldaLLtzAaEn1O8IW`) guarda
+el `codigo` de `D_TipoDocumento` (RN-25), que es exactamente la clave de la tabla de §28. Con la
+decisión **Q1 de Héctor** —limpiar todo lo que el documento pobló, aunque un campo lo compartan dos
+tipos o lo haya editado el tasador a mano— el tipo basta: no hace falta provenance por campo.
+
+- El cascade (`lib/adjuntos-cascade.ts`) lee `clave_adjunto` del adjunto vivo antes del borrado y,
+  para las entradas (a)/(c) cuyo `tipoDocumento` coincide, pone los campos a **null** (PATCH),
+  **conservando la fila** (Q2 · `TX_Unidades` mantiene `rol_sii` y demás datos de intake).
+- Scope: (a) `{solicitud}="{codigoExt}"` en `TX_DatosTasacion`/`TX_DocumentosLegales`
+  (`codigo_ext` = `codigo_solicitud` en valor, §19.1); (c) `ARRAYJOIN({solicitud_record_id})="{recId}"`
+  en `TX_Unidades` (§23, más robusto que el Link).
+
+**Espejo curado en código.** El mapa `tipoDocumento → {tabla, campos}` vive hardcodeado en
+`lib/adjuntos-doc-campos.ts` (client-safe: lo consumen el cascade en servidor y el diálogo de
+confirmación Q3 en cliente). Los campos se referencian por **FIELD_ID** (no por nombre) para no rozar
+el homónimo `anno_construccion` de `TX_DatosTasacion` ni el rename `numero_inscripcion ← numero_dominio`.
+FIELD_IDs verificados vía meta API el 10-sep-2026 y agregados al curado de `lib/tasador/field-ids.ts`
+(`FIELD_IDS_DATOS_TASACION`: `rolSii`, `calidadSii`, `destinoSii`, `avaluoFiscalClp`, `avaluoExento`,
+`contribucionAnual`; `FIELD_IDS_UNIDADES`: `supM2`, `avaluoUf`, `tipoMaterial`, `anioConstruccion`).
+
+> **`D_TipoDocumentoAtributo` sigue siendo la fuente canónica.** `lib/adjuntos-doc-campos.ts` es su
+> espejo curado. Si `AT03-Ext` cambia qué campos poblar, este mapa y la tabla de §28 se actualizan en
+> el mismo commit: un campo de más limpia dato que el documento no pobló; uno de menos deja un huérfano.

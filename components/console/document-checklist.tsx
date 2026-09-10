@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Progress } from "@/components/ui/progress"
 import { SelectorDestinoUnidad } from "@/components/console/selector-destino-unidad"
+import { ConfirmarBorradoAdjuntoDialog } from "@/components/shared/confirmar-borrado-adjunto-dialog"
 import {
   destinoAPayload,
   destinoInicial,
@@ -529,29 +530,17 @@ function DocumentRow({
         )}
       </div>
 
-      {/* Diálogo de desmarcado · RF-52 §8.6.4 */}
-      <AlertDialog open={confirmarBorrado} onOpenChange={setConfirmarBorrado}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar este documento?</AlertDialogTitle>
-            <AlertDialogDescription>
-              El archivo será eliminado permanentemente de la solicitud y del
-              almacenamiento. Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={eliminando}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              disabled={eliminando}
-              onClick={() => void eliminarAdjunto()}
-            >
-              {eliminando && <Loader2 data-icon="inline-start" className="animate-spin" />}
-              {eliminando ? "Eliminando…" : "Eliminar definitivamente"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Diálogo de desmarcado · RF-52 §8.6.4 · Q3 (Tarea 5 · Fase B): lista
+          además los datos que el cascade limpiará al borrar este documento. */}
+      <ConfirmarBorradoAdjuntoDialog
+        open={confirmarBorrado}
+        onOpenChange={setConfirmarBorrado}
+        nombreAdjunto={persistido?.nombre ?? item.archivo?.nombre}
+        tipoDocumentoLabel={meta.nombre}
+        tipoDocumentoCodigo={item.codigo}
+        eliminando={eliminando}
+        onConfirmar={() => void eliminarAdjunto()}
+      />
 
       {/* Diálogo de reemplazo · RN-60 §8.6.4 */}
       <AlertDialog open={confirmarReemplazo} onOpenChange={setConfirmarReemplazo}>

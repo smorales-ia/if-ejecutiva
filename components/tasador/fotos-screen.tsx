@@ -36,6 +36,8 @@ import {
   evaluarCustom,
 } from "@/components/tasador/fotos-categorizadas"
 import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
+import { ConfirmarBorradoAdjuntoDialog } from "@/components/shared/confirmar-borrado-adjunto-dialog"
+import { claveAdjuntoDeCategoria } from "@/lib/tasador/tipo-documento-foto"
 import { aSolicitudParaSheet } from "@/lib/tasador/adaptador-solicitud"
 import {
   desdeTipoPropiedadNuevoUsado,
@@ -273,38 +275,40 @@ export function FotosScreen({
     [tasacion.id, tasacion.codigo, encolar, refrescar],
   )
 
+  /**
+   * Confirmación de borrado (Q3 · Tarea 5 · Fase B). Toda eliminación de un
+   * adjunto —foto persistida o categoría completa— pasa por el diálogo compartido
+   * (decisión P-A: el diálogo aparece SIEMPRE). Sólo las fotos aún en cola, que
+   * no son adjuntos en Airtable, se descartan sin diálogo.
+   */
+  type SolicitudBorrado =
+    | { tipo: "foto"; categoria: string; foto: FotoAdjunta }
+    | { tipo: "categoria"; categoriaId: string; nombre: string }
+  const [solicitudBorrado, setSolicitudBorrado] = useState<SolicitudBorrado | null>(null)
+  const [procesandoBorrado, setProcesandoBorrado] = useState(false)
+
   const borrarFoto = useCallback(
-    async (_categoria: string, foto: FotoAdjunta) => {
-      setBorrandoId(foto.id)
-      try {
-        // Una foto que nunca llegó a subir se descarta de la cola: no hay nada
-        // que borrar en Dropbox ni en Airtable.
-        if (esIdDeCola(foto.id)) {
+    async (categoria: string, foto: FotoAdjunta) => {
+      // Una foto que nunca llegó a subir se descarta de la cola: no hay adjunto
+      // que borrar en Dropbox ni en Airtable, así que tampoco cascade ni diálogo.
+      if (esIdDeCola(foto.id)) {
+        setBorrandoId(foto.id)
+        try {
           await eliminarDeCola(foto.id)
           await refrescar()
-          return
+        } finally {
+          setBorrandoId(null)
         }
-
-        const ok = await eliminarFotoDeVisita({
-          adjuntoId: foto.id,
-          solicitudId: tasacion.id,
-          codigoExt: tasacion.codigo,
-          hashMd5: foto.hashMd5,
-        })
-        if (!ok) {
-          toast.error(MSG_ERROR_RED)
-          return
-        }
-        await refrescar()
-      } finally {
-        setBorrandoId(null)
+        return
       }
+      setSolicitudBorrado({ tipo: "foto", categoria, foto })
     },
-    [tasacion.id, tasacion.codigo, refrescar],
+    [refrescar],
   )
 
   /**
-   * Eliminar una categoría personalizada borra también sus fotos.
+   * Eliminar una categoría personalizada borra también sus fotos. Abre el
+   * diálogo; la baja real ocurre en {@link ejecutarBorrado} tras confirmar.
    *
    * Dejarlas huérfanas en `TX_Adjuntos` sería peor que no borrar la categoría:
    * volverían a aparecer en la siguiente hidratación, recreando la categoría que
@@ -315,25 +319,60 @@ export function FotosScreen({
     async (categoriaId: string) => {
       const cat = form.categoriasCustom.find((c) => c.id === categoriaId)
       if (!cat) return
-
-      for (const foto of cat.fotos) {
-        if (esIdDeCola(foto.id)) {
-          await eliminarDeCola(foto.id)
-          continue
-        }
-        await eliminarFotoDeVisita({
-          adjuntoId: foto.id,
-          solicitudId: tasacion.id,
-          codigoExt: tasacion.codigo,
-          hashMd5: foto.hashMd5,
-        })
-      }
-
-      setCustom((prev) => prev.filter((c) => c.id !== categoriaId))
-      await refrescar()
+      setSolicitudBorrado({ tipo: "categoria", categoriaId, nombre: cat.nombre })
     },
-    [form.categoriasCustom, tasacion.id, tasacion.codigo, setCustom, refrescar],
+    [form.categoriasCustom],
   )
+
+  /**
+   * Ejecuta el borrado confirmado. Regla D: `procesandoBorrado` gobierna el
+   * spinner del diálogo; su reset va en el `finally`, igual que `setBorrandoId`.
+   */
+  const ejecutarBorrado = useCallback(async () => {
+    const s = solicitudBorrado
+    if (!s) return
+    setProcesandoBorrado(true)
+    try {
+      if (s.tipo === "foto") {
+        setBorrandoId(s.foto.id)
+        try {
+          const ok = await eliminarFotoDeVisita({
+            adjuntoId: s.foto.id,
+            solicitudId: tasacion.id,
+            codigoExt: tasacion.codigo,
+            hashMd5: s.foto.hashMd5,
+          })
+          if (!ok) {
+            toast.error(MSG_ERROR_RED)
+            return
+          }
+          await refrescar()
+        } finally {
+          setBorrandoId(null)
+        }
+      } else {
+        const cat = form.categoriasCustom.find((c) => c.id === s.categoriaId)
+        if (!cat) return
+        for (const foto of cat.fotos) {
+          if (esIdDeCola(foto.id)) {
+            await eliminarDeCola(foto.id)
+            continue
+          }
+          await eliminarFotoDeVisita({
+            adjuntoId: foto.id,
+            solicitudId: tasacion.id,
+            codigoExt: tasacion.codigo,
+            hashMd5: foto.hashMd5,
+          })
+        }
+        setCustom((prev) => prev.filter((c) => c.id !== s.categoriaId))
+        await refrescar()
+      }
+    } finally {
+      setProcesandoBorrado(false)
+      setSolicitudBorrado(null)
+    }
+  }, [solicitudBorrado, form.categoriasCustom, tasacion.id, tasacion.codigo, setCustom, refrescar])
 
   /**
    * Sheet documental de la ejecutiva, **reutilizado tal cual** (R7 · RF-TAS-06).
@@ -504,6 +543,27 @@ export function FotosScreen({
           <ArrowRight className="h-4 w-4" />
         </Button>
       </footer>
+
+      <ConfirmarBorradoAdjuntoDialog
+        open={solicitudBorrado !== null}
+        onOpenChange={(abierto) => {
+          if (!abierto && !procesandoBorrado) setSolicitudBorrado(null)
+        }}
+        nombreAdjunto={
+          solicitudBorrado?.tipo === "foto"
+            ? solicitudBorrado.foto.nombre
+            : solicitudBorrado?.tipo === "categoria"
+              ? `Categoría "${solicitudBorrado.nombre}"`
+              : null
+        }
+        tipoDocumentoCodigo={
+          solicitudBorrado?.tipo === "foto"
+            ? claveAdjuntoDeCategoria(solicitudBorrado.categoria)
+            : null
+        }
+        eliminando={procesandoBorrado}
+        onConfirmar={() => void ejecutarBorrado()}
+      />
     </div>
   )
 }

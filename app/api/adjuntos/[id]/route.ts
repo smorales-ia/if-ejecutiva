@@ -177,7 +177,10 @@ export async function DELETE(
    */
   let derivadosACascada: DerivadoCascade[] = []
   try {
-    derivadosACascada = await capturarDerivadosDeAdjunto(id, payload.codigo_ext)
+    derivadosACascada = await capturarDerivadosDeAdjunto(id, {
+      codigoExt: payload.codigo_ext,
+      solicitudId: payload.solicitud_id,
+    })
   } catch (err) {
     console.error('[ADJUNTOS-CASCADE-ORPHAN] no se pudieron capturar derivados antes del borrado', {
       adjunto_record_id: id,
@@ -241,7 +244,7 @@ export async function DELETE(
      */
     try {
       const cascade = await purgarDerivadosCapturados(derivadosACascada)
-      if (cascade.borrados || cascade.desligados || cascade.errores) {
+      if (cascade.borrados || cascade.desligados || cascade.limpiados || cascade.errores) {
         console.log('[ADJUNTOS-CASCADE] derivados purgados', {
           adjunto_record_id: id,
           codigo_ext: payload.codigo_ext,

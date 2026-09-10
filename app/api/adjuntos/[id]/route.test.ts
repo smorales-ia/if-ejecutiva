@@ -60,15 +60,18 @@ beforeEach(() => {
   auth.mockResolvedValue({ userId: 'user_123' })
   verificarRN59.mockResolvedValue({ tipo: 'ok' })
   capturarDerivadosDeAdjunto.mockResolvedValue([])
-  purgarDerivadosCapturados.mockResolvedValue({ borrados: 0, desligados: 0, errores: 0 })
+  purgarDerivadosCapturados.mockResolvedValue({ borrados: 0, desligados: 0, limpiados: 0, errores: 0 })
   postToMake.mockResolvedValue(makeResponse(true, { ok: true, adjunto_id: '77', airtable_borrado: true }))
 })
 
 describe('cascade en el borrado', () => {
-  it('captura los derivados ANTES de llamar a Make', async () => {
+  it('captura los derivados ANTES de llamar a Make, con ctx {codigoExt, solicitudId}', async () => {
     await llamar()
 
-    expect(capturarDerivadosDeAdjunto).toHaveBeenCalledWith(ID, CODIGO)
+    expect(capturarDerivadosDeAdjunto).toHaveBeenCalledWith(ID, {
+      codigoExt: CODIGO,
+      solicitudId: SOLICITUD,
+    })
     expect(capturarDerivadosDeAdjunto.mock.invocationCallOrder[0]).toBeLessThan(
       postToMake.mock.invocationCallOrder[0]
     )
