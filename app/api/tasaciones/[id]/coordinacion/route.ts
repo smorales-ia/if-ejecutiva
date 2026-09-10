@@ -252,11 +252,29 @@ export async function POST(
      * Ninguno de los dos es fórmula: los escribe el servidor
      * (`docs/schema-airtable.md` §26.6). `estado` **no aparece** en este
      * payload, y no debe aparecer nunca.
+     *
+     * P18-TAS · Item 2 (R7 abierta explícitamente para este fix). Al **confirmar**
+     * la coordinación se propaga la fecha al campo canónico de la solicitud,
+     * `fecha_visita_programada` (`fldPUFd9YuQdkcrOI`), en el **mismo** PATCH. Antes
+     * quedaba sólo en `TX_CoordinacionVisita.fecha_visita_propuesta` y la solicitud
+     * seguía con el campo vacío: el read-layer de IF-02 (P17-TAS) lo tapaba en
+     * captura, pero cualquier otro consumidor (informe, PDF, exports) veía el hueco.
+     * No hay Automation que lo propague (verificado: ninguna dispara sobre
+     * `TX_CoordinacionVisita`), así que lo escribe el handler.
+     *
+     * Viaja como el mismo string `YYYY-MM-DD` que `fecha_visita_propuesta`: no se
+     * construye ningún `Date`, así que no hay corrimiento de huso (RO-36). Sólo se
+     * escribe en la rama `confirmada`; un `rechazada` no la toca ni la limpia.
      */
-    await updateRecord(TABLE_IDS.solicitudes, id, {
+    const camposSolicitud: Record<string, unknown> = {
       coordinacion_vigente: datos.resultado,
       ...camposSla,
-    })
+    }
+    if (datos.resultado === 'confirmada') {
+      camposSolicitud.fecha_visita_programada = datos.fechaVisita
+    }
+
+    await updateRecord(TABLE_IDS.solicitudes, id, camposSolicitud)
 
     await auditar([
       {

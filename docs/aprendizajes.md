@@ -2841,3 +2841,37 @@ estaba bien, así que futuras extracciones aterrizan solas).
  - **Flujo de coordinación:** al confirmar una coordinación, `TX_Solicitudes.fecha_visita_programada`
    no se está llenando; la fecha queda sólo en `TX_CoordinacionVisita`. El fix read-layer lo tapa en
    la captura, pero la causa (SC/route de coordinación) queda por abordar aparte.
+
+### 2026-09-09 — P18-TAS: cierre de los dos pendientes de P17 + CI del SII per-unit
+**Contexto:** los dos PENDIENTES abiertos por P17-TAS (regla DFL2 y write de fecha al confirmar
+coordinación) más un tercer gap del SII per-unit. OK-Gate por item.
+**Item 1 (DFL2 · resuelto):** fórmula `TX_DatosTasacion.dfl2` pasó de
+`IF({sup_construida_total} < 140, 'SI', 'NO')` a
+`IF(AND({sup_construida_total} > 0, {sup_construida_total} < 140), 'SI', 'NO')` vía MCP
+`update_field`. Con `sup_construida_total=0` (sin capturar) ahora da `NO`, no `SI`. Verificado que
+ningún campo Airtable (fórmula/lookup/rollup en TX_DatosTasacion, TX_Calculos, TX_Solicitudes)
+referencia `dfl2`; sólo lo lee el read-layer como boolean. Sin cambio de código. Documentado en
+`schema-airtable.md` §27.
+**Item 2 (coordinación · resuelto):** `app/api/tasaciones/[id]/coordinacion/route.ts` ahora PATCHea
+`TX_Solicitudes.fecha_visita_programada = fecha_visita_propuesta` en el **mismo** update, sólo en
+rama `confirmada` (no la toca en `rechazada` ni en el early-return de idempotencia). No hay
+Automation que lo propague (verificado con MCP `list_automations`: ninguna dispara sobre
+`TX_CoordinacionVisita`), así que lo escribe el handler. Tests ampliados: happy path, no-write en
+rechazada, y reconfirmación (intento mayor gana su fecha).
+**Item 3 (SII per-unit · NO ejecutado, queda como CI):**
+El gap se investigó y NO es un problema de formato de `rol_sii`: es estructural. La foto SII
+(`foto_fuente_sii`, ver rec0nGAtNdPCleHRB y recCY22He7rPDygox) lista **`rol_sii` en `no_extraidos`
+en todos los casos** — el certificado de avalúo SII no emite un rol que el extractor capture. Lo que
+trae son códigos catastrales a nivel documento: `cod_sii_manzana`+`cod_sii_predio` (2827-272), que
+NO son un `rol_sii` per-unit. El `rol_sii=05271-00016` de la unidad de intake lo tipeó el usuario en
+el alta (crear/editar-solicitud). El formato de producción en `TX_Unidades.rol_sii` es
+`manzana-predio` sin padding (882-40, 402-02, 31-800); "05271-00016" es un outlier y la mayoría de
+unidades no tiene rol. El write SII→`TX_Unidades` **no vive en este repo**: lo hace un customScript
+de Airtable Automation (`AT03-Ext` sobre `TX_Adjuntos.atributos_obtenidos`), cuyo cuerpo el MCP no
+lee. **CI:** SII no trae `rol_sii` → match automático imposible. El pipeline `AT03-Ext` hoy hace
+no-op silencioso para el per-unit. **Deferido:** cuando se retome el informe (Bloque 4) o IF-04,
+evaluar match posicional `fila→orden` en el customScript `AT03-Ext`, o ingreso manual del `rol_sii`
+tras subir el SII.
+**Prevención futura:** antes de asumir "problema de formato" en un match SII, verificar en
+`atributos_obtenidos` si el campo llave está en `no_extraidos` — el certificado SII rara vez trae
+`rol_sii`. Y recordar que el aterrizaje per-unit del SII es pipeline Airtable, no código IF-03.

@@ -243,6 +243,50 @@ describe('rama rechazada', () => {
   })
 })
 
+describe('P18-TAS · fecha_visita_programada en la solicitud (Item 2)', () => {
+  it('al confirmar, el PATCH propaga fecha_visita_programada = fecha propuesta', async () => {
+    await llamar(CONFIRMADA)
+
+    expect(updateRecord).toHaveBeenCalledTimes(1)
+    expect(payloadPatch()).toMatchObject({
+      coordinacion_vigente: 'confirmada',
+      fecha_visita_programada: '2026-08-30',
+    })
+  })
+
+  it('al rechazar, el PATCH no incluye fecha_visita_programada', async () => {
+    await llamar(RECHAZADA)
+
+    expect(updateRecord).toHaveBeenCalledTimes(1)
+    expect(payloadPatch()).not.toHaveProperty('fecha_visita_programada')
+  })
+
+  it('reconfirmación: gana el intento mayor y su fecha es la que se escribe', async () => {
+    // Ya existe un intento previo confirmado con otra fecha; el segundo intento
+    // (nº 2, RF-TAS-04) trae una fecha nueva y es la que debe quedar en la
+    // solicitud: "última confirmación gana".
+    listRecords.mockResolvedValue([
+      {
+        id: 'recCOORD0000000000',
+        fields: {
+          intento_numero: 1,
+          estado_coordinacion: 'confirmada',
+          fecha_respuesta: '2026-08-18T10:00:00.000Z',
+        },
+      },
+    ])
+
+    await llamar({ resultado: 'confirmada', fechaVisita: '2026-09-05' })
+
+    const fila = createRecord.mock.calls[0][1] as Record<string, unknown>
+    expect(fila.intento_numero).toBe(2)
+    expect(payloadPatch()).toMatchObject({
+      coordinacion_vigente: 'confirmada',
+      fecha_visita_programada: '2026-09-05',
+    })
+  })
+})
+
 describe('intento_numero', () => {
   it('es 2 cuando ya existe un intento previo (RF-TAS-04)', async () => {
     listRecords.mockResolvedValue([

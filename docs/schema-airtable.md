@@ -1646,3 +1646,31 @@ SUPERIOR`). Sus 20 filas llevan `catalogo_ref` inline, no vacío.
   dos ejes, de modo que alojarlo acá duplicaría 114 filas constantes por combinación. Se resuelve
   con tabla hermana o como constante de aplicación; agregar la cuarta opción a `bloque` es un
   `update_field` trivial si se decide lo primero.
+
+---
+
+## 27. IF-03 · `TX_DatosTasacion.dfl2` — fórmula corregida (P18-TAS · 09-sep-2026)
+
+**Campo:** `dfl2` (`fldtyMwl3SZwTRN4h`, formula → singleLineText). **Vía:** MCP `update_field`
+(RO-30). Cambio de **fórmula**, no de tipo ni de dependencias.
+
+**Antes:**
+
+    IF({sup_construida_total} < 140, 'SI', 'NO')
+
+**Ahora:**
+
+    IF(AND({sup_construida_total} > 0, {sup_construida_total} < 140), 'SI', 'NO')
+
+**Motivo.** `sup_construida_total` (`fldhsMeHuyoUMnvqq`) es a su vez una fórmula:
+`{sup_construida_piso1} + IF({sup_construida_piso2}, …) + IF({sup_subterraneo}, …)`. Mientras la
+superficie no se captura vale **0**, y `0 < 140` daba **`SI`** — un falso positivo de DFL2 antes de
+tener datos. Con la guarda `> 0`, una superficie sin capturar devuelve **`NO`**. Ser DFL2 (no pagar
+contribuciones) exige `0 < sup_construida_total < 140`; el "no paga contribuciones" es consecuencia,
+no la definición.
+
+**Dependencias (verificadas vía `get_table_schema` de `TX_DatosTasacion`, `TX_Calculos` y
+`TX_Solicitudes`):** ningún campo Airtable —fórmula, lookup ni rollup— referencia a `dfl2`. En
+código sólo lo **lee** el read-layer (`lib/tasador/lectura-datos.ts`, `lectura-informe.ts`),
+traduciendo `'SI'`/`'NO'` → boolean; está en `FIELD_IDS_DATOS_TASACION_READONLY` (nunca se escribe).
+El único cambio de comportamiento observable es `sup=0` → `NO` en vez de `SI`. Sin cambio de código.
