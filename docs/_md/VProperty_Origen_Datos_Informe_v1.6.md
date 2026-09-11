@@ -26,20 +26,22 @@
                      Especialista en Extracción IA (Claude SC07) · QA
                      Lead
 
-  **Versión**        v1.5 · 11-sep-2026 · IF-03-permiso-edificacion · Se
-                     inventaría el documento **`permiso_edificacion`**
-                     (Permiso de Edificación municipal · DOM) como fuente
-                     documental propia en §2.1.2, con su cuadro de atributos
+  **Versión**        v1.6 · 11-sep-2026 · IF-03-certificado-recepcion-final ·
+                     Se inventaría el documento
+                     **`certificado_recepcion_final`** (Certificado de
+                     Recepción Definitiva de Obras municipal · DOM) como fuente
+                     documental propia en §2.1.3, con su cuadro de atributos
                      catalogados en D_TipoDocumentoAtributo bajo el doc
-                     permiso_edificacion (recibSR1tfKZKcnOA). Scope mínimo
-                     spec-fiel: sólo `numero_permiso` y `fecha_permiso`
-                     reciben destino real
-                     (TX_DocumentosLegales.permiso_edificacion_numero/_fecha,
-                     ya mostrados en la Sección F de la UF del Tasador); los
-                     otros 12 atributos quedan catalogados sin destino y
+                     certificado_recepcion_final (rec8dQ3tS2Qpd2paE). Scope
+                     mínimo spec-fiel: sólo `numero_recepcion` y
+                     `fecha_recepcion` reciben destino real
+                     (TX_DocumentosLegales.recepcion_final_numero/_fecha, ya
+                     mostrados en la Sección F de la UF del Tasador); los otros
+                     8 atributos quedan catalogados sin destino y
                      obligatorio=FALSE como brecha de diseño. El borrado del
-                     documento limpia el par permiso (cascade §28). Sucede a
-                     v1.4 (09-sep-2026), que queda como versión anterior.
+                     documento limpia el par recepción final (cascade §28).
+                     Sucede a v1.5 (11-sep-2026), que queda como versión
+                     anterior.
   -----------------------------------------------------------------------
 
 +-----------------------------------------------------------------------+
@@ -522,6 +524,59 @@ el estado DFL2 («pierde beneficios del D.F.L.-N°2», derivado por fórmula en
 PE-2582/2020) que no van a campos estructurados. El detalle de estas brechas está
 en `docs/_analisis/lectura_datos_permiso_edificacion_v1.xlsx` (hoja «Etapa Diseño»).
 No se crearon columnas nuevas en `TX_DocumentosLegales`.
+
+### 2.1.3 · Inventario del documento `certificado_recepcion_final` (Certificado de Recepción Definitiva de Obras municipal)
+
+El Certificado de Recepción Definitiva de Obras de Edificación de la Dirección de
+Obras Municipales (`docs/_referencias/certificado_recepcion_final.pdf` · DOM Colina,
+N°210-2024, 18-07-2024, ROL S.I.I. 882-40, proyecto «CASA VERGARA ORELLANA») es una
+**fuente documental propia**, catalogada en `D_TipoDocumento` como
+`certificado_recepcion_final` (`rec8dQ3tS2Qpd2paE`, activo, emisor DOM). Es el
+**documento canónico** del par recepción final: §2.1 ya lo declara como origen de
+«N° Certificado de Recepción Final + fecha» (también transcrito en la Escritura de
+compraventa, cláusula 3ª). Sus atributos quedan catalogados en
+`D_TipoDocumentoAtributo` bajo el doc `certificado_recepcion_final`.
+
+**Scope mínimo spec-fiel (IF-03).** De los 10 atributos catalogados sólo **dos**
+reciben destino real —los que §2.1 sourcea canónicamente desde la Recepción Final—,
+cableados vía MCP con `uso_interfaz_tasador = TRUE`. Ya se muestran en la **Sección
+F** de la UF del Tasador (`components/tasador/form-sections/seccion-documentos.tsx`,
+editable) y en el preview del informe (`components/tasador/informe-preview.tsx`),
+ambos hidratados de `TX_DocumentosLegales` por `lib/tasador/lectura-datos.ts` /
+`lib/tasador/lectura-informe.ts` — **no hubo UI nueva** (los mismos campos ya los
+poblaba `escritura_compraventa`). El poblado al subir el PDF lo hace la pipeline
+genérica (AT03-Ext, fuera del repo) enrutando por `uso_campo_destino`; el borrado
+limpia el par vía el cascade de §28 (`lib/adjuntos-doc-campos.ts`).
+
+  ----------------------------------------------------------------------------------------------
+  **Campo (recepción final)**   **codigo_atributo**       **Tabla · Campo destino**    **Motor**
+  ---------------------------- ------------------------- ---------------------------- ----------
+  N° Recepción Final            numero_recepcion          TX_DocumentosLegales ·       No
+  (210-2024)                                              recepcion_final_numero
+
+  Fecha Recepción Final         fecha_recepcion           TX_DocumentosLegales ·       No
+  (18-07-2024)                                            recepcion_final_fecha
+  -----------------------------------------------------------------------------------------
+
+**Atributos catalogados sin destino (brecha de diseño · `obligatorio=FALSE`).** Los
+otros 8 —`comuna`, `direccion`, `rol_sii`, `superficie_construida_m2`, `destino_sii`,
+`numero_permiso`, `ano_construccion`, `tipo_propiedad`— no tienen columna destino
+propia y/o su fuente canónica es otra (SII para rol/superficie/año/destino; la
+solicitud para comuna y dirección; el par permiso lo sourcea
+`permiso_edificacion` / `escritura_compraventa`). El PDF además trae los datos del
+propietario (Vergara Undurraga / Orellana Fernández, RUT 16.610.203-4 / 16.606.022-2,
+cuyo doc canónico de titularidad es el CBR) que no van a campos estructurados desde
+este tipo. El detalle de estas brechas está en
+`docs/_analisis/lectura_datos_certificado_recepcion_final_v1.xlsx` (hoja «Etapa
+Diseño»). No se crearon columnas nuevas en `TX_DocumentosLegales`.
+
+**Extracción (SC-RF09).** El escenario Make `SC-RF09-ExtraccionClaude` arma
+`atributos_esperados` filtrando `D_TipoDocumentoAtributo` **sólo por
+`tipo_documento`** (`FIND("{{tipo_documento_codigo}}", ARRAYJOIN({tipo_documento}))`),
+**no** por `usado_motor_calculo`; por eso los 10 atributos se extraen y `usado_motor_calculo`
+sólo viaja como metadato en el payload. `numero_recepcion` / `fecha_recepcion` quedan
+con `usado_motor_calculo = FALSE` porque el DAG del motor no los consume (son metadato
+legal del informe), consistente con las mismas dos filas bajo `escritura_compraventa`.
 
 ## 2.2 · Datos del PDF que también se extraen pero NO van a campos estructurados
 
@@ -1263,6 +1318,27 @@ generar la matriz tag-por-tag de la plantilla Carbone, o construir el
 prompt de SC07 con su schema JSON.
 
 # Changelog
+
+**v1.6 (11-sep-2026 · IF-03-certificado-recepcion-final)** — Sucede a **v1.5**, que
+queda en `docs/_md/VProperty_Origen_Datos_Informe_v1.5.md` como versión anterior.
+Cambio único: se agrega **§2.1.3**, que inventaría el documento
+`certificado_recepcion_final` (Certificado de Recepción Definitiva de Obras
+municipal · DOM, `docs/_referencias/certificado_recepcion_final.pdf`) como fuente
+documental propia y canónica del par recepción final. Scope mínimo spec-fiel: de sus
+10 atributos catalogados en `D_TipoDocumentoAtributo` (`rec8dQ3tS2Qpd2paE`) sólo
+**`numero_recepcion`** y **`fecha_recepcion`** reciben destino real
+(`TX_DocumentosLegales.recepcion_final_numero` · `…_fecha`), cableados vía MCP con
+`uso_interfaz_tasador = TRUE`; ya se muestran en la Sección F de la UF del Tasador y
+en el preview del informe (sin UI nueva — los mismos campos ya los poblaba
+`escritura_compraventa`). Los otros 8 atributos quedan catalogados **sin destino** y
+`obligatorio=FALSE` como brecha de diseño (no se crearon columnas nuevas en
+`TX_DocumentosLegales`). `SC-RF09-ExtraccionClaude` filtra `D_TipoDocumentoAtributo`
+sólo por `tipo_documento`, no por `usado_motor_calculo` (que queda `FALSE` para el par,
+igual que en `escritura_compraventa`). El borrado del documento limpia el par recepción
+final vía el cascade de §28 (`lib/adjuntos-doc-campos.ts`); el par lo comparte con
+`escritura_compraventa` (política Q1). Brechas detalladas en
+`docs/_analisis/lectura_datos_certificado_recepcion_final_v1.xlsx`. El documento queda
+consistente con las tablas D_ y con la UI del Tasador (Regla 1).
 
 **v1.5 (11-sep-2026 · IF-03-permiso-edificacion)** — Sucede a **v1.4**, que queda
 en `docs/_md/VProperty_Origen_Datos_Informe_v1.4.md` como versión anterior.

@@ -83,14 +83,18 @@ export interface TablaDerivada {
  * Mapa `tipoDocumento → TablaDerivada[]`. Derivado literal de
  * `docs/schema-airtable.md` §28.
  *
- * Los tipos sin destino (`consulta_antecedentes_bien_raiz`,
- * `certificado_recepcion_final`, etc. · los 7 de §28 · Q5) simplemente no están:
- * `camposLimpiablesDe()` los devuelve como lista vacía y el cascade no purga nada
- * para ellos (no-op).
+ * Los tipos sin destino (`consulta_antecedentes_bien_raiz`, etc. · los de §28 sin
+ * `uso_tabla_destino` · Q5) simplemente no están: `camposLimpiablesDe()` los
+ * devuelve como lista vacía y el cascade no purga nada para ellos (no-op).
  *
- * ⚠ `permiso_edificacion` y `escritura_compraventa` comparten los dos campos de
- * permiso en `TX_DocumentosLegales` (ambos son fuente legítima del par ·
- * Origen v1.5 §2.1). Borrar cualquiera de los dos documentos limpia el par: es
+ * ⚠ El par **recepción final** (`recepcion_final_numero` · `recepcion_final_fecha`)
+ * y el par **permiso** (`permiso_edificacion_numero` · `permiso_edificacion_fecha`)
+ * en `TX_DocumentosLegales` tienen cada uno más de un documento-fuente legítimo
+ * (Origen v1.6 §2.1):
+ *   - `escritura_compraventa` puebla **ambos** pares (cláusulas 2ª y 3ª).
+ *   - `permiso_edificacion` puebla el par permiso.
+ *   - `certificado_recepcion_final` puebla el par recepción final.
+ * Borrar cualquiera de esos documentos limpia el par que ese tipo pudo poblar: es
  * la política Q1 de Héctor (limpiar todo lo que el tipo pudo poblar), consistente
  * con cómo ya se comportan los campos SII compartidos por `foto_fuente_sii` y
  * `certificado_avaluo_fiscal`.
@@ -181,7 +185,7 @@ export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
     },
   ],
 
-  // Documento canónico del par permiso (Origen v1.5 §2.1). Scope mínimo spec-fiel:
+  // Documento canónico del par permiso (Origen v1.6 §2.1). Scope mínimo spec-fiel:
   // sólo `permiso_edificacion_numero` · `permiso_edificacion_fecha` tienen destino
   // real en `D_TipoDocumentoAtributo`; el resto del PDF (tipo_obra, superficie,
   // DFL2, propietario…) quedó catalogado sin destino (brecha · ver el xlsx de
@@ -194,6 +198,24 @@ export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
       campos: [
         { fieldId: FIELD_IDS_DOC_LEGALES.permisoEdificacionNumero, label: 'N° permiso de edificación' },
         { fieldId: FIELD_IDS_DOC_LEGALES.permisoEdificacionFecha, label: 'Fecha permiso de edificación' },
+      ],
+    },
+  ],
+
+  // Documento canónico del par recepción final (Origen v1.6 §2.1). Scope mínimo
+  // spec-fiel: sólo `recepcion_final_numero` · `recepcion_final_fecha` tienen
+  // destino real en `D_TipoDocumentoAtributo` (cableado vía MCP · TANDA B); el
+  // resto del PDF (rol_sii, superficie, destino, propietario…) quedó catalogado
+  // sin destino (brecha · ver docs/_analisis/lectura_datos_certificado_recepcion_final_v1.xlsx).
+  // Comparte el par recepción final con `escritura_compraventa` (ver docblock ⚠).
+  certificado_recepcion_final: [
+    {
+      tabla: TABLE_IDS.documentosLegales,
+      tablaLabel: 'Documentos legales',
+      patron: 'a',
+      campos: [
+        { fieldId: FIELD_IDS_DOC_LEGALES.recepcionFinalNumero, label: 'N° recepción final' },
+        { fieldId: FIELD_IDS_DOC_LEGALES.recepcionFinalFecha, label: 'Fecha recepción final' },
       ],
     },
   ],
@@ -222,3 +244,13 @@ export function grupoCamposLimpiables(
     labels: t.campos.map((c) => c.label),
   }))
 }
+
+/* ---------------------------------------------------------------------------
+ * Changelog
+ * - v1.2 (11-sep-2026): alta de `certificado_recepcion_final` → limpia el par
+ *   recepción final (`recepcion_final_numero` · `recepcion_final_fecha`, patrón a)
+ *   en `TX_DocumentosLegales`. Espejo del alta de `permiso_edificacion`. El par lo
+ *   comparte con `escritura_compraventa` (política Q1). CASCADE_REGISTRY: 8 → 9.
+ * - v1.1 (10-sep-2026): alta de `permiso_edificacion` (par permiso).
+ * - v1.0 (09-sep-2026): mapa inicial derivado de §28 (Tarea 5 · Fase B).
+ * ------------------------------------------------------------------------- */

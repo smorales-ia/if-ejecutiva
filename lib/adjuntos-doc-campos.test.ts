@@ -71,6 +71,33 @@ describe('CAMPOS_DERIVADOS · conteos de §28', () => {
     }
   })
 
+  it('certificado_recepcion_final → DocumentosLegales 2 (a): sólo el par recepción final (scope mínimo)', () => {
+    const t = tablasDerivadasDe('certificado_recepcion_final')
+    expect(t).toHaveLength(1)
+    expect(t[0].patron).toBe('a')
+    expect(t[0].campos).toHaveLength(2)
+    expect(t[0].campos.map((c) => c.fieldId)).toEqual([
+      FIELD_IDS_DOC_LEGALES.recepcionFinalNumero,
+      FIELD_IDS_DOC_LEGALES.recepcionFinalFecha,
+    ])
+  })
+
+  it('certificado_recepcion_final y escritura_compraventa comparten el par recepción final (Q1)', () => {
+    const camposDe = (tipo: string) =>
+      tablasDerivadasDe(tipo)
+        .filter((t) => t.patron === 'a')
+        .flatMap((t) => t.campos.map((c) => c.fieldId))
+    const certificado = camposDe('certificado_recepcion_final')
+    const escritura = camposDe('escritura_compraventa')
+    for (const f of [
+      FIELD_IDS_DOC_LEGALES.recepcionFinalNumero,
+      FIELD_IDS_DOC_LEGALES.recepcionFinalFecha,
+    ]) {
+      expect(certificado).toContain(f)
+      expect(escritura).toContain(f)
+    }
+  })
+
   it('tipos sin destino (Q5) y clave vacía/nula → sin campos (no-op)', () => {
     expect(tablasDerivadasDe('consulta_antecedentes_bien_raiz')).toEqual([])
     expect(tablasDerivadasDe('foto_ofertas_comparables')).toEqual([]) // es patrón b, no vive aquí
@@ -130,7 +157,7 @@ describe('grupoCamposLimpiables · forma para el diálogo Q3', () => {
   })
 
   it('tipo sin datos → lista vacía (el diálogo no muestra sección de campos)', () => {
-    expect(grupoCamposLimpiables('certificado_recepcion_final')).toEqual([])
+    expect(grupoCamposLimpiables('consulta_antecedentes_bien_raiz')).toEqual([])
   })
 
   it('permiso_edificacion → lista el par permiso en el diálogo Q3', () => {
@@ -138,6 +165,15 @@ describe('grupoCamposLimpiables · forma para el diálogo Q3', () => {
       {
         tablaLabel: 'Documentos legales',
         labels: ['N° permiso de edificación', 'Fecha permiso de edificación'],
+      },
+    ])
+  })
+
+  it('certificado_recepcion_final → lista el par recepción final en el diálogo Q3', () => {
+    expect(grupoCamposLimpiables('certificado_recepcion_final')).toEqual([
+      {
+        tablaLabel: 'Documentos legales',
+        labels: ['N° recepción final', 'Fecha recepción final'],
       },
     ])
   })

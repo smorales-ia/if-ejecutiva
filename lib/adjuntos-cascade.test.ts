@@ -101,12 +101,12 @@ describe('CASCADE_REGISTRY', () => {
     })
   })
 
-  it('incluye las 7 entradas de campos (a/c) derivadas del mapa §28', () => {
+  it('incluye las 8 entradas de campos (a/c) derivadas del mapa §28', () => {
     const campos = CASCADE_REGISTRY.filter((e) => e.patron !== 'b')
     // foto_fuente_sii(3) + certificado_avaluo_fiscal(2) + escritura_compraventa(1)
-    //   + permiso_edificacion(1)
-    expect(campos).toHaveLength(7)
-    expect(CASCADE_REGISTRY).toHaveLength(8)
+    //   + permiso_edificacion(1) + certificado_recepcion_final(1)
+    expect(campos).toHaveLength(8)
+    expect(CASCADE_REGISTRY).toHaveLength(9)
   })
 })
 
@@ -199,6 +199,43 @@ describe('capturarDerivadosDeAdjunto · patrones a/c por tipo de documento', () 
     expect(capturados).toHaveLength(1)
     expect(capturados[0]).toMatchObject({ op: 'limpiar', tabla: TABLE_IDS.documentosLegales })
     expect((capturados[0] as Extract<DerivadoCascade, { op: 'limpiar' }>).campos).toHaveLength(4)
+  })
+
+  it('permiso_edificacion → sólo DocumentosLegales (par permiso · 2)', async () => {
+    conClave('permiso_edificacion')
+    listRecordsPorTabla({ [TABLE_IDS.documentosLegales]: [{ id: 'recDL1' }] })
+
+    const capturados = await capturarDerivadosDeAdjunto(ADJUNTO, CTX)
+    const campos = CAMPOS_DERIVADOS['permiso_edificacion']
+      .find((t) => t.tabla === TABLE_IDS.documentosLegales)!
+      .campos.map((c) => c.fieldId)
+    expect(capturados).toEqual([
+      { op: 'limpiar', id: 'recDL1', tabla: TABLE_IDS.documentosLegales, campos },
+    ])
+    expect(campos).toHaveLength(2)
+  })
+
+  it('certificado_recepcion_final → DocumentosLegales (par recepción final · 2) y PATCHea esos 2 a null (regresión bug de borrado)', async () => {
+    conClave('certificado_recepcion_final')
+    listRecordsPorTabla({ [TABLE_IDS.documentosLegales]: [{ id: 'recDL1' }] })
+
+    const capturados = await capturarDerivadosDeAdjunto(ADJUNTO, CTX)
+    const campos = CAMPOS_DERIVADOS['certificado_recepcion_final']
+      .find((t) => t.tabla === TABLE_IDS.documentosLegales)!
+      .campos.map((c) => c.fieldId)
+    expect(capturados).toEqual([
+      { op: 'limpiar', id: 'recDL1', tabla: TABLE_IDS.documentosLegales, campos },
+    ])
+    expect(campos).toHaveLength(2)
+
+    // Integración capture→purge: la purga escribe EXACTAMENTE esos 2 campos a null
+    // en TX_DocumentosLegales (el UPDATE que faltaba ejecutarse en producción).
+    await purgarDerivadosCapturados(capturados)
+    expect(updateRecord).toHaveBeenCalledWith(
+      TABLE_IDS.documentosLegales,
+      'recDL1',
+      Object.fromEntries(campos.map((f) => [f, null]))
+    )
   })
 
   it('clave desconocida (los 8 sin destino · Q5) → no captura nada', async () => {

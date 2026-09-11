@@ -1714,10 +1714,10 @@ Este mapa es el insumo del **cascade de borrado** (`lib/adjuntos-cascade.ts`).
 | `consulta_antecedentes_bien_raiz` · `certificado_recepcion_final` · `inscripcion_dominio_cbr` · `certificado_deuda_tgr` · `informe_no_expropiacion_serviu` · `sello_verde_sec` · `plano_cuadro_superficies` | — (sin `uso_tabla_destino`) | — | (atributos declarados, sin destino mapeado) | no-op |
 
 > **`permiso_edificacion` (11-sep-2026 · IF-03).** Documento canónico del par permiso
-> (Origen v1.5 §2.1). De sus 14 atributos catalogados sólo `numero_permiso` y `fecha_permiso`
+> (Origen v1.6 §2.1). De sus 14 atributos catalogados sólo `numero_permiso` y `fecha_permiso`
 > reciben destino real (`TX_DocumentosLegales.permiso_edificacion_numero` · `…_fecha`); los otros
 > 12 quedan catalogados **sin destino** y `obligatorio=FALSE` (tipo_obra, superficie, DFL2,
-> propietario… son brechas: no hay columna ni los piden Motor v2.7 / Origen v1.5 · ver
+> propietario… son brechas: no hay columna ni los piden Motor v2.7 / Origen v1.6 · ver
 > `docs/_analisis/lectura_datos_permiso_edificacion_v1.xlsx`). Comparte el par con
 > `escritura_compraventa`: borrar cualquiera de los dos limpia `permiso_edificacion_numero` y
 > `permiso_edificacion_fecha` (política Q1). La UI del Tasador ya muestra el par (Sección F editable
