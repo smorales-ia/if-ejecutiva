@@ -1,5 +1,5 @@
 {
-    "name": "SC-IApro-LeadsScraper v1.0 - LinkedIn leads scraper (SerpAPI + Apify -> Google Sheets)",
+    "name": "SC-IApro-LeadsScraper v1.4 - LinkedIn leads scraper (SerpAPI + Apify -> Google Sheets)",
     "flow": [
         {
             "id": 1,
@@ -8,29 +8,64 @@
             "parameters": {},
             "mapper": {
                 "variables": [
-                    { "name": "max_pages", "value": "3" },
-                    { "name": "results_per_page", "value": "15" },
-                    { "name": "start_offset", "value": "0" },
-                    { "name": "sleep_paginacion_s", "value": "2" },
-                    { "name": "sleep_perfil_s", "value": "10" },
-                    { "name": "dedupe_activo", "value": "true" }
+                    {
+                        "name": "max_pages",
+                        "value": "3"
+                    },
+                    {
+                        "name": "results_per_page",
+                        "value": "15"
+                    },
+                    {
+                        "name": "start_offset",
+                        "value": "0"
+                    },
+                    {
+                        "name": "sleep_paginacion_s",
+                        "value": "2"
+                    },
+                    {
+                        "name": "sleep_perfil_s",
+                        "value": "10"
+                    },
+                    {
+                        "name": "dedupe_activo",
+                        "value": "true"
+                    }
                 ],
                 "scope": "roundtrip"
             },
             "metadata": {
-                "designer": { "x": 0, "y": 0, "name": "A.1 Set parametros" },
+                "designer": {
+                    "x": 0,
+                    "y": 0,
+                    "name": "A.1 Set parametros"
+                },
                 "restore": {
                     "expect": {
-                        "variables": { "mode": "chose" },
-                        "scope": { "label": "One cycle" }
+                        "variables": {
+                            "mode": "chose"
+                        },
+                        "scope": {
+                            "label": "One cycle"
+                        }
                     }
                 },
                 "expect": [
                     {
                         "name": "variables",
                         "spec": [
-                            { "name": "name", "type": "text", "label": "Variable name", "required": true },
-                            { "name": "value", "type": "any", "label": "Variable value" }
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Variable name",
+                                "required": true
+                            },
+                            {
+                                "name": "value",
+                                "type": "any",
+                                "label": "Variable value"
+                            }
                         ],
                         "type": "array",
                         "label": "Variables"
@@ -40,95 +75,371 @@
                         "type": "select",
                         "label": "Variable lifetime",
                         "required": true,
-                        "validate": { "enum": ["roundtrip", "execution"] }
+                        "validate": {
+                            "enum": [
+                                "roundtrip",
+                                "execution"
+                            ]
+                        }
                     }
                 ]
             }
         },
         {
             "id": 2,
-            "module": "google-sheets:searchRows",
+            "module": "google-sheets:filterRows",
             "version": 2,
-            "parameters": { "__IMTCONN__": 1 },
+            "parameters": {
+                "__IMTCONN__": 1
+            },
             "mapper": {
-                "mode": "select",
+                "from": "share",
+                "valueRenderOption": "FORMATTED_VALUE",
+                "dateTimeRenderOption": "FORMATTED_STRING",
+                "limit": "100",
                 "spreadsheetId": "__SPREADSHEET_ID_BUSQUEDAS__",
                 "sheetId": "Busquedas",
                 "includesHeaders": true,
+                "tableFirstRow": "A1:Z1",
                 "filter": [
                     [
-                        { "a": "F", "b": "TRUE", "o": "text:equal" }
+                        {
+                            "a": "F",
+                            "o": "text:equal",
+                            "b": "TRUE"
+                        }
                     ]
                 ],
-                "sortOrder": "asc",
-                "valueRenderOption": "FORMATTED_VALUE",
-                "dateTimeRenderOption": "FORMATTED_STRING"
+                "sortOrder": "asc"
             },
             "metadata": {
-                "designer": { "x": 300, "y": 0, "name": "A.2 Busquedas WHERE activa=TRUE" },
+                "designer": {
+                    "x": 300,
+                    "y": 0,
+                    "name": "A.2 Busquedas WHERE activa=TRUE"
+                },
                 "restore": {
-                    "expect": {
-                        "mode": { "label": "Select rows" },
-                        "sheetId": { "label": "Busquedas" },
-                        "spreadsheetId": { "label": "iapro-busquedas (__SPREADSHEET_ID_BUSQUEDAS__)" },
-                        "includesHeaders": { "label": "Yes" }
-                    },
                     "parameters": {
                         "__IMTCONN__": {
-                            "data": { "scoped": "true", "connection": "google" },
-                            "label": "Google Sheets (iapro)"
+                            "label": "Google Sheets (iapro)",
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            }
+                        }
+                    },
+                    "expect": {
+                        "from": {
+                            "label": "Select from all"
+                        },
+                        "valueRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted value"
+                        },
+                        "dateTimeRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted string"
+                        },
+                        "spreadsheetId": {
+                            "rpcSearch": {
+                                "label": "iapro-busquedas",
+                                "value": "__SPREADSHEET_ID_BUSQUEDAS__"
+                            }
+                        },
+                        "sheetId": {
+                            "mode": "chose",
+                            "label": "Busquedas"
+                        },
+                        "includesHeaders": {
+                            "mode": "chose",
+                            "label": "Yes"
+                        },
+                        "tableFirstRow": {
+                            "label": "A-Z"
+                        },
+                        "orderBy": {
+                            "mode": "chose"
+                        },
+                        "sortOrder": {
+                            "mode": "chose",
+                            "label": "Ascending"
                         }
                     }
                 },
                 "parameters": [
-                    { "name": "__IMTCONN__", "type": "account:google-restricted", "label": "Connection", "required": true }
-                ]
-            }
-        },
-        {
-            "id": 3,
-            "module": "util:SetVariable",
-            "version": 1,
-            "parameters": {},
-            "mapper": {
-                "name": "estimado_serpapi",
-                "scope": "execution",
-                "value": "{{length(2.array) * 1.max_pages}}"
-            },
-            "metadata": {
-                "designer": { "x": 600, "y": 0, "name": "A.3 Estima consumo SerpAPI" },
-                "restore": { "expect": { "scope": { "label": "Whole execution" } } },
-                "expect": [
-                    { "name": "name", "type": "text", "label": "Variable name", "required": true },
-                    { "name": "scope", "type": "select", "label": "Variable lifetime", "required": true, "validate": { "enum": ["roundtrip", "execution"] } },
-                    { "name": "value", "type": "any", "label": "Variable value" }
-                ]
-            }
-        },
-        {
-            "id": 4,
-            "module": "datastore:AddReplaceRecord",
-            "version": 1,
-            "parameters": { "datastore": "__DATASTORE_ID__" },
-            "mapper": {
-                "key": "run_{{formatDate(now; \"YYYYMMDDHHmmss\")}}",
-                "overwrite": true,
-                "record": {
-                    "estimado_serpapi": "{{3.value}}",
-                    "consumo_real": "0",
-                    "iniciado": "{{now}}"
-                }
-            },
-            "metadata": {
-                "designer": { "x": 900, "y": 0, "name": "A.3 Data Store: guarda estimado" },
-                "restore": {
-                    "expect": {
-                        "datastore": { "label": "IApro Leads Scraper (__DATASTORE_ID__)" },
-                        "overwrite": { "label": "Yes" }
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
                     }
-                },
-                "parameters": [
-                    { "name": "datastore", "type": "datastore", "label": "Data store", "required": true }
+                ],
+                "expect": [
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "valueRenderOption",
+                        "type": "select",
+                        "label": "Value render option",
+                        "validate": {
+                            "enum": [
+                                "FORMATTED_VALUE",
+                                "UNFORMATTED_VALUE",
+                                "FORMULA"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "dateTimeRenderOption",
+                        "type": "select",
+                        "label": "Date and time render option",
+                        "validate": {
+                            "enum": [
+                                "SERIAL_NUMBER",
+                                "FORMATTED_STRING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit"
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "text",
+                        "label": "Spreadsheet ID",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                true,
+                                false
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tableFirstRow",
+                        "type": "select",
+                        "label": "Column range",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "A1:Z1",
+                                "A1:BZ1",
+                                "A1:CZ1",
+                                "A1:DZ1",
+                                "A1:MZ1",
+                                "A1:ZZ1",
+                                "A1:AZZ1",
+                                "A1:BZZ1",
+                                "A1:CZZ1",
+                                "A1:DZZ1",
+                                "A1:MZZ1",
+                                "A1:ZZZ1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter",
+                        "type": "filter",
+                        "label": "Filter",
+                        "options": "rpc://google-sheets/2/rpcGetFilterKeys?includesHeaders=true"
+                    },
+                    {
+                        "name": "orderBy",
+                        "type": "select",
+                        "label": "Order by"
+                    },
+                    {
+                        "name": "sortOrder",
+                        "type": "select",
+                        "label": "Sort order",
+                        "validate": {
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "label": "Total number of bundles",
+                        "type": "uinteger"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "label": "Bundle order position",
+                        "type": "uinteger"
+                    },
+                    {
+                        "name": "__ROW_NUMBER__",
+                        "label": "Row number",
+                        "type": "number"
+                    },
+                    {
+                        "name": "__SPREADSHEET_ID__",
+                        "label": "Spreadsheet ID",
+                        "type": "text"
+                    },
+                    {
+                        "name": "__SHEET__",
+                        "label": "Sheet",
+                        "type": "text"
+                    },
+                    {
+                        "name": "0",
+                        "label": "keyword (A)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "1",
+                        "label": "ciudad (B)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "2",
+                        "label": "pais (C)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "3",
+                        "label": "dominio (D)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "4",
+                        "label": "nombre_hoja (E)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "5",
+                        "label": "activa (F)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "6",
+                        "label": "(G)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "7",
+                        "label": "(H)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "8",
+                        "label": "(I)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "9",
+                        "label": "(J)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "10",
+                        "label": "(K)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "11",
+                        "label": "(L)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "12",
+                        "label": "(M)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "13",
+                        "label": "(N)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "14",
+                        "label": "(O)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "15",
+                        "label": "(P)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "16",
+                        "label": "(Q)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "17",
+                        "label": "(R)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "18",
+                        "label": "(S)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "19",
+                        "label": "(T)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "20",
+                        "label": "(U)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "21",
+                        "label": "(V)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "22",
+                        "label": "(W)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "23",
+                        "label": "(X)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "24",
+                        "label": "(Y)",
+                        "type": "text"
+                    },
+                    {
+                        "name": "25",
+                        "label": "(Z)",
+                        "type": "text"
+                    }
                 ]
             }
         },
@@ -137,12 +448,22 @@
             "module": "builtin:BasicFeeder",
             "version": 1,
             "parameters": {},
-            "mapper": { "array": "{{2.array}}" },
+            "mapper": {
+                "array": "{{2.array}}"
+            },
             "metadata": {
-                "designer": { "x": 1200, "y": 0, "name": "B Iterator por busqueda" },
+                "designer": {
+                    "x": 1200,
+                    "y": 0,
+                    "name": "B Iterator por busqueda"
+                },
                 "restore": {},
                 "expect": [
-                    { "name": "array", "type": "array", "label": "Array" }
+                    {
+                        "name": "array",
+                        "type": "array",
+                        "label": "Array"
+                    }
                 ]
             }
         },
@@ -157,12 +478,42 @@
                 "value": "site:linkedin.com/in \"{{5.D}}\" \"{{5.A}}\" \"{{5.B}}\""
             },
             "metadata": {
-                "designer": { "x": 1500, "y": 0, "name": "B Query builder" },
-                "restore": { "expect": { "scope": { "label": "One cycle" } } },
+                "designer": {
+                    "x": 1500,
+                    "y": 0,
+                    "name": "B Query builder"
+                },
+                "restore": {
+                    "expect": {
+                        "scope": {
+                            "label": "One cycle"
+                        }
+                    }
+                },
                 "expect": [
-                    { "name": "name", "type": "text", "label": "Variable name", "required": true },
-                    { "name": "scope", "type": "select", "label": "Variable lifetime", "required": true, "validate": { "enum": ["roundtrip", "execution"] } },
-                    { "name": "value", "type": "any", "label": "Variable value" }
+                    {
+                        "name": "name",
+                        "type": "text",
+                        "label": "Variable name",
+                        "required": true
+                    },
+                    {
+                        "name": "scope",
+                        "type": "select",
+                        "label": "Variable lifetime",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "roundtrip",
+                                "execution"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "type": "any",
+                        "label": "Variable value"
+                    }
                 ]
             }
         },
@@ -177,12 +528,30 @@
                 "step": "1"
             },
             "metadata": {
-                "designer": { "x": 1800, "y": 0, "name": "C Repeater 1..max_pages" },
+                "designer": {
+                    "x": 1800,
+                    "y": 0,
+                    "name": "C Repeater 1..max_pages"
+                },
                 "restore": {},
                 "expect": [
-                    { "name": "start", "type": "number", "label": "Initial value", "required": true },
-                    { "name": "repeats", "type": "number", "label": "Repeats", "required": true },
-                    { "name": "step", "type": "number", "label": "Step" }
+                    {
+                        "name": "start",
+                        "type": "number",
+                        "label": "Initial value",
+                        "required": true
+                    },
+                    {
+                        "name": "repeats",
+                        "type": "number",
+                        "label": "Repeats",
+                        "required": true
+                    },
+                    {
+                        "name": "step",
+                        "type": "number",
+                        "label": "Step"
+                    }
                 ]
             }
         },
@@ -197,12 +566,42 @@
                 "value": "{{1.start_offset + (7.i - 1) * 1.results_per_page}}"
             },
             "metadata": {
-                "designer": { "x": 2100, "y": 0, "name": "C Offset de pagina" },
-                "restore": { "expect": { "scope": { "label": "One cycle" } } },
+                "designer": {
+                    "x": 2100,
+                    "y": 0,
+                    "name": "C Offset de pagina"
+                },
+                "restore": {
+                    "expect": {
+                        "scope": {
+                            "label": "One cycle"
+                        }
+                    }
+                },
                 "expect": [
-                    { "name": "name", "type": "text", "label": "Variable name", "required": true },
-                    { "name": "scope", "type": "select", "label": "Variable lifetime", "required": true, "validate": { "enum": ["roundtrip", "execution"] } },
-                    { "name": "value", "type": "any", "label": "Variable value" }
+                    {
+                        "name": "name",
+                        "type": "text",
+                        "label": "Variable name",
+                        "required": true
+                    },
+                    {
+                        "name": "scope",
+                        "type": "select",
+                        "label": "Variable lifetime",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "roundtrip",
+                                "execution"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "type": "any",
+                        "label": "Variable value"
+                    }
                 ]
             }
         },
@@ -215,33 +614,249 @@
                 "useNewZLibDeCompress": true
             },
             "mapper": {
-                "ca": "",
-                "qs": [
-                    { "name": "engine", "value": "google" },
-                    { "name": "q", "value": "{{6.value}}" },
-                    { "name": "start", "value": "{{8.value}}" },
-                    { "name": "num", "value": "{{1.results_per_page}}" },
-                    { "name": "gl", "value": "{{5.C}}" },
-                    { "name": "hl", "value": "es" },
-                    { "name": "api_key", "value": "{{SERPAPI_KEY}}" }
-                ],
                 "url": "https://serpapi.com/search.json",
-                "gzip": true,
+                "serializeUrl": false,
                 "method": "get",
                 "headers": [],
-                "timeout": "",
-                "useMtls": false,
-                "authPass": "",
-                "authUser": "",
+                "qs": [
+                    {
+                        "name": "engine",
+                        "value": "google"
+                    },
+                    {
+                        "name": "q",
+                        "value": "{{6.value}}"
+                    },
+                    {
+                        "name": "start",
+                        "value": "{{8.value}}"
+                    },
+                    {
+                        "name": "num",
+                        "value": "{{1.results_per_page}}"
+                    },
+                    {
+                        "name": "gl",
+                        "value": "{{5.C}}"
+                    },
+                    {
+                        "name": "hl",
+                        "value": "es"
+                    },
+                    {
+                        "name": "api_key",
+                        "value": "{{SERPAPI_KEY}}"
+                    }
+                ],
                 "bodyType": "",
-                "contentType": "",
-                "serializeUrl": false,
-                "shareCookies": false,
                 "parseResponse": true,
+                "authUser": "",
+                "authPass": "",
+                "timeout": "",
+                "shareCookies": false,
+                "ca": "",
+                "rejectUnauthorized": true,
                 "followRedirect": true,
                 "useQuerystring": false,
-                "followAllRedirects": false,
-                "rejectUnauthorized": true
+                "gzip": true,
+                "useMtls": false,
+                "followAllRedirects": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 2400,
+                    "y": 0,
+                    "name": "C SerpAPI GET search.json"
+                },
+                "restore": {
+                    "expect": {
+                        "method": {
+                            "mode": "chose",
+                            "label": "GET"
+                        },
+                        "headers": {
+                            "mode": "chose"
+                        },
+                        "qs": {
+                            "mode": "chose",
+                            "items": [
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null
+                            ]
+                        },
+                        "bodyType": {
+                            "label": "Empty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "handleErrors",
+                        "type": "boolean",
+                        "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+                        "required": true
+                    },
+                    {
+                        "name": "useNewZLibDeCompress",
+                        "type": "hidden"
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "url",
+                        "type": "url",
+                        "label": "URL",
+                        "required": true
+                    },
+                    {
+                        "name": "serializeUrl",
+                        "type": "boolean",
+                        "label": "Serialize URL",
+                        "required": true
+                    },
+                    {
+                        "name": "method",
+                        "type": "select",
+                        "label": "Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "get",
+                                "head",
+                                "post",
+                                "put",
+                                "patch",
+                                "delete",
+                                "options"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "headers",
+                        "type": "array",
+                        "label": "Headers",
+                        "spec": [
+                            {
+                                "name": "name",
+                                "label": "Name",
+                                "type": "text",
+                                "required": true
+                            },
+                            {
+                                "name": "value",
+                                "label": "Value",
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "qs",
+                        "type": "array",
+                        "label": "Query String",
+                        "spec": [
+                            {
+                                "name": "name",
+                                "label": "Name",
+                                "type": "text",
+                                "required": true
+                            },
+                            {
+                                "name": "value",
+                                "label": "Value",
+                                "type": "text"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "bodyType",
+                        "type": "select",
+                        "label": "Body type",
+                        "validate": {
+                            "enum": [
+                                "raw",
+                                "x_www_form_urlencoded",
+                                "multipart_form_data"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "parseResponse",
+                        "type": "boolean",
+                        "label": "Parse response",
+                        "required": true
+                    },
+                    {
+                        "name": "authUser",
+                        "type": "text",
+                        "label": "User name"
+                    },
+                    {
+                        "name": "authPass",
+                        "type": "password",
+                        "label": "Password"
+                    },
+                    {
+                        "name": "timeout",
+                        "type": "uinteger",
+                        "label": "Timeout",
+                        "validate": {
+                            "max": 300,
+                            "min": 1
+                        }
+                    },
+                    {
+                        "name": "shareCookies",
+                        "type": "boolean",
+                        "label": "Share cookies with other HTTP modules",
+                        "required": true
+                    },
+                    {
+                        "name": "ca",
+                        "type": "cert",
+                        "label": "Self-signed certificate"
+                    },
+                    {
+                        "name": "rejectUnauthorized",
+                        "type": "boolean",
+                        "label": "Reject connections that are using unverified (self-signed) certificates",
+                        "required": true
+                    },
+                    {
+                        "name": "followRedirect",
+                        "type": "boolean",
+                        "label": "Follow redirect",
+                        "required": true
+                    },
+                    {
+                        "name": "useQuerystring",
+                        "type": "boolean",
+                        "label": "Disable serialization of multiple same query string keys as arrays",
+                        "required": true
+                    },
+                    {
+                        "name": "gzip",
+                        "type": "boolean",
+                        "label": "Request compressed content",
+                        "required": true
+                    },
+                    {
+                        "name": "useMtls",
+                        "type": "boolean",
+                        "label": "Use Mutual TLS",
+                        "required": true
+                    },
+                    {
+                        "name": "followAllRedirects",
+                        "type": "boolean",
+                        "label": "Follow all redirect",
+                        "required": true
+                    }
+                ]
             },
             "onerror": [
                 {
@@ -256,91 +871,61 @@
                     },
                     "mapper": {},
                     "metadata": {
-                        "designer": { "x": 2100, "y": 300, "name": "Break SerpAPI 429/5xx (1s->3s->9s)" },
+                        "designer": {
+                            "x": 2100,
+                            "y": 300,
+                            "name": "Break SerpAPI 429/5xx (1s->3s->9s)",
+                            "messages": [
+                                {
+                                    "category": "badsettings",
+                                    "severity": "error",
+                                    "message": "This directive requires storing of incomplete executions to be enabled."
+                                }
+                            ]
+                        },
                         "restore": {},
                         "expect": [
-                            { "name": "retry", "type": "boolean", "label": "Automatically complete execution" },
-                            { "name": "count", "type": "number", "label": "Number of attempts" },
-                            { "name": "interval", "type": "number", "label": "Interval between attempts (minutes)" }
+                            {
+                                "name": "retry",
+                                "type": "boolean",
+                                "label": "Automatically complete execution"
+                            },
+                            {
+                                "name": "count",
+                                "type": "number",
+                                "label": "Number of attempts"
+                            },
+                            {
+                                "name": "interval",
+                                "type": "number",
+                                "label": "Interval between attempts (minutes)"
+                            }
                         ]
                     }
                 }
-            ],
-            "metadata": {
-                "designer": { "x": 2400, "y": 0, "name": "C SerpAPI GET search.json" },
-                "restore": {
-                    "expect": {
-                        "qs": { "mode": "chose" },
-                        "method": { "mode": "chose", "label": "GET" },
-                        "headers": { "mode": "chose" },
-                        "bodyType": { "mode": "chose" },
-                        "contentType": { "mode": "chose" }
-                    }
-                },
-                "parameters": [
-                    { "name": "handleErrors", "type": "boolean", "label": "Evaluate all states as errors (except for 2xx and 3xx )", "required": true },
-                    { "name": "useNewZLibDeCompress", "type": "hidden" }
-                ],
-                "expect": [
-                    { "name": "url", "type": "url", "label": "URL", "required": true },
-                    { "name": "serializeUrl", "type": "boolean", "label": "Serialize URL", "required": true },
-                    { "name": "method", "type": "select", "label": "Method", "required": true, "validate": { "enum": ["get", "head", "post", "put", "patch", "delete", "options"] } },
-                    { "name": "headers", "spec": [ { "name": "name", "type": "text", "label": "Name", "required": true }, { "name": "value", "type": "text", "label": "Value" } ], "type": "array", "label": "Headers" },
-                    { "name": "qs", "spec": [ { "name": "name", "type": "text", "label": "Name", "required": true }, { "name": "value", "type": "text", "label": "Value" } ], "type": "array", "label": "Query String" },
-                    { "name": "bodyType", "type": "select", "label": "Body type", "validate": { "enum": ["raw", "x_www_form_urlencoded", "multipart_form_data"] } },
-                    { "name": "parseResponse", "type": "boolean", "label": "Parse response", "required": true },
-                    { "name": "authUser", "type": "text", "label": "User name" },
-                    { "name": "authPass", "type": "password", "label": "Password" },
-                    { "name": "timeout", "type": "uinteger", "label": "Timeout", "validate": { "max": 300, "min": 1 } },
-                    { "name": "shareCookies", "type": "boolean", "label": "Share cookies with other HTTP modules", "required": true },
-                    { "name": "ca", "type": "cert", "label": "Self-signed certificate" },
-                    { "name": "rejectUnauthorized", "type": "boolean", "label": "Reject connections that are using unverified (self-signed) certificates", "required": true },
-                    { "name": "followRedirect", "type": "boolean", "label": "Follow redirect", "required": true },
-                    { "name": "useQuerystring", "type": "boolean", "label": "Disable serialization of multiple same query string keys as arrays", "required": true },
-                    { "name": "gzip", "type": "boolean", "label": "Request compressed content", "required": true },
-                    { "name": "useMtls", "type": "boolean", "label": "Use Mutual TLS", "required": true },
-                    { "name": "contentType", "type": "select", "label": "Content type", "validate": { "enum": ["text/plain", "application/json", "application/xml", "text/xml", "text/html", "custom"] } },
-                    { "name": "data", "type": "buffer", "label": "Request content" },
-                    { "name": "followAllRedirects", "type": "boolean", "label": "Follow all redirect", "required": true }
-                ]
-            }
+            ]
         },
         {
             "id": 10,
             "module": "builtin:BasicFeeder",
             "version": 1,
             "parameters": {},
-            "mapper": { "array": "{{9.data.organic_results}}" },
-            "metadata": {
-                "designer": { "x": 2700, "y": 0, "name": "C Iterator organic_results[]" },
-                "restore": {},
-                "expect": [
-                    { "name": "array", "type": "array", "label": "Array" }
-                ]
-            }
-        },
-        {
-            "id": 11,
-            "module": "builtin:Sleep",
-            "version": 1,
-            "parameters": {},
-            "filter": {
-                "name": "Solo perfiles linkedin.com/in",
-                "conditions": [
-                    [
-                        { "a": "{{10.link}}", "b": "https://www.linkedin.com/in/", "o": "text:startwith" }
-                    ],
-                    [
-                        { "a": "{{10.link}}", "b": "https://{{5.C}}.linkedin.com/in/", "o": "text:startwith" }
-                    ]
-                ]
+            "mapper": {
+                "array": "{{9.data.organic_results}}"
             },
-            "mapper": { "delay": "{{1.sleep_perfil_s}}" },
             "metadata": {
-                "designer": { "x": 3000, "y": 0, "name": "D Sleep entre perfiles" },
+                "designer": {
+                    "x": 2700,
+                    "y": 0,
+                    "name": "C Iterator organic_results[]"
+                },
                 "restore": {},
                 "expect": [
-                    { "name": "delay", "type": "uinteger", "label": "Delay", "required": true, "validate": { "max": 300, "min": 1 } }
+                    {
+                        "name": "array",
+                        "type": "array",
+                        "label": "Array"
+                    }
                 ]
             }
         },
@@ -348,12 +933,117 @@
             "id": 12,
             "module": "apify:runActor",
             "version": 1,
-            "parameters": { "__IMTCONN__": 2 },
+            "parameters": {
+                "__IMTCONN__": 1
+            },
+            "filter": {
+                "name": "Solo perfiles linkedin.com/in",
+                "conditions": [
+                    [
+                        {
+                            "a": "{{10.link}}",
+                            "b": "https://www.linkedin.com/in/",
+                            "o": "text:startwith"
+                        },
+                        {
+                            "a": "{{10.link}}",
+                            "b": "https://{{5.C}}.linkedin.com/in/",
+                            "o": "text:startwith"
+                        }
+                    ]
+                ]
+            },
             "mapper": {
                 "actorId": "dev_fusion/linkedin-profile-scraper",
-                "waitForFinish": true,
-                "timeout": 300,
-                "input": "{\"profileUrls\": [\"{{10.link}}\"], \"proxy\": {\"useApifyProxy\": true, \"apifyProxyGroups\": [\"RESIDENTIAL\"], \"apifyProxyCountry\": \"{{5.C}}\"}}"
+                "runSync": true,
+                "inputBody": "{\r\n  \"profileUrls\": [\"{{10.link}}\"]\r\n}",
+                "timeout": "300"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 3300,
+                    "y": 0,
+                    "name": "D Apify Run an Actor (sync, devuelve items)"
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "Apify (iapro)",
+                            "data": {
+                                "scoped": "true",
+                                "connection": "apify"
+                            }
+                        }
+                    },
+                    "expect": {
+                        "actorId": {
+                            "mode": "chose",
+                            "label": "dev_fusion/linkedin-profile-scraper"
+                        },
+                        "runSync": {
+                            "mode": "chose"
+                        },
+                        "memory": {
+                            "mode": "chose",
+                            "label": "Empty"
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:apify2,apify",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "actorId",
+                        "type": "select",
+                        "label": "Actor",
+                        "required": true
+                    },
+                    {
+                        "name": "runSync",
+                        "type": "boolean",
+                        "label": "Run synchronously",
+                        "required": true
+                    },
+                    {
+                        "name": "inputBody",
+                        "type": "text",
+                        "label": "Input JSON"
+                    },
+                    {
+                        "name": "build",
+                        "type": "text",
+                        "label": "Build"
+                    },
+                    {
+                        "name": "timeout",
+                        "type": "uinteger",
+                        "label": "Timeout"
+                    },
+                    {
+                        "name": "memory",
+                        "type": "select",
+                        "label": "Memory",
+                        "validate": {
+                            "enum": [
+                                128,
+                                256,
+                                512,
+                                1024,
+                                2048,
+                                4096,
+                                8192,
+                                16384,
+                                32768
+                            ]
+                        }
+                    }
+                ]
             },
             "onerror": [
                 {
@@ -368,70 +1058,39 @@
                     },
                     "mapper": {},
                     "metadata": {
-                        "designer": { "x": 3300, "y": 300, "name": "Break Apify 429/5xx (1s->3s->9s)" },
+                        "designer": {
+                            "x": 3300,
+                            "y": 300,
+                            "name": "Break Apify 429/5xx (1s->3s->9s)",
+                            "messages": [
+                                {
+                                    "category": "badsettings",
+                                    "severity": "error",
+                                    "message": "This directive requires storing of incomplete executions to be enabled."
+                                }
+                            ]
+                        },
                         "restore": {},
                         "expect": [
-                            { "name": "retry", "type": "boolean", "label": "Automatically complete execution" },
-                            { "name": "count", "type": "number", "label": "Number of attempts" },
-                            { "name": "interval", "type": "number", "label": "Interval between attempts (minutes)" }
+                            {
+                                "name": "retry",
+                                "type": "boolean",
+                                "label": "Automatically complete execution"
+                            },
+                            {
+                                "name": "count",
+                                "type": "number",
+                                "label": "Number of attempts"
+                            },
+                            {
+                                "name": "interval",
+                                "type": "number",
+                                "label": "Interval between attempts (minutes)"
+                            }
                         ]
                     }
                 }
-            ],
-            "metadata": {
-                "designer": { "x": 3300, "y": 0, "name": "D Apify Run an Actor (sync)" },
-                "restore": {
-                    "expect": {
-                        "actorId": { "label": "dev_fusion/linkedin-profile-scraper" },
-                        "waitForFinish": { "label": "Yes" }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": { "scoped": "true", "connection": "apify" },
-                            "label": "Apify (iapro)"
-                        }
-                    }
-                },
-                "parameters": [
-                    { "name": "__IMTCONN__", "type": "account:apify", "label": "Connection", "required": true }
-                ],
-                "expect": [
-                    { "name": "actorId", "type": "text", "label": "Actor", "required": true },
-                    { "name": "waitForFinish", "type": "boolean", "label": "Wait for the actor run to finish" },
-                    { "name": "timeout", "type": "uinteger", "label": "Timeout (s)" },
-                    { "name": "input", "type": "text", "label": "Input JSON" }
-                ]
-            }
-        },
-        {
-            "id": 13,
-            "module": "apify:getDatasetItems",
-            "version": 1,
-            "parameters": { "__IMTCONN__": 2 },
-            "mapper": {
-                "datasetId": "{{12.defaultDatasetId}}",
-                "limit": 1,
-                "clean": true
-            },
-            "metadata": {
-                "designer": { "x": 3600, "y": 0, "name": "D Apify Get Dataset Items" },
-                "restore": {
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": { "scoped": "true", "connection": "apify" },
-                            "label": "Apify (iapro)"
-                        }
-                    }
-                },
-                "parameters": [
-                    { "name": "__IMTCONN__", "type": "account:apify", "label": "Connection", "required": true }
-                ],
-                "expect": [
-                    { "name": "datasetId", "type": "text", "label": "Dataset ID", "required": true },
-                    { "name": "limit", "type": "uinteger", "label": "Limit" },
-                    { "name": "clean", "type": "boolean", "label": "Clean" }
-                ]
-            }
+            ]
         },
         {
             "id": 14,
@@ -441,61 +1100,410 @@
             "mapper": {
                 "name": "correo",
                 "scope": "roundtrip",
-                "value": "{{first(match(13.summary; \"[\\w.+-]+@[\\w-]+\\.[\\w.-]+\"; \"g\"))}}"
+                "value": "{{first(match(12.summary; \"[\\w.+-]+@[\\w-]+\\.[\\w.-]+\"; \"g\"))}}"
             },
             "metadata": {
-                "designer": { "x": 3900, "y": 0, "name": "E Extrae correo por regex" },
-                "restore": { "expect": { "scope": { "label": "One cycle" } } },
+                "designer": {
+                    "x": 3900,
+                    "y": 0,
+                    "name": "E Extrae correo por regex"
+                },
+                "restore": {
+                    "expect": {
+                        "scope": {
+                            "label": "One cycle"
+                        }
+                    }
+                },
                 "expect": [
-                    { "name": "name", "type": "text", "label": "Variable name", "required": true },
-                    { "name": "scope", "type": "select", "label": "Variable lifetime", "required": true, "validate": { "enum": ["roundtrip", "execution"] } },
-                    { "name": "value", "type": "any", "label": "Variable value" }
+                    {
+                        "name": "name",
+                        "type": "text",
+                        "label": "Variable name",
+                        "required": true
+                    },
+                    {
+                        "name": "scope",
+                        "type": "select",
+                        "label": "Variable lifetime",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "roundtrip",
+                                "execution"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "type": "any",
+                        "label": "Variable value"
+                    }
                 ]
             }
         },
         {
             "id": 15,
-            "module": "google-sheets:searchRows",
+            "module": "google-sheets:filterRows",
             "version": 2,
-            "parameters": { "__IMTCONN__": 1 },
+            "parameters": {
+                "__IMTCONN__": 1
+            },
             "filter": {
                 "name": "Correo no vacio",
                 "conditions": [
                     [
-                        { "a": "{{14.value}}", "o": "exist" }
+                        {
+                            "a": "{{14.value}}",
+                            "o": "exist"
+                        }
                     ]
                 ]
             },
             "mapper": {
-                "mode": "select",
+                "from": "share",
+                "valueRenderOption": "FORMATTED_VALUE",
+                "dateTimeRenderOption": "FORMATTED_STRING",
+                "limit": "10",
                 "spreadsheetId": "__SPREADSHEET_ID_LEADS__",
                 "sheetId": "{{5.E}}",
                 "includesHeaders": true,
+                "tableFirstRow": "A1:Z1",
                 "filter": [
                     [
-                        { "a": "url_linkedin", "b": "{{10.link}}", "o": "text:equal" }
+                        {
+                            "a": "F",
+                            "o": "text:equal",
+                            "b": "{{10.link}}"
+                        }
                     ]
                 ],
-                "valueRenderOption": "FORMATTED_VALUE",
-                "dateTimeRenderOption": "FORMATTED_STRING"
+                "sortOrder": "asc"
             },
             "metadata": {
-                "designer": { "x": 4200, "y": 0, "name": "F Dedupe: Search Rows por url_linkedin" },
+                "designer": {
+                    "x": 4200,
+                    "y": 0,
+                    "name": "F Dedupe: Filter Rows por url_linkedin"
+                },
                 "restore": {
-                    "expect": {
-                        "mode": { "label": "Select rows" },
-                        "spreadsheetId": { "label": "iapro-leads (__SPREADSHEET_ID_LEADS__)" },
-                        "includesHeaders": { "label": "Yes" }
-                    },
                     "parameters": {
                         "__IMTCONN__": {
-                            "data": { "scoped": "true", "connection": "google" },
-                            "label": "Google Sheets (iapro)"
+                            "label": "Google Sheets (iapro)",
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            }
+                        }
+                    },
+                    "expect": {
+                        "from": {
+                            "label": "Select from all"
+                        },
+                        "valueRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted value"
+                        },
+                        "dateTimeRenderOption": {
+                            "mode": "chose",
+                            "label": "Formatted string"
+                        },
+                        "spreadsheetId": {
+                            "rpcSearch": {
+                                "label": "iapro-leads",
+                                "value": "__SPREADSHEET_ID_LEADS__"
+                            }
+                        },
+                        "includesHeaders": {
+                            "mode": "chose",
+                            "label": "Yes"
+                        },
+                        "tableFirstRow": {
+                            "label": "A-Z"
+                        },
+                        "orderBy": {
+                            "mode": "chose"
+                        },
+                        "sortOrder": {
+                            "mode": "chose",
+                            "label": "Ascending"
                         }
                     }
                 },
                 "parameters": [
-                    { "name": "__IMTCONN__", "type": "account:google-restricted", "label": "Connection", "required": true }
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "valueRenderOption",
+                        "type": "select",
+                        "label": "Value render option",
+                        "validate": {
+                            "enum": [
+                                "FORMATTED_VALUE",
+                                "UNFORMATTED_VALUE",
+                                "FORMULA"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "dateTimeRenderOption",
+                        "type": "select",
+                        "label": "Date and time render option",
+                        "validate": {
+                            "enum": [
+                                "SERIAL_NUMBER",
+                                "FORMATTED_STRING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "type": "uinteger",
+                        "label": "Limit"
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "text",
+                        "label": "Spreadsheet ID",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                true,
+                                false
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tableFirstRow",
+                        "type": "select",
+                        "label": "Column range",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "A1:Z1",
+                                "A1:BZ1",
+                                "A1:CZ1",
+                                "A1:DZ1",
+                                "A1:MZ1",
+                                "A1:ZZ1",
+                                "A1:AZZ1",
+                                "A1:BZZ1",
+                                "A1:CZZ1",
+                                "A1:DZZ1",
+                                "A1:MZZ1",
+                                "A1:ZZZ1"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "filter",
+                        "type": "filter",
+                        "label": "Filter",
+                        "options": "rpc://google-sheets/2/rpcGetFilterKeys?includesHeaders=true"
+                    },
+                    {
+                        "name": "orderBy",
+                        "type": "select",
+                        "label": "Order by"
+                    },
+                    {
+                        "name": "sortOrder",
+                        "type": "select",
+                        "label": "Sort order",
+                        "validate": {
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "interface": [
+                    {
+                        "name": "__IMTLENGTH__",
+                        "label": "Total number of bundles",
+                        "type": "uinteger"
+                    },
+                    {
+                        "name": "__IMTINDEX__",
+                        "label": "Bundle order position",
+                        "type": "uinteger"
+                    },
+                    {
+                        "name": "__ROW_NUMBER__",
+                        "label": "Row number",
+                        "type": "number"
+                    },
+                    {
+                        "name": "__SPREADSHEET_ID__",
+                        "label": "Spreadsheet ID",
+                        "type": "text"
+                    },
+                    {
+                        "name": "__SHEET__",
+                        "label": "Sheet",
+                        "type": "text"
+                    },
+                    {
+                        "name": "0",
+                        "label": "A",
+                        "type": "text"
+                    },
+                    {
+                        "name": "1",
+                        "label": "B",
+                        "type": "text"
+                    },
+                    {
+                        "name": "2",
+                        "label": "C",
+                        "type": "text"
+                    },
+                    {
+                        "name": "3",
+                        "label": "D",
+                        "type": "text"
+                    },
+                    {
+                        "name": "4",
+                        "label": "E",
+                        "type": "text"
+                    },
+                    {
+                        "name": "5",
+                        "label": "F",
+                        "type": "text"
+                    },
+                    {
+                        "name": "6",
+                        "label": "G",
+                        "type": "text"
+                    },
+                    {
+                        "name": "7",
+                        "label": "H",
+                        "type": "text"
+                    },
+                    {
+                        "name": "8",
+                        "label": "I",
+                        "type": "text"
+                    },
+                    {
+                        "name": "9",
+                        "label": "J",
+                        "type": "text"
+                    },
+                    {
+                        "name": "10",
+                        "label": "K",
+                        "type": "text"
+                    },
+                    {
+                        "name": "11",
+                        "label": "L",
+                        "type": "text"
+                    },
+                    {
+                        "name": "12",
+                        "label": "M",
+                        "type": "text"
+                    },
+                    {
+                        "name": "13",
+                        "label": "N",
+                        "type": "text"
+                    },
+                    {
+                        "name": "14",
+                        "label": "O",
+                        "type": "text"
+                    },
+                    {
+                        "name": "15",
+                        "label": "P",
+                        "type": "text"
+                    },
+                    {
+                        "name": "16",
+                        "label": "Q",
+                        "type": "text"
+                    },
+                    {
+                        "name": "17",
+                        "label": "R",
+                        "type": "text"
+                    },
+                    {
+                        "name": "18",
+                        "label": "S",
+                        "type": "text"
+                    },
+                    {
+                        "name": "19",
+                        "label": "T",
+                        "type": "text"
+                    },
+                    {
+                        "name": "20",
+                        "label": "U",
+                        "type": "text"
+                    },
+                    {
+                        "name": "21",
+                        "label": "V",
+                        "type": "text"
+                    },
+                    {
+                        "name": "22",
+                        "label": "W",
+                        "type": "text"
+                    },
+                    {
+                        "name": "23",
+                        "label": "X",
+                        "type": "text"
+                    },
+                    {
+                        "name": "24",
+                        "label": "Y",
+                        "type": "text"
+                    },
+                    {
+                        "name": "25",
+                        "label": "Z",
+                        "type": "text"
+                    }
                 ]
             }
         },
@@ -503,23 +1511,117 @@
             "id": 16,
             "module": "google-sheets:addSheet",
             "version": 2,
-            "parameters": { "__IMTCONN__": 1 },
+            "parameters": {
+                "__IMTCONN__": 1
+            },
             "filter": {
                 "name": "Solo si dedupe devolvio cero filas",
                 "conditions": [
                     [
-                        { "a": "{{length(15.array)}}", "b": "0", "o": "number:equal" }
+                        {
+                            "a": "{{length(15.array)}}",
+                            "b": "0",
+                            "o": "number:equal"
+                        }
                     ]
                 ]
             },
             "mapper": {
+                "select": "fromAll",
                 "spreadsheetId": "__SPREADSHEET_ID_LEADS__",
-                "title": "{{5.E}}",
-                "rowCount": 1000,
-                "columnCount": 9,
+                "properties": {
+                    "title": "{{5.E}}",
+                    "rowCount": 1000,
+                    "columnCount": 9
+                },
                 "headers": [
-                    "nombre", "cargo_actual", "empresa_actual", "ubicacion", "correo",
-                    "url_linkedin", "headline", "resumen_about", "fecha_extraccion"
+                    "nombre",
+                    "cargo_actual",
+                    "empresa_actual",
+                    "ubicacion",
+                    "correo",
+                    "url_linkedin",
+                    "headline",
+                    "resumen_about",
+                    "fecha_extraccion"
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 4500,
+                    "y": 0,
+                    "name": "G Add a Sheet (si falta) con headers"
+                },
+                "restore": {
+                    "parameters": {
+                        "__IMTCONN__": {
+                            "label": "Google Sheets (iapro)",
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            }
+                        }
+                    },
+                    "expect": {
+                        "select": {
+                            "label": "Select from all"
+                        },
+                        "spreadsheetId": {
+                            "rpcSearch": {
+                                "label": "iapro-leads",
+                                "value": "__SPREADSHEET_ID_LEADS__"
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
+                    }
+                ],
+                "expect": [
+                    {
+                        "name": "select",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "list",
+                                "fromAll",
+                                "map"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "properties",
+                        "type": "collection",
+                        "label": "Properties",
+                        "spec": [
+                            {
+                                "name": "title",
+                                "type": "text",
+                                "label": "Title",
+                                "validate": {
+                                    "max": 100
+                                }
+                            },
+                            {
+                                "name": "index",
+                                "type": "number",
+                                "label": "Index"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "text",
+                        "label": "Spreadsheet ID",
+                        "required": true
+                    }
                 ]
             },
             "onerror": [
@@ -530,150 +1632,328 @@
                     "parameters": {},
                     "mapper": {},
                     "metadata": {
-                        "designer": { "x": 4500, "y": 300, "name": "Ignore: pestana ya existe" }
-                    }
-                }
-            ],
-            "metadata": {
-                "designer": { "x": 4500, "y": 0, "name": "G Add a Sheet (si falta) con headers" },
-                "restore": {
-                    "expect": {
-                        "spreadsheetId": { "label": "iapro-leads (__SPREADSHEET_ID_LEADS__)" }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": { "scoped": "true", "connection": "google" },
-                            "label": "Google Sheets (iapro)"
+                        "designer": {
+                            "x": 4500,
+                            "y": 300,
+                            "name": "Ignore: pestana ya existe"
                         }
                     }
-                },
-                "parameters": [
-                    { "name": "__IMTCONN__", "type": "account:google-restricted", "label": "Connection", "required": true }
-                ]
-            }
+                }
+            ]
         },
         {
             "id": 17,
             "module": "google-sheets:addRow",
             "version": 2,
-            "parameters": { "__IMTCONN__": 1 },
+            "parameters": {
+                "__IMTCONN__": 1
+            },
             "mapper": {
                 "mode": "select",
                 "insertUnformatted": false,
                 "valueInputOption": "USER_ENTERED",
                 "insertDataOption": "INSERT_ROWS",
+                "from": "share",
                 "spreadsheetId": "__SPREADSHEET_ID_LEADS__",
                 "sheetId": "{{5.E}}",
                 "includesHeaders": true,
+                "useColumnHeaders": false,
                 "values": {
-                    "0": "{{13.fullName}}",
-                    "1": "{{13.experience[1].title}}",
-                    "2": "{{13.experience[1].companyName}}",
-                    "3": "{{13.location}}",
+                    "0": "{{12.fullName}}",
+                    "1": "{{12.experience[1].title}}",
+                    "2": "{{12.experience[1].companyName}}",
+                    "3": "{{12.location}}",
                     "4": "{{14.value}}",
                     "5": "{{10.link}}",
-                    "6": "{{13.headline}}",
-                    "7": "{{13.summary}}",
+                    "6": "{{12.headline}}",
+                    "7": "{{12.summary}}",
                     "8": "{{formatDate(now; \"YYYY-MM-DDTHH:mm:ssZ\")}}"
                 }
             },
             "metadata": {
-                "designer": { "x": 4800, "y": 0, "name": "G Add a Row (catalogo 9 columnas)" },
+                "designer": {
+                    "x": 4800,
+                    "y": 0,
+                    "name": "G Add a Row (catalogo 9 columnas)"
+                },
                 "restore": {
-                    "expect": {
-                        "mode": { "label": "Select" },
-                        "spreadsheetId": { "label": "iapro-leads (__SPREADSHEET_ID_LEADS__)" },
-                        "includesHeaders": { "label": "Yes" },
-                        "valueInputOption": { "label": "User entered" },
-                        "insertDataOption": { "label": "Insert rows" }
-                    },
                     "parameters": {
                         "__IMTCONN__": {
-                            "data": { "scoped": "true", "connection": "google" },
-                            "label": "Google Sheets (iapro)"
+                            "label": "Google Sheets (iapro)",
+                            "data": {
+                                "scoped": "true",
+                                "connection": "google"
+                            }
+                        }
+                    },
+                    "expect": {
+                        "mode": {
+                            "label": "Select"
+                        },
+                        "insertUnformatted": {
+                            "mode": "chose"
+                        },
+                        "valueInputOption": {
+                            "mode": "chose",
+                            "label": "User entered"
+                        },
+                        "insertDataOption": {
+                            "mode": "chose",
+                            "label": "Insert rows"
+                        },
+                        "from": {
+                            "label": "Select from all"
+                        },
+                        "spreadsheetId": {
+                            "path": [
+                                "iapro-leads"
+                            ]
+                        },
+                        "includesHeaders": {
+                            "label": "Yes"
+                        },
+                        "useColumnHeaders": {
+                            "label": "No"
                         }
                     }
                 },
                 "parameters": [
-                    { "name": "__IMTCONN__", "type": "account:google-restricted", "label": "Connection", "required": true }
-                ]
-            }
-        },
-        {
-            "id": 18,
-            "module": "builtin:Sleep",
-            "version": 1,
-            "parameters": {},
-            "mapper": { "delay": "{{1.sleep_paginacion_s}}" },
-            "metadata": {
-                "designer": { "x": 5100, "y": 0, "name": "H Sleep entre paginaciones" },
-                "restore": {},
-                "expect": [
-                    { "name": "delay", "type": "uinteger", "label": "Delay", "required": true, "validate": { "max": 300, "min": 1 } }
-                ]
-            }
-        },
-        {
-            "id": 19,
-            "module": "datastore:AddReplaceRecord",
-            "version": 1,
-            "parameters": { "datastore": "__DATASTORE_ID__" },
-            "mapper": {
-                "key": "{{5.E}}",
-                "overwrite": true,
-                "record": {
-                    "pestana": "{{5.E}}",
-                    "procesados": "{{13.fullName}}",
-                    "con_correo": "{{14.value}}",
-                    "url_linkedin": "{{10.link}}",
-                    "actualizado": "{{now}}"
-                }
-            },
-            "metadata": {
-                "designer": { "x": 5400, "y": 0, "name": "I Data Store: contadores por pestana" },
-                "restore": {
-                    "expect": {
-                        "datastore": { "label": "IApro Leads Scraper (__DATASTORE_ID__)" },
-                        "overwrite": { "label": "Yes" }
+                    {
+                        "name": "__IMTCONN__",
+                        "type": "account:google",
+                        "label": "Connection",
+                        "required": true
                     }
-                },
-                "parameters": [
-                    { "name": "datastore", "type": "datastore", "label": "Data store", "required": true }
-                ]
-            }
-        },
-        {
-            "id": 20,
-            "module": "email:ActionSendEmail",
-            "version": 1,
-            "parameters": { "__IMTCONN__": 3 },
-            "mapper": {
-                "to": ["__EMAIL_DESTINATARIO__"],
-                "subject": "IApro Leads Scraper - reporte de corrida",
-                "contentType": "text",
-                "content": "Corrida IApro Leads Scraper finalizada.\nEstimado SerpAPI: {{3.value}}\nConsumo real: revisar Data Store.\nUltima pestana escrita: {{5.E}}"
-            },
-            "metadata": {
-                "designer": { "x": 5700, "y": 0, "name": "I Notification reporte final" },
-                "restore": {
-                    "expect": {
-                        "contentType": { "label": "Text" }
-                    },
-                    "parameters": {
-                        "__IMTCONN__": {
-                            "data": { "scoped": "true", "connection": "email" },
-                            "label": "Email (iapro)"
-                        }
-                    }
-                },
-                "parameters": [
-                    { "name": "__IMTCONN__", "type": "account:email", "label": "Connection", "required": true }
                 ],
                 "expect": [
-                    { "name": "to", "type": "array", "label": "To", "required": true },
-                    { "name": "subject", "type": "text", "label": "Subject" },
-                    { "name": "contentType", "type": "select", "label": "Content type", "validate": { "enum": ["text", "html"] } },
-                    { "name": "content", "type": "text", "label": "Content" }
+                    {
+                        "name": "mode",
+                        "type": "select",
+                        "label": "Search Method",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "select",
+                                "fromAll",
+                                "map"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "insertUnformatted",
+                        "type": "boolean",
+                        "label": "Unformatted",
+                        "required": true
+                    },
+                    {
+                        "name": "valueInputOption",
+                        "type": "select",
+                        "label": "Value input option",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "USER_ENTERED",
+                                "RAW"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "insertDataOption",
+                        "type": "select",
+                        "label": "Insert data option",
+                        "validate": {
+                            "enum": [
+                                "INSERT_ROWS",
+                                "OVERWRITE"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "type": "select",
+                        "label": "Drive",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                "drive",
+                                "share",
+                                "team"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "spreadsheetId",
+                        "type": "file",
+                        "label": "Spreadsheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "sheetId",
+                        "type": "select",
+                        "label": "Sheet Name",
+                        "required": true
+                    },
+                    {
+                        "name": "includesHeaders",
+                        "type": "select",
+                        "label": "Table contains headers",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                true,
+                                false
+                            ]
+                        }
+                    },
+                    {
+                        "name": "useColumnHeaders",
+                        "type": "select",
+                        "label": "Use column headers as IDs of the columns",
+                        "required": true,
+                        "validate": {
+                            "enum": [
+                                true,
+                                false
+                            ]
+                        }
+                    },
+                    {
+                        "name": "values",
+                        "type": "collection",
+                        "label": "Values in columns",
+                        "spec": [
+                            {
+                                "name": "0",
+                                "type": "text",
+                                "label": "A"
+                            },
+                            {
+                                "name": "1",
+                                "type": "text",
+                                "label": "B"
+                            },
+                            {
+                                "name": "2",
+                                "type": "text",
+                                "label": "C"
+                            },
+                            {
+                                "name": "3",
+                                "type": "text",
+                                "label": "D"
+                            },
+                            {
+                                "name": "4",
+                                "type": "text",
+                                "label": "E"
+                            },
+                            {
+                                "name": "5",
+                                "type": "text",
+                                "label": "F"
+                            },
+                            {
+                                "name": "6",
+                                "type": "text",
+                                "label": "G"
+                            },
+                            {
+                                "name": "7",
+                                "type": "text",
+                                "label": "H"
+                            },
+                            {
+                                "name": "8",
+                                "type": "text",
+                                "label": "I"
+                            },
+                            {
+                                "name": "9",
+                                "type": "text",
+                                "label": "J"
+                            },
+                            {
+                                "name": "10",
+                                "type": "text",
+                                "label": "K"
+                            },
+                            {
+                                "name": "11",
+                                "type": "text",
+                                "label": "L"
+                            },
+                            {
+                                "name": "12",
+                                "type": "text",
+                                "label": "M"
+                            },
+                            {
+                                "name": "13",
+                                "type": "text",
+                                "label": "N"
+                            },
+                            {
+                                "name": "14",
+                                "type": "text",
+                                "label": "O"
+                            },
+                            {
+                                "name": "15",
+                                "type": "text",
+                                "label": "P"
+                            },
+                            {
+                                "name": "16",
+                                "type": "text",
+                                "label": "Q"
+                            },
+                            {
+                                "name": "17",
+                                "type": "text",
+                                "label": "R"
+                            },
+                            {
+                                "name": "18",
+                                "type": "text",
+                                "label": "S"
+                            },
+                            {
+                                "name": "19",
+                                "type": "text",
+                                "label": "T"
+                            },
+                            {
+                                "name": "20",
+                                "type": "text",
+                                "label": "U"
+                            },
+                            {
+                                "name": "21",
+                                "type": "text",
+                                "label": "V"
+                            },
+                            {
+                                "name": "22",
+                                "type": "text",
+                                "label": "W"
+                            },
+                            {
+                                "name": "23",
+                                "type": "text",
+                                "label": "X"
+                            },
+                            {
+                                "name": "24",
+                                "type": "text",
+                                "label": "Y"
+                            },
+                            {
+                                "name": "25",
+                                "type": "text",
+                                "label": "Z"
+                            }
+                        ]
+                    }
                 ]
             }
         }
@@ -699,8 +1979,13 @@
         "zone": "eu1.make.com",
         "notes": [
             {
-                "moduleIds": [2, 9, 12, 13, 15, 16, 17, 18, 19, 20],
-                "text": "R1: SerpAPI api_key = variable global SERPAPI_KEY (nunca embebida). Google Sheets spreadsheetId = placeholders __SPREADSHEET_ID_BUSQUEDAS__ / __SPREADSHEET_ID_LEADS__. Data Store = __DATASTORE_ID__. Email destino = __EMAIL_DESTINATARIO__. Verificar en import que ningun modulo aparezca en rojo (RG-1: solo http:ActionSendData y util:SetVariable estan verificados contra el repo)."
+                "moduleIds": [
+                    12,
+                    15,
+                    16,
+                    17
+                ],
+                "text": "v1.4: 5 fixes sobre el export de Sergio. m15 dedupe: filter recupera la clave 'a'=\"F\" (columna url_linkedin del catalogo A->I) y sheetId pasa a dinamico {{5.E}}. m16 Add a Sheet: mapper reconstruido (select=fromAll, properties.title={{5.E}}, rowCount=1000, columnCount=9, headers=9 columnas del catalogo). m17 Add a Row: quitado '/' inicial de spreadsheetId, sheetId dinamico {{5.E}}, from=drive->share. m12 Apify: las 2 conditions del filter van en el MISMO grupo (OR) en vez de grupos separados (AND imposible). En el repo van placeholders __SPREADSHEET_ID_BUSQUEDAS__/__SPREADSHEET_ID_LEADS__ y __IMTCONN__=1. VERIFICAR en Run once: m16 crea la pestana con los 9 headers (el expect del modulo no declara rowCount/columnCount/headers, se resuelven dinamicos); filterRows emite bundles con claves numericas (no .array) -> si {{2.array}}/{{5.A..E}}/{{15.array}} no resuelven, remapear a indices del bundle."
             }
         ]
     }

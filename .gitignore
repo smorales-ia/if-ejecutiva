@@ -19,6 +19,12 @@ yarn-error.log*
 # env files
 .env*
 
+# make blueprints listos-para-importar con secretos embebidos (nunca versionar)
+docs/_artefactos/make/_local/
+
+# exports de Make con IDs reales / connections / datos de cuenta (nunca versionar)
+docs/_artefactos/make/_debug/
+
 # vercel
 .vercel
 

@@ -1,5 +1,19 @@
-# Plan de Ejecución · IApro Leads Scraper v1.0
+# Plan de Ejecución · IApro Leads Scraper v1.3
 
+> **Versión del plan: v1.3** (12-sep-2026). Cambio respecto de v1.2: el module id REAL del "Select rows" de Google Sheets es **`google-sheets:filterRows`** (version 2) —confirmado por el export de Make (`docs/_artefactos/make/_debug/` v1.2)—; no existe `searchRows` ni `searchRowsAdvanced`. Se copió literal el shape del módulo del export en m2 (lectura Búsquedas) y m15, y **m15 quedó preconfigurado para el dedupe** en iapro-leads. Único paso manual tras importar: ver §5. Blueprint → v1.3.
+>
+> **Versión del plan: v1.2** (12-sep-2026). Cambio respecto de v1.1: el identificador `google-sheets:searchRowsAdvanced` usado en v1.1 **no existe** en la app Google Sheets de Make — m2 y m15 salían "Module Not Found" (rojos) al importar; se corrige al módulo real **`google-sheets:searchRows`** (version 2), conservando el mapper (filter builder avanzado). Blueprint → v1.2. *(Superado por v1.3: el id real es `filterRows`, no `searchRows`.)*
+>
+> **Versión del plan: v1.1** (11-sep-2026). Cambio respecto de v1.0: **resolución de los "Module Not
+> Found" del primer import** (RG-1 se materializó). El blueprint pasó a v1.1: (a) `google-sheets:searchRows`
+> → **`google-sheets:searchRowsAdvanced`** (m2 lectura Búsquedas y m15 dedupe) — la variante con *filter
+> builder* estructurado, coherente con los verdes `addSheet`/`addRow`; (b) **eliminados** los 2
+> `datastore:AddReplaceRecord` (contadores), el `email:ActionSendEmail` (notificación) y los 2
+> `builtin:Sleep` — todo **diferido a v2**; los `Break` con Retries=3 cubren el rate limit; (c)
+> **`apify:getDatasetItems` eliminado**: `apify:runActor` con `waitForFinish=true` devuelve los items del
+> dataset directamente; m14 y m17 leen `{{12.<campo>}}`. El bloque C conserva el filtro `linkedin.com/in`,
+> movido al m12 al borrar el Sleep que lo alojaba. Flujo: 13 módulos (antes 20). Sin tandas nuevas.
+>
 > **Versión del plan: v1.0** (11-sep-2026). Base normativa: `docs/_md/SPEC-iapro-leads-scraper-v4.md`
 > (SPEC v4.0 — Make.com). Gobierna **una sola automatización Make**, no una app. Estilo tomado de
 > `plan_ejecucion_UItasador_v1.5.md` §0/§2 (rigor y accionabilidad), sin replicar su volumen.
@@ -179,19 +193,21 @@ bloque C funcional. · Aceptación: con `max_pages=1` devuelve `organic_results`
 `https://…linkedin.com/in/`.
 
 **P3 · Bloque D–E.**
-Qué: `Sleep sleep_perfil_s` + Apify `Run an Actor` (sync) + `Get Dataset Items` + `SetVariable correo`
-(regex) + filtro `correo ≠ vacío`. · Entregable: bloque D–E funcional. · Aceptación: un perfil real
-devuelve `fullName`/`summary` y el filtro descarta los sin correo.
+Qué: Apify `Run an Actor` (`waitForFinish=true`, devuelve items del dataset; el filtro `linkedin.com/in`
+va sobre este módulo) + `SetVariable correo` (regex sobre `{{12.summary}}`) + filtro `correo ≠ vacío`. ·
+Entregable: bloque D–E funcional. · Aceptación: un perfil real devuelve `fullName`/`summary` bajo el
+output de `runActor` y el filtro descarta los sin correo. ⚠ Confirmar en el smoke test el path real del
+output de `runActor` y remapear `{{12.<campo>}}` si Make los expone bajo una clave anidada.
 
 **P4 · Bloque F–G.**
-Qué: `Search Rows` dedupe en `{nombre_hoja}` + filtro cero filas + `Add a Sheet` (si falta, headers) +
-`Add a Row` (9 columnas). · Entregable: escritura con dedupe. · Aceptación: primera corrida crea pestaña
-+ encabezados y escribe fila; segunda corrida no duplica (R4).
+Qué: `Search Rows (Advanced)` dedupe en `{nombre_hoja}` + filtro cero filas + `Add a Sheet` (si falta,
+headers) + `Add a Row` (9 columnas). · Entregable: escritura con dedupe. · Aceptación: primera corrida
+crea pestaña + encabezados y escribe fila; segunda corrida no duplica (R4).
 
-**P5 · Bloque H–I.**
-Qué: `Sleep sleep_paginacion_s` (fin Repeater) + Data Store contadores
-(`procesados`/`con_correo`/`duplicados`/`errores`) + `Notification` final. · Entregable: reporte
-consolidado. · Aceptación: al terminar, la notificación trae el estimado inicial y el consumo real.
+**P5 · (diferido a v2).**
+El bloque H–I original (`Sleep` de paginación + Data Store de contadores + `Notification` email) **sale
+de v1**: el rate limit lo cubren los `Break` (Retries=3) y la telemetría/notificación quedan para v2. Sin
+tanda en esta versión; el flujo termina tras P4.
 
 **P6 · Smoke test.**
 Qué: `Run once` con **1 fila activa** en `iapro-busquedas` y `max_pages=1`. · Entregable: 1 corrida
@@ -227,6 +243,8 @@ con una pestaña por búsqueda activa. · Aceptación: todos los criterios §3; 
 - Columnas distintas por pestaña en la misma corrida.
 - Paginación distinta por búsqueda.
 - Ejecución programada (v1 solo manual, con `Run once`).
+- Notificación email al finalizar (diferido a v2).
+- Contadores en Data Store (diferido a v2).
 
 ---
 
@@ -239,3 +257,22 @@ con una pestaña por búsqueda activa. · Aceptación: todos los criterios §3; 
   este escenario Make, pero verificar antes de push.
 - Blueprint vive en `docs/_artefactos/make/SC-IApro-LeadsScraper.blueprint.json` (R1). Cada cambio:
   bumpear `name` y reimportar (R3).
+
+### §5.1 · Paso manual único tras importar v1.3
+
+El blueprint v1.3 importa verde pero trae placeholders que Make no puede resolver solo.
+Tras **Import Blueprint**, hacer **una sola vez**:
+
+1. **Reemplazar 3 placeholders** (nunca commitear los valores reales al repo — quedan sólo en el
+   scenario de Make):
+   - `__SPREADSHEET_ID_BUSQUEDAS__` → ID real del sheet **iapro-busquedas** (m2).
+   - `__SPREADSHEET_ID_LEADS__` → ID real del sheet **iapro-leads** (m15 dedupe + m16/m17 escritura).
+   - `__COL_URL_LINKEDIN__` (m15, campo *Filter*) → letra real de la columna `url_linkedin`
+     en la pestaña destino (A/B/C…). Es la columna contra la que se deduplica `{{10.link}}`.
+2. **Configurar la variable global** `SERPAPI_KEY` (Scenario → más opciones → variables).
+3. **Reconectar las 2 cuentas**: Google Sheets (m2, m15, m16, m17) y Apify (m12).
+4. **Run once** con 1 fila activa en Búsquedas y `max_pages=1` (m1) para smoke test. En esa corrida
+   **confirmar el shape de salida de `filterRows`**: emite un bundle por fila con claves numéricas
+   (`0`=keyword/A … `4`=nombre_hoja/E), no una colección `.array`; si los consumidores
+   `{{2.array}}`/`{{5.A..E}}`/`{{15.array}}`/`length(15.array)` no resuelven, remapear a las claves
+   por índice del bundle.
