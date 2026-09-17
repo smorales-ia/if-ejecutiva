@@ -2310,3 +2310,805 @@ fijar el contrato. Y una nota de método sobre el formato de trabajo: los cuatro
 aparecieron en la fase de propuesta o al redactar el docblock, no ejecutando — el bloque de
 propuesta previa a cada tanda es lo que los cazó, y el único que se escapó (**RO-38**) fue el que
 la propuesta dio por sentado sin ir a mirar.
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+
+### 2026-09-04 — VP-2026-0060: adjunto huérfano por `reused` sin verificar Dropbox
+**Contexto:** incidente confirmado. El usuario borró a mano en Dropbox la foto de
+Ofertas/Comparables de VP-2026-0060 y la re-subió por la UI. SC-Adjuntos-Upload encontró el
+`hash_md5` en TX_Adjuntos (módulo 2) y respondió `reused: true` sin re-subir a Dropbox: fila viva
+apuntando a un path inexistente, UI en OK y Dropbox vacío.
+**Inconveniente:** el escenario opera "según diseño"; la falla no es un bug de código sino un
+supuesto tácito del módulo 2: "si existe la fila (hash+solicitud), el binario está en Dropbox".
+Deja de ser cierto cuando alguien borra el archivo fuera de la aplicación.
+**Causa raíz:** la reutilización se decidía sólo por el índice de Airtable, sin comprobar la
+existencia física del binario. Un borrado externo (manual, sincronización, limpieza) rompe la
+premisa sin que el escenario lo note.
+**Solución aplicada:** (1) Fila huérfana identificada para eliminación manual: `rec8WypPYugEYaicK`
+(única fila de la solicitud; categoría en `descripcion=ofertas_comparables`, `clave_adjunto`
+vacío). (2) Fix definitivo = opción (a): se reescribió §8.6.2 de la spec normativa
+(`VProperty_Especificacion_Proyecto_v1_9_15.md`) agregando el **Módulo 2b · Verificación de
+existencia física en Dropbox** (Get file metadata sobre `{{2.url_dropbox}}`, error `path_not_found`
+en modo *resume*) y separando el router en cuatro ramas: **reutilización** (fila + archivo
+presente), **re-subida por huérfano** (fila presente + archivo ausente → borra fila, re-sube, crea
+fila nueva, evento `adjunto_resubido`, responde `modo:"nuevo"`), reemplazo y alta. El contrato
+§8.6.1 no cambia y el cliente no requiere cambios.
+**Prevención futura:** ante una decisión de idempotencia sobre un recurso externo (Dropbox, S3,
+etc.), no confiar sólo en el índice interno; verificar la existencia real antes de "reutilizar".
+Descartada la opción (b) —cerrar permisos— por no reparar huérfanos existentes ni cubrir otras
+causas de desaparición. Falta llevar el cambio al blueprint ejecutable de Make (SC-Adjuntos-Upload,
+hoy v1.4) y reimportar.
+
+### 2026-09-04 — SC-Adjuntos-Upload v1.4→v1.5: implementación del módulo 2b en el blueprint
+**Contexto:** materializar en el blueprint ejecutable de Make el módulo 2b (verificación Dropbox) y
+la rama huérfano diseñados en §8.6.2.
+**Inconveniente:** el primer diseño ponía un filtro `{{2.id}} exist` en el propio módulo 2b para que
+sólo corriera "cuando hay match". Pero el módulo 2b va en el flujo principal, ANTES del router.
+**Causa raíz:** en Make, un filtro sobre un módulo lineal bloquea TODO lo que va después de él en esa
+ruta. Si el filtro de 2b fallaba (caso alta/reemplazo, sin match), el router entero quedaba sin
+ejecutarse → sin upload ni respuesta → la app colgaba.
+**Solución aplicada:** el módulo 2b (id 19, `dropbox:getFileMetadata` v5) se deja SIN filtro, corre
+siempre; con `{{2.url_dropbox}}` vacío (sin match) Dropbox devuelve error y la directiva `builtin:Resume`
+(id 26) lo resuelve a salida vacía sin detener el flujo. La condición "cuando hay match" se traslada a
+los filtros de las ramas del router: reused = `{{2.id}}` exist AND `{{19.id}}` exist; huérfano =
+`{{2.id}}` exist AND `{{19.id}}` notexist. La rama huérfano (ids 20-25) espeja a reemplazo salvo el
+delete de Dropbox, y sube con `overwrite:true` para ser idempotente ante un falso negativo del metadata.
+Validado con `python3 -c json.load`: JSON OK, IDs únicos `[…,11,19,26,3,4,5,20-25,12,…]`, 4 ramas.
+**Prevención futura:** en Make, para condicionar un módulo sin cortar el resto del flujo, o se mete el
+módulo dentro de una ruta del router, o se deja correr siempre con `Resume` y se decide en los filtros
+de las ramas. Nunca un filtro gatillo en un módulo lineal pre-router. Pendiente: no se pudo verificar
+contra Make la clave/versión exacta de `dropbox:getFileMetadata` ni de `builtin:Resume` (el MCP no
+alcanza Make); quedaron señalados en claude-out.txt para confirmar en la UI tras importar.
+
+### 2026-09-04 — v1.5→v1.6: `dropbox:getFileMetadata` no existe; usar `makeAnAPICall`
+**Contexto:** al importar el v1.5 en Make, el módulo 2b falló con "Module Not Found:
+dropbox:getFileMetadata".
+**Inconveniente:** ese identificador fue *inventado* por analogía (deleteFile/uploadLargeFile v5),
+sin verificarlo. La app oficial de Dropbox en Make no tiene ninguna acción de metadata dedicada.
+**Causa raíz:** asumir un nombre de módulo Make sin contrastarlo contra la spec oficial de la app.
+Es exactamente lo que CLAUDE.md advierte al auditar módulos escritos a mano.
+**Solución aplicada:** verificado en la doc oficial (apps.make.com/dropbox) que existen "Make an API
+Call", "Download a File", "Search Files/Folders" y "Get Files/Folders", pero **ningún** getMetadata.
+Elegida la opción (a): módulo 2b = `dropbox:makeAnAPICall` (v1) con `POST /2/files/get_metadata`,
+cuerpo `{"path":"{{2.url_dropbox}}"}`, header `Content-Type: application/json`, y `builtin:Resume`
+ante el `409 path/not_found`. El test de existencia pasó de `{{19.id}}` a `{{19.statusCode}}`
+(presente=200 → reused; ausente por resume → huérfano). Reusa la conexión Dropbox 7553318. JSON
+revalidado: OK, IDs únicos, 4 ramas, sin residuos de `getFileMetadata` ni `{{19.id}}`.
+**Prevención futura:** NUNCA escribir un identificador de módulo Make sin verificarlo contra la spec
+oficial de la app (apps.make.com/<app>) o un blueprint real. Ante dudas de existencia de un módulo,
+preferir "Make an API Call" (universal, siempre presente) apuntando al endpoint REST del proveedor:
+elimina la clase entera de errores "Module Not Found". Descartadas (b) List Folder (parseo/paginación)
+y (c) Get a File (descarga el binario) por más costosas o frágiles.
+
+### 2026-09-04 — REGLA DE MÉTODO: identificadores de módulo Make se COPIAN, no se deducen
+**Contexto:** el módulo 2b de SC-Adjuntos-Upload falló al importar dos veces seguidas.
+**Inconveniente:** v1.5 usó `dropbox:getFileMetadata` (inventado por analogía) → "Module Not Found".
+v1.6 usó `dropbox:makeAnAPICall` (deducido de doc/web, no del repo) → "Module Not Found" otra vez.
+El consejo del propio aprendizaje anterior ("preferir Make an API Call") era también una deducción.
+**Causa raíz:** escribir identificadores de módulo Make por deducción (analogía, doc oficial, búsqueda
+web) en vez de copiarlos de un artefacto real y funcionando. La doc/web no garantiza el identificador
+interno exacto ni su versión para ESTE cliente.
+**Regla (obligatoria de aquí en adelante):** ningún identificador de módulo Make se escribe por
+deducción. Se COPIA LITERAL desde un blueprint real y funcionando del repo del cliente
+(`docs/_artefactos/make/*.json` y `docs/_artefactos/produccion-actual/*.json`). Si no aparece en
+ninguno de esos blueprints, no se usa. Antes de escribir un blueprint, inventariar el catálogo de
+identificadores presentes y elegir SOLO de ahí; al terminar, cross-check de que cada `"module"` usado
+aparece textualmente en otro blueprint del repo.
+**Solución aplicada (v1.7):** inventariado el catálogo real (9 blueprints). Módulos Dropbox proven:
+`dropbox:deleteFile` v5, `dropbox:uploadLargeFile` v5, `dropbox:getFile` v5. Directivas de error
+proven: `builtin:Ignore` (SC-Asignar), `builtin:Commit` (SC-Adjuntos-Delete) — `builtin:Resume` NO
+estaba en ningún blueprint real, así que también se descartó. HTTP genérico proven: `http:ActionSendData`
+v3, pero autentica con API key literal en header (SC-RF09 con Claude); contra Dropbox exigiría un Bearer
+que caduca → inviable. Elegido 2b = `dropbox:getFile` v5 (copiado literal de SC-RF09 id 9: mapper
+`path` + `select:"map"`, conexión OAuth 7553318). Como `Ignore`/`Commit` cortan el flujo ante error, la
+sonda no puede ir antes del Router (rompería alta/reemplazo): se movió DENTRO de la rama reused como
+primer módulo, con la reparación huérfano en su `onerror` cerrada con `builtin:Commit` (patrón del
+módulo 12 de este mismo blueprint). Router quedó en 3 ramas + bifurcación éxito/error de la sonda.
+Cross-check automático: los 10 módulos de v1.7 aparecen en otros blueprints del repo. Acepta el coste
+de que `getFile` descargue el binario (sólo en el caso reused, archivos pequeños).
+**Prevención futura:** la regla de arriba. Y guardar en el repo los backups de producción
+(`docs/_artefactos/produccion-actual/`) como catálogo de referencia vivo.
+
+### 2026-09-04 — RF-09 comparables: cero ejecuciones porque la foto sube sin tipo_documento
+**Contexto:** el tasador fotografía el cuadro de comparables, la foto sube bien a Dropbox y a
+TX_Adjuntos, pero SC-RF09-ExtraccionClaude v2.0 (hook 3393157) tiene el escenario ON y cero
+ejecuciones en History; la UI queda en «0 de 3 comparables leídos del cuadro».
+**Inconveniente:** el webhook de RF-09 nunca se llamaba y no había pista en Make (History sólo con
+«Scenario was edited»).
+**Causa raíz:** el disparo de RF-09 depende de la automation `AT-RF09-Trigger`, que sólo hace el POST
+al webhook si la fila de TX_Adjuntos trae `clave_adjunto` (código de D_TipoDocumento). SC-Adjuntos-Upload
+escribe `clave_adjunto = {{1.tipo_documento}}`, pero `subirFotoDeVisita` (lib/tasador/fotos.ts) subía
+las fotos de la visita **sin** `tipo_documento`. Con `clave_adjunto` vacío la automation aplica RN-25
+(«sin tipo declarado»), marca `estado_extraccion = 'skipped'` y retorna sin llamar al webhook → cero
+ejecuciones + TX_Comparables sin poblar. La spec §8.6.1 ya definía el código correcto:
+`foto_ofertas_comparables`.
+**Solución aplicada:** en `lib/tasador/fotos.ts` se agregó `TIPO_DOCUMENTO_POR_CATEGORIA`
+(`ofertas_comparables → foto_ofertas_comparables`) y `subirFotoDeVisita` ahora envía ese
+`tipo_documento` a `uploadConReintentos` sólo para la foto del cuadro; el resto de categorías sigue
+subiendo con `tipo_documento` undefined (sin cambio). Dos tests nuevos en `fotos.test.ts`
+(16/16 verde). No se tocó ningún blueprint ni el script de la automation: el diseño ya esperaba
+`clave_adjunto`; faltaba que la app lo mandara.
+**Prevención futura:** una foto que dispara extracción no es sólo una «foto de visita» — debe viajar
+con su `tipo_documento`/`clave_adjunto`, que es la llave con la que AT-RF09-Trigger decide disparar.
+Al depurar «webhook Make no ejecuta», descartar primero el disparador aguas arriba (¿la fila trae la
+clave que la automation exige?) antes de sospechar de Make. Nota: si `clave_adjunto` ya viene poblado
+y Make sigue sin ejecutar, el pendiente es CI-002 (URL/HMAC de la automation).
+
+### 2026-09-04 — RF-09 comparables (2ª vuelta): el fix de cliente no bastó; se movió al servidor
+**Contexto:** tras el fix anterior (tasador manda `tipo_documento` en la subida), en producción la
+fila nueva de TX_Adjuntos seguía con `clave_adjunto` vacío, `tipo_adjunto="foto_interior"`,
+`descripcion="ofertas_comparables"`, y Make SC-RF09 sin ejecuciones nuevas.
+**Inconveniente:** el fix estaba commiteado (7687782) y era correcto de punta a punta, pero no surtía
+efecto en runtime.
+**Causa raíz:** la cadena código→Make estaba bien (verificado línea por línea: fotos-categorizadas.tsx
+pasa "ofertas_comparables"; fotos.ts lo mapea a "foto_ofertas_comparables"; adjuntos-uploader lo pone
+en el body; upload/route lo reenvía; el webhook del blueprint declara `tipo_documento` y CreateRecord
+escribe `clave_adjunto = {{1.tipo_documento}}`). Que `clave_adjunto` llegara vacío significa que el
+`tipo_documento` no viajó en runtime — bundle viejo en el navegador del tasador (deploy/caché) o el
+webhook en vivo sin el campo. Ambas son runtime/config, no bug de fuente. La debilidad de fondo: el
+fix dependía 100% de que el cliente mandara el dato y de que Make lo parseara. Pista de que Make sí
+funciona: logs de agosto con `clave_adjunto="foto_ofertas_comparables"` (subido por la Ejecutiva).
+**Solución aplicada:** se dejó de depender del cliente. El PATCH server-side de
+`app/api/tasaciones/[id]/fotos/route.ts` ahora escribe `clave_adjunto="foto_ofertas_comparables"`
+DIRECTO en Airtable (sin pasar por Make) para la categoría `ofertas_comparables`. Como la automation
+`recordCreated` de Airtable dispara con segundos de retraso y el PATCH corre ~1s tras la subida,
+`clave_adjunto` queda poblado antes de que la automation lea la fila, incluso con cliente stale. Se
+creó `lib/tasador/tipo-documento-foto.ts` como fuente única del mapa categoría→código (lo usan el
+cliente en la subida y el servidor en el PATCH), se agregó `clave_adjunto` a `AdjuntoFotoFields`, y
+tests en ambos archivos. 35/35 verde; typecheck sólo con los 2 errores preexistentes de coordinacion*.
+**Prevención futura:** cuando un dato es la llave de un disparador (aquí `clave_adjunto` para
+AT-RF09-Trigger), escribirlo por la vía que NO dependa del bundle del cliente ni del parseo del
+webhook — el servidor, que siempre corre el último deploy y escribe directo en Airtable. Si el mismo
+valor lo necesitan cliente y servidor, un módulo compartido sin "use client" evita que se desincronicen.
+Diagnóstico exprés para «Make no ejecuta»: DevTools→Network→payload de /api/adjuntos/upload muestra al
+instante si el campo viajó (stale bundle) o no (config Make).
+
+### 2026-09-04 — RF-09 comparables: rescate del `skipped` + key hardcodeada en SC-RF09
+**Contexto:** continuación del fix de comparables. Aun escribiendo `clave_adjunto` server-side (fix
+del 04-09 anterior), la extracción RF-09 seguía sin correr y `TX_Comparables` quedaba vacía.
+**Inconveniente:** dos bugs distintos. (1) Timing real, no el supuesto ayer: `AT-RF09-Trigger` corre en
+`recordCreated` cuando `clave_adjunto` todavía está vacío → aplica RN-25 → deja la fila en
+`estado_extraccion='skipped'`, que es **terminal**. El PATCH repone `clave_adjunto` después, pero el
+`recordUpdated` encuentra `skipped` y no reactiva nada: la extracción no se reintenta nunca. (2)
+Seguridad: el módulo 10 (HTTP a `api.anthropic.com`) del blueprint `SC-RF09-ExtraccionClaude v2.0`
+tenía la **API key de Anthropic hardcodeada** en el header `x-api-key`, versionada en git.
+**Causa raíz:** (1) reponer `clave_adjunto` no basta si la fila ya cayó en un estado terminal; falta
+devolverla al único estado no-terminal (`idle`) para que `recordUpdated` la re-evalúe con la llave ya
+poblada. (2) el HTTP crudo (`http:ActionSendData`) no liga connection y alguien puso la key en claro.
+**Solución aplicada:** (a) en `PATCH /api/tasaciones/[id]/fotos` se repone `estado_extraccion='idle'`
+en el mismo `updateRecord`, **sólo** cuando se escribe una `clave_adjunto` (foto de comparables) Y la
+fila está en `skipped` — no se pisa `listo`/`extrayendo`/`error`. Se agregó `estado_extraccion` a
+`AdjuntoFotoFields` y 3 tests (rescata skipped, no toca listo, no rescata categoría sin RF-09); 22/22
+verde. (b) blueprint bumpeado a `v2.1`: módulo 10 pasa de `http:ActionSendData` a
+`http:ActionSendDataApiKeyAuth` con `__IMTCONN__` (keychain Anthropic), header `x-api-key` eliminado
+del mapper; JSON válido, `grep sk-ant` = 0. Pendiente operativo del usuario: crear la connection
+keychain en Make al reimportar y **rotar la key** en console.anthropic.com (estuvo expuesta en git).
+**Prevención futura:** un estado terminal (`skipped`, `error`) no se auto-recupera al corregir el dato
+que lo causó; hay que reponerlo explícitamente a un estado no-terminal para que el trigger de update
+vuelva a evaluar. Y ningún secreto va en el `mapper` de un módulo HTTP: el módulo `*ApiKeyAuth` con
+keychain existe precisamente para eso.
+
+### 2026-09-04 — SC-RF09 v2.1: "Module Not Found" al importar y modelo inexistente
+**Contexto:** el blueprint v2.1 del commit 317d73d no importaba en Make: "Module Not Found" en el
+módulo 10 (llamada HTTP a Anthropic).
+**Inconveniente:** el fix anterior cambió el módulo 10 de `http:ActionSendData` a
+`http:ActionSendDataApiKeyAuth` creyendo que era la variante HTTP con keychain. **Ese módulo no
+existe** en Make: la app HTTP sólo trae `ActionSendData`, `ActionSendDataBasicAuth` y
+`ActionSendDataOAuth2` — no hay un `ApiKeyAuth`. Al importar, Make no resuelve el nombre y aborta el
+módulo. Segundo hallazgo, colateral: el blueprint commiteado traía `"model": "claude-sonnet-5"`, que
+**no es un ID de modelo válido** de Anthropic (los reales son `claude-sonnet-4-6`, `claude-opus-4-8`,
+`claude-fable-5`, `claude-haiku-4-5-*`); habría fallado con error de modelo aunque el import pasara.
+**Causa raíz:** se inventó un tipo de módulo por analogía con los de Airtable/Dropbox (que sí ligan
+`__IMTCONN__`), sin verificarlo contra los tipos reales de la app HTTP. `http:ActionSendData` **no
+soporta connection ni keychain**: es una petición cruda y el secreto se ingresa en el propio campo del
+header dentro de la UI de Make. No hay forma connection-based para un HTTP crudo.
+**Solución aplicada:** se reconstruyó el blueprint desde el backup probado
+(`_backup/SC-RF09-ExtraccionClaude v2.0_backup_2026-09-04.json`) con `cp`, preservando el flujo
+completo (webhook 3393157, Airtable search/update/create, Dropbox, router, ramas huérfano, JSON
+parsers, respuestas). Sólo se tocaron dos cosas: `name` → v2.1 y el valor del header `x-api-key`, que
+pasó de la key en claro a un placeholder `PEGA-AQUI-LA-API-KEY-NUEVA-EN-MAKE`. El módulo 10 vuelve a
+ser `http:ActionSendData` (importa OK) y la reconstrucción restaura de paso `claude-sonnet-4-6`.
+Validación: `grep sk-ant`=0, header `x-api-key` presente sin valor real, `python -m json.tool` OK, y
+los 10 tipos de módulo del v2.0 intactos. Sergio pega la key nueva en el header del módulo 10 tras
+reimportar (la key vieja ya la rotó).
+**Prevención futura:** antes de cambiar el `module` de un blueprint, verificar que el tipo existe en un
+blueprint que YA importó en Make; no derivar el nombre por analogía. Para un HTTP crudo con secreto, el
+patrón real no es "connection" —`http:ActionSendData` no la soporta— sino pegar el valor en el campo
+del header en la UI y mantener el placeholder en git. Y todo `model` de una llamada a Anthropic se
+contrasta contra la lista vigente de IDs antes de commitear (ver skill claude-api): `claude-sonnet-5`
+no existe.
+
+### 2026-09-04 — RF-09 nunca dispara: AT-RF09-Trigger sólo escucha recordCreated
+**Contexto:** con el PATCH server-side (rescate skipped→idle) y el blueprint v2.1 ya arreglados, la
+extracción de comparables seguía sin correr: Make History no mostraba ningún run tipo Webhook.
+**Inconveniente:** la fila de TX_Adjuntos quedaba en el estado correcto pero el webhook jamás se
+llamaba. Verificado vía MCP en la fila real `recps2S7A7xTB66ha` (VP-2026-0060, 2026-09-04 20:49):
+`clave_adjunto="foto_ofertas_comparables"` ✓ y `estado_extraccion="idle"` ✓ — exactamente el estado
+que debería disparar RF-09, y aun así nada.
+**Causa raíz:** la automation `AT-RF09-Trigger` (`wflIEucD1MxxcNXH8`) tiene **un solo trigger,
+`recordCreated`** (confirmado con `get_automation`: `trigger.type="recordCreated"`). Pero para la foto
+de comparables la `clave_adjunto` y el `idle` los escribe el PATCH server-side vía **update**, segundos
+DESPUÉS de crear la fila. El `recordCreated` ya pasó (con la llave vacía → RN-25 → skipped) y **no hay
+ninguna automation con `recordUpdated`** enganchada a `estado_extraccion` (la única recordUpdated sobre
+la tabla es AT03-Ext, que vigila otro campo, `fldeCH15RrL8f4TZk`). El docblock del script SIEMPRE dijo
+"recordCreated O recordUpdated watching estado_extraccion", pero la segunda gemela nunca se desplegó.
+Todo el diseño de rescate del PATCH dependía de un trigger de update que no existía.
+**Solución aplicada:** se documenta y se pide desplegar la automation gemela `AT-RF09-Trigger-Update`
+(mismo script, mismos inputs/secrets) con trigger `recordUpdated` watching `estado_extraccion`. Se
+decidió NO crearla vía MCP: `customScript` es creable pero exige reinyectar ~9 KB de script inline
+(riesgo de transcripción en producción); la vía fiel es **duplicar** la automation en la UI de Airtable
+(copia script+inputs+secrets exactos) y cambiar sólo el trigger. Sin cambio de código de app: la fila
+ya quedaba en idle+clave; el hueco era 100% de configuración de la automation. Breadcrumb de despliegue
+agregado al docblock de `AT-RF09-Trigger_script.js`.
+**Prevención futura:** cuando un fix server-side corrige un dato "para que un trigger re-evalúe",
+verificar que ESE trigger existe y escucha el evento correcto (create vs update) ANTES de dar el fix por
+cerrado. Un `recordCreated` no ve cambios posteriores; si el dato se completa por update, hace falta una
+automation `recordUpdated`. Diagnóstico exprés: `get_automation` sobre la automation muestra
+`trigger.type` real en una línea. Para replicar un script complejo en una segunda automation, duplicar
+en la UI (fiel) en vez de recrear por MCP (transcripción).
+
+### 2026-09-04 — La gemela recordUpdated tampoco dispara: watch field frágil + prueba con dedup
+**Contexto:** creada y activada la gemela `AT-RF09-Trigger-Update` (recordUpdated watching
+estado_extraccion), su historial seguía VACÍO tras subir la foto de comparables ~23:03.
+**Inconveniente:** la gemela nunca corrió pese a estar bien configurada.
+**Causa raíz (evidencia MCP):** dos cosas se sumaron. (1) La fila más nueva de comparables leída vía
+`search_records` seguía siendo la de las 20:49 (`recps2S7A7xTB66ha`, VP-2026-0060, estado=idle,
+clave=foto_ofertas_comparables): **no se creó fila nueva a las 23:03** → la re-subida fue del mismo
+archivo y `SC-Adjuntos-Upload` la deduplicó por `hash_md5`, sin crear ni cambiar nada → ningún
+recordUpdated → la gemela no tenía qué disparar (prueba inconcluyente). (2) Aun con una subida nueva,
+vigilar `estado_extraccion` es frágil: la fila hace `idle→skipped→idle` en ~1-2 s (recordCreated pone
+skipped, el PATCH rescata idle) y Airtable puede coalescer ambos writes dentro de su ventana de
+debounce viendo un NETO idle→idle (sin cambio) → la gemela no dispara nunca. Confirmado además que
+`estado_extraccion` es singleSelect **sin default** (via `get_table_schema`).
+**Solución aplicada:** (a) la gemela debe vigilar **`clave_adjunto`** (fldaLLtzAaEn1O8IW), que pasa
+vacío→"foto_ofertas_comparables" en una sola transición limpia sin rebote — disparo confiable; añadir
+estado_extraccion al watch sólo como extra para el reproceso. (b) Código: en `PATCH
+/api/tasaciones/[id]/fotos` se amplió el rescate: repone `estado_extraccion='idle'` cuando el estado
+actual es re-extraíble (`''`, `skipped`, `error`), no sólo `skipped`; protege `extrayendo` y `listo`.
+Así, cuando la gemela dispara por el cambio de clave, la fila garantiza `idle` y el guard del script
+(`=== 'idle'`) pasa aunque el campo llegara vacío. `route.test.ts` 24/24 verde (tests para error, vacío,
+y protección de listo/extrayendo). (c) Documentado en el docblock del script que al probar hay que subir
+una foto NUEVA (hash distinto) para no caer en el dedup.
+**Prevención futura:** para disparar una automation `recordUpdated`, elegir un campo con una transición
+ÚNICA y monótona (empty→value), no uno que rebote (idle→skipped→idle) porque el debounce de Airtable
+puede anular el neto. Y al probar pipelines con dedup por hash, usar siempre un binario nuevo: reusar el
+archivo enmascara el fix como si no funcionara.
+
+### 2026-09-04 — Pantalla de lectura: «Datos listos» + aviso + botón gris (contradicción) y BUG-3 falso positivo
+**Contexto:** RF-09 ya corría end-to-end (gemela + Make v2.1 success, 7 comparables extraídos). Quedaban
+tres avisos en la pantalla `/tasaciones/[id]/lectura` y en el run de Make.
+**Inconvenientes y causa raíz (evidencia MCP):**
+- **BUG 1+2 (mismo origen).** La pantalla mostraba a la vez «Datos listos» (stepper verde), el aviso
+  «No pudimos leer algunos documentos. Puedes completar esos datos a mano.» y el botón «Continuar»
+  DESHABILITADO. Causa: en `lib/tasador/avance-lectura.ts`, `puedeContinuar = completo && bloqueados===0`
+  con `bloqueados = error + delegado_visador` (§7.3). Un adjunto en `error` es terminal (→ stepper
+  completo, fase 2) pero bloqueaba el botón, mientras el copy invitaba a completar a mano: el tasador
+  quedaba atrapado. Leída la tasación `rec75VXoWvRImjd0f` (VP-2026-0060) vía MCP: hoy tiene UN solo
+  adjunto (la foto de comparables, `estado_extraccion=listo`), así que ahora mismo no hay doc fallido;
+  el aviso que vio Sergio fue de un intento previo con un doc en `error`. La contradicción vive en el
+  código y es reproducible con cualquier `error`.
+- **BUG 3 (falso positivo).** En el run de Make e385735083, el módulo 13 "Airtable Update" mostró
+  «The bundle did not pass through the filter». Es una rama de router ESPERADA: su filtro es
+  `length(25.items) == 0` («Mismatch: 0 atributos extraidos», hijo módulo 15 → `estado_extraccion=error`).
+  El run extrajo 7 items (`≠ 0`), así que esa rama de error correctamente no pasó; la rama gemela
+  (`items != 0`) creó los comparables y respondió el webhook. Nada quedó sin escribir.
+**Solución aplicada:** decisión de producto (D-2026-09-04, **diverge de §7.3**): todo estado terminal
+habilita continuar. `puedeContinuar` pasó a ser `= completo`; se removió `bloqueados`/`BLOQUEANTES`.
+`error`/`delegado_visador` siguen exponiéndose por `hayError`/`hayDelegado` para el aviso ámbar, pero ya
+no cierran el botón. Actualizados docblocks de `avance-lectura.ts` y `estado-procesando.tsx`, y ambos
+tests (`avance-lectura.test.ts` con el caso pedido «datos-listos con doc no leído → botón habilitado»,
+`estado-procesando.test.ts`). 39/39 verde. BUG 3 no requirió cambio: documentado como rama esperada.
+**Prevención futura:** si un copy dice «puedes continuar / completar a mano», el gate del botón no puede
+ser más estricto que ese mensaje —copy y estado habilitante se derivan de la misma verdad—. Y un módulo
+Make con «did not pass through the filter» dentro de un router es diseño, no falla: contrastar el filtro
+de la rama gemela antes de tratarlo como bug. Pendiente: reconciliar §7.3 en la spec con esta decisión.
+
+### 2026-09-07 — Reconciliación documental de RF-09 / CI-013 (P6-TAS)
+Ajuste puramente documental (sin tocar código ni tests). Se reconció la spec y el plan con la
+decisión de producto del 04-sep-2026: al llegar el stepper a "Datos listos" el botón "Continuar con
+datos de la visita" se habilita siempre; `error` y `delegado_visador` sólo muestran aviso ámbar y no
+bloquean. Archivos actualizados y renombrados: la especificación normativa pasó a **v1.9.16** (§2.7
+viñeta del botón + RF-TAS-15 + nota CI-013 + changelog) y el plan de UI Tasador pasó a **v1.4**
+(§7.1/§7.2/§7.3 + bloque de versión). Se barrieron las referencias vivas a los nombres anteriores en
+el repo. Motivo: cerrar el pendiente "reconciliar §7.3 con la decisión" anotado el 04-sep-2026.
+
+### 2026-09-07 — P13-TAS · Sección D comparables cuadro-a-cuadro
+**Contexto:** replicar el cuadro `[Excel: Portada!B28:AX44]` en la Sección D del Tasador (dos bloques
+OFERTAS/CBR con sus tres renglones de resumen), sin factores de homogeneización (R-COMP-1).
+**Inconveniente:** (1) la grilla mostraba `UF/m² = totalUf / supConstruida` (daba 83,7) cuando el
+cuadro trae 34,05; (2) el docblock de `comparables.ts` afirmaba que `informe/route.ts` "sí homogeneiza
+con factor_sup×edad×distancia" (CI-057), lo que sugería tener que desfactorizar el cálculo del informe.
+**Causa raíz:** (1) el UF/m² del cuadro es un valor CRUDO extraído (`uf_m2_construccion_f`), calculado
+en origen con `(totalUF − uf_m2_terreno_f×sup_terreno − oo_cc)/sup_constr` `[Excel: Portada!AX29]`, no
+`precio/sup`; (2) la nota CI-057 estaba STALE: `lectura-informe.ts` (Bloque 6) ya usaba esa misma
+fórmula directa A-44 y NO multiplicaba por factores. El único factor en el informe era un comentario.
+**Solución aplicada:** la grilla pinta las columnas crudas (`uf_m2_terreno_f`/`uf_m2_construccion_f`);
+`comparables.ts` se reescribió a promedios simples por columna + V/S; se quitaron `factor*` del tipo
+`Comparable`, del mapeo `lectura-datos.ts` y de los tests; se reescribió el comentario de
+`lectura-informe.ts` (cálculo intacto). Las tablas `D_TipoDocumentoAtributo` YA tenían los 13
+atributos crudos vigentes (tasador+motor), así que no hubo escrituras en Airtable.
+**Prevención futura:** antes de "desfactorizar" un cálculo, verificar el CÓDIGO y no la nota — un
+docblock puede describir un estado ya superado. Y para columnas "UF/m²" de un cuadro extraído,
+comprobar si son valores crudos de la fuente antes de recalcularlos en la UI.
+
+### 2026-09-07 — P13-TAS · Conflicto de versionado spec vs R-COMP-4
+**Contexto:** la tanda pedía "nueva versión dejando el archivo anterior en su sitio" (R-COMP-4) para
+los 4 docs, incluida la especificación.
+**Inconveniente:** para el spec eso choca con CLAUDE.md ("fuente única", PROHÍBE archivos paralelos de
+spec, exige `git mv` + actualizar refs).
+**Causa raíz:** dos reglas con destinos opuestos para el mismo archivo.
+**Solución aplicada:** se llevó a OK-Gate (F-1). El spec fue por `git mv` v1_9_16→v1_9_17 + barrido de
+refs vivas (CLAUDE.md, CODE_INCONSISTENCIES, SLA, RESUME.md); plan/motor/origen por copia+bump dejando
+el anterior. Los refs en docs claramente históricos (plan v1.4, plan-if02-v1_9, _sync annotations) se
+dejaron congelados por la excepción de CLAUDE.md.
+**Prevención futura:** cuando una regla de tanda toque el spec normativo, contrastar siempre con la
+sección "Fuente única de especificación" de CLAUDE.md y resolver en gate antes de ejecutar.
+
+### 2026-09-08 — P14-TAS-LECTURA: la tanda ya venía ~80% construida
+**Contexto:** brief P14 pedía sheet filtrado por tipo_propiedad, acciones Reemplazar/Eliminar, DELETE
+de adjuntos, upload con tipo_documento, helper `codigoADisplay`, campo `ordinal` y paralelismo 3 en
+SC-RF09.
+**Inconveniente:** ejecutar el brief al pie de la letra habría reconstruido código existente y añadido
+schema/riesgo Make innecesarios.
+**Causa raíz:** el brief se redactó sobre un estado anterior del repo. En la recon de FASE 1 casi todo
+ya existía: filtro por `tipo_propiedad` (`documentoAplicaA`, P-5 cerrada por CI-070 Fase 2),
+`document-checklist.tsx` con Reemplazar/Eliminar, `DELETE /api/adjuntos/[id]` con salvaguarda
+`hash_md5` + guard RN-59, upload seteando `tipo_documento`, y reemplazo idempotente (SC-Adjuntos-Upload
+v1.2 · RN-60). Además: `codigoADisplay` es redundante porque `D_TipoDocumento` ya tiene campo `nombre`;
+`TX_Adjuntos` **no** tiene `ordinal` (ese concepto vive sólo para unidades/path Dropbox); y SC-RF09 v2.1
+procesa **un adjunto por invocación** (no hay iterator donde meter paralelismo 3) y sólo escribe
+`TX_Adjuntos` + `LogEscenarios` + un update a `TX_Solicitudes` —sin fan-out a tablas hijas—, por lo que
+la "política de delete post-extracción" A/B/C carecía de sustancia hoy.
+**Solución aplicada:** OK-Gate con reality-check; Sergio aprobó ejecutar sólo el delta real. Se amplió
+`GET /api/tasaciones/[id]/lectura` con `adjuntos[]` (`id`, `codigo`=`clave_adjunto`, `nombre` resuelto
+server-side contra `D_TipoDocumento`, `estado`) —aditivo, sin tocar los agregados que consume el
+stepper— y P6-TAS (`EstadoProcesando`) ahora lista los documentos con ✓ cuando `estado='listo'`. Delete
+sin política especial. Sin tocar SC-RF09, sin `codigoADisplay`, sin `ordinal`. Tests 769→774.
+**Prevención futura:** ante un brief de tanda, la FASE 1 de recon manda: verificar qué existe en el repo
+antes de tratar el brief como lista de construcción, y llevar las divergencias al gate en vez de
+ejecutarlas.
+
+### 2026-09-08 — P14-TAS-CASCADE: purga de comparables al borrar un adjunto
+**Contexto:** DELETE /api/adjuntos/[id] borraba el archivo pero dejaba huérfanos los
+comparables que RF-09 extrajo de esa foto (TX_Comparables). Se creó el campo
+`TX_Comparables.adjunto_origen` (link → TX_Adjuntos) y se construyó el cascade.
+**Inconveniente 1 (orden vs Make):** el diseño natural "buscar por adjunto_origen tras
+data.ok de Make" no funciona: al borrar el adjunto, Airtable retira automáticamente ese
+record del link `adjunto_origen` de las filas hijas, así que buscar después encuentra 0 —un
+no-op silencioso—.
+**Causa raíz:** auto-clear de links al eliminar el registro apuntado.
+**Solución aplicada:** partir el cascade en dos y ordenarlo alrededor de Make —
+`capturarComparablesDeAdjunto()` (READ) antes de `postToMake`, con el adjunto aún vivo, y
+`purgarComparablesCapturados()` (WRITE) sólo tras `data.ok`—. Es correcto haya o no
+auto-clear, así que es la opción segura. En `lib/adjuntos-cascade.ts`.
+**Inconveniente 2 (filtro por solicitud):** en TX_Comparables ni `{solicitud}="VP-..."` ni
+`FIND(cod, ARRAYJOIN({solicitud}))` matchean (devuelven 0).
+**Causa raíz:** el primary de TX_Solicitudes es `codigo_solicitud` (fórmula); la comparación
+de un link contra texto no coacciona igual cuando el primary es fórmula.
+**Solución aplicada:** scope server-side por `SEARCH(codigoExt, {clave_natural})` (clave_natural
+= `{codigo}|COMP-NN`) y precisión en memoria por `adjunto_origen.includes(adjuntoId)` —el
+filtro JS no da falsos positivos aunque el SEARCH sobre-devuelva—.
+**Prevención futura:** ante un link cuya tabla destino tiene primary de tipo fórmula, no
+filtrar por `{link}=texto`; usar un campo de texto propio de la tabla como scope y afinar en
+memoria por el array de record ids que devuelve la REST.
+
+### 2026-09-09 — FASE2-lectura-sii: cierre de CI-025 y desvío de rama
+**Contexto:** tanda FASE2-lectura-sii — inventariar el documento SII (`foto_fuente_sii`),
+poblar D_TipoDocumento/D_TipoDocumentoAtributo y mostrar los datos en la UF del Tasador
+(Bloque 4). Gate aprobado con Opción A.
+**Inconveniente 1 (CI-025 · campos SII inexistentes):** el "bloque SII §20.6" de
+`TX_DatosTasacion` estaba documentado en `docs/schema-airtable.md` pero **nunca se había
+creado** en la base real, así que el productor `lib/tasador/lectura-informe.ts` emitía los
+códigos SII en `null` por ausencia de columna, y la foto `foto_fuente_sii.jpg` traía ~8
+campos sin destino donde persistir.
+**Causa raíz:** divergencia doc↔base — el schema documentó la intención (§20.6) sin
+ejecutar la creación; se detectó vía meta API contrastando nombres contra la tabla real.
+**Solución aplicada:** **CI-025 CERRADA.** Se crearon los 8 campos en `TX_DatosTasacion`
+(`cod_sii_comuna`/`cod_sii_manzana`/`cod_sii_predio`, `ubicacion_urbano_rural` select
+urbano|rural, `cg`/`ociv`/`oc`/`g`), se catalogaron/activaron en `D_TipoDocumentoAtributo`
+bajo `foto_fuente_sii` (recZ7UdIYi6aftB6T: 4 filas editadas + 14 creadas) y se cableó el
+Bloque 4 read-only en `components/tasador/informe-preview.tsx`. Doc de referencia:
+`docs/_md/VProperty_Origen_Datos_Informe_v1.4.md` §2.1.1.
+**Prevención futura:** antes de leer/escribir un campo que sólo aparece en el schema doc,
+verificarlo contra la base real (meta API `/meta/bases/{id}/tables`); un §"campos nuevos"
+en `schema-airtable.md` no garantiza que existan en Airtable.
+
+### 2026-09-09 — FASE2-lectura-sii: desvío de rama activa
+**Contexto:** misma tanda; el plan fijaba `feat/tasador-ui` como rama de trabajo.
+**Inconveniente:** la tanda se ejecutó sobre el working tree con HEAD en **`main`**, no en
+`feat/tasador-ui`. Las ediciones aplican al working tree igual, pero quedan en la rama
+equivocada.
+**Causa raíz:** no se verificó la rama activa en el Paso 0 de verificación previa; el
+contexto de reanudación asumía `feat/tasador-ui` sin comprobarlo.
+**Solución aplicada:** se detectó con `git branch --show-current`, se registró como anomalía
+en el cierre y en `claude-out.txt`, y **no se hizo `checkout`** (R12: nunca cambiar de rama
+sin OK). El traslado a `feat/tasador-ui` lo gestiona Sergio en GitHub Desktop.
+**Prevención futura:** al arrancar cualquier Fase 2, `git branch --show-current` como primer
+chequeo; si no coincide con la rama del plan, **avisar y detenerse antes de escribir**,
+nunca resolver con `checkout` por iniciativa propia.
+
+### 2026-09-09 — FASE3-escritura-sii: el write-path SII ya era genérico + E2E validado
+**Contexto:** verificar que al subir `foto_fuente_sii.jpg` los 8 campos SII quedaran escritos
+en `TX_DatosTasacion` y visibles en la UI del Tasador.
+**Hallazgo (no era un inconveniente, evitó trabajo):** el camino de escritura es **100%
+genérico y data-driven**, no requirió código nuevo. SC07 (`SC-RF09-ExtraccionClaude`) arma
+el prompt a Claude desde `D_TipoDocumentoAtributo` (módulo 7 `TextAggregator`) y guarda el
+JSON en `TX_Adjuntos.atributos_obtenidos`; la Automation `AT03-Ext` propaga por
+`uso_cardinalidad_destino` a `TX_DatosTasacion` (`una_por_solicitud`) / `TX_Unidades`
+(`una_por_unidad`). Como FASE2 catalogó los 18 atributos SII con su routing, el pipeline los
+cubre solo. R7 intacto: no se tocó ni el blueprint ni el script.
+**Inconveniente real (singleSelect):** `ubicacion_urbano_rural` es singleSelect (`urbano|rural`)
+y `AT03-Ext.valorParaSelect()` exige match EXACTO al nombre de la opción. El prompt no
+restringía el valor y Claude, leyendo "zona urbana" de la foto, podía devolver
+"urbana"/"zona urbana" → el campo se omitía sin escribir.
+**Causa raíz:** el dominio del select no se comunicaba a Claude; el prompt solo forzaba valor
+exacto para `tipo_referencia`.
+**Solución aplicada (Opción 1, respeta la decisión de NO tocar el blueprint):** se pobló
+`D_TipoDocumentoAtributo.ejemplo_atributo` de la fila `recLdXKaZqVw5xbBq` con
+`"urbano — dominio cerrado; responde EXACTAMENTE 'urbano' o 'rural'..."`. Ese campo viaja a
+Claude vía el módulo 7, así que el dominio se fija **como dato (D_ es el contrato)**, sin
+editar SC07. E2E real (VP-2026-0054): Claude devolvió `ubicacion_urbano_rural='urbano'`
+(conf 1) y AT03-Ext creó la fila `TX_DatosTasacion` con los 8 valores correctos.
+**Método operativo probado:** para un E2E que exige la cuenta Clerk de un tasador, **reasignar
+temporalmente** `TX_Solicitudes.tasador` a la cuenta de test (`recJPSCLckxLuf9nV`) y
+**revertir obligatoriamente** al owner original al cerrar. Guardar el valor original antes del
+PATCH; revertir incluso si el E2E falla a mitad.
+**Prevención futura:** para forzar dominios cerrados en extracción RF-09, usar
+`ejemplo_atributo` en D_ antes que tocar el prompt del blueprint; es más barato, versionable
+como dato y no rompe la genericidad de SC07/AT03-Ext.
+
+### 2026-09-09 — Tarea 4 · Fase 2 (Opción A): cierre gap F (Dominio SII) + C vía TX_Unidades
+**Contexto:** post-gate Opción A. B ya estaba completo y validado (FASE2/3). Sólo faltaban F
+(mapeo SII→TX_DocumentosLegales) y confirmar C (líneas de edificación) en la UI, que bajo
+Opción A viven en `TX_Unidades` (no en `TX_ItemsCuadroValoracion`).
+**Inconveniente 1 (meta API rechaza añadir opción a singleSelect):** el PATCH a
+`/meta/bases/{id}/tables/{t}/fields/{f}` para agregar la opción `"Dominio SII"` a
+`TX_DocumentosLegales.tipo_documento` devolvió `INVALID_REQUEST_UNKNOWN — Changing a field's
+type or number precision is not currently supported`, con o sin `type` y con las choices
+existentes por id.
+**Causa raíz:** la actualización de choices de un singleSelect por meta API es poco fiable en
+esta base; el endpoint interpreta el body como cambio de tipo.
+**Solución aplicada:** añadir la opción por **Data API con `typecast:true`** — POST de un
+registro throwaway con `tipo_documento:"Dominio SII"`, verificar que la choice quedó en el
+schema, y **DELETE** del throwaway. La choice persiste (es cambio de schema, independiente del
+registro). recVgRZqv58D0Lj6S creado y borrado.
+**Inconveniente 2 (no hay lever data-driven para la constante `tipo_documento`):** el brief pedía
+que las filas SII queden con `tipo_documento = "Dominio SII"`, pero el catálogo
+`D_TipoDocumentoAtributo` sólo mapea **valores extraídos** vía `uso_campo_destino`; una constante
+no tiene mecanismo. `valor_por_defecto` no lo usa **ninguna** fila (0/148), y el campo
+`tipo_documento` del catálogo es el **link al documento ORIGEN** (SII), no la columna destino.
+**Causa raíz:** confusión de dos conceptos homónimos «tipo_documento» (origen vs destino) y
+ausencia de un patrón probado para estampar constantes en la tabla hija.
+**Solución aplicada:** se hizo lo R7-safe (choice + 3 filas de mapeo foja/numero/año →
+fojas/numero_inscripcion/ano_inscripcion, `una_por_solicitud`) y se **planteó** la constante en el
+gate en vez de tocar AT03-Ext. Queda como decisión de Sergio: (a) tocar pipeline (needs OK, R7) o
+(b) que el tasador fije `tipo_documento` en la UI. Además: la muestra `foto_fuente_sii.jpg` trae
+foja/numero/año **en blanco**, así que el E2E no poblará valores F — sólo prueba routing.
+**Prevención futura:** para añadir choices a un singleSelect en esta base, usar `typecast:true` por
+Data API, no el meta PATCH. Y antes de prometer una constante en tabla hija, confirmar que existe
+un lever data-driven (no asumir que `uso_campo_destino`/`valor_por_defecto` la cubren).
+
+### 2026-09-09 — Tarea 4 · Fase 3 (P16-TAS): regresión "sección B vacía" en captura del tasador
+**Contexto:** tras subir `foto_fuente_sii.jpg` a VP-2026-0060, la sección B del FORMULARIO DE
+CAPTURA salía vacía y el progreso quedaba en 18%, pese a que el pipeline había corrido.
+**Inconveniente 1 (causa raíz · desajuste de capas):** SC07 corrió (`atributos_obtenidos`
+poblado) y AT03-Ext propagó los `una_por_solicitud` a `TX_DatosTasacion` en columnas
+SII-específicas (`cg`, `calidad_sii`, `destino_sii`…), pero el formulario de captura
+(`seccion-propiedad.tsx` vía `lectura-datos.ts`) bindea a las columnas GENÉRICAS
+(`sup_construccion_m2`, `material_predominante`, `calidad_construccion`, `anio_construccion`,
+`sup_terreno_m2`) que el pipeline no llena. FASE2/3/P15-TAS habían cableado el layer del INFORME
+(`informe-preview.tsx`), no el de captura.
+**Solución aplicada (Opción A · read-layer · R7 intacto):** fallback con "primer no vacío" en
+`lectura-datos.ts` sección B — `supConstruida ??cg`, `supTerreno/anioConstruccion ?? primera
+unidad con dato de TX_Unidades`, `materialPredominante ?? map(tipo_material)`, `calidadConstruccion
+?? map(calidad_sii→1..5)`. La columna genérica gana si trae dato (el tasador ya editó). Mapas
+`MATERIAL_SII_A_PREDOMINANTE` y `CALIDAD_SII_A_NUMERO` en el mismo archivo, con `console.warn` en
+valores fuera de dominio.
+**Inconveniente 2 (política de borrador · falso trabajo evitado):** el brief pedía "servidor gana
+si el borrador está vacío en B". Al leer `recuperacion-borrador.ts` resultó que YA lo cumple:
+`combinarConBorrador` toma A–H de `informeInicial` (servidor, ya con fallback) y sólo repone
+`documentosCargados`; `borradorAportaContenido` exige `tieneContenido` del lado del borrador para
+ofrecer el banner. No se tocó la lógica, sólo se documentó la interacción con el fallback.
+**Inconveniente 3 (no-op TX_Unidades · diagnóstico, sin fix):** los per-unit SII no aterrizan en
+`TX_Unidades` porque el JSON no emite `rol_sii` y el link exige `uso_campo_link_unidad =
+TX_Unidades.rol_sii`; además la foto trae manzana/predio (`2827/272`) que no casan con el rol de
+intake (`05271-00016`). Se dejó como PLANTEAMIENTO para OK-Gate (no se tocó pipeline/catálogo).
+**Inconveniente 4 (menor):** se coló `${valor!r}` (sintaxis Python) en un template literal JS;
+`pnpm typecheck` no lo marca porque `!` es non-null assertion válido. Corregido a
+`${JSON.stringify(valor)}` por `sed`.
+**Prevención futura:** ante "campo vacío en la UI" con el pipeline OK, contrastar las columnas que
+LEE el consumidor contra las que ESCRIBE el pipeline — el informe y la captura son layers distintos
+y pueden leer columnas distintas. Y ojo con la sintaxis Python en template literals JS.
+
+### 2026-09-09 — P17-TAS: tres fixes de lectura (DFL2, tipo de zona, fecha planificada)
+**Contexto:** tres campos salían vacíos/OFF en la captura del tasador pese a tener el dato en Airtable.
+Todos resultaron el mismo patrón P16 (la UI lee una columna distinta de donde vive el dato).
+**Item 1 (DFL2 OFF):** la premisa "ON con contribución=0" era falsa. `TX_DatosTasacion.dfl2` es
+fórmula `IF({sup_construida_total} < 140, 'SI', 'NO')` y ya computaba `SI`. El switch bindea a
+`form.dfl2` (boolean, arranca `false`) que nunca se cableaba desde `derivados.dfl2`. Fix read-layer:
+`datos.dfl2 = (d.dfl2 === 'SI')` en `lectura-datos.ts` (el PATCH no reescribe la fórmula).
+**Item 2 (tipo de zona vacío):** el form "Tipo de zona" lee `tipo_zona_descripcion` mientras el SII
+escribe `ubicacion_urbano_rural` (singleSelect urbano|rural). Fix read-layer con fallback
+`tipoZona ← tipo_zona_descripcion ?? ubicacion_urbano_rural` + data recovery de 1 celda
+(`ubicacion_urbano_rural='urbano'` en recUb4FxZPdW2hQP3; el `ejemplo_atributo` del catálogo ya
+estaba bien, así que futuras extracciones aterrizan solas).
+**Item 3 (fecha planificada vacía):** `lectura-datos` leía `TX_Solicitudes.fecha_visita_programada`
+(None) y no la coordinación confirmada. Fix read-layer: se lee `TX_CoordinacionVisita` y
+`fechaPlanificadaVisita ← fecha_visita_programada ?? (confirmada de mayor intento).fecha_visita_propuesta`.
+**Tests:** `lectura-datos.test.ts` 20→27; suite 801→808; typecheck+build verdes.
+**PENDIENTES abiertos (NO ejecutados en esta tanda, por decisión de Sergio):**
+ - **DFL2 · regla de negocio:** con `sup_construida_total=0` (sin datos de construcción) la fórmula
+   da `SI` por defecto — posible falso positivo. Revisar si debe exigir `>0` o atarse a avalúo.
+   Es cambio de fórmula/schema → requiere OK-Gate.
+ - **Flujo de coordinación:** al confirmar una coordinación, `TX_Solicitudes.fecha_visita_programada`
+   no se está llenando; la fecha queda sólo en `TX_CoordinacionVisita`. El fix read-layer lo tapa en
+   la captura, pero la causa (SC/route de coordinación) queda por abordar aparte.
+
+### 2026-09-09 — P18-TAS: cierre de los dos pendientes de P17 + CI del SII per-unit
+**Contexto:** los dos PENDIENTES abiertos por P17-TAS (regla DFL2 y write de fecha al confirmar
+coordinación) más un tercer gap del SII per-unit. OK-Gate por item.
+**Item 1 (DFL2 · resuelto):** fórmula `TX_DatosTasacion.dfl2` pasó de
+`IF({sup_construida_total} < 140, 'SI', 'NO')` a
+`IF(AND({sup_construida_total} > 0, {sup_construida_total} < 140), 'SI', 'NO')` vía MCP
+`update_field`. Con `sup_construida_total=0` (sin capturar) ahora da `NO`, no `SI`. Verificado que
+ningún campo Airtable (fórmula/lookup/rollup en TX_DatosTasacion, TX_Calculos, TX_Solicitudes)
+referencia `dfl2`; sólo lo lee el read-layer como boolean. Sin cambio de código. Documentado en
+`schema-airtable.md` §27.
+**Item 2 (coordinación · resuelto):** `app/api/tasaciones/[id]/coordinacion/route.ts` ahora PATCHea
+`TX_Solicitudes.fecha_visita_programada = fecha_visita_propuesta` en el **mismo** update, sólo en
+rama `confirmada` (no la toca en `rechazada` ni en el early-return de idempotencia). No hay
+Automation que lo propague (verificado con MCP `list_automations`: ninguna dispara sobre
+`TX_CoordinacionVisita`), así que lo escribe el handler. Tests ampliados: happy path, no-write en
+rechazada, y reconfirmación (intento mayor gana su fecha).
+**Item 3 (SII per-unit · NO ejecutado, queda como CI):**
+El gap se investigó y NO es un problema de formato de `rol_sii`: es estructural. La foto SII
+(`foto_fuente_sii`, ver rec0nGAtNdPCleHRB y recCY22He7rPDygox) lista **`rol_sii` en `no_extraidos`
+en todos los casos** — el certificado de avalúo SII no emite un rol que el extractor capture. Lo que
+trae son códigos catastrales a nivel documento: `cod_sii_manzana`+`cod_sii_predio` (2827-272), que
+NO son un `rol_sii` per-unit. El `rol_sii=05271-00016` de la unidad de intake lo tipeó el usuario en
+el alta (crear/editar-solicitud). El formato de producción en `TX_Unidades.rol_sii` es
+`manzana-predio` sin padding (882-40, 402-02, 31-800); "05271-00016" es un outlier y la mayoría de
+unidades no tiene rol. El write SII→`TX_Unidades` **no vive en este repo**: lo hace un customScript
+de Airtable Automation (`AT03-Ext` sobre `TX_Adjuntos.atributos_obtenidos`), cuyo cuerpo el MCP no
+lee. **CI:** SII no trae `rol_sii` → match automático imposible. El pipeline `AT03-Ext` hoy hace
+no-op silencioso para el per-unit. **Deferido:** cuando se retome el informe (Bloque 4) o IF-04,
+evaluar match posicional `fila→orden` en el customScript `AT03-Ext`, o ingreso manual del `rol_sii`
+tras subir el SII.
+**Prevención futura:** antes de asumir "problema de formato" en un match SII, verificar en
+`atributos_obtenidos` si el campo llave está en `no_extraidos` — el certificado SII rara vez trae
+`rol_sii`. Y recordar que el aterrizaje per-unit del SII es pipeline Airtable, no código IF-03.
+
+### 2026-09-09 — Tarea 5 Fase A: cascade genérico de borrado de adjuntos (registry)
+**Contexto:** al borrar un adjunto desde cualquier UI deben purgarse los datos que ese
+documento pobló en Airtable. Objetivo Fase A: generalizar el cascade sin cambiar comportamiento.
+**Solución aplicada:** `lib/adjuntos-cascade.ts` pasó de comparables-específico a un
+`CASCADE_REGISTRY` de `{ tabla, linkField, historicoField?, desligarField?, scopeFormula }`.
+Firmas nuevas `capturarDerivadosDeAdjunto` / `purgarDerivadosCapturados` (antes
+`…ComparablesDeAdjunto` / `…ComparablesCapturados`). El endpoint único
+`DELETE /api/adjuntos/[id]` —que YA usan Ejecutiva (`use-adjuntos-solicitud.ts`) y Tasador
+(`tasador/fotos.ts`); Visador no borra— consume las genéricas. Comportamiento externo idéntico:
+hoy el registry tiene UNA entrada (TX_Comparables, RO-31). Mapa completo en `schema-airtable.md` §28.
+**CI — sólo el patrón (b) es auto-purgable con seguridad hoy.** `TX_Comparables` tiene provenance
+por adjunto (`adjunto_origen` `fld4i271GJA1VHu6a`). Los patrones (a) —satélites `TX_DatosTasacion`/
+`TX_DocumentosLegales`— y (c) —merge por unidad en `TX_Unidades`— **no tienen provenance por campo**,
+y campos como `avaluo_exento`/`contribucion_anual`/`destino_sii`/`calidad_sii` los comparten dos
+tipos de documento (`foto_fuente_sii` y `certificado_avaluo_fiscal`). Limpiar a ciegas = pérdida de
+dato humano o multi-fuente. **Deferido a Fase B.**
+**Prevención futura:** para sumar una tabla al cascade basta una entrada en `CASCADE_REGISTRY`,
+pero sólo si esa tabla tiene un Link de provenance de vuelta al adjunto que creó la fila; si no lo
+tiene, el borrado no es seguro y es tema de Fase B, no de código.
+**PENDIENTE FORMAL PARA HÉCTOR (Fase B · 5 preguntas):**
+ - **Q1.** Satélites (`TX_DatosTasacion`, `TX_DocumentosLegales`): al borrar el adjunto fuente,
+   ¿limpiar los campos que pobló? ¿Qué pasa con campos compartidos por 2 tipos de documento o
+   editados por el tasador? (sin provenance por campo no es seguro).
+ - **Q2.** `TX_Unidades` per-unit SII: ¿limpiar sólo los campos SII conservando la fila + los datos
+   de intake, o dejar como está? (ligado a P18 Item 3: hoy casi no aterriza).
+ - **Q3.** ¿El borrado es reversible? (Airtable no tiene undo; el delete es permanente).
+ - **Q4.** Comparables con `aporta_a_historico=true`: hoy se **desliga**, no se borra (RO-31).
+   ¿Confirmado?
+ - **Q5.** Los 8 tipos sin `uso_tabla_destino`: ¿confirmar que hoy no deben purgar nada?
+
+### 2026-09-10 — Tarea 5 Fase B: cascade (a)/(c) + diálogo de confirmación de borrado
+**Contexto:** implementar la limpieza de datos derivados de los patrones (a) satélite 1:1 y
+(c) merge por unidad al borrar un adjunto, más el diálogo Q3 que avisa qué datos se limpiarán.
+Aprobado por Héctor (Q1..Q5) y por el equipo (P-A..P-D del cierre de Fase 1).
+**Hallazgo que destrabó la Fase B:** la premisa de Fase A —"(a)/(c) no se pueden purgar con
+seguridad por falta de provenance por campo"— era incompleta. El adjunto **sí tiene provenance
+por TIPO**: `TX_Adjuntos.clave_adjunto` (`fldaLLtzAaEn1O8IW`) guarda el `codigo` de
+`D_TipoDocumento` (RN-25). Con Q1 (limpiar todo lo que el documento pobló, aunque el campo sea
+compartido o editado a mano) el tipo basta y no hace falta provenance por campo. El cascade lee
+`clave_adjunto` del adjunto vivo antes del borrado y pone a null los campos de ese tipo,
+conservando la fila (Q2). Q1..Q5 quedan **cerradas: Héctor respondió SÍ a todas.**
+**Solución aplicada:**
+- `lib/adjuntos-cascade.ts`: `CascadeEntry` pasó a unión discriminada por `patron` (`a`|`b`|`c`).
+  (b) TX_Comparables intacto (RO-31); (a)/(c) derivadas del mapa curado. `DerivadoCascade` es
+  ahora unión `{op:'baja'}` | `{op:'limpiar', campos}`; `capturar` recibe `ctx={codigoExt,solicitudId}`
+  y lee la clave con `getRecord`; `purgar` suma la rama `op:'limpiar'` (PATCH campos→null, no DELETE).
+- `lib/adjuntos-doc-campos.ts` (nuevo, client-safe): mapa `tipoDocumento→{tabla,campos:{fieldId,label}}`,
+  espejo curado de §28. Lo consumen el cascade (servidor) y el diálogo (cliente) — una sola fuente.
+- `components/shared/confirmar-borrado-adjunto-dialog.tsx` (nuevo): diálogo compartido por checklist
+  (Ejecutiva+Tasador) y fotos-screen. P-A: aparece SIEMPRE; lista de campos sólo si el tipo purga algo.
+- `app/api/adjuntos/[id]/route.ts`: pasa `ctx` a la captura. Contrato externo intacto (200/degradado/no-fatal).
+**Inconveniente 1 · PATCH por FIELD_ID, no por nombre.** `TX_DatosTasacion` tiene el homónimo
+`anio_construccion`/`anno_construccion` y `TX_DocumentosLegales` un rename (`numero_inscripcion ←
+numero_dominio`). Limpiar por nombre podía tocar la columna equivocada en silencio. Se PATCHea por
+FIELD_ID (Airtable acepta ambos como clave del body); un FIELD_ID inexistente devuelve 422 y el
+cascade lo cuenta como error sin destruir nada, en vez de fallar callado.
+**Inconveniente 2 · faltaban FIELD_IDs en el curado (P-C).** `rol_sii`, `calidad_sii`, `destino_sii`,
+`avaluo_fiscal_clp`, `avaluo_exento`, `contribucion_anual` (DatosTasacion) y `sup_m2`, `avaluo_uf`,
+`tipo_material`, `anio_construccion` (Unidades) no estaban en `lib/tasador/field-ids.ts`. Se
+verificaron y agregaron **antes** de escribir el mapa, vía **meta API read-only** (MCP no autenticado
+en la sesión: sólo exponía los tools de OAuth interactivo; RO-30 admite el respaldo declarando el
+motivo). El token salió de `.env.local` (no hay `.env`), sin imprimirlo.
+**Inconveniente 3 · doble confirmación en fotos.** `fotos-categorizadas.tsx` tenía un `window.confirm`
+nativo para eliminar categoría, y el nuevo diálogo compartido vive en `fotos-screen.tsx`. Se retiró el
+`window.confirm` para no pedir dos confirmaciones ni mezclar el confirm nativo con el `AlertDialog` base-ui.
+**Prevención futura:** el mapa `adjuntos-doc-campos.ts` es espejo curado de `D_TipoDocumentoAtributo`
+(fuente canónica); documentada en §28.2 la obligación de sincronizarlo en el mismo commit que cualquier
+cambio de `AT03-Ext`. Para verificar nombres de campo antes de PATCHear a ciegas, la meta API es el
+respaldo cuando el MCP no está autenticado — schema read-only, nunca escritura a prod.
+
+### 2026-09-10 — CI · AT03-Ext no re-puebla TX_DatosTasacion en re-subidas (getCellValue sobre query estrecha)
+**Contexto:** tras Fase B, re-subir `foto_fuente_sii` a VP-2026-0060 dejaba los 14 campos SII de
+TX_DatosTasacion y los de TX_Unidades vacíos, pese a `estado_extraccion='listo'` y
+`atributos_obtenidos` poblado. Diagnóstico end-to-end del pipeline (extracción + enrutamiento).
+**Etapa culpable: ENRUTAMIENTO (AT03-Ext).** La extracción (RF-09/Make/Claude) corrió bien —
+`LogEscenarios` muestra "RF-09 extraccion exitosa … 12 atributo(s)". Se refutó la hipótesis de
+caché por hash: dos TX_Adjuntos con el MISMO `hash_md5` (VP-2026-0060 y VP-2026-0054) tienen
+`atributos_obtenidos` DISTINTOS (1150 vs 1099 bytes) — cada solicitud extrajo lo suyo.
+**Causa raíz (línea exacta):** `resolverFilaDatosTasacion()` obtenía la fila existente con
+`tDatosTasacion.selectRecordsAsync({ fields: ['solicitud'] })` y pasaba ESE record a
+`escribirDestino`, que hace `destRow.getCellValue(campoDestino)` para la política "solo si vacío".
+El Scripting API de Airtable sólo expone en el record los campos pedidos en la query; leer cualquier
+otro lanza **`Field "<x>" isn't in this record. Make sure it was included in the QueryResult`**. Con
+9 campos destino → 9 errores → 0 escrituras (visible en `LogEscenarios`: "AT03-Ext · propagación
+(0 ok · 0 skip · 12 err)"). Sólo se manifestaba con la fila YA existente: en el alta la fila se crea
+con `selectRecordAsync(id)` (record completo), por eso funcionó UNA vez el 09-sep ("8 ok") y nunca
+más. **Fase B conserva la fila (Q2), así que toda re-extracción cae por la rama del bug.** Bug
+gemelo latente en `resolverFilaMuchas` (comparables), enmascarado porque sus filas se crean frescas.
+**Bug secundario:** `resolverUnidad` resolvía la unidad por el valor extraído de `rol_sii`, que la
+foto SII NO extrae → nunca encontraba la unidad (existente, del intake) → los campos de merge por
+unidad jamás se escribían.
+**Fix aplicado (`docs/_artefactos/airtable/AT03-Ext_script.js`):**
+1. `resolverFilaDatosTasacion`: la rama de fila existente re-selecciona con
+   `selectRecordAsync(existente.id)` (record completo) antes de escribir.
+2. `resolverFilaMuchas`: mismo re-select completo en la rama existente (robustez).
+3. `resolverUnidad`: fallback — si la clave de unidad no viene en la extracción y la solicitud tiene
+   EXACTAMENTE una unidad, se usa esa (destino inequívoco); con 0 o >1 se omite.
+**Idempotencia:** la política "solo si vacío" de `escribirDestino` ya evita doble escritura al
+re-disparar el mismo adjunto; NO se agregó guard por `procesado_por_ia` en AT03-Ext porque ese campo
+lo escribe RF-09/Make ANTES de que corra el enrutamiento — un skip por `procesado_por_ia=true` en
+AT03-Ext bloquearía TODO el enrutamiento.
+**Despliegue (pendiente · sólo Sergio):** los scripts de Airtable Automations no se despliegan por
+API — hay que pegar el script corregido en Airtable → Automations → AT03-Ext → acción "Run a script"
+→ Editar código. El repo tiene el espejo; Airtable refleja el último pegado.
+**Prevención futura:** en Airtable Scripts, todo record que se vaya a leer con `getCellValue(campo)`
+debe provenir de una query que incluya ESE campo, o cargarse con `selectRecordAsync(id)` (singular =
+record completo). Nunca pasar un record de `selectRecordsAsync({fields:[...]})` a un consumidor que
+lea campos fuera de esa proyección.
+
+### 2026-09-10 — Regla operativa: "Éxito" de una Automation ≠ escritura de datos
+**Contexto:** depuración del CI de AT03-Ext registrado arriba (misma sesión · Tarea 5 Post-Fase B).
+**Inconveniente:** el Historial de la Automation marcaba "Se ejecutó con éxito" en las corridas de
+las 10:48 y 11:11 sobre `recb7tNO42tAvLZ8V`, pero 0 campos se escribieron en TX_DatosTasacion ni
+TX_Unidades. Asumir "Éxito = datos escritos" atascó el diagnóstico varias vueltas.
+**Causa raíz:** el badge "Éxito" del Historial sólo significa "el script terminó sin lanzar una
+excepción no capturada". Los errores por campo (`getCellValue` sobre fields fuera de la query) se
+tragaban dentro del bucle de escritura sin propagar — el script terminaba limpio con 0 escrituras.
+**Solución aplicada:** verificar la escritura de verdad, no el badge: contar escrituras/errores en
+`LogEscenarios` (la corrida mostraba "0 ok · 0 skip · 12 err"), o consultar el estado real de las
+tablas destino vía MCP/curl. El badge "Éxito" nunca es evidencia de que hubo datos escritos.
+**Prevención futura:** ante cualquier "corrió bien pero no veo el dato", ir directo a `LogEscenarios`
+o a la tabla destino antes de dar por buena la Automation. Nunca cerrar un diagnóstico sobre la sola
+base del Historial de Airtable.
+
+### 2026-09-11 — IF-03 · lectura de datos de `permiso_edificacion.pdf`
+**Contexto:** habilitar que subir el Permiso de Edificación persista, muestre y borre sus datos (TANDA 1–4), reusando la pipeline genérica (R7) sin crear columnas nuevas.
+**Inconveniente 1:** el tipo `permiso_edificacion` ya existía en `D_TipoDocumento` (`recibSR1tfKZKcnOA`, activo) con 14 atributos, pero estaban "esqueleto": sólo `codigo_atributo`/`orden`/`obligatorio`, con `uso_campo_destino`/`uso_tabla_destino`/`tipo_dato`/`uso_cardinalidad_destino` vacíos. Sin destino, AT03-Ext no tenía a dónde escribir y subir el PDF no persistía nada.
+**Causa raíz:** el catálogo se creó con los nombres de atributo pero nunca se cableó el enrutamiento a tabla/campo.
+**Solución aplicada:** PATCH a `D_TipoDocumentoAtributo` — scope mínimo spec-fiel (Origen §2.1): sólo `numero_permiso`→`TX_DocumentosLegales.permiso_edificacion_numero` y `fecha_permiso`→`…_fecha` reciben destino real, `tipo_dato`, `uso_cardinalidad_destino=una_por_solicitud`, `uso_interfaz_tasador=TRUE`, `nombre_atributo`. Los otros 12 quedaron `obligatorio=FALSE` sin destino (brecha documentada en `docs/_analisis/lectura_datos_permiso_edificacion_v1.xlsx`). La UI (Sección F + preview) ya leía esos campos de `TX_DocumentosLegales`, así que no hubo UI nueva.
+**Prevención futura:** antes de "construir UI" para un tipo de documento, verificar por meta API si sus filas de `D_TipoDocumentoAtributo` tienen `uso_campo_destino` poblado; un tipo activo con atributos sin destino es un catálogo a medio cablear, no un bug de la UI.
+
+**Inconveniente 2:** al dar de alta `permiso_edificacion` en `CAMPOS_DERIVADOS` (`lib/adjuntos-doc-campos.ts`) para que el borrado limpie el par permiso, rompió `lib/adjuntos-cascade.test.ts` («6 entradas a/c» → 7; total 7 → 8).
+**Causa raíz:** `CASCADE_REGISTRY` se deriva del mapa; el test fija conteos absolutos de §28. Añadir una entrada (a) mueve ambos números.
+**Solución aplicada:** actualizar los dos `toHaveLength` (7 y 8) y el comentario del desglose. `pnpm test` verde (832). ⚠ Colisión declarada: `permiso_edificacion` y `escritura_compraventa` comparten `permiso_edificacion_numero/_fecha`; borrar cualquiera limpia el par (política Q1, consistente con los campos SII compartidos).
+**Prevención futura:** todo alta/baja en `CAMPOS_DERIVADOS` obliga a re-cuadrar los conteos de §28 en `adjuntos-cascade.test.ts` y `adjuntos-doc-campos.test.ts` en el mismo cambio.
+
+### 2026-09-11 — AT03-Ext · propagación 0/8/2 en permiso_edificacion (una_por_solicitud atada a TX_DatosTasacion)
+**Contexto:** tras cablear `permiso_edificacion` en `D_TipoDocumentoAtributo` (numero_permiso/fecha_permiso → `TX_DocumentosLegales`, `una_por_solicitud`), subir el PDF dejó `TX_DocumentosLegales` sin fila para VP-2026-0060 y la Sección F vacía. La automation AT03-Ext reportó `propagados:0 · skip:8 · error:2`.
+**Inconveniente:** los 2 atributos con destino real (numero_permiso, fecha_permiso) daban ERROR; los 8 sin destino, skip.
+**Causa raíz:** el script de AT03-Ext hardcodea la rama `una_por_solicitud` a `TX_DatosTasacion` (`if (tablaDestino !== TABLES.TX_DATOS_TASACION) { propError++; continue }`). Cualquier `una_por_solicitud` con destino distinto —`TX_DocumentosLegales`— muere en ese guard sin escribir. Confirmado por LogEscenarios (2026-09-10 21:10:47): `uso_tabla_destino="TX_DocumentosLegales" con cardinalidad una_por_solicitud no es TX_DatosTasacion`. El cableado D_ estaba correcto; el bug era del script. Bug latente además para `escritura_compraventa` (par permiso/recepción) y los campos de dominio de `foto_fuente_sii` (numero_inscripcion/fojas/ano_inscripcion), todos `una_por_solicitud → TX_DocumentosLegales`.
+**Solución preparada (NO aplicada):** generalizar la rama a cualquier tabla destino 1:1 por link `solicitud`: (a) `const destTable = base.getTable(tablaDestino); const destRow = await resolverFila1a1(destTable, tablaDestino)`; (b) renombrar `resolverFilaDatosTasacion` → `resolverFila1a1(destTable, tablaNombre)` con cache por nombre de tabla, resolver/crear por `solicitud`. Script v3 (canónico) en `docs/_artefactos/airtable/AT03-Ext_script.js`; original respaldado en `docs/_artefactos/airtable/AT03-Ext_script_backup_20260911.js`.
+**Bloqueo:** `mcp__airtable__update_automation` **no** puede editar nodos `customScript` (`readOnlyNodeType`: "cannot be edited through the API. Edit this automation in the Airtable UI instead"). El fix debe pegarse a mano en Airtable UI (Automations → AT03-Ext → acción Script → reemplazar el código con `_v3_` → Update/publicar). Tras publicar: re-disparar tocando `atributos_obtenidos` del adjunto `recdgomIFRyN3hCu1` y verificar `permiso_edificacion_numero=319-2020` / `_fecha=2020-09-09` en `TX_DocumentosLegales` para VP-2026-0060, y contadores `error→0`.
+**Prevención futura:** los scripts de Airtable Automations no son editables por API MCP; toda corrección de AT01/AT02/AT03-Ext/AT-RF09 requiere paso manual en UI. Preparar el script verificado + backup y entregarlo para pegado, no asumir que el MCP lo despliega. Y: cardinalidad `una_por_solicitud` en `D_TipoDocumentoAtributo` sólo funciona hoy contra `TX_DatosTasacion` hasta que se publique el v3.
+
+### 2026-09-11 — REGLA DE UBICACIÓN · scripts finales de Airtable Automations
+**REGLA (permanente):** Los scripts finales de Airtable Automations —AT01, AT02, AT03, AT03-Ext, AT03_Calculos_DAG, AT04, AT08, AT-RF09-Trigger, AT-RF09-Trigger-Update, etc.— viven SIEMPRE en `docs/_artefactos/airtable/` (junto a `AT03_Calculos_DAG.js`, `AT08_Alertas_SLA.js`, `AT-RF09-Trigger_script.js`, `AT01-ResolverMotorReglas.js`). Es la fuente de verdad que refleja lo que está pegado en Airtable UI. Convención de nombre: `<Automation>_script.js`. Los backups van en la MISMA carpeta con sufijo `_backup_YYYYMMDD` (ej. `AT03-Ext_script_backup_20260911.js`).
+**NO usar `docs/_notas/` para scripts finales** — `_notas/` es solo notas operativas con fecha, exploración y borradores. Un script "listo para pegar" no es un borrador: va al artefacto canónico.
+**Corrección aplicada hoy:** el fix v3 de AT03-Ext se había dejado por error en `docs/_notas/`; se movió a `docs/_artefactos/airtable/AT03-Ext_script.js` (sobrescribiendo el original, que quedó respaldado como `AT03-Ext_script_backup_20260911.js`) y se eliminaron los duplicados de `_notas/`.
+
+### 2026-09-11 — IF-03 · alta de `certificado_recepcion_final` como fuente de datos (espejo de permiso)
+**Contexto:** habilitar `certificado_recepcion_final.pdf` en todo el flujo del Tasador (extracción → guardado → UI/informe → borrado en cascada), análogo directo al alta de `permiso_edificacion` del día anterior.
+**Hallazgo 1 (catálogo a medio cablear, no bug):** el tipo `certificado_recepcion_final` (`rec8dQ3tS2Qpd2paE`) ya existía activo en `D_TipoDocumento` con sus 10 atributos linkeados; pero las filas `numero_recepcion`/`fecha_recepcion` estaban SIN destino. Bastó PATCH (MCP) para cablear `uso_tabla_destino=TX_DocumentosLegales`, `uso_campo_destino=recepcion_final_numero/_fecha`, `uso_cardinalidad_destino=una_por_solicitud`, `tipo_dato`, `ejemplo_atributo`, `uso_interfaz_tasador=TRUE`. Mismo destino que ya usa `escritura_compraventa` → la UI (Sección F + preview informe) ya lo mostraba: 0 UI nueva.
+**Hallazgo 2 (premisa del prompt inexacta · C2):** se pidió "validar que SC-RF09 filtra `usado_motor_calculo=true`". FALSO: el módulo 4 del blueprint `SC-RF09-ExtraccionClaude` busca `D_TipoDocumentoAtributo` con `formula: FIND("{{tipo_documento_codigo}}", ARRAYJOIN({tipo_documento}))` — filtra SÓLO por `tipo_documento`. `usado_motor_calculo` viaja como metadato en `atributos_esperados` pero no filtra. Por eso se extraen los 10 atributos y el par recepción queda `usado_motor_calculo=FALSE` (metadato legal, no input del DAG), igual que las filas homólogas de `escritura_compraventa`.
+**Hallazgo 3 (PDF escaneado):** `certificado_recepcion_final.pdf` es imagen escaneada (pypdf devuelve textlen=2). Se leyó renderizando con PyMuPDF (`pymupdf.open(...).get_pixmap(Matrix(6,6), clip=Rect)`) y leyendo los PNG por regiones. Datos clave: N°210-2024 · 18-07-2024 · ROL S.I.I. 882-40 · DOM Colina · Vivienda Unifamiliar · 249,91 m² · CASA VERGARA ORELLANA.
+**Bloqueo runtime (idéntico a permiso):** el par recepción se rutea `una_por_solicitud → TX_DocumentosLegales`, que en runtime SÓLO funciona si AT03-Ext **v3** (generalizado a cualquier tabla 1:1) está pegado en Airtable UI. Si Airtable aún corre v2 (hardcode a `TX_DatosTasacion`), la escritura dará `error` como pasó con permiso. La deuda de pegado manual del v3 (MCP no edita nodos `customScript`) cubre también este tipo — no requiere trabajo extra de código, sólo que el v3 esté publicado.
+**Solución aplicada:** (A) `docs/_analisis/lectura_datos_certificado_recepcion_final_v1.xlsx` (2 hojas: inventario + brechas Etapa Diseño). (B) PATCH D_ a las 2 filas. (E/F) alta de `certificado_recepcion_final` en `CAMPOS_DERIVADOS` (`lib/adjuntos-doc-campos.ts`, changelog v1.2) → limpia el par recepción al borrar; tests `adjuntos-doc-campos.test.ts` y `adjuntos-cascade.test.ts` (conteos 7→8 y 8→9) verdes (835). (G) Origen v1.5→**v1.6** (§2.1.3 nuevo, header + changelog, `git mv`). `pnpm typecheck`/`build` limpios.
+**Prevención futura:** un tipo de `D_TipoDocumento` activo no implica atributos con destino: verificar `uso_campo_destino` antes de asumir que "falta UI". Y no dar por cierto lo que un prompt afirma del blueprint Make — leer el `formula`/`mapper` real.
+
+### 2026-09-11 — Bug reportado "borrar adjunto no limpia datos legales" = brecha de despliegue, no bug de código
+**Contexto:** VP-2026-0060 · tras borrar el adjunto `certificado_recepcion_final.pdf` desde la UI del Tasador, los campos `recepcion_final_numero` (210-2024) y `recepcion_final_fecha` (18-07-2024) seguían visibles. Se pidió diagnosticar y corregir para `certificado_recepcion_final` y `permiso_edificacion`.
+**Inconveniente:** el cascade de borrado no limpiaba el par recepción final en `TX_DocumentosLegales`, aunque el mapa y el consumidor parecían correctos.
+**Causa raíz:** brecha de despliegue. La entrada `certificado_recepcion_final` en `CAMPOS_DERIVADOS` (`lib/adjuntos-doc-campos.ts` v1.2) estaba en el working tree pero SIN COMMIT → ausente de `origin/main` (= `c67c92f`, lo que corre Railway). El commit desplegado sólo tenía `permiso_edificacion`. En producción, `capturarDerivadosDeAdjunto` no encontraba entrada con `tipoDocumento==='certificado_recepcion_final'` → cero filas capturadas → cero purga. NO era bug de lógica: se descartó (1) fallo de scope formula —se probó por REST que `{solicitud}="VP-2026-0060"` SÍ devuelve la fila `recDKdtr5Luz7BGsf` en `TX_DocumentosLegales`— y (2) mismatch de clave —`D_TipoDocumento.codigo`=`certificado_recepcion_final` idéntico al mapa—. `permiso_edificacion` sí está desplegado y funciona: no tiene el bug.
+**Solución aplicada:** (a) confirmado que el fix ya existe correcto en el working tree; no se reescribió `adjuntos-doc-campos.ts` ni el endpoint ni el motor. (b) Regresión: 2 tests nuevos en `lib/adjuntos-cascade.test.ts` que fijan capture→purge de ambos tipos de `TX_DocumentosLegales` (permiso y recepción), verificando el UPDATE con los 2 FIELD_IDs a null (34/34 verdes, typecheck+build limpios). (c) Remediación del dato colgado: PATCH vía MCP a `recDKdtr5Luz7BGsf` dejando `recepcion_final_numero`/`_fecha` en null. Cierre no-técnico en `C:\Users\Sergio\Documents\claude-out.txt`.
+**Prevención futura:** antes de declarar "bug de código" ante un síntoma en producción, contrastar `origin/main` (lo desplegado) contra el working tree: `git show <commit-desplegado>:<archivo>`. Un mapa client-safe hardcodeado sólo surte efecto cuando está commiteado y desplegado; el arreglo de la tanda anterior no llega a Railway hasta que Sergio hace push. Bloqueante de cierre real: publicar el commit + prueba de pantalla post-deploy.
+
+### 2026-09-12 — SC-IApro-LeadsScraper v1.1→v1.2: "Module Not Found" en m2/m15 por module id Google Sheets inexistente (gestión de blueprints Make)
+**Contexto:** tras importar la v1.1 en Make (export en `docs/_artefactos/make/_debug/`), m2 (lectura Búsquedas) y m15 (dedupe por url_linkedin) salían en rojo como "Module Not Found"; el resto del flujo importó verde. Ambos usaban `module: "google-sheets:searchRowsAdvanced"`.
+**Inconveniente:** `google-sheets:searchRowsAdvanced` no existe en la app Google Sheets de Make; el import no resuelve el módulo y lo pinta rojo. Era la materialización exacta del riesgo que RO-43 había anticipado.
+**Causa raíz:** el identificador se escribió con nomenclatura deducida (el "advanced filter builder" se confundió con un nombre de módulo) sin copiarlo literal de un blueprint verde. No hay ningún Search Rows de Google Sheets en el resto del repo, así que no existía precedente verde para cross-check; la v1.1 incluso había renombrado *hacia* el identificador roto.
+**Solución aplicada:** grep de todos los `google-sheets:*` del repo (sólo `searchRowsAdvanced`, `addSheet`, `addRow`; ningún Search Rows verde). Rename de m2 y m15 a `google-sheets:searchRows` (version 2) — módulo real de "Search Rows", camelCase sin prefijo `Action` (patrón de los verdes `addSheet`/`addRow`/`runActor`), misma `version: 2`. El mapper (mode=select, advanced filter `[[{a,b,o}]]`, sortOrder, valueRenderOption, dateTimeRenderOption) es nativo de `searchRows` v2 → se conservó sin reescribir; `restore.expect` intacto. Blueprint y plan bumpeados a v1.2. JSON validado con `python3 -c "import json; json.load(...)"`. Queda registrado para el smoke test P6 (riesgo runtime, NO red de import): `searchRows` emite un bundle por fila, no `.array`; verificar los consumidores `{{2.array}}` (feeder m5) y `{{15.array}}` (`length(15.array)` en m16) y remapear si Make no expone la colección bajo `.array`.
+**Prevención futura:** copiar SIEMPRE el `module`/`version` LITERAL (case-sensitive) de un blueprint verde existente antes de escribirlo; si no hay precedente en el repo, no dar por bueno el nombre deducido — el import en Make es la prueba, y el arreglo va al `.json` versionado + reimport, nunca sólo al canvas (RO-43). Para Google Sheets "Search Rows" el id verificado es `google-sheets:searchRows` v2.
+
+### 2026-09-12 — CIERRE del hilo "Search Rows": el module id REAL es google-sheets:filterRows (v1.2→v1.3)
+**Contexto:** v1.2 importó pero m2/m15 seguían rojos; Sergio creó los módulos a mano en Make, exportó el scenario (`docs/_artefactos/make/_debug/…v1.2….json`) y ese export pasó a ser la fuente de verdad del shape.
+**Inconveniente:** el id `google-sheets:searchRows` que la entrada anterior dio por "verificado" TAMPOCO existe. El "Select rows" de Google Sheets en Make se llama en realidad **`google-sheets:filterRows`** (version 2). La corrección v1.1→v1.2 (searchRowsAdvanced→searchRows) fue adivinar por patrones de nomenclatura otra vez — y volvió a fallar.
+**Causa raíz:** deducir el id por convención (camelCase sin "Action", analogía con addRow/addSheet) no es verificación. Sin un blueprint verde con ese módulo en el repo, cualquier nombre es una conjetura hasta que Make lo confirma. El shape real además diverge de lo supuesto: `from:"share"`, `limit`, `tableFirstRow:"A1:Z1"`, `filter:[[{a,o,b}]]`, `sortOrder`; connection `type:"account:google"` (no `-restricted`); y la salida son **bundles con claves numéricas** (`0`=A … `4`=E), sin `.array`.
+**Solución aplicada:** copiado LITERAL el shape de parameters/mapper/restore.expect del m162 del export a m2 (lectura Busquedas, spreadsheetId `__SPREADSHEET_ID_BUSQUEDAS__`, `__IMTCONN__:1`) y construido m15 para dedupe en iapro-leads (`__SPREADSHEET_ID_LEADS__`, sheetId `{{5.E}}`, limit 10, columna url_linkedin como placeholder `__COL_URL_LINKEDIN__`). Id de módulos conservados (2 y 15) para no romper referencias río abajo. Blueprint y plan a v1.3; JSON validado (`json.load`). Paso manual post-import documentado en plan §5.1 (3 placeholders + SERPAPI_KEY + reconectar 2 cuentas + Run once que confirma el shape de salida). El riesgo runtime `.array` vs bundles queda anotado para el Run once.
+**Prevención futura (regla nueva, ancla RO-43):** cuando un module id no aparezca en NINGÚN blueprint verde local, **no adivinar por patrones de nomenclatura** — crear el módulo a mano UNA vez en un scenario throwaway, exportarlo, y leer el `module`/`version` del JSON exportado. El export de Make es la única fuente de verdad del id y del shape; la convención de nombres no lo es. Catálogo Google Sheets verificado por export: `filterRows` (Select rows), `addSheet`, `addRow` — todos v2.
+
+### 2026-09-12 — SC-IApro-LeadsScraper v1.3→v1.4: 5 fixes de mapper/filter sobre el export configurado por Sergio
+**Contexto:** Sergio configuró a mano el scenario en Make y exportó (`docs/_artefactos/make/_debug/…v1.3….json`). Ese export (IDs reales, connections reales) fue la fuente de verdad para auditar los mapeos. Se generaron dos artefactos: `SC-IApro-LeadsScraper.READY-TO-IMPORT.json` (git-ignored, IDs/connections reales) y el versionado `SC-IApro-LeadsScraper.blueprint.json` (placeholders, `__IMTCONN__:1`, v1.4).
+**Inconveniente y fix (síntoma → causa → fix), 5 bugs:**
+- **BUG 1 · m15 dedupe sin columna.** Síntoma: `filter` era `[[{"o":"text:equal","b":"{{10.link}}"}]]` (sin clave `a`) → el dedupe no compara contra ninguna columna. Causa: al rellenar el filter en la UI quedó sin columna seleccionada. Fix: `a:"F"` (url_linkedin es la columna F del catálogo A→I de iapro-leads).
+- **BUG 2 · m15 sheetId hardcoded.** Síntoma: `sheetId:"Hoja 1"` fijo → siempre deduplica contra una pestaña equivocada. Causa: valor de prueba dejado sin parametrizar. Fix: `sheetId:"{{5.E}}"` (nombre_hoja dinámico de m5).
+- **BUG 3 · m16 Add a Sheet vacío.** Síntoma: mapper sólo con `select:"fromAll"`+`spreadsheetId` (sin título ni headers) → no crea la pestaña con el catálogo. Causa: módulo a medio configurar. Fix: `properties.title:"{{5.E}}"`, `rowCount:1000`, `columnCount:9`, `headers:[9 columnas del catálogo]`; se conservan el filter "Solo si dedupe devolvió cero filas" y el `onerror:Ignore`.
+- **BUG 4 · m17 Add a Row (3).** Síntomas: (4a) `spreadsheetId` con `/` inicial (`"/15Qvt…"`) → ID inválido; (4b) `sheetId:"Hoja 1"` fijo; (4c) `from:"drive"` inconsistente con m2/m15. Causa: selección por path en UI (dejó el `/` y el Drive). Fix: quitar `/`, `sheetId:"{{5.E}}"`, `from:"share"`. Se conservan values 0..8, mode, insertUnformatted, valueInputOption, insertDataOption, includesHeaders, useColumnHeaders.
+- **BUG 5 · m12 Apify filter AND imposible.** Síntoma: las 2 conditions de "Solo perfiles linkedin.com/in" iban en grupos internos separados → se evaluaban con AND, exigiendo que la URL empiece por los dos prefijos a la vez (imposible) → 0 perfiles pasaban. Causa: en Make, condiciones en arrays distintos = AND; en el mismo array = OR. Fix: fusionar ambas en un solo grupo interno (OR).
+**Solución aplicada:** ambos artefactos se derivaron del export con un script Python (precisión y para no re-tipear 2000 líneas). Versionado scrub de IDs reales→placeholders, email de Sergio y `__IMTCONN__`→1. `_debug/` agregado a `.gitignore` (el READY-TO-IMPORT nunca se commitea). Validado: `json.load` OK en ambos; los 13 módulos presentes; todas las referencias `{{X.}}` apuntan a IDs vivos (1,2,5,6,7,8,9,10,12,14,15); sin fugas en el versionado; SerpAPI sigue como variable `{{SERPAPI_KEY}}`.
+**Prevención futura:** en Make, el shape del filter es `conditions[grupo][condición]`: mismo grupo = OR, grupos distintos = AND — revisar la anidación al escribir filtros multi-condición a mano. Y todo `filter` de Google Sheets `filterRows`/`searchRows` necesita la terna completa `{a,o,b}`: sin `a` no filtra por columna. El export de Make vuelve a ser la fuente de verdad; el artefacto versionado debe derivarse de él (misma estructura) y sólo sustituir IDs/connections por placeholders. Pendiente de confirmar en Run once: que m16 materialice los 9 headers (su `expect` no declara rowCount/columnCount/headers, se resuelven dinámicos) y el shape de salida bundles-vs-`.array` de filterRows.
+
+### 2026-09-13 — SC-IApro-LeadsScraper v1.9: onerror `builtin:Ignore` descarta el bundle → m17 (addRow) corría 0 veces
+**Contexto:** en un run del scenario 7380314, m12 (Apify) y m18 (Get Dataset Items) producían 84 bundles y el filtro "Correo no vacio" dejaba pasar 48, pero el Google Sheet de leads quedaba sin filas de datos; m17 (Add a Row) figuraba con 0 ejecuciones.
+**Inconveniente:** en Make, el onerror `builtin:Ignore` de un módulo DESCARTA el bundle completo cuando ese módulo falla — los módulos posteriores del flujo NO se ejecutan para ese bundle. Aquí m16 (addSheet) tenía `onerror: builtin:Ignore` y fallaba de forma esperada y benigna con "sheet already exists" (la pestaña ya existía), así que Ignore consumía cada bundle antes de llegar a m17.
+**Causa raíz:** el handler correcto para un error esperado y benigno cuando el módulo siguiente NO depende del output del que falla es `builtin:Resume`, no `builtin:Ignore`. Resume ignora el error PERO deja continuar el bundle upstream hacia los módulos posteriores. m17 sólo lee `{{18.*}}` y `{{11.*}}` (nunca `{{16.*}}`), así que no necesita el output de m16.
+**Solución aplicada:** fix del 2026-09-13 vía PATCH del blueprint completo (Make no ofrece patch incremental por módulo): `m16.onerror[0].module` de `builtin:Ignore` → `builtin:Resume` (mapper `{}`), resto del blueprint byte-idéntico. Verificado por GET que persistió; smoke test real confirmó m17 > 0 (operations 444→590; addRow ya visible en el flujo). Escribir a la pestaña existente ("headhunt-conce") dejó de bloquearse.
+**Prevención futura:** regla general — `builtin:Ignore` corta la rama del bundle en el módulo que falla; usar `builtin:Resume` cuando el error sea esperado/benigno y el resto del flujo deba continuar con los datos upstream. Nota aparte destapada por el fix (no es del onerror): m16 no crea las pestañas nuevas de otras búsquedas activas, así que esos bundles fallan río abajo en m17 con "Unable to parse range: '<tab>'!A1" — es un segundo problema pendiente de decisión.
+
+### 2026-09-13 — SC-IApro-LeadsScraper v1.9: filterRows con FORMATTED_VALUE devuelve booleanos como texto → `boolean:equal` deja pasar todas las filas
+**Contexto:** m2 (Búsquedas WHERE activa=TRUE) del scenario debía leer sólo las búsquedas realmente activas de la hoja, pero procesaba TODAS las filas, incluidas las de `activa=FALSE`.
+**Inconveniente:** el módulo Google Sheets `filterRows` con `valueRenderOption=FORMATTED_VALUE` devuelve las celdas booleanas como texto (`'TRUE'`/`'FALSE'`), no como booleano nativo. El filtro usaba el operador `boolean:equal`, que coacciona la cadena `'FALSE'` a truthy (cualquier string no vacío es truthy) → el filtro dejaba pasar todas las filas.
+**Causa raíz:** desajuste entre el tipo que la hoja emite bajo FORMATTED_VALUE (texto) y el operador elegido (`boolean:equal`). El operador booleano no parsea `'FALSE'` como falso; sólo comprueba que el string no esté vacío.
+**Solución aplicada:** fix del 2026-09-13 vía PATCH del blueprint. Se cambió el filtro de m2 a `text:equal` con valor `'TRUE'` (mayúsculas exactas tal como las muestra la hoja). Combinado con el fix previo de m16 (onerror `Ignore`→`Resume`), el scenario quedó procesando sólo las búsquedas realmente activas.
+**Prevención futura:** al filtrar celdas booleanas de Google Sheets bajo `FORMATTED_VALUE`, tratar el valor como texto (`text:equal` contra `'TRUE'`/`'FALSE'` en mayúsculas) — nunca `boolean:equal`, que da falso positivo con `'FALSE'`. Si se necesita booleano nativo, cambiar el `valueRenderOption` a `UNFORMATTED_VALUE`.
+<<<<<<< Updated upstream
+=======
+
+### 2026-09-16 — SC-IApro-LeadsScraper v1.9: run vacío = 400 en addSheet + addSheet "cuelga" el flujo lineal
+**Contexto:** scenario 7380314 cerraba SUCCESS (266 ops, 30 min) pero escribía 0 filas nuevas en el sheet destino. Las "badges 21" del inspector se malinterpretaban como filas; eran contador de operaciones.
+**Inconveniente:** dos fallos encadenados. (1) m16 `google-sheets:addSheet` nunca creaba la pestaña: enviaba `rowCount`/`columnCount` planos dentro de `properties`, y la API Sheets v4 los exige bajo `properties.gridProperties` → `400 INVALID_ARGUMENT: Unknown name "rowCount" ... Cannot find field`; el `onerror:Resume` tragaba el error. (2) Al arreglar el 400, se destapó que el módulo `addSheet` NO propaga el bundle a su sucesor en una cadena lineal: m16 crea la pestaña pero m166/m17 (posteriores) corren 0 veces, con o sin filtro, con o sin onerror, en pestaña nueva y limpia. Verificado que m17 movido ANTES de m16 (o entre el agregador 165 y m16) SÍ escribe → el que cuelga es m16, no el agregador.
+**Causa raíz:** (1) mapper mal formado contra el esquema `AddSheetRequest.properties` (SheetProperties). (2) comportamiento del módulo addSheet en este flujo: termina la rama del bundle tras crear la hoja.
+**Solución aplicada:** PATCH del blueprint (Make no da patch por módulo). (a) `properties.rowCount/columnCount` → anidados en `properties.gridProperties`. (b) Reestructura: los tres escritores dentro de un `builtin:BasicRouter` (id 300) con 3 rutas independientes `[[16],[166],[17]]` — addSheet queda solo en su ruta y su "cuelgue" ya no afecta; header y data cuelgan del router, no de m16; las rutas corren en orden (crea→header→data). (c) Header-once: las refs cross-route `{{16.sheetId}}`/`{{16.title}}` NO resuelven entre rutas de un router; se agregó chequeo de hoja vacía AGUAS ARRIBA (m168 filterRows sin filtro, `includesHeaders:false`, limit 1, onerror Ignore → m169 aggregator) y el gate de m166 pasó a `{{length(169.array)}} == 0`. Dedup de datos intacto (m164/m165 por url_linkedin, gate `length(165.array)==0` en m17). Validado con lectura dura del sheet: `headhunter-khp` (nombre real `{{2.`4`}}`) creada con 9 headers en fila 1 + fila de datos con fecha de hoy; segunda corrida no duplica ni header ni fila.
+**Prevención futura:** (1) en Make, `properties` de `addSheet` se serializa casi verbatim a la API → `rowCount`/`columnCount` van bajo `gridProperties`, nunca planos. (2) No poner módulos críticos DESPUÉS de `addSheet` en cadena lineal: aislarlo en su propia ruta de router. (3) Las referencias entre rutas distintas de un mismo router no resuelven; cualquier gate que dependa de "se acaba de crear" debe basarse en una señal upstream (p.ej. contar filas físicas con `includesHeaders:false`), no en el output del addSheet. (4) Las badges del history son operaciones/bundles, no filas escritas: confirmar siempre con lectura dura del sheet.
+
+### 2026-09-16 — SC-IApro-LeadsScraper v1.10: Router 300 con m166 (header) sin guard de email → "Unable to parse range" en pestañas no creadas
+**Contexto:** corrida de producción (9 búsquedas activas) del scenario 7380314 falló con Incomplete Executions en Operation 4 y 6: `400 INVALID_ARGUMENT - Unable to parse range: 'consultor-de-seleccion-khp'!A1` y `'ejecutivo-de-reclutamiento-khp'!A1`. El inspector atribuyó el fallo a m17 (Add a Row de datos).
+**Inconveniente:** el módulo que fallaba era en realidad **m166** (la fila de CABECERA, route[1] del Router 300), no m17. Firma en el bundle que reventaba: `includesHeaders:false` (m166), mientras m17 usa `includesHeaders:true`. De las 3 rutas del router, m16 (addSheet) y m17 (data) llevaban el guard `{{18.email}} exist`, pero m166 sólo tenía `length(169.array)==0`.
+**Causa raíz:** cuando un perfil LinkedIn viene SIN email, m16 se salta (guard) y la pestaña no se crea; pero m166 evalúa `length(169.array)==0` como TRUE precisamente porque la pestaña no existe (m168 la lee, error, `onerror:Ignore` → agregado vacío) → m166 corre e intenta escribir cabecera en una pestaña inexistente → 400 "Unable to parse range". No era "rutas en paralelo": las rutas sí corren en orden (crea→header→data); el hueco era el guard de email faltante en m166. Confirmado por timestamps: en consultor-de-seleccion-khp la fila de datos se escribió 6 s DESPUÉS del DLQ (un bundle sin email falló, otro con email creó la hoja y escribió).
+**Solución aplicada:** PATCH del blueprint (scenario → v1.10). Se agregó `{{18.email}} exist` al filtro de m166 (AND con `length(169.array)==0`), alineándolo con m16/m17. Validación por evidencia dura: (a) retry de los 2 DLQ que reventaban (`POST /dlqs/{id}/retry`) → `resolved=True` sin re-gasto de SerpAPI/Apify (el bundle sin email ahora salta limpio en m166); el 3er DLQ (stale, "Missing value of required parameter 'select'", de blueprint pre-fix) se descartó con `DELETE /dlqs/{id}`. (b) smoke test escribiendo a pestaña desechable `smoke-fix-selector` (búsqueda "reclutador", sheetIds override a literal para no tocar data real): pestaña creada con 9 headers en fila 1 + fila de datos con `fecha_extraccion` de hoy; re-run idéntico dejó la pestaña en 2 filas (sin duplicar header ni fila → dedup OK). (c) `dlqCount=0` al cierre. Scenario restaurado a producción (m2 sin restricción, sheetIds de vuelta a `{{2.`4`}}`); sheet fuente nunca editado (restricción hecha en el filtro del scenario, no en la hoja).
+**Prevención futura:** en un router donde varias rutas escriben a la misma hoja condicionadas a que exista/se haya creado, TODAS las rutas de escritura deben compartir el mismo guard que la ruta de creación (aquí `{{18.email}} exist`). Un gate `length(agg.array)==0` no distingue "hoja vacía" de "hoja inexistente" (la lectura con `onerror:Ignore` da agregado vacío en ambos casos), así que por sí solo no protege contra escribir en una pestaña que nunca se creó. Truco de validación sin gastar crédito: `POST /dlqs/{id}/retry` reprocesa el bundle exacto que falló contra el blueprint corregido — si `resolved=True`, el fix quedó probado sobre la data real que reventaba. Para probar creación de pestaña nueva sin tocar data real, override temporal de los sheetId a un nombre literal desechable.
+
+### 2026-09-16 — SC-IApro-LeadsScraper v1.11: el fix v1.10 "no funcionaba" porque el blueprint fue revertido; la corrida usó v1.9 sin el guard
+**Contexto:** tras desplegar v1.10 (guard de email en m166) y validarlo en vivo al cierre de la sesión previa, la corrida de producción de Sergio volvió a fallar con el MISMO error `Unable to parse range: 'consultor-de-seleccion-khp'!A1` en Operation 4/6. Parecía que el fix no servía.
+**Inconveniente:** distinguir "el fix es incorrecto" de "el fix no se ejecutó". El inspector no lo aclara.
+**Causa raíz:** el fix era correcto pero NO estaba en el blueprint que corrió. Verificado por API: `GET /dlqs/{id}/blueprint` del bundle que reventó devolvió un blueprint nombrado **"v1.9"** con m166 SIN guard, y `response.failer` = **166** (confirma que el módulo que Google rechazó es m166, la cabecera, no m17). Además el scenario en vivo, aunque nombrado "v1.10", tenía m166 con el filtro revertido a sólo `length(169.array)==0`. O sea: entre sesiones el blueprint se revirtió (rollback en la UI de Make o re-import de una versión vieja); mi PATCH v1.10 quedó pisado. El orden de rutas del Router quedó descartado como causa: m16 (route0) y m17 (route2) llevaban guard y nunca fallaron con "parse range"; sólo m166 (route1, sin guard) falló — si el router no respetara crea→escribe, m17 también habría reventado en pestañas nuevas.
+**Solución aplicada:** re-desplegar el guard como **v1.11** (bump para que el blueprint en vivo sea inequívoco y no se confunda con el "v1.10 sin guard" revertido). PATCH del local `SC-IApro-LeadsScraper.blueprint.json`, verificado leyendo el blueprint EN VIVO (las 3 rutas con `{{18.email}} exist`). Validación reproduciendo la data que fallaba (no como el smoke previo, que usó "reclutador" con email en el primer perfil): (a) retry de los 2 DLQ range-error → `resolved=True` bajo v1.11; los 2 DLQ "Execution was forced to stop" (Sergio detuvo) descartados con DELETE. (b) corrida restringida a `consultor-de-seleccion-khp` (la búsqueda que rompía; devuelve perfiles con y sin email) a pestaña desechable `smoke-v111-consultor`: `status=SUCCESS`, `dlqCount=0`, pestaña con 9 headers + 1 fila (el único perfil con email, Florencia arjona@khp.cl, fecha de hoy); los perfiles sin email se saltaron sin generar DLQ. (c) re-run idéntico → 2 filas, sin duplicados. Producción restaurada (m2 sin restricción, sheetIds `{{2.`4`}}`, v1.11); 9 filas activa=TRUE del sheet fuente intactas (nunca se editó la hoja).
+**Prevención futura:** cuando un fix desplegado por API "vuelve a fallar", PRIMERO confirmar qué blueprint corrió realmente — `GET /dlqs/{id}/blueprint` da el blueprint exacto del bundle fallido y `response.failer` da el módulo culpable; no fiarse del nombre del scenario (puede decir vX pero tener el cuerpo revertido). El blueprint en vivo de Make puede revertirse fuera de mi control (rollback/re-import); dejar bump de versión claro y avisar a Sergio de NO re-importar versiones viejas antes de correr. Y reproducir el fallo con la data EXACTA que rompía (aquí, la búsqueda consultor con perfiles sin email), no con una búsqueda cualquiera que no dispara la condición.
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
