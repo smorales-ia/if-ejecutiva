@@ -338,6 +338,12 @@ export const FIELD_IDS_DATOS_TASACION = Object.freeze({
   destinoSii: 'fldXcPz00Qf2ZVMJa',
   /** `avaluo_fiscal_clp` · number. */
   avaluoFiscalClp: 'fldE4t7FzB47FKTui',
+  /**
+   * `avaluo_total` · currency. Lo lee el informe (`DatosSii.avaluoTotal`,
+   * `lectura-informe.ts`). Destino de `consulta_antecedentes_bien_raiz__avaluo_total_clp`
+   * (H2 · cableado vía MCP · TANDA H1-H4). Distinto de `avaluo_fiscal_clp`.
+   */
+  avaluoTotal: 'fldcoEp2r58Q8b8KA',
   /** `avaluo_exento` · currency. Compartido con `certificado_avaluo_fiscal`. */
   avaluoExento: 'fld1Rl4AYBwic2VN3',
   /** `contribucion_anual` · currency. Compartido con `certificado_avaluo_fiscal`. */

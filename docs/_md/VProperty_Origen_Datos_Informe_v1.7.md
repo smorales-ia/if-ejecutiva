@@ -26,22 +26,24 @@
                      Especialista en Extracción IA (Claude SC07) · QA
                      Lead
 
-  **Versión**        v1.6 · 11-sep-2026 · IF-03-certificado-recepcion-final ·
-                     Se inventaría el documento
-                     **`certificado_recepcion_final`** (Certificado de
-                     Recepción Definitiva de Obras municipal · DOM) como fuente
-                     documental propia en §2.1.3, con su cuadro de atributos
-                     catalogados en D_TipoDocumentoAtributo bajo el doc
-                     certificado_recepcion_final (rec8dQ3tS2Qpd2paE). Scope
-                     mínimo spec-fiel: sólo `numero_recepcion` y
-                     `fecha_recepcion` reciben destino real
-                     (TX_DocumentosLegales.recepcion_final_numero/_fecha, ya
-                     mostrados en la Sección F de la UF del Tasador); los otros
-                     8 atributos quedan catalogados sin destino y
-                     obligatorio=FALSE como brecha de diseño. El borrado del
-                     documento limpia el par recepción final (cascade §28).
-                     Sucede a v1.5 (11-sep-2026), que queda como versión
-                     anterior.
+  **Versión**        v1.7 · 17-sep-2026 · IF-03-lectura-H1-H4-Met_6283 · Se
+                     inventarían cuatro fuentes documentales nuevas del set
+                     Met_6283: **`consulta_antecedentes_bien_raiz`** (SII · H2,
+                     §2.1.4), **`informe_no_expropiacion_serviu`** (SERVIU · H3,
+                     §2.1.5), **`inscripcion_dominio_cbr`** (CBR · H4, §2.1.6) y
+                     **`certificado_deuda_tgr`** (TGR · H1, §2.1.7 · sin
+                     cableado). Scope mínimo spec-fiel: H2 rutea 3 campos SII
+                     (avaluo_total/destino_sii/calidad_sii → TX_DatosTasacion),
+                     H3 rutea 3 (n_cert_no_expropiacion/lat/long →
+                     TX_DatosTasacion), H4 rutea la terna de dominio
+                     (fojas/numero_inscripcion/ano_inscripcion →
+                     TX_DocumentosLegales); todos ya leídos por la UF del
+                     Tasador (0 UI nueva) y limpiados por el cascade §28.
+                     **Decisión H4**: el destino canónico de vendedor/comprador
+                     es TX_Solicitudes.vendedor_* (intake); el CBR queda como
+                     origen_dato de verificación y NO se rutea. H1 no se cabla
+                     (deuda es gestión, no insumo; sin columna canónica). Sucede
+                     a v1.6 (11-sep-2026), que queda como versión anterior.
   -----------------------------------------------------------------------
 
 +-----------------------------------------------------------------------+
@@ -577,6 +579,130 @@ Diseño»). No se crearon columnas nuevas en `TX_DocumentosLegales`.
 sólo viaja como metadato en el payload. `numero_recepcion` / `fecha_recepcion` quedan
 con `usado_motor_calculo = FALSE` porque el DAG del motor no los consume (son metadato
 legal del informe), consistente con las mismas dos filas bajo `escritura_compraventa`.
+
+### 2.1.4 · Inventario del documento `consulta_antecedentes_bien_raiz` (Consulta de Antecedentes de Bien Raíz · SII) — H2
+
+La Consulta de Antecedentes de Bien Raíz (`docs/_referencias/Met_6283/consulta_antecedentes_bien_raiz_Met6283.pdf`,
+escaneada) es contenido **SII**, catalogada en `D_TipoDocumento` como
+`consulta_antecedentes_bien_raiz` (`recvGwhwO8gdnSFQE`, activo, emisor SII). ⚠
+**Coexiste con `foto_fuente_sii`**, que es el tipo **canónico** del bloque SII; para no
+duplicar el modelo, este tipo **no lo reemplaza**: se rutean sólo tres atributos SII
+descriptivos al mismo destino que ya usa `foto_fuente_sii`.
+
+**Scope mínimo spec-fiel (IF-03).** De los 15 atributos catalogados, **tres** reciben
+destino real cableado vía MCP con `uso_interfaz_tasador = TRUE`, cardinalidad
+`una_por_solicitud`, política «solo si vacío» del pipeline:
+
+  ----------------------------------------------------------------------------------------------
+  **Campo (SII)**               **codigo_atributo**       **Tabla · Campo destino**    **Motor**
+  ---------------------------- ------------------------- ---------------------------- ----------
+  Avalúo Total (339.609.429)    avaluo_total_clp          TX_DatosTasacion ·           No
+                                                          avaluo_total
+
+  Destino SII                   destino_sii               TX_DatosTasacion ·           No
+                                                          destino_sii
+
+  Calidad SII                   calidad_sii               TX_DatosTasacion ·           No
+                                                          calidad_sii
+  -----------------------------------------------------------------------------------------
+
+Los tres los lee ya el informe (`DatosSii.avaluoTotal` / `destinoSii` / `calidadSii`,
+`lib/tasador/lectura-informe.ts`) — **no hubo UI nueva**. `destino_sii` y `calidad_sii`
+son **compartidos** (política Q1) con `foto_fuente_sii` y `certificado_avaluo_fiscal`;
+el cascade de §28 los limpia al borrar cualquiera de esos documentos.
+
+**Atributos catalogados sin destino (brecha de diseño).** Los otros 12 —rol/ubicación/
+avalúo_exento/avalúo_afecto/sobretasa/contribución/detalle de líneas de edificación/
+códigos catastrales/propietario— quedan sin destino: su fuente canónica es
+`foto_fuente_sii` (bloque SII) o la solicitud, y **`avaluo_afecto` no tiene columna**.
+La **contribución** del documento viene rotulada trimestral/semestral mientras el campo
+del modelo es `contribucion_anual` (misma ambigüedad de conversión ×N que §2.1.1): **no
+se auto-escribe** hasta fijar la regla. Detalle en
+`docs/_analisis/lectura_datos_consulta_antecedentes_bien_raiz_v1.xlsx`. No se crearon
+columnas nuevas.
+
+### 2.1.5 · Inventario del documento `informe_no_expropiacion_serviu` (Informe de No Expropiación · SERVIU) — H3
+
+El Informe de No Expropiación (`docs/_referencias/Met_6283/informe_no_expropiacion_serviu_Met6283.pdf`,
+escaneado) está catalogado como `informe_no_expropiacion_serviu` (`recpKP7b6xlqAA4Rs`,
+activo, emisor SERVIU). E3 (Motor) marca el tipo «no-op», pero Origen y la UF del
+Tasador **sí** usan su dato: el número de certificado y las coordenadas.
+
+**Scope mínimo spec-fiel (IF-03).** **Tres** atributos reciben destino real (vía MCP,
+`uso_interfaz_tasador = TRUE`, `una_por_solicitud`):
+
+  ----------------------------------------------------------------------------------------------
+  **Campo**                     **codigo_atributo**       **Tabla · Campo destino**    **Motor**
+  ---------------------------- ------------------------- ---------------------------- ----------
+  N° Certificado No             numero_documento          TX_DatosTasacion ·           No
+  Expropiación (3444743)                                  n_cert_no_expropiacion
+
+  Latitud                       latitud                   TX_DatosTasacion · lat       No
+
+  Longitud                      longitud                  TX_DatosTasacion · long      No
+  -----------------------------------------------------------------------------------------
+
+Los tres los lee ya la UF (`nCertificadoNoExpropiacion` / `coordenadasLat` /
+`coordenadasLng`, `lib/tasador/lectura-datos.ts`) — **no hubo UI nueva**. El cascade
+los limpia al borrar el documento (§28).
+
+**Brecha.** `afecto_expropiacion` (SÍ/NO) **no tiene columna persistente** en el modelo:
+la UF lo captura como flag pero no se hidrata desde el documento, así que queda sin
+destino. `fecha_emision`, `comuna`, `rol_sii`, `direccion` tienen fuente canónica
+propia (solicitud / SII). Detalle en
+`docs/_analisis/lectura_datos_informe_no_expropiacion_serviu_v1.xlsx`.
+
+### 2.1.6 · Inventario del documento `inscripcion_dominio_cbr` (Inscripción de Dominio · CBR) — H4
+
+La Inscripción de Dominio del Conservador de Bienes Raíces
+(`docs/_referencias/Met_6283/inscripcion_dominio_cbr_Met6283.docx`, imagen escaneada)
+es el **documento canónico de titularidad**, catalogado como `inscripcion_dominio_cbr`
+(`recsLnkTWhbMgyX4d`, activo, emisor CBR).
+
+**Scope mínimo spec-fiel (IF-03).** La **terna de dominio** recibe destino real (vía
+MCP, `uso_interfaz_tasador = TRUE`, `una_por_solicitud`), compartida (Q1) con el bloque
+dominio de `foto_fuente_sii`:
+
+  ----------------------------------------------------------------------------------------------
+  **Campo (dominio CBR)**       **codigo_atributo**       **Tabla · Campo destino**    **Motor**
+  ---------------------------- ------------------------- ---------------------------- ----------
+  Foja CBR (3312)               foja_cbr                  TX_DocumentosLegales · fojas No
+
+  N° Inscripción CBR (4663)     numero_cbr                TX_DocumentosLegales ·       No
+                                                          numero_inscripcion
+
+  Año Inscripción CBR (2020)    ano_inscripcion_cbr       TX_DocumentosLegales ·       No
+                                                          ano_inscripcion
+  -----------------------------------------------------------------------------------------
+
+Los tres los lee ya la UF (`cbrFoja` / `cbrNumero` / `cbrAnio`,
+`lib/tasador/lectura-datos.ts` y §Antecedentes legales del informe) — **no hubo UI
+nueva**. El cascade limpia la terna al borrar el documento (§28).
+
+**⚠ DECISIÓN H4 · doble destino de `vendedor` / `comprador`.** El scan del CBR trae la
+parte vendedora y compradora de la compraventa; §2.1 lo declara como origen canónico.
+Sin embargo `vendedor_*` ya vive en **`TX_Solicitudes`** (`vendedor_nombre`/`_rut`/
+`_email`/`_telefono`, §21.2), poblado en el **intake** (IF-01/IF-02). Para evitar doble
+escritura y un modelo con dos fuentes de verdad, **el destino canónico de
+vendedor/comprador es `TX_Solicitudes.vendedor_*`**, y el CBR queda como **origen_dato
+de verificación**: sus atributos `vendedor`/`comprador` **NO se rutean** desde
+`D_TipoDocumentoAtributo`. (Refuerzo técnico: el resolver 1:1 de AT03-Ext escribe en
+tablas hijas por link `solicitud`, no en la propia `TX_Solicitudes`.) `notaria` y
+`repertorio` no tienen columna destino → brecha. `servidumbres` es fuente de
+`TX_ItemsCuadroValoracion` (no se auto-rutea). Detalle en
+`docs/_analisis/lectura_datos_inscripcion_dominio_cbr_v1.xlsx`.
+
+### 2.1.7 · Nota sobre `certificado_deuda_tgr` (Certificado de Deuda de Contribuciones · TGR) — H1 · sin cableado
+
+El Certificado de Deuda de la TGR (`docs/_referencias/Met_6283/certificado_deuda_tgr_Met6283.pdf`)
+está catalogado (`recl9kd6N4qjfpzQn`, activo) pero **deliberadamente sin destino**. Sus
+datos (`tiene_deuda`, `monto_deuda_clp`, `contribucion_total_clp`, `deuda_no_vencida`)
+son **gestión de deuda, no insumo de tasación**: `deuda_no_vencida` no se cataloga; la
+contribución del TGR (dual con SII) requiere la misma regla de conversión pendiente y
+**no existe columna `contribucion_total`** (sólo `contribucion_anual`, ya sourceada por
+`foto_fuente_sii`); `deuda_contrib` existe en `TX_DatosTasacion` pero **la UI no la lee**.
+Por eso H1 no se cabló y no participa del cascade. Detalle en
+`docs/_analisis/lectura_datos_certificado_deuda_tgr_v1.xlsx`.
 
 ## 2.2 · Datos del PDF que también se extraen pero NO van a campos estructurados
 

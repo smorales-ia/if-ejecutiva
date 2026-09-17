@@ -83,9 +83,10 @@ export interface TablaDerivada {
  * Mapa `tipoDocumento → TablaDerivada[]`. Derivado literal de
  * `docs/schema-airtable.md` §28.
  *
- * Los tipos sin destino (`consulta_antecedentes_bien_raiz`, etc. · los de §28 sin
- * `uso_tabla_destino` · Q5) simplemente no están: `camposLimpiablesDe()` los
- * devuelve como lista vacía y el cascade no purga nada para ellos (no-op).
+ * Los tipos sin destino (`certificado_deuda_tgr`, `certificado_dominio_vigente`,
+ * etc. · los de §28 sin `uso_tabla_destino` · Q5) simplemente no están:
+ * `camposLimpiablesDe()` los devuelve como lista vacía y el cascade no purga nada
+ * para ellos (no-op).
  *
  * ⚠ El par **recepción final** (`recepcion_final_numero` · `recepcion_final_fecha`)
  * y el par **permiso** (`permiso_edificacion_numero` · `permiso_edificacion_fecha`)
@@ -219,6 +220,69 @@ export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
       ],
     },
   ],
+
+  // H2 · Consulta de Antecedentes de Bien Raíz (SII). Scope mínimo spec-fiel: de
+  // los 15 atributos sólo tres SII descriptivos tienen destino real cableado en
+  // `D_TipoDocumentoAtributo` — `avaluo_total`, `destino_sii`, `calidad_sii`
+  // (TX_DatosTasacion, una_por_solicitud, política "solo si vacío"). Comparte
+  // `destino_sii`/`calidad_sii` con `foto_fuente_sii` y `certificado_avaluo_fiscal`
+  // (política Q1). El resto (rol/avalúo_afecto/contribución/detalle edificación…)
+  // quedó sin destino: `foto_fuente_sii` es el tipo canónico del bloque SII, y la
+  // contribución del documento viene rotulada trimestral/semestral (conversión
+  // pendiente, no se auto-escribe). Ver docs/_analisis/lectura_datos_consulta_antecedentes_bien_raiz_v1.xlsx.
+  consulta_antecedentes_bien_raiz: [
+    {
+      tabla: TABLE_IDS.datosTasacion,
+      tablaLabel: 'Datos de tasación (SII)',
+      patron: 'a',
+      campos: [
+        { fieldId: FIELD_IDS_DATOS_TASACION.avaluoTotal, label: 'Avalúo total (SII)' },
+        { fieldId: FIELD_IDS_DATOS_TASACION.destinoSii, label: 'Destino SII' },
+        { fieldId: FIELD_IDS_DATOS_TASACION.calidadSii, label: 'Calidad SII' },
+      ],
+    },
+  ],
+
+  // H3 · Informe de No Expropiación SERVIU. Scope mínimo spec-fiel: número de
+  // certificado + coordenadas, todos en TX_DatosTasacion (una_por_solicitud) y
+  // leídos por la UI (`nCertificadoNoExpropiacion`, `coordenadasLat/Lng` en
+  // lectura-datos.ts). `afecto_expropiacion` no tiene columna persistente en el
+  // modelo (la UI lo captura como flag, no se hidrata), así que queda sin destino
+  // (brecha documentada). Ver docs/_analisis/lectura_datos_informe_no_expropiacion_serviu_v1.xlsx.
+  informe_no_expropiacion_serviu: [
+    {
+      tabla: TABLE_IDS.datosTasacion,
+      tablaLabel: 'Datos de tasación',
+      patron: 'a',
+      campos: [
+        { fieldId: FIELD_IDS_DATOS_TASACION.nCertNoExpropiacion, label: 'N° certificado no expropiación' },
+        { fieldId: FIELD_IDS_DATOS_TASACION.lat, label: 'Latitud' },
+        { fieldId: FIELD_IDS_DATOS_TASACION.long, label: 'Longitud' },
+      ],
+    },
+  ],
+
+  // H4 · Inscripción de Dominio CBR — documento canónico de titularidad. Scope
+  // mínimo spec-fiel: la terna de dominio (foja/número/año) → TX_DocumentosLegales
+  // (una_por_solicitud), leída por la UI (`cbrFoja/cbrNumero/cbrAnio` en
+  // lectura-datos.ts). Comparte la terna con `foto_fuente_sii` (dominio) — política Q1.
+  // ⚠ DECISIÓN H4 (doble destino vendedor/comprador): el destino canónico de
+  // vendedor/comprador es `TX_Solicitudes.vendedor_*`, poblado en el intake; el CBR
+  // queda como ORIGEN_DATO de verificación y NO se rutea (evita doble escritura y
+  // el resolver 1:1 de AT03-Ext no alcanza TX_Solicitudes). `notaria`/`repertorio`
+  // no tienen columna → brecha. Ver docs/_analisis/lectura_datos_inscripcion_dominio_cbr_v1.xlsx.
+  inscripcion_dominio_cbr: [
+    {
+      tabla: TABLE_IDS.documentosLegales,
+      tablaLabel: 'Documentos legales (dominio)',
+      patron: 'a',
+      campos: [
+        { fieldId: FIELD_IDS_DOC_LEGALES.fojas, label: 'Fojas (dominio)' },
+        { fieldId: FIELD_IDS_DOC_LEGALES.numeroInscripcion, label: 'Número de inscripción (dominio)' },
+        { fieldId: FIELD_IDS_DOC_LEGALES.anoInscripcion, label: 'Año de inscripción (dominio)' },
+      ],
+    },
+  ],
 }
 
 /**
@@ -247,6 +311,16 @@ export function grupoCamposLimpiables(
 
 /* ---------------------------------------------------------------------------
  * Changelog
+ * - v1.3 (17-sep-2026): alta de tres tipos-fuente H2/H3/H4 (TANDA H1-H4 · Met_6283).
+ *   `consulta_antecedentes_bien_raiz` → 3 campos SII en TX_DatosTasacion
+ *   (`avaluo_total`·`destino_sii`·`calidad_sii`, patrón a; comparte destino/calidad
+ *   con foto_fuente_sii y certificado_avaluo_fiscal · Q1). `informe_no_expropiacion_serviu`
+ *   → 3 campos en TX_DatosTasacion (`n_cert_no_expropiacion`·`lat`·`long`, patrón a).
+ *   `inscripcion_dominio_cbr` → terna de dominio en TX_DocumentosLegales
+ *   (`fojas`·`numero_inscripcion`·`ano_inscripcion`, patrón a; comparte terna con
+ *   foto_fuente_sii · Q1). H1 `certificado_deuda_tgr` NO se cabló (sin destino
+ *   canónico). H4 vendedor/comprador sin destino (canónico = TX_Solicitudes.vendedor_*).
+ *   CASCADE_REGISTRY: 9 → 12.
  * - v1.2 (11-sep-2026): alta de `certificado_recepcion_final` → limpia el par
  *   recepción final (`recepcion_final_numero` · `recepcion_final_fecha`, patrón a)
  *   en `TX_DocumentosLegales`. Espejo del alta de `permiso_edificacion`. El par lo

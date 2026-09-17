@@ -101,12 +101,14 @@ describe('CASCADE_REGISTRY', () => {
     })
   })
 
-  it('incluye las 8 entradas de campos (a/c) derivadas del mapa §28', () => {
+  it('incluye las 11 entradas de campos (a/c) derivadas del mapa §28', () => {
     const campos = CASCADE_REGISTRY.filter((e) => e.patron !== 'b')
     // foto_fuente_sii(3) + certificado_avaluo_fiscal(2) + escritura_compraventa(1)
     //   + permiso_edificacion(1) + certificado_recepcion_final(1)
-    expect(campos).toHaveLength(8)
-    expect(CASCADE_REGISTRY).toHaveLength(9)
+    //   + consulta_antecedentes_bien_raiz(1) + informe_no_expropiacion_serviu(1)
+    //   + inscripcion_dominio_cbr(1)  [TANDA H1-H4]
+    expect(campos).toHaveLength(11)
+    expect(CASCADE_REGISTRY).toHaveLength(12)
   })
 })
 
@@ -238,8 +240,39 @@ describe('capturarDerivadosDeAdjunto · patrones a/c por tipo de documento', () 
     )
   })
 
-  it('clave desconocida (los 8 sin destino · Q5) → no captura nada', async () => {
-    conClave('consulta_antecedentes_bien_raiz')
+  it('inscripcion_dominio_cbr (H4) → DocumentosLegales (terna dominio · 3) y PATCHea esos 3 a null (capture→purge)', async () => {
+    conClave('inscripcion_dominio_cbr')
+    listRecordsPorTabla({ [TABLE_IDS.documentosLegales]: [{ id: 'recDL1' }] })
+
+    const capturados = await capturarDerivadosDeAdjunto(ADJUNTO, CTX)
+    const campos = CAMPOS_DERIVADOS['inscripcion_dominio_cbr']
+      .find((t) => t.tabla === TABLE_IDS.documentosLegales)!
+      .campos.map((c) => c.fieldId)
+    expect(capturados).toEqual([
+      { op: 'limpiar', id: 'recDL1', tabla: TABLE_IDS.documentosLegales, campos },
+    ])
+    expect(campos).toHaveLength(3)
+
+    await purgarDerivadosCapturados(capturados)
+    expect(updateRecord).toHaveBeenCalledWith(
+      TABLE_IDS.documentosLegales,
+      'recDL1',
+      Object.fromEntries(campos.map((f) => [f, null]))
+    )
+  })
+
+  it('informe_no_expropiacion_serviu (H3) → DatosTasacion (n_cert · lat · long · 3)', async () => {
+    conClave('informe_no_expropiacion_serviu')
+    listRecordsPorTabla({ [TABLE_IDS.datosTasacion]: [{ id: 'recDT1' }] })
+
+    const capturados = await capturarDerivadosDeAdjunto(ADJUNTO, CTX)
+    const dt = capturados.find((c) => c.tabla === TABLE_IDS.datosTasacion)!
+    expect((dt as Extract<DerivadoCascade, { op: 'limpiar' }>).campos).toHaveLength(3)
+    expect(capturados.some((c) => c.tabla === TABLE_IDS.documentosLegales)).toBe(false)
+  })
+
+  it('tipo cableado sin destino (certificado_deuda_tgr · H1) → no captura nada', async () => {
+    conClave('certificado_deuda_tgr')
     listRecordsPorTabla({
       [TABLE_IDS.datosTasacion]: [{ id: 'recDT1' }],
       [TABLE_IDS.unidades]: [{ id: 'recU1' }],

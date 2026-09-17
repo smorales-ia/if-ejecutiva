@@ -13,7 +13,7 @@ import {
   tablasDerivadasDe,
   grupoCamposLimpiables,
 } from '@/lib/adjuntos-doc-campos'
-import { FIELD_IDS_DATOS_TASACION, FIELD_IDS_DOC_LEGALES } from '@/lib/tasador/field-ids'
+import { FIELD_IDS_DATOS_TASACION, FIELD_IDS_DOC_LEGALES, TABLE_IDS } from '@/lib/tasador/field-ids'
 
 describe('CAMPOS_DERIVADOS · conteos de §28', () => {
   it('foto_fuente_sii → 3 tablas (DatosTasacion 14 · DocumentosLegales 3 · Unidades 4)', () => {
@@ -99,11 +99,54 @@ describe('CAMPOS_DERIVADOS · conteos de §28', () => {
   })
 
   it('tipos sin destino (Q5) y clave vacía/nula → sin campos (no-op)', () => {
-    expect(tablasDerivadasDe('consulta_antecedentes_bien_raiz')).toEqual([])
+    // certificado_deuda_tgr (H1) está catalogado pero deliberadamente sin destino
+    expect(tablasDerivadasDe('certificado_deuda_tgr')).toEqual([])
     expect(tablasDerivadasDe('foto_ofertas_comparables')).toEqual([]) // es patrón b, no vive aquí
     expect(tablasDerivadasDe('')).toEqual([])
     expect(tablasDerivadasDe(null)).toEqual([])
     expect(tablasDerivadasDe(undefined)).toEqual([])
+  })
+
+  it('consulta_antecedentes_bien_raiz (H2) → DatosTasacion 3 (a): avaluo_total · destino_sii · calidad_sii', () => {
+    const t = tablasDerivadasDe('consulta_antecedentes_bien_raiz')
+    expect(t).toHaveLength(1)
+    expect(t[0].patron).toBe('a')
+    expect(t[0].tabla).toBe(TABLE_IDS.datosTasacion)
+    expect(t[0].campos.map((c) => c.fieldId)).toEqual([
+      FIELD_IDS_DATOS_TASACION.avaluoTotal,
+      FIELD_IDS_DATOS_TASACION.destinoSii,
+      FIELD_IDS_DATOS_TASACION.calidadSii,
+    ])
+  })
+
+  it('informe_no_expropiacion_serviu (H3) → DatosTasacion 3 (a): n_cert · lat · long', () => {
+    const t = tablasDerivadasDe('informe_no_expropiacion_serviu')
+    expect(t).toHaveLength(1)
+    expect(t[0].patron).toBe('a')
+    expect(t[0].tabla).toBe(TABLE_IDS.datosTasacion)
+    expect(t[0].campos.map((c) => c.fieldId)).toEqual([
+      FIELD_IDS_DATOS_TASACION.nCertNoExpropiacion,
+      FIELD_IDS_DATOS_TASACION.lat,
+      FIELD_IDS_DATOS_TASACION.long,
+    ])
+  })
+
+  it('inscripcion_dominio_cbr (H4) → DocumentosLegales 3 (a): terna de dominio, compartida con foto_fuente_sii (Q1)', () => {
+    const t = tablasDerivadasDe('inscripcion_dominio_cbr')
+    expect(t).toHaveLength(1)
+    expect(t[0].patron).toBe('a')
+    expect(t[0].tabla).toBe(TABLE_IDS.documentosLegales)
+    const terna = [
+      FIELD_IDS_DOC_LEGALES.fojas,
+      FIELD_IDS_DOC_LEGALES.numeroInscripcion,
+      FIELD_IDS_DOC_LEGALES.anoInscripcion,
+    ]
+    expect(t[0].campos.map((c) => c.fieldId)).toEqual(terna)
+    // Q1: la misma terna la limpia foto_fuente_sii (bloque dominio)
+    const sii = tablasDerivadasDe('foto_fuente_sii')
+      .find((x) => x.tabla === TABLE_IDS.documentosLegales)!
+      .campos.map((c) => c.fieldId)
+    for (const f of terna) expect(sii).toContain(f)
   })
 })
 
@@ -157,7 +200,7 @@ describe('grupoCamposLimpiables · forma para el diálogo Q3', () => {
   })
 
   it('tipo sin datos → lista vacía (el diálogo no muestra sección de campos)', () => {
-    expect(grupoCamposLimpiables('consulta_antecedentes_bien_raiz')).toEqual([])
+    expect(grupoCamposLimpiables('certificado_deuda_tgr')).toEqual([])
   })
 
   it('permiso_edificacion → lista el par permiso en el diálogo Q3', () => {
