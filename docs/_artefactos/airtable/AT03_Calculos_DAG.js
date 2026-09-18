@@ -1,7 +1,27 @@
 // ============================================================
 // AT03_v32 - Ejecutor de Formulas (LECTOR REAL de C_Formulas_v32)
-// Version    : 11.0 (v32)
+// Version    : 11.1 (v32-b0)
 // Trigger    : TX_Solicitudes.estado = 'visitada'
+//
+// CAMBIOS v32 -> v32-b0 (Fase B-0a · lector del Cuadro de Valoracion)
+// -------------------------------------------------------
+// b0-1: NUEVO lector sumCuadroValoracion(recId) sobre TX_ItemsCuadroValoracion
+//       (tblCxnMtOETK2ulD0). Agrupa valor_total_uf (fld1F3u5J5NlnJUjY, formula
+//       ya calculada = BI del xlsm) por tipo_bien (fld5HVdWpMY0jWqkx) replicando
+//       1:1 las sumas del xlsm Portada B51:BI58:
+//         valor_terreno_items_uf           = SUMIF(tipo='Terreno')       -> BI61
+//         valor_edificacion_items_uf       = SUMIF(tipo='Edificacion')   -> BI59 (depreciado)
+//         valor_edificacion_nuevo_items_uf = SUMIF(sup*uf_m2, Edif)      -> CC70 (a nuevo, sin dep.)
+//         valor_occ_items_uf               = total - edif - terreno      -> BI60 (por exclusion)
+//         sup_terreno_items_m2             = SUMIF(superficie, tipo='Terreno') -> AN61
+//         valor_seguro_base_items_uf       = SUMIF(valor_seguro_base fldxzIzT0kakMUbss) -> BO62
+//                                             (la formula de la tabla ya excluye terreno/estac/S-Reg)
+//       Inyectados al SCOPE de safeEval para que C_Formulas v3.3 los consuma.
+// b0-2: ADITIVO y retrocompatible. Ninguna formula vigente referencia estas
+//       variables => las tasaciones actuales calculan identico. Se expone ademas
+//       hay_cuadro (1/0); las formulas v3.3 haran fallback al modelo previo
+//       cuando hay_cuadro=0 (predios sin cuadro poblado). NO rompe nada.
+// b0-3: NO retira overrides ni cambia las terminales; eso es Fase B-0b (C_Formulas).
 //
 // CAMBIOS v31 -> v32 (CRITICOS)
 // -------------------------------------------------------
@@ -43,7 +63,7 @@
 
 const tInicio = Date.now();
 const AUTOMATION_ID = 'AT03';
-const MOTOR_VERSION = 'AT03_v11.0_v32';
+const MOTOR_VERSION = 'AT03_v11.1_v32b0';
 
 const { recordId } = input.config();
 
@@ -52,7 +72,7 @@ const tFormulas    = base.getTable('C_Formulas');
 const tCalculos    = base.getTable('TX_Calculos');
 let tDatosTas = null, tFactores = null, tComunas = null, tClientes = null;
 let tEventos = null, tVidaUtil = null, tPrecios = null, tTramosBC = null, tObrasCmp = null;
-let tReglas = null;
+let tReglas = null, tItemsCuadro = null;
 try { tDatosTas = base.getTable('TX_DatosTasacion'); } catch (e) {}
 try { tFactores = base.getTable('C_Factores'); } catch (e) {}
 try { tComunas  = base.getTable('M_Comunas'); } catch (e) {}
@@ -62,6 +82,7 @@ try { tVidaUtil = base.getTable('C_VidaUtil'); } catch (e) {}
 try { tPrecios  = base.getTable('C_PreciosUnitarios'); } catch (e) {}
 try { tTramosBC = base.getTable('C_TramosBienComun'); } catch (e) {}
 try { tObrasCmp = base.getTable('TX_ObrasComplementarias'); } catch (e) {}
+try { tItemsCuadro = base.getTable('TX_ItemsCuadroValoracion'); } catch (e) {}
 try { tReglas   = base.getTable('C_ReglasNegocio'); } catch (e) {}
 
 const FIELD_CANDIDATES = {
@@ -876,6 +897,55 @@ async function sumObrasComplementarias(recId) {
         return total;
     } catch (e) { return 0; }
 }
+// ----------------------------------------------------------------
+// b0: Lector del Cuadro de Valoracion (TX_ItemsCuadroValoracion).
+// Replica 1:1 las sumas del xlsm Portada!BI59/BI60/BI61:
+//   terreno = SUMIF(tipo='Terreno')                 -> BI61
+//   edif    = SUMIF(tipo='Edificacion')             -> BI59
+//   occ     = total - edif - terreno (por exclusion) -> BI60
+//   supTerreno = SUMIF(superficie, tipo='Terreno')  -> AN61 (para el UF/m2 efectivo BD61)
+// valor_total_uf (fld1F3u5J5NlnJUjY) es una formula de la tabla = BI ya calculado.
+// Retrocompatible: sin filas para la solicitud => todo 0 y nFilas=0 (fallback en C_Formulas).
+// ----------------------------------------------------------------
+async function sumCuadroValoracion(recId) {
+    const out = { edif: 0, edifNuevo: 0, terreno: 0, occ: 0, supTerreno: 0, seguroBase: 0, nFilas: 0 };
+    if (!tItemsCuadro) return out;
+    const F_SOLIC   = 'fld8atIwbxSbOlsgq'; // link -> TX_Solicitudes
+    const F_TIPO    = 'fld5HVdWpMY0jWqkx'; // tipo_bien (singleSelect activo)
+    const F_VALOR   = 'fld1F3u5J5NlnJUjY'; // valor_total_uf (formula = BI del xlsm; edif ya depreciado)
+    const F_SUP     = 'fldSoAHz4I7MPTUBN'; // superficie (AN)
+    const F_UFM2    = 'fldVxo2PfoG7aQ33s'; // uf_m2 (AT)
+    const F_SEGBASE = 'fldxzIzT0kakMUbss'; // valor_seguro_base (formula = BO: 0 si Terreno/Estac/S-Reg)
+    try {
+        const q = await tItemsCuadro.selectRecordsAsync({ fields: [F_SOLIC, F_TIPO, F_VALOR, F_SUP, F_UFM2, F_SEGBASE] });
+        let total = 0;
+        for (const r of q.records) {
+            const link = r.getCellValue(F_SOLIC);
+            if (!(link && Array.isArray(link) && link.some(x => x.id === recId))) continue;
+            out.nFilas++;
+            const v = parseFloat(r.getCellValue(F_VALOR));
+            const val = isNaN(v) ? 0 : v;
+            total += val;
+            const sb = parseFloat(r.getCellValue(F_SEGBASE));
+            if (!isNaN(sb)) out.seguroBase += sb; // suma del BO ya-excluido por fila (edif+OCC, sin terreno/estac)
+            const tipo = String(r.getCellValueAsString(F_TIPO) || '').trim().toLowerCase();
+            if (tipo === 'terreno') {
+                out.terreno += val;
+                const s = parseFloat(r.getCellValue(F_SUP));
+                if (!isNaN(s)) out.supTerreno += s;
+            } else if (tipo.indexOf('edific') === 0 || tipo.indexOf('ampl') === 0) {
+                out.edif += val;
+                // a-nuevo (sin factor de depreciacion) = sup * uf_m2 -> xlsm CC70 (SUMIF Edif, AN*AT)
+                const s = parseFloat(r.getCellValue(F_SUP));
+                const u = parseFloat(r.getCellValue(F_UFM2));
+                if (!isNaN(s) && !isNaN(u)) out.edifNuevo += s * u;
+            }
+            // el resto (Piscina, OO.CC., Bodega, Estac., Terraza, Otro) cae en OCC por exclusion
+        }
+        out.occ = total - out.edif - out.terreno; // = BI60 del xlsm (SUM - edif - terreno)
+    } catch (e) { console.log('  WARN sumCuadroValoracion: ' + e.message); }
+    return out;
+}
 
 // ----------------------------------------------------------------
 // 6. Construir SCOPE para safeEval (variables primitivas)
@@ -925,9 +995,14 @@ const lookupFactorRemateLU = await lookupFactorRemate(velocidad);
 const ufM2PromedioResidComuna = ufM2PromedioResid;
 const sumObrasComplementariasUf = await sumObrasComplementarias(recordId);
 const porcentajeBienComun = (tipoPropiedad === 'Departamento') ? await lookupBienComun(supConstruccion) : 0;
+// b0: totales del Cuadro de Valoracion (TX_ItemsCuadroValoracion) = xlsm BI59/BI60/BI61
+const cuadro = await sumCuadroValoracion(recordId);
 
 console.log('  LOOKUPS: vida_util=' + lookupVidaUtilLU + ' uf_m2_nuevo=' + lookupPrecioUnitario +
             ' factor_remate=' + lookupFactorRemateLU + ' obras_comp=' + sumObrasComplementariasUf);
+console.log('  CUADRO: filas=' + cuadro.nFilas + ' edif=' + cuadro.edif + ' edif_nuevo=' + cuadro.edifNuevo +
+            ' terreno=' + cuadro.terreno + ' occ=' + cuadro.occ + ' sup_terreno=' + cuadro.supTerreno +
+            ' seguro_base=' + cuadro.seguroBase);
 
 // ----------------------------------------------------------------
 // 7. SCOPE INICIAL para safeEval (todas las variables primitivas)
@@ -972,6 +1047,15 @@ const SCOPE = {
     lookup_factor_remate: lookupFactorRemateLU,
     sum_obras_complementarias_uf: sumObrasComplementariasUf,
     porcentaje_bien_comun: porcentajeBienComun,
+
+    // ─── b0: Cuadro de Valoracion (TX_ItemsCuadroValoracion) → xlsm BI59/BI60/BI61 ───
+    valor_edificacion_items_uf:       cuadro.edif,       // SUMIF(tipo='Edificacion') → BI59 (depreciado)
+    valor_edificacion_nuevo_items_uf: cuadro.edifNuevo,  // SUMIF(sup*uf_m2, Edif)    → CC70 (a nuevo)
+    valor_terreno_items_uf:           cuadro.terreno,    // SUMIF(tipo='Terreno')     → BI61
+    valor_occ_items_uf:               cuadro.occ,        // total - edif - terreno    → BI60
+    sup_terreno_items_m2:             cuadro.supTerreno, // SUMIF(superficie, Terreno)→ AN61
+    valor_seguro_base_items_uf:       cuadro.seguroBase, // SUMIF(valor_seguro_base)  → BO62 (edif+OCC, sin terreno/estac)
+    hay_cuadro:                       cuadro.nFilas > 0 ? 1 : 0, // fallback flag para C_Formulas v3.3
 
     // ─── overrides ACTIVOS v32 (5 = 3 numericos + 2 audit) ─────────────
     valor_final_override:        valorFinalOverride,       // → Valor Comercial UF
