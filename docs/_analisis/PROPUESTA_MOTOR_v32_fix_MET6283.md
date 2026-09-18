@@ -1,9 +1,12 @@
 # Propuesta · Fix del motor v3.2 a partir de la auditoría del xlsm MET-6283
 
-> **Versión:** v2 · **Fecha:** 2026-09-18 · **Estado: APROBADO para tanda P##-MOTOR.**
+> **Versión:** v3 · **Fecha:** 2026-09-18 · **Estado: APROBADO para tanda P##-MOTOR (Fase A cerrada).**
 > Q1 (OCC) y Q2 (terreno) confirmadas por Héctor/Óscar el 2026-09-18; diseño cerrado.
-> **Fuente de verdad:** `docs/_analisis/AUDITORIA_XLSM_MET6283_OCC_TERRENO.md` (auditoría del
-> motor Excel real `docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm`).
+> **Fuentes de verdad:** `docs/_analisis/AUDITORIA_XLSM_MET6283_OCC_TERRENO.md` (auditoría del motor
+> Excel real) y **`docs/_analisis/FASE_A_DISENO_TABLAS_MOTOR.md`** (diseño de tablas · hallazgo:
+> `TX_ItemsCuadroValoracion` ya reproduce el cuadro del xlsm 1:1).
+> **Cambio v2→v3:** se elimina la tabla nueva `TX_TerrenoTramos`; terreno y OCC pasan a ser filas de
+> `TX_ItemsCuadroValoracion` (`tblCxnMtOETK2ulD0`), el cuadro único ya existente en la base.
 > Prueba Ruta 3 (overrides) + Opción A del Bloqueo #1 (regla `REGLA_REFI_CASA_V32`): **13/13
 > valores dentro de ±1 %** del oráculo sobre la sandbox `VP-2026-0066` (`recNiwM4s1ibr3sbO`).
 
@@ -36,18 +39,18 @@ Las dos preguntas de diseño quedaron **cerradas** (ver auditoría §Confirmacio
 ## 2 · Patches P1–P6
 
 ### P1 — F_ValorComercialUF (`rec8rv76smtjQh4Rb`, v3.2) · fix central
-Consumir **`F_ValorTerreno`** (agregado de `TX_TerrenoTramos`) y **`F_ValorOCC`** (agregado de
-`TX_ObrasComplementarias`), no un `uf_m2_terreno_efectivo` escalar ni una OCC lump-sum:
+Consumir tres agregados que son **SUMIF sobre `TX_ItemsCuadroValoracion` por `tipo_bien`** (replican
+`BI59/BI60/BI61` del xlsm), no un `uf_m2_terreno_efectivo` escalar ni una OCC lump-sum:
 ```
 DE:  valor_final_override > 0 ? valor_final_override
        : (sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc)
 A:   valor_final_override > 0 ? valor_final_override
        : (F_ValorEdificacion + F_ValorTerreno + F_ValorOCC)
 ```
-donde:
-- `F_ValorEdificacion = sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc`  (8.157,06)
-- `F_ValorTerreno     = Σ_tramos (superficie_m2 * uf_m2 * factor_df * factor_fm)`   (11.218,80)
-- `F_ValorOCC         = Σ_obras (valor_uf)`                                          (750)
+donde (todos leídos de `TX_ItemsCuadroValoracion.valor_total_uf` = `fld1F3u5J5NlnJUjY`):
+- `F_ValorEdificacion = SUMIF(valor_total_uf, tipo_bien='Edificacion')`                         (8.157,06)
+- `F_ValorTerreno     = SUMIF(valor_total_uf, tipo_bien='Terreno')`                              (11.218,80)
+- `F_ValorOCC         = SUMIF(valor_total_uf, tipo_bien ∈ {OO.CC., Piscina, Bodega, Estac.…})`   (750)
 - MET-6283: 8.157,06 + 11.218,80 + 750 = **20.125,86 UF**.
 
 ### P2 — F_ValorReposicionUF (`reckDXGPbkDVjzPjY`, v3.2) · agrega OCC
@@ -68,61 +71,49 @@ A:   valor_seguro_override > 0 ? valor_seguro_override
 (Seguro = (edificación depreciada 8.157,06 + OCC 750) × factor; para MetLife+Casa el factor es 1 →
 **8.907,06**; excluye terreno.)
 
-### P4 — Tablas de datos (esquema definitivo)
+### P4 — Tablas de datos (esquema definitivo · reformulado en Fase A)
 
-`uf_m2_terreno_efectivo` **YA NO es un campo de `TX_DatosTasacion`**: pasa a ser un **derivado
-calculado** (`F_ValorTerreno / Σ superficie_m2`). El motor consume dos tablas de detalle:
+**Hallazgo Fase A:** la base **ya tiene el cuadro del xlsm reproducido 1:1** en
+`TX_ItemsCuadroValoracion` (`tblCxnMtOETK2ulD0`) — mismo discriminador `tipo_bien`, mismos inputs
+(`superficie`, `uf_m2`, `factor`, `situacion_municipal`, `estado`, `garantia`, `unidad_medida`) y las
+fórmulas `valor_total_uf`/`es_bien_no_garantia`/`valor_seguro_base` que traducen literalmente `BI`/`BZ`/`BO`.
+Ver detalle campo-por-campo en `FASE_A_DISENO_TABLAS_MOTOR.md` §1.5.
 
-#### P4.a — `TX_ObrasComplementarias` (YA EXISTE · `tblQ1fXM06bzSQ84w`) — validar y poblar
-El DAG (`AT03_Calculos_DAG.js`) ya la lee para `sum_obras_complementarias_uf`. **No es cambio de
-esquema, es de poblado.** Cardinalidad: **1 `TX_Solicitudes` → N obras**.
+**Decisiones (revierten P4.a/P4.b de v2):**
 
-| Campo | Tipo | Uso |
-|---|---|---|
-| `solicitud` | link → TX_Solicitudes | dueño |
-| `tipo_obra` | singleLineText / select | Piscina, OO.CC, Quincho… |
-| `valor_uf` | number | valor UF del ítem (col AT del xlsm; lump-sum, cantidad = 1) |
-| `se_deprecia` | checkbox | cubre el D.F. (en MET-6283, las 3 OCC sin depreciar) |
-| `orden` *(añadir si falta)* | number | orden de presentación |
+- **NO se crea `TX_TerrenoTramos`.** Un tramo de terreno = una fila de `TX_ItemsCuadroValoracion`
+  con `tipo_bien='Terreno'`, `unidad_medida='m2'`. Cardinalidad **1 `TX_Solicitudes` → N filas**.
+- **Las OCC también son filas de `TX_ItemsCuadroValoracion`** (`tipo_bien ∈ {OO.CC., Piscina, Bodega,
+  Estac. U/Goce, Estac. Desc}`, `unidad_medida='unidad'`). `TX_ObrasComplementarias`
+  (`tblQ1fXM06bzSQ84w`, `valor_uf`+`se_deprecia`) es una proyección **lossy** (booleano en vez del
+  `AX` continuo, sin desglose cantidad×unitario): queda como captura de UI **o** se deprecia; **no**
+  es fuente del motor.
+- `uf_m2_terreno_efectivo` **NO es campo de `TX_DatosTasacion`**: es **derivado**
+  (`F_ValorTerreno / Σ superficie[Terreno]`), idéntico a `BD61`.
 
-`F_ValorOCC = SUM(valor_uf)` de las filas de la solicitud.
+**Mapeo de campos del cuadro (FIELD_IDs verificados vía MCP 2026-09-18):**
+`tipo_bien` `fld5HVdWpMY0jWqkx` · `detalle` `fldH2znpRjC3LYrVe` · `superficie` `fldSoAHz4I7MPTUBN` ·
+`uf_m2` `fldVxo2PfoG7aQ33s` · `factor` (AX·BA) `fld7WgYgsicMa42yv` · `situacion_municipal`
+`flds7AFUnTJkeUIER` · `unidad_medida` `fldZyiYfG9wcRDpsN` · `orden` `fldbE6UeloY9opfoJ` ·
+`solicitud` `fld8atIwbxSbOlsgq` · `valor_total_uf` (fórmula) `fld1F3u5J5NlnJUjY`.
 
-**Ejemplo poblado — MET-6283:**
+**Ejemplo poblado — MET-6283 (6 filas en `TX_ItemsCuadroValoracion`):**
 
-| solicitud | tipo_obra | valor_uf | se_deprecia | orden |
-|---|---|---|---|---|
-| VP-2026-0066 | Piscina | 350 | no | 1 |
-| VP-2026-0066 | OO.CC (Quincho, terrazas, bodega) | 250 | no | 2 |
-| VP-2026-0066 | OO.CC (Cierros, pavimento exterior) | 150 | no | 3 |
+| tipo_bien | detalle | superficie | uf_m2 | factor | unidad | valor_total_uf |
+|---|---|---|---|---|---|---|
+| Terreno | Terreno | 1.402,35 | 8,00 | — | m2 | 11.218,80 |
+| Terreno | Servidumbre | 3.622,51 | 0,00 | — | m2 | 0 |
+| Edificacion | Piso 1 | 249,91 | 34 | 0,96 | m2 | 8.157,06 |
+| Piscina | Piscina | 1 | 350 | 1 | unidad | 350 |
+| OO.CC. | Quincho, terrazas, bodega | 1 | 250 | 1 | unidad | 250 |
+| OO.CC. | Cierros, pavimento exterior | 1 | 150 | 1 | unidad | 150 |
 
-→ `F_ValorOCC = 350 + 250 + 150 = 750 UF`.
+→ `F_ValorTerreno = 11.218,80` · `uf_m2_terreno_efectivo = 11.218,80 / 5.024,86 = 2,2327` ·
+`F_ValorOCC = 750` · `F_ValorEdificacion = 8.157,06` · **Comercial = 20.125,86 UF**.
 
-#### P4.b — `TX_TerrenoTramos` (NUEVA TABLA) — crear
-Reemplaza el modelo de una sola `uf_m2_terreno × sup_terreno`. Cardinalidad: **1 `TX_Solicitudes` → N tramos**.
-
-| Campo | Tipo | Uso |
-|---|---|---|
-| `solicitud` | link → TX_Solicitudes | dueño |
-| `glosa` | singleLineText | Terreno / Servidumbre / Excedente (col G del xlsm) |
-| `superficie_m2` | number | col AN |
-| `uf_m2` | number | col AT (criterio del tasador; 0 para excedente) |
-| `factor_df` | number (def. 1) | col AX |
-| `factor_fm` | number (def. 1) | col BA |
-| `orden` | number | fila 51,52 |
-
-Derivados:
-- `valor_tramo_uf = superficie_m2 * uf_m2 * factor_df * factor_fm`.
-- `F_ValorTerreno = SUM(valor_tramo_uf)`.
-- `uf_m2_terreno_efectivo = F_ValorTerreno / SUM(superficie_m2)` (derivado, nunca input).
-
-**Ejemplo poblado — MET-6283:**
-
-| solicitud | glosa | superficie_m2 | uf_m2 | factor_df | factor_fm | orden | valor_tramo_uf |
-|---|---|---|---|---|---|---|---|
-| VP-2026-0066 | Terreno | 1.402,35 | 8,00 | 1 | 1 | 1 | 11.218,80 |
-| VP-2026-0066 | Servidumbre | 3.622,51 | 0,00 | 1 | 1 | 2 | 0 |
-
-→ `F_ValorTerreno = 11.218,80 UF`; `uf_m2_terreno_efectivo = 11.218,80 / 5.024,86 = 2,2327`.
+**Único gap de esquema:** falta `origen_superficie` (col AJ: Escritura · M. Laser · Plano Muni. ·
+Plano Prop.) — opcional, no entra en fórmulas de valor. Campos legacy duplicados a despublicar:
+`flddcT2wvPX38pHrE`, `flddveB4mZ6sovdeR`, `fldMsoEuBe5IN5y1S`.
 
 ### P5 — Remate/Liquidación table-driven por velocidad de venta
 Mantener **table-driven** (no hardcodear `× 0.65` / `× 0.825`; v3.2: F_ValorRemateUF `recCjbaxfXQELCfj9`,
@@ -132,20 +123,24 @@ F_ValorLiquidacionUF `recSYwQqRULkqYimi`). Lookup de `factor_remate` según `vel
 Para MET-6283 (velocidad "8 a 10 meses") → factor_remate 0,65, factor_liq **0,825** (confirmado Q1).
 
 ### P6 — Terreno por sub-lotes · **RESUELTO**
-La deuda de modelo (predios donde el excedente se valora a 0) queda **cerrada por `TX_TerrenoTramos`**
-(P4.b). Ya no se depende de una sola `uf_m2_terreno × sup_terreno` ni de un promedio como input.
+La deuda de modelo (predios donde el excedente se valora a 0) queda **cerrada por las filas de terreno
+de `TX_ItemsCuadroValoracion`** (P4). Ya no se depende de una sola `uf_m2_terreno × sup_terreno` ni de
+un promedio como input, y no se crea tabla nueva.
 
 ---
 
 ## 3 · Plan de tanda P##-MOTOR (por fases)
 
-- **Fase A — Estructura de datos.** Crear `TX_TerrenoTramos` (esquema P4.b) y **validar**
-  `TX_ObrasComplementarias` (`tblQ1fXM06bzSQ84w`): confirmar campos, añadir `orden` si falta, y
-  cablear ambas al DAG (`F_ValorTerreno`, `F_ValorOCC`).
+- **Fase A — Estructura de datos. ✅ CERRADA (`FASE_A_DISENO_TABLAS_MOTOR.md`, 2026-09-18).**
+  Hallazgo: `TX_ItemsCuadroValoracion` ya es el cuadro del xlsm 1:1. **No se crea `TX_TerrenoTramos`**;
+  terreno y OCC son filas de esa tabla. Pendiente de ejecución en Fase B: despublicar campos legacy,
+  (opcional) añadir `origen_superficie`, y cablear los rollups `F_ValorEdificacion`/`F_ValorTerreno`/
+  `F_ValorOCC` al DAG.
 - **Fase B — Patches `C_Formulas`.** Aplicar **P1–P3 y P5**. Bumpear versión de cada fórmula terminal
   y documentar el cambio.
-- **Fase C — Siembra de datos históricos.** Retrocargar tramos de terreno (`TX_TerrenoTramos`) y OCC
-  (`TX_ObrasComplementarias`) en las tasaciones activas, empezando por MET-6283 (VP-2026-0066).
+- **Fase C — Siembra de datos históricos.** Retrocargar las filas del cuadro en
+  `TX_ItemsCuadroValoracion` (terreno + OCC + edificación) en las tasaciones activas, empezando por
+  MET-6283 (VP-2026-0066): 2 filas Terreno + 1 Edificación + 3 OCC.
 - **Fase D — Regresión.** Correr AT03 v32 contra los xlsm de referencia disponibles, comparar los 13
   valores con tolerancia ±1 %, y agregar tests unitarios en `TX_Calculos` para `F_ValorTerreno`,
   `F_ValorOCC`, `F_ValorComercialUF`, `F_ValorReposicionUF`, `F_SeguroIncendioUF`.
