@@ -120,8 +120,12 @@ poblar un campo de calidad textual "BUENA" y normalizar `material_predominante` 
 3. **Input config:** verificar que el paso conserva el input **`recordId`** mapeado al record del
    trigger (el script hace `const { recordId } = input.config();`). No cambia respecto de v11.0.
 4. **Guardar** el script. **No** activar/desactivar nada más. **No** tocar overrides ni la sandbox.
-5. **Cabecera:** confirmar que el header dice `Version : 11.1 (v32-b0)` y
-   `MOTOR_VERSION = 'AT03_v11.1_v32b0'` (así el smoke test lo identifica en logs/`TX_Calculos`).
+5. **Cabecera:** confirmar que el header dice `Version : 11.1.1 (v32-b0)` y
+   `MOTOR_VERSION = 'AT03_v11.1.1_v32b0'` (así el smoke test lo identifica en logs/`TX_Calculos`).
+
+> ⚠ **Re-pegado obligatorio (2026-09-18):** el smoke test de v11.1_v32b0 falló en la escritura
+> final; la corrección va en **v11.1.1_v32b0**. Hay que **volver a pegar** el script completo
+> (mismo procedimiento 1-5) y re-correr el smoke. Ver §7.
 
 ---
 
@@ -169,5 +173,48 @@ poblar un campo de calidad textual "BUENA" y normalizar `material_predominante` 
 
 ---
 
-**Estado:** Fase B-0a completa. DAG listo para pegado manual; patches `C_Formulas` v3.3 listos para
-B-0b. Nada ejecutado contra Airtable ni contra la sandbox.
+## Sección 7 — Reparación smoke test 2026-09-18
+
+**Campo identificado:** `fld2H2r0GMeVfNO26` = **`estado`** en **`TX_Solicitudes`** (`tblaHTyMHYfmy7Fg6`),
+tipo **singleSelect**. `'calculada'` **sí** es una opción válida (`selvwWsw46l6yiOsX`); el problema no
+es el valor sino la **forma** de la escritura.
+
+**Causa raíz (1 línea):** el paso 11 escribía el singleSelect `estado` con un **string pelado**
+(`{ estado: 'calculada' }`), que Airtable Scripting rechaza ("Field … cannot accept the provided
+value"); debe ir en forma canónica `{ name: 'calculada' }`.
+
+**No lo introdujo B-0a.** El `diff` backup v11.0 → actual demuestra que el bloque final es
+**byte-idéntico**: mis cambios son 100 % aditivos (header, `tItemsCuadro`, `sumCuadroValoracion`,
+llamada+log, inyección al SCOPE) y ninguno toca la línea del `updateRecordAsync(estado)`. Es un bug
+**latente** en v11.0 (por eso en la corrida previa el estado quedaba en `visitada`: la línea siempre
+lanzaba antes de llegar a `logEventoCompleto`). El smoke lo **surfaceó** porque corrió AT03 hasta el
+final por primera vez. El resto del script ya escribía selects con la forma correcta vía
+`valueForSelect` + try/catch; esta línea era la única escritura de select **sin guardar**.
+
+**Diff conceptual del fix (paso 11, v11.1 → v11.1.1):**
+```
+DE:  await tSolicitudes.updateRecordAsync(recordId, { estado: 'calculada' });
+A:   try {
+         await tSolicitudes.updateRecordAsync(recordId, { estado: { name: 'calculada' } });
+     } catch (eEstado) {
+         console.log('  WARN transicion estado->calculada (no fatal): ' + eEstado.message);
+     }
+```
+- Forma canónica `{name}` (funciona con la opción válida) **+** try/catch (no fatal), replicando el
+  patrón guardado que ya usa `logEventoCompleto` para sus selects.
+
+**Backup usado como referencia:** `docs/_artefactos/airtable/_backup/20260918resp_AT03_Calculos_DAG.txt`
+(v11.0, 1262 líneas). Diff con CRLF normalizado → solo las regiones aditivas de B-0a difieren; el
+bloque de escritura final es idéntico.
+
+**Lector del cuadro: PRESERVADO.** `sumCuadroValoracion()`, la inyección al SCOPE
+(`valor_edificacion_items_uf`, `valor_edificacion_nuevo_items_uf`, `valor_terreno_items_uf`,
+`valor_occ_items_uf`, `sup_terreno_items_m2`, `valor_seguro_base_items_uf`, `hay_cuadro`) y el log
+`CUADRO:` quedan intactos (19 referencias verificadas). Versión: **v11.1.1_v32b0**. `node --check`
+(async-wrapped) → SYNTAX OK.
+
+---
+
+**Estado:** Fase B-0a reparada. DAG **v11.1.1_v32b0** listo para **re-pegado** (§4) y re-smoke (§5).
+Patches `C_Formulas` v3.3 listos para B-0b. Nada ejecutado contra Airtable ni contra la sandbox;
+overrides intactos.
