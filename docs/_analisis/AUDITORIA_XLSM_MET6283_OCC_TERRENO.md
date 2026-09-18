@@ -3,6 +3,7 @@
 > **Documento de referencia formal para la tanda P##-MOTOR.**
 > Fuente única de verdad sobre cómo el xlsm original resuelve las Obras Complementarias (OCC)
 > y el UF/m² efectivo del terreno. Reemplaza cualquier suposición previa sobre Q1 y Q2.
+> **Diseño CERRADO** — confirmado por Héctor/Óscar el 2026-09-18 (ver sección al final).
 
 **Archivo auditado:** `docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm`
 **Fecha auditoría:** 2026-09-18
@@ -74,21 +75,17 @@ las 8 filas. Solo hay validaciones de coherencia de Rol SII en `FICHA SOLIC` (f�
 `O31/O32` marcan "ERROR" si el nº de bodegas no calza con el nº de roles).
 
 ### Recomendación Airtable (Q1)
-Tabla **`TX_ObrasComplementarias`** (una fila por ítem), enlazada a `TX_Solicitudes`:
+Hogar de datos: **`TX_ObrasComplementarias`** (`tblQ1fXM06bzSQ84w`, **ya existe** — campos
+`tipo_obra`, `valor_uf`, `se_deprecia`, `solicitud`; el DAG ya la lee para
+`sum_obras_complementarias_uf`). El gap no era de esquema sino de **poblado**.
 
-| Campo | Tipo | Origen xlsm |
-|---|---|---|
-| `solicitud` | link → TX_Solicitudes | — |
-| `tipo_obra` | singleSelect (Piscina, OO.CC, Quincho…) | Portada col B |
-| `detalle` | singleLineText | Portada col G |
-| `cantidad` | number | Portada col AN (=1) |
-| `uf_unitaria` | number | Portada col AT |
-| `factor_df` | number (dep., def. 1) | Portada col AX |
-| `factor_fm` | number (def. 1) | Portada col BA |
-| `orden` | number | orden de fila 54,55,56 |
-
-- `F_ValorOCC` (agregación por solicitud): `SUM_over_items(cantidad × uf_unitaria × factor_df × factor_fm)`.
-- **Seguro y liquidación NO se guardan por ítem**: seguro = valor × factor_cliente (regla por cliente/tipo propiedad); liquidación = valor × factor_velocidad_venta (global). Van como fórmulas del motor, no columnas de la tabla.
+- `valor_uf` guarda el valor UF del ítem tal como se tipea en la col AT del xlsm (las OCC son
+  montos lump-sum con cantidad = 1, no requieren m² ni UF unitaria separada).
+- `se_deprecia` cubre el factor D.F.; en MET-6283 las 3 OCC van sin depreciar.
+- `F_ValorOCC` (agregación por solicitud) = `SUM(valor_uf)` de las filas de la solicitud → 750.
+- **Seguro y liquidación NO se guardan por ítem**: seguro = valor × factor_cliente (mega-IF por
+  cliente/tipo propiedad); liquidación = valor × 0,825 (factor global de velocidad de venta).
+  Van como fórmulas del motor, no columnas de la tabla.
 
 ---
 
@@ -125,7 +122,7 @@ Terreno_ufm2_efect Portada!BD61 = BI61 / AN61 = 11.218,80 / 5.024,86 = 2,2327
 `Zonificacion` no interviene en este número (verificado: solo alimenta texto del informe vía
 `ZoneVal`, basado en la comuna `AU8 = Colina`).
 
-### Recomendación de arquitectura (Q2) — **elegir opción (b)**
+### Recomendación de arquitectura (Q2) — **opción (b)**
 
 - **(a) input directo `uf_m2_terreno_efectivo`**: descartada. Guardaría el 2,2327 ya cocinado
   y perdería la trazabilidad de los tramos; no reproduce el xlsm, que primero valoriza cada
@@ -134,7 +131,7 @@ Terreno_ufm2_efect Portada!BD61 = BI61 / AN61 = 11.218,80 / 5.024,86 = 2,2327
 - **(b) tabla de tramos** ✅: replica exactamente el comportamiento del xlsm (valorizar por
   tramo → sumar → dividir por superficie total).
 
-**Esquema `TX_TerrenoTramos`** (una fila por tramo, enlazada a `TX_Solicitudes`):
+**Esquema `TX_TerrenoTramos`** (nueva tabla, una fila por tramo, enlazada a `TX_Solicitudes`):
 
 | Campo | Tipo | Origen xlsm |
 |---|---|---|
@@ -179,76 +176,54 @@ Terreno_ufm2_efect Portada!BD61 = BI61 / AN61 = 11.218,80 / 5.024,86 = 2,2327
 
 ---
 
-## TAREA 4 — Recomendación final del equipo
+## Confirmaciones Héctor/Óscar (2026-09-18)
 
-**Q1 — Hogar de OCC itemizada:**
-- Estructura Airtable: **`TX_ObrasComplementarias`** (tipo_obra, detalle, cantidad, uf_unitaria,
-  factor_df, factor_fm, orden), enlazada a `TX_Solicitudes`.
-- Agregación: `F_ValorOCC = Σ(cantidad × uf_unitaria × factor_df × factor_fm)`.
-- Poblado: tipeo del tasador, con apoyo de foto/plano para identificar las obras.
-- La tabla actual sirve si tiene esos campos; falta asegurar `uf_unitaria`, `factor_df`,
-  `factor_fm` y `orden`.
+Ambas preguntas de diseño quedaron **cerradas** con la respuesta de Héctor y Óscar:
 
-**Q2 — Fuente de `uf_m2_terreno_efectivo`:**
-- Opción elegida: **(b) `TX_TerrenoTramos`** — replica el flujo del xlsm (valorizar tramo →
-  sumar → dividir), preserva trazabilidad y recalcula el efectivo si cambia cualquier tramo.
-  Descartadas (a) input directo (pierde trazabilidad) y (c) comparables (el xlsm no la usa).
-- Esquema: glosa, superficie_m2, uf_m2, factor_df, factor_fm, orden (enlazada a `TX_Solicitudes`).
-- `F_ValorTerreno = Σ(superficie_m2 × uf_m2 × factor_df × factor_fm)`;
-  `uf_m2_terreno_efectivo = F_ValorTerreno / Σ(superficie_m2)` (derivado, nunca input).
+- **Q1 (OCC):** **SE MANTIENE COMO HOY.** El factor de seguro se resuelve por cliente/tipo de
+  propiedad (mega-IF de la columna `BO`: ×1 para "Casa" y lista de clientes, ×0,8 el resto).
+  El factor de liquidación es **0,825**, obtenido por velocidad de venta
+  (`VLOOKUP(BF70, BZ62:CB71, 3, 0)` → `Portada!AU78`, plazo "8 A 10 MESES"). No se toca la lógica.
+- **Q2 (Terreno):** **SIEMPRE CRITERIO DEL TASADOR.** No hay tabla ni regla automática. El corte
+  útil vs. excedente es decisión del profesional; no existe lookup por plano ni por plan
+  regulador. Por eso el modelo debe guardar los tramos tal como el tasador los define, sin
+  intentar derivarlos.
 
-**Mensaje enviado a Héctor y Óscar (2026-09-18):**
+Mensaje enviado a Héctor/Óscar el 2026-09-18 (para trazabilidad):
 
 > Héctor, Óscar: leímos el xlsm de MET-6283 (Los Eucaliptus 2100). Con eso cerramos las dos
-> dudas:
->
-> **Q1 — Obras complementarias (OCC).** Vimos que las tipean directo en el cuadro de la hoja
-> Portada, filas 54-56: Piscina 350, "Quincho/terrazas/bodega" 250 y "Cierros/pavimento" 150,
-> cada una con cantidad 1. El total 750 (celda BI60) no es una suma de "OCC", es *todo el cuadro
-> menos Edificación menos Terreno*. El seguro (750) usa factor 1 porque es Casa, y la liquidación
-> (618,75) es 750 × 0,825, donde el 0,825 sale de la tabla de velocidad de venta según "8 a 10
-> meses". Lo replicamos con una tabla de OCC (tipo, detalle, cantidad, UF unitaria, factor
-> depreciación) y el total sale por suma. ¿Nos confirman que el 0,825 y el factor de seguro
-> deben quedar como hoy (según cliente y plazo de venta)?
->
-> **Q2 — UF/m² del terreno.** No es un dato que se digite: es promedio. Ustedes parten el terreno
-> en dos filas (51 y 52): 1.402,35 m² a 8 UF/m² y 3.622,51 m² a 0 UF/m² (la servidumbre/excedente
-> no se valoriza). El total en UF es 11.218,80 y el "2,23 UF/m²" que se muestra (BD61) es
-> 11.218,80 ÷ 5.024,86. La superficie total (5.024,86) viene de la ficha; el corte en dos tramos
-> lo deciden ustedes a criterio, no hay tabla que lo haga solo. Por eso lo vamos a guardar como
-> tramos de terreno (superficie + UF/m² por tramo) y el sistema calcula el promedio igual que el
-> Excel. ¿La regla para separar útil vs. excedente es siempre criterio del tasador, o hay algún
-> caso en que el plano/plan regulador lo fije?
->
-> Con esto quedamos alineados con el archivo real; solo necesitamos esas dos confirmaciones para
-> dejar el motor idéntico.
-
----
-
-## Estado de confirmación Héctor/Óscar
-
-| Pregunta | Estado | Enviado | Pendiente de confirmar |
-|---|---|---|---|
-| **Q1 OCC** | Mensaje enviado | 2026-09-18 | Factor de seguro (por cliente/tipo propiedad) y factor de liquidación **0,825** (velocidad de venta). |
-| **Q2 Terreno** | Mensaje enviado | 2026-09-18 | Regla de separación **útil vs. excedente**: ¿siempre criterio del tasador, o hay caso en que el plano/plan regulador lo fije? |
-
-Hasta que Héctor/Óscar respondan, ambos umbrales se toman como los observados en el xlsm
-(0,825 desde la tabla velocidad de venta; corte de tramos manual por el tasador).
+> dudas: **Q1 (OCC)** las tipean directo en el cuadro de Portada (Piscina 350, Quincho 250,
+> Cierros 150), el total 750 es "todo el cuadro menos Edificación menos Terreno", seguro ×1 por
+> ser Casa y liquidación 750 × 0,825 (velocidad de venta "8 a 10 meses"). **Q2 (terreno)** el
+> 2,23 UF/m² es promedio (11.218,80 ÷ 5.024,86); ustedes parten el terreno en dos tramos
+> (1.402,35 @ 8 + 3.622,51 @ 0) a criterio. Lo replicamos con tramos de terreno. ¿Confirman que
+> el factor de seguro/liquidación quedan como hoy y que el corte útil/excedente es siempre
+> criterio del tasador?
 
 ---
 
 ## Impacto en Propuesta P1-P6
 
-- **Q1 resuelve el hogar de datos de OCC** → **`TX_ObrasComplementarias`** (esquema propuesto en
-  Tarea 4). Las OCC dejan de ser un campo lump-sum y pasan a ser itemizadas.
-- **Q2 resuelve la fuente de `uf_m2_terreno_efectivo`** → **opción (b) `TX_TerrenoTramos`**
-  (esquema propuesto en Tarea 4). El efectivo pasa a ser derivado, no input.
-- **P1 (`F_ValorComercialUF`) debe reformularse** para consumir `F_ValorTerreno` y `F_ValorOCC`
-  como agregados de esas dos tablas, en lugar de campos escalares sueltos:
-  `F_ValorComercialUF = F_ValorEdificacion + F_ValorOCC + F_ValorTerreno`.
-- **P6 (deuda de modelo) queda cubierto** con `TX_TerrenoTramos`: la falta de un hogar para los
-  sub-lotes de terreno con precios distintos era la deuda; la tabla de tramos la cierra.
+Con Q1 y Q2 resueltos, la propuesta del motor (`PROPUESTA_MOTOR_v32_fix_MET6283.md`) se reformula así:
+
+- **P1 · `F_ValorComercialUF`:** reformular para consumir **`F_ValorTerreno`** (agregado de
+  `TX_TerrenoTramos`) y **`F_ValorOCC`** (agregado de `TX_ObrasComplementarias`), en lugar de un
+  `uf_m2_terreno_efectivo` escalar y una OCC lump-sum.
+  `F_ValorComercialUF = F_ValorEdificacion + F_ValorTerreno + F_ValorOCC`.
+- **P2 · `F_ValorReposicionUF`:** agregar **`F_ValorOCC`** (edificación a nuevo, sin depreciar,
+  + OCC). En MET-6283: 8.496,94 + 750 = 9.246,94.
+- **P3 · `F_SeguroIncendioUF`:** **excluye terreno**, suma **edificación depreciada + `F_ValorOCC`**
+  y aplica el **factor de seguro por cliente/tipo** (mega-IF col BO). En MET-6283: 8.157,06 + 750
+  = 8.907,06 (× factor 1 por ser Casa).
+- **P4 · Inputs/catálogos:** `uf_m2_terreno_efectivo` **YA NO existe como campo de
+  `TX_DatosTasacion`** — queda como **derivado calculado** (`F_ValorTerreno / Σ superficie_m2`).
+  Se necesita el esquema real de **`TX_TerrenoTramos`** (tabla nueva) y validar que
+  `TX_ObrasComplementarias` (ya existe) quede poblada.
+- **P5 · Remate/Liquidación:** sigue **table-driven por velocidad de venta** (factor liquidación
+  0,825 confirmado; no se hardcodea).
+- **P6 · Terreno por sub-lotes:** **RESUELTO** por `TX_TerrenoTramos`. La deuda de modelo (predios
+  con excedente valorado a 0) queda cerrada.
 
 ---
 
-**Estado global:** solo documento de referencia. NO se tocó Airtable ni `C_Formulas`.
+**Estado global:** diseño cerrado. Solo documento de referencia. NO se tocó Airtable ni `C_Formulas`.

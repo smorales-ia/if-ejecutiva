@@ -1,8 +1,11 @@
 # Propuesta · Fix del motor v3.2 a partir de la auditoría del xlsm MET-6283
 
-> Estado: **PROPUESTA** (no aplicada). Requiere decisión de Hector/Oscar antes de tocar `C_Formulas` o catálogos.
-> Origen: auditoría del motor Excel real `docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm` (17-sep-2026) y prueba de producción sobre la sandbox `VP-2026-0066` (`recNiwM4s1ibr3sbO`).
-> Prueba Ruta 3 (overrides) + Opción A del Bloqueo #1 (regla `REGLA_REFI_CASA_V32`): **13/13 valores dentro de ±1 %** del oráculo (deltas < 0,00003 %, todos por redondeo de los overrides a 2 decimales).
+> **Versión:** v2 · **Fecha:** 2026-09-18 · **Estado: APROBADO para tanda P##-MOTOR.**
+> Q1 (OCC) y Q2 (terreno) confirmadas por Héctor/Óscar el 2026-09-18; diseño cerrado.
+> **Fuente de verdad:** `docs/_analisis/AUDITORIA_XLSM_MET6283_OCC_TERRENO.md` (auditoría del
+> motor Excel real `docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm`).
+> Prueba Ruta 3 (overrides) + Opción A del Bloqueo #1 (regla `REGLA_REFI_CASA_V32`): **13/13
+> valores dentro de ±1 %** del oráculo sobre la sandbox `VP-2026-0066` (`recNiwM4s1ibr3sbO`).
 
 ---
 
@@ -10,111 +13,145 @@
 
 La auditoría del xlsm que produjo el informe MET-6283 (hoja `Portada`, filas 51–78) mostró que el
 motor real calcula el **Valor Comercial UF** como la suma de tres componentes:
-`edificación (sup × UF/m² nuevo × factor_df) + terreno (Σ sub-lotes sup × UF/m²) + obras complementarias`.
+`edificación (sup × UF/m² nuevo × factor_df) + terreno (Σ tramos sup × UF/m²) + obras complementarias`.
 La fórmula terminal v3.2 **`F_ValorComercialUF`** en `C_Formulas` computa **sólo el término de edificación**
 (`sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc`), omitiendo terreno (11.218,80 UF) y OCC (750 UF).
 Como Remate, Liquidación y todos los CLP derivan de `valor_comercial_uf`, ese único gap contamina la cadena.
 Los tres valores independientes de comercial — Avalúo Fiscal, Ingreso Líquido Anual, Renta Perpetua — sí
 coinciden exactos con el xlsm porque su fórmula v3.2 es idéntica a la del Excel.
 
-Además, la auditoría **corrige la premisa del Bloqueo #3**: el terreno del informe **no** se homogeneizó por
-comparables a ~2,23 UF/m². El "2,23 UF/m²" del cuadro es un promedio derivado (`= 11.218,80 / 5.024,86`).
-El motor real tasó el suelo con **dos filas Terreno manuales**: 1.402,35 m² × 8,00 UF/m² + 3.622,51 m² × 0,00 UF/m².
-Ni `M_Comunas.Colina.uf_m2_terreno = 17` ni un promedio de comparables reproduce ese valor; sólo lo reproduce
-alimentar un `uf_m2_terreno_efectivo` ≈ 2,2327 sobre la superficie total, o replicar el split por sub-lotes.
+La auditoría además **corrigió la premisa del Bloqueo #3**: el terreno del informe **no** se homogeneizó por
+comparables. El "2,23 UF/m²" del cuadro es un promedio derivado (`= 11.218,80 / 5.024,86`). El motor real tasó
+el suelo con **dos tramos manuales**: 1.402,35 m² × 8,00 UF/m² + 3.622,51 m² × 0,00 UF/m². El corte útil vs.
+excedente es **criterio del tasador** (confirmado por Héctor/Óscar el 2026-09-18; no hay lookup por plano ni
+plan regulador).
 
-La prueba de producción confirmó ambos diagnósticos: con la regla v3.1 (`Regla_MetLife_Refinanciamiento_Casa`)
-el motor emitió las fórmulas UF + intermedias pero **ningún terminal CLP** ni Avalúo Fiscal (Bloqueo #1 vivo);
-al cambiar a `REGLA_REFI_CASA_V32` (Opción A) + los 3 overrides, cuadraron los 13. El override es hoy el
-único puente para valuar este caso; el motor no es autónomo hasta resolver el gap de fórmula y los datos.
+Las dos preguntas de diseño quedaron **cerradas** (ver auditoría §Confirmaciones):
+- **Q1 (OCC):** se mantiene como hoy — factor de seguro por cliente/tipo (mega-IF col `BO`), factor de
+  liquidación **0,825** por velocidad de venta (`VLOOKUP` → `Portada!AU78`, tabla `BZ62:CB71`).
+- **Q2 (terreno):** siempre criterio del tasador — se guardan los tramos tal como el profesional los define.
 
 ---
 
 ## 2 · Patches P1–P6
 
 ### P1 — F_ValorComercialUF (`rec8rv76smtjQh4Rb`, v3.2) · fix central
+Consumir **`F_ValorTerreno`** (agregado de `TX_TerrenoTramos`) y **`F_ValorOCC`** (agregado de
+`TX_ObrasComplementarias`), no un `uf_m2_terreno_efectivo` escalar ni una OCC lump-sum:
 ```
 DE:  valor_final_override > 0 ? valor_final_override
        : (sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc)
 A:   valor_final_override > 0 ? valor_final_override
-       : (sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc
-          + (hay_terreno ? sup_terreno_m2 * uf_m2_terreno_efectivo : 0)
-          + valor_obras_complementarias_uf)
+       : (F_ValorEdificacion + F_ValorTerreno + F_ValorOCC)
 ```
+donde:
+- `F_ValorEdificacion = sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc`  (8.157,06)
+- `F_ValorTerreno     = Σ_tramos (superficie_m2 * uf_m2 * factor_df * factor_fm)`   (11.218,80)
+- `F_ValorOCC         = Σ_obras (valor_uf)`                                          (750)
+- MET-6283: 8.157,06 + 11.218,80 + 750 = **20.125,86 UF**.
 
 ### P2 — F_ValorReposicionUF (`reckDXGPbkDVjzPjY`, v3.2) · agrega OCC
 ```
 DE:  ... : (sup_construccion_m2 * uf_m2_nuevo_lookup)
-A:   ... : (sup_construccion_m2 * uf_m2_nuevo_lookup + valor_obras_complementarias_uf)
+A:   ... : (sup_construccion_m2 * uf_m2_nuevo_lookup + F_ValorOCC)
 ```
-(Reposición = edificación **a nuevo**, sin factor_df, + OCC = 8.496,94 + 750 = 9.246,94.)
+(Reposición = edificación **a nuevo**, sin factor_df, + OCC = 8.496,94 + 750 = **9.246,94**.)
 
 ### P3 — F_SeguroIncendioUF (`recZTfJX0MJ0r1tHP`, v3.2) · edificación depreciada + OCC, sin terreno
+Excluye terreno; suma edificación depreciada + `F_ValorOCC`; aplica el **factor de seguro por
+cliente/tipo** (mega-IF de la columna `BO` del xlsm: ×1 para "Casa" y lista de clientes, ×0,8 el resto):
 ```
 DE:  valor_seguro_override > 0 ? valor_seguro_override : (valor_comercial_uf * factor_seguro)
 A:   valor_seguro_override > 0 ? valor_seguro_override
-       : (sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc + valor_obras_complementarias_uf)
+       : ((sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc + F_ValorOCC) * factor_seguro_cliente_tipo)
 ```
-(Seguro = edificación **depreciada** (8.157,06) + OCC (750) = 8.907,06; excluye terreno.)
+(Seguro = (edificación depreciada 8.157,06 + OCC 750) × factor; para MetLife+Casa el factor es 1 →
+**8.907,06**; excluye terreno.)
 
-### P4 — Inputs / catálogos (no son fórmulas)
-- `uf_m2_terreno_efectivo`: fuente confiable por solicitud (≈ 2,2327 para MET-6283). **No usar `M_Comunas.Colina = 17`.**
-- `valor_obras_complementarias_uf`: cargar las obras (Piscina 350 + OO.CC 250 + OO.CC 150 = 750) en su hogar de datos.
-- `factor_df_calc` / `factor_depreciacion_override`: 0,96 en el xlsm (manual). Confirmar si se ingresa o se calcula por edad.
-- `uf_m2_nuevo_lookup`: 34 desde `C_PreciosUnitarios` clave `Casa-Albanileria-BUENA` → requiere `calidad = BUENA` (Bloqueo #2; en la prueba el lookup dio 22 con calidad vacía).
-- `gasto_anual_clp = 3.300.000` (= 1 mes de arriendo; el xlsm deduce exactamente 1 mes). Ya sembrado en la sandbox.
+### P4 — Tablas de datos (esquema definitivo)
 
-### P5 — (opcional, generalización) Remate/Liquidación table-driven por velocidad_venta
-Reemplazar `× 0.65` / `× 0.825` hardcodeados (v3.2: F_ValorRemateUF `recCjbaxfXQELCfj9`, F_ValorLiquidacionUF `recSYwQqRULkqYimi`)
-por lookup de `factor_remate` según `velocidad_venta` y `f_liq = (1 − factor_remate)/2 + factor_remate`.
-Tabla real del xlsm: 1-2m 0,75 · 2-4/4-6/6-8m 0,70 · 8-10m 0,65 · 10-12/12-18m 0,60 · 18-24m 0,55 · >24m 0,50.
-Para MET-6283 el hardcode coincide, pero fallará con otra velocidad. (v3.1 ya es table-driven.)
+`uf_m2_terreno_efectivo` **YA NO es un campo de `TX_DatosTasacion`**: pasa a ser un **derivado
+calculado** (`F_ValorTerreno / Σ superficie_m2`). El motor consume dos tablas de detalle:
 
-### P6 — (deuda de modelo) Terreno por sub-lotes
-El modelo de una sola `uf_m2_terreno × sup_terreno` no reproduce predios donde el excedente se valora a 0.
-Hace falta soportar tramos (sup_valorizada @ precio + sup_excedente @ 0) o aceptar `uf_m2_terreno_efectivo`
-promedio como input. Fuera del alcance de un patch de fórmula. **No existe tabla de tramos de terreno hoy**
-(`C_TramosBienComun` es para % de bien común, no para precio de suelo).
+#### P4.a — `TX_ObrasComplementarias` (YA EXISTE · `tblQ1fXM06bzSQ84w`) — validar y poblar
+El DAG (`AT03_Calculos_DAG.js`) ya la lee para `sum_obras_complementarias_uf`. **No es cambio de
+esquema, es de poblado.** Cardinalidad: **1 `TX_Solicitudes` → N obras**.
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| `solicitud` | link → TX_Solicitudes | dueño |
+| `tipo_obra` | singleLineText / select | Piscina, OO.CC, Quincho… |
+| `valor_uf` | number | valor UF del ítem (col AT del xlsm; lump-sum, cantidad = 1) |
+| `se_deprecia` | checkbox | cubre el D.F. (en MET-6283, las 3 OCC sin depreciar) |
+| `orden` *(añadir si falta)* | number | orden de presentación |
+
+`F_ValorOCC = SUM(valor_uf)` de las filas de la solicitud.
+
+**Ejemplo poblado — MET-6283:**
+
+| solicitud | tipo_obra | valor_uf | se_deprecia | orden |
+|---|---|---|---|---|
+| VP-2026-0066 | Piscina | 350 | no | 1 |
+| VP-2026-0066 | OO.CC (Quincho, terrazas, bodega) | 250 | no | 2 |
+| VP-2026-0066 | OO.CC (Cierros, pavimento exterior) | 150 | no | 3 |
+
+→ `F_ValorOCC = 350 + 250 + 150 = 750 UF`.
+
+#### P4.b — `TX_TerrenoTramos` (NUEVA TABLA) — crear
+Reemplaza el modelo de una sola `uf_m2_terreno × sup_terreno`. Cardinalidad: **1 `TX_Solicitudes` → N tramos**.
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| `solicitud` | link → TX_Solicitudes | dueño |
+| `glosa` | singleLineText | Terreno / Servidumbre / Excedente (col G del xlsm) |
+| `superficie_m2` | number | col AN |
+| `uf_m2` | number | col AT (criterio del tasador; 0 para excedente) |
+| `factor_df` | number (def. 1) | col AX |
+| `factor_fm` | number (def. 1) | col BA |
+| `orden` | number | fila 51,52 |
+
+Derivados:
+- `valor_tramo_uf = superficie_m2 * uf_m2 * factor_df * factor_fm`.
+- `F_ValorTerreno = SUM(valor_tramo_uf)`.
+- `uf_m2_terreno_efectivo = F_ValorTerreno / SUM(superficie_m2)` (derivado, nunca input).
+
+**Ejemplo poblado — MET-6283:**
+
+| solicitud | glosa | superficie_m2 | uf_m2 | factor_df | factor_fm | orden | valor_tramo_uf |
+|---|---|---|---|---|---|---|---|
+| VP-2026-0066 | Terreno | 1.402,35 | 8,00 | 1 | 1 | 1 | 11.218,80 |
+| VP-2026-0066 | Servidumbre | 3.622,51 | 0,00 | 1 | 1 | 2 | 0 |
+
+→ `F_ValorTerreno = 11.218,80 UF`; `uf_m2_terreno_efectivo = 11.218,80 / 5.024,86 = 2,2327`.
+
+### P5 — Remate/Liquidación table-driven por velocidad de venta
+Mantener **table-driven** (no hardcodear `× 0.65` / `× 0.825`; v3.2: F_ValorRemateUF `recCjbaxfXQELCfj9`,
+F_ValorLiquidacionUF `recSYwQqRULkqYimi`). Lookup de `factor_remate` según `velocidad_venta` y
+`f_liq = (1 − factor_remate)/2 + factor_remate`. Tabla real del xlsm (`Portada!BZ62:CB71`):
+1-2m 0,75 · 2-4/4-6/6-8m 0,70 · 8-10m 0,65 · 10-12/12-18m 0,60 · 18-24m 0,55 · >24m 0,50.
+Para MET-6283 (velocidad "8 a 10 meses") → factor_remate 0,65, factor_liq **0,825** (confirmado Q1).
+
+### P6 — Terreno por sub-lotes · **RESUELTO**
+La deuda de modelo (predios donde el excedente se valora a 0) queda **cerrada por `TX_TerrenoTramos`**
+(P4.b). Ya no se depende de una sola `uf_m2_terreno × sup_terreno` ni de un promedio como input.
 
 ---
 
-## 3 · Datos a decidir con Hector/Oscar antes de aplicar Ruta 2
+## 3 · Plan de tanda P##-MOTOR (por fases)
 
-### 3.1 · Hogar de datos para OCC itemizada
-**Ya existe** `TX_ObrasComplementarias` (`tblQ1fXM06bzSQ84w`, campos `tipo_obra`, `valor_uf`, `se_deprecia`,
-`solicitud`), y el DAG (`AT03_Calculos_DAG.js`, línea 64/867) ya lee de ella para `sum_obras_complementarias_uf`.
-El gap no es de esquema sino de **poblado**: la sandbox no tenía filas, por eso `F_ValorOCC` dio 0.
-**Decisión:** ¿quién/qué puebla `TX_ObrasComplementarias` en el flujo real (extracción de foto/plano, tipeo del tasador)?
-
-### 3.2 · Cómo se resuelve `uf_m2_terreno_efectivo` por solicitud
-Opciones a decidir:
-- (a) **Input directo** desde la ficha del tasador (campo por solicitud) — más simple, replica lo que hace el Excel.
-- (b) **Split de sub-lotes** con nueva tabla `TX_TerrenoTramos` (sup + precio por tramo) — fiel al xlsm, mayor esfuerzo.
-- (c) **Homogeneización de comparables** — **descartada para MET-6283** (Hallazgo T-1: el informe no la usó para terreno).
-Recomendación técnica: (a) para cerrar MET-6283; (b) si se quiere generalizar a predios rurales con excedente a 0.
-
----
-
-## 4 · Riesgo de aplicar P1–P3 sin resolver los datos
-
-Si se aplican P1–P3 pero **no** se resuelven `uf_m2_terreno_efectivo` (P4) y el poblado de OCC (3.1), el motor
-**seguirá sin ser autónomo**: `F_ValorComercialUF` sumaría terreno con el default de comuna (17 → ~85.000 UF de
-terreno, resultado disparatado) y OCC = 0. El override de `valor_final_override` seguiría siendo obligatorio.
-Es decir, los patches de fórmula son necesarios pero **no suficientes**; sin los datos, no destraban nada y
-podrían empeorar el resultado por defecto (hoy v3.2 al menos da sólo-edificación; con P1 y comuna=17 daría un
-terreno inflado). **Aplicar P1 y la corrección de `uf_m2_terreno` deben ir juntos.**
-
----
-
-## 5 · Alcance sugerido de la tanda P##-MOTOR
-
-- **Fase A — Definir datos con Hector.** Cerrar 3.1 (poblado OCC) y 3.2 (fuente de `uf_m2_terreno_efectivo`);
-  confirmar si `factor_df` se ingresa o se calcula; confirmar Bloqueo #2 (calidad → `Casa-Albanileria-BUENA`).
-- **Fase B — Patches `C_Formulas`.** Aplicar P1–P3 (y P5 si se aprueba generalización). Bumpear versión y documentar.
-- **Fase C — Siembra de catálogos.** `M_Comunas` (uf_m2_terreno realista o marcar no-usable para rural),
-  `C_PreciosUnitarios` (clave BUENA), `M_Clientes` (tasa_cap 4,5 % MetLife ya OK).
-- **Fase D — Regresión.** Correr AT03 v32 contra los xlsm de referencia disponibles y comparar los 13 valores
-  con tolerancia ±1 %; vigilar que overrides sólo se usen donde se decida y no enmascaren gaps de fórmula.
+- **Fase A — Estructura de datos.** Crear `TX_TerrenoTramos` (esquema P4.b) y **validar**
+  `TX_ObrasComplementarias` (`tblQ1fXM06bzSQ84w`): confirmar campos, añadir `orden` si falta, y
+  cablear ambas al DAG (`F_ValorTerreno`, `F_ValorOCC`).
+- **Fase B — Patches `C_Formulas`.** Aplicar **P1–P3 y P5**. Bumpear versión de cada fórmula terminal
+  y documentar el cambio.
+- **Fase C — Siembra de datos históricos.** Retrocargar tramos de terreno (`TX_TerrenoTramos`) y OCC
+  (`TX_ObrasComplementarias`) en las tasaciones activas, empezando por MET-6283 (VP-2026-0066).
+- **Fase D — Regresión.** Correr AT03 v32 contra los xlsm de referencia disponibles, comparar los 13
+  valores con tolerancia ±1 %, y agregar tests unitarios en `TX_Calculos` para `F_ValorTerreno`,
+  `F_ValorOCC`, `F_ValorComercialUF`, `F_ValorReposicionUF`, `F_SeguroIncendioUF`.
+- **Fase E — Retiro de overrides.** Una vez validada la regresión, retirar los overrides
+  (`valor_final_override`, `valor_reposicion_override`, `valor_seguro_override`) para que el motor
+  quede autónomo; vigilar que ningún caso vuelva a depender de ellos.
 
 ---
 
