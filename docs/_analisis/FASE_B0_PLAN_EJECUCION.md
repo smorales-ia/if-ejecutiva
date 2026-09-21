@@ -40,7 +40,7 @@ Tabla `C_Formulas` = `tblNFa454fBbqRB3t`. Campos: nombre `fldjSdn7HT1d8PXZy` · 
 - Nueva: `valor_final_override > 0 ? valor_final_override : (hay_cuadro > 0 ? (valor_edificacion_items_uf + valor_terreno_items_uf + valor_occ_items_uf) : (sup_construccion_m2 * uf_m2_nuevo_lookup * factor_df_calc))`
 - MET-6283: `8.157,06 + 11.218,80 + 750 = 20.125,86` ✓
 
-**P2 · F_ValorReposicionUF** — `reckDXGPbkDVjzPjY` · v3.2 → v3.3 · celda `BG72` (`CC70 + BI60`)
+**P2 · F_ValorReposicionUF** — `reckDXGPbkDVjzPjY` · v3.2 → v3.3 · celda `BG72 = IF(AN61=0, CD37*0,8+CC46, CD37+CC46)` [`CD37=CC70` ; `CC46=BI60`] · resultado `9.246,94`
 - Actual: `valor_reposicion_override > 0 ? valor_reposicion_override : (sup_construccion_m2 * uf_m2_nuevo_lookup)`
 - Nueva: `valor_reposicion_override > 0 ? valor_reposicion_override : ((hay_cuadro > 0 ? valor_edificacion_nuevo_items_uf : sup_construccion_m2 * uf_m2_nuevo_lookup) + (hay_cuadro > 0 ? valor_occ_items_uf : sum_obras_complementarias_uf))`
 - MET-6283: `8.496,94 + 750 = 9.246,94` ✓ (edificación **a nuevo**, sin factor_df)

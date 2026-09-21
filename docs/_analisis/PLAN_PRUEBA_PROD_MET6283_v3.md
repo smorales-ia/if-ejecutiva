@@ -143,7 +143,12 @@ el DAG). Comparar el **valor final** con el informe:
 | **VALOR TASACIÓN / Comercial normal** | **UF 20.125,86** · **$ 802.913.431** |
 | **Valor a Remate** | **UF 13.081,81** |
 | UF del día (13-04-2026) | 39.894,61 |
-| (contexto) Liquidación / Reposición | UF 8.157,06 / 9.255,51 · Reposición 11.218,80 UF |
+| (contexto) Edif. depreciada (BI59) / Reposición (BG72) | UF 8.157,06 / **9.246,94** · Terreno (BI61) 11.218,80 UF |
+
+> **Corrección de etiquetas (D-4/D-5).** La versión previa rotulaba `8.157,06` como Liquidación
+> y `9.255,51` como Reposición: `8.157,06` es la **edificación depreciada (BI59)**, `9.255,51`
+> era un **typo** (no existe en ninguna celda; la reposición real es `9.246,94`, celda `BG72`), y
+> `11.218,80` es el **terreno (BI61)**, no la reposición.
 
 > El valor final debe caer dentro de tolerancia del oráculo. Divergencias grandes ⇒ revisar
 > inputs (superficies, comparables homogeneizados, factores).
@@ -213,7 +218,7 @@ la `regla_aplicada`.
 | 7 | Avalúo Fiscal UF | F_AvaluoFiscalUF · avaluo_fiscal_uf | **8.517,68** | (input 339.809.429) |
 | 8 | Valor a Remate UF (65%) | F_ValorRemateUF · valor_remate_uf | **13.081,81** | 521.893.730 |
 | 9 | Valor a Remate CLP | F_ValorRemateCLP · valor_remate_clp | — | 521.893.730 |
-| 10 | Liquid. Normal UF (82,5%) | F_ValorLiquidacionUF · valor_liquidacion_uf | **16.603,84** | 662.403.581 |
+| 10 | Liquid. Normal UF (82,5%) | F_ValorLiquidacionUF · valor_liquidacion_uf | **16.603,84** (xlsm 16.603,8365; ±1%) | 662.403.581 |
 | 11 | Liquid. Normal CLP | F_ValorLiquidacionCLP · valor_liquidacion_clp | — | 662.403.581 |
 | 12 | Ingreso Líquido Anual CLP | F_IngresoLiquidoAnualCLP · ingreso_liquido_anual_clp | — | 36.300.000 |
 | 13 | Renta Perpetua CLP | F_RentaPerpetuaCLP · renta_perpetua_clp | — | 806.666.667 |
