@@ -707,9 +707,19 @@ Reemplaza al patrón EAV (`D_Documento` + `D_DocumentoValorAtributo`, ambas depr
 
 RN-32 (vigente, redefinida v1.6): exactamente uno de los tipos de valor esperados por `tipo_dato` debe corresponder al valor persistido en el JSON para ese atributo. Ya no se valida vía Airtable Automation sobre una tabla EAV intermedia — el escritor (Airtable Script `AT03-Ext`, invocado desde el blueprint Make SC-RF09) es responsable de respetar el contrato de tipos al construir el JSON.
 
-### Estado del blueprint Make `SC-RF09-ExtraccionClaude` frente a este schema (17-jul-2026)
+### Estado del blueprint Make `SC-RF09-ExtraccionClaude` frente a este schema (actualizado 21-09-2026)
 
-⚠ El blueprint en `docs/make-blueprints/SC-RF09-ExtraccionClaude.blueprint.json` **todavía tiene 13 módulos** y sus módulos 5 y 6 (`airtable:ActionGetRecord`) **referencian los TABLE_IDs deprecados** `tblOI0Su3ogySNeHm` (D_Atributo) y `tble0Na4Neon7Vz3z` (D_TipoDato), que ya no existen en la base real. **Riesgo alto: la ejecución fallará al llegar al módulo 5.** Además, el prompt del módulo 10 tiene la cadena literal `"Atributos esperados: 7"` en vez de un valor dinámico. Ver nota en el propio archivo del blueprint y `docs/_notas/rf09_diseno.md`. Reconstrucción pendiente — no es un cambio de documentación, requiere sesión de construcción aparte.
+✅ **Corregido — la advertencia anterior estaba stale.** El blueprint vive en
+`docs/_artefactos/make/SC-RF09-ExtraccionClaude.blueprint.json` (no `docs/make-blueprints/`) y hoy es
+**v2.2 · async** (era v2.1 · 24 módulos; la conversión async agregó un `WebhookRespond` temprano y quitó
+los 3 terminales — ver ficha CI-002). **Todas las 5 tablas referenciadas están VIVAS** y verificadas por REST
+(`AIRTABLE_TOKEN`, meta): `tblur71x1oItbmKZc` TX_Adjuntos, `tblkPhBnpdDmUWOl3` D_TipoDocumento,
+`tbldI86ieVKpjpL7E` D_TipoDocumentoAtributo, `tblR4VWpUHw1CSyIS` LogEscenarios, `tblaHTyMHYfmy7Fg6`
+TX_Solicitudes. **Cero referencias a los TABLE_IDs deprecados** `tblOI0Su3ogySNeHm` (D_Atributo) ni
+`tble0Na4Neon7Vz3z` (D_TipoDato) — el riesgo "la ejecución fallará en el módulo 5" **ya no existe**.
+El prompt del módulo 10 es **dinámico** (`[{{7.text}}]` provisto por el TextAggregator), **no** la cadena
+literal "Atributos esperados: 7" (grep negativo). No hay reconstrucción pendiente: el residual era config
+en Make (pegar la API key en el módulo 10 · placeholder en git) + async, no reescritura del schema.
 
 ### Gaps cerrados en auditorías anteriores (12-jul-2026, sobre tablas hoy deprecadas)
 

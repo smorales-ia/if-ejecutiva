@@ -89,6 +89,21 @@ Todos los valores verificados directamente contra el PDF oráculo (p.2) y los 8 
 | foto_comparables_Met6283.JPG | **`foto_ofertas_comparables`** (⚠ ≠ nombre archivo) | TX_Comparables |
 | certificado_deuda_tgr_Met6283.pdf | `certificado_deuda_tgr` | ninguna (no-op por diseño) |
 
+> **⚠ Corrección K-4 (RF09-REACTIVACION · 21-09-2026) — enrutamiento de la propagación `AT03-Ext`.**
+> La columna «Tabla destino» de arriba describe la **semántica del informe/motor**, no necesariamente el
+> destino que hoy escribe la propagación `AT03-Ext` tras la extracción RF-09. El Agente 5 del plan
+> RF09-REACTIVACION (verificado contra schema §28) sostiene que **de los 8 documentos sólo 3 pueblan una
+> tabla vía `AT03-Ext`**: `permiso_edificacion` (→ TX_DocumentosLegales), `foto_fuente_sii`
+> (→ TX_DatosTasacion.`avaluo_fiscal_clp` + TX_Unidades) y `foto_ofertas_comparables` (→ TX_Comparables);
+> los **5 restantes son no-op → `skipped`** (sin destino declarado en `uso_cardinalidad_destino`), entre
+> ellos **`consulta_antecedentes_bien_raiz`**. En consecuencia el **`avaluo_total`** de la propiedad **no**
+> lo escribe la extracción de `consulta_antecedentes` a TX_DatosTasacion, sino que proviene de
+> **`certificado_avaluo_fiscal` → `TX_Unidades`**, documento que **no está entre estos 8**; el bloque SII
+> de `foto_fuente_sii` enruta a `avaluo_fiscal_clp` en TX_DatosTasacion. **El valor validado del informe
+> (avalúo total 339.809.429) no cambia** — sólo se corrige *qué documento/campo lo puebla*. Esta corrección
+> se **confirmará empíricamente** en la verificación E2E RF-09 (FASE 2 · BLOQUE 3/4): los tests (b)/(c)
+> revelan cuáles de los 8 terminan en `listo` (pueblan) vs `skipped` (no-op). Ver `docs/_planes/PLAN_rf09-reactivacion.md` §8 · K-4.
+
 ### (b) Datos ingresados (extracto verificado; fuente = PDF p.2 + doc de entrada)
 
 **Legales:** permiso 319 / 2020-09-09 · recepción 210 / 2024-07-18 · CBR fojas **3312** · nº insc **4663** ·

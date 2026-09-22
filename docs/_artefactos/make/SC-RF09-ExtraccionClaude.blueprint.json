@@ -1,5 +1,5 @@
 {
-    "name": "SC-RF09-ExtraccionClaude v2.1 - comparables (fila)",
+    "name": "SC-RF09-ExtraccionClaude v2.2 - async (fila)",
     "flow": [
         {
             "id": 1,
@@ -36,6 +36,45 @@
                         "name": "maxResults",
                         "type": "number",
                         "label": "Maximum number of results"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 26,
+            "module": "gateway:WebhookRespond",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "body": "{\"ok\": true, \"estado\": \"recibido\", \"async\": true}",
+                "status": "200",
+                "headers": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 600
+                },
+                "parameters": [
+                    {
+                        "name": "status",
+                        "type": "text",
+                        "label": "Status"
+                    },
+                    {
+                        "name": "body",
+                        "type": "text",
+                        "label": "Body"
+                    },
+                    {
+                        "name": "headers",
+                        "type": "array",
+                        "label": "Headers"
                     }
                 ]
             }
@@ -1272,7 +1311,8 @@
             "version": 3,
             "parameters": {
                 "handleErrors": true,
-                "useNewZLibDeCompress": true
+                "useNewZLibDeCompress": true,
+                "timeout": "180"
             },
             "mapper": {
                 "ca": "",
@@ -2741,45 +2781,6 @@
                                                         "name": "ultima_modificacion",
                                                         "type": "date",
                                                         "label": "ultima_modificacion"
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        {
-                                            "id": 17,
-                                            "module": "gateway:WebhookRespond",
-                                            "version": 1,
-                                            "parameters": {},
-                                            "mapper": {
-                                                "body": "{\"ok\": true, \"estado\": \"error\", \"reintentable\": true}",
-                                                "status": "200",
-                                                "headers": [
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json"
-                                                    }
-                                                ]
-                                            },
-                                            "metadata": {
-                                                "designer": {
-                                                    "x": 4500,
-                                                    "y": 0
-                                                },
-                                                "parameters": [
-                                                    {
-                                                        "name": "status",
-                                                        "type": "text",
-                                                        "label": "Status"
-                                                    },
-                                                    {
-                                                        "name": "body",
-                                                        "type": "text",
-                                                        "label": "Body"
-                                                    },
-                                                    {
-                                                        "name": "headers",
-                                                        "type": "array",
-                                                        "label": "Headers"
                                                     }
                                                 ]
                                             }
@@ -4904,45 +4905,6 @@
                                                     }
                                                 ]
                                             }
-                                        },
-                                        {
-                                            "id": 21,
-                                            "module": "gateway:WebhookRespond",
-                                            "version": 1,
-                                            "parameters": {},
-                                            "mapper": {
-                                                "body": "{\"ok\": true, \"estado\": \"delegado_visador\", \"reintentable\": false}",
-                                                "status": "200",
-                                                "headers": [
-                                                    {
-                                                        "key": "Content-Type",
-                                                        "value": "application/json"
-                                                    }
-                                                ]
-                                            },
-                                            "metadata": {
-                                                "designer": {
-                                                    "x": 4800,
-                                                    "y": 300
-                                                },
-                                                "parameters": [
-                                                    {
-                                                        "name": "status",
-                                                        "type": "text",
-                                                        "label": "Status"
-                                                    },
-                                                    {
-                                                        "name": "body",
-                                                        "type": "text",
-                                                        "label": "Body"
-                                                    },
-                                                    {
-                                                        "name": "headers",
-                                                        "type": "array",
-                                                        "label": "Headers"
-                                                    }
-                                                ]
-                                            }
                                         }
                                     ]
                                 }
@@ -5711,45 +5673,6 @@
                                         "name": "ultima_modificacion",
                                         "type": "date",
                                         "label": "ultima_modificacion"
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            "id": 24,
-                            "module": "gateway:WebhookRespond",
-                            "version": 1,
-                            "parameters": {},
-                            "mapper": {
-                                "body": "{\"ok\": true, \"estado\": \"listo\"}",
-                                "status": "200",
-                                "headers": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    }
-                                ]
-                            },
-                            "metadata": {
-                                "designer": {
-                                    "x": 3900,
-                                    "y": 600
-                                },
-                                "parameters": [
-                                    {
-                                        "name": "status",
-                                        "type": "text",
-                                        "label": "Status"
-                                    },
-                                    {
-                                        "name": "body",
-                                        "type": "text",
-                                        "label": "Body"
-                                    },
-                                    {
-                                        "name": "headers",
-                                        "type": "array",
-                                        "label": "Headers"
                                     }
                                 ]
                             }
