@@ -1,0 +1,69 @@
+# DIFF AT03_Calculos — repo (AT03_Calculos_DAG.js, con 3 edits T-MC-P0) vs LIVE deployed 2026-09-23
+# Generado con: diff --strip-trailing-cr LIVE repo  (el repo es LF; el live capturado venia CRLF)
+# Sin --strip-trailing-cr el diff reporta 1,1365c1,1400 (TODO el archivo) por line endings: FALSO drift.
+# Con normalizacion: 4 hunks reales = exactamente las 3 ediciones T-MC-P0 (handle H_PreciosUF, fetch fecha_visita, guard H3).
+# (El unico hunk extra, 1,4d0, es la cabecera de backup del archivo pre-T-MC-P0.)
+# ================================================================================
+
+1,9d0
+< // AT03_Calculos (wflSBI7cjLNc0rkV5) — script LIVE / DEPLOYED
+< // Fuente: captura MCP get_automation 2026-09-23 (deploymentStatus=deployed · configurationStatus=valid),
+< //         re-materializada esta sesion desde AT03_Calculos_DAG_pre-T-MC-P0.js.
+< // NOTA: en esta sesion NO se re-extrajo por MCP (el server oficial mcp.airtable.com
+< //       no lee automations; la captura previa vino de otro MCP). Contenido identico
+< //       al pre-T-MC-P0 salvo line endings: aqui NORMALIZADO a LF para evitar el
+< //       falso-drift CRLF que bloqueo la sesion del 22-09. Rollback byte-fiel: usar
+< //       el pre-T-MC-P0 (CRLF). deploymentStatus=deployed al 2026-09-23.
+< // --------------------------------------------------------------------------------
+90c81
+< let tReglas = null, tItemsCuadro = null;
+---
+> let tReglas = null, tItemsCuadro = null, tPreciosUF = null;
+100a92
+> try { tPreciosUF = base.getTable('H_PreciosUF'); } catch (e) {}
+630c622
+<     fields: ['estado', 'nro_interno', 'codigo_solicitud',
+---
+>     fields: ['estado', 'fecha_visita', 'nro_interno', 'codigo_solicitud',
+994c986,1024
+< const ufDiaVisita = parseFloat(flatVal(datosCrudo.uf_dia_visita)) || 38500;
+---
+> // H3 (T-MC-P0): la UF del dia de visita se resuelve por LOOKUP a H_PreciosUF
+> // segun `fecha_visita` de TX_Solicitudes. Sin default silencioso: si falta la
+> // fecha, o no hay fila de UF para esa fecha, se falla RUIDOSO (evento en
+> // A_Eventos + throw), en vez de escalar todos los CLP con un 38500 hardcode
+> // (subvaloracion invisible). Solo aplica a corridas post-deploy: los historicos
+> // ya calculados no se recalculan (el motor no reprocesa records ya en 'calculada').
+> const fechaVisita = String(sol.getCellValueAsString('fecha_visita') || '').slice(0, 10);
+> if (!fechaVisita) {
+>     const msgFv = 'H3: fecha_visita ausente en TX_Solicitudes. Calculo abortado — sin default 38500 (T-MC-P0).';
+>     console.log('  FAIL-RUIDOSO ' + msgFv);
+>     if (tEventos) {
+>         try { await tEventos.createRecordAsync({ 'tipo_evento': 'fecha_visita_ausente' }); }
+>         catch (eFv) { console.log('  ERROR A_Eventos[H3 fecha]: ' + eFv.message); }
+>     }
+>     throw new Error(msgFv);
+> }
+> let ufDiaVisita = null;
+> if (tPreciosUF) {
+>     try {
+>         const qUf = await tPreciosUF.selectRecordsAsync({ fields: ['fecha', 'valor_clp'] });
+>         for (const rUf of qUf.records) {
+>             const fUf = String(rUf.getCellValueAsString('fecha') || '').slice(0, 10);
+>             if (fUf === fechaVisita) {
+>                 const vUf = parseFloat(rUf.getCellValue('valor_clp'));
+>                 if (!isNaN(vUf) && vUf > 0) ufDiaVisita = vUf;
+>                 break;
+>             }
+>         }
+>     } catch (eLk) { console.log('  WARN lookup H_PreciosUF: ' + eLk.message); }
+> }
+> if (ufDiaVisita === null) {
+>     const msgUf = 'H3: UF no cargada en H_PreciosUF para fecha_visita=' + fechaVisita + '. Calculo abortado — sin default 38500 (T-MC-P0).';
+>     console.log('  FAIL-RUIDOSO ' + msgUf);
+>     if (tEventos) {
+>         try { await tEventos.createRecordAsync({ 'tipo_evento': 'uf_no_cargada_para_fecha ' + fechaVisita }); }
+>         catch (eUf) { console.log('  ERROR A_Eventos[H3 uf]: ' + eUf.message); }
+>     }
+>     throw new Error(msgUf);
+> }

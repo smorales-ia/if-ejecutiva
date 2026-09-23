@@ -2388,3 +2388,19 @@ tabla `porUnidad`**.
 | **Dueño** | (por asignar) |
 | **Fecha objetivo** | (pendiente) |
 | **Estado** | 🟡 **abierta** · requerimiento definido · pendiente verificación de schema |
+
+## CI-071 · AT03 no escribe A_Eventos — logEventoCompleto vs schema real
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-071 |
+| **Archivo:línea** | `docs/_artefactos/airtable/AT03_Calculos_DAG.js` · helper `logEventoCompleto()` (línea 218; invocado en 699 y 1349) |
+| **Descripción** | `logEventoCompleto()` intenta escribir a `A_Eventos` con un map que incluye `'mensaje'`, pero `A_Eventos` **no tiene** ese campo (schema real: `tipo_evento`/`descripcion`/`detalle_json`/`severidad`/…). Airtable rechaza el create: el 1er intento (`minimalMap`, línea 207) falla silenciosamente en `catch e1` (sin loguear), y el 2º intento (`ultraMin`, línea 217) reporta `"Request processing is disabled due to earlier failed request"` — mensaje secundario que oculta la causa real. Resultado: **0 registros A_Eventos escritos por AT03**. |
+| **Evidencia** | Corrida VP-2026-0066 el **2026-09-23 14:47** — `FIN OK` con **13/13 TX_Calculos** escritos, pero **A_Eventos = 0 registros nuevos** (verificado por REST: `IS_AFTER(CREATED_TIME(), '2026-09-23T00:00:00Z')` → 0 filas). |
+| **Impacto** | **Pérdida de auditoría.** No bloquea el cálculo: por diseño el helper está envuelto y devuelve `null` sin abortar (las 13 escrituras y la transición `estado→calculada` son awaits posteriores y salen OK). **Preexistente, NO introducido por T-MC-P0** (que sólo tocó H3/`H_PreciosUF`). |
+| **Prioridad** | **Media** (auditoría, no funcional). |
+| **Fix propuesto** | Mapear `logEventoCompleto()` a los campos reales de `A_Eventos` (`descripcion` + `detalle_json`). Verificar el schema con `get_table_schema` antes de tocar el map. Como refuerzo: loguear también el `catch e1`, no sólo el `e2`, para que el error real no quede oculto. |
+| **Origen** | Hallazgo en la validación post-deploy de **T-MC-P0** (2026-09-23). |
+| **Dueño** | (por asignar) |
+| **Fecha objetivo** | (pendiente) |
+| **Estado** | 🟡 **abierta** · causa raíz confirmada · pendiente fix del map |

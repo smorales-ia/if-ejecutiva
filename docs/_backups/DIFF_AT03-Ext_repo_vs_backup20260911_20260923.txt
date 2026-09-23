@@ -1,0 +1,107 @@
+# DIFF AT03-Ext — repo (AT03-Ext_script.js, con edit T-MC-P0) vs BACKUP 2026-09-11
+# ⚠ NO es un diff repo-vs-LIVE. No hay captura live de AT03-Ext en disco (no se salvo
+#   antes del apagon del 22-09, y el MCP oficial mcp.airtable.com no lee automations).
+# El backup del 11-09 es la unica base disponible; tiene 12 dias de antiguedad, asi que
+# estos 9 hunks MEZCLAN la edicion T-MC-P0 (guard origen_dato=tipeado) con cambios
+# Sep11->Sep22 no relacionados. Para aislar la edicion T-MC-P0 hace falta captura LIVE.
+# Ambos archivos son LF (sin trampa CRLF).
+# ================================================================================
+
+281a282,283
+> // T-MC-P0 · A_Eventos para loguear skips del guard origen_dato=tipeado (best-effort).
+> let tEventos_ext = null; try { tEventos_ext = base.getTable('A_Eventos') } catch (e) {}
+330a333,350
+>   // T-MC-P0 · guard origen_dato=tipeado: si el REGISTRO destino fue tipeado a
+>   // mano por el tasador, RF-09 NO escribe NINGUNO de sus campos (evita pisar el
+>   // juicio del tasador / contaminacion SII). Aplica a TODOS los destinos, no solo
+>   // a los 3 atributos del fix RF-09. destRow viene completo (selectRecordAsync).
+>   const _origenField = getFieldByName(destTable, 'origen_dato')
+>   if (_origenField) {
+>     const _origenDestino = String(destRow.getCellValueAsString('origen_dato') || '').trim().toLowerCase()
+>     if (_origenDestino === 'tipeado') {
+>       propLog.push(`${item.codigo_atributo}: ${tablaDestinoNombre}.origen_dato=tipeado — skip (no pisar dato tipeado)`)
+>       propSkip++
+>       if (tEventos_ext) {
+>         try { await tEventos_ext.createRecordAsync({ 'tipo_evento': 'skip_origen_tipeado ' + claveAdjunto }) }
+>         catch (e) { /* best-effort: no bloquear la corrida por el log */ }
+>       }
+>       return
+>     }
+>   }
+> 
+410,415c430,444
+< // --- 3a. una_por_solicitud → TX_DatosTasacion (fila 1:1 por `solicitud`) ---
+< 
+< let filaDatosTasacion = null
+< async function resolverFilaDatosTasacion() {
+<   if (filaDatosTasacion !== undefined && filaDatosTasacion !== null) return filaDatosTasacion
+<   const q = await tDatosTasacion.selectRecordsAsync({ fields: ['solicitud'] })
+---
+> // --- 3a. una_por_solicitud → fila 1:1 por `solicitud`, en CUALQUIER tabla ---
+> // v3 (11-sep-2026 · IF-03): generalizado de TX_DatosTasacion a cualquier
+> // uso_tabla_destino. La cardinalidad una_por_solicitud ya no está atada a una
+> // tabla concreta: se resuelve/crea la fila 1:1 por el link `solicitud` en la
+> // tabla que declare D_TipoDocumentoAtributo (TX_DatosTasacion,
+> // TX_DocumentosLegales, …). Antes el guard hardcodeaba TX_DatosTasacion y todo
+> // destino distinto daba propError sin escribir — bug que dejaba sin propagar el
+> // par permiso (permiso_edificacion / escritura_compraventa) y los campos de
+> // dominio de foto_fuente_sii (numero_inscripcion / fojas / ano_inscripcion),
+> // todos declarados en TX_DocumentosLegales. Cache por nombre de tabla.
+> 
+> const filas1a1 = new Map() // tablaNombre -> record (fila 1:1 de la solicitud)
+> async function resolverFila1a1(destTable, tablaNombre) {
+>   if (filas1a1.has(tablaNombre)) return filas1a1.get(tablaNombre)
+>   const q = await destTable.selectRecordsAsync({ fields: ['solicitud'] })
+419a449
+>   let row
+421,430c451,456
+<     // BUG FIX (Tarea 5 Post-Fase B · 10-sep-2026): re-seleccionar el record COMPLETO.
+<     // `selectRecordsAsync({fields:['solicitud']})` sólo expone el campo `solicitud`;
+<     // pasar ESE record a escribirDestino hace que `destRow.getCellValue(campoDestino)`
+<     // lance "Field <x> isn't in this record. Make sure it was included in the
+<     // QueryResult" para CADA campo destino → 0 escrituras. Sólo se manifestaba
+<     // cuando la fila YA EXISTÍA (re-subida): en el alta la fila se crea con
+<     // selectRecordAsync(id), que sí trae todos los campos. Fase B conserva la fila
+<     // (Q2), así que la re-extracción siempre cae por esta rama. selectRecordAsync
+<     // (singular) carga el record entero. Ver docs/aprendizajes.md CI de esta fecha.
+<     filaDatosTasacion = await tDatosTasacion.selectRecordAsync(existente.id)
+---
+>     // Re-seleccionar el record COMPLETO (mismo bug fix que la versión previa):
+>     // selectRecordsAsync({fields:['solicitud']}) sólo expone `solicitud`; pasar
+>     // ESE record a escribirDestino lanza "Field <x> isn't in this record" para
+>     // cada campo destino → 0 escrituras cuando la fila YA EXISTÍA. selectRecordAsync
+>     // (singular) carga el record entero.
+>     row = await destTable.selectRecordAsync(existente.id)
+432,434c458,460
+<     const nuevaId = await tDatosTasacion.createRecordAsync({ solicitud: [{ id: solicitudId }] })
+<     filaDatosTasacion = await tDatosTasacion.selectRecordAsync(nuevaId)
+<     propLog.push(`(creada fila TX_DatosTasacion ${nuevaId} para la solicitud)`)
+---
+>     const nuevaId = await destTable.createRecordAsync({ solicitud: [{ id: solicitudId }] })
+>     row = await destTable.selectRecordAsync(nuevaId)
+>     propLog.push(`(creada fila ${tablaNombre} ${nuevaId} para la solicitud)`)
+436c462,463
+<   return filaDatosTasacion
+---
+>   filas1a1.set(tablaNombre, row)
+>   return row
+561,567c588,594
+<       if (tablaDestino !== TABLES.TX_DATOS_TASACION) {
+<         propLog.push(`${item.codigo_atributo}: uso_tabla_destino="${tablaDestino}" con cardinalidad una_por_solicitud no es TX_DatosTasacion — revisar fila en D_TipoDocumentoAtributo`)
+<         propError++
+<         continue
+<       }
+<       const destRow = await resolverFilaDatosTasacion()
+<       await escribirDestino(tDatosTasacion, TABLES.TX_DATOS_TASACION, destRow, campoDestino, item)
+---
+>       // v3 (11-sep-2026 · IF-03): data-driven para cualquier tabla destino 1:1
+>       // por `solicitud`, no sólo TX_DatosTasacion. base.getTable lanza si el
+>       // nombre de uso_tabla_destino no existe → lo captura el try/catch del loop
+>       // como propError, sin congelar la corrida.
+>       const destTable = base.getTable(tablaDestino)
+>       const destRow = await resolverFila1a1(destTable, tablaDestino)
+>       await escribirDestino(destTable, tablaDestino, destRow, campoDestino, item)
+654c681
+<     // Mismo bug latente que resolverFilaDatosTasacion: el record de la query
+---
+>     // Mismo bug latente que resolverFila1a1: el record de la query
