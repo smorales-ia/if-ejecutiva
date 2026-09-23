@@ -429,6 +429,8 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
         estado: texto(i.fields.flag_estado),
         aportaGarantia: Boolean(i.fields.aporta_a_garantia),
         superficieM2: texto(i.fields.sup_m2),
+        ufM2Unitario: texto(i.fields.uf_m2_unitario),
+        factorAplicado: texto(i.fields.factor_aplicado),
         materialItem: texto(i.fields.material),
         origenSuperficie: '',
       })),
@@ -475,6 +477,8 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       tasaCapRateOverride: texto(s.tasa_cap_rate_override),
       vidaUtilOverride: texto(s.vida_util_override),
       valorSugeridoOverride: texto(s.valor_final_override),
+      valorReposicionOverride: texto(s.valor_reposicion_override),
+      valorSeguroOverride: texto(s.valor_seguro_override),
       motivoOverride: texto(s.override_motivo),
       /* --- H --- */
       arriendoBrutoClp: texto(d.arriendo_mensual),

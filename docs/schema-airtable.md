@@ -67,7 +67,7 @@
 | `TX_Adjuntos` | `tblur71x1oItbmKZc` | Write upload + estado extracción RF-09 |
 | `TX_DocumentosGenerados` | `tbl5sYnGPZXgYCBSY` | No usada en IF-02 |
 | `TX_Notificaciones` | `tbldgLQgjdgsOSZnt` | Write desde SC05 |
-| `TX_ItemsCuadroValoracion` | `tblCxnMtOETK2ulD0` | IF-03 aguas abajo |
+| `TX_ItemsCuadroValoracion` | `tblCxnMtOETK2ulD0` | IF-03 aguas abajo · IF-03 escribe `uf_m2_unitario` (`fldVxo2PfoG7aQ33s`, number 2) y `factor_aplicado` (`fld7WgYgsicMa42yv`, number 4) desde T-MC-P0 (H1/H2). La fórmula `valor_uf` (`fld1F3u5J5NlnJUjY`) los consume — no escribir. |
 | `TX_Ampliaciones` | `tblpAtUq4p6o1vofo` | IF-03 aguas abajo |
 | `TX_HabitacionesPorNivel` | `tblBITpPb8WuqsatM` | IF-03 aguas abajo |
 | `TX_TerminacionesPorRecinto` | `tbleQ7pcLxYx9NbCi` | IF-03 aguas abajo |

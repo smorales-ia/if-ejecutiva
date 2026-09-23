@@ -156,6 +156,10 @@ export const itemValoracionSchema = z.object({
   /** ⚠ Sin columna destino — CI-023 §1. Se acepta y no se persiste. */
   origenSuperficie: z.string().trim().optional(),
   superficieM2: numeroDeInput,
+  /** H1 · UF/m² unitario → `uf_m2_unitario`. */
+  ufM2Unitario: numeroDeInput,
+  /** H2 · factor D.F. override por ítem → `factor_aplicado` (vacío = deriva motor). */
+  factorAplicado: numeroDeInput,
   materialItem: z.string().trim().optional(),
 })
 
@@ -284,6 +288,10 @@ export const datosPatchSchema = z
     vidaUtilOverride: numeroDeInput,
     /** Persiste en `valor_final_override`, no en un campo homónimo. */
     valorSugeridoOverride: numeroDeInput,
+    /** Persiste en `valor_reposicion_override` (fldqpnvfi6ZcWcfQm). */
+    valorReposicionOverride: numeroDeInput,
+    /** Persiste en `valor_seguro_override` (fldc1bOUK1o5jlWbP). */
+    valorSeguroOverride: numeroDeInput,
     motivoOverride: z.string().trim().optional(),
 
     /* --- H · Rentabilidad --- */

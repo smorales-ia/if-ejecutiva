@@ -26,6 +26,8 @@ function nuevoItem(): ItemValoracion {
     aportaGarantia: true,
     origenSuperficie: "plano-municipal",
     superficieM2: "",
+    ufM2Unitario: "",
+    factorAplicado: "",
     materialItem: "",
   }
 }
@@ -145,6 +147,20 @@ export function SeccionValoracion({
                   label="Material (opcional)"
                   value={it.materialItem}
                   onChange={(v) => updateItem(it.id, { materialItem: v })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <TextField
+                  label="UF/m² unitario"
+                  type="number"
+                  value={it.ufM2Unitario}
+                  onChange={(v) => updateItem(it.id, { ufM2Unitario: v })}
+                />
+                <TextField
+                  label="Factor D.F. (opcional)"
+                  type="number"
+                  value={it.factorAplicado}
+                  onChange={(v) => updateItem(it.id, { factorAplicado: v })}
                 />
               </div>
 

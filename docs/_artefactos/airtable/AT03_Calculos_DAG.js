@@ -78,7 +78,7 @@ const tFormulas    = base.getTable('C_Formulas');
 const tCalculos    = base.getTable('TX_Calculos');
 let tDatosTas = null, tFactores = null, tComunas = null, tClientes = null;
 let tEventos = null, tVidaUtil = null, tPrecios = null, tTramosBC = null, tObrasCmp = null;
-let tReglas = null, tItemsCuadro = null;
+let tReglas = null, tItemsCuadro = null, tPreciosUF = null;
 try { tDatosTas = base.getTable('TX_DatosTasacion'); } catch (e) {}
 try { tFactores = base.getTable('C_Factores'); } catch (e) {}
 try { tComunas  = base.getTable('M_Comunas'); } catch (e) {}
@@ -89,6 +89,7 @@ try { tPrecios  = base.getTable('C_PreciosUnitarios'); } catch (e) {}
 try { tTramosBC = base.getTable('C_TramosBienComun'); } catch (e) {}
 try { tObrasCmp = base.getTable('TX_ObrasComplementarias'); } catch (e) {}
 try { tItemsCuadro = base.getTable('TX_ItemsCuadroValoracion'); } catch (e) {}
+try { tPreciosUF = base.getTable('H_PreciosUF'); } catch (e) {}
 try { tReglas   = base.getTable('C_ReglasNegocio'); } catch (e) {}
 
 const FIELD_CANDIDATES = {
@@ -618,7 +619,7 @@ function toNum(v, d) {
 // 1. Cargar solicitud
 // ----------------------------------------------------------------
 const sol = await tSolicitudes.selectRecordAsync(recordId, {
-    fields: ['estado', 'nro_interno', 'codigo_solicitud',
+    fields: ['estado', 'fecha_visita', 'nro_interno', 'codigo_solicitud',
              'cliente', 'comuna', 'tasador', 'regla_aplicada',
              'tipo_propiedad', 'tipo_informe', 'monto_estimado_uf',
              'tasa_cap_rate_override', 'vida_util_override',
@@ -982,7 +983,45 @@ if (isNaN(coefEstado)) {
 
 const coefTipo = parseFloat(flatVal(datosCrudo.coef_tipo)) || 1.0;
 const hayTerreno = (flatVal(datosCrudo.hay_terreno) === false || flatVal(datosCrudo.hay_terreno) === 'NO') ? false : true;
-const ufDiaVisita = parseFloat(flatVal(datosCrudo.uf_dia_visita)) || 38500;
+// H3 (T-MC-P0): la UF del dia de visita se resuelve por LOOKUP a H_PreciosUF
+// segun `fecha_visita` de TX_Solicitudes. Sin default silencioso: si falta la
+// fecha, o no hay fila de UF para esa fecha, se falla RUIDOSO (evento en
+// A_Eventos + throw), en vez de escalar todos los CLP con un 38500 hardcode
+// (subvaloracion invisible). Solo aplica a corridas post-deploy: los historicos
+// ya calculados no se recalculan (el motor no reprocesa records ya en 'calculada').
+const fechaVisita = String(sol.getCellValueAsString('fecha_visita') || '').slice(0, 10);
+if (!fechaVisita) {
+    const msgFv = 'H3: fecha_visita ausente en TX_Solicitudes. Calculo abortado — sin default 38500 (T-MC-P0).';
+    console.log('  FAIL-RUIDOSO ' + msgFv);
+    if (tEventos) {
+        try { await tEventos.createRecordAsync({ 'tipo_evento': 'fecha_visita_ausente' }); }
+        catch (eFv) { console.log('  ERROR A_Eventos[H3 fecha]: ' + eFv.message); }
+    }
+    throw new Error(msgFv);
+}
+let ufDiaVisita = null;
+if (tPreciosUF) {
+    try {
+        const qUf = await tPreciosUF.selectRecordsAsync({ fields: ['fecha', 'valor_clp'] });
+        for (const rUf of qUf.records) {
+            const fUf = String(rUf.getCellValueAsString('fecha') || '').slice(0, 10);
+            if (fUf === fechaVisita) {
+                const vUf = parseFloat(rUf.getCellValue('valor_clp'));
+                if (!isNaN(vUf) && vUf > 0) ufDiaVisita = vUf;
+                break;
+            }
+        }
+    } catch (eLk) { console.log('  WARN lookup H_PreciosUF: ' + eLk.message); }
+}
+if (ufDiaVisita === null) {
+    const msgUf = 'H3: UF no cargada en H_PreciosUF para fecha_visita=' + fechaVisita + '. Calculo abortado — sin default 38500 (T-MC-P0).';
+    console.log('  FAIL-RUIDOSO ' + msgUf);
+    if (tEventos) {
+        try { await tEventos.createRecordAsync({ 'tipo_evento': 'uf_no_cargada_para_fecha ' + fechaVisita }); }
+        catch (eUf) { console.log('  ERROR A_Eventos[H3 uf]: ' + eUf.message); }
+    }
+    throw new Error(msgUf);
+}
 const arriendoBrutoMensualClp = parseFloat(flatVal(datosCrudo.arriendo_bruto_mensual_clp) || flatVal(datosCrudo.arriendo_bruto_clp) || flatVal(datosCrudo.arriendo_mensual)) || 0;
 const gastoAnualClp = parseFloat(flatVal(datosCrudo.gasto_anual_clp) || flatVal(datosCrudo.gasto_anual)) || 0;
 const ingresoLiquidoAnualPreCalc = parseFloat(flatVal(datosCrudo.ingreso_liquido_anual)) || 0;

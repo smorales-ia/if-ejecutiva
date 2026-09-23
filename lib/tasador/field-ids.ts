@@ -137,13 +137,17 @@ export const FIELD_IDS_SOLICITUD = Object.freeze({
    * P2-TAS.A contra la Meta API (18-ago-2026).
    *
    * ⚠ `InformeData.valorSugeridoOverride` persiste en **`valor_final_override`**:
-   * el nombre del identificador y el del campo no coinciden. La tabla tiene
-   * otros 10 campos `*_override` que **IF-03 no escribe** — son del motor
-   * AT03 y del visador (IF-04).
+   * el nombre del identificador y el del campo no coinciden. Desde T-MC-P0,
+   * IF-03 escribe además `valor_reposicion_override` y `valor_seguro_override`
+   * (fuerzan BG72/BO62 sobre el cálculo del cuadro · el DAG v32 ya los lee).
+   * La tabla tiene otros 8 campos `*_override` que **IF-03 no escribe** — son
+   * del motor AT03 y del visador (IF-04).
    */
   tasaCapRateOverride: 'fld1BmKPnzmGr330w',
   vidaUtilOverride: 'fldvqM5ISxBCZZd9N',
   valorFinalOverride: 'fldDiO58l26WwYLuv',
+  valorReposicionOverride: 'fldqpnvfi6ZcWcfQm',
+  valorSeguroOverride: 'fldc1bOUK1o5jlWbP',
   overrideMotivo: 'fldHeJCF1rxJIHVkD',
   overrideAutor: 'fldAz2dcOOjOigPwi',
 } as const)

@@ -548,6 +548,13 @@ export interface ItemValoracion {
   aportaGarantia: boolean
   origenSuperficie: string
   superficieM2: string
+  /** H1 · UF/m² unitario del ítem → `TX_ItemsCuadroValoracion.uf_m2_unitario`. */
+  ufM2Unitario: string
+  /**
+   * H2 · factor D.F. (homogeneización) del ítem → `factor_aplicado`. Override
+   * opcional: si va vacío, el motor deriva el factor por defecto (coef. estado).
+   */
+  factorAplicado: string
   materialItem: string
 }
 
@@ -812,6 +819,10 @@ export interface InformeData {
   tasaCapRateOverride: string
   vidaUtilOverride: string
   valorSugeridoOverride: string
+  /** Fuerza el "Valor de Reposición UF" (BG72) sobre el cálculo del cuadro. */
+  valorReposicionOverride: string
+  /** Fuerza el "Seguro Incendio UF" (BO62) sobre el cálculo del cuadro. */
+  valorSeguroOverride: string
   /** Obligatorio si hay algún override: mínimo 20 caracteres. */
   motivoOverride: string
 
@@ -1334,6 +1345,8 @@ export function resolverInforme(tasacion: Tasacion): InformeData {
     tasaCapRateOverride: '',
     vidaUtilOverride: '',
     valorSugeridoOverride: '',
+    valorReposicionOverride: '',
+    valorSeguroOverride: '',
     motivoOverride: '',
 
     /* H · Rentabilidad */

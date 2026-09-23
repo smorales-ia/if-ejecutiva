@@ -279,6 +279,8 @@ let propError = 0
 
 const tDatosTasacion = base.getTable(TABLES.TX_DATOS_TASACION)
 const tUnidades = base.getTable(TABLES.TX_UNIDADES)
+// T-MC-P0 · A_Eventos para loguear skips del guard origen_dato=tipeado (best-effort).
+let tEventos_ext = null; try { tEventos_ext = base.getTable('A_Eventos') } catch (e) {}
 
 /** Coerciona `valor` al tipo del `field` destino. */
 function coercionar(field, valor) {
@@ -326,6 +328,24 @@ async function escribirDestino(destTable, tablaDestinoNombre, destRow, campoDest
     propLog.push(`${item.codigo_atributo}: campo destino "${tablaDestinoNombre}.${campoDestino}" no existe — skip`)
     propError++
     return
+  }
+
+  // T-MC-P0 · guard origen_dato=tipeado: si el REGISTRO destino fue tipeado a
+  // mano por el tasador, RF-09 NO escribe NINGUNO de sus campos (evita pisar el
+  // juicio del tasador / contaminacion SII). Aplica a TODOS los destinos, no solo
+  // a los 3 atributos del fix RF-09. destRow viene completo (selectRecordAsync).
+  const _origenField = getFieldByName(destTable, 'origen_dato')
+  if (_origenField) {
+    const _origenDestino = String(destRow.getCellValueAsString('origen_dato') || '').trim().toLowerCase()
+    if (_origenDestino === 'tipeado') {
+      propLog.push(`${item.codigo_atributo}: ${tablaDestinoNombre}.origen_dato=tipeado — skip (no pisar dato tipeado)`)
+      propSkip++
+      if (tEventos_ext) {
+        try { await tEventos_ext.createRecordAsync({ 'tipo_evento': 'skip_origen_tipeado ' + claveAdjunto }) }
+        catch (e) { /* best-effort: no bloquear la corrida por el log */ }
+      }
+      return
+    }
   }
 
   const noRegistra = esNoRegistra(item.valor)

@@ -283,6 +283,8 @@ function camposSolicitud(b: DatosPatch): Fields {
   poner('vida_util_override', b.vidaUtilOverride)
   // ⚠ el identificador dice `valorSugerido`; la columna es `valor_final_override`.
   poner('valor_final_override', b.valorSugeridoOverride)
+  poner('valor_reposicion_override', b.valorReposicionOverride)
+  poner('valor_seguro_override', b.valorSeguroOverride)
   poner('override_motivo', b.motivoOverride)
 
   return f
@@ -417,6 +419,10 @@ export async function PATCH(
           subtipo: item.subtipo,
           rol_sii: item.rolSii ?? '',
           sup_m2: item.superficieM2,
+          // H1/H2 · UF/m² unitario y factor D.F. por ítem. La fórmula
+          // `valor_uf` (fld1F3u5J5NlnJUjY) ya los consume — no escribir valor_uf.
+          uf_m2_unitario: item.ufM2Unitario,
+          factor_aplicado: item.factorAplicado,
           tipo_item: item.tipo,
           anno_construccion: item.anioItem,
           situacion_municipal: item.situacionMunicipal,

@@ -15,7 +15,9 @@ export function hayOverride(form: InformeData): boolean {
   return (
     form.tasaCapRateOverride.trim() !== "" ||
     form.vidaUtilOverride.trim() !== "" ||
-    form.valorSugeridoOverride.trim() !== ""
+    form.valorSugeridoOverride.trim() !== "" ||
+    form.valorReposicionOverride.trim() !== "" ||
+    form.valorSeguroOverride.trim() !== ""
   )
 }
 
@@ -56,6 +58,18 @@ export function SeccionOverrides({
           type="number"
           value={form.valorSugeridoOverride}
           onChange={(v) => set("valorSugeridoOverride", v)}
+        />
+        <TextField
+          label="Valor de reposición override (UF)"
+          type="number"
+          value={form.valorReposicionOverride}
+          onChange={(v) => set("valorReposicionOverride", v)}
+        />
+        <TextField
+          label="Seguro incendio override (UF)"
+          type="number"
+          value={form.valorSeguroOverride}
+          onChange={(v) => set("valorSeguroOverride", v)}
         />
       </div>
 
