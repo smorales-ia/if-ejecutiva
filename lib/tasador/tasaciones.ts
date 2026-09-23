@@ -377,6 +377,15 @@ export interface Tasacion {
   adjuntosDropbox?: AdjuntoDropbox[]
 
   /**
+   * H4 · ¿el `tipo_informe` de la solicitud exige la sección H · Rentabilidad?
+   * Proyección del checkbox `M_TiposInforme.requiere_rentabilidad`
+   * (T-AUDIT-CLOSE-20260923 · C3). `null` = dato no disponible — la UI aplica
+   * el fail-safe (visible y opcional, comportamiento pre-C3). Semántica en
+   * `lib/tasador/rentabilidad.ts`.
+   */
+  requiereRentabilidad?: boolean | null
+
+  /**
    * Desenlace del último intento de coordinación, o `null` si no hubo ninguno
    * (`TX_Solicitudes.coordinacion_vigente` · `fldI4Dv0jpRQvbdHl`).
    *

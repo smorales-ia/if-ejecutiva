@@ -55,6 +55,8 @@ import {
 import { autorizarSolicitud, type SolicitudFields } from './auth-guard'
 import { telefonosPrioritarios } from './contactos-cola'
 import { TABLE_IDS } from './field-ids'
+// H4 · C3 (T-AUDIT-CLOSE-20260923): gating de la sección H por tipo_informe.
+import { resolverFlagRentabilidad } from './rentabilidad'
 import { getUsuarioTasador } from './usuario'
 // CI-070 Fase 1: normalización de género del eje nuevo/usado (paliativo P-5).
 import { normalizarTipoPropiedad } from './tipo-propiedad'
@@ -107,12 +109,57 @@ export function _resetCacheComunas(): void {
   cacheComunas = null
 }
 
+/** `M_TiposInforme`. Mismo motivo que `TABLA_COMUNAS`: acá los Link llegan como recordIds. */
+const TABLA_TIPOS_INFORME = 'tblOcsdiwxQLfD178'
+
+const TTL_RENTABILIDAD_MS = 5 * 60 * 1000
+
+let cacheRentabilidad: { valor: Map<string, boolean>; expira: number } | null = null
+
+/**
+ * recordId → `requiere_rentabilidad` de `M_TiposInforme` (H4 · C3).
+ *
+ * No reusa `fetchCatalogos()` a propósito: ese módulo es territorio IF-02
+ * (§8 NO-TOCAR de T-AUDIT-CLOSE) y además filtra por `activo`, mientras que
+ * acá interesa resolver el flag de **cualquier** tipo vinculado, activo o no.
+ * Checkbox de Airtable: desmarcado llega ausente → se normaliza a `false`.
+ */
+async function mapaRequiereRentabilidad(): Promise<Map<string, boolean>> {
+  const ahora = Date.now()
+  if (cacheRentabilidad && cacheRentabilidad.expira > ahora) return cacheRentabilidad.valor
+
+  const registros = await listRecords<{ requiere_rentabilidad?: boolean }>(TABLA_TIPOS_INFORME, {
+    fields: ['requiere_rentabilidad'],
+  })
+
+  const valor = new Map<string, boolean>()
+  for (const r of registros) valor.set(r.id, r.fields.requiere_rentabilidad === true)
+
+  cacheRentabilidad = { valor, expira: ahora + TTL_RENTABILIDAD_MS }
+  return valor
+}
+
+/** Invalida la caché del flag de rentabilidad. Sólo para tests. */
+export function _resetCacheRentabilidad(): void {
+  cacheRentabilidad = null
+}
+
 /** Los cuatro maestros que hacen falta para resolver los Link de una solicitud. */
 export interface MaestrosTasacion {
   comunas: Map<string, string>
   clientes: Map<string, string>
   productos: Map<string, string>
   tiposPropiedad: Map<string, string>
+  /**
+   * recordId de `M_TiposInforme` → `requiere_rentabilidad` (H4 · C3).
+   *
+   * `null` cuando el maestro no se pudo leer — p. ej. el campo aún no existe
+   * en la base. La degradación es distinta a la de los mapas de nombres: acá
+   * un mapa vacío significaría «ningún tipo la exige» (ocultaría la sección),
+   * así que el fallo se propaga como `null` y la UI aplica su fail-safe
+   * (visible y opcional). Ver `lib/tasador/rentabilidad.ts`.
+   */
+  requiereRentabilidad: ReadonlyMap<string, boolean> | null
   /**
    * Rótulos de §5.2.4 por número de etapa, leídos de `C_SLA_Etapas`.
    *
@@ -136,7 +183,7 @@ function aMapa(opciones: { id: string; nombre: string }[]): Map<string, string> 
  * campo sale como `—` y el resto de la tasación sigue siendo legible.
  */
 export async function leerMaestros(): Promise<MaestrosTasacion> {
-  const [comunas, catalogos, nombresEtapa] = await Promise.all([
+  const [comunas, catalogos, nombresEtapa, requiereRentabilidad] = await Promise.all([
     mapaComunas().catch((err) => {
       console.error('[lectura-tasacion] no se pudo leer M_Comunas', err)
       return new Map<string, string>()
@@ -151,6 +198,12 @@ export async function leerMaestros(): Promise<MaestrosTasacion> {
         console.warn('[lectura-tasacion] C_SLA_Etapas ilegible; etapa sin rótulo', err)
         return new Map<number, string>()
       }),
+    mapaRequiereRentabilidad().catch((err) => {
+      // Degrada a null, no a mapa vacío: vacío ocultaría la sección H para
+      // todos. Ver el docblock de `MaestrosTasacion.requiereRentabilidad`.
+      console.warn('[lectura-tasacion] M_TiposInforme.requiere_rentabilidad ilegible; sección H en fail-safe', err)
+      return null
+    }),
   ])
 
   return {
@@ -159,6 +212,7 @@ export async function leerMaestros(): Promise<MaestrosTasacion> {
     productos: catalogos ? aMapa(catalogos.productos) : new Map(),
     tiposPropiedad: catalogos ? aMapa(catalogos.tiposPropiedad) : new Map(),
     nombresEtapa,
+    requiereRentabilidad,
   }
 }
 
@@ -397,6 +451,8 @@ export function proyectarTasacion(
       rolSii,
     },
     slaEtapa: proyectarSlaEtapa(f, maestros.nombresEtapa),
+    /** H4 · C3: flag del gating de la sección H. `null` = fail-safe en la UI. */
+    requiereRentabilidad: resolverFlagRentabilidad(f['tipo_informe'], maestros.requiereRentabilidad),
     fechaAsignacion: typeof f['fecha_asignacion_ts'] === 'string' ? f['fecha_asignacion_ts'] : undefined,
     fechaSolicitud: typeof f['fecha_solicitud'] === 'string' ? f['fecha_solicitud'] : undefined,
     proyecto: texto(f['proyecto_condominio'], ''),

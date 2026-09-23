@@ -14,6 +14,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type Tasacion, type InformeData } from "@/lib/tasador/tasaciones"
+// H4 · C3 (T-AUDIT-CLOSE-20260923): gating de la sección H por tipo_informe.
+import { rentabilidadObligatoria, seccionRentabilidadVisible } from "@/lib/tasador/rentabilidad"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { clearPayload, leerMeta, readPayload, writePayload } from "@/lib/tasador/tasador-store"
 import { leyendaGuardado, useGuardado } from "@/lib/tasador/use-guardado"
@@ -46,7 +48,7 @@ import {
   overridesValidos,
 } from "@/components/tasador/form-sections/seccion-overrides"
 
-type Seccion = "A" | "B" | "C" | "D" | "F" | "G"
+type Seccion = "A" | "B" | "C" | "D" | "F" | "G" | "H"
 /**
  * Un dato obligatorio que falta.
  *
@@ -155,8 +157,8 @@ export function TasacionForm({
   // Secciones abiertas (controlado). En consulta abrimos todas para poder revisar.
   const [openSections, setOpenSections] = useState<Record<Seccion, boolean>>(() =>
     consulta
-      ? { A: true, B: true, C: true, D: true, F: true, G: true }
-      : { A: true, B: false, C: false, D: false, F: false, G: false },
+      ? { A: true, B: true, C: true, D: true, F: true, G: true, H: true }
+      : { A: true, B: false, C: false, D: false, F: false, G: false, H: false },
   )
 
   const set: SetForm = useCallback((key, value) => {
@@ -171,6 +173,15 @@ export function TasacionForm({
     const custom = form.categoriasCustom.reduce((a, c) => a + c.fotos.length, 0)
     return pre + custom
   }, [form.fotosPredefinidas, form.categoriasCustom])
+
+  /**
+   * H4 · C3: gating de la sección H por `tipo_informe` — flag
+   * `M_TiposInforme.requiere_rentabilidad`, proyectado en `leerTasacion`.
+   * `null` = dato no disponible → fail-safe: visible y opcional, como pre-C3.
+   * La regla vive en Airtable; acá sólo se obedece (`lib/tasador/rentabilidad.ts`).
+   */
+  const flagRentabilidad = tasacion.requiereRentabilidad ?? null
+  const rentaObligatoria = rentabilidadObligatoria(flagRentabilidad)
 
   // ---- Validación de datos mínimos obligatorios (CU calcular) ----
   const faltantes = useMemo<Faltante[]>(() => {
@@ -218,16 +229,24 @@ export function TasacionForm({
     // Override activo debe tener motivo válido
     if (hayOverride(form) && !overridesValidos(form))
       m.push({ label: "Motivo del override (mín. 20 caracteres)", seccion: "G" })
+    // H. Rentabilidad — obligatoria sólo cuando el tipo_informe la exige (H4 · C3)
+    if (rentaObligatoria) {
+      if (!form.arriendoBrutoClp.trim())
+        m.push({ label: "Arriendo bruto mensual", seccion: "H" })
+      if (!form.gastoAnualClp.trim())
+        m.push({ label: "Gasto anual", seccion: "H" })
+    }
     return m
-  }, [form])
+  }, [form, rentaObligatoria])
 
   const puedeCalcular = faltantes.length === 0
 
   const progreso = useMemo(() => {
-    const TOTAL = 11
+    // H4 · C3: con rentabilidad obligatoria entran 2 obligatorios más al total.
+    const TOTAL = 11 + (rentaObligatoria ? 2 : 0)
     const cubiertos = Math.max(0, TOTAL - faltantes.length)
     return Math.round((cubiertos / TOTAL) * 100)
-  }, [faltantes.length])
+  }, [faltantes.length, rentaObligatoria])
 
   // Scroll suave + foco en el primer campo faltante (§5.5).
   const scrollAFaltante = () => {
@@ -507,25 +526,36 @@ export function TasacionForm({
             <SeccionOverrides form={form} set={set} />
           </Section>
 
-          {/* H. Rentabilidad */}
-          <Section letra="H" titulo="Rentabilidad (opcional)">
-            <div className="flex flex-col gap-3">
-              <TextField
-                label="Arriendo bruto mensual (CLP)"
-                type="number"
-                value={form.arriendoBrutoClp}
-                onChange={(v) => set("arriendoBrutoClp", v)}
-                disabled={consulta}
-              />
-              <TextField
-                label="Gasto anual (CLP)"
-                type="number"
-                value={form.gastoAnualClp}
-                onChange={(v) => set("gastoAnualClp", v)}
-                disabled={consulta}
-              />
-            </div>
-          </Section>
+          {/* H. Rentabilidad — visible salvo `requiere_rentabilidad = false` en
+              el tipo_informe (H4 · C3). Con `true` deja de ser opcional y sus
+              dos campos entran a `faltantes`. Con `null` (dato no disponible)
+              se comporta como pre-C3: visible y opcional (fail-safe). */}
+          {seccionRentabilidadVisible(flagRentabilidad) && (
+            <Section
+              id="seccion-H"
+              letra="H"
+              titulo={rentaObligatoria ? "Rentabilidad" : "Rentabilidad (opcional)"}
+              open={openSections.H}
+              onOpenChange={setOpen("H")}
+            >
+              <div className="flex flex-col gap-3">
+                <TextField
+                  label="Arriendo bruto mensual (CLP)"
+                  type="number"
+                  value={form.arriendoBrutoClp}
+                  onChange={(v) => set("arriendoBrutoClp", v)}
+                  disabled={consulta}
+                />
+                <TextField
+                  label="Gasto anual (CLP)"
+                  type="number"
+                  value={form.gastoAnualClp}
+                  onChange={(v) => set("gastoAnualClp", v)}
+                  disabled={consulta}
+                />
+              </div>
+            </Section>
+          )}
         </fieldset>
         </FormModoConsultaContext.Provider>
       </main>

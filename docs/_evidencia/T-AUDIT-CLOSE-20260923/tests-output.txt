@@ -1,0 +1,9 @@
+
+ RUN  v4.1.10 /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva
+
+
+ Test Files  5 passed (5)
+      Tests  81 passed (81)
+   Start at  16:19:27
+   Duration  7.39s (transform 744ms, setup 0ms, import 3.01s, tests 130ms, environment 1ms)
+

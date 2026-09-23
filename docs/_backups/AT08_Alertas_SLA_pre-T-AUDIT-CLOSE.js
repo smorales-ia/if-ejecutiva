@@ -79,13 +79,6 @@ const ESTADOS_ACTIVOS = new Set([
 /** Tope defensivo: si la cartera crece, el script no debe agotar el runtime. */
 const MAX_NOTIFICACIONES_POR_CORRIDA = 40;
 
-// T-AUDIT-CLOSE-20260923 · M3: primer disparo en DRY-RUN. Con DRY_RUN=true el
-// barrido calcula semáforos y arma las notificaciones pero NO escribe filas en
-// TX_Notificaciones (por ende no dispara el envío SC13). Revisar el log del
-// resumen, y sólo entonces poner DRY_RUN=false + publicar en la UI. Ver §8 del
-// plan (riesgo loop/alertas en masa) y AT08_CHANGES_T-AUDIT-CLOSE.md.
-const DRY_RUN = true;
-
 // ---------------------------------------------------------------------------
 // Calendario hábil — una sola implementación, dos usos (§5.2.1)
 // ---------------------------------------------------------------------------
@@ -476,9 +469,6 @@ const CAMPOS_SOLICITUD = [
   'codigo_ext', 'estado', 'cliente', 'tipo_informe', 'tipo_propiedad',
   'tasador', 'visador', 'ejecutiva_asignada', 'fecha_solicitud',
   'sla_pausa_habil_min', 'sla_etapa_actual',
-  // T-AUDIT-CLOSE M3 · RO-05: la fórmula sla_semaforo_etapa (M-13) es la fuente
-  // ÚNICA del estado del semáforo de etapa. Se lee aquí para NO abrir una 2ª fuente.
-  'sla_semaforo_etapa',
 ].concat(CAMPOS_ETAPA.map((c) => c.inicio)).concat(CAMPOS_ETAPA.map((c) => c.fin));
 
 const feriados = await cargarFeriados();
@@ -513,14 +503,6 @@ for (const solicitud of consulta.records) {
   const sla = resolverSla(solicitud, catalogoSla);
   const agregado = semaforoAgregado(solicitud, sla, feriados);
   const etapa = semaforoEtapa(solicitud, matriz, sla, feriados);
-
-  // T-AUDIT-CLOSE M3 · RO-05: fuente ÚNICA del estado del semáforo de etapa =
-  // la fórmula sla_semaforo_etapa (M-13) en TX_Solicitudes. El cálculo local
-  // (semaforoEtapa) queda SÓLO para el detalle (etapaNombre/horas/responsable);
-  // la decisión verde/ámbar/rojo la manda la fórmula cuando está disponible, para
-  // no mantener dos fuentes del mismo umbral (RO-05, mismo principio del §9.6-R8).
-  const semEtapaFormula = solicitud.getCellValueAsString('sla_semaforo_etapa');
-  if (semEtapaFormula) etapa.estado = String(semEtapaFormula).trim().toLowerCase();
 
   resumen.agregado[agregado.estado] += 1;
   resumen.etapa[etapa.estado] += 1;
@@ -620,19 +602,7 @@ async function crearEnLotes(tabla, filas) {
   return creados;
 }
 
-// T-AUDIT-CLOSE M3 · DRY-RUN: con DRY_RUN=true NO se escribe en TX_Notificaciones
-// (no se dispara el envío SC13). Se registra en el log qué se HABRÍA enviado. Los
-// eventos A_Eventos (auditoría, sin envío) sí se escriben para dejar traza del barrido.
-if (DRY_RUN) {
-  console.log(`AT08 DRY-RUN · ${notificacionesNuevas.length} notificaciones NO enviadas (habrían sido creadas en TX_Notificaciones):`);
-  for (const n of notificacionesNuevas) {
-    console.log(`  DRY-RUN would-send · clave=${n.fields.clave_natural} · to=${n.fields.destinatarios_to} · asunto=${n.fields.asunto}`);
-  }
-  resumen.notificadas = 0;
-  resumen.dry_run = true;
-} else {
-  resumen.notificadas = await crearEnLotes(tNotificaciones, notificacionesNuevas);
-}
+resumen.notificadas = await crearEnLotes(tNotificaciones, notificacionesNuevas);
 await crearEnLotes(tEventos, eventosNuevos);
 
 const huboProblema =

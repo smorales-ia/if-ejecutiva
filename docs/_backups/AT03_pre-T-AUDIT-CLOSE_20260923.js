@@ -754,14 +754,8 @@ if (tDatosTas) {
 // ----------------------------------------------------------------
 // 3. Factores cliente
 // ----------------------------------------------------------------
-// H5/H6 (T-AUDIT-CLOSE 2026-09-23): los factores del cliente NO degradan a
-// default silencioso. Cliente vinculado (cliId) sin tasa_cap_rate / factor_seguro /
-// factor_garantia => fail-ruidoso (A_Eventos + throw), molde H3 (:999-1031). Sin
-// cliente vinculado se conservan los defaults historicos. El override de tasa tiene
-// precedencia: con override>0 la falta de tasa_cap_rate del cliente NO aborta.
 let factorSeguro = 1.0, factorGarantia = 0.8, tasaCapRateCliente = 0.045;
 let clienteNombre = '';
-let cliTasaNaN = false, cliSeguroNaN = false, cliGarantiaNaN = false;
 if (tClientes && cliId) {
     try {
         const cliRec = await tClientes.selectRecordAsync(cliId, {
@@ -771,33 +765,12 @@ if (tClientes && cliId) {
             const fs = parseFloat(cliRec.getCellValue('factor_seguro'));
             const fg = parseFloat(cliRec.getCellValue('factor_garantia'));
             const tc = parseFloat(cliRec.getCellValue('tasa_cap_rate'));
-            cliSeguroNaN = isNaN(fs); cliGarantiaNaN = isNaN(fg); cliTasaNaN = isNaN(tc);
             if (!isNaN(fs)) factorSeguro = fs;
             if (!isNaN(fg)) factorGarantia = fg;
             if (!isNaN(tc)) tasaCapRateCliente = tc;
             clienteNombre = cliRec.getCellValueAsString('nombre') || '';
         }
     } catch (e) { console.log('  WARN cliente: ' + e.message); }
-}
-// H5: cliente vinculado sin tasa_cap_rate y sin override => abortar
-if (cliId && cliTasaNaN && !(tasaCapRateOverride > 0)) {
-    const msgH5 = 'H5: cliente vinculado sin tasa_cap_rate (' + (clienteNombre || cliId) + '). Calculo abortado — sin default 0.045 (T-AUDIT-CLOSE).';
-    console.log('  FAIL-RUIDOSO ' + msgH5);
-    if (tEventos) {
-        try { await tEventos.createRecordAsync({ 'tipo_evento': 'cliente_sin_tasa_cap_rate' }); }
-        catch (eH5) { console.log('  ERROR A_Eventos[H5]: ' + eH5.message); }
-    }
-    throw new Error(msgH5);
-}
-// H6: cliente vinculado sin factor_seguro / factor_garantia => abortar
-if (cliId && (cliSeguroNaN || cliGarantiaNaN)) {
-    const msgH6 = 'H6: cliente vinculado sin factor_seguro/factor_garantia (' + (clienteNombre || cliId) + '). Calculo abortado — sin default 1.0/0.8 (T-AUDIT-CLOSE).';
-    console.log('  FAIL-RUIDOSO ' + msgH6);
-    if (tEventos) {
-        try { await tEventos.createRecordAsync({ 'tipo_evento': 'cliente_sin_factor_seguro_garantia' }); }
-        catch (eH6) { console.log('  ERROR A_Eventos[H6]: ' + eH6.message); }
-    }
-    throw new Error(msgH6);
 }
 // v26-2: aplicar override de tasa_cap_rate
 const tasaCapRateEfectivo = (tasaCapRateOverride > 0) ? tasaCapRateOverride : tasaCapRateCliente;
@@ -807,40 +780,23 @@ console.log('  CLIENTE: ' + clienteNombre + ' fs=' + factorSeguro + ' fg=' + fac
 // ----------------------------------------------------------------
 // 4. Comuna
 // ----------------------------------------------------------------
-// H7 (T-AUDIT-CLOSE 2026-09-23): los precios unitarios de la comuna NO degradan a
-// default silencioso (20/40/45). Comuna vinculada (comId) sin NINGUNO de los tres
-// uf_m2_* => fail-ruidoso (A_Eventos + throw), molde H3. Con al menos uno presente
-// se conserva el default por-campo previo.
 let ufM2Terreno = 20, ufM2Construccion = 40, ufM2PromedioResid = 45;
 let comunaNombre = '';
-let comTerrNaN = false, comConsNaN = false, comPromNaN = false, comLeida = false;
 if (tComunas && comId) {
     try {
         const comRec = await tComunas.selectRecordAsync(comId, {
             fields: ['nombre','uf_m2_terreno','uf_m2_construccion','uf_m2_promedio_residencial']
         });
         if (comRec) {
-            comLeida = true;
             const a = parseFloat(comRec.getCellValue('uf_m2_terreno'));
             const b = parseFloat(comRec.getCellValue('uf_m2_construccion'));
             const c = parseFloat(comRec.getCellValue('uf_m2_promedio_residencial'));
-            comTerrNaN = isNaN(a); comConsNaN = isNaN(b); comPromNaN = isNaN(c);
             if (!isNaN(a)) ufM2Terreno = a;
             if (!isNaN(b)) ufM2Construccion = b;
             if (!isNaN(c)) ufM2PromedioResid = c;
             comunaNombre = comRec.getCellValueAsString('nombre') || '';
         }
     } catch (e) { console.log('  WARN comuna: ' + e.message); }
-}
-// H7: comuna vinculada sin ningun uf_m2_* => abortar
-if (comId && comLeida && comTerrNaN && comConsNaN && comPromNaN) {
-    const msgH7 = 'H7: comuna vinculada sin precios unitarios uf_m2_* (' + (comunaNombre || comId) + '). Calculo abortado — sin default 20/40/45 (T-AUDIT-CLOSE).';
-    console.log('  FAIL-RUIDOSO ' + msgH7);
-    if (tEventos) {
-        try { await tEventos.createRecordAsync({ 'tipo_evento': 'comuna_sin_precios_unitarios' }); }
-        catch (eH7) { console.log('  ERROR A_Eventos[H7]: ' + eH7.message); }
-    }
-    throw new Error(msgH7);
 }
 
 // ----------------------------------------------------------------
