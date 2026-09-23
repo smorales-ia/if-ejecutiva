@@ -185,16 +185,12 @@ async function logEventoCompleto(ctx) {
     }
     const tipoFld = resolveField('tipo_evento', eventosSchema);
     if (tipoFld) {
-        // CI-071: singleSelect requiere forma canonica {name:...} (Airtable Scripting
-        // rechaza el string pelado -> "Field ... cannot accept the provided value"),
-        // igual que la transicion estado->calculada del paso 11.
-        if (tipoFld.type === 'singleSelect') { const v = valueForSelect(tipoFld.name, tipoEv, eventosSchema); if (v) minimalMap[tipoFld.name] = { name: v }; }
+        if (tipoFld.type === 'singleSelect') { const v = valueForSelect(tipoFld.name, tipoEv, eventosSchema); if (v) minimalMap[tipoFld.name] = v; }
         else if (tipoFld.type === 'singleLineText' || tipoFld.type === 'multilineText') minimalMap[tipoFld.name] = String(tipoEv);
     }
     const sevFld = resolveField('severidad', eventosSchema);
     if (sevFld) {
-        // CI-071: severidad es singleSelect en el schema real -> {name:...}, no string pelado.
-        if (sevFld.type === 'singleSelect') { const v = valueForSelect(sevFld.name, severidad, eventosSchema); if (v) minimalMap[sevFld.name] = { name: v }; }
+        if (sevFld.type === 'singleSelect') { const v = valueForSelect(sevFld.name, severidad, eventosSchema); if (v) minimalMap[sevFld.name] = v; }
         else if (sevFld.type === 'singleLineText' || sevFld.type === 'multilineText') minimalMap[sevFld.name] = String(severidad);
     }
     const claveFld = resolveField('clave_evento', eventosSchema);
@@ -210,9 +206,6 @@ async function logEventoCompleto(ctx) {
     try {
         createdId = await tEventos.createRecordAsync(minimalMap);
     } catch (e1) {
-        // CI-071: loguear el 1er intento (antes se tragaba en silencio y solo emergia
-        // el mensaje secundario "Request processing is disabled..." del 2o intento).
-        console.log('  WARN A_Eventos[AT03] intento-1 (minimalMap) fallo: ' + e1.message);
         const ultraMin = {};
         for (const fname of eventosSchema.names) {
             const t = eventosSchema.byName[fname];
@@ -246,8 +239,8 @@ async function logEventoCompleto(ctx) {
             if (!res) continue;
             if (minimalMap[res.name] !== undefined) continue;
             let writeVal = val;
-            if (res.type === 'singleSelect') { const v = valueForSelect(res.name, val, eventosSchema); if (!v) continue; writeVal = { name: v }; }
-            else if (res.type === 'multipleSelects') { const v = valueForSelect(res.name, val, eventosSchema); if (!v) continue; writeVal = [{ name: v }]; }
+            if (res.type === 'singleSelect') { const v = valueForSelect(res.name, val, eventosSchema); if (!v) continue; writeVal = v; }
+            else if (res.type === 'multipleSelects') { const v = valueForSelect(res.name, val, eventosSchema); if (!v) continue; writeVal = [v]; }
             else if (res.type === 'number' || res.type === 'currency') { const n = parseFloat(val); writeVal = isNaN(n) ? null : n; }
             else if (res.type === 'checkbox') writeVal = !!val;
             else if (res.type === 'dateTime' || res.type === 'date') writeVal = val;
