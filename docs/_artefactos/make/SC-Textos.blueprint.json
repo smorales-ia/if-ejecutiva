@@ -1,0 +1,405 @@
+{
+    "name": "SC-Textos v0.1 DRAFT - NO IMPORTAR (campos destino pendientes)",
+    "flow": [
+        {
+            "id": 1,
+            "module": "gateway:CustomWebHook",
+            "version": 1,
+            "parameters": {
+                "hook": 0,
+                "maxResults": 1
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 0,
+                    "name": "Webhook SC-Textos (hook 0 = crear al provisionar) · payload: {solicitud_codigo}"
+                }
+            }
+        },
+        {
+            "id": 2,
+            "module": "gateway:WebhookRespond",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "body": "{\"ok\": true, \"estado\": \"recibido\", \"async\": true}",
+                "status": "200",
+                "headers": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ]
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 0,
+                    "name": "Ack async inmediato (patron SC-RF09 modulo 26)"
+                }
+            }
+        },
+        {
+            "id": 3,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblaHTyMHYfmy7Fg6",
+                "formula": "{codigo_ext} = \"{{1.solicitud_codigo}}\"",
+                "maxRecords": "1",
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 0,
+                    "name": "GET TX_Solicitudes por codigo_ext"
+                }
+            }
+        },
+        {
+            "id": 4,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblMoK3mFuwN8Yr1A",
+                "formula": "{solicitud} = \"{{1.solicitud_codigo}}\"",
+                "maxRecords": "1",
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 0,
+                    "name": "GET TX_DatosTasacion de la solicitud (VERIFICAR campo de match del Link)"
+                }
+            }
+        },
+        {
+            "id": 5,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblBITpPb8WuqsatM",
+                "formula": "{solicitud} = \"{{1.solicitud_codigo}}\"",
+                "maxRecords": "100",
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1200,
+                    "y": 0,
+                    "name": "GET TX_HabitacionesPorNivel de la solicitud (programa de recintos)"
+                }
+            }
+        },
+        {
+            "id": 6,
+            "module": "util:TextAggregator",
+            "version": 1,
+            "parameters": {
+                "feeder": 5,
+                "rowSeparator": "other",
+                "otherRowSeparator": ",",
+                "stopProcessingAfterEmpty": true
+            },
+            "mapper": {
+                "value": "{'recinto':'{{5.recinto}}','nivel':'{{5.nivel}}','cantidad':'{{5.cantidad}}'}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1500,
+                    "y": 0,
+                    "name": "Agrega el programa de recintos a una lista para el prompt (patron SC-RF09 modulo 7)"
+                }
+            }
+        },
+        {
+            "id": 7,
+            "module": "http:ActionSendData",
+            "version": 3,
+            "parameters": {
+                "handleErrors": true,
+                "useNewZLibDeCompress": true,
+                "timeout": "180"
+            },
+            "mapper": {
+                "ca": "",
+                "qs": [],
+                "url": "https://api.anthropic.com/v1/messages",
+                "gzip": true,
+                "method": "post",
+                "headers": [
+                    {
+                        "name": "x-api-key",
+                        "value": "PEGA-AQUI-LA-API-KEY-EN-MAKE"
+                    },
+                    {
+                        "name": "anthropic-version",
+                        "value": "2023-06-01"
+                    },
+                    {
+                        "name": "content-type",
+                        "value": "application/json"
+                    }
+                ],
+                "timeout": "",
+                "useMtls": false,
+                "authPass": "",
+                "authUser": "",
+                "bodyType": "raw",
+                "contentType": "application/json",
+                "data": "{\"model\": \"claude-sonnet-4-6\", \"max_tokens\": 4096, \"system\": \"Eres el redactor tecnico de informes de tasacion de VProperty (Chile). Redactas parrafos breves, factuales y en tercera persona para informes bancarios. NUNCA inventas datos: solo usas los valores entregados en el mensaje. Si un dato no viene, omites la frase que lo necesitaria.\", \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"Redacta los textos descriptivos del informe de tasacion a partir de los DATOS DE LA PROPIEDAD del final. Responde EXCLUSIVAMENTE con un objeto JSON valido en texto plano, sin backticks, sin markdown, sin la palabra json antes del objeto, sin comentarios. Tu respuesta debe empezar con el caracter { y terminar con }. Formato exacto: {\\\"sintesis\\\": string, \\\"programa\\\": string, \\\"descripcion_sector\\\": string}. REGLA CRITICA (RF-32): PROHIBIDO inventar cifras. Todo numero que escribas (superficies, numeracion, cantidades) debe aparecer literalmente en los DATOS DE LA PROPIEDAD. Numeros en formato chileno: coma decimal (249,91), simbolo m2 para superficies, N° para numeracion de calle. Si un dato viene vacio o nulo, omite la frase correspondiente; no lo reemplaces por un valor tipico ni aproximado. Sin signos de exclamacion, sin adjetivos de valor no respaldados, tercera persona, tiempo presente. \\\"sintesis\\\": 90 a 140 palabras (direccion, condominio, terreno, pisos, materialidad, programa, exterior). \\\"programa\\\": solo la enumeracion de recintos por nivel derivada de PROGRAMA DE RECINTOS; cantidades mayores que 1 se escriben con el numero. \\\"descripcion_sector\\\": 60 a 100 palabras, frases cortas (caracter del sector, densidad, conectividad, servicios en la comuna). El patron de estilo y los ejemplos few-shot canonicos viven en docs/_artefactos/plantillas/prompts-textos-informe.md seccion 4.2 (gold master MET-6283) y deben pegarse aqui al provisionar. DATOS DE LA PROPIEDAD: - Direccion: {{3.direccion}} N°{{3.numeracion}} - Condominio: {{3.condominio}} - Comuna: {{3.comuna}} · Region: {{3.region}} - Tipo de propiedad: {{3.tipo_propiedad}} - Superficie de terreno (m2): {{4.sup_terreno_m2}} - Superficie construida (m2): {{4.sup_construccion_m2}} - Cantidad de pisos: {{4.pisos}} - Materialidad predominante: {{4.material_predominante}} - Estado de conservacion: {{4.estado_conservacion}} - Zona normativa: {{4.zona}} · Tipo de zona: {{4.tipo_zona}} PROGRAMA DE RECINTOS (recinto · nivel · cantidad): [{{6.text}}]\"}]}]}",
+                "serializeUrl": false,
+                "shareCookies": false,
+                "parseResponse": false,
+                "followRedirect": true,
+                "useQuerystring": false,
+                "followAllRedirects": false,
+                "rejectUnauthorized": true
+            },
+            "metadata": {
+                "designer": {
+                    "x": 1800,
+                    "y": 0,
+                    "name": "Claude API claude-sonnet-4-6 (clon del modulo 10 de SC-RF09)"
+                }
+            }
+        },
+        {
+            "id": 8,
+            "module": "json:ParseJSON",
+            "version": 1,
+            "parameters": {
+                "type": ""
+            },
+            "mapper": {
+                "json": "{{7.data}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 2100,
+                    "y": 0,
+                    "name": "Parse envelope de la API"
+                }
+            }
+        },
+        {
+            "id": 9,
+            "module": "json:ParseJSON",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "json": "{{trim(replace(replace(get(last(8.content); \"text\"); \"```json\"; ); \"```\"; ))}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 2400,
+                    "y": 0,
+                    "name": "Parse del JSON {sintesis, programa, descripcion_sector} (strip defensivo de backticks, patron SC-RF09 modulo 25)"
+                }
+            }
+        },
+        {
+            "id": 10,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "mapper": null,
+            "metadata": {
+                "designer": {
+                    "x": 2700,
+                    "y": 0,
+                    "name": "Router exito / fallo"
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 11,
+                            "module": "airtable:ActionUpdateRecords",
+                            "version": 3,
+                            "filter": {
+                                "name": "Exito: sintesis no vacia",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{length(9.sintesis)}}",
+                                            "b": "0",
+                                            "o": "number:notequal"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "id": "{{4.id}}",
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblMoK3mFuwN8Yr1A",
+                                "record": {
+                                    "sintesis_propiedad_texto": "{{9.sintesis}}",
+                                    "descripcion_sector_texto": "{{9.descripcion_sector}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 3000,
+                                    "y": -150,
+                                    "name": "Update TX_DatosTasacion — CAMPOS DESTINO PENDIENTES DE CREACION (ver metadata.notes)"
+                                }
+                            }
+                        },
+                        {
+                            "id": 12,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblR4VWpUHw1CSyIS",
+                                "record": {
+                                    "Estado": "✓ OK",
+                                    "Detalle": "Solicitud {{1.solicitud_codigo}}. Textos IA generados (sintesis {{length(9.sintesis)}} chars, sector {{length(9.descripcion_sector)}} chars) y escritos en TX_DatosTasacion. Validacion RF-32 anti-cifras delegada a lib/informe/validador-cifras.ts (pre-persistencia, ver notes).",
+                                    "Trigger": "Webhook SC-Textos",
+                                    "Escenario": "SC-Textos",
+                                    "Solicitud": "{{1.solicitud_codigo}}",
+                                    "Titulo Log": "SC-Textos exito - {{1.solicitud_codigo}}",
+                                    "Fecha / Hora": "{{now}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 3300,
+                                    "y": -150,
+                                    "name": "Log LogEscenarios OK"
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 13,
+                            "module": "airtable:ActionCreateRecord",
+                            "version": 3,
+                            "filter": {
+                                "name": "Fallo: sintesis vacia o ausente",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{length(9.sintesis)}}",
+                                            "b": "0",
+                                            "o": "number:equal"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "parameters": {
+                                "__IMTCONN__": 8847431
+                            },
+                            "mapper": {
+                                "base": "app9G7lLkIV3CpeLa",
+                                "table": "tblR4VWpUHw1CSyIS",
+                                "record": {
+                                    "Estado": "⚠ Parcial",
+                                    "Detalle": "Solicitud {{1.solicitud_codigo}}. Claude no devolvio sintesis utilizable. Reintento/redaccion manual segun flujo RF-32 (prompts-textos-informe.md seccion 5).",
+                                    "Trigger": "Webhook SC-Textos",
+                                    "Escenario": "SC-Textos",
+                                    "Solicitud": "{{1.solicitud_codigo}}",
+                                    "Titulo Log": "SC-Textos sin texto - {{1.solicitud_codigo}}",
+                                    "Fecha / Hora": "{{now}}"
+                                },
+                                "typecast": false,
+                                "useColumnId": false
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 3000,
+                                    "y": 150,
+                                    "name": "Log LogEscenarios fallo"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": true,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "eu1.make.com",
+        "notes": [
+            {
+                "moduleIds": [
+                    11
+                ],
+                "content": "PENDIENTE DE CREACION: los campos destino sintesis_propiedad_texto y descripcion_sector_texto NO existen en TX_DatosTasacion (tblMoK3mFuwN8Yr1A) al 25-sep-2026 — grep negativo en schema y codigo (hallazgo 7, ROADMAP_paridad_informe_20260924.md §6). Crearlos es decision de Sergio; hasta entonces este blueprint NO SE IMPORTA. El mapper respeta el contrato real de airtable:ActionUpdateRecords: record ID en la clave `id` (text) y valores en `record` (collection) — ver CLAUDE.md, causa raiz de F-1."
+            },
+            {
+                "moduleIds": [
+                    1
+                ],
+                "content": "hook=0 es placeholder: crear webhook nuevo en Make al provisionar y registrar la URL en Z_Webhooks (tblovY0Bt1Avhdgdx). Payload esperado: {\"solicitud_codigo\": \"VP-2026-XXXX\"}. Disparo previsto: pre-SC09, solicitud en estado=calculada."
+            },
+            {
+                "moduleIds": [
+                    4,
+                    5
+                ],
+                "content": "VERIFICAR antes de provisionar: el nombre del campo de match ({solicitud}) en las formulas de TX_DatosTasacion y TX_HabitacionesPorNivel debe contrastarse contra el schema real (docs/schema-airtable.md); si el Link no rinde el codigo como texto, casar por lookup del codigo (patron CI-010: A_DecisionesMotor casa por solicitud_codigo). Idem los field names del mapper 6 (recinto/nivel/cantidad)."
+            },
+            {
+                "moduleIds": [
+                    7
+                ],
+                "content": "API key: placeholder PEGA-AQUI-LA-API-KEY-EN-MAKE (nunca versionar la real). El prompt embebido es la version corta; el prompt v1 canonico con few-shot del gold master MET-6283 vive en docs/_artefactos/plantillas/prompts-textos-informe.md §4 y debe pegarse completo al provisionar. Parametros calcados del modulo 10 de SC-RF09 (probado en produccion): claude-sonnet-4-6, max_tokens 4096, anthropic-version 2023-06-01, timeout 180, parseResponse false."
+            },
+            {
+                "moduleIds": [
+                    9,
+                    10
+                ],
+                "content": "VALIDACION RF-32 (rechazo y reintento por cifras inventadas): NO vive en este escenario v0.1. El validador es lib/informe/validador-cifras.ts (TS puro, testeado con los parrafos reales del gold master); el flujo previsto (prompts-textos-informe.md §5) lo ejecuta el orquestador/route handler antes de persistir, con UN reintento y caida a redaccion manual + log. Al integrar en T5, insertar la llamada al endpoint del repo entre los modulos 9 y 11, o mover la generacion completa al repo y dejar Make solo como plomeria."
+            }
+        ]
+    }
+}

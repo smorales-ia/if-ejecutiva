@@ -42,6 +42,22 @@ export const TABLE_IDS = Object.freeze({
   slaEtapas: 'tbl05zu5RLhH3u6pl',
   /** Versiones del informe (RN-56). La escribe el pipeline PDF; IF-03 sólo lee. */
   documentosGenerados: 'tbl5sYnGPZXgYCBSY',
+  /**
+   * `TX_Calculos` — los 13 valores terminales que escribe el motor AT03
+   * (una fila por fórmula: `variable_output` + `resultado`). **Sólo lectura**
+   * desde el repo: la escribe AT03 v11.1.1. La consume el ensamblador del
+   * informe (`lib/informe/ensamblador.ts` · T-INFORME-ENSAMBLADOR-20260925).
+   * TABLE_ID documentado en `docs/schema-airtable.md` §1.
+   */
+  calculos: 'tblFz37KSvn5pLKDR',
+  /**
+   * `H_PreciosUF` — serie diaria UF (`valor_clp`) + dólar (`tipo_cambio_usd`,
+   * `fldlFxWDnK67OajaE`), clave `fecha`. La escribe CRON_UF_Diaria (el dólar
+   * aún no tiene escritor automático — P1-3). **Sólo lectura** desde el repo;
+   * la consume el ensamblador del informe para «1UF=» / «1US$=».
+   * TABLE_ID documentado en `docs/schema-airtable.md` §1.
+   */
+  preciosUf: 'tblWPRuIYfzdlveHM',
 } as const)
 
 /* -------------------------------------------------------------------------
