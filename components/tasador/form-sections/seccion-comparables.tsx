@@ -182,7 +182,21 @@ function BloqueComparables({
   )
 }
 
-export function SeccionComparables({ form }: { form: InformeData }) {
+export function SeccionComparables({
+  form,
+  ufM2Tasacion = null,
+}: {
+  form: InformeData
+  /**
+   * UF/m² de construcción del inmueble sujeto (F-2 · P1-8): `valor tasación UF
+   * / sup. construcción`, calculado por el llamador con `filaTasacionUfM2`
+   * (`lib/informe/fila-tasacion.ts` — RO-05, misma aritmética que el
+   * ensamblador). El preview lo pasa desde el valor canónico; el formulario de
+   * captura no lo pasa (default `null` → filas con «—», como siempre). **La UI
+   * muestra, no calcula el valor del sujeto.**
+   */
+  ufM2Tasacion?: number | null
+}) {
   const comparables = form.comparables
   const total = comparables.length
 
@@ -190,21 +204,25 @@ export function SeccionComparables({ form }: { form: InformeData }) {
   const cbr = comparables.filter((c) => c.fuente === "cbr")
 
   /*
-   * F-2 (P13-TAS · Opción A): las filas `TASACION` y `TASACION V/S PROMEDIO`
-   * muestran los valores del inmueble sujeto, que produce el motor AT03. Hoy
-   * `InformeData` **no** trae esos campos —Total UF, OO.CC. y UF/m² T./C. del
-   * sujeto—, así que ambas filas se pintan con «—». La superficie de terreno y
-   * construida del sujeto sí existen (`form.supTerreno` / `form.supConstruida`),
-   * pero se mantienen fuera hasta que la fila entera tenga fuente de motor, para
-   * no mezclar dato capturado con dato calculado en el mismo renglón.
-   *
-   * Cuando una tanda futura cablee los valores del sujeto en `InformeData`
-   * (p.ej. `tasacionTotalUf`, `tasacionOoCcUf`, `tasacionUfM2Terreno`,
-   * `tasacionUfM2Construccion`), construir aquí `tasacionSujeto: PromedioMuestra`
-   * y las dos filas se pintan solas, sin tocar el layout. **La UI muestra, no
-   * calcula el valor del sujeto.**
+   * F-2 (P13-TAS · Opción A → cableado parcial 25-sep-2026 · P1-8): la fila
+   * `TASACION` pinta el UF/m² C. del sujeto cuando el llamador lo aporta, y el
+   * renglón `TASACION V/S PROMEDIO` se forma solo (cociente contra el promedio
+   * simple del bloque — la divergencia con el homogeneizado del canónico es
+   * CI-057 y no se toca acá). Las demás columnas del sujeto —Total UF, OO.CC.,
+   * UF/m² T. y superficies— siguen en «—» hasta que el motor las persista
+   * (P1-8/T2): no se mezcla dato capturado con dato calculado en el renglón.
    */
-  const tasacionSujeto: PromedioMuestra | null = null
+  const tasacionSujeto: PromedioMuestra | null =
+    ufM2Tasacion === null
+      ? null
+      : {
+          totalUf: null,
+          supTerreno: null,
+          supConstruida: null,
+          ooCcUf: null,
+          ufM2Terreno: null,
+          ufM2Construccion: ufM2Tasacion,
+        }
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">

@@ -1,7 +1,29 @@
 // ============================================================
 // AT03_v32 - Ejecutor de Formulas (LECTOR REAL de C_Formulas_v32)
-// Version    : 11.1.1 (v32-b0)
+// Version    : 11.2.0 (v32-b1)
 // Trigger    : TX_Solicitudes.estado = 'visitada'
+//
+// CAMBIOS v32-b0 -> v32-b1 (P1-8 · promedio de comparables al motor)
+// -------------------------------------------------------
+// b1-1: NUEVO lector sumComparables(recId) sobre TX_Comparables
+//       (tbllbTuhb0waWIbRo), mismo patron fail-safe que sumCuadroValoracion.
+//       Calcula el promedio SIMPLE del UF/m2 de construccion de la muestra con
+//       la MISMA aritmetica A-44 del frontend (lib/tasador/lectura-informe.ts):
+//         uf_m2_c = (precio_uf - uf_m2_terreno_f*sup_t - oo_cc_uf) / sup_c
+//       Es la formula directa del cuadro [Excel: Portada!AX29], SIN
+//       homogeneizacion (la divergencia CI-057 queda intacta a proposito).
+// b1-2: SCOPE gana promedio_uf_m2_muestra y n_comparables. ADITIVO y
+//       retrocompatible: ninguna formula vigente los referencia, asi que las
+//       tasaciones actuales calculan identico hasta que C_Formulas los consuma
+//       (F_UFm2_promedio re-expresada + F_DesviacionVsPromedio nueva — cambio
+//       manual en Airtable, fuera de este script). La escritura a TX_Calculos
+//       sigue el patron existente fila-por-formula, gateado por
+//       regla_aplicada.formulas_resultado (Filtro 2): sin formula linkeada no
+//       se escribe nada nuevo; sin columnas nuevas en TX_Calculos.
+// b1-3: NO es un guard. Sin filas en TX_Comparables (o sin filas validas) el
+//       promedio queda 0 y n_comparables=0 y el calculo SIGUE — fail-safe, a
+//       diferencia de H5/H6/H7 que abortan por diseño. Las formulas que
+//       consuman promedio_uf_m2_muestra deben chequear n_comparables > 0.
 //
 // CAMBIOS v32 -> v32-b0 (Fase B-0a · lector del Cuadro de Valoracion)
 // -------------------------------------------------------
@@ -69,7 +91,7 @@
 
 const tInicio = Date.now();
 const AUTOMATION_ID = 'AT03';
-const MOTOR_VERSION = 'AT03_v11.1.1_v32b0';
+const MOTOR_VERSION = 'AT03_v11.2.0_v32b1';
 
 const { recordId } = input.config();
 
@@ -78,7 +100,7 @@ const tFormulas    = base.getTable('C_Formulas');
 const tCalculos    = base.getTable('TX_Calculos');
 let tDatosTas = null, tFactores = null, tComunas = null, tClientes = null;
 let tEventos = null, tVidaUtil = null, tPrecios = null, tTramosBC = null, tObrasCmp = null;
-let tReglas = null, tItemsCuadro = null, tPreciosUF = null;
+let tReglas = null, tItemsCuadro = null, tPreciosUF = null, tComparables = null;
 try { tDatosTas = base.getTable('TX_DatosTasacion'); } catch (e) {}
 try { tFactores = base.getTable('C_Factores'); } catch (e) {}
 try { tComunas  = base.getTable('M_Comunas'); } catch (e) {}
@@ -90,6 +112,7 @@ try { tTramosBC = base.getTable('C_TramosBienComun'); } catch (e) {}
 try { tObrasCmp = base.getTable('TX_ObrasComplementarias'); } catch (e) {}
 try { tItemsCuadro = base.getTable('TX_ItemsCuadroValoracion'); } catch (e) {}
 try { tPreciosUF = base.getTable('H_PreciosUF'); } catch (e) {}
+try { tComparables = base.getTable('TX_Comparables'); } catch (e) {}
 try { tReglas   = base.getTable('C_ReglasNegocio'); } catch (e) {}
 
 const FIELD_CANDIDATES = {
@@ -1006,6 +1029,53 @@ async function sumCuadroValoracion(recId) {
 }
 
 // ----------------------------------------------------------------
+// b1: Lector de Comparables de mercado (TX_Comparables) · P1-8.
+// Promedio SIMPLE del UF/m2 de construccion de la muestra, con la MISMA
+// aritmetica A-44 que el frontend (lib/tasador/lectura-informe.ts, bloque 6):
+//   uf_m2_c = (precio_uf - uf_m2_terreno_f * sup_terreno_m2 - oo_cc_uf) / sup_construccion_m2
+// Es la formula directa del cuadro [Excel: Portada!AX29], SIN homogeneizacion
+// (CI-057 intacta: aca no se decide esa divergencia, se replica la simple).
+// Criterio de fila valida = el del frontend: sup_construccion_m2 ausente o 0,
+// o precio_uf ausente, dejan la fila FUERA del promedio; uf_m2_terreno_f /
+// sup_terreno_m2 / oo_cc_uf ausentes cuentan como 0.
+// NO es un guard: sin filas => promedio=0 y n=0, y el calculo SIGUE (fail-safe,
+// a diferencia de H5/H6/H7 que abortan por diseño).
+// ----------------------------------------------------------------
+async function sumComparables(recId) {
+    const out = { promedio: 0, n: 0, nFilas: 0 };
+    if (!tComparables) return out;
+    const F_SOLIC  = 'fldcQ7xOvQGG8HqSY'; // solicitud (link -> TX_Solicitudes)
+    const F_PRECIO = 'fldKGHTMf9klT9OWb'; // precio_uf
+    const F_SUP_T  = 'fldh1mqVKLsN8pMb6'; // sup_terreno_m2
+    const F_SUP_C  = 'fldmRFgXQKOLJtMnG'; // sup_construccion_m2
+    const F_UFM2_T = 'flduMg4BjloEJSZo6'; // uf_m2_terreno_f (crudo de la foto)
+    const F_OOCC   = 'fld1LN2WcvRK6U2ak'; // oo_cc_uf
+    try {
+        const q = await tComparables.selectRecordsAsync({ fields: [F_SOLIC, F_PRECIO, F_SUP_T, F_SUP_C, F_UFM2_T, F_OOCC] });
+        let suma = 0;
+        for (const r of q.records) {
+            const link = r.getCellValue(F_SOLIC);
+            if (!(link && Array.isArray(link) && link.some(x => x.id === recId))) continue;
+            out.nFilas++;
+            const precio = parseFloat(r.getCellValue(F_PRECIO));
+            const supC   = parseFloat(r.getCellValue(F_SUP_C));
+            if (isNaN(precio) || isNaN(supC) || supC === 0) continue; // fila incompleta: fuera del promedio
+            const supT  = parseFloat(r.getCellValue(F_SUP_T));
+            const ufm2T = parseFloat(r.getCellValue(F_UFM2_T));
+            const oocc  = parseFloat(r.getCellValue(F_OOCC));
+            const ufm2C = (precio
+                - (isNaN(ufm2T) ? 0 : ufm2T) * (isNaN(supT) ? 0 : supT)
+                - (isNaN(oocc) ? 0 : oocc)) / supC;
+            if (!isFinite(ufm2C)) continue;
+            suma += ufm2C;
+            out.n++;
+        }
+        if (out.n > 0) out.promedio = suma / out.n;
+    } catch (e) { console.log('  WARN sumComparables: ' + e.message); }
+    return out;
+}
+
+// ----------------------------------------------------------------
 // 6. Construir SCOPE para safeEval (variables primitivas)
 // ----------------------------------------------------------------
 const anioActual = new Date().getFullYear();
@@ -1093,12 +1163,16 @@ const sumObrasComplementariasUf = await sumObrasComplementarias(recordId);
 const porcentajeBienComun = (tipoPropiedad === 'Departamento') ? await lookupBienComun(supConstruccion) : 0;
 // b0: totales del Cuadro de Valoracion (TX_ItemsCuadroValoracion) = xlsm BI59/BI60/BI61
 const cuadro = await sumCuadroValoracion(recordId);
+// b1: promedio simple A-44 de la muestra de comparables (TX_Comparables) · P1-8
+const comparablesMuestra = await sumComparables(recordId);
 
 console.log('  LOOKUPS: vida_util=' + lookupVidaUtilLU + ' uf_m2_nuevo=' + lookupPrecioUnitario +
             ' factor_remate=' + lookupFactorRemateLU + ' obras_comp=' + sumObrasComplementariasUf);
 console.log('  CUADRO: filas=' + cuadro.nFilas + ' edif=' + cuadro.edif + ' edif_nuevo=' + cuadro.edifNuevo +
             ' terreno=' + cuadro.terreno + ' occ=' + cuadro.occ + ' sup_terreno=' + cuadro.supTerreno +
             ' seguro_base=' + cuadro.seguroBase);
+console.log('  COMPARABLES: filas=' + comparablesMuestra.nFilas + ' validas=' + comparablesMuestra.n +
+            ' promedio_uf_m2=' + comparablesMuestra.promedio);
 
 // ----------------------------------------------------------------
 // 7. SCOPE INICIAL para safeEval (todas las variables primitivas)
@@ -1152,6 +1226,15 @@ const SCOPE = {
     sup_terreno_items_m2:             cuadro.supTerreno, // SUMIF(superficie, Terreno)→ AN61
     valor_seguro_base_items_uf:       cuadro.seguroBase, // SUMIF(valor_seguro_base)  → BO62 (edif+OCC, sin terreno/estac)
     hay_cuadro:                       cuadro.nFilas > 0 ? 1 : 0, // fallback flag para C_Formulas v3.3
+
+    // ─── b1: Comparables de mercado (TX_Comparables) · P1-8 ────────────
+    // Promedio simple A-44 de la muestra (0 si no hay filas validas) y n de
+    // filas usadas. Consumo previsto: F_UFm2_promedio re-expresada con
+    // fallback a comuna via n_comparables, y F_DesviacionVsPromedio (nueva).
+    // La escritura a TX_Calculos sigue el patron fila-por-formula, gateado
+    // por regla_aplicada.formulas_resultado (Filtro 2 del paso 9).
+    promedio_uf_m2_muestra: comparablesMuestra.promedio,
+    n_comparables:          comparablesMuestra.n,
 
     // ─── overrides ACTIVOS v32 (5 = 3 numericos + 2 audit) ─────────────
     valor_final_override:        valorFinalOverride,       // → Valor Comercial UF

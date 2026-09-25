@@ -35,7 +35,7 @@ IF-02 es la **Consola de la Ejecutiva Comercial** de VProperty (Tasaciones · Bi
 - **Entradas**: `TX_Solicitudes` (cartera del ejecutivo filtrada por SLA), `M_Tasadores` (activos con `disponible=TRUE`, zona compatible), `M_Visadores` (por `especialidades`), `M_Clientes`, `A_Eventos` (cronología del caso).
 - **Acciones**: crear alta interna, editar campos no-cálculo (sólo en estado `creada`, REGLA C), asignar tasador (única, sin reasignación formal — REGLA A), fijar fecha de visita, cambiar prioridad, pausar, cancelar. **Acción primaria**: `Asignar Tasador`.
 - **Salidas**: `TX_Solicitudes` (insert/update, `origen_canal=ingreso_manual`), `A_Eventos` (alta · asignación · cambios), `A_Cambios` (override de AT02).
-- **Estado destino**: `creada → asignada` — bloqueado hasta que existan tasador + visador + `fecha_visita_programada`. La transición la ejecuta AT02; SC05 notifica al tasador.
+- **Estado destino**: `creada → asignada` — bloqueado hasta que existan tasador + visador + `fecha_visita_programada`. La transición la ejecuta **SC-Asignar (Make)**, no AT02 (REGLA A · D-15; AT02 está undeployed — verificado MCP 25-sep-2026); SC05 notifica al tasador *(escenario existente pero inactivo al 24-sep-2026, ver CLAUDE.md tabla Make)*.
 
 ---
 

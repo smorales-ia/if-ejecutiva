@@ -168,11 +168,15 @@ por separado crearía dos fuentes para el mismo umbral (plan IF-02 · §9.6-R8 �
   la sesión del cliente y no existe dentro del proceso de Next.js en Railway.
   Nunca invocar el MCP desde código compilado ni desde componentes cliente, ni
   proponerlo como vía de acceso de la app (RO-30).
-- Alcance conocido del MCP:
+- Alcance conocido del MCP (actualizado 25-sep-2026):
   - ✅ Puede: leer schema (`list_tables_for_base`, `get_table_schema`), buscar
-    registros (`search_records`), listar comentarios.
-  - ❌ No puede: verificar estado activo/inactivo de Airtable Automations
-    (scripts AT01/AT02/AT08); leer logs de ejecución; alcanzar Make (SC01/SC05/RF-09).
+    registros (`search_records`), listar comentarios; y — desde la versión actual
+    del server — verificar estado deployed/undeployed de Airtable Automations
+    (`list_automations`) y listar sus corridas (`list_automation_runs`). Lo que
+    sigue sin poder: crear/editar el nodo `customScript` (el paste del script es
+    manual en la UI).
+  - ❌ No puede: alcanzar Make (SC01/SC05/RF-09) — escenarios, logs y activación
+    de Make quedan fuera del MCP de Airtable.
 - Si el MCP se usa para modificar schema durante el diseño (crear/renombrar
   campos), documentar el cambio en `docs/schema-airtable.md` y actualizar la
   tabla de campos del Plan §1.3.
@@ -287,7 +291,7 @@ Dos ajustes al aplicar la regla en este repo, para no contradecir código ya esc
 | `C_ReglasNegocio` | `tblyCb8cVTDzfeBx0` | Lectura por AT01 |
 | `C_AutomationsAirtable` | `tblYYtKEaPgH7GfY0` | Registro AT01/AT02/AT08 |
 | `LogEscenarios` | `tblR4VWpUHw1CSyIS` | Write log escenarios Make |
-| `Z_EscenariosMake` | `tblYfmDoaq7Z3Vh6P` | Registro SC01/SC05/RF-09 (vacío al 04-jul-2026) |
+| `Z_EscenariosMake` | `tblYfmDoaq7Z3Vh6P` | Registro escenarios Make. ⚠ 11 filas seed desactualizadas (verificado MCP 25-sep-2026): la fila "SC01" apunta al scenario 5748459 (que es E1, no el SC01 real 6483077) y faltan SC-Asignar, SC-Edicion, SC-Adjuntos-Upload, SC-RF09 y SC-SLA-Envio |
 | `Z_Webhooks` | `tblovY0Bt1Avhdgdx` | Registro URLs webhook SC01 y SC05 y RF-09 |
 
 Endpoint base: `https://api.airtable.com/v0/app9G7lLkIV3CpeLa/{TABLE_ID}`  
@@ -318,16 +322,25 @@ campo trigger que identificar. Ver REGLA A · D-15 arriba.)*
 
 ### Make (org 1594725 · `eu1.make.com`)
 
-| Escenario | Uso | Estado (06-jul-2026) |
+| Escenario | Uso | Estado (inventario 24-sep-2026, `_evidencia/T-MAKE-SLA-ENVIO-20260924/diagnostico.md`) |
 |---|---|---|
-| SC01 | Alta interna → crea `TX_Solicitudes(estado=creada)` | ❌ por provisionar (BQ-3) |
-| SC05 | Notifica tasador al pasar a `asignada` | ❌ por provisionar (BQ-3) · verificar código libre (H-03) |
-| RF-09 | Extracción Claude API tras subir adjunto | ❌ por provisionar (BQ-3-c) · usar código propio, no SC07 |
-| SC13 | Notificaciones reasignación/prioridad/pausa | **FUERA DE ALCANCE CU-002** — no provisionar en este CU |
-| E1/E2/E3 | Pipeline PDF (IF-04 aguas abajo) | ✅ ACTIVO — no tocar desde IF-02 |
-| SC-Edicion | Edición de solicitud (scenario 6682031 · hook 3441135) | ✅ **v3.4 ACTIVO** — F-1 cerrado 31-jul-2026 |
+| SC01 | Alta interna → crea `TX_Solicitudes(estado=creada)` | ✅ **v1.1 ACTIVO** (scenario 6483077) |
+| SC05 | Notifica tasador al pasar a `asignada` | ⚠ **EXISTE INACTIVO** — SC05 v1.0 (6780103), stop de Sergio 21-sep-2026, **nunca ejecutado**. No es "por provisionar": está construido y detenido |
+| RF-09 | Extracción Claude API tras subir adjunto | ✅ **ACTIVO** — SC-RF09-ExtraccionClaude v2.2 (6554321) |
+| SC-Asignar | Fija tasador + estado `asignada` | ✅ **v2.1 ACTIVO** (6681939) |
+| SC-Adjuntos-Upload | Upload adjuntos → Dropbox | ⚠ **DOS activos a la vez**: v1.2 (6839979) y v1.7 (6527528) — anomalía pendiente de saneo (PARIDAD 24-sep §5) |
+| SC-SLA-Envio | Despacho email de `TX_Notificaciones` `sla_alerta_roja` | ⚠ v1.0 (7597712) creado y **probado** 24-sep-2026 (2 envíos reales); quedó **INACTIVO** — activación programada es decisión de Sergio |
+| SC13 | Notificaciones reasignación/prioridad/pausa | **FUERA DE ALCANCE CU-002** — no provisionar en este CU · sin evidencia de existir en Make |
+| E1/E2/E3 | Pipeline PDF (IF-04 aguas abajo) | ❌ **INACTIVOS** (ids 5748459/5750023/5791413), "Pendiente"/"En_construccion" en Z_EscenariosMake, **sin blueprint** en `docs/_artefactos/make/` — es reconstrucción (T5), no reactivación. La versión anterior de esta tabla decía "✅ ACTIVO"; era falso (PARIDAD 24-sep §5) |
+| SC-Edicion | Edición de solicitud (scenario 6682031 · hook 3441135) | ✅ **v3.5 ACTIVO** — F-1 cerrado 31-jul-2026 |
 
-**Blueprint activo de SC-Edicion: `v3.4`.** El archivo de `docs/_artefactos/make/` es la
+**Alias E1/E2/E3 ↔ SC09/SC10** (documentado aquí de una vez, fuente: Z_EscenariosMake +
+diagnóstico 24-sep): E1 = `SC01_Airtable_Make` (5748459, ingesta Tally F1 — **no** es el
+SC01 v1.1 de alta interna, que es 6483077) · E2 = `SC09_Carbone_Render` (5750023) ·
+E3 = `SC10_Carbone_Download_Dropbox` (5791413). Cuando otros docs dicen "SC09/SC10"
+hablan de E2/E3.
+
+**Blueprint activo de SC-Edicion: `v3.5`.** El archivo de `docs/_artefactos/make/` es la
 fuente de verdad; Make sólo refleja el último import. Al tocarlo, bumpear el `name`
 (`SC-Edicion vX.Y - Edicion de solicitud`) y reimportar — el fix no llega a Make solo.
 
@@ -448,10 +461,19 @@ docs/
 │  ├─ SC-Edicion.blueprint.json
 │  ├─ SC-Asignar.blueprint.json
 │  ├─ SC-Adjuntos-Upload.blueprint.json
-│  └─ SC-RF09-ExtraccionClaude.blueprint.json
+│  ├─ SC-Adjuntos-Delete.blueprint.json
+│  ├─ SC-RF09-ExtraccionClaude.blueprint.json
+│  ├─ SC05-EmailTasador.blueprint.json
+│  └─ SC-Textos.blueprint.json        (v0.1 DRAFT — NO IMPORTAR · T-INFORME-ENSAMBLADOR 25-sep)
+├─ _analisis/                          (auditorías, roadmaps y cierres de tanda)
+├─ _evidencia/                         (evidencia por tanda: snapshots, blueprints, logs)
+├─ _referencias/                       (gold masters: PDF/xlsm de informes históricos)
 ├─ _notas/                             (notas operativas con fecha — NUNCA spec)
 └─ _archivo/                          (archivos históricos/obsoletos)
 ```
+
+*(Árbol parcial actualizado el 25-sep-2026; existen además `_backups/`, `_paste/`,
+`_planes/`, `_sync_ifTasador_v1/`, `_sync_ifTasador_v2/` y `_artefactos/{airtable,plantillas}/`.)*
 
 No existe ni existió un `v1_9_1.md` en este árbol; las menciones a "Spec v1.9.1"
 en `docs/aprendizajes.md` son históricas y se dejan intactas por la regla de
@@ -528,6 +550,12 @@ aprendizajes, actas de sesión). No para especificación.
 
 ## Estructura de rutas
 
+Verificado contra el árbol real (`find app/api -name route.ts`) el 25-sep-2026. La versión
+anterior listaba rutas planificadas que nunca se crearon; se marcan abajo. El árbol es
+**parcial**: solo cubre CU-002 — además existen las rutas de IF-03 (`app/api/tasaciones/**`,
+incl. `informe-data` de T-INFORME-ENSAMBLADOR-20260925) y otras (`catalogos`,
+`tipos-documento`, `solicitudes/contadores`, `solicitudes/[id]/{adjuntos,coordinacion,decision-motor,eventos,sla,versiones-informe}`, `tasadores/candidatos`, `adjuntos/[id]`).
+
 ```
 app/
 ├─ (public)/
@@ -540,21 +568,23 @@ app/
 ├─ api/
 │  ├─ solicitudes/
 │  │  ├─ route.ts                    # GET lista (server-side, token Airtable)
-│  │  └─ [id]/route.ts               # GET detalle
+│  │  ├─ [id]/route.ts               # GET detalle
+│  │  └─ [id]/asignar/route.ts       # POST → SC-Asignar (fija tasador + estado; encadena SC05)
 │  ├─ tasadores/route.ts             # GET filtrado por disponible=TRUE + casos_en_curso ASC
 │  ├─ visadores/route.ts             # GET filtrado por especialidades
 │  ├─ adjuntos/upload/route.ts       # POST streaming → Make → Dropbox
 │  ├─ webhooks/
-│  │  ├─ crear-solicitud/route.ts    # POST → SC01
-│  │  ├─ asignar/route.ts            # POST → SC-Asignar (fija tasador + estado; encadena SC05)
-│  │  ├─ reasignar/route.ts          # POST → Airtable + A_Eventos (sin SC13)
-│  │  ├─ prioridad/route.ts          # POST → Airtable + A_Eventos (sin SC13)
-│  │  └─ pausar/route.ts             # POST → Airtable + A_Eventos (sin SC13)
-│  ├─ extraccion/
-│  │  └─ iniciar/route.ts            # POST → RF-09 Make → Claude API
+│  │  └─ crear-solicitud/route.ts    # POST → SC01
 │  └─ health/route.ts
 └─ globals.css                       # @theme con tokens VProperty
 ```
+
+**Rutas planificadas que NO existen en el árbol** (no crearlas sin RF que las pida):
+`webhooks/{asignar,reasignar,prioridad,pausar}/route.ts` (asignar se construyó como
+`solicitudes/[id]/asignar`; reasignar/prioridad/pausar nunca se crearon) y
+`extraccion/iniciar/route.ts` (RF-09 se dispara desde las automations
+`AT-RF09-Trigger`/`AT-RF09-Trigger-Update` de Airtable hacia Make, sin Route Handler;
+`app/api/extraccion/` no existe — confirmado también en ROADMAP paridad 25-sep §6.8).
 
 ## Cosas que Claude Code NO debe hacer en este CU
 
@@ -570,7 +600,7 @@ app/
 - Invocar AT02 ni escribir un campo trigger de AT02 desde IF-02 — no hay asignación
   automática (REGLA A · D-15). La asignación es manual y única.
 - Emitir mensajes de error técnicos al usuario — siempre humano.
-- Modificar los escenarios E1/E2/E3 activos (son del pipeline PDF, no de IF-02).
+- Modificar los escenarios E1/E2/E3 del pipeline PDF (hoy inactivos y sin blueprint — ver tabla Make; son de IF-04/T5, no de IF-02).
 - Introducir sesiones de negocio en el cliente (state machine vive en Airtable).
 - Referenciar campos de `TX_Solicitudes` por nombres que difieran del schema real (usar FIELD_ID si hay duda).
 - Usar el código "SC07" para RF-09 (SC07 queda reservado para IF-03 post-visita).

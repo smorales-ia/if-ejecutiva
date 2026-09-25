@@ -14,8 +14,9 @@
 3. **Action**: *Run a script* → pegar el contenido íntegro de
    `docs/_artefactos/airtable/CRON_UF_Diaria.js`.
 4. **Test run** (botón *Test*): verificar en el log
-   `UF-diaria: fin · nuevas=N · fallidas=0` y que `H_PreciosUF` tenga fila de
-   hoy con `valor_clp` plausible (~39.900 en sep-2026).
+   `UF-diaria: fin · nuevas=N · backfill_dolar=M · sin_dolar=K · fallidas_uf=0`
+   y que `H_PreciosUF` tenga fila de hoy con `valor_clp` plausible (~41.000 en
+   sep-2026) y `tipo_cambio_usd` cargado (~950-970).
 5. **Activar** la automation.
 
 ## Backfill inicial (una sola vez, si hace falta)
@@ -28,11 +29,25 @@ ya cargadas.
 
 ## Semántica de fallo (decidida en plan §12-Q3, opción recomendada)
 
-Fetch fallido o API sin dato → **no se escribe nada**, se loguea y queda
-evento `uf_fetch_fallido <fechas>` en `A_Eventos`. Consecuencia: H3 aborta
-las tasaciones de esa fecha hasta que la UF exista. Es el diseño — nunca un
-default silencioso. El día siguiente el propio cron repone el hueco
-(self-healing con lookback).
+Fetch de UF fallido o API sin dato → **no se escribe nada**, se loguea y
+queda evento `uf_fetch_fallido` (severidad ERROR, fechas en `descripcion`
+y `detalle_json`) en `A_Eventos`. Consecuencia: H3 aborta las tasaciones
+de esa fecha hasta que la UF exista. Es el diseño — nunca un default
+silencioso. El día siguiente el propio cron repone el hueco (self-healing
+con lookback). Si al cierre de la corrida ≥2 fechas de la ventana siguen
+sin UF (fallo repetido: ayer + hoy), se emite además
+`uf_fetch_fallido_critico` (severidad CRITICO).
+
+## Dólar (`tipo_cambio_usd` · P1-3 · 25-sep-2026)
+
+El cron también escribe `tipo_cambio_usd` (GET `/api/dolar/dd-mm-yyyy`) y
+`fuente = mindicador`. El dólar interbancario no se publica sábados,
+domingos ni feriados: para esas fechas se arrastra el **último valor hábil
+disponible** dentro de la ventana, con traza en `notas`. Sin dato ni con
+arrastre → la fila queda **sin dólar** (la UF no se bloquea) y la próxima
+corrida la backfillea: las filas existentes de la ventana con
+`tipo_cambio_usd` vacío se actualizan (rama UPDATE); nunca se pisa un
+dólar ya cargado.
 
 ## Rollback (plan §9 · M4)
 

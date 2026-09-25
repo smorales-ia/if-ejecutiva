@@ -126,7 +126,7 @@
 
 | Tabla lógica | TABLE_ID | Notas |
 |---|---|---|
-| `Z_EscenariosMake` | `tblYfmDoaq7Z3Vh6P` | ⚠ Vacía al 04-jul-2026; poblar al importar SC01/SC05 |
+| `Z_EscenariosMake` | `tblYfmDoaq7Z3Vh6P` | ⚠ 11 filas seed (verificado MCP 25-sep-2026), pero **desactualizadas**: la fila "SC01" registra el scenario 5748459 (= E1 pipeline PDF, no el SC01 real 6483077) y no hay fila para SC-Asignar, SC-Edicion, SC-Adjuntos-Upload, SC-RF09 ni SC-SLA-Envio (7597712) |
 | `Z_EjecucionesMake` | `tblaAmNmPqqqSrwbS` | |
 | `Z_ColaPendientes` | `tblSvEtzO2TdmkBfk` | |
 | `Z_Webhooks` | `tblovY0Bt1Avhdgdx` | Registro URLs webhook SC01 y SC05 |

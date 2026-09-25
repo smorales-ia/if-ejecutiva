@@ -27,6 +27,8 @@ import type {
 } from "@/lib/tasador/lectura-informe"
 import { combinarConBorrador } from "@/lib/tasador/recuperacion-borrador"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
+import { numeroDe } from "@/lib/tasador/comparables"
+import { filaTasacionUfM2 } from "@/lib/informe/fila-tasacion"
 import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
 import { ExpedienteSheet } from "@/components/tasador/expediente-sheet"
 import { Button } from "@/components/ui/button"
@@ -237,6 +239,15 @@ export function InformePreview({
   const capRate =
     valorCanonico?.capRate != null ? valorCanonico.capRate.toFixed(2) : null
   const esOverrideValor = valorCanonico?.esOverride ?? false
+
+  /*
+   * Fila TASACIÓN del bloque 6 (F-2 · P1-8): UF/m² C. del sujeto = valor
+   * canónico / sup. construida capturada. Misma aritmética que el ensamblador
+   * (`filaTasacionUfM2` · RO-05). Sin valor canónico o sin superficie → null y
+   * la fila sigue en «—». El % vs promedio lo forma `SeccionComparables` contra
+   * el promedio simple de cada bloque (CI-057 no se toca).
+   */
+  const ufM2Tasacion = filaTasacionUfM2(valorUf, numeroDe(d.supConstruida))
 
   /* Bloque 4 · unidades + avalúo SII — canónico (P9-TAS.B). Reemplaza el origen
    * cliente `tasacion.unidades`, que sólo traía la grilla sin el avalúo. */
@@ -534,7 +545,7 @@ export function InformePreview({
 
           {/* 6 · Comparables (grilla §5.2 read-only) */}
           <ReportSection titulo="Comparables" numero={6} listo={listo}>
-            <SeccionComparables form={d} />
+            <SeccionComparables form={d} ufM2Tasacion={ufM2Tasacion} />
           </ReportSection>
 
           {/* 7 · Registro fotográfico */}

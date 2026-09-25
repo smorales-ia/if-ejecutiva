@@ -524,7 +524,7 @@ El diálogo de justificación obligatoria al cambiar prioridad a Urgente o Crít
 
 ### Qué construir
 
-Suite de tests unitarios para validaciones bloqueantes y mensajes humanos. Verificación visual de todos los mensajes §6. Regresión del pipeline PDF (E1→E2→E3) para confirmar que IF-02 no lo rompe.
+Suite de tests unitarios para validaciones bloqueantes y mensajes humanos. Verificación visual de todos los mensajes §6. ~~Regresión del pipeline PDF (E1→E2→E3) para confirmar que IF-02 no lo rompe.~~ *(Retirado 25-sep-2026: E1/E2/E3 están inactivos y sin blueprint — ids 5748459/5750023/5791413, "Pendiente" — así que no hay pipeline que regresionar; ver PARIDAD 24-sep §5 y CLAUDE.md tabla Make. La regresión se reintroduce cuando T5 los reconstruya.)*
 
 ### Archivos a crear
 
@@ -540,7 +540,7 @@ Suite de tests unitarios para validaciones bloqueantes y mensajes humanos. Verif
 - `pnpm test` pasa con cobertura > 80 % en los módulos de validación.
 - Todos los mensajes de §6 de Blueprint están cubiertos con texto literal.
 - `pnpm build` limpio.
-- Regresión E1→E2→E3 (pipeline PDF): ejecutar en Make; los 3 escenarios salen verdes.
+- ~~Regresión E1→E2→E3 (pipeline PDF): ejecutar en Make; los 3 escenarios salen verdes.~~ *(No ejecutable: los 3 escenarios están inactivos y sin blueprint al 24-sep-2026 — ver §10 arriba.)*
 - Bundle del cliente verificado: ninguna variable sensible (`AIRTABLE_TOKEN`, `MAKE_*`, `ANTHROPIC_API_KEY`) aparece en el bundle del cliente (`pnpm build` + `grep -r "patxMFm" .next/`).
 
 ---
@@ -732,14 +732,14 @@ Filtro nuevo en `id=13`: `{solicitud_record_id} = "{{1.solicitudId}}"` — compa
 | Invocar SC13 desde algún Route Handler | SC13 está fuera del alcance de CU-002. |
 | Reasignar visador desde la UI | D-01: dato visible, sin acción. |
 | Emitir mensajes de error técnicos al usuario | Siempre el mensaje humano canónico §6 Blueprint. |
-| Modificar E1/E2/E3 (pipeline PDF activo) | Son de IF-04; no tocarlos desde IF-02. |
+| Modificar E1/E2/E3 (pipeline PDF — inactivos y sin blueprint al 24-sep-2026) | Son de IF-04/T5; no tocarlos desde IF-02. |
 | "construye toda la consola en esta sesión" | Una RF por sesión (§1.7.4). |
 | Importar `lib/claude-extractor.ts` desde cliente | Server-only; jamás en componente cliente. |
 | Introducir mocks nuevos después del Paso 1 | Los mocks de v0 se reemplazan; no agregar nuevos. |
 | Dividir `tamanio_kb` por 1024 al mostrar | Ya viene en KB desde Airtable. |
 | Usar `Promise.all` sin control de concurrencia para subidas | Batching de 3 (`uploadEnLotes`, D-14.1). |
 | Usar `fetch` para subidas con progreso | `fetch` no expone `upload.onprogress` — usar `XMLHttpRequest` (`lib/adjuntos-uploader.ts`). |
-| Habilitar `ExtraccionStatusBadge` en Fase Adjuntos 1 | Es de Fase Adjuntos 2 (RF-09), fuera de alcance hasta que se provisione el escenario Make. |
+| Habilitar `ExtraccionStatusBadge` en Fase Adjuntos 1 | Es de Fase Adjuntos 2 (RF-09). *(Nota 25-sep-2026: el escenario Make ya está provisionado y activo — SC-RF09-ExtraccionClaude v2.2, id 6554321; el componente no existe aún en el código.)* |
 | Hacer `solicitud_id` opcional en `/api/adjuntos/upload` | Es OBLIGATORIO (D-12, Opción C) — E-023 queda SUPERSEDED. |
 | Usar `codigo_solicitud` como nombre de campo en el código | Es `codigo_ext` — `codigo_solicitud` es el primary field de Airtable (interno, no se referencia en TS). |
 | Crear opciones nuevas en `TX_Adjuntos.subido_por` | Usar la opción existente `"Ejecutivo"` (con E mayúscula). |

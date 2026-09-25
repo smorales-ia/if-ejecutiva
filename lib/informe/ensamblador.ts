@@ -46,9 +46,10 @@
  *
  * `tasacionUfM2 = valorComercialUf / supConstruccionM2` y
  * `tasacionVsPct = (tasacionUfM2 / promedioUfM2 − 1) × 100` cablean la fila
- * TASACIÓN que hoy pinta «—» (F-2), como puente hasta que T2 los persista en
+ * TASACIÓN que pintaba «—» (F-2), como puente hasta que T2 los persista en
  * el motor (P1-8). Lo manda el ROADMAP §3 bloque 2. Todo lo demás se lee, no
- * se computa.
+ * se computa. La aritmética vive en `lib/informe/fila-tasacion.ts` (RO-05:
+ * una sola fuente por número — la comparte el preview del tasador).
  */
 
 import { getRecord, listRecords } from '@/lib/airtable-client'
@@ -56,6 +57,7 @@ import { autorizarSolicitud, type ResultadoGuard } from '@/lib/tasador/auth-guar
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
 import { construirInforme } from '@/lib/tasador/lectura-informe'
+import { filaTasacionUfM2, filaTasacionVsPct } from './fila-tasacion'
 import type {
   ComparablesInforme,
   CualitativaInforme,
@@ -333,14 +335,11 @@ export async function construirInformeContexto(
   const valorComercialUf =
     t('valor_comercial_uf') ?? informe.valorDestacado.valorUf
   const supConstruccionM2 = numeroONull(d.sup_construccion_m2)
-  const tasacionUfM2 =
-    valorComercialUf !== null && supConstruccionM2
-      ? valorComercialUf / supConstruccionM2
-      : null
-  const tasacionVsPct =
-    tasacionUfM2 !== null && bloqueComparables.promedioUfM2
-      ? (tasacionUfM2 / bloqueComparables.promedioUfM2 - 1) * 100
-      : null
+  const tasacionUfM2 = filaTasacionUfM2(valorComercialUf, supConstruccionM2)
+  const tasacionVsPct = filaTasacionVsPct(
+    tasacionUfM2,
+    bloqueComparables.promedioUfM2,
+  )
 
   const comparablesInforme: ComparablesInforme = {
     filas: bloqueComparables.comparables,
