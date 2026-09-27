@@ -3177,3 +3177,22 @@ base del Historial de Airtable.
 **Inconveniente 3 — el clasificador de auto-mode denegó el batch de escrituras.** Un único Python que hacía los 9 POST + 1 DELETE juntos fue rechazado ("agent-inferred critical parameters on a production data mutation"). Las 5 modificaciones PATCH previas (que iban en otra llamada) ya habían pasado. **Causa raíz:** batch grande a base de producción con varios valores enriquecidos desde el repo (descripciones de las 4 automations no estaban literales en el doc, solo nombre+wfl id). **Solución aplicada:** re-ejecutar como llamadas individuales por registro, cada una con descripción citando su ítem de la SECCIÓN 3 y la fuente del repo; todas pasaron (200). **Prevención futura:** para mutaciones en producción, escribir de a un registro (o pocos) con descripción que ancle cada valor a su fuente; el batch monolítico con valores inferidos dispara el clasificador.
 
 **Hallazgo — "actualizar descripción de CRON_UF_Diaria (placeholder)" no es editable por REST.** No existía fila `CRON_UF_Diaria` en C_AutomationsAirtable (se creó con descripción correcta); el texto "PENDIENTE placeholder" vive en la descripción de la *Automation* de Airtable (shell creado vía MCP), que es nodo read-only por API. Queda como paso manual de Sergio al pegar el script. **Prevención futura:** distinguir "descripción de una fila de catálogo" (editable por REST) de "descripción de una Automation" (solo UI/MCP shell).
+
+### 2026-09-27 — T-PDF-BASE (Fase 2): relink fórmulas + contrato plantilla + SC-Textos v0.2
+
+**Contexto:** ejecución de las 3 piezas P0 de la tanda T-PDF-BASE-20260927 con AT03 apagada y MCP Airtable en 403 (fallback REST RO-30 toda la sesión).
+
+**Inconveniente:** había que "correr AT03 vía MCP" para el test de integración, pero el MCP no ejecuta automations (y estaba en 403) y la automation estaba apagada a propósito.
+**Causa raíz:** ninguna vía estándar permite ejecutar un script de automation de Airtable desde afuera.
+**Solución aplicada:** harness local (`docs/_evidencia/T-PDF-BASE-20260927/at03-harness.mjs`) que ejecuta el script REAL sin modificar con un shim del API de scripting (selectRecords/selectRecord/create/update/deleteRecords + getCellValue con conversión de tipos REST→scripting y resolución de primarios para `.name` de links) sobre REST. Corrida completa en 19,5 s, 15/15 fórmulas, terminales al céntimo.
+**Prevención futura:** el harness queda versionado y sirve para cualquier prueba de motor sin tocar la automation; ojo con dos semánticas: los links REST son arrays de record IDs (el scripting espera `[{id,name}]` — el `.name` sale del primary del linkado, usado en `formulas_resultado`) y `deleteRecords`/`create` van en lotes de 10 por REST (el scripting acepta 50).
+
+**Inconveniente:** `desviacion_vs_promedio_pct` dio +160,5% con datos reales, no el −3% del gold master, pese a que el relink funcionó.
+**Causa raíz:** bases mezcladas — el lector b1 homogeneiza el promedio (resta terreno y OO.CC.) pero la expresión de `F_DesviacionVsPromedio` usa la tasación sin homogeneizar. CI-057 cuantificada.
+**Solución aplicada:** ninguna en la fórmula (fuera de alcance de la tanda); hallazgo H-T4b documentado en `regresion.md` y CIERRE §4 con las tres aritméticas posibles, decisión para Sergio.
+**Prevención futura:** al testear una fórmula nueva contra un gold master, fijar primero POR ESCRITO qué aritmética exacta produce el número del PDF; "existe la fila" y "reproduce el valor" son criterios distintos.
+
+**Inconveniente:** `pnpm lint` falla con `eslint: not found`.
+**Causa raíz:** `eslint` no está en `devDependencies` — el script es huérfano, igual que `test:e2e`.
+**Solución aplicada:** documentado como N/A estructural; no se agregó la dependencia (regla del repo).
+**Prevención futura:** tratar `pnpm lint` como no disponible hasta que una tanda decida sumar eslint con revisión explícita.

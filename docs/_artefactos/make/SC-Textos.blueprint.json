@@ -1,5 +1,5 @@
 {
-    "name": "SC-Textos v0.1 DRAFT - NO IMPORTAR (campos destino pendientes)",
+    "name": "SC-Textos v0.2 - Textos informe (corregido, listo para importar)",
     "flow": [
         {
             "id": 1,
@@ -64,6 +64,50 @@
             }
         },
         {
+            "id": 14,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tblyggAfQfq682XHK",
+                "formula": "RECORD_ID()=\"{{first(3.comuna)}}\"",
+                "maxRecords": "1",
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 750,
+                    "y": 200,
+                    "name": "GET M_Comunas por RECORD_ID (resuelve nombre; comuna es Link en TX_Solicitudes)"
+                }
+            }
+        },
+        {
+            "id": 15,
+            "module": "airtable:ActionSearchRecords",
+            "version": 3,
+            "parameters": {
+                "__IMTCONN__": 8847431
+            },
+            "mapper": {
+                "base": "app9G7lLkIV3CpeLa",
+                "table": "tbl8rxZA14xFIBGU6",
+                "formula": "RECORD_ID()=\"{{first(3.tipo_propiedad)}}\"",
+                "maxRecords": "1",
+                "useColumnId": false
+            },
+            "metadata": {
+                "designer": {
+                    "x": 750,
+                    "y": 400,
+                    "name": "GET M_TiposPropiedad por RECORD_ID (resuelve nombre; tipo_propiedad es Link en TX_Solicitudes)"
+                }
+            }
+        },
+        {
             "id": 4,
             "module": "airtable:ActionSearchRecords",
             "version": 3,
@@ -118,7 +162,7 @@
                 "stopProcessingAfterEmpty": true
             },
             "mapper": {
-                "value": "{'recinto':'{{5.recinto}}','nivel':'{{5.nivel}}','cantidad':'{{5.cantidad}}'}"
+                "value": "{'recinto':'{{5.tipo_recinto}}','nivel':'{{5.nivel}}','cantidad':'{{5.cantidad}}'}"
             },
             "metadata": {
                 "designer": {
@@ -163,7 +207,7 @@
                 "authUser": "",
                 "bodyType": "raw",
                 "contentType": "application/json",
-                "data": "{\"model\": \"claude-sonnet-4-6\", \"max_tokens\": 4096, \"system\": \"Eres el redactor tecnico de informes de tasacion de VProperty (Chile). Redactas parrafos breves, factuales y en tercera persona para informes bancarios. NUNCA inventas datos: solo usas los valores entregados en el mensaje. Si un dato no viene, omites la frase que lo necesitaria.\", \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"Redacta los textos descriptivos del informe de tasacion a partir de los DATOS DE LA PROPIEDAD del final. Responde EXCLUSIVAMENTE con un objeto JSON valido en texto plano, sin backticks, sin markdown, sin la palabra json antes del objeto, sin comentarios. Tu respuesta debe empezar con el caracter { y terminar con }. Formato exacto: {\\\"sintesis\\\": string, \\\"programa\\\": string, \\\"descripcion_sector\\\": string}. REGLA CRITICA (RF-32): PROHIBIDO inventar cifras. Todo numero que escribas (superficies, numeracion, cantidades) debe aparecer literalmente en los DATOS DE LA PROPIEDAD. Numeros en formato chileno: coma decimal (249,91), simbolo m2 para superficies, N° para numeracion de calle. Si un dato viene vacio o nulo, omite la frase correspondiente; no lo reemplaces por un valor tipico ni aproximado. Sin signos de exclamacion, sin adjetivos de valor no respaldados, tercera persona, tiempo presente. \\\"sintesis\\\": 90 a 140 palabras (direccion, condominio, terreno, pisos, materialidad, programa, exterior). \\\"programa\\\": solo la enumeracion de recintos por nivel derivada de PROGRAMA DE RECINTOS; cantidades mayores que 1 se escriben con el numero. \\\"descripcion_sector\\\": 60 a 100 palabras, frases cortas (caracter del sector, densidad, conectividad, servicios en la comuna). El patron de estilo y los ejemplos few-shot canonicos viven en docs/_artefactos/plantillas/prompts-textos-informe.md seccion 4.2 (gold master MET-6283) y deben pegarse aqui al provisionar. DATOS DE LA PROPIEDAD: - Direccion: {{3.direccion}} N°{{3.numeracion}} - Condominio: {{3.condominio}} - Comuna: {{3.comuna}} · Region: {{3.region}} - Tipo de propiedad: {{3.tipo_propiedad}} - Superficie de terreno (m2): {{4.sup_terreno_m2}} - Superficie construida (m2): {{4.sup_construccion_m2}} - Cantidad de pisos: {{4.pisos}} - Materialidad predominante: {{4.material_predominante}} - Estado de conservacion: {{4.estado_conservacion}} - Zona normativa: {{4.zona}} · Tipo de zona: {{4.tipo_zona}} PROGRAMA DE RECINTOS (recinto · nivel · cantidad): [{{6.text}}]\"}]}]}",
+                "data": "{\"model\": \"claude-sonnet-4-6\", \"max_tokens\": 4096, \"system\": \"Eres el redactor tecnico de informes de tasacion de VProperty (Chile). Redactas parrafos breves, factuales y en tercera persona para informes bancarios. NUNCA inventas datos: solo usas los valores entregados en el mensaje. Si un dato no viene, omites la frase que lo necesitaria.\", \"messages\": [{\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"Redacta los textos descriptivos del informe de tasacion a partir de los DATOS DE LA PROPIEDAD del final. Responde EXCLUSIVAMENTE con un objeto JSON valido en texto plano, sin backticks, sin markdown, sin la palabra json antes del objeto, sin comentarios. Tu respuesta debe empezar con el caracter { y terminar con }. Formato exacto: {\\\"sintesis\\\": string, \\\"programa\\\": string, \\\"descripcion_sector\\\": string}. REGLA CRITICA (RF-32): PROHIBIDO inventar cifras. Todo numero que escribas (superficies, numeracion, cantidades) debe aparecer literalmente en los DATOS DE LA PROPIEDAD. Numeros en formato chileno: coma decimal (249,91), simbolo m2 para superficies, N° para numeracion de calle. Si un dato viene vacio o nulo, omite la frase correspondiente; no lo reemplaces por un valor tipico ni aproximado. Sin signos de exclamacion, sin adjetivos de valor no respaldados, tercera persona, tiempo presente. \\\"sintesis\\\": 90 a 140 palabras (direccion, condominio, terreno, pisos, materialidad, programa, exterior). \\\"programa\\\": solo la enumeracion de recintos por nivel derivada de PROGRAMA DE RECINTOS; cantidades mayores que 1 se escriben con el numero. \\\"descripcion_sector\\\": 60 a 100 palabras, frases cortas (caracter del sector, densidad, conectividad, servicios en la comuna). El patron de estilo y los ejemplos few-shot canonicos viven en docs/_artefactos/plantillas/prompts-textos-informe.md seccion 4.2 (gold master MET-6283) y deben pegarse aqui al provisionar. DATOS DE LA PROPIEDAD: - Direccion: {{3.direccion}} - Condominio: {{3.proyecto_condominio}} - Comuna: {{14.nombre}} · Region: {{3.region}} - Tipo de propiedad: {{15.nombre}} - Superficie de terreno (m2): {{4.sup_terreno_m2}} - Superficie construida (m2): {{4.sup_construccion_m2}} - Cantidad de pisos: {{4.pisos}} - Materialidad predominante: {{4.material_predominante}} - Estado de conservacion: {{4.estado_conservacion}} - Tipo de zona: {{4.tipo_zona_descripcion}} · Ubicacion urbano/rural: {{4.ubicacion_urbano_rural}} PROGRAMA DE RECINTOS (recinto · nivel · cantidad): [{{6.text}}]\"}]}]}",
                 "serializeUrl": false,
                 "shareCookies": false,
                 "parseResponse": false,
@@ -253,17 +297,17 @@
                                 "base": "app9G7lLkIV3CpeLa",
                                 "table": "tblMoK3mFuwN8Yr1A",
                                 "record": {
-                                    "sintesis_propiedad_texto": "{{9.sintesis}}",
-                                    "descripcion_sector_texto": "{{9.descripcion_sector}}"
+                                    "fldCfipeATICMiimq": "{{9.sintesis}}",
+                                    "fldBSpioukujGCcHS": "{{9.descripcion_sector}}"
                                 },
                                 "typecast": false,
-                                "useColumnId": false
+                                "useColumnId": true
                             },
                             "metadata": {
                                 "designer": {
                                     "x": 3000,
                                     "y": -150,
-                                    "name": "Update TX_DatosTasacion — CAMPOS DESTINO PENDIENTES DE CREACION (ver metadata.notes)"
+                                    "name": "Update TX_DatosTasacion por FIELD_ID: sintesis_descriptiva + descripcion_sector"
                                 }
                             }
                         },
@@ -286,7 +330,7 @@
                                     "Titulo Log": "SC-Textos exito - {{1.solicitud_codigo}}",
                                     "Fecha / Hora": "{{now}}"
                                 },
-                                "typecast": false,
+                                "typecast": true,
                                 "useColumnId": false
                             },
                             "metadata": {
@@ -332,7 +376,7 @@
                                     "Titulo Log": "SC-Textos sin texto - {{1.solicitud_codigo}}",
                                     "Fecha / Hora": "{{now}}"
                                 },
-                                "typecast": false,
+                                "typecast": true,
                                 "useColumnId": false
                             },
                             "metadata": {
@@ -372,7 +416,7 @@
                 "moduleIds": [
                     11
                 ],
-                "content": "PENDIENTE DE CREACION: los campos destino sintesis_propiedad_texto y descripcion_sector_texto NO existen en TX_DatosTasacion (tblMoK3mFuwN8Yr1A) al 25-sep-2026 — grep negativo en schema y codigo (hallazgo 7, ROADMAP_paridad_informe_20260924.md §6). Crearlos es decision de Sergio; hasta entonces este blueprint NO SE IMPORTA. El mapper respeta el contrato real de airtable:ActionUpdateRecords: record ID en la clave `id` (text) y valores en `record` (collection) — ver CLAUDE.md, causa raiz de F-1."
+                "content": "RESUELTO en v0.2 (27-sep-2026): los campos destino EXISTEN en TX_DatosTasacion (tblMoK3mFuwN8Yr1A) y se escriben por FIELD_ID con useColumnId=true: fldCfipeATICMiimq (sintesis_descriptiva) y fldBSpioukujGCcHS (descripcion_sector) — verificados contra el meta schema real de la base. El mapper respeta el contrato real de airtable:ActionUpdateRecords: record ID en la clave `id` (text) y valores en `record` (collection) — ver CLAUDE.md, causa raiz de F-1."
             },
             {
                 "moduleIds": [
@@ -385,7 +429,7 @@
                     4,
                     5
                 ],
-                "content": "VERIFICAR antes de provisionar: el nombre del campo de match ({solicitud}) en las formulas de TX_DatosTasacion y TX_HabitacionesPorNivel debe contrastarse contra el schema real (docs/schema-airtable.md); si el Link no rinde el codigo como texto, casar por lookup del codigo (patron CI-010: A_DecisionesMotor casa por solicitud_codigo). Idem los field names del mapper 6 (recinto/nivel/cantidad)."
+                "content": "VERIFICAR antes de provisionar: el nombre del campo de match ({solicitud}) en las formulas de TX_DatosTasacion y TX_HabitacionesPorNivel es un Link — en formula rinde el primary de TX_Solicitudes (codigo_solicitud); confirmar en el Run once que casa con el solicitud_codigo del payload, y si no, casar por lookup del codigo (patron CI-010). Los field names del mapper 6 quedaron VERIFICADOS en v0.2 contra el schema real: tipo_recinto / nivel / cantidad (TX_HabitacionesPorNivel tblBITpPb8WuqsatM)."
             },
             {
                 "moduleIds": [
@@ -399,6 +443,19 @@
                     10
                 ],
                 "content": "VALIDACION RF-32 (rechazo y reintento por cifras inventadas): NO vive en este escenario v0.1. El validador es lib/informe/validador-cifras.ts (TS puro, testeado con los parrafos reales del gold master); el flujo previsto (prompts-textos-informe.md §5) lo ejecuta el orquestador/route handler antes de persistir, con UN reintento y caida a redaccion manual + log. Al integrar en T5, insertar la llamada al endpoint del repo entre los modulos 9 y 11, o mover la generacion completa al repo y dejar Make solo como plomeria."
+            },
+            {
+                "moduleIds": [
+                    14,
+                    15
+                ],
+                "content": "v0.2 (27-sep-2026): modulos 14 y 15 agregados porque comuna y tipo_propiedad son multipleRecordLinks en TX_Solicitudes y Make rinde record IDs, no texto. Resuelven el nombre via ActionSearchRecords con RECORD_ID()=first(3.campo), sin cambio de schema en Airtable. Estructura del mapper calcada del modulo 3 del mismo blueprint (regla F-1). El prompt del modulo 7 referencia {{14.nombre}} y {{15.nombre}} (primary de M_Comunas y M_TiposPropiedad)."
+            },
+            {
+                "moduleIds": [
+                    1
+                ],
+                "content": "CHANGELOG v0.2 (27-sep-2026, T-PDF-BASE-20260927 Fase 2): correcciones de auditoria — modulo 11 escribe por FIELD_ID campos reales sintesis_descriptiva/descripcion_sector; modulo 6 usa tipo_recinto; prompt del modulo 7 sin numeracion (ya viene en direccion), con proyecto_condominio, tipo_zona_descripcion y ubicacion_urbano_rural (el Link zonificacion esta vacio en el oraculo — fallback local); modulos 12/13 con typecast=true porque SC-Textos no es choice del singleSelect Escenario de LogEscenarios (decision OK Gate: sin cambios de esquema en Airtable). Decision E-85: el analisis de las referencias es TEXTO FIJO en la plantilla — NO se agrega clave analisis_referencias al JSON de salida ni columna en Airtable. Al importar: pegar a mano la API key (modulo 7) y el prompt canonico few-shot (docs/_artefactos/plantillas/prompts-textos-informe.md secciones 4.1-4.2); tras el Run once el escenario queda INACTIVO."
             }
         ]
     }

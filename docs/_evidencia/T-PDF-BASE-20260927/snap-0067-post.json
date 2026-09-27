@@ -1,0 +1,506 @@
+{
+ "generado": "2026-09-27 · Agente C T-PDF-BASE-20260927 FASE 2",
+ "TX_Solicitudes": {
+  "id": "recmMzeu3eWGxyXsf",
+  "createdTime": "2026-09-22T02:07:50.000Z",
+  "fields": {
+   "TX_Adjuntos": [
+    "rec95X1HPJB7ZUo5G",
+    "recWdb4FAphNaTE0I",
+    "rectcojWwOIonkQRA",
+    "rechQjmqpb3HMWyeb",
+    "rectCtwDMT2mwN4GO",
+    "reckRZ0e9mwtR6xCC",
+    "recpI0wPyESJ0Etvs",
+    "rec7t6MPxKu10WniF"
+   ],
+   "estado": "asignada",
+   "tipo_propiedad": [
+    "recrXDAjlVCe59XBW"
+   ],
+   "cliente_final_nombre": "FRANCISCO JOSE VERGARA UNDURRAGA",
+   "lookup_rango_max": [
+    100
+   ],
+   "sla_semaforo_etapa": "sin_dato",
+   "A_Eventos": [
+    "recs1yH45fF8yss67"
+   ],
+   "codigo_solicitud": "VP-2026-0067",
+   "TX_ItemsCuadroValoracion": [
+    "recnIInvI1IchIfX2",
+    "recQuqMyXs7ttOHVb",
+    "recZCOq0TTlzVouzP",
+    "recTV6R4rxuDyamYG",
+    "rechm7Py8l1qtcMzl",
+    "recMBbJ4HHfZYOGTV"
+   ],
+   "TX_Comparables": [
+    "rec2aFg7XPsbSjufp",
+    "recXGxAeVg2ThVUfQ",
+    "recKGLWdMaK0lrXCh",
+    "recUAawogrtK3AJ59",
+    "recniOUZHto7ZaA1E",
+    "recmizO68egY2SUiR",
+    "recD9eZEG2Ilpm2lx"
+   ],
+   "override_motivo": "MET-6283-REAL · RF-09 en vivo con los 8 adjuntos reales de docs/_referencias/Met_6283 · SANDBOX aislado por notas+numero -REAL",
+   "tipo_propiedad_nuevo_usado": "usada",
+   "coordinacion_vigente": "confirmada",
+   "numero_solicitud": "METLIFE-6283-REAL",
+   "tipo_informe": [
+    "recreojxTjoAWOEHa"
+   ],
+   "comuna": [
+    "recKT9mUJkeq3YuBu"
+   ],
+   "direccion": "LOS EUCALIPTUS 2100",
+   "regla_aplicada": [
+    "recYEf9XepX4SmLnH"
+   ],
+   "ultima_modificacion": "2026-09-27T17:01:57.000Z",
+   "fecha_visita_programada": "2026-04-13",
+   "fuera_rango": 0,
+   "codigo_ext": "VP-2026-0067",
+   "semaforo_sla": "VENCIDO",
+   "dias_desde_solicitud": 6,
+   "solicitud_id": 67,
+   "tasador": [
+    "recJPSCLckxLuf9nV"
+   ],
+   "TX_DatosTasacion": [
+    "recy8q3Tq9omjdNUf"
+   ],
+   "fecha_limite_entrega": "2026-04-15T00:00:00.000Z",
+   "fecha_creacion": "2026-09-22T02:07:50.000Z",
+   "dias_desde_visita": 167,
+   "fecha_visita": "2026-04-13",
+   "TX_DocumentosLegales": [
+    "rec7t4cD2zjuJKpXq"
+   ],
+   "cliente": [
+    "recIg8NtVhptXkEUJ"
+   ],
+   "fecha_solicitud": "2026-09-21T12:00:00.000Z",
+   "cliente_final_rut": "16.610.203-0",
+   "record_id": "recmMzeu3eWGxyXsf",
+   "region": "Metropolitana de Santiago",
+   "notas": "MET-6283-REAL-20260921 · REPLICA TASACION REAL FRANCISCO VERGARA · Met_6283 · validacion end-to-end · NO es operacion real de cartera\nREGISTRO DE PRUEBA T-PDF-BASE-20260927 (espejo MET-6283)",
+   "rol_sii": "00882-00040"
+  }
+ },
+ "TX_DatosTasacion": {
+  "id": "recy8q3Tq9omjdNUf",
+  "createdTime": "2026-09-22T16:43:04.000Z",
+  "fields": {
+   "arriendo_bruto_mensual_clp": 3300000,
+   "avaluo_exento": 0,
+   "velocidad_venta_estimada": "8 a 10 meses",
+   "sup_terreno_m2": 5024.86,
+   "avaluo_fiscal_uf": 339809429,
+   "origen_dato": "tipeado",
+   "avaluo_fiscal_clp": 339809429,
+   "ubicacion_urbano_rural": "rural",
+   "ingreso_liquido_anual": 0,
+   "solicitud": [
+    "recmMzeu3eWGxyXsf"
+   ],
+   "cod_sii_comuna": "14201",
+   "propietario_nombre": "FRANCISCO JOSE VERGARA UNDURRAGA",
+   "gasto_anual_clp": 3300000,
+   "n_cert_no_expropiacion": "3444743",
+   "destino_sii": "HABITACIONAL",
+   "sup_construccion_m2": 249.91,
+   "cod_sii_manzana": "882",
+   "uf_dia_visita": 39894.61,
+   "tasa_cap_rate": 0.045,
+   "propietario_rut": "16.610.203-0",
+   "avaluo_total": 339809429,
+   "estado_conservacion": "Bueno",
+   "sup_construida_total": 0,
+   "contribucion_anual": 0,
+   "coef_ocupacion_suelo": 0,
+   "cod_sii_predio": "40",
+   "material_predominante": "ALBAÑILERÍA LADRILLO",
+   "dfl2": "NO",
+   "fecha_creacion": "2026-09-22T16:43:04.000Z",
+   "fecha_ultima_modificacion": "2026-09-27T17:01:56.000Z",
+   "anio_construccion": 2020
+  }
+ },
+ "TX_ItemsCuadroValoracion_creados": [
+  {
+   "id": "recnIInvI1IchIfX2",
+   "createdTime": "2026-09-27T17:01:57.000Z",
+   "fields": {
+    "item_id": 13,
+    "valor_uf": 11218.8,
+    "tipo_item": "Terreno",
+    "factor_aplicado": 1,
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "nombre_item": "Terreno",
+    "sup_m2": 1402.35,
+    "uf_m2_unitario": 8,
+    "valoracion_por": "m2",
+    "anno_construccion": 51,
+    "detalle_no_garantia": "-",
+    "es_bien_no_garantia": 0,
+    "situacion_municipal": "Regularizado",
+    "ultima_modificacion": "2026-09-27T17:01:57.000Z",
+    "valor_seguro_item_uf": 0
+   }
+  },
+  {
+   "id": "recQuqMyXs7ttOHVb",
+   "createdTime": "2026-09-27T17:01:57.000Z",
+   "fields": {
+    "item_id": 14,
+    "valor_uf": 0,
+    "tipo_item": "Terreno",
+    "factor_aplicado": 1,
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "nombre_item": "Servidumbre",
+    "sup_m2": 3622.51,
+    "uf_m2_unitario": 0,
+    "valoracion_por": "m2",
+    "anno_construccion": 52,
+    "detalle_no_garantia": "-",
+    "es_bien_no_garantia": 0,
+    "situacion_municipal": "Regularizado",
+    "ultima_modificacion": "2026-09-27T17:01:57.000Z",
+    "valor_seguro_item_uf": 0
+   }
+  },
+  {
+   "id": "recZCOq0TTlzVouzP",
+   "createdTime": "2026-09-27T17:01:57.000Z",
+   "fields": {
+    "item_id": 15,
+    "valor_uf": 8157.0624,
+    "tipo_item": "Edificacion",
+    "factor_aplicado": 0.96,
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "nombre_item": "Piso 1",
+    "sup_m2": 249.91,
+    "uf_m2_unitario": 34,
+    "valoracion_por": "m2",
+    "anno_construccion": 53,
+    "detalle_no_garantia": "-",
+    "es_bien_no_garantia": 0,
+    "situacion_municipal": "Regularizado",
+    "ultima_modificacion": "2026-09-27T17:01:57.000Z",
+    "valor_seguro_item_uf": 8157.0624
+   }
+  },
+  {
+   "id": "recTV6R4rxuDyamYG",
+   "createdTime": "2026-09-27T17:01:57.000Z",
+   "fields": {
+    "item_id": 16,
+    "valor_uf": 350,
+    "tipo_item": "Piscina",
+    "factor_aplicado": 1,
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "nombre_item": "Piscina",
+    "sup_m2": 1,
+    "uf_m2_unitario": 350,
+    "valoracion_por": "unidad",
+    "anno_construccion": 54,
+    "detalle_no_garantia": "-",
+    "es_bien_no_garantia": 0,
+    "situacion_municipal": "Regularizado",
+    "ultima_modificacion": "2026-09-27T17:01:57.000Z",
+    "valor_seguro_item_uf": 350
+   }
+  },
+  {
+   "id": "rechm7Py8l1qtcMzl",
+   "createdTime": "2026-09-27T17:01:57.000Z",
+   "fields": {
+    "item_id": 17,
+    "valor_uf": 250,
+    "tipo_item": "OO.CC.",
+    "factor_aplicado": 1,
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "nombre_item": "Quincho, terrazas, bodega",
+    "sup_m2": 1,
+    "uf_m2_unitario": 250,
+    "valoracion_por": "unidad",
+    "anno_construccion": 55,
+    "detalle_no_garantia": "-",
+    "es_bien_no_garantia": 0,
+    "situacion_municipal": "Regularizado",
+    "ultima_modificacion": "2026-09-27T17:01:57.000Z",
+    "valor_seguro_item_uf": 250
+   }
+  },
+  {
+   "id": "recMBbJ4HHfZYOGTV",
+   "createdTime": "2026-09-27T17:01:57.000Z",
+   "fields": {
+    "item_id": 18,
+    "valor_uf": 150,
+    "tipo_item": "OO.CC.",
+    "factor_aplicado": 1,
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "nombre_item": "Cierros, pavimento exterior",
+    "sup_m2": 1,
+    "uf_m2_unitario": 150,
+    "valoracion_por": "unidad",
+    "anno_construccion": 56,
+    "detalle_no_garantia": "-",
+    "es_bien_no_garantia": 0,
+    "situacion_municipal": "Regularizado",
+    "ultima_modificacion": "2026-09-27T17:01:57.000Z",
+    "valor_seguro_item_uf": 150
+   }
+  }
+ ],
+ "TX_Comparables_preexistentes_RF09": [
+  {
+   "id": "rec2aFg7XPsbSjufp",
+   "createdTime": "2026-09-22T16:45:11.000Z",
+   "fields": {
+    "oo_cc_uf": 750,
+    "adjunto_origen": [
+     "rectcojWwOIonkQRA"
+    ],
+    "antiguedad_meses": {
+     "specialValue": "NaN"
+    },
+    "ultima_modificacion": "2026-09-22T16:45:14.000Z",
+    "tipo_referencia": "Oferta",
+    "comp_id": 125,
+    "telefono_contacto": "979998714",
+    "anio": 2015,
+    "precio_uf": 20000,
+    "clave_natural": "VP-2026-0067|COMP-01",
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "valor_ajustado_uf": 0,
+    "valor_uf_m2": 0,
+    "sup_terreno_m2": 5051,
+    "sup_construccion_m2": 239,
+    "uf_m2_terreno": 3.959611958028113,
+    "direccion": "Las Brisas de Chicureo - Los Boldos",
+    "uf_m2_construccion": 83.68200836820084,
+    "uf_m2_terreno_f": 2.2,
+    "uf_m2_construccion_f": 34.05,
+    "fecha_publicacion": "2026-04-01"
+   }
+  },
+  {
+   "id": "recXGxAeVg2ThVUfQ",
+   "createdTime": "2026-09-22T16:45:14.000Z",
+   "fields": {
+    "oo_cc_uf": 750,
+    "adjunto_origen": [
+     "rectcojWwOIonkQRA"
+    ],
+    "antiguedad_meses": {
+     "specialValue": "NaN"
+    },
+    "ultima_modificacion": "2026-09-22T16:45:16.000Z",
+    "tipo_referencia": "Oferta",
+    "comp_id": 126,
+    "telefono_contacto": "989225642",
+    "anio": 2016,
+    "precio_uf": 24900,
+    "clave_natural": "VP-2026-0067|COMP-02",
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "valor_ajustado_uf": 0,
+    "valor_uf_m2": 0,
+    "sup_terreno_m2": 5077,
+    "sup_construccion_m2": 239,
+    "uf_m2_terreno": 4.9044711443766005,
+    "direccion": "Las Brisas de Chicureo - La Viña 1060",
+    "uf_m2_construccion": 104.18410041841004,
+    "uf_m2_terreno_f": 3.1,
+    "uf_m2_construccion_f": 35.19,
+    "fecha_publicacion": "2026-04-01"
+   }
+  },
+  {
+   "id": "recKGLWdMaK0lrXCh",
+   "createdTime": "2026-09-22T16:45:16.000Z",
+   "fields": {
+    "oo_cc_uf": 500,
+    "adjunto_origen": [
+     "rectcojWwOIonkQRA"
+    ],
+    "antiguedad_meses": {
+     "specialValue": "NaN"
+    },
+    "ultima_modificacion": "2026-09-22T16:45:19.000Z",
+    "tipo_referencia": "Oferta",
+    "comp_id": 127,
+    "telefono_contacto": "936820393",
+    "anio": 2017,
+    "precio_uf": 19500,
+    "clave_natural": "VP-2026-0067|COMP-03",
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "valor_ajustado_uf": 0,
+    "valor_uf_m2": 0,
+    "sup_terreno_m2": 5001,
+    "sup_construccion_m2": 252,
+    "uf_m2_terreno": 3.8992201559688064,
+    "direccion": "La Viña & La Vendimia",
+    "uf_m2_construccion": 77.38095238095238,
+    "uf_m2_terreno_f": 2,
+    "uf_m2_construccion_f": 35.71,
+    "fecha_publicacion": "2026-04-01"
+   }
+  },
+  {
+   "id": "recUAawogrtK3AJ59",
+   "createdTime": "2026-09-22T16:45:19.000Z",
+   "fields": {
+    "oo_cc_uf": 750,
+    "adjunto_origen": [
+     "rectcojWwOIonkQRA"
+    ],
+    "antiguedad_meses": {
+     "specialValue": "NaN"
+    },
+    "ultima_modificacion": "2026-09-22T16:45:22.000Z",
+    "tipo_referencia": "Oferta",
+    "comp_id": 128,
+    "telefono_contacto": "995394000",
+    "anio": 2005,
+    "precio_uf": 23900,
+    "clave_natural": "VP-2026-0067|COMP-04",
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "valor_ajustado_uf": 0,
+    "valor_uf_m2": 0,
+    "sup_terreno_m2": 5012,
+    "sup_construccion_m2": 258,
+    "uf_m2_terreno": 4.768555466879489,
+    "direccion": "Las Brisas 1-300",
+    "uf_m2_construccion": 92.63565891472868,
+    "uf_m2_terreno_f": 3,
+    "uf_m2_construccion_f": 31.45,
+    "fecha_publicacion": "2026-04-01"
+   }
+  },
+  {
+   "id": "recniOUZHto7ZaA1E",
+   "createdTime": "2026-09-22T16:45:22.000Z",
+   "fields": {
+    "oo_cc_uf": 500,
+    "adjunto_origen": [
+     "rectcojWwOIonkQRA"
+    ],
+    "antiguedad_meses": {
+     "specialValue": "NaN"
+    },
+    "ultima_modificacion": "2026-09-22T16:45:24.000Z",
+    "tipo_referencia": "Oferta",
+    "comp_id": 129,
+    "telefono_contacto": "942182983",
+    "anio": 2023,
+    "precio_uf": 18900,
+    "clave_natural": "VP-2026-0067|COMP-05",
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "valor_ajustado_uf": 0,
+    "valor_uf_m2": 0,
+    "sup_terreno_m2": 5000,
+    "sup_construccion_m2": 264,
+    "uf_m2_terreno": 3.78,
+    "direccion": "Liray - Lo Pinto",
+    "uf_m2_construccion": 71.5909090909091,
+    "uf_m2_terreno_f": 2,
+    "uf_m2_construccion_f": 31.82,
+    "fecha_publicacion": "2026-04-01"
+   }
+  },
+  {
+   "id": "recmizO68egY2SUiR",
+   "createdTime": "2026-09-22T16:45:24.000Z",
+   "fields": {
+    "oo_cc_uf": 700,
+    "adjunto_origen": [
+     "rectcojWwOIonkQRA"
+    ],
+    "antiguedad_meses": {
+     "specialValue": "NaN"
+    },
+    "numero": "55521",
+    "ultima_modificacion": "2026-09-22T16:45:27.000Z",
+    "tipo_referencia": "CBR",
+    "comp_id": 130,
+    "foja": "40132",
+    "anio": 1996,
+    "precio_uf": 20500,
+    "clave_natural": "VP-2026-0067|COMP-06",
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "valor_ajustado_uf": 0,
+    "valor_uf_m2": 0,
+    "sup_terreno_m2": 5002,
+    "sup_construccion_m2": 250,
+    "uf_m2_terreno": 4.098360655737705,
+    "direccion": "Chicureo 3 LT 40",
+    "uf_m2_construccion": 82,
+    "uf_m2_terreno_f": 2.7,
+    "uf_m2_construccion_f": 25.18,
+    "fecha_publicacion": "2025-03-01"
+   }
+  },
+  {
+   "id": "recD9eZEG2Ilpm2lx",
+   "createdTime": "2026-09-22T16:45:27.000Z",
+   "fields": {
+    "oo_cc_uf": 700,
+    "adjunto_origen": [
+     "rectcojWwOIonkQRA"
+    ],
+    "antiguedad_meses": {
+     "specialValue": "NaN"
+    },
+    "numero": "66056",
+    "ultima_modificacion": "2026-09-22T16:45:29.000Z",
+    "tipo_referencia": "CBR",
+    "comp_id": 131,
+    "foja": "47523",
+    "anio": 2004,
+    "precio_uf": 18000,
+    "clave_natural": "VP-2026-0067|COMP-07",
+    "solicitud": [
+     "recmMzeu3eWGxyXsf"
+    ],
+    "valor_ajustado_uf": 0,
+    "valor_uf_m2": 0,
+    "sup_terreno_m2": 5013,
+    "sup_construccion_m2": 360,
+    "uf_m2_terreno": 3.5906642728904847,
+    "direccion": "Las Brisas 3 MZ A LT 12",
+    "uf_m2_construccion": 50,
+    "uf_m2_terreno_f": 1.8,
+    "uf_m2_construccion_f": 22.99,
+    "fecha_publicacion": "2025-05-01"
+   }
+  }
+ ]
+}

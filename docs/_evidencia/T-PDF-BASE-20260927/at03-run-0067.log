@@ -1,0 +1,51 @@
+[harness] primarios cacheados: 810 records
+[harness] ejecutando AT03 real sobre recmMzeu3eWGxyXsf …
+[AT03_v32] Procesando: VP-2026-0067
+  OVERRIDES v32: tasa_cap=0 vida_util=0 valor_final=0 valor_repo=0 valor_gar=0
+  OVERRIDES v32 (legado): seg=0 liq=0 rem=0 rem65=0 renta=0 ing=0 df=0 ufm2=0 fr=0 fl=0
+  CLEANUP TX_Calculos previos para VP-2026-0067
+  Datos tasacion: 23 campos
+  CLIENTE: MetLife fs=1 fg=0.8 tasa_cap_efectivo=0.045 (override=0)
+  INPUTS: tipo=Casa anio=2020 sup_c=249.91 sup_t=5024.86 mat=ALBAÑILERÍA LADRILLO cal=BUENA velocidad=8 a 10 meses coef_estado=0.95
+  LOOKUPS: vida_util=70 uf_m2_nuevo=22 factor_remate=0.65 obras_comp=0
+  CUADRO: filas=6 edif=8157.0624 edif_nuevo=8496.94 terreno=11218.8 occ=750 sup_terreno=5024.860000000001 seguro_base=8907.062399999999
+  COMPARABLES: filas=7 validas=7 promedio_uf_m2=30.912313602499562
+  REGLA formulas_resultado: F_IngresoLiquidoAnualCLP,F_RentaPerpetuaCLP,F_ValorComercialUF,F_ValorComercialCLP,F_ValorReposicionUF,F_SeguroIncendioUF,F_AvaluoFiscalUF,F_ValorRemateUF,F_ValorLiquidacionUF,F_ValorReposicionCLP,F_SeguroIncendioCLP,F_ValorRemateCLP,F_ValorLiquidacionCLP,F_UFm2_promedio,F_DesviacionVsPromedio
+  Formulas a ejecutar: 15
+  v32 DIAGNOSTICO CANDIDATOS DE VALOR:
+    ESCRIBIBLES: valor_calculado(number), numero_resultado(number), resultado(number)
+    COMPUTED   : (ninguno)
+    FALTANTES  : valor, outcome
+    [F_UFm2_promedio] promedio_uf_m2_muestra = 30.912313602499562 (eval_ok)
+    [F_UFm2_promedio] promedio_uf_m2_muestra = 30.912313602499562 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_IngresoLiquidoAnualCLP] ingreso_liquido_anual_clp = 36300000 (eval_ok)
+    [F_IngresoLiquidoAnualCLP] ingreso_liquido_anual_clp = 36300000 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_RentaPerpetuaCLP] renta_perpetua_clp = 806666666.6666667 (eval_ok)
+    [F_RentaPerpetuaCLP] renta_perpetua_clp = 806666666.6666667 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorComercialUF] valor_comercial_uf = 20125.862399999998 (eval_ok)
+    [F_ValorComercialUF] valor_comercial_uf = 20125.862399999998 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorComercialCLP] valor_comercial_clp = 802913431.3616639 (eval_ok)
+    [F_ValorComercialCLP] valor_comercial_clp = 802913431.3616639 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorReposicionUF] valor_reposicion_uf = 9246.94 (eval_ok)
+    [F_ValorReposicionUF] valor_reposicion_uf = 9246.94 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_SeguroIncendioUF] seguro_incendio_uf = 8907.062399999999 (eval_ok)
+    [F_SeguroIncendioUF] seguro_incendio_uf = 8907.062399999999 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_AvaluoFiscalUF] avaluo_fiscal_uf = 8517.67767625752 (eval_ok)
+    [F_AvaluoFiscalUF] avaluo_fiscal_uf = 8517.67767625752 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorRemateUF] valor_remate_uf = 13081.81056 (eval_ok)
+    [F_ValorRemateUF] valor_remate_uf = 13081.81056 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorLiquidacionUF] valor_liquidacion_uf = 16603.836479999998 (eval_ok)
+    [F_ValorLiquidacionUF] valor_liquidacion_uf = 16603.836479999998 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorReposicionCLP] valor_reposicion_clp = 368903064.99340004 (eval_ok)
+    [F_ValorReposicionCLP] valor_reposicion_clp = 368903064.99340004 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_SeguroIncendioCLP] seguro_incendio_clp = 355343780.69366395 (eval_ok)
+    [F_SeguroIncendioCLP] seguro_incendio_clp = 355343780.69366395 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorRemateCLP] valor_remate_clp = 521893730.3850816 (eval_ok)
+    [F_ValorRemateCLP] valor_remate_clp = 521893730.3850816 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_ValorLiquidacionCLP] valor_liquidacion_clp = 662403580.8733728 (eval_ok)
+    [F_ValorLiquidacionCLP] valor_liquidacion_clp = 662403580.8733728 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+    [F_DesviacionVsPromedio] desviacion_vs_promedio_pct = 160.51897090080166 (eval_ok)
+    [F_DesviacionVsPromedio] desviacion_vs_promedio_pct = 160.51897090080166 (eval_ok) | esc=resultado,valor_calculado,numero_resultado + notas:RES=
+  TX_Calculos escritos: 15/15
+[AT03_v32] FIN OK -- 18225 ms
+[harness] FIN OK en 19.5s

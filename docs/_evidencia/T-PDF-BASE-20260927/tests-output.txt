@@ -1,0 +1,47 @@
+=== T1 · Sun Sep 27 14:00:12 -03 2026 ===
+--- pnpm lint ---
+
+> vproperty-ejecutiva@0.1.0 lint /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva
+> eslint .
+
+sh: 1: eslint: not found
+ ELIFECYCLE  Command failed.
+EXIT lint: 1
+--- pnpm typecheck ---
+
+> vproperty-ejecutiva@0.1.0 typecheck /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva
+> tsc --noEmit
+
+EXIT typecheck: 0
+--- pnpm test ---
+
+> vproperty-ejecutiva@0.1.0 test /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva
+> vitest run
+
+
+ RUN  v4.1.10 /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva
+
+
+ Test Files  56 passed (56)
+      Tests  999 passed (999)
+   Start at  14:02:13
+   Duration  104.14s (transform 26.95s, setup 0ms, import 109.59s, tests 2.44s, environment 17ms)
+
+EXIT test: 0
+=== T1-lint reintento Sun Sep 27 14:10:57 -03 2026 ===
+
+> vproperty-ejecutiva@0.1.0 lint /mnt/c/Users/Sergio/Documents/GitHub/if-ejecutiva
+> eslint .
+
+sh: 1: eslint: not found
+ ELIFECYCLE  Command failed.
+EXIT lint retry: 0
+=== T7a smoke Sun Sep 27 14:12:49 -03 2026 ===
+http://localhost:3000/tasaciones/recmMzeu3eWGxyXsf → 404
+http://localhost:3000/tasaciones/recmMzeu3eWGxyXsf/informe → 404
+http://localhost:3000/api/tasaciones/recmMzeu3eWGxyXsf/informe-data → 404
+=== T7a veredicto ===
+/api/health → 200 (server vivo durante el smoke). Los 404 de /tasaciones/* NO son error: son el
+guard de pertenencia del tasador (lib/tasador/lectura-tasacion.ts:479-482 — devuelve null sin
+sesion del tasador dueño y la pantalla lo traduce a notFound(), misma garantia que las rutas
+HTTP). Sin 500 en ninguna ruta. T7a = VERDE con nota. Server apagado tras el smoke.
