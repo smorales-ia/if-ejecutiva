@@ -476,8 +476,11 @@ export async function construirInformeContexto(
       arriendoUfMes: null,
     },
     textosIA: {
-      sintesisPropiedad: null,
-      descripcionSector: null,
+      /* Puente SC-Textos (T-PDF-IMPRENTA-20260927): el escenario escribe estas
+         dos columnas de TX_DatosTasacion. `textoExpropiacion` sigue sin columna
+         (P1-1); su hueco estructural queda declarado. */
+      sintesisPropiedad: texto(d.sintesis_descriptiva) || null,
+      descripcionSector: texto(d.descripcion_sector) || null,
       textoExpropiacion: null,
     },
     cualitativa,

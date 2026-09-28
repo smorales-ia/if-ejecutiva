@@ -1,0 +1,17 @@
+import { it } from 'vitest'
+import { writeFileSync } from 'node:fs'
+import { construirInformeContexto } from '@/lib/informe/ensamblador'
+
+it('dump InformeContexto VP-2026-0067', async () => {
+  const id = 'recmMzeu3eWGxyXsf'
+  const res = await fetch(
+    `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/tblaHTyMHYfmy7Fg6/${id}`,
+    { headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` } },
+  )
+  const rec = await res.json()
+  const contexto = await construirInformeContexto(id, rec.fields)
+  writeFileSync(
+    'docs/_evidencia/T-PDF-IMPRENTA-20260927/payload-carbone-0067.json',
+    JSON.stringify(contexto, null, 1),
+  )
+}, 120000)

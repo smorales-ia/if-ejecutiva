@@ -1,0 +1,910 @@
+{
+ "meta": {
+  "codigo": "VP-2026-0067",
+  "codigoExt": "VP-2026-0067",
+  "nOperacionCliente": 900159638,
+  "numeroSolicitudCliente": "METLIFE-6283-REAL",
+  "estado": "calculada",
+  "version": null,
+  "fechaEmision": null
+ },
+ "clienteInforme": {
+  "nombre": "MetLife",
+  "logoUrl": null,
+  "nombreRevisor": null
+ },
+ "partes": {
+  "propietario": "FRANCISCO JOSE VERGARA UNDURRAGA",
+  "rut": "16.610.203-0",
+  "ejecutivo": "MONICA REYES PINTO",
+  "tasador": {
+   "nombre": "Nelcy Jaimes",
+   "firmaUrl": null
+  },
+  "visador": {
+   "nombre": "Héctor Martínez C."
+  },
+  "fechaVisita": "2026-04-13",
+  "fechaVisado": null
+ },
+ "propiedad": {
+  "direccion": "LOS EUCALIPTUS 2100",
+  "comuna": "Colina",
+  "region": "Metropolitana de Santiago",
+  "tipoPropiedad": "Casa",
+  "objetivo": "Refinanciamiento",
+  "nuevoUsado": "usada",
+  "proyectoCondominio": "LAS BRISAS DE CHICUREO",
+  "supTerrenoM2": 5024.86,
+  "supConstruccionM2": 249.91,
+  "supPrimerPisoM2": null,
+  "supConstruidaTotal": 0,
+  "anioConstruccion": 2020,
+  "materialPredominante": "ALBAÑILERÍA LADRILLO",
+  "calidadConstruccion": null,
+  "estadoConservacion": "Bueno",
+  "agrupacion": "",
+  "orientacion": "N",
+  "pisos": 1,
+  "dormitorios": 4,
+  "banos": 4,
+  "estacionamientos": 4,
+  "bodegas": 1,
+  "dfl2": "NO",
+  "velocidadVentaEstimada": "8 a 10 meses",
+  "tipoZonaDescripcion": "Rural - IPB Colina",
+  "vidaUtil": null
+ },
+ "sii": {
+  "rolSii": "00882-00040",
+  "avaluoTotal": 339809429,
+  "avaluoFiscalUf": 339809429,
+  "avaluoExento": 0,
+  "contribucionAnual": 0,
+  "calidadSii": "",
+  "destinoSii": "HABITACIONAL",
+  "codComuna": "14201",
+  "codManzana": "882",
+  "codPredio": "40",
+  "ubicacionUrbanoRural": "rural",
+  "cg": "",
+  "ociv": "",
+  "oc": "",
+  "g": "",
+  "porUnidad": []
+ },
+ "cuadro": {
+  "items": [
+   {
+    "id": "recMBbJ4HHfZYOGTV",
+    "orden": 18,
+    "descripcion": "Cierros, pavimento exterior",
+    "tipoItem": "OO.CC.",
+    "supM2": 1,
+    "ufM2Aplicado": 150,
+    "factorAplicado": 1,
+    "ufTotalItem": 150,
+    "aportaAGarantia": false,
+    "situacionMunicipal": "Regularizado"
+   },
+   {
+    "id": "recQuqMyXs7ttOHVb",
+    "orden": 14,
+    "descripcion": "Servidumbre",
+    "tipoItem": "Terreno",
+    "supM2": 3622.51,
+    "ufM2Aplicado": 0,
+    "factorAplicado": 1,
+    "ufTotalItem": 0,
+    "aportaAGarantia": false,
+    "situacionMunicipal": "Regularizado"
+   },
+   {
+    "id": "recTV6R4rxuDyamYG",
+    "orden": 16,
+    "descripcion": "Piscina",
+    "tipoItem": "Piscina",
+    "supM2": 1,
+    "ufM2Aplicado": 350,
+    "factorAplicado": 1,
+    "ufTotalItem": 350,
+    "aportaAGarantia": false,
+    "situacionMunicipal": "Regularizado"
+   },
+   {
+    "id": "recZCOq0TTlzVouzP",
+    "orden": 15,
+    "descripcion": "Piso 1",
+    "tipoItem": "Edificacion",
+    "supM2": 249.91,
+    "ufM2Aplicado": 34,
+    "factorAplicado": 0.96,
+    "ufTotalItem": 8157.0624,
+    "aportaAGarantia": false,
+    "situacionMunicipal": "Regularizado"
+   },
+   {
+    "id": "rechm7Py8l1qtcMzl",
+    "orden": 17,
+    "descripcion": "Quincho, terrazas, bodega",
+    "tipoItem": "OO.CC.",
+    "supM2": 1,
+    "ufM2Aplicado": 250,
+    "factorAplicado": 1,
+    "ufTotalItem": 250,
+    "aportaAGarantia": false,
+    "situacionMunicipal": "Regularizado"
+   },
+   {
+    "id": "recnIInvI1IchIfX2",
+    "orden": 13,
+    "descripcion": "Terreno",
+    "tipoItem": "Terreno",
+    "supM2": 1402.35,
+    "ufM2Aplicado": 8,
+    "factorAplicado": 1,
+    "ufTotalItem": 11218.8,
+    "aportaAGarantia": false,
+    "situacionMunicipal": "Regularizado"
+   }
+  ],
+  "totalUf": 20125.862399999998
+ },
+ "terminales": {
+  "valorComercialUf": 20125.862399999998,
+  "valorComercialClp": 802913431.3616639,
+  "valorReposicionUf": 9246.94,
+  "valorReposicionClp": 368903064.99340004,
+  "seguroIncendioUf": 8907.062399999999,
+  "seguroIncendioClp": 355343780.69366395,
+  "avaluoFiscalUf": 8517.67767625752,
+  "valorRemateUf": 13081.81056,
+  "valorRemateClp": 521893730.3850816,
+  "valorLiquidacionUf": 16603.836479999998,
+  "valorLiquidacionClp": 662403580.8733728,
+  "rentaPerpetuaClp": 806666666.6666667,
+  "ingresoLiquidoAnualClp": 36300000,
+  "ufDia": 39894.61,
+  "usdDia": null,
+  "fechaUf": null
+ },
+ "comparablesInforme": {
+  "filas": [
+   {
+    "id": "rec2aFg7XPsbSjufp",
+    "direccion": "Las Brisas de Chicureo - Los Boldos",
+    "comuna": "",
+    "supTerreno": 5051,
+    "supConstruida": 239,
+    "precioUf": 20000,
+    "anio": 2015,
+    "tipoReferencia": "Oferta",
+    "ufM2Construccion": 34.049372384937236
+   },
+   {
+    "id": "recD9eZEG2Ilpm2lx",
+    "direccion": "Las Brisas 3 MZ A LT 12",
+    "comuna": "",
+    "supTerreno": 5013,
+    "supConstruida": 360,
+    "precioUf": 18000,
+    "anio": 2004,
+    "tipoReferencia": "CBR",
+    "ufM2Construccion": 22.990555555555556
+   },
+   {
+    "id": "recKGLWdMaK0lrXCh",
+    "direccion": "La Viña & La Vendimia",
+    "comuna": "",
+    "supTerreno": 5001,
+    "supConstruida": 252,
+    "precioUf": 19500,
+    "anio": 2017,
+    "tipoReferencia": "Oferta",
+    "ufM2Construccion": 35.70634920634921
+   },
+   {
+    "id": "recUAawogrtK3AJ59",
+    "direccion": "Las Brisas 1-300",
+    "comuna": "",
+    "supTerreno": 5012,
+    "supConstruida": 258,
+    "precioUf": 23900,
+    "anio": 2005,
+    "tipoReferencia": "Oferta",
+    "ufM2Construccion": 31.449612403100776
+   },
+   {
+    "id": "recXGxAeVg2ThVUfQ",
+    "direccion": "Las Brisas de Chicureo - La Viña 1060",
+    "comuna": "",
+    "supTerreno": 5077,
+    "supConstruida": 239,
+    "precioUf": 24900,
+    "anio": 2016,
+    "tipoReferencia": "Oferta",
+    "ufM2Construccion": 35.19372384937238
+   },
+   {
+    "id": "recmizO68egY2SUiR",
+    "direccion": "Chicureo 3 LT 40",
+    "comuna": "",
+    "supTerreno": 5002,
+    "supConstruida": 250,
+    "precioUf": 20500,
+    "anio": 1996,
+    "tipoReferencia": "CBR",
+    "ufM2Construccion": 25.178399999999993
+   },
+   {
+    "id": "recniOUZHto7ZaA1E",
+    "direccion": "Liray - Lo Pinto",
+    "comuna": "",
+    "supTerreno": 5000,
+    "supConstruida": 264,
+    "precioUf": 18900,
+    "anio": 2023,
+    "tipoReferencia": "Oferta",
+    "ufM2Construccion": 31.818181818181817
+   }
+  ],
+  "promedioUfM2": 30.912313602499562,
+  "usadosEnPromedio": 7,
+  "cumpleMinimo": true,
+  "tasacionUfM2": 80.53244127886039,
+  "tasacionVsPct": 160.51897090080166
+ },
+ "rentabilidad": {
+  "arriendoBrutoMensualClp": 3300000,
+  "gastoAnualClp": 3300000,
+  "ingresoLiquidoAnualClp": 36300000,
+  "rentaPerpetuaClp": 806666666.6666667,
+  "tasaCapRate": 0.045,
+  "arriendoUfMes": null
+ },
+ "textosIA": {
+  "sintesisPropiedad": "La propiedad corresponde a una casa ubicada en Los Eucaliptus N° 2100, condominio Las Brisas de Chicureo, comuna de Colina, Región Metropolitana de Santiago. El inmueble se emplaza en un terreno de 5.024,86 m2 con una superficie construida de 249,91 m2, desarrollada en un solo nivel. La materialidad predominante es albañilería ladrillo y su estado de conservación es bueno. El programa contempla recintos de uso habitacional y de servicio distribuidos en planta única. La propiedad se ubica en zona rural dentro del límite comunal de Colina.",
+  "descripcionSector": "El sector corresponde a una zona rural de la comuna de Colina, en la Región Metropolitana de Santiago. Predominan condominios de baja densidad insertos en paños de terreno de gran superficie. La conectividad se articula a través de vías intercomunales que vinculan el área con los centros urbanos de la comuna. Colina cuenta con servicios comerciales, educacionales y de salud concentrados principalmente en su casco urbano.",
+  "textoExpropiacion": null
+ },
+ "cualitativa": {
+  "normativa": null,
+  "sector": null,
+  "geometriaTerreno": null,
+  "emplazamiento": null,
+  "constructivas": null,
+  "servicios": null,
+  "comodidades": null,
+  "detallePropiedad": null
+ },
+ "recintos": {
+  "ampliaciones": [],
+  "habitacionesPorNivel": [
+   {
+    "id": "rec5LRrxMRYeXImUW",
+    "nivel": "Piso1",
+    "tipoRecinto": "Bano",
+    "cantidad": 1
+   },
+   {
+    "id": "rec7BKSfhPhKJshtF",
+    "nivel": "Piso1",
+    "tipoRecinto": "D.Servicio",
+    "cantidad": 1
+   },
+   {
+    "id": "recFxdYpaFDstXsFC",
+    "nivel": "Piso1",
+    "tipoRecinto": "Living",
+    "cantidad": 1
+   },
+   {
+    "id": "recGj1VoH6b2PboOr",
+    "nivel": "Piso1",
+    "tipoRecinto": "Lavadero",
+    "cantidad": 1
+   },
+   {
+    "id": "recKBxWV8flOICDTY",
+    "nivel": "Piso1",
+    "tipoRecinto": "Otro",
+    "cantidad": 1
+   },
+   {
+    "id": "recL3B487noW4qrsL",
+    "nivel": "Piso1",
+    "tipoRecinto": "Sala",
+    "cantidad": 1
+   },
+   {
+    "id": "recTHqfySqehAwT56",
+    "nivel": "Piso1",
+    "tipoRecinto": "D.Simple",
+    "cantidad": 3
+   },
+   {
+    "id": "recfd0RTx4q3xqrSc",
+    "nivel": "Piso1",
+    "tipoRecinto": "Bano",
+    "cantidad": 3
+   },
+   {
+    "id": "recnMeFfU9jTfBAf6",
+    "nivel": "Piso1",
+    "tipoRecinto": "Comedor",
+    "cantidad": 1
+   },
+   {
+    "id": "recr5qBotjKdqKLtT",
+    "nivel": "Piso1",
+    "tipoRecinto": "Suite",
+    "cantidad": 1
+   },
+   {
+    "id": "recrRdpUe5EsxoAFH",
+    "nivel": "Piso1",
+    "tipoRecinto": "Cocina",
+    "cantidad": 1
+   }
+  ],
+  "terminacionesPorRecinto": []
+ },
+ "fotos": {
+  "total": 0,
+  "porCategoria": {},
+  "fotos": []
+ },
+ "anexos": {
+  "documentos": [
+   {
+    "id": "rec7t6MPxKu10WniF",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/inscripcion_dominio_cbr_Met6283.docx"
+   },
+   {
+    "id": "rec95X1HPJB7ZUo5G",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/permiso_edificacion_Met6283.pdf"
+   },
+   {
+    "id": "recWdb4FAphNaTE0I",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/foto_fuente_sii_Met6283.jpg"
+   },
+   {
+    "id": "rechQjmqpb3HMWyeb",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/certificado_deuda_tgr_Met6283.pdf"
+   },
+   {
+    "id": "reckRZ0e9mwtR6xCC",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/consulta_antecedentes_bien_raiz_Met6283.pdf"
+   },
+   {
+    "id": "recpI0wPyESJ0Etvs",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/informe_no_expropiacion_serviu_Met6283.pdf"
+   },
+   {
+    "id": "rectCtwDMT2mwN4GO",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/certificado_recepcion_final_Met6283.pdf"
+   },
+   {
+    "id": "rectcojWwOIonkQRA",
+    "nombre": "",
+    "tipo": "",
+    "url": "/VProperty/met-6283-real/foto_comparables_Met6283.jpg"
+   }
+  ]
+ },
+ "mapa": {
+  "staticMapUrl": null,
+  "lat": null,
+  "long": null
+ },
+ "legales": {
+  "fojas": "13291",
+  "numeroInscripcion": "21565",
+  "anoInscripcion": 2006,
+  "permisoEdificacion": "319-2020",
+  "recepcionFinal": "210-2024"
+ },
+ "huecos": [
+  {
+   "ruta": "textosIA.sintesisPropiedad",
+   "eIds": [
+    "E-59",
+    "E-60"
+   ],
+   "pId": "P0-2",
+   "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+  },
+  {
+   "ruta": "textosIA.descripcionSector",
+   "eIds": [
+    "E-59",
+    "E-60"
+   ],
+   "pId": "P0-2",
+   "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+  },
+  {
+   "ruta": "textosIA.textoExpropiacion",
+   "eIds": [
+    "E-57"
+   ],
+   "pId": "P1-1",
+   "motivo": "Plantilla con variables; falta la columna afecto_expropiacion"
+  },
+  {
+   "ruta": "cualitativa.detallePropiedad",
+   "eIds": [
+    "E-37",
+    "E-39",
+    "E-41",
+    "E-45",
+    "E-52",
+    "E-56",
+    "E-54",
+    "E-55"
+   ],
+   "pId": "P1-1",
+   "motivo": "La UI captura y descarta (CI-023): sin columnas destino"
+  },
+  {
+   "ruta": "cualitativa.constructivas",
+   "eIds": [
+    "E-176..E-191"
+   ],
+   "pId": "P1-1",
+   "motivo": "La UI captura y descarta (6 CI-023 + 7 silenciosos): sin columnas"
+  },
+  {
+   "ruta": "cualitativa.comodidades",
+   "eIds": [
+    "E-207"
+   ],
+   "pId": "P1-1",
+   "motivo": "14 switches capturados y descartados; TX_Amenities no existe"
+  },
+  {
+   "ruta": "cualitativa.normativa",
+   "eIds": [
+    "E-125..E-140"
+   ],
+   "pId": "P1-2",
+   "motivo": "Sin catálogo normativo poblado ni UI (rescate M_Zonificacion en T4)"
+  },
+  {
+   "ruta": "cualitativa.sector",
+   "eIds": [
+    "E-141..E-146",
+    "E-148..E-157"
+   ],
+   "pId": "P1-2",
+   "motivo": "Mercado y sector sin UI ni columnas"
+  },
+  {
+   "ruta": "cualitativa.geometriaTerreno",
+   "eIds": [
+    "E-159..E-165"
+   ],
+   "pId": "P1-2",
+   "motivo": "Forma/pendiente/frente/deslindes sin UI ni columnas"
+  },
+  {
+   "ruta": "cualitativa.emplazamiento",
+   "eIds": [
+    "E-167..E-175"
+   ],
+   "pId": "P1-2",
+   "motivo": "Emplazamiento cualitativo sin UI ni columnas"
+  },
+  {
+   "ruta": "cualitativa.servicios",
+   "eIds": [
+    "E-197..E-201"
+   ],
+   "pId": "P1-2",
+   "motivo": "Servicios de la propiedad sin UI ni columnas"
+  },
+  {
+   "ruta": "terminales.usdDia",
+   "eIds": [
+    "E-103"
+   ],
+   "pId": "P1-3",
+   "motivo": "tipo_cambio_usd sin escritor automático (el cron UF no lo escribe; el valor de 0066 es seed manual)"
+  },
+  {
+   "ruta": "mapa.staticMapUrl",
+   "eIds": [
+    "E-120"
+   ],
+   "pId": "P1-4",
+   "motivo": "Google Static Maps sin implementación ni API key"
+  },
+  {
+   "ruta": "clienteInforme.logoUrl",
+   "eIds": [
+    "E-02"
+   ],
+   "pId": "P1-5",
+   "motivo": "C_VariablesCliente sin clientes reales (H9 — la portada MET salió con marca Austral)"
+  },
+  {
+   "ruta": "clienteInforme.nombreRevisor",
+   "eIds": [
+    "E-114"
+   ],
+   "pId": "P1-5",
+   "motivo": "C_VariablesCliente.nombre_revisor sin valor (H9)"
+  },
+  {
+   "ruta": "comparablesInforme.promedioUfM2",
+   "eIds": [
+    "E-66..E-68",
+    "E-73..E-75"
+   ],
+   "pId": "P1-8",
+   "motivo": "Promedios y fila TASACIÓN calculados por el ensamblador, sin persistencia (puente hasta T2)"
+  },
+  {
+   "ruta": "partes.tasador.firmaUrl",
+   "eIds": [
+    "E-111"
+   ],
+   "pId": "P1-9",
+   "motivo": "Imagen de firma sin mecanismo en M_Tasadores"
+  },
+  {
+   "ruta": "partes.fechaVisado",
+   "eIds": [
+    "E-113"
+   ],
+   "pId": "P1-9",
+   "motivo": "IF-04 (visación) no existe"
+  },
+  {
+   "ruta": "propiedad.vidaUtil",
+   "eIds": [
+    "E-48",
+    "E-76",
+    "E-81"
+   ],
+   "pId": "P1-9",
+   "motivo": "F_VidaUtil existe pero está fuera de la regla v32"
+  }
+ ],
+ "canonico": {
+  "id": "recmMzeu3eWGxyXsf",
+  "codigo": "VP-2026-0067",
+  "estado": "calculada",
+  "versionVigente": null,
+  "valorDestacado": {
+   "valorUf": null,
+   "capRate": 0.045,
+   "esOverride": false,
+   "ufDiaVisita": null
+  },
+  "datosSii": {
+   "rolSii": "00882-00040",
+   "avaluoTotal": 339809429,
+   "avaluoFiscalUf": 339809429,
+   "avaluoExento": 0,
+   "contribucionAnual": 0,
+   "calidadSii": "",
+   "destinoSii": "HABITACIONAL",
+   "codComuna": "14201",
+   "codManzana": "882",
+   "codPredio": "40",
+   "ubicacionUrbanoRural": "rural",
+   "cg": "",
+   "ociv": "",
+   "oc": "",
+   "g": "",
+   "porUnidad": []
+  },
+  "observaciones": {
+   "observacionesTasador": "",
+   "observacionRechazo": "",
+   "overrides": [],
+   "motivoOverride": "MET-6283-REAL · RF-09 en vivo con los 8 adjuntos reales de docs/_referencias/Met_6283 · SANDBOX aislado por notas+numero -REAL",
+   "autorOverride": "",
+   "antecedentesLegales": {
+    "fojas": "13291",
+    "numeroInscripcion": "21565",
+    "anoInscripcion": 2006,
+    "permisoEdificacion": "319-2020",
+    "recepcionFinal": "210-2024"
+   }
+  },
+  "bloques": [
+   {
+    "numero": 1,
+    "id": "cabecera",
+    "titulo": "Cabecera",
+    "vacio": false,
+    "datos": {
+     "codigo": "VP-2026-0067",
+     "codigoExt": "VP-2026-0067",
+     "nuevoUsado": "usada",
+     "cliente": [
+      "recIg8NtVhptXkEUJ"
+     ],
+     "direccion": "LOS EUCALIPTUS 2100",
+     "comuna": [
+      "recKT9mUJkeq3YuBu"
+     ],
+     "fechaVisita": "2026-04-13",
+     "version": null
+    }
+   },
+   {
+    "numero": 2,
+    "id": "valor",
+    "titulo": "Valor de tasación",
+    "vacio": true,
+    "datos": {
+     "valorUf": null,
+     "capRate": 0.045,
+     "esOverride": false,
+     "ufDiaVisita": null
+    }
+   },
+   {
+    "numero": 3,
+    "id": "antecedentes",
+    "titulo": "Antecedentes de la propiedad",
+    "vacio": false,
+    "datos": {
+     "supTerrenoM2": 5024.86,
+     "supConstruccionM2": 249.91,
+     "supPrimerPisoM2": null,
+     "supConstruidaTotal": 0,
+     "anioConstruccion": 2020,
+     "materialPredominante": "ALBAÑILERÍA LADRILLO",
+     "calidadConstruccion": null,
+     "estadoConservacion": "Bueno",
+     "agrupacion": "",
+     "dormitorios": 4,
+     "banos": 4,
+     "estacionamientos": 4,
+     "bodegas": 1,
+     "dfl2": "NO"
+    }
+   },
+   {
+    "numero": 4,
+    "id": "sii",
+    "titulo": "Datos SII y avalúo",
+    "vacio": false,
+    "datos": {
+     "rolSii": "00882-00040",
+     "avaluoTotal": 339809429,
+     "avaluoFiscalUf": 339809429,
+     "avaluoExento": 0,
+     "contribucionAnual": 0,
+     "calidadSii": "",
+     "destinoSii": "HABITACIONAL",
+     "codComuna": "14201",
+     "codManzana": "882",
+     "codPredio": "40",
+     "ubicacionUrbanoRural": "rural",
+     "cg": "",
+     "ociv": "",
+     "oc": "",
+     "g": "",
+     "porUnidad": []
+    }
+   },
+   {
+    "numero": 5,
+    "id": "valoracion",
+    "titulo": "Cuadro de valoración",
+    "vacio": false,
+    "datos": {
+     "items": [
+      {
+       "id": "recMBbJ4HHfZYOGTV",
+       "orden": null,
+       "descripcion": "",
+       "tipoItem": "OO.CC.",
+       "supM2": 1,
+       "ufM2Aplicado": null,
+       "ufTotalItem": null,
+       "aportaAGarantia": false,
+       "situacionMunicipal": "Regularizado"
+      },
+      {
+       "id": "recQuqMyXs7ttOHVb",
+       "orden": null,
+       "descripcion": "",
+       "tipoItem": "Terreno",
+       "supM2": 3622.51,
+       "ufM2Aplicado": null,
+       "ufTotalItem": null,
+       "aportaAGarantia": false,
+       "situacionMunicipal": "Regularizado"
+      },
+      {
+       "id": "recTV6R4rxuDyamYG",
+       "orden": null,
+       "descripcion": "",
+       "tipoItem": "Piscina",
+       "supM2": 1,
+       "ufM2Aplicado": null,
+       "ufTotalItem": null,
+       "aportaAGarantia": false,
+       "situacionMunicipal": "Regularizado"
+      },
+      {
+       "id": "recZCOq0TTlzVouzP",
+       "orden": null,
+       "descripcion": "",
+       "tipoItem": "Edificacion",
+       "supM2": 249.91,
+       "ufM2Aplicado": null,
+       "ufTotalItem": null,
+       "aportaAGarantia": false,
+       "situacionMunicipal": "Regularizado"
+      },
+      {
+       "id": "rechm7Py8l1qtcMzl",
+       "orden": null,
+       "descripcion": "",
+       "tipoItem": "OO.CC.",
+       "supM2": 1,
+       "ufM2Aplicado": null,
+       "ufTotalItem": null,
+       "aportaAGarantia": false,
+       "situacionMunicipal": "Regularizado"
+      },
+      {
+       "id": "recnIInvI1IchIfX2",
+       "orden": null,
+       "descripcion": "",
+       "tipoItem": "Terreno",
+       "supM2": 1402.35,
+       "ufM2Aplicado": null,
+       "ufTotalItem": null,
+       "aportaAGarantia": false,
+       "situacionMunicipal": "Regularizado"
+      }
+     ],
+     "totalUf": 0
+    }
+   },
+   {
+    "numero": 6,
+    "id": "comparables",
+    "titulo": "Comparables",
+    "vacio": false,
+    "datos": {
+     "comparables": [
+      {
+       "id": "rec2aFg7XPsbSjufp",
+       "direccion": "Las Brisas de Chicureo - Los Boldos",
+       "comuna": "",
+       "supTerreno": 5051,
+       "supConstruida": 239,
+       "precioUf": 20000,
+       "anio": 2015,
+       "tipoReferencia": "Oferta",
+       "ufM2Construccion": 34.049372384937236
+      },
+      {
+       "id": "recD9eZEG2Ilpm2lx",
+       "direccion": "Las Brisas 3 MZ A LT 12",
+       "comuna": "",
+       "supTerreno": 5013,
+       "supConstruida": 360,
+       "precioUf": 18000,
+       "anio": 2004,
+       "tipoReferencia": "CBR",
+       "ufM2Construccion": 22.990555555555556
+      },
+      {
+       "id": "recKGLWdMaK0lrXCh",
+       "direccion": "La Viña & La Vendimia",
+       "comuna": "",
+       "supTerreno": 5001,
+       "supConstruida": 252,
+       "precioUf": 19500,
+       "anio": 2017,
+       "tipoReferencia": "Oferta",
+       "ufM2Construccion": 35.70634920634921
+      },
+      {
+       "id": "recUAawogrtK3AJ59",
+       "direccion": "Las Brisas 1-300",
+       "comuna": "",
+       "supTerreno": 5012,
+       "supConstruida": 258,
+       "precioUf": 23900,
+       "anio": 2005,
+       "tipoReferencia": "Oferta",
+       "ufM2Construccion": 31.449612403100776
+      },
+      {
+       "id": "recXGxAeVg2ThVUfQ",
+       "direccion": "Las Brisas de Chicureo - La Viña 1060",
+       "comuna": "",
+       "supTerreno": 5077,
+       "supConstruida": 239,
+       "precioUf": 24900,
+       "anio": 2016,
+       "tipoReferencia": "Oferta",
+       "ufM2Construccion": 35.19372384937238
+      },
+      {
+       "id": "recmizO68egY2SUiR",
+       "direccion": "Chicureo 3 LT 40",
+       "comuna": "",
+       "supTerreno": 5002,
+       "supConstruida": 250,
+       "precioUf": 20500,
+       "anio": 1996,
+       "tipoReferencia": "CBR",
+       "ufM2Construccion": 25.178399999999993
+      },
+      {
+       "id": "recniOUZHto7ZaA1E",
+       "direccion": "Liray - Lo Pinto",
+       "comuna": "",
+       "supTerreno": 5000,
+       "supConstruida": 264,
+       "precioUf": 18900,
+       "anio": 2023,
+       "tipoReferencia": "Oferta",
+       "ufM2Construccion": 31.818181818181817
+      }
+     ],
+     "promedioUfM2": 30.912313602499562,
+     "usadosEnPromedio": 7,
+     "cumpleMinimo": true
+    }
+   },
+   {
+    "numero": 7,
+    "id": "fotografico",
+    "titulo": "Registro fotográfico",
+    "vacio": true,
+    "datos": {
+     "total": 0,
+     "porCategoria": {},
+     "fotos": []
+    }
+   },
+   {
+    "numero": 8,
+    "id": "observaciones",
+    "titulo": "Observaciones y overrides",
+    "vacio": true,
+    "datos": {
+     "observacionesTasador": "",
+     "observacionRechazo": "",
+     "overrides": [],
+     "motivoOverride": "MET-6283-REAL · RF-09 en vivo con los 8 adjuntos reales de docs/_referencias/Met_6283 · SANDBOX aislado por notas+numero -REAL",
+     "autorOverride": "",
+     "antecedentesLegales": {
+      "fojas": "13291",
+      "numeroInscripcion": "21565",
+      "anoInscripcion": 2006,
+      "permisoEdificacion": "319-2020",
+      "recepcionFinal": "210-2024"
+     }
+    }
+   }
+  ]
+ }
+}

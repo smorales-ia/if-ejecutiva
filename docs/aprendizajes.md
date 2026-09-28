@@ -3196,3 +3196,26 @@ base del Historial de Airtable.
 **Causa raíz:** `eslint` no está en `devDependencies` — el script es huérfano, igual que `test:e2e`.
 **Solución aplicada:** documentado como N/A estructural; no se agregó la dependencia (regla del repo).
 **Prevención futura:** tratar `pnpm lint` como no disponible hasta que una tanda decida sumar eslint con revisión explícita.
+
+### 2026-09-27 — T-PDF-IMPRENTA: cadena completa hasta el PDF real
+
+**Contexto:** plantilla Carbone nueva + cirugía E2/E3 + SC-Textos por API + corrida E2E sobre VP-2026-0067.
+
+**Inconveniente:** no se sabía cómo pasarle el `InformeContexto` anidado (27 KB) a Carbone desde Make sin re-mapear campo por campo.
+**Causa raíz:** duda sobre cómo interpola Make una colección en un campo de texto.
+**Solución aplicada:** test empírico con un escenario echo descartable (webhook → respond): Make serializa colecciones como JSON. El body de E2 quedó `{"data": {{1.contexto}}, "convertTo": "pdf", "lang": "es-cl"}` — cero módulos intermedios.
+**Prevención futura:** ante dudas de comportamiento de Make, escenario echo temporal por API (crear→probar→borrar cuesta 2 operaciones); quedó el patrón en `endpoints-make.md`.
+
+**Inconveniente:** el primer PDF renderizado perdía columnas enteras (cuadro, referencias, bloque derecho de identificación) y la cola de cada línea de los párrafos.
+**Causa raíz:** tablas de python-docx más anchas que la página; LibreOffice (Carbone) recorta sin avisar lo que cae fuera.
+**Solución aplicada:** post-pass en el generador que fija `tblLayout fixed` + `tblW`/`gridCol`/`tcW` explícitos y reescala cada tabla al ancho útil (11.226 dxa hojas / 10.659 portada), con validación aritmética obligatoria post-guardado. v1.1 rindió 41/41 valores visibles.
+**Prevención futura:** toda plantilla docx para Carbone debe pasar el validador de anchos ANTES de subirse; un tag presente en el XML no garantiza que el render lo muestre.
+
+**Inconveniente:** `dropbox:createShareLink` falló en runtime con `[401] missing_scope` aunque el blueprint era válido y el upload funcionaba.
+**Causa raíz:** la conexión OAuth de Make (7553318) se autorizó sin el scope `sharing.write` (upload y lectura sí están).
+**Solución aplicada:** E3 v2.1 sin share-link: `pdf_final_url` = URL dropbox.com/home con `?preview=` (clickeable para el dueño) + path interno en `url_dropbox`. Gate para Sergio: re-autorizar la conexión y reponer el módulo.
+**Prevención futura:** los scopes de una conexión Make solo se descubren ejecutando; probar el módulo sensible con Run once antes de darlo por integrado.
+
+**Inconveniente:** al reactivar E3 tras un PATCH de blueprint, apareció una fila duplicada en TX_DocumentosGenerados.
+**Causa raíz:** Make reprocesa los bundles de ejecuciones incompletas al re-encender el escenario (dataloss=false) — el bundle del run fallido corrió con el blueprint nuevo.
+**Prevención futura:** tras PATCH+start de un escenario con corridas fallidas pendientes, revisar y sanear los efectos del reproceso.

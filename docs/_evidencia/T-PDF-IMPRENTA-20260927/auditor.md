@@ -1,0 +1,16 @@
+# Auditoría ciega — T-PDF-IMPRENTA-20260927
+
+**Auditor:** agente ciego (sin lectura de regresion.md, diseno-checklist.md, rollback.md ni reportes de otros agentes).
+**Fecha:** 2026-09-27 · Verificación exclusivamente desde el estado final (archivos del repo + curl read-only a Airtable y Make con credenciales de `.env.local`; sin imprimir tokens ni URLs de webhook).
+
+| Criterio | OK/FAIL | Evidencia |
+|---|---|---|
+| C1 — PDF real generado | **OK** | `PDF_generado_VP0067.pdf`: 102.749 bytes (>50KB), header `%PDF-1.6`, **9 páginas** (pypdf, dentro del rango 8-9). Texto extraído con pypdf: los 12 valores en formato chileno presentes de forma exacta — `20.125,86` · `802.913.431` · `9.246,94` · `8.517,68` · `13.081,81` · `16.603,84` · `36.300.000` · `806.666.667` · `39.894,61` · `5.024,86` · `249,91` · `16.610.203-0`. También presentes los textos "El profesional que firma declara", "Las muestras fueron seleccionadas" y síntesis que menciona "Las Brisas de Chicureo". 15/15 checks. |
+| C2 — Entrega en Airtable | **OK** | `TX_Solicitudes/recmMzeu3eWGxyXsf` (codigo_ext `VP-2026-0067`): `estado="pdf_listo"`, `pdf_final_url` no-nulo y contiene `dropbox.com`. `TX_DocumentosGenerados` (tbl5sYnGPZXgYCBSY) filtrado por `FIND("VP-2026-0067",ARRAYJOIN({solicitud}))`: **exactamente 1 fila** (`recWP8Ex4XuPoNIfG`) con `es_vigente=true`, `url_dropbox` contiene `/VProperty/Tasaciones/`, `render_id_carbone` no vacío. |
+| C3 — Textos | **OK** | `TX_DatosTasacion/recy8q3Tq9omjdNUf`: `sintesis_descriptiva` len=543 (>80) y `descripcion_sector` len=424 (>80); ambos mencionan "Colina"; ninguno contiene `{`, "Claude" ni "API". |
+| C4 — Make | **OK** | GET scenarios: 5750023 (`E2_Carbone_Render v2.0 - InformeContexto`) `isActive=false` · 5791413 (`E3_Carbone_Download_Dropbox v2.1`) `isActive=false` · 7650070 (`SC-Textos v0.2`) `isActive=false`. Blueprint actual de E2 (GET /scenarios/5750023/blueprint): URL `https://api.carbone.io/render/<templateId>` con `<templateId>` **idéntico** a `CARBONE_TEMPLATE_ID` de `.env.local` (comparación programática por igualdad; primeros 8 chars: `070757d8`). Mapper del módulo 2 (`http:ActionSendData`) contiene `{{1.contexto}}`. |
+| C5 — Oráculo intacto | **OK** | `TX_Solicitudes/recNiwM4s1ibr3sbO` (codigo_ext `VP-2026-0066`): `estado="asignada"`, `pdf_final_url` vacío. `TX_Calculos` (tblFz37KSvn5pLKDR) con `FIND("VP-2026-0066",ARRAYJOIN({solicitud}))`: **13 filas** (sin offset de paginación → conteo completo). |
+| C6 — Repo | **OK** | `pnpm typecheck` → exit 0. `pnpm vitest run app/api/tasaciones/[id]/generar-pdf/route.test.ts lib/informe/ensamblador.test.ts` → 2 test files passed, **54/54 tests verdes** (vitest 4.1.10). `docs/_artefactos/carbone/PLANTILLA_MET_v1.docx`: 76.526 bytes (>50KB); integridad zip verificada con `zipfile.testzip()` de Python → todos los CRC válidos, 19 entradas, `word/document.xml` presente (nota: binario `unzip` no disponible en el entorno WSL; el test de CRC es equivalente). |
+| C7 — Higiene | **OK** | `grep -rInE --binary-files=without-match 'eyJ[A-Za-z0-9_-]{10,}|sk-ant-|pat[A-Za-z0-9]{14}\.[A-Za-z0-9]+|hook\.eu1\.make\.com/[A-Za-z0-9]{20,}'` sobre `docs/_evidencia/T-PDF-IMPRENTA-20260927/` y `docs/_artefactos/carbone/` → **0 matches**. |
+
+## VEREDICTO: 7 OK / 0 FAIL

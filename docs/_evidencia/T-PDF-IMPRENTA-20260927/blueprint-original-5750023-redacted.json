@@ -1,0 +1,385 @@
+{
+  "code": "OK",
+  "response": {
+    "blueprint": {
+      "flow": [
+        {
+          "id": 1,
+          "mapper": {},
+          "module": "gateway:CustomWebHook",
+          "version": 1,
+          "metadata": {
+            "restore": {
+              "parameters": {
+                "hook": {
+                  "data": {
+                    "editable": "true"
+                  },
+                  "label": "wh_E2_Carbone_Render"
+                }
+              }
+            },
+            "designer": {
+              "x": 0,
+              "y": 0
+            },
+            "parameters": [
+              {
+                "name": "hook",
+                "type": "hook:gateway-webhook",
+                "label": "Webhook",
+                "required": true
+              },
+              {
+                "name": "maxResults",
+                "type": "number",
+                "label": "Maximum number of results"
+              }
+            ]
+          },
+          "parameters": {
+            "hook": 3045780,
+            "maxResults": 1
+          }
+        },
+        {
+          "id": 2,
+          "mapper": {
+            "ca": "",
+            "qs": [],
+            "url": "https://api.carbone.io/render/5da250fc93c001a5ab7184ddd0cf592579601c83abe20d4ebf6cdd06859a96d0",
+            "data": "{\n  \"data\": {\n    \"numero_solicitud\": \"{{1.numero_solicitud}}\",\n    \"nombre_cliente\": \"{{1.nombre_cliente}}\",\n    \"rut_cliente\": \"{{1.rut_cliente}}\",\n    \"direccion_propiedad\": \"{{1.direccion_propiedad}}\",\n    \"comuna\": \"{{1.comuna}}\",\n    \"region\": \"{{1.region}}\",\n    \"institucion\": \"{{1.institucion}}\",\n    \"dfl2\": \"{{1.dfl2}}\",\n    \"propietario\": \"{{1.propietario}}\",\n    \"anio_construccion\": \"{{1.anio_construccion}}\",\n    \"rol_sii\": \"{{1.rol_sii}}\",\n    \"condominio\": \"{{1.condominio}}\",\n    \"ejecutivo\": \"{{1.ejecutivo}}\",\n    \"estado_conservacion\": \"{{1.estado_conservacion}}\",\n    \"tasador\": \"{{1.tasador}}\",\n    \"fecha_tasacion\": \"{{1.fecha_tasacion}}\",\n    \"objetivo\": \"{{1.objetivo}}\",\n    \"zona\": \"{{1.zona}}\",\n    \"tipo_propiedad\": \"{{1.tipo_propiedad}}\",\n    \"destino_sii\": \"{{1.destino_sii}}\",\n    \"sintesis_propiedad\": \"{{1.sintesis_propiedad}}\",\n    \"sintesis_sector\": \"{{1.sintesis_sector}}\",\n    \"valor_comercial_uf\": \"{{1.valor_comercial_uf}}\",\n    \"valor_comercial_pesos\": \"{{1.valor_comercial_pesos}}\",\n    \"valor_tasacion_uf\": \"{{1.valor_tasacion_uf}}\",\n    \"valor_tasacion_pesos\": \"{{1.valor_tasacion_pesos}}\",\n    \"velocidad_venta\": \"{{1.velocidad_venta}}\",\n    \"valor_uf\": \"{{1.valor_uf}}\",\n    \"valor_usd\": \"{{1.valor_usd}}\",\n    \"visador\": \"{{1.visador}}\",\n    \"fecha_visita\": \"{{1.fecha_visita}}\",\n    \"fecha_visado\": \"{{1.fecha_visado}}\",\n    \"revisor\": \"{{1.revisor}}\",\n    \"fecha_revision\": \"{{1.fecha_revision}}\",\n    \"ofertas\": [{{1.ofertas}}],\n    \"cuadro_valoracion\": [{{1.cuadro_valoracion}}],\n    \"referencias\": [{{1.referencias}}],\n    \"constr\": {{1.constr}},\n    \"habitaciones\": {{1.habitaciones}},\n    \"comodidades\": {{1.comodidades}},\n    \"fotos\": {{1.fotos}},\n    \"anexo1\": {{1.anexo1}},\n    \"anexo2\": {{1.anexo2}}\n  },\n  \"convertTo\": \"pdf\"\n}",
+            "gzip": true,
+            "method": "post",
+            "headers": [
+              {
+                "name": "Authorization",
+                "value": "***REDACTED***"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "timeout": "60",
+            "useMtls": false,
+            "authPass": "",
+            "authUser": "",
+            "bodyType": "raw",
+            "contentType": "application/json",
+            "serializeUrl": false,
+            "shareCookies": false,
+            "parseResponse": true,
+            "followRedirect": true,
+            "useQuerystring": false,
+            "followAllRedirects": false,
+            "rejectUnauthorized": true
+          },
+          "module": "http:ActionSendData",
+          "version": 3,
+          "metadata": {
+            "restore": {
+              "expect": {
+                "qs": {
+                  "mode": "chose"
+                },
+                "method": {
+                  "mode": "chose",
+                  "label": "POST"
+                },
+                "headers": {
+                  "mode": "chose",
+                  "items": [
+                    null,
+                    null
+                  ]
+                },
+                "bodyType": {
+                  "label": "Raw"
+                },
+                "contentType": {
+                  "label": "JSON (application/json)"
+                }
+              }
+            },
+            "designer": {
+              "x": 300,
+              "y": 0
+            },
+            "parameters": [
+              {
+                "name": "handleErrors",
+                "type": "boolean",
+                "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+                "required": true
+              },
+              {
+                "name": "useNewZLibDeCompress",
+                "type": "hidden"
+              }
+            ]
+          },
+          "parameters": {
+            "handleErrors": false,
+            "useNewZLibDeCompress": true
+          }
+        },
+        {
+          "id": 3,
+          "mapper": {
+            "ca": "",
+            "qs": [],
+            "url": "https://hook.eu1.make.com/***REDACTED***",
+            "data": "{\n  \"renderId\": \"{{2.data.data.renderId}}\",\n  \"numero_solicitud\": \"{{1.numero_solicitud}}\",\n  \"nombre_cliente\": \"{{1.nombre_cliente}}\",\n  \"fecha_tasacion\": \"{{1.fecha_tasacion}}\",\n  \"tasador\": \"{{1.tasador}}\",\n  \"dropbox_api_arg\": \"{\\\"path\\\": \\\"/VProperty/Tasaciones/{{1.nombre_cliente}}_{{1.numero_solicitud}}.pdf\\\", \\\"mode\\\": \\\"overwrite\\\", \\\"autorename\\\": false, \\\"mute\\\": false}\"\n}",
+            "gzip": false,
+            "method": "post",
+            "headers": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "timeout": "30",
+            "useMtls": false,
+            "authPass": "",
+            "authUser": "",
+            "bodyType": "raw",
+            "contentType": "application/json",
+            "serializeUrl": false,
+            "shareCookies": false,
+            "parseResponse": true,
+            "followRedirect": true,
+            "useQuerystring": false,
+            "followAllRedirects": false,
+            "rejectUnauthorized": true
+          },
+          "module": "http:ActionSendData",
+          "version": 3,
+          "metadata": {
+            "restore": {
+              "expect": {
+                "qs": {
+                  "mode": "chose"
+                },
+                "method": {
+                  "mode": "chose",
+                  "label": "POST"
+                },
+                "headers": {
+                  "mode": "chose",
+                  "items": [
+                    null
+                  ]
+                },
+                "bodyType": {
+                  "label": "Raw"
+                },
+                "contentType": {
+                  "label": "JSON (application/json)"
+                }
+              }
+            },
+            "designer": {
+              "x": 600,
+              "y": 0
+            },
+            "parameters": [
+              {
+                "name": "handleErrors",
+                "type": "boolean",
+                "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+                "required": true
+              },
+              {
+                "name": "useNewZLibDeCompress",
+                "type": "hidden"
+              }
+            ]
+          },
+          "parameters": {
+            "handleErrors": false,
+            "useNewZLibDeCompress": true
+          }
+        },
+        {
+          "id": 4,
+          "mapper": {
+            "ca": "",
+            "qs": [],
+            "url": "https://api.airtable.com/v0/app9G7lLkIV3CpeLa/tblR4VWpUHw1CSyIS",
+            "data": "{\"fields\": {\"Titulo Log\": \"E2_Carbone_Render - {{1.numero_solicitud}}\", \"Fecha / Hora\": \"{{formatDate(now; \\\"YYYY-MM-DDTHH:mm:ss.000Z\\\")}}\", \"Escenario\": \"E2_Carbone_Render\", \"Estado\": \"✓ OK\", \"Trigger\": \"Webhook desde E1\", \"Detalle\": \"Carbone status: {{2.statusCode}} | renderId: {{2.data.data.renderId}} | E3 status: {{3.statusCode}} | Solicitud: {{1.numero_solicitud}} - {{1.nombre_cliente}}\", \"Reintentos\": 0, \"ID Make\": \"5750023\", \"Solicitud\": \"{{1.numero_solicitud}}\", \"Destinatario\": \"\", \"Duracion ms\": 0}}",
+            "gzip": false,
+            "method": "post",
+            "headers": [
+              {
+                "name": "Authorization",
+                "value": "***REDACTED***"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "timeout": "30",
+            "useMtls": false,
+            "authPass": "",
+            "authUser": "",
+            "bodyType": "raw",
+            "contentType": "application/json",
+            "serializeUrl": false,
+            "shareCookies": false,
+            "parseResponse": true,
+            "followRedirect": true,
+            "useQuerystring": false,
+            "followAllRedirects": false,
+            "rejectUnauthorized": true
+          },
+          "module": "http:ActionSendData",
+          "version": 3,
+          "metadata": {
+            "restore": {
+              "expect": {
+                "qs": {
+                  "mode": "chose"
+                },
+                "method": {
+                  "mode": "chose",
+                  "label": "POST"
+                },
+                "headers": {
+                  "mode": "chose",
+                  "items": [
+                    null,
+                    null
+                  ]
+                },
+                "bodyType": {
+                  "label": "Raw"
+                },
+                "contentType": {
+                  "label": "JSON (application/json)"
+                }
+              }
+            },
+            "designer": {
+              "x": 900,
+              "y": 0
+            },
+            "parameters": [
+              {
+                "name": "handleErrors",
+                "type": "boolean",
+                "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+                "required": true
+              },
+              {
+                "name": "useNewZLibDeCompress",
+                "type": "hidden"
+              }
+            ]
+          },
+          "parameters": {
+            "handleErrors": false,
+            "useNewZLibDeCompress": true
+          }
+        }
+      ],
+      "name": "E2_Carbone_Render",
+      "metadata": {
+        "instant": true,
+        "version": 1,
+        "designer": {
+          "orphans": [],
+          "samples": {
+            "1": {
+              "fotos": {},
+              "anexo1": {},
+              "anexo2": {},
+              "comuna": "Providencia",
+              "constr": {
+                "estructura_tipo": "Hormigon"
+              },
+              "region": "Metropolitana",
+              "ofertas": [
+                {
+                  "numero": 1,
+                  "total_uf": 5000,
+                  "direccion": "Calle Test 1"
+                }
+              ],
+              "tasador": "Pedro Soto",
+              "comodidades": {
+                "piscina": "No"
+              },
+              "institucion": "Banco Test",
+              "referencias": [
+                {
+                  "tipo": "Casa",
+                  "valor_uf": 4800,
+                  "direccion": "Ref 1"
+                }
+              ],
+              "rut_cliente": "12.345.678-9",
+              "habitaciones": {
+                "banos": 2,
+                "dormitorios": 3
+              },
+              "fecha_tasacion": "2026-05-15",
+              "nombre_cliente": "Juan Perez",
+              "numero_solicitud": "001",
+              "cuadro_valoracion": [
+                {
+                  "numero": 1,
+                  "detalle": "Terreno"
+                }
+              ],
+              "direccion_propiedad": "Av. Providencia 1234"
+            },
+            "2": {
+              "data": {
+                "data": {
+                  "renderId": "MTAuMjAuMTEuNDAgICAgof0FyxfGDzSAINvWFtUlGwcmVwb3J0.pdf"
+                },
+                "success": true
+              },
+              "headers": [
+                {
+                  "name": "strict-transport-security",
+                  "value": "max-age=63072000"
+                }
+              ],
+              "fileSize": 93,
+              "statusCode": 200,
+              "cookieHeaders": []
+            }
+          }
+        },
+        "scenario": {
+          "dlq": false,
+          "slots": null,
+          "dataloss": false,
+          "maxErrors": 3,
+          "autoCommit": true,
+          "roundtrips": 1,
+          "sequential": false,
+          "confidential": false,
+          "freshVariables": false,
+          "autoCommitTriggerLast": true
+        }
+      }
+    },
+    "scheduling": {
+      "type": "immediately",
+      "maximum_runs_per_minute": null
+    },
+    "concept": false,
+    "created": "2026-05-16T02:19:27.927Z",
+    "last_edit": "2026-05-19T19:09:36.780Z",
+    "metadata": {
+      "input_spec": [],
+      "output_spec": []
+    },
+    "idSequence": 5,
+    "version": 49
+  }
+}

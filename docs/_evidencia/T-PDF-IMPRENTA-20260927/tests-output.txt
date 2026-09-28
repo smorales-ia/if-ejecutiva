@@ -1,0 +1,23 @@
+=== suite completa Sun Sep 27 20:29:27 -03 2026 ===
+> tsc --noEmit
+
+ Test Files  1 failed | 57 passed (58)
+      Tests  1 failed | 1005 passed (1006)
+   Start at  20:30:46
+   Duration  102.95s (transform 19.25s, setup 0ms, import 109.29s, tests 3.84s, environment 15ms)
+
+ ELIFECYCLE  Test failed. See above for more details.
+=== pnpm build Sun Sep 27 20:40:37 -03 2026 ===
+├ ƒ /tasaciones/[id]/coordinar
+├ ƒ /tasaciones/[id]/estado
+├ ƒ /tasaciones/[id]/fotos
+├ ƒ /tasaciones/[id]/informe
+└ ƒ /tasaciones/[id]/lectura
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+EXIT build: 0

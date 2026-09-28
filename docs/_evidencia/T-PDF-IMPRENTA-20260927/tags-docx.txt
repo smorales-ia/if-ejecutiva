@@ -1,0 +1,136 @@
+{d.anexos.documentos[i+1].nombre}
+{d.anexos.documentos[i].nombre}
+{d.anexos.documentos[i].tipo}
+{d.clienteInforme.nombre}
+{d.comparablesInforme.filas[i+1].direccion}
+{d.comparablesInforme.filas[i, tipoReferencia='CBR'].anio}
+{d.comparablesInforme.filas[i, tipoReferencia='CBR'].direccion}
+{d.comparablesInforme.filas[i, tipoReferencia='CBR'].precioUf:formatN(0)}
+{d.comparablesInforme.filas[i, tipoReferencia='CBR'].supConstruida:formatN(2)}
+{d.comparablesInforme.filas[i, tipoReferencia='CBR'].supTerreno:formatN(2)}
+{d.comparablesInforme.filas[i, tipoReferencia='CBR'].tipoReferencia}
+{d.comparablesInforme.filas[i, tipoReferencia='CBR'].ufM2Construccion:formatN(2)}
+{d.comparablesInforme.filas[i, tipoReferencia='Oferta'].anio}
+{d.comparablesInforme.filas[i, tipoReferencia='Oferta'].direccion}
+{d.comparablesInforme.filas[i, tipoReferencia='Oferta'].precioUf:formatN(0)}
+{d.comparablesInforme.filas[i, tipoReferencia='Oferta'].supConstruida:formatN(2)}
+{d.comparablesInforme.filas[i, tipoReferencia='Oferta'].supTerreno:formatN(2)}
+{d.comparablesInforme.filas[i, tipoReferencia='Oferta'].tipoReferencia}
+{d.comparablesInforme.filas[i, tipoReferencia='Oferta'].ufM2Construccion:formatN(2)}
+{d.comparablesInforme.filas[i=0].anio}
+{d.comparablesInforme.filas[i=0].comuna}
+{d.comparablesInforme.filas[i=0].direccion}
+{d.comparablesInforme.filas[i=0].precioUf:formatN(0)}
+{d.comparablesInforme.filas[i=0].supConstruida:formatN(2)}
+{d.comparablesInforme.filas[i=0].supTerreno:formatN(2)}
+{d.comparablesInforme.filas[i=0].tipoReferencia}
+{d.comparablesInforme.filas[i=1].anio}
+{d.comparablesInforme.filas[i=1].comuna}
+{d.comparablesInforme.filas[i=1].direccion}
+{d.comparablesInforme.filas[i=1].precioUf:formatN(0)}
+{d.comparablesInforme.filas[i=1].supConstruida:formatN(2)}
+{d.comparablesInforme.filas[i=1].supTerreno:formatN(2)}
+{d.comparablesInforme.filas[i=1].tipoReferencia}
+{d.comparablesInforme.filas[i=2].anio}
+{d.comparablesInforme.filas[i=2].comuna}
+{d.comparablesInforme.filas[i=2].direccion}
+{d.comparablesInforme.filas[i=2].precioUf:formatN(0)}
+{d.comparablesInforme.filas[i=2].supConstruida:formatN(2)}
+{d.comparablesInforme.filas[i=2].supTerreno:formatN(2)}
+{d.comparablesInforme.filas[i=2].tipoReferencia}
+{d.comparablesInforme.promedioUfM2:formatN(2)}
+{d.comparablesInforme.tasacionUfM2:formatN(2)}
+{d.comparablesInforme.tasacionVsPct:formatN(0)}
+{d.cuadro.items[i+1].tipoItem}
+{d.cuadro.items[i].aportaAGarantia:ifEQ(true):show(SI):elseShow( )}
+{d.cuadro.items[i].descripcion}
+{d.cuadro.items[i].factorAplicado:formatN(2)}
+{d.cuadro.items[i].situacionMunicipal}
+{d.cuadro.items[i].supM2:formatN(2)}
+{d.cuadro.items[i].tipoItem}
+{d.cuadro.items[i].ufM2Aplicado:formatN(2)}
+{d.cuadro.items[i].ufTotalItem:formatN(2)}
+{d.cuadro.totalUf:formatN(2)}
+{d.fotos.fotos[i+1].categoria}
+{d.fotos.fotos[i=0].url}
+{d.fotos.fotos[i].categoria}
+{d.fotos.fotos[i].url}
+{d.legales.permisoEdificacion}
+{d.legales.recepcionFinal}
+{d.mapa.staticMapUrl}
+{d.meta.codigo}
+{d.meta.nOperacionCliente}
+{d.meta.numeroSolicitudCliente}
+{d.partes.ejecutivo}
+{d.partes.fechaVisado:formatD(LL)}
+{d.partes.fechaVisita:formatD(DD-MM-YYYY)}
+{d.partes.fechaVisita:formatD(LL)}
+{d.partes.propietario}
+{d.partes.rut}
+{d.partes.tasador.firmaUrl}
+{d.partes.tasador.nombre}
+{d.partes.visador.nombre}
+{d.propiedad.agrupacion}
+{d.propiedad.anioConstruccion}
+{d.propiedad.banos}
+{d.propiedad.bodegas}
+{d.propiedad.calidadConstruccion}
+{d.propiedad.comuna}
+{d.propiedad.dfl2}
+{d.propiedad.direccion}
+{d.propiedad.dormitorios}
+{d.propiedad.estacionamientos}
+{d.propiedad.estadoConservacion:upperCase}
+{d.propiedad.materialPredominante}
+{d.propiedad.objetivo}
+{d.propiedad.orientacion}
+{d.propiedad.pisos}
+{d.propiedad.proyectoCondominio}
+{d.propiedad.region}
+{d.propiedad.supConstruccionM2:formatN(0)}
+{d.propiedad.supConstruccionM2:formatN(2)}
+{d.propiedad.supTerrenoM2:formatN(0)}
+{d.propiedad.supTerrenoM2:formatN(2)}
+{d.propiedad.tipoPropiedad}
+{d.propiedad.velocidadVentaEstimada:upperCase}
+{d.propiedad.vidaUtil}
+{d.recintos.ampliaciones[i+1].descripcion}
+{d.recintos.ampliaciones[i].annoRegularizacion}
+{d.recintos.ampliaciones[i].descripcion}
+{d.recintos.ampliaciones[i].supM2:formatN(2)}
+{d.recintos.habitacionesPorNivel[i+1].nivel}
+{d.recintos.habitacionesPorNivel[i].cantidad}
+{d.recintos.habitacionesPorNivel[i].nivel}
+{d.recintos.habitacionesPorNivel[i].tipoRecinto}
+{d.recintos.terminacionesPorRecinto[i+1].nombre}
+{d.recintos.terminacionesPorRecinto[i].calidad}
+{d.recintos.terminacionesPorRecinto[i].categoria}
+{d.recintos.terminacionesPorRecinto[i].descripcion}
+{d.recintos.terminacionesPorRecinto[i].nombre}
+{d.rentabilidad.arriendoBrutoMensualClp:formatN(0)}
+{d.rentabilidad.arriendoUfMes:formatN(1)}
+{d.rentabilidad.gastoAnualClp:formatN(0)}
+{d.rentabilidad.ingresoLiquidoAnualClp:formatN(0)}
+{d.rentabilidad.rentaPerpetuaClp:formatN(0)}
+{d.rentabilidad.tasaCapRate:mul(100):formatN(1)}
+{d.sii.avaluoTotal:formatN(0)}
+{d.sii.codManzana}
+{d.sii.destinoSii}
+{d.sii.rolSii}
+{d.terminales.avaluoFiscalUf:formatN(2)}
+{d.terminales.seguroIncendioClp:formatN(0)}
+{d.terminales.seguroIncendioUf:formatN(2)}
+{d.terminales.ufDia:formatN(2)}
+{d.terminales.usdDia:formatN(2)}
+{d.terminales.valorComercialClp:formatN(0)}
+{d.terminales.valorComercialUf:formatN(0)}
+{d.terminales.valorComercialUf:formatN(2)}
+{d.terminales.valorLiquidacionClp:formatN(0)}
+{d.terminales.valorLiquidacionUf:formatN(2)}
+{d.terminales.valorRemateClp:formatN(0)}
+{d.terminales.valorRemateUf:formatN(2)}
+{d.terminales.valorReposicionClp:formatN(0)}
+{d.terminales.valorReposicionUf:formatN(2)}
+{d.textosIA.descripcionSector}
+{d.textosIA.sintesisPropiedad}
+{d.textosIA.textoExpropiacion}

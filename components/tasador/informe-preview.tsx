@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import {
   ArrowLeft,
   Download,
@@ -188,6 +189,7 @@ export function InformePreview({
   const [confirmarOpen, setConfirmarOpen] = useState(false)
   const [rechazoOkOpen, setRechazoOkOpen] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  const [enviando, setEnviando] = useState(false)
   const [obs, setObs] = useState("")
 
   /*
@@ -286,11 +288,24 @@ export function InformePreview({
     setRechazoOkOpen(true)
   }
 
-  const handleEnviar = () => {
-    marcarPdfListo(tasacion.id)
-    setConfirmarOpen(false)
-    setEnviado(true)
-    setTimeout(() => router.push("/tasaciones"), 2500)
+  const handleEnviar = async () => {
+    setEnviando(true)
+    try {
+      await marcarPdfListo(tasacion.id)
+      setConfirmarOpen(false)
+      setEnviado(true)
+      setTimeout(() => router.push("/tasaciones"), 2500)
+    } catch (err) {
+      toast.error(
+        err instanceof Error
+          ? err.message
+          : "No pudimos completar la acción. Intenta nuevamente en unos segundos.",
+      )
+    } finally {
+      // Obligatorio en `finally` (Regla D): en `catch` un fallo fuera de él
+      // dejaría el botón muerto para el resto de la sesión.
+      setEnviando(false)
+    }
   }
 
   /* ---- Pantalla de agradecimiento (§7.5) ---- */
@@ -783,6 +798,7 @@ export function InformePreview({
             <Button
               type="button"
               variant="outline"
+              disabled={enviando}
               onClick={() => setConfirmarOpen(false)}
               className="min-h-11 border-border bg-transparent font-semibold text-foreground"
             >
@@ -790,10 +806,12 @@ export function InformePreview({
             </Button>
             <Button
               type="button"
+              disabled={enviando}
               onClick={handleEnviar}
               className="min-h-11 bg-success font-semibold text-white hover:brightness-95"
             >
-              Enviar informe
+              {enviando && <Loader2 data-icon="inline-start" className="animate-spin" />}
+              {enviando ? "Enviando…" : "Enviar informe"}
             </Button>
           </div>
         </DialogContent>

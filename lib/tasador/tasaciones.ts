@@ -43,8 +43,9 @@
  * De las funciones que el v0 importaba desde aquí, P2-TAS.B dejó las que un
  * componente cliente puede ejecutar sin riesgo: `resolverLimite` y
  * `resolverInforme` (puras), `marcarVisitada` y `guardarObservacionRechazo`
- * (`fetch` a las rutas de IF-03) y `marcarPdfListo` (**stub declarado**: no
- * existe ruta backend para esa transición). `getTasacion` se renombró a
+ * (`fetch` a las rutas de IF-03) y `marcarPdfListo` (desde
+ * T-PDF-IMPRENTA-20260927 llama a `POST /api/tasaciones/[id]/generar-pdf`;
+ * fue stub declarado hasta esa tanda). `getTasacion` se renombró a
  * `leerTasacion` al mudarse; la constante `TASACIONES` de prueba se sustituyó
  * por `leerCola`.
  */
@@ -1481,22 +1482,18 @@ export async function guardarObservacionRechazo(
 }
 
 /**
- * ⚠ **STUB DECLARADO — no persiste nada.** El envío del informe al visador no
- * tiene ruta backend.
+ * Dispara la imprenta del informe (T-PDF-IMPRENTA-20260927 — cierra el stub
+ * declarado en P2-TAS.B).
  *
- * P2-TAS.A construyó once rutas y **ninguna escribe esta transición**; el plan
- * §3.1 tampoco la lista. El v0 la resolvía mutando un array en memoria. Dejarla
- * cableada contra una ruta inventada habría sido peor que no cablearla: el
- * botón diría «enviado» y el informe se quedaría donde está.
- *
- * Hasta que la ruta exista, la pantalla avanza a su confirmación —el
- * comportamiento visible no cambia respecto del v0— y el gap queda en consola y
- * en su ficha CI. **La ruta se diseña fuera de P2-TAS.B.**
+ * **No cambia el estado acá**: la ruta ensambla el `InformeContexto` y lo
+ * entrega a la cadena Make (E2 render Carbone → E3 Dropbox); es el pipeline
+ * quien escribe `pdf_final_url`, la fila de TX_DocumentosGenerados y la
+ * transición a `pdf_listo`. Lanza si la ruta rechaza (guard, 409 de estado,
+ * webhook caído) — el caller decide el feedback (Regla B/D).
  */
-export function marcarPdfListo(id: string): void {
-  console.warn(
-    `[tasaciones] marcarPdfListo(${id}) es un stub: no existe ruta backend para ` +
-      'la transición de envío del informe. El estado de la solicitud NO cambió. ' +
-      'Ver la ficha CI de P2-TAS.B.',
+export async function marcarPdfListo(id: string): Promise<void> {
+  await llamarApi<{ id: string; enviado: boolean }>(
+    `/api/tasaciones/${id}/generar-pdf`,
+    { method: 'POST' },
   )
 }
