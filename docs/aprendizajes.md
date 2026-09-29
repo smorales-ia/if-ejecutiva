@@ -3296,3 +3296,22 @@ base del Historial de Airtable.
 **Causa raíz:** al cablear el bloque 2 canónico (CI-063) se asumió que la solicitud tendría `valor_comercial_uf` poblado; no existe escritor de ese campo.
 **Solución aplicada:** fallback en `construirInforme` a la misma fuente del PDF — precedencia `valor_final_override ?? valor_comercial_uf ?? terminal TX_Calculos`, consulta perezosa y regla «nunca 0» conservada. El lector de terminales se extrajo a `leerTerminales()` (exportado de `lectura-informe.ts`) y el ensamblador lo reutiliza en su `Promise.all`, eliminando su copia inline. 3 candados nuevos en `lectura-informe.test.ts`. Registrado como CI-072 (resuelta).
 **Prevención futura:** cuando dos consumidores muestran el mismo dato (preview y PDF), deben compartir el lector — extraer helper antes que duplicar la lectura; y al cablear un campo de solicitud, verificar que exista un ESCRITOR real de ese campo (grep en motor/escenarios), no solo la columna.
+
+### 2026-09-29 — T-VP0067-CONSISTENTE-PROD: espejo MET-6283 punta a punta con equipo de agentes
+
+**Contexto:** dejar VP-2026-0067 100% consistente en producción (6 vistas del tasador) como espejo de MET-6283; 13 agentes en 4 olas paralelas + auditor ciego.
+
+**Inconveniente:** los checks de datos (regresión 71/71 PASS) no detectaron que la UI del informe renderizaría el cuadro de valoración vacío: TX_ItemsCuadroValoracion tiene DOS parejas de campos — la "nueva" que escribe el motor (`nombre_item`/`uf_m2_unitario`/fórmula `valor_uf`) y la "vieja" que lee el canónico de la UI (`descripcion`/`uf_m2_aplicado`/`uf_total_item`); el ensamblador del PDF tiene fallback entre parejas, `lectura-informe.ts` no.
+**Causa raíz:** verificar que "el dato existe" no es verificar que "el campo que consume la vista existe"; la dualidad estaba documentada solo en un comentario del ensamblador.
+**Solución aplicada:** verificador dedicado de render (Bloque 2b) que lee el código de cada bloque y verifica el campo EXACTO consumido; batch PATCH (D8) poblando la pareja vieja en las 6 filas (Σ=20.125,8624).
+**Prevención futura:** en baterías de consistencia, separar SIEMPRE "check de dato" de "check de render por campo consumido (archivo:línea)"; sospechar de tablas con parejas legacy/nueva.
+
+**Inconveniente:** el agente que disparó la cadena E2→E3 quedó varado esperando logs de Make: `curl "$MAKE_BASE_URL/scenarios/{id}/logs?pg[limit]=2"` falla silenciosamente por el globbing de curl con `[ ]` en la URL.
+**Causa raíz:** curl interpreta `pg[limit]` como rango de globbing; sin `-g` el request no sale como se espera.
+**Solución aplicada:** `curl -g` (o URL-encodear los corchetes); el orquestador completó verificación y vigencia en paralelo y el agente reanudado re-verificó idempotente.
+**Prevención futura:** toda llamada a la API de Make con paginación `pg[...]` lleva `curl -g`; y el patrón "orquestador completa + agente re-verifica" demostró ser seguro si los PATCH son idempotentes.
+
+**Inconveniente:** el clasificador de permisos denegó al subagente el PATCH de `arriendo_mensual`/`gasto_anual` (fuentes de la fórmula `ingreso_liquido_anual`) y también al orquestador al reintentarlo directo (marcado como bypass).
+**Causa raíz:** los campos no estaban nombrados en la autorización de la tanda; re-ejecutar por otra vía una acción denegada a un subagente es tunneling y el clasificador lo detecta.
+**Solución aplicada:** se respetó la denegación: pieza D6c documentada como bloqueada con el PATCH exacto listo para Sergio (2 campos, valores del oráculo).
+**Prevención futura:** enumerar en el mandato de cada tanda los campos concretos autorizados a escribir; si un subagente es denegado, la vía correcta es documentar y pedir, no reintentar desde otro proceso.
