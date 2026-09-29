@@ -305,16 +305,21 @@ def bloque_con_sidebar(doc, rotulo, filas, cols, anchos_cm, borde_sz=2):
 
 
 def portada(doc):
+    # Densidad vertical calibrada contra el oráculo Met6283 (T-CIERRE-FINAL-20260929):
+    # la portada generada terminaba a ~68% de la altura y la referencia a ~81%.
+    # Los spacers se agrandaron (space_after) para bajar cada bloque a su posición
+    # de referencia: título 6,3% · logo 23,2% · ANTECEDENTES 54,4% · ficha 59,8%
+    # · pie 77,6% (medidos como % del alto de página a 100 dpi).
     barra(doc, "INFORME DE TASACION", size=18, bold=False, ancho=17.0)
     for _ in range(4):
-        parrafo(doc, "", size=11, space_after=6)
+        parrafo(doc, "", size=11, space_after=21)
     # logo centrado, sin recuadro (v1 tenía caja con placeholder sobrante)
     if LOGO.exists():
         imagen(doc, None, 9.9, 6.3, path=LOGO)
     for _ in range(3):
-        parrafo(doc, "", size=11, space_after=6)
+        parrafo(doc, "", size=11, space_after=21)
     barra(doc, "ANTECEDENTES", size=14, bold=False, ancho=17.0)
-    parrafo(doc, "", size=8)
+    parrafo(doc, "", size=8, space_after=20)
     # caja única de borde azul fino SIN grilla interna; label + tab a ~40%
     ficha = doc.add_table(rows=7, cols=2)
     ficha.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -336,8 +341,7 @@ def portada(doc):
         alto_fila(ficha.rows[i], 0.55)
         celda(ficha.cell(i, 0), k, 11, False)
         celda(ficha.cell(i, 1), v, 11, True)
-    for _ in range(4):
-        parrafo(doc, "", size=11, space_after=6)
+    parrafo(doc, "", size=11, space_after=12)
     pie = doc.add_table(rows=2, cols=2)
     pie.alignment = WD_TABLE_ALIGNMENT.CENTER
     pie.autofit = False
@@ -1357,6 +1361,8 @@ def main():
     s0.page_width, s0.page_height = Cm(21), Cm(29.7)
     for m in ("left_margin", "right_margin", "top_margin", "bottom_margin"):
         setattr(s0, m, Cm(1.0))
+    # sólo portada: la referencia arranca la banda de título a 6,3% del alto
+    s0.top_margin = Cm(1.87)
     portada(doc)
 
     s1 = doc.add_section(WD_SECTION.NEW_PAGE)

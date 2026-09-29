@@ -1,0 +1,139 @@
+PASS  T0-PAG     v3 tiene 8 páginas
+PASS  T1-DATOS   '20.125,86'
+PASS  T1-DATOS   '802.913.431'
+PASS  T1-DATOS   '9.246,94'
+PASS  T1-DATOS   '8.907,06'
+PASS  T1-DATOS   '8.517,68'
+PASS  T1-DATOS   '13.081,81'
+PASS  T1-DATOS   '16.603,84'
+PASS  T1-DATOS   '36.300.000'
+PASS  T1-DATOS   '806.666.667'
+PASS  T1-DATOS   '39.894,61'
+PASS  T1-DATOS   '5.024,86'
+PASS  T1-DATOS   '249,91'
+PASS  T1-DATOS   '16.610.203-0'
+PASS  T1-DATOS   '2024'
+PASS  T1-DATOS   '70'
+PASS  T1-DATOS   'Maria Eugenia Soto'
+PASS  T1-DATOS   'METLIFE -6283'
+PASS  T1-DATOS   '900159638'
+PASS  T1-DATOS   'N°882-40'
+PASS  T1-DATOS   'N°319 09/09/2020'
+PASS  T1-DATOS   'N°210 18/07/2024'
+PASS  T1-DATOS   'LOS EUCALIPTUS, Casa: N°2100, Condominio LAS BRISAS DE CHICUREO'
+PASS  T1-DATOS   'FRANCISCO JOSÉ VERGARA UNDURRAGA'
+PASS  T1-DATOS   'MONICA REYES PINTO'
+PASS  T1-DATOS   'Héctor Martínez C.'
+PASS  T1-DATOS   'Colina'
+PASS  T1-DATOS   'Metropolitana de Santiago'
+PASS  T1-DATOS   'Refinanciamiento'
+PASS  T1-DATOS   'HABITACIONAL'
+PASS  T1-DATOS   '13-04-2026'
+PASS  T1-DATOS   'DOM, Plano Catastro'
+PASS  T1-DATOS   '20.000'
+PASS  T1-DATOS   '24.900'
+PASS  T1-DATOS   '19.500'
+PASS  T1-DATOS   '23.900'
+PASS  T1-DATOS   '18.900'
+PASS  T1-DATOS   '20.500'
+PASS  T1-DATOS   '18.000'
+PASS  T1-DATOS   '34,05'
+PASS  T1-DATOS   '35,19'
+PASS  T1-DATOS   '35,71'
+PASS  T1-DATOS   '31,45'
+PASS  T1-DATOS   '31,82'
+PASS  T1-DATOS   '25,18'
+PASS  T1-DATOS   '22,99'
+PASS  T1-DATOS   '11.218,80'
+PASS  T1-DATOS   '8.157,06'
+PASS  T1-DATOS   '350,00'
+PASS  T1-DATOS   '32,64'
+PASS  T1-DATOS   '0,96'
+PASS  T1-DATOS   '3.300.000'
+PASS  T1-DATOS   '4,5%'
+PASS  T1-DATOS   '8 A 10 MESES'
+PASS  T1-DATOS   '82,5%'
+PASS  T1-DATOS   '65'
+PASS  T2-IMG     p1: 36 imgs (min 1)
+PASS  T2-IMG     p2: 36 imgs (min 3)
+PASS  T2-IMG     p3: 36 imgs (min 4)
+PASS  T2-IMG     p4: 36 imgs (min 0)
+PASS  T2-IMG     p5: 36 imgs (min 8)
+PASS  T2-IMG     p6: 36 imgs (min 8)
+PASS  T2-IMG     p7: 36 imgs (min 4)
+PASS  T2-IMG     p8: 36 imgs (min 6)
+PASS  T2-IMG     sin placeholders '{d.' residuales
+PASS  T3-HOJA3   'PRMS' en pág.4
+PASS  T3-HOJA3   'OGUC' en pág.4
+PASS  T3-HOJA3   'LEY 19537' en pág.4
+PASS  T3-HOJA3   'Estrato Medio Alto' en pág.4
+PASS  T3-HOJA3   'Caletera Oriente Gral San Martín' en pág.4
+PASS  T3-HOJA3   '29,95' en pág.4
+PASS  T3-HOJA3   'REGULAR' en pág.4
+PASS  T3-HOJA3   'PLANO' en pág.4
+PASS  T3-HOJA3   'NORTE' en pág.4
+PASS  T3-HOJA3   'CONDOMINIO' en pág.4
+PASS  T3-HOJA3   'AISLADA' en pág.4
+PASS  T3-HOJA3   'ALBAÑILERÍA LADRILLO' en pág.4
+PASS  T3-HOJA3   'ACERO VOLCANITA' en pág.4
+PASS  T3-HOJA3   'PLANCHA METALICA' en pág.4
+PASS  T3-HOJA3   'ESTUCO Y PINTURA' en pág.4
+PASS  T3-HOJA3   'REJA METALICA' en pág.4
+PASS  T3-HOJA3   'TERRAZA DESCUBIERTA+QUINCHO+PISCINA+BODEGA' en pág.4
+PASS  T3-HOJA3   'RADIADOR MURAL' en pág.4
+PASS  T3-HOJA3   'MELAMINA' en pág.4
+PASS  T3-HOJA3   'MELAMINA Y CUARZO' en pág.4
+PASS  T3-HOJA3   'LOSA NACIONAL CORRIENTE' en pág.4
+PASS  T3-HOJA3   'NACIONAL CORRIENTE' en pág.4
+PASS  T3-HOJA3   'MADERA' en pág.4
+PASS  T3-HOJA3   'PVC TERMOPANEL' en pág.4
+PASS  T3-HOJA3   'ENMADERADO' en pág.4
+PASS  T3-HOJA3   'TIPO PISO DE INGENIERÍA' en pág.4
+PASS  T3-HOJA3   'ESMALTE' en pág.4
+PASS  T3-HOJA3   'ENLUCIDO / PINTURA' en pág.4
+PASS  T3-HOJA3   'CERAMICO' en pág.4
+PASS  T3-HOJA3   'TIPO PORCELANATO' en pág.4
+PASS  T3-HOJA3   'Colector' en pág.4
+PASS  T3-HOJA3   'Matriz Pública' en pág.4
+PASS  T3-HOJA3   'Red Subterránea' en pág.4
+PASS  T3-HOJA3   'Red Pública' en pág.4
+PASS  T3-HOJA3   '10 %' en pág.4
+PASS  T3-HOJA3   '45 %' en pág.4
+PASS  T3-HOJA3   '35 %' en pág.4
+PASS  T3-HOJA3   '249,91' en pág.4
+PASS  T3-HOJA3   'NO CONTEMPLA' en pág.4
+PASS  T3-HOJA3   'Solerilla' en pág.4
+PASS  T4-CI057   '-3%' presente
+PASS  T4-CI057   '36%' presente
+PASS  T4-CI057   '161%' AUSENTE
+PASS  T4-CI057   promedio ofertas 33,64
+PASS  T4-CI057   promedio CBR 24,08
+PASS  T4-CI057   30,91 (promedio viejo) AUSENTE
+PASS  T4-CI057   dólar 890,33
+PASS  T4-CI057   columna US$ '414.344'
+PASS  T4-CI057   columna US$ '399.115'
+PASS  T4-CI057   columna US$ '381.667'
+PASS  T4-CI057   columna US$ '586.180'
+PASS  T4-CI057   columna US$ '743.998'
+PASS  T5-VISUAL  p1 diff 10% <= 35%
+FAIL  T5-VISUAL  p2 diff 42% <= 35%  << 
+PASS  T5-VISUAL  p3 diff 20% <= 35%
+PASS  T5-VISUAL  p4 diff 26% <= 35%
+PASS  T5-VISUAL  p7 diff 26% <= 35%
+PASS  T5-VISUAL  p8 diff 31% <= 35%
+T5-VISUAL: revisar ocularmente visual-ref-pN vs visual-gen-pN (veredicto fino = auditor/Sergio)
+PASS  T6-CADENA  PDF v3 3396967 bytes >= 300000 y header %PDF
+PASS  T6-CADENA  pdf_final_url con dropbox.com
+PASS  T6-CADENA  1 fila vigente en TX_DocumentosGenerados
+PASS  T6-CADENA  render_id_carbone presente
+PASS  T6-CADENA  url_dropbox /VProperty/Tasaciones/
+
+== 127/128 PASS ==
+
+==================================================================
+pnpm test (vitest 4.1.10) — 29-sep-2026
+ Test Files  58 passed | 3 skipped (61)
+      Tests  1017 passed | 3 skipped (1020)
+(incluye overrides.test.ts — candado de genericidad: overrides solo
+aplican si json.codigo === contexto.meta.codigo)
+==================================================================
