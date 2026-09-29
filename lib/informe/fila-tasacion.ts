@@ -51,3 +51,20 @@ export function filaTasacionVsPct(
   const fraccion = tasacionVsPromedio(tasacionUfM2, promedioUfM2)
   return fraccion === null ? null : fraccion * 100
 }
+
+/**
+ * «PROMEDIO DE LA MUESTRA» de una columna del cuadro de comparables —
+ * aritmética exacta del XLSM (`Portada!AX34`):
+ * `SUM(rango) / COUNTIF(rango, ">0")`, es decir el promedio de los valores
+ * **mayores que cero** de la columna, por bloque (ofertas y CBR por
+ * separado). Los `0` del Excel son «sin dato» y no diluyen el promedio; acá
+ * además `null` es ausente. Sin valores positivos → `null`, nunca un 0
+ * inventado (CI-057).
+ */
+export function promedioSinCeros(
+  valores: ReadonlyArray<number | null>,
+): number | null {
+  const positivos = valores.filter((v): v is number => typeof v === 'number' && v > 0)
+  if (positivos.length === 0) return null
+  return positivos.reduce((a, b) => a + b, 0) / positivos.length
+}

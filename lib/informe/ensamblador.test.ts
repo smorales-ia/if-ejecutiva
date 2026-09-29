@@ -340,12 +340,93 @@ describe('construirInformeContexto · golden VP-2026-0066', () => {
     expect(contexto.cuadro.items[0].ufM2Aplicado).toBe(8)
   })
 
-  it('fila TASACIÓN (F-2): tasacionUfM2 calculada; tasacionVsPct null sin muestra', async () => {
+  it('fila TASACIÓN (CI-057): UF/m²C homologado desde el cuadro; V/S null sin muestra', async () => {
     const contexto = await contexto0066()
-    // 20125.8624 / 249.91 = 80.5324…
-    expect(contexto.comparablesInforme.tasacionUfM2).toBeCloseTo(80.53, 2)
+    // 8.157,0624 (edificación) ÷ 249,91 = 32,64 — el 34,00 × 0,96 del XLSM
+    // (Portada!BD59). Ya NO el valor total ÷ superficie (80,53) que producía
+    // el 161% del CI-057.
+    expect(contexto.comparablesInforme.tasacionUfM2).toBeCloseTo(32.64, 2)
+    expect(contexto.comparablesInforme.tasacionFila.ufM2Construccion).toBeCloseTo(32.64, 2)
+    // UF/m²T = 11.218,8 ÷ 5.024,86 y OO.CC. = 350 + 250 + 150 (XLSM AU35/AR35).
+    expect(contexto.comparablesInforme.tasacionFila.ufM2Terreno).toBeCloseTo(2.2327, 3)
+    expect(contexto.comparablesInforme.tasacionFila.oocc).toBe(750)
     // 0066 no tiene comparables: sin promedio no hay desviación — null honesto.
     expect(contexto.comparablesInforme.tasacionVsPct).toBeNull()
+    expect(contexto.comparablesInforme.ofertas.promedio.ufM2Construccion).toBeNull()
+  })
+
+  it('CI-057: promedios POR BLOQUE y V/S contra el XLSM MET-6283 (−3% / +36%)', async () => {
+    // Las 7 referencias del gold master (inputs de TX_Comparables: UF/m²T es
+    // INPUT del tasador; el UF/m²C homologado lo deriva el canónico A-44).
+    const comparable = (
+      id: string,
+      tipo: string,
+      precio: number,
+      supT: number,
+      supC: number,
+      ufm2t: number,
+      oocc: number,
+    ) =>
+      fila(id, {
+        solicitud: [ID],
+        direccion: `Ref ${id}`,
+        tipo_referencia: tipo,
+        precio_uf: precio,
+        sup_terreno_m2: supT,
+        sup_construccion_m2: supC,
+        uf_m2_terreno_f: ufm2t,
+        oo_cc_uf: oocc,
+        anio: 2015,
+        fecha_publicacion: 'abr-26',
+      })
+    const COMPARABLES_MET = [
+      comparable('rc1', 'Oferta', 20000, 5051, 239, 2.2, 750),
+      comparable('rc2', 'Oferta', 24900, 5077, 239, 3.1, 750),
+      comparable('rc3', 'Oferta', 19500, 5001, 252, 2.0, 500),
+      comparable('rc4', 'Oferta', 23900, 5012, 258, 3.0, 750),
+      comparable('rc5', 'Oferta', 18900, 5000, 264, 2.0, 500),
+      comparable('rc6', 'CBR', 20500, 5002, 250, 2.7, 700),
+      comparable('rc7', 'CBR', 18000, 5013, 360, 1.8, 700),
+    ]
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.comparables ? COMPARABLES_MET : (TABLAS_0066[tableId] ?? []),
+    )
+
+    const { comparablesInforme: c } = await contexto0066()
+    expect(c.ofertas.filas).toHaveLength(5)
+    expect(c.cbr.filas).toHaveLength(2)
+    // Numeración correlativa POR BLOQUE (1..5 ofertas · 1..2 CBR).
+    expect(c.ofertas.filas.map((f) => f.numero)).toEqual([1, 2, 3, 4, 5])
+    expect(c.cbr.filas.map((f) => f.numero)).toEqual([1, 2])
+    // PROMEDIO DE LA MUESTRA por bloque (XLSM AX34/AX42) — no el 30,91 combinado.
+    expect(c.ofertas.promedio.ufM2Construccion).toBeCloseTo(33.643448, 4)
+    expect(c.cbr.promedio.ufM2Construccion).toBeCloseTo(24.084478, 4)
+    expect(c.ofertas.promedio.totalUf).toBeCloseTo(21440, 6)
+    expect(c.cbr.promedio.totalUf).toBeCloseTo(19250, 6)
+    expect(c.ofertas.promedio.ufM2Terreno).toBeCloseTo(2.46, 6)
+    // TASACIÓN V/S PROMEDIO (XLSM AX36/AX44): −2,98% ofertas · +35,52% CBR —
+    // imprime «-3%» y «36%»; ya no el 161% del CI-057.
+    expect(c.ofertas.tasacionVsPct).toBeCloseTo(-2.9826, 3)
+    expect(c.cbr.tasacionVsPct).toBeCloseTo(35.523, 3)
+    // Espejos de compatibilidad pre-v2.
+    expect(c.promedioUfM2).toBeCloseTo(33.643448, 4)
+    expect(c.tasacionVsPct).toBeCloseTo(-2.9826, 3)
+  })
+
+  it('columna US$ de terminales: CLP ÷ dólar del día (890,33 · XLSM BO71)', async () => {
+    const { terminales } = await contexto0066()
+    expect(terminales.usdDia).toBeCloseTo(890.33, 2)
+    expect(terminales.valorReposicionUsd).toBeCloseTo(414344, 0)
+    expect(terminales.seguroIncendioUsd).toBeCloseTo(399115, 0)
+    expect(terminales.avaluoFiscalUsd).toBeCloseTo(381667, 0)
+    expect(terminales.valorRemateUsd).toBeCloseTo(586180, 0)
+    expect(terminales.valorLiquidacionUsd).toBeCloseTo(743998, 0)
+  })
+
+  it('imagenes: todas las ranuras null fuera del caso espejo (0066 sin assets)', async () => {
+    const { imagenes, partes } = await contexto0066()
+    expect(Object.values(imagenes).every((v) => v === null)).toBe(true)
+    expect(partes.tasador.firmaUrl).toBeNull()
   })
 
   it('visador vacío en la base → nombre null, sin inventar', async () => {

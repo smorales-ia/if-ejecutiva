@@ -198,11 +198,20 @@ export interface TerminalesInforme {
   usdDia: number | null
   /** Fecha de la fila de `H_PreciosUF` usada (= `fecha_visita`). */
   fechaUf: string | null
+  /* Columna US$ del cuadro de valores (XLSM `= $ ÷ BO71`): cada CLP terminal
+     dividido por `usdDia`. `null` si falta el CLP o el dólar del día. */
+  valorReposicionUsd: number | null
+  seguroIncendioUsd: number | null
+  avaluoFiscalUsd: number | null
+  valorRemateUsd: number | null
+  valorLiquidacionUsd: number | null
 }
 
 /** Una fila de la muestra de referencias (bloque 6 · TX_Comparables). */
 export interface FilaComparableInforme {
   id: string
+  /** `numero` de la foto del cuadro; si falta, correlativo dentro del bloque. */
+  numero: number | null
   direccion: string
   comuna: string
   supTerreno: number | null
@@ -210,28 +219,73 @@ export interface FilaComparableInforme {
   precioUf: number | null
   anio: number | null
   tipoReferencia: string
+  /** `fecha_publicacion` de la oferta («abr-26» en el gold master). */
+  fecha: string
+  /** `telefono_contacto` — la ficha de referencia de Hoja 2 lo imprime. */
+  telefono: string
+  /** Columna «Foja y Número» de las referencias CBR: `foja`-`numero` («40132-55521»). */
+  fojaNumero: string
+  /** Columna «Comentarios» de REF.OFERTAS (vacía en el gold master). */
+  comentarios: string
+  /** `uf_m2_terreno_f` — INPUT del tasador, columna independiente del UF/m²C. */
+  ufM2Terreno: number | null
+  /** `oo_cc_uf` — obras complementarias descontadas en la homologación. */
+  oocc: number | null
   /** UF/m² de construcción — fórmula directa A-44 del modelo canónico. */
   ufM2Construccion: number | null
 }
 
 /**
+ * Promedio por columna de un bloque de la muestra — el renglón «PROMEDIO DE
+ * LA MUESTRA» del cuadro (XLSM `Portada!AD34..AX34` / `AD42..AX42`): promedio
+ * de los valores `> 0` de cada columna, por bloque (ofertas y CBR por
+ * separado), nunca combinado. También tipa la fila TASACIÓN (`AD35..AX35`).
+ */
+export interface ColumnasComparables {
+  totalUf: number | null
+  supTerreno: number | null
+  supConstruida: number | null
+  oocc: number | null
+  ufM2Terreno: number | null
+  ufM2Construccion: number | null
+}
+
+/** Un bloque de la muestra (REF. OFERTAS o REF. C.B.R.) con sus agregados. */
+export interface BloqueComparablesInforme {
+  filas: FilaComparableInforme[]
+  promedio: ColumnasComparables
+  /** `(tasacionFila.ufM2Construccion / promedio.ufM2Construccion − 1) × 100`. */
+  tasacionVsPct: number | null
+}
+
+/**
  * Comparables + los agregados de la muestra (E-61..75).
  *
- * `tasacionUfM2` y `tasacionVsPct` son los **únicos campos calculados por el
- * ensamblador** (no persisten en ninguna tabla): cablean la fila TASACIÓN que
- * hoy pinta «—» (F-2) como puente hasta que T2 los persista en el motor
- * (P1-8). Fórmulas documentadas en `ensamblador.ts`.
+ * Desde T-PDF-IDENTICO-20260927 el cuadro se agrega **por bloque** (`ofertas`
+ * / `cbr`), replicando la aritmética del XLSM: el promedio combinado que
+ * imprimía 30,91/161% era el bug CI-057 de esta capa. `tasacionFila` sale del
+ * cuadro de valoración (UF/m²C homologado = edificación ÷ superficie, no el
+ * valor comercial total ÷ superficie). Los campos planos (`promedioUfM2` ·
+ * `tasacionUfM2` · `tasacionVsPct`) quedan como espejo del bloque de ofertas
+ * y de la fila TASACIÓN para los consumidores previos; los nuevos deben usar
+ * los bloques. Nada persiste aún (P1-8 — puente hasta T2).
  */
 export interface ComparablesInforme {
   filas: FilaComparableInforme[]
-  /** Promedio UF/m² de la muestra (modelo canónico, A-44). */
+  /** Bloque REF. OFERTAS (tipo_referencia «Oferta»). */
+  ofertas: BloqueComparablesInforme
+  /** Bloque REF. C.B.R. (tipo_referencia «CBR»). */
+  cbr: BloqueComparablesInforme
+  /** Fila TASACIÓN del cuadro (XLSM `AD35..AX35`) — sale del cuadro de valoración. */
+  tasacionFila: ColumnasComparables
+  /** Espejo de `ofertas.promedio.ufM2Construccion` (compat pre-v2). */
   promedioUfM2: number | null
   usadosEnPromedio: number
   /** RF-12 exige mínimo 3. Se informa; no se bloquea acá. */
   cumpleMinimo: boolean
-  /** Fila TASACIÓN: `valorComercialUf / supConstruccionM2`. Calculado. */
+  /** Espejo de `tasacionFila.ufM2Construccion` (compat pre-v2). */
   tasacionUfM2: number | null
-  /** Desviación % de la tasación vs el promedio de la muestra. Calculado. */
+  /** Espejo de `ofertas.tasacionVsPct` (compat pre-v2). */
   tasacionVsPct: number | null
 }
 
@@ -297,18 +351,29 @@ export interface RecintosInforme {
     /** ⚠ number (sólo el año), no fecha completa (P2-3). */
     annoRegularizacion: number | null
   }[]
+  /**
+   * Matriz de la Hoja 3. `tipoRecinto`/`nivel` viajan en el vocabulario que
+   * la plantilla filtra (`Sala`, `Bano`, `MedioBano`, `BanoServicio`,
+   * `Lavadero`, `Piso1`…) — el ensamblador normaliza los rótulos de captura.
+   */
   habitacionesPorNivel: {
     id: string
     nivel: string
     tipoRecinto: string
     cantidad: number | null
   }[]
+  /** Σ cantidades — celda «Cantidad Total de Recintos» de la matriz. */
+  totalRecintos: number | null
   terminacionesPorRecinto: {
     id: string
     nombre: string
     categoria: string
     descripcion: string
     calidad: string
+    /** Columnas extra de la tabla impresa — sin columna Airtable hoy. */
+    revMuros?: string
+    cielo?: string
+    iluminacion?: string
   }[]
 }
 
@@ -322,6 +387,45 @@ export interface FotosInforme {
 /** Anexos 1-2: adjuntos no-foto que la plantilla insertará (E-214..223). */
 export interface AnexosInforme {
   documentos: { id: string; nombre: string; tipo: string; url: string }[]
+}
+
+/**
+ * Ranuras de imagen del informe (contrato §3.3 del plan T-PDF-IDENTICO):
+ * cada valor es una **URL pública o un data-URI base64** que Carbone v4
+ * inserta sobre el placeholder correspondiente de la plantilla, o `null`
+ * (ranura vacía). Los produce `lib/informe/imagenes.ts`: primero desde un
+ * adjunto Airtable con URL http(s) utilizable; si no, desde los assets del
+ * repo del caso espejo (fallback de tanda — columna nueva pendiente para el
+ * flujo vivo).
+ */
+export interface ImagenesInforme {
+  /** Hoja 1 · recuadro «Ubicación» (arriba-derecha). */
+  mapaUbicacion: string | null
+  /** Hoja 1 · FOTO FACHADA. */
+  fachada: string | null
+  /** Hoja 1 · firma manuscrita del tasador (también en `partes.tasador.firmaUrl`). */
+  firma: string | null
+  /** Hoja 2 · mapa de ubicación de referencias (banda superior). */
+  refMapa: string | null
+  /** Hoja 2 · fotos de las referencias 1-3 (= ofertas 1-3). */
+  ref1: string | null
+  ref2: string | null
+  ref3: string | null
+  /* Anexo N°1 — 7 ranuras. */
+  anexo1Plano: string | null
+  anexo1Esquema: string | null
+  anexo1CuadroSup: string | null
+  anexo1Emplazamiento: string | null
+  anexo1Aerea: string | null
+  anexo1MapaSii: string | null
+  anexo1InfoSii: string | null
+  /* Anexo N°2 — 6 escaneados (incluye la escritura «Fojas 3312»). */
+  anexo2RolAvaluo: string | null
+  anexo2Permiso: string | null
+  anexo2Escritura: string | null
+  anexo2NoExpropiacion: string | null
+  anexo2Recepcion: string | null
+  anexo2Tgr: string | null
 }
 
 /** Mapa de referencias (E-120 · P1-4). */
@@ -353,6 +457,8 @@ export interface InformeContexto {
   recintos: RecintosInforme
   fotos: FotosInforme
   anexos: AnexosInforme
+  /** Ranuras de imagen del informe (T-PDF-IDENTICO · plantilla v2). */
+  imagenes: ImagenesInforme
   mapa: MapaInforme
   /** Bloque 8 · antecedentes legales reutilizados del modelo canónico. */
   legales: AntecedentesLegales

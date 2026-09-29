@@ -1,0 +1,179 @@
+{
+  "_comentario": "T-PDF-IDENTICO-20260927 · datos del oráculo MET-6283 SIN columna real en Airtable (P1-1/P1-2 cualitativa Hoja 3, terminaciones por recinto, texto expropiación, nombre impreso de la tasadora, fecha de visado, tiempo de renta). Deep-merge sobre el InformeContexto cuando codigo coincide. Claves alineadas 1:1 con los tags {d.*} de PLANTILLA_MET_v2.docx (B-RECON 28-sep-2026). Cada clave es candidata a columna nueva para el flujo vivo — ver CIERRE.",
+  "codigo": "VP-2026-0067",
+  "contexto": {
+    "partes": {
+      "tasador": {
+        "nombre": "Maria Eugenia Soto"
+      },
+      "fechaVisado": "2026-04-15"
+    },
+    "rentabilidad": {
+      "tiempoRentaAnios": 65
+    },
+    "textosIA": {
+      "textoExpropiacion": "De acuerdo al DOM, Plano Catastro de la Municipalidad de Colina la propiedad NO cuenta con expropiación."
+    },
+    "recintos": {
+      "terminacionesPorRecinto": [
+        {
+          "id": "override-terminaciones-1",
+          "nombre": "Estar - Dormitorios - Circulación",
+          "categoria": "ENMADERADO",
+          "descripcion": "TIPO PISO DE INGENIERÍA",
+          "revMuros": "ESMALTE",
+          "cielo": "ENLUCIDO / PINTURA",
+          "iluminacion": "BUENA",
+          "calidad": "BUENO"
+        },
+        {
+          "id": "override-terminaciones-2",
+          "nombre": "Cocina - Baños - Loggia",
+          "categoria": "CERAMICO",
+          "descripcion": "TIPO PORCELANATO",
+          "revMuros": "CERAMICO",
+          "cielo": "ENLUCIDO / PINTURA",
+          "iluminacion": "BUENA",
+          "calidad": "BUENO"
+        }
+      ]
+    },
+    "cualitativa": {
+      "normativa": {
+        "supPredialMinimo": "PRMS",
+        "frentePredialMinimo": "PRMS",
+        "ocupacionSuelo": "PRMS",
+        "coefConstructibilidad": "PRMS",
+        "alturaEdificacion": "OGUC",
+        "distanciaMedianero": "OGUC",
+        "sistemaAgrupamiento": "OGUC",
+        "antejardin": "SI",
+        "dfl2": "NO",
+        "ley6071": "NO",
+        "ley9135": "NO",
+        "ley19537": "SI",
+        "cumpleUsoActual": "SI",
+        "cumpleTipoConstruccion": "SI",
+        "usoMasProbable": "HABITACIONAL",
+        "cambiosPlanRegulador": "NO CONTEMPLA"
+      },
+      "sector": {
+        "demanda": "Medio",
+        "tendencia": "Estable",
+        "densidad": "Baja",
+        "mercado": "Estrato Medio Alto",
+        "abc1": "SI/No Homogéneo",
+        "destinoBarrio": "Habitacional",
+        "tipoZona": "Rural",
+        "calzada": "Asfalto",
+        "acera": "Tierra",
+        "solera": "Solerilla",
+        "antejardin": "Sí",
+        "redElectrica": "Red Subterránea",
+        "aguaPotable": "Matriz Pública",
+        "gas": "Red Pública",
+        "proyUsoTerrenos": "Estacionario",
+        "pctCasas": 10,
+        "pctDeptos": 0,
+        "pctCondominios": 45,
+        "pctEquipComercial": 1,
+        "pctIndustrial": 0,
+        "pctComercial": 1,
+        "pctSitiosEriazos": 35,
+        "pctOtros": 8,
+        "arteriaPrincipal": "Caletera Oriente Gral San Martín"
+      },
+      "geometriaTerreno": {
+        "forma": "REGULAR",
+        "pendiente": "PLANO",
+        "orientacion": "NORTE",
+        "frente": "29,95",
+        "contrafrente": "29,95",
+        "deslindeNorte": "50",
+        "deslindeSur": "50"
+      },
+      "emplazamiento": {
+        "tipoAgrupamiento": "CONDOMINIO",
+        "disenoArquitectonico": "TIPICO",
+        "utilidadFuncional": "ADECUADA",
+        "tipoAdosamiento": "AISLADA",
+        "calidadConstructiva": "BUENA",
+        "estadoConservacion": "BUENO",
+        "predioVista": "BUENO",
+        "orientacionConstruccion": "NORTE",
+        "relacionTerrenoConstruccion": "ADECUADO",
+        "iluminacionNatural": "ADECUADA"
+      },
+      "constructivas": {
+        "estructura": "ALBAÑILERÍA LADRILLO",
+        "estructuraCalidad": "BUENA",
+        "estructuraEstado": "BUENO",
+        "divisiones": "ACERO VOLCANITA",
+        "divisionesCalidad": "BUENA",
+        "divisionesEstado": "BUENO",
+        "entrepisos": "",
+        "entrepisosCalidad": "",
+        "entrepisosEstado": "",
+        "cubierta": "PLANCHA METALICA",
+        "cubiertaCalidad": "BUENA",
+        "cubiertaEstado": "BUENO",
+        "revestimientoExterior": "ESTUCO Y PINTURA",
+        "revestimientoExteriorCalidad": "BUENA",
+        "revestimientoExteriorEstado": "BUENO",
+        "cierros": "REJA METALICA",
+        "cierrosCalidad": "BUENA",
+        "cierrosEstado": "BUENO",
+        "obrasComplementarias": "TERRAZA DESCUBIERTA+QUINCHO+PISCINA+BODEGA",
+        "obrasComplementariasCalidad": "BUENA",
+        "obrasComplementariasEstado": "BUENO",
+        "construccionAnexo": "0",
+        "construccionAnexoCalidad": "",
+        "construccionAnexoEstado": "",
+        "aireAcondicionado": "RADIADOR MURAL",
+        "calefaccion": "NO PRESENTA",
+        "closet": "MELAMINA",
+        "mueblesCocina": "MELAMINA Y CUARZO",
+        "sanitarios": "LOSA NACIONAL CORRIENTE",
+        "griferia": "NACIONAL CORRIENTE",
+        "puertaPrincipal": "MADERA",
+        "ventanas": "PVC TERMOPANEL"
+      },
+      "servicios": {
+        "alcantarillado": "Colector",
+        "aguaPotable": "Matriz Pública",
+        "electricidad": "Red Subterránea",
+        "gas": "Red Pública",
+        "otros": ""
+      },
+      "comodidades": {
+        "mueblesCocina": "SI",
+        "comedorDiario": "SI",
+        "patioServicio": "SI",
+        "estacionamiento": "SI",
+        "piscina": "SI",
+        "gimnasio": "NO",
+        "sauna": "NO",
+        "bodega": "SI",
+        "jardin": "SI",
+        "calefaccion": "NO",
+        "alarma": "NO",
+        "protecciones": "NO",
+        "aspiracion": "NO",
+        "climatizacion": "NO",
+        "purificador": "NO",
+        "corrientesDebiles": "SI"
+      },
+      "detallePropiedad": {
+        "casaNumero": "N°2100",
+        "sitioLote": "A 40",
+        "zona": "IPB(Colina)",
+        "subterraneos": "NO",
+        "mansarda": "NO",
+        "selloSec": "SI",
+        "afectoExpropiacion": "NO",
+        "fuenteInformacion": "DOM, Plano Catastro",
+        "ampliacion": "No"
+      }
+    }
+  }
+}

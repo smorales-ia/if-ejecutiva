@@ -215,6 +215,22 @@ function texto(valor: unknown): string {
   return valor === null || valor === undefined ? '' : String(valor)
 }
 
+const MESES_ABREV = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+] as const
+
+/**
+ * "YYYY-MM-DD" → "abr-26", el formato de la columna Fecha de REF.OFERTAS en
+ * el informe impreso. Cualquier valor no parseable pasa tal cual.
+ */
+function fechaMesAnio(iso: string): string {
+  const m = /^(\d{4})-(\d{2})/.exec(iso)
+  if (!m) return iso
+  const mes = MESES_ABREV[Number(m[2]) - 1]
+  return mes ? `${mes}-${m[1].slice(2)}` : iso
+}
+
 /**
  * Rol SII con sentinel de ausencia (CI-067 · regla aprobada por Héctor
  * 29-ago-2026). Vacío, sólo espacios o el marcador `EN TRAMITE` → literal
@@ -284,7 +300,14 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
   }
 
   /* --- Bloque 6 · comparables y UF/m² de construcción (A-44) --------- */
-  const filasComparables = comparables.map((c) => {
+  /* Orden estable por `comp_id` (COMP-01..07): Airtable no garantiza orden de
+     listado y las filas/fichas del informe se imprimen por posición. */
+  const comparablesOrdenados = [...comparables].sort(
+    (a, b) =>
+      (numeroONull(a.fields.comp_id) ?? Number.MAX_SAFE_INTEGER) -
+      (numeroONull(b.fields.comp_id) ?? Number.MAX_SAFE_INTEGER),
+  )
+  const filasComparables = comparablesOrdenados.map((c) => {
     const f = c.fields
     const supConstruida = numeroONull(f.sup_construccion_m2)
     const supTerreno = numeroONull(f.sup_terreno_m2)
@@ -306,6 +329,10 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
 
     return {
       id: c.id,
+      /* Posición dentro del bloque (1..n) — la asigna el ensamblador. El
+         campo `numero` de TX_Comparables es el N° de inscripción CBR (texto,
+         p.ej. "55521") y viaja compuesto en `fojaNumero`, no acá. */
+      numero: null,
       direccion: texto(f.direccion),
       comuna: texto(f.comuna_comparable),
       supTerreno,
@@ -313,6 +340,13 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       precioUf,
       anio: numeroONull(f.anio),
       tipoReferencia: texto(f.tipo_referencia),
+      fecha: fechaMesAnio(texto(f.fecha_publicacion)),
+      telefono: texto(f.telefono_contacto),
+      /* Columna "Foja y Número" de las referencias CBR: "40132-55521". */
+      fojaNumero: [texto(f.foja), texto(f.numero)].filter(Boolean).join('-'),
+      comentarios: texto(f.comentarios),
+      ufM2Terreno: ufM2TerrenoF,
+      oocc: ooCcUf,
       ufM2Construccion,
     }
   })

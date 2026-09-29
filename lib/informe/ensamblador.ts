@@ -44,12 +44,17 @@
  *
  * ## Campos calculados — los únicos, y con permiso
  *
- * `tasacionUfM2 = valorComercialUf / supConstruccionM2` y
- * `tasacionVsPct = (tasacionUfM2 / promedioUfM2 − 1) × 100` cablean la fila
- * TASACIÓN que pintaba «—» (F-2), como puente hasta que T2 los persista en
- * el motor (P1-8). Lo manda el ROADMAP §3 bloque 2. Todo lo demás se lee, no
- * se computa. La aritmética vive en `lib/informe/fila-tasacion.ts` (RO-05:
- * una sola fuente por número — la comparte el preview del tasador).
+ * Los agregados del cuadro de comparables (T-PDF-IDENTICO · fix CI-057 de
+ * esta capa): promedios **por bloque** (ofertas / CBR, valores > 0 —
+ * `promedioSinCeros`, XLSM `Portada!AX34/AX42`), la fila TASACIÓN derivada
+ * del cuadro de valoración (`ufM2Construccion` = edificación UF ÷ sup.
+ * edificación = UF/m² nuevo × factor depreciación, XLSM `BD59`; el promedio
+ * combinado ÷ valor total anterior imprimía 30,91/161%), y
+ * `tasacionVsPct = (tasacionFila.ufM2C / promedio.ufM2C − 1) × 100` por
+ * bloque. Puente hasta que T2 los persista en el motor (P1-8). La columna
+ * US$ de terminales es `CLP ÷ usdDia` (XLSM `BO71`). Todo lo demás se lee,
+ * no se computa. La aritmética vive en `lib/informe/fila-tasacion.ts`
+ * (RO-05: una sola fuente por número — la comparte el preview del tasador).
  */
 
 import { getRecord, listRecords } from '@/lib/airtable-client'
@@ -57,14 +62,19 @@ import { autorizarSolicitud, type ResultadoGuard } from '@/lib/tasador/auth-guar
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
 import { construirInforme } from '@/lib/tasador/lectura-informe'
-import { filaTasacionUfM2, filaTasacionVsPct } from './fila-tasacion'
+import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
+import { resolverImagenes } from './imagenes'
+import { aplicarOverridesLocales } from './overrides'
 import type {
+  BloqueComparablesInforme,
+  ColumnasComparables,
   ComparablesInforme,
   CualitativaInforme,
   FilaComparableInforme,
   FotosInforme,
   Hueco,
   InformeContexto,
+  ItemCuadroInforme,
 } from './tipos'
 
 type Fields = Record<string, unknown>
@@ -274,10 +284,12 @@ export async function construirInformeContexto(
           })
         : Promise.resolve([]),
       /* H_PreciosUF: la fila del día de la visita — mismo lookup que hace el
-         guard H3 del motor. Sin fecha de visita no se consulta. */
+         guard H3 del motor. Sin fecha de visita no se consulta. `fecha` es
+         dateTime en Airtable: la igualdad literal contra "YYYY-MM-DD" devuelve
+         0 filas, hay que comparar sobre el día formateado. */
       fechaVisita
         ? listRecords<Fields>(TABLE_IDS.preciosUf, {
-            filterByFormula: `{fecha}="${fechaVisita.replace(/"/g, '\\"')}"`,
+            filterByFormula: `DATETIME_FORMAT({fecha},'YYYY-MM-DD')="${fechaVisita.slice(0, 10).replace(/"/g, '\\"')}"`,
           })
         : Promise.resolve([]),
     ])
@@ -294,6 +306,18 @@ export async function construirInformeContexto(
 
   const d = datos[0]?.fields ?? {}
   const uf = filasUf[0]?.fields ?? {}
+  const usdDia = numeroONull(uf.tipo_cambio_usd)
+  /** Columna US$: `clp ÷ usdDia` — null-safe (sin dólar del día no hay US$). */
+  const usd = (clp: number | null): number | null =>
+    clp !== null && usdDia ? clp / usdDia : null
+  const ufDiaValor =
+    numeroONull(uf.valor_clp) ??
+    numeroONull(s.uf_dia_visita) ??
+    numeroONull(d.uf_dia_visita)
+  const arriendoClp =
+    numeroONull(d.arriendo_bruto_mensual_clp) ?? numeroONull(d.arriendo_mensual)
+  const arriendoUfMes =
+    arriendoClp !== null && ufDiaValor ? arriendoClp / ufDiaValor : null
 
   /* --- Terminales: variable_output → resultado ----------------------- */
   const terminal = new Map<string, number | null>()
@@ -304,27 +328,32 @@ export async function construirInformeContexto(
   const t = (variable: string): number | null => terminal.get(variable) ?? null
 
   /* --- Cuadro: pareja vieja con caída a la nueva (ver docblock) ------ */
-  const itemsCuadro = items.map((i) => {
-    const f = i.fields
-    return {
-      id: i.id,
-      orden: numeroONull(f.orden) ?? numeroONull(f.item_id),
-      descripcion: texto(f.descripcion) || texto(f.nombre_item),
-      tipoItem: texto(f.tipo_item),
-      supM2: numeroONull(f.sup_m2),
-      ufM2Aplicado: numeroONull(f.uf_m2_aplicado) ?? numeroONull(f.uf_m2_unitario),
-      factorAplicado: numeroONull(f.factor_aplicado),
-      ufTotalItem: numeroONull(f.uf_total_item) ?? numeroONull(f.valor_uf),
-      aportaAGarantia: Boolean(f.aporta_a_garantia),
-      situacionMunicipal: texto(f.situacion_municipal),
-    }
-  })
+  const itemsCuadro = items
+    .map((i) => {
+      const f = i.fields
+      return {
+        id: i.id,
+        orden: numeroONull(f.orden) ?? numeroONull(f.item_id),
+        descripcion: texto(f.descripcion) || texto(f.nombre_item),
+        tipoItem: texto(f.tipo_item),
+        supM2: numeroONull(f.sup_m2),
+        ufM2Aplicado: numeroONull(f.uf_m2_aplicado) ?? numeroONull(f.uf_m2_unitario),
+        factorAplicado: numeroONull(f.factor_aplicado),
+        ufTotalItem: numeroONull(f.uf_total_item) ?? numeroONull(f.valor_uf),
+        aportaAGarantia: Boolean(f.aporta_a_garantia),
+        situacionMunicipal: texto(f.situacion_municipal),
+      }
+    })
+    /* La plantilla imprime por índice [i=0..5]: el orden del array ES el del
+       informe (Terreno, Servidumbre, Piso 1, Piscina, Quincho, Cierros —
+       `orden`/`item_id` ascendente; Airtable no garantiza orden de listado). */
+    .sort((a, b) => (a.orden ?? Number.MAX_SAFE_INTEGER) - (b.orden ?? Number.MAX_SAFE_INTEGER))
   const totalUf =
     itemsCuadro.length > 0
       ? itemsCuadro.reduce((suma, i) => suma + (i.ufTotalItem ?? 0), 0)
       : null
 
-  /* --- Comparables: base canónica + fila TASACIÓN calculada (F-2) ---- */
+  /* --- Comparables por bloque + fila TASACIÓN (F-2 · CI-057) --------- */
   const bloqueComparables = informe.bloques.find((b) => b.id === 'comparables')!
     .datos as {
     comparables: FilaComparableInforme[]
@@ -335,24 +364,87 @@ export async function construirInformeContexto(
   const valorComercialUf =
     t('valor_comercial_uf') ?? informe.valorDestacado.valorUf
   const supConstruccionM2 = numeroONull(d.sup_construccion_m2)
-  const tasacionUfM2 = filaTasacionUfM2(valorComercialUf, supConstruccionM2)
-  const tasacionVsPct = filaTasacionVsPct(
-    tasacionUfM2,
-    bloqueComparables.promedioUfM2,
+  const supTerrenoM2 = numeroONull(d.sup_terreno_m2)
+
+  /* Fila TASACIÓN — sale del cuadro de valoración, no de los comparables
+     (XLSM `AD35..AX35`): Total = valor comercial; UF/m²T = terreno UF ÷ sup.
+     terreno; OO.CC. = piscina + obras; UF/m²C = edificación UF ÷ sup.
+     edificación (= UF/m² nuevo × factor depreciación — el homologado). Sin
+     ítems de edificación cae al puente previo valor total ÷ sup. (F-2). */
+  const esTipo = (i: ItemCuadroInforme, ...tipos: string[]) =>
+    tipos.some((tp) => i.tipoItem.toLowerCase() === tp.toLowerCase())
+  const sumaUf = (filtro: (i: ItemCuadroInforme) => boolean): number | null => {
+    const seleccion = itemsCuadro.filter(filtro)
+    if (seleccion.length === 0) return null
+    return seleccion.reduce((s, i) => s + (i.ufTotalItem ?? 0), 0)
+  }
+  const terrenoUf = sumaUf((i) => esTipo(i, 'Terreno'))
+  const edificacionUf = sumaUf((i) => esTipo(i, 'Edificacion'))
+  const supEdificacion = itemsCuadro
+    .filter((i) => esTipo(i, 'Edificacion'))
+    .reduce((s, i) => s + (i.supM2 ?? 0), 0)
+  const ooccUf = sumaUf((i) => esTipo(i, 'Piscina', 'OO.CC.'))
+
+  const tasacionFila: ColumnasComparables = {
+    totalUf: valorComercialUf,
+    supTerreno: supTerrenoM2,
+    supConstruida: supConstruccionM2,
+    oocc: ooccUf,
+    ufM2Terreno:
+      terrenoUf !== null && supTerrenoM2 ? terrenoUf / supTerrenoM2 : null,
+    ufM2Construccion:
+      edificacionUf !== null && supEdificacion > 0
+        ? edificacionUf / supEdificacion
+        : filaTasacionUfM2(valorComercialUf, supConstruccionM2),
+  }
+
+  /* Bloques ofertas / CBR: promedio POR COLUMNA sobre su bloque, valores > 0
+     (XLSM `AX34`/`AX42`) — el promedio combinado era el 30,91 del CI-057. */
+  const armarBloque = (filas: FilaComparableInforme[]): BloqueComparablesInforme => {
+    const numeradas = filas.map((f, i) => ({ ...f, numero: f.numero ?? i + 1 }))
+    const promedio: ColumnasComparables = {
+      totalUf: promedioSinCeros(numeradas.map((f) => f.precioUf)),
+      supTerreno: promedioSinCeros(numeradas.map((f) => f.supTerreno)),
+      supConstruida: promedioSinCeros(numeradas.map((f) => f.supConstruida)),
+      oocc: promedioSinCeros(numeradas.map((f) => f.oocc)),
+      ufM2Terreno: promedioSinCeros(numeradas.map((f) => f.ufM2Terreno)),
+      ufM2Construccion: promedioSinCeros(numeradas.map((f) => f.ufM2Construccion)),
+    }
+    return {
+      filas: numeradas,
+      promedio,
+      tasacionVsPct: filaTasacionVsPct(
+        tasacionFila.ufM2Construccion,
+        promedio.ufM2Construccion,
+      ),
+    }
+  }
+  const ofertas = armarBloque(
+    bloqueComparables.comparables.filter((f) => /^oferta/i.test(f.tipoReferencia)),
+  )
+  const cbr = armarBloque(
+    bloqueComparables.comparables.filter((f) => /^cbr/i.test(f.tipoReferencia)),
   )
 
   const comparablesInforme: ComparablesInforme = {
     filas: bloqueComparables.comparables,
-    promedioUfM2: bloqueComparables.promedioUfM2,
+    ofertas,
+    cbr,
+    tasacionFila,
+    /* Espejos de compatibilidad pre-v2 (matriz/consumidores previos). */
+    promedioUfM2: ofertas.promedio.ufM2Construccion,
     usadosEnPromedio: bloqueComparables.usadosEnPromedio,
     cumpleMinimo: bloqueComparables.cumpleMinimo,
-    tasacionUfM2,
-    tasacionVsPct,
+    tasacionUfM2: tasacionFila.ufM2Construccion,
+    tasacionVsPct: ofertas.tasacionVsPct,
   }
 
   /* --- Fotos (bloque 7 canónico) y anexos (adjuntos no-foto) --------- */
-  const fotos = informe.bloques.find((b) => b.id === 'fotografico')!
+  const fotosCanonicas = informe.bloques.find((b) => b.id === 'fotografico')!
     .datos as unknown as FotosInforme
+  /* Ranuras de imagen + grilla resuelta (adjunto http(s) primero; fallback
+     assets del espejo — ver lib/informe/imagenes.ts). */
+  const { imagenes, fotos } = resolverImagenes(codigo, fotosCanonicas)
   const anexos = {
     documentos: adjuntos
       .filter((a) => !texto(a.fields.tipo_adjunto).startsWith('foto'))
@@ -363,6 +455,54 @@ export async function construirInformeContexto(
         url: texto(a.fields.url_dropbox),
       })),
   }
+
+  /* --- Habitaciones: vocabulario de la matriz + total ---------------- */
+  /* La plantilla filtra `[nivel='Piso1',tipoRecinto='Sala']` etc. con el
+     vocabulario del gold master; la captura guarda rótulos XLSM (`Estar`,
+     `Baños`, `1/2 Baño`, `B.Servicio`, `Loggia`). Se normaliza acá y se
+     completan con 0 los tipos ausentes de cada nivel presente, para que la
+     matriz impresa no deje celdas mudas. */
+  const TIPO_RECINTO_CANONICO: Record<string, string> = {
+    'Estar': 'Sala',
+    'Sala': 'Sala',
+    'Baños': 'Bano',
+    'Bano': 'Bano',
+    'Baño': 'Bano',
+    '1/2 Baño': 'MedioBano',
+    'MedioBano': 'MedioBano',
+    'B.Servicio': 'BanoServicio',
+    'BanoServicio': 'BanoServicio',
+    'Loggia': 'Lavadero',
+    'Lavadero': 'Lavadero',
+    'Otros': 'Otro',
+    'Otro': 'Otro',
+  }
+  const TIPOS_MATRIZ = [
+    'Comedor', 'Living', 'Sala', 'Hall', 'Suite', 'D.Simple', 'D.Servicio',
+    'Cocina', 'Escritorio', 'Bano', 'MedioBano', 'BanoServicio', 'Lavadero', 'Otro',
+  ]
+  const habitacionesNormalizadas = habitaciones.map((h) => {
+    const crudo = texto(h.fields.tipo_recinto)
+    return {
+      id: h.id,
+      nivel: texto(h.fields.nivel),
+      tipoRecinto: TIPO_RECINTO_CANONICO[crudo] ?? crudo,
+      cantidad: numeroONull(h.fields.cantidad),
+    }
+  })
+  const nivelesPresentes = [...new Set(habitacionesNormalizadas.map((h) => h.nivel))]
+  const habitacionesPorNivel = [
+    ...habitacionesNormalizadas,
+    ...nivelesPresentes.flatMap((nivel) =>
+      TIPOS_MATRIZ.filter(
+        (tp) => !habitacionesNormalizadas.some((h) => h.nivel === nivel && h.tipoRecinto === tp),
+      ).map((tp) => ({ id: `relleno-${nivel}-${tp}`, nivel, tipoRecinto: tp, cantidad: 0 })),
+    ),
+  ]
+  const totalRecintos =
+    habitacionesNormalizadas.length > 0
+      ? habitacionesNormalizadas.reduce((s, h) => s + (h.cantidad ?? 0), 0)
+      : null
 
   /* --- Cualitativa: todo null hoy (P1-1/P1-2) ------------------------ */
   const cualitativa: CualitativaInforme = {
@@ -387,7 +527,7 @@ export async function construirInformeContexto(
     })
   }
 
-  return {
+  const contexto: InformeContexto = {
     meta: {
       codigo,
       codigoExt: texto(s.codigo_ext),
@@ -406,7 +546,7 @@ export async function construirInformeContexto(
       propietario: texto(s.cliente_final_nombre),
       rut: texto(s.cliente_final_rut),
       ejecutivo: texto(s.ejecutivo_solicitante) || null,
-      tasador: { nombre: tasadorNombre, firmaUrl: null },
+      tasador: { nombre: tasadorNombre, firmaUrl: imagenes.firma },
       visador: { nombre: visadorNombre },
       fechaVisita,
       fechaVisado: null,
@@ -455,25 +595,29 @@ export async function construirInformeContexto(
       valorLiquidacionClp: t('valor_liquidacion_clp'),
       rentaPerpetuaClp: t('renta_perpetua_clp'),
       ingresoLiquidoAnualClp: t('ingreso_liquido_anual_clp'),
-      ufDia:
-        numeroONull(uf.valor_clp) ??
-        numeroONull(s.uf_dia_visita) ??
-        numeroONull(d.uf_dia_visita),
-      usdDia: numeroONull(uf.tipo_cambio_usd),
+      ufDia: ufDiaValor,
+      usdDia,
       fechaUf: filasUf.length > 0 ? texto(uf.fecha) || fechaVisita : null,
+      /* Columna US$ (XLSM `= $ ÷ BO71`): CLP terminal ÷ dólar del día. */
+      valorReposicionUsd: usd(t('valor_reposicion_clp')),
+      seguroIncendioUsd: usd(t('seguro_incendio_clp')),
+      avaluoFiscalUsd: usd(numeroONull(d.avaluo_fiscal_clp)),
+      valorRemateUsd: usd(t('valor_remate_clp')),
+      valorLiquidacionUsd: usd(t('valor_liquidacion_clp')),
     },
     comparablesInforme,
     rentabilidad: {
       /* Los campos *_clp son los que lee el motor; la pareja sin sufijo
          (`arriendo_mensual`/`gasto_anual`) alimenta la fórmula legacy de la
          tabla (CI-023 §4). Se prefiere la del motor y se cae a la otra. */
-      arriendoBrutoMensualClp:
-        numeroONull(d.arriendo_bruto_mensual_clp) ?? numeroONull(d.arriendo_mensual),
+      arriendoBrutoMensualClp: arriendoClp,
       gastoAnualClp: numeroONull(d.gasto_anual_clp) ?? numeroONull(d.gasto_anual),
       ingresoLiquidoAnualClp: t('ingreso_liquido_anual_clp'),
       rentaPerpetuaClp: t('renta_perpetua_clp'),
       tasaCapRate: informe.valorDestacado.capRate,
-      arriendoUfMes: null,
+      /* «UF/ mes» del análisis de rentabilidad: arriendo CLP ÷ UF del día
+         (XLSM: 3.300.000 ÷ 39.894,61 = 82,7). */
+      arriendoUfMes: arriendoUfMes,
     },
     textosIA: {
       /* Puente SC-Textos (T-PDF-IMPRENTA-20260927): el escenario escribe estas
@@ -491,22 +635,22 @@ export async function construirInformeContexto(
         supM2: numeroONull(a.fields.sup_m2),
         annoRegularizacion: numeroONull(a.fields.anno_regularizacion),
       })),
-      habitacionesPorNivel: habitaciones.map((h) => ({
-        id: h.id,
-        nivel: texto(h.fields.nivel),
-        tipoRecinto: texto(h.fields.tipo_recinto),
-        cantidad: numeroONull(h.fields.cantidad),
-      })),
+      habitacionesPorNivel,
+      totalRecintos,
       terminacionesPorRecinto: terminaciones.map((r) => ({
         id: r.id,
         nombre: texto(r.fields.nombre),
         categoria: texto(r.fields.categoria),
         descripcion: texto(r.fields.descripcion),
         calidad: texto(r.fields.calidad),
+        revMuros: texto(r.fields.rev_muros),
+        cielo: texto(r.fields.cielo),
+        iluminacion: texto(r.fields.iluminacion),
       })),
     },
     fotos,
     anexos,
+    imagenes,
     mapa: {
       staticMapUrl: null,
       lat: numeroONull(d.lat),
@@ -516,6 +660,9 @@ export async function construirInformeContexto(
     huecos,
     canonico: informe,
   }
+
+  /* Overrides locales (datos sin columna — puente de tanda, ver overrides.ts). */
+  return aplicarOverridesLocales(contexto)
 }
 
 /**

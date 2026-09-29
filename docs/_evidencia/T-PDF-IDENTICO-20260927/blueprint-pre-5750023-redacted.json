@@ -1,0 +1,389 @@
+{
+ "code": "OK",
+ "response": {
+  "blueprint": {
+   "flow": [
+    {
+     "id": 1,
+     "mapper": {},
+     "module": "gateway:CustomWebHook",
+     "version": 1,
+     "metadata": {
+      "restore": {
+       "parameters": {
+        "hook": {
+         "data": {
+          "editable": "true"
+         },
+         "label": "wh_E2_Carbone_Render"
+        }
+       }
+      },
+      "designer": {
+       "x": 0,
+       "y": 0
+      },
+      "parameters": [
+       {
+        "name": "hook",
+        "type": "hook:gateway-webhook",
+        "label": "Webhook",
+        "required": true
+       },
+       {
+        "name": "maxResults",
+        "type": "number",
+        "label": "Maximum number of results"
+       }
+      ]
+     },
+     "parameters": {
+      "hook": 3045780,
+      "maxResults": 1
+     }
+    },
+    {
+     "id": 2,
+     "mapper": {
+      "ca": "",
+      "qs": [],
+      "url": "https://api.carbone.io/render/070757d80034364c781d05184beea235c5a503b63f5037b761e375f9f182b54d",
+      "data": "{\"data\": {{1.contexto}}, \"convertTo\": \"pdf\", \"lang\": \"es-cl\"}",
+      "gzip": true,
+      "method": "post",
+      "headers": [
+       {
+        "name": "Authorization",
+        "value": "Bearer ***"
+       },
+       {
+        "name": "Content-Type",
+        "value": "application/json"
+       },
+       {
+        "name": "carbone-version",
+        "value": "4"
+       }
+      ],
+      "timeout": "60",
+      "useMtls": false,
+      "authPass": "",
+      "authUser": "",
+      "bodyType": "raw",
+      "contentType": "application/json",
+      "serializeUrl": false,
+      "shareCookies": false,
+      "parseResponse": true,
+      "followRedirect": true,
+      "useQuerystring": false,
+      "followAllRedirects": false,
+      "rejectUnauthorized": true
+     },
+     "module": "http:ActionSendData",
+     "version": 3,
+     "metadata": {
+      "restore": {
+       "expect": {
+        "qs": {
+         "mode": "chose"
+        },
+        "method": {
+         "mode": "chose",
+         "label": "POST"
+        },
+        "headers": {
+         "mode": "chose",
+         "items": [
+          null,
+          null
+         ]
+        },
+        "bodyType": {
+         "label": "Raw"
+        },
+        "contentType": {
+         "label": "JSON (application/json)"
+        }
+       }
+      },
+      "designer": {
+       "x": 300,
+       "y": 0
+      },
+      "parameters": [
+       {
+        "name": "handleErrors",
+        "type": "boolean",
+        "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+        "required": true
+       },
+       {
+        "name": "useNewZLibDeCompress",
+        "type": "hidden"
+       }
+      ]
+     },
+     "parameters": {
+      "handleErrors": false,
+      "useNewZLibDeCompress": true
+     }
+    },
+    {
+     "id": 3,
+     "mapper": {
+      "ca": "",
+      "qs": [],
+      "url": "https://hook.eu1.make.com/***",
+      "data": "{\n \"renderId\": \"{{2.data.data.renderId}}\",\n \"solicitud_id\": \"{{1.solicitud_id}}\",\n \"solicitud_codigo\": \"{{1.solicitud_codigo}}\",\n \"numero_solicitud\": \"{{1.contexto.meta.numeroSolicitudCliente}}\",\n \"nombre_cliente\": \"{{1.contexto.partes.propietario}}\"\n}",
+      "gzip": false,
+      "method": "post",
+      "headers": [
+       {
+        "name": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "timeout": "30",
+      "useMtls": false,
+      "authPass": "",
+      "authUser": "",
+      "bodyType": "raw",
+      "contentType": "application/json",
+      "serializeUrl": false,
+      "shareCookies": false,
+      "parseResponse": true,
+      "followRedirect": true,
+      "useQuerystring": false,
+      "followAllRedirects": false,
+      "rejectUnauthorized": true
+     },
+     "module": "http:ActionSendData",
+     "version": 3,
+     "metadata": {
+      "restore": {
+       "expect": {
+        "qs": {
+         "mode": "chose"
+        },
+        "method": {
+         "mode": "chose",
+         "label": "POST"
+        },
+        "headers": {
+         "mode": "chose",
+         "items": [
+          null
+         ]
+        },
+        "bodyType": {
+         "label": "Raw"
+        },
+        "contentType": {
+         "label": "JSON (application/json)"
+        }
+       }
+      },
+      "designer": {
+       "x": 600,
+       "y": 0
+      },
+      "parameters": [
+       {
+        "name": "handleErrors",
+        "type": "boolean",
+        "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+        "required": true
+       },
+       {
+        "name": "useNewZLibDeCompress",
+        "type": "hidden"
+       }
+      ]
+     },
+     "parameters": {
+      "handleErrors": false,
+      "useNewZLibDeCompress": true
+     }
+    },
+    {
+     "id": 4,
+     "mapper": {
+      "ca": "",
+      "qs": [],
+      "url": "https://api.airtable.com/v0/app9G7lLkIV3CpeLa/tblR4VWpUHw1CSyIS",
+      "data": "{\"fields\": {\"Titulo Log\": \"E2_Carbone_Render - {{1.solicitud_codigo}}\", \"Fecha / Hora\": \"{{formatDate(now; \\\"YYYY-MM-DDTHH:mm:ss.000Z\\\")}}\", \"Escenario\": \"E2_Carbone_Render\", \"Estado\": \"✓ OK\", \"Trigger\": \"Webhook desde POST /generar-pdf (IF-03)\", \"Detalle\": \"Carbone status: {{2.statusCode}} | renderId: {{2.data.data.renderId}} | E3 status: {{3.statusCode}} | Solicitud: {{1.solicitud_codigo}} - {{1.contexto.partes.propietario}}\", \"Reintentos\": 0, \"ID Make\": \"5750023\", \"Solicitud\": \"{{1.solicitud_codigo}}\", \"Destinatario\": \"\", \"Duracion ms\": 0}}",
+      "gzip": false,
+      "method": "post",
+      "headers": [
+       {
+        "name": "Authorization",
+        "value": "Bearer ***"
+       },
+       {
+        "name": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "timeout": "30",
+      "useMtls": false,
+      "authPass": "",
+      "authUser": "",
+      "bodyType": "raw",
+      "contentType": "application/json",
+      "serializeUrl": false,
+      "shareCookies": false,
+      "parseResponse": true,
+      "followRedirect": true,
+      "useQuerystring": false,
+      "followAllRedirects": false,
+      "rejectUnauthorized": true
+     },
+     "module": "http:ActionSendData",
+     "version": 3,
+     "metadata": {
+      "restore": {
+       "expect": {
+        "qs": {
+         "mode": "chose"
+        },
+        "method": {
+         "mode": "chose",
+         "label": "POST"
+        },
+        "headers": {
+         "mode": "chose",
+         "items": [
+          null,
+          null
+         ]
+        },
+        "bodyType": {
+         "label": "Raw"
+        },
+        "contentType": {
+         "label": "JSON (application/json)"
+        }
+       }
+      },
+      "designer": {
+       "x": 900,
+       "y": 0
+      },
+      "parameters": [
+       {
+        "name": "handleErrors",
+        "type": "boolean",
+        "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+        "required": true
+       },
+       {
+        "name": "useNewZLibDeCompress",
+        "type": "hidden"
+       }
+      ]
+     },
+     "parameters": {
+      "handleErrors": false,
+      "useNewZLibDeCompress": true
+     }
+    }
+   ],
+   "name": "E2_Carbone_Render v2.0 - InformeContexto",
+   "metadata": {
+    "instant": true,
+    "version": 1,
+    "designer": {
+     "orphans": [],
+     "samples": {
+      "1": {
+       "fotos": {},
+       "anexo1": {},
+       "anexo2": {},
+       "comuna": "Providencia",
+       "constr": {
+        "estructura_tipo": "Hormigon"
+       },
+       "region": "Metropolitana",
+       "ofertas": [
+        {
+         "numero": 1,
+         "total_uf": 5000,
+         "direccion": "Calle Test 1"
+        }
+       ],
+       "tasador": "Pedro Soto",
+       "comodidades": {
+        "piscina": "No"
+       },
+       "institucion": "Banco Test",
+       "referencias": [
+        {
+         "tipo": "Casa",
+         "valor_uf": 4800,
+         "direccion": "Ref 1"
+        }
+       ],
+       "rut_cliente": "12.345.678-9",
+       "habitaciones": {
+        "banos": 2,
+        "dormitorios": 3
+       },
+       "fecha_tasacion": "2026-05-15",
+       "nombre_cliente": "Juan Perez",
+       "numero_solicitud": "001",
+       "cuadro_valoracion": [
+        {
+         "numero": 1,
+         "detalle": "Terreno"
+        }
+       ],
+       "direccion_propiedad": "Av. Providencia 1234"
+      },
+      "2": {
+       "data": {
+        "data": {
+         "renderId": "MTAuMjAuMTEuNDAgICAgof0FyxfGDzSAINvWFtUlGwcmVwb3J0.pdf"
+        },
+        "success": true
+       },
+       "headers": [
+        {
+         "name": "strict-transport-security",
+         "value": "max-age=63072000"
+        }
+       ],
+       "fileSize": 93,
+       "statusCode": 200,
+       "cookieHeaders": []
+      }
+     }
+    },
+    "scenario": {
+     "dlq": false,
+     "slots": null,
+     "dataloss": false,
+     "maxErrors": 3,
+     "autoCommit": true,
+     "roundtrips": 1,
+     "sequential": false,
+     "confidential": false,
+     "freshVariables": false,
+     "autoCommitTriggerLast": true
+    }
+   }
+  },
+  "scheduling": {
+   "type": "immediately",
+   "maximum_runs_per_minute": null
+  },
+  "concept": false,
+  "created": "2026-05-16T02:19:27.927Z",
+  "last_edit": "2026-09-27T23:36:47.980Z",
+  "metadata": {
+   "input_spec": [],
+   "output_spec": []
+  },
+  "idSequence": 5,
+  "version": 51
+ }
+}

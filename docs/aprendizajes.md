@@ -3219,3 +3219,27 @@ base del Historial de Airtable.
 **Inconveniente:** al reactivar E3 tras un PATCH de blueprint, apareció una fila duplicada en TX_DocumentosGenerados.
 **Causa raíz:** Make reprocesa los bundles de ejecuciones incompletas al re-encender el escenario (dataloss=false) — el bundle del run fallido corrió con el blueprint nuevo.
 **Prevención futura:** tras PATCH+start de un escenario con corridas fallidas pendientes, revisar y sanear los efectos del reproceso.
+
+### 2026-09-28 — T-PDF-IDENTICO: PDF de MET-6283 al 95% con imprenta viva
+
+**Contexto:** tanda T-PDF-IDENTICO-20260927 — plantilla Carbone v2 con imágenes, Hoja 3, CI-057/dólares y datos reales de VP-2026-0067; corrida real E2→Carbone→E3.
+
+**Inconveniente:** el "161%/30,91" atribuido al motor (C_Formulas/AT03) en realidad lo producía la app: `lib/informe/ensamblador.ts` promediaba los 7 comparables juntos y usaba valor total ÷ sup. construcción.
+**Causa raíz:** el XLSM promedia POR BLOQUE (5 ofertas / 2 CBR, `SUM/COUNTIF(">0")`) y la fila TASACIÓN usa UF/m² nuevo × depreciación (34,00×0,96=32,64), no el valor comercial total.
+**Solución aplicada:** fix en el ensamblador (`promedioSinCeros`, bloques `ofertas/cbr/tasacionFila`) validado 127/128 en corrida real; el espejo del fix en C_Formulas quedó PREPARADO sin aplicar (`fix-motor-preparado.md`) hasta confirmar AT03 OFF.
+**Prevención futura:** antes de tocar C_Formulas por un número mal impreso, localizar el productor real del literal en el payload (`payload-carbone-*.json`) — la app calcula agregados puente (P1-8).
+
+**Inconveniente:** el filtro `{fecha}="YYYY-MM-DD"` contra `H_PreciosUF` devolvía 0 filas y `usdDia` quedaba null aunque el dólar estuviera sembrado.
+**Causa raíz:** `fecha` es dateTime en Airtable; la igualdad literal contra un date-string no matchea.
+**Solución aplicada:** `DATETIME_FORMAT({fecha},'YYYY-MM-DD')="…"` en `ensamblador.ts`.
+**Prevención futura:** todo filtro de igualdad sobre campos date/dateTime de Airtable va con `DATETIME_FORMAT` o `IS_SAME`.
+
+**Inconveniente:** las imágenes salían como recuadros vacíos o desbordaban la página en Carbone.
+**Causa raíz:** doble contrato no documentado: (1) el valor del tag debe ser URL pública o data-URI base64 (los `url_dropbox` son paths internos no descargables); (2) Carbone escala al ANCHO del placeholder preservando el aspecto DE ORIGEN — ignora el alto.
+**Solución aplicada:** data-URIs en el payload (`lib/informe/imagenes.ts`) con assets PRE-RECORTADOS al aspecto de cada ranura (`assets_met6283/render/` + dict CROPS en `build-payload-prueba-v2.py`).
+**Prevención futura:** toda ranura nueva de imagen en plantilla Carbone define su aspecto y el productor recorta a ese aspecto antes de emitir.
+
+**Inconveniente:** al re-encender E3 tras la corrida apareció una fila duplicada en TX_DocumentosGenerados, y `GET /render/{renderId}` de la corrida dio 404.
+**Causa raíz:** Make reprocesa bundles incompletos al re-encender un escenario (efecto ya visto el 27-sep), y Carbone borra cada render tras su primera descarga (la hace E3).
+**Solución aplicada:** saneo con rollback (duplicado eliminado, vigencia única) y evidencia local por re-render del mismo contexto; la corrida real se prueba con logs Make status=1 + render_id nuevo en Airtable.
+**Prevención futura:** snapshot de DocGen ANTES de re-encender escenarios, y no contar con descargar el render de una corrida que E3 ya bajó.

@@ -1042,7 +1042,11 @@ async function sumCuadroValoracion(recId) {
 // a diferencia de H5/H6/H7 que abortan por diseño).
 // ----------------------------------------------------------------
 async function sumComparables(recId) {
-    const out = { promedio: 0, n: 0, nFilas: 0 };
+    // T-PDF-IDENTICO-20260927 · CI-057: ademas del promedio combinado (compat),
+    // se agrega POR BLOQUE (ofertas / CBR), replicando el XLSM: el renglon
+    // PROMEDIO DE LA MUESTRA promedia SOLO su bloque (Portada!AX34 / AX42).
+    const out = { promedio: 0, n: 0, nFilas: 0,
+                  ofertas: { promedio: 0, n: 0 }, cbr: { promedio: 0, n: 0 } };
     if (!tComparables) return out;
     const F_SOLIC  = 'fldcQ7xOvQGG8HqSY'; // solicitud (link -> TX_Solicitudes)
     const F_PRECIO = 'fldKGHTMf9klT9OWb'; // precio_uf
@@ -1050,9 +1054,11 @@ async function sumComparables(recId) {
     const F_SUP_C  = 'fldmRFgXQKOLJtMnG'; // sup_construccion_m2
     const F_UFM2_T = 'flduMg4BjloEJSZo6'; // uf_m2_terreno_f (crudo de la foto)
     const F_OOCC   = 'fld1LN2WcvRK6U2ak'; // oo_cc_uf
+    const F_TIPO   = 'fldB920e8jIKgbERM'; // tipo_referencia (singleSelect Oferta/CBR)
     try {
-        const q = await tComparables.selectRecordsAsync({ fields: [F_SOLIC, F_PRECIO, F_SUP_T, F_SUP_C, F_UFM2_T, F_OOCC] });
+        const q = await tComparables.selectRecordsAsync({ fields: [F_SOLIC, F_PRECIO, F_SUP_T, F_SUP_C, F_UFM2_T, F_OOCC, F_TIPO] });
         let suma = 0;
+        const acc = { ofertas: { suma: 0 }, cbr: { suma: 0 } };
         for (const r of q.records) {
             const link = r.getCellValue(F_SOLIC);
             if (!(link && Array.isArray(link) && link.some(x => x.id === recId))) continue;
@@ -1069,8 +1075,15 @@ async function sumComparables(recId) {
             if (!isFinite(ufm2C)) continue;
             suma += ufm2C;
             out.n++;
+            const tipoCell = r.getCellValue(F_TIPO);
+            const tipo = tipoCell && tipoCell.name ? tipoCell.name : String(tipoCell || '');
+            const bloque = /cbr/i.test(tipo) ? 'cbr' : 'ofertas';
+            acc[bloque].suma += ufm2C;
+            out[bloque].n++;
         }
         if (out.n > 0) out.promedio = suma / out.n;
+        if (out.ofertas.n > 0) out.ofertas.promedio = acc.ofertas.suma / out.ofertas.n;
+        if (out.cbr.n > 0)     out.cbr.promedio     = acc.cbr.suma / out.cbr.n;
     } catch (e) { console.log('  WARN sumComparables: ' + e.message); }
     return out;
 }
@@ -1235,6 +1248,15 @@ const SCOPE = {
     // por regla_aplicada.formulas_resultado (Filtro 2 del paso 9).
     promedio_uf_m2_muestra: comparablesMuestra.promedio,
     n_comparables:          comparablesMuestra.n,
+    // ─── CI-057 (T-PDF-IDENTICO-20260927): promedios POR BLOQUE del XLSM ──
+    // y UF/m2 de construccion HOMOLOGADO de la tasacion (Portada!BD59 =
+    // edificacion depreciada / sup construccion — NO el valor comercial total).
+    promedio_uf_m2_ofertas: comparablesMuestra.ofertas.promedio,
+    n_ofertas:              comparablesMuestra.ofertas.n,
+    promedio_uf_m2_cbr:     comparablesMuestra.cbr.promedio,
+    n_cbr:                  comparablesMuestra.cbr.n,
+    uf_m2_construccion_tasacion:
+        (supConstruccion > 0 && cuadro.edif > 0) ? (cuadro.edif / supConstruccion) : 0,
 
     // ─── overrides ACTIVOS v32 (5 = 3 numericos + 2 audit) ─────────────
     valor_final_override:        valorFinalOverride,       // → Valor Comercial UF
