@@ -3243,3 +3243,11 @@ base del Historial de Airtable.
 **Causa raíz:** Make reprocesa bundles incompletos al re-encender un escenario (efecto ya visto el 27-sep), y Carbone borra cada render tras su primera descarga (la hace E3).
 **Solución aplicada:** saneo con rollback (duplicado eliminado, vigencia única) y evidencia local por re-render del mismo contexto; la corrida real se prueba con logs Make status=1 + render_id nuevo en Airtable.
 **Prevención futura:** snapshot de DocGen ANTES de re-encender escenarios, y no contar con descargar el render de una corrida que E3 ya bajó.
+
+### 2026-09-29 — Fix CI-072: valor de tasación «—» en el preview del informe
+
+**Contexto:** pantalla del informe del tasador (`app/tasaciones/[id]/informe`), caso VP-2026-0067: el recuadro "VALOR DE TASACIÓN" mostraba «—» con `F_ValorComercialUF = 20.125,86` ya calculado; el PDF sí lo imprimía.
+**Inconveniente:** el preview leía `valor_comercial_uf` de TX_Solicitudes, campo que el motor AT03 nunca escribe (deja los terminales en TX_Calculos). Dos consumidores del mismo dato leían fuentes distintas: el ensamblador del PDF iba a TX_Calculos y el preview no.
+**Causa raíz:** al cablear el bloque 2 canónico (CI-063) se asumió que la solicitud tendría `valor_comercial_uf` poblado; no existe escritor de ese campo.
+**Solución aplicada:** fallback en `construirInforme` a la misma fuente del PDF — precedencia `valor_final_override ?? valor_comercial_uf ?? terminal TX_Calculos`, consulta perezosa y regla «nunca 0» conservada. El lector de terminales se extrajo a `leerTerminales()` (exportado de `lectura-informe.ts`) y el ensamblador lo reutiliza en su `Promise.all`, eliminando su copia inline. 3 candados nuevos en `lectura-informe.test.ts`. Registrado como CI-072 (resuelta).
+**Prevención futura:** cuando dos consumidores muestran el mismo dato (preview y PDF), deben compartir el lector — extraer helper antes que duplicar la lectura; y al cablear un campo de solicitud, verificar que exista un ESCRITOR real de ese campo (grep en motor/escenarios), no solo la columna.

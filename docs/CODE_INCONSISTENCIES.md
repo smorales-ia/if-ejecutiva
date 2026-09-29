@@ -2406,3 +2406,20 @@ tabla `porUnidad`**.
 | **Dueño** | (por asignar) |
 | **Fecha objetivo** | (pendiente) |
 | **Estado** | 🟢 **resuelta 2026-09-23** · fix desplegado y verificado |
+
+## CI-072 · Preview del informe: valor destacado «—» sin escritor de valor_comercial_uf en la solicitud
+
+| Campo | Valor |
+|---|---|
+| **Identificador** | CI-072 |
+| **Archivo:línea** | `lib/tasador/lectura-informe.ts` · bloque 2 de `construirInforme` (valorDestacado) |
+| **Descripción** | El valor destacado del preview (`valorDestacado.valorUf`) leía `valor_final_override ?? valor_comercial_uf` **solo de TX_Solicitudes**. El motor AT03 no escribe `valor_comercial_uf` en la solicitud: deja los terminales en `TX_Calculos` (`variable_output` → `resultado`). Resultado: el recuadro "VALOR DE TASACIÓN" mostraba «—» con el valor ya calculado. El PDF no tenía el problema porque `lib/informe/ensamblador.ts` lee `TX_Calculos` directamente (`t('valor_comercial_uf')`). La nota de cierre de CI-063 ya describía el síntoma («en filas sin ese campo el valor destacado muestra "—"») pero como estado ausente honesto, sin registrar que el motor nunca puebla ese campo. |
+| **Evidencia** | VP-2026-0067 (`recmMzeu3eWGxyXsf`): `F_ValorComercialUF = 20.125,86` presente en TX_Calculos; preview «—»; PDF con el valor. |
+| **Impacto** | El tasador no ve el valor de tasación en la pantalla del informe aunque exista. |
+| **Prioridad** | Alta (visible en el flujo diario del tasador). |
+| **Fix aplicado** | Fallback a la misma fuente que el PDF: nueva precedencia `valor_final_override (solicitud) ?? valor_comercial_uf (solicitud) ?? terminal 'valor_comercial_uf' (TX_Calculos)`, con consulta perezosa (solo si la solicitud no trae valor) y regla «nunca 0» conservada (terminal 0 → «—»). El lector de terminales se **extrajo** a `leerTerminales(codigo)` en `lectura-informe.ts`, y el ensamblador ahora lo reutiliza (se retiró su copia inline) — preview y PDF leen la MISMA fuente sin duplicar. Sin cambios en AT03 ni escrituras a TX_Solicitudes. Candados: 3 tests nuevos en `lectura-informe.test.ts` (fallback al terminal · override sigue mandando · terminal 0 = ausente). |
+| **Origen** | Reporte de Sergio post-deploy 1faad5a (29-sep-2026): el preview de VP-2026-0067 mostraba «—». |
+| **Verificación** | `pnpm tsc --noEmit` = 0 · `pnpm test` 1020/1020 (29-sep-2026). Pendiente verificación visual en producción tras deploy: el recuadro debe mostrar 20.125,86 UF. |
+| **Dueño** | (por asignar) |
+| **Fecha objetivo** | — |
+| **Estado** | 🟢 **resuelta en código 2026-09-29** · pendiente sólo la verificación visual post-deploy |

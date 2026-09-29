@@ -61,7 +61,7 @@ import { getRecord, listRecords } from '@/lib/airtable-client'
 import { autorizarSolicitud, type ResultadoGuard } from '@/lib/tasador/auth-guard'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
-import { construirInforme } from '@/lib/tasador/lectura-informe'
+import { construirInforme, leerTerminales } from '@/lib/tasador/lectura-informe'
 import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
 import { resolverImagenes } from './imagenes'
 import { aplicarOverridesLocales } from './overrides'
@@ -266,7 +266,7 @@ export async function construirInformeContexto(
   const codigo = texto(s.codigo_solicitud)
   const fechaVisita = texto(s.fecha_visita)
 
-  const [informe, datos, items, adjuntos, ampliaciones, habitaciones, terminaciones, calculos, filasUf] =
+  const [informe, datos, items, adjuntos, ampliaciones, habitaciones, terminaciones, t, filasUf] =
     await Promise.all([
       construirInforme(id, s),
       filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
@@ -275,14 +275,9 @@ export async function construirInformeContexto(
       filasDeSolicitud<Fields>(TABLE_IDS.ampliaciones, codigo),
       filasDeSolicitud<Fields>(TABLE_IDS.habitacionesPorNivel, codigo),
       filasDeSolicitud<Fields>(TABLE_IDS.terminacionesPorRecinto, codigo),
-      /* TX_Calculos no tiene campo `solicitud` como primary evaluable estable
-         para el filtro genérico: se filtra por `solicitud_codigo`, el campo de
-         texto que el motor escribe en cada fila. */
-      codigo
-        ? listRecords<Fields>(TABLE_IDS.calculos, {
-            filterByFormula: `{solicitud_codigo}="${codigo.replace(/"/g, '\\"')}"`,
-          })
-        : Promise.resolve([]),
+      /* Lector compartido de terminales del motor (CI-072): misma fuente que
+         el fallback del valor destacado del preview. */
+      leerTerminales(codigo),
       /* H_PreciosUF: la fila del día de la visita — mismo lookup que hace el
          guard H3 del motor. Sin fecha de visita no se consulta. `fecha` es
          dateTime en Airtable: la igualdad literal contra "YYYY-MM-DD" devuelve
@@ -318,14 +313,6 @@ export async function construirInformeContexto(
     numeroONull(d.arriendo_bruto_mensual_clp) ?? numeroONull(d.arriendo_mensual)
   const arriendoUfMes =
     arriendoClp !== null && ufDiaValor ? arriendoClp / ufDiaValor : null
-
-  /* --- Terminales: variable_output → resultado ----------------------- */
-  const terminal = new Map<string, number | null>()
-  for (const fila of calculos) {
-    const variable = texto(fila.fields.variable_output)
-    if (variable) terminal.set(variable, numeroONull(fila.fields.resultado))
-  }
-  const t = (variable: string): number | null => terminal.get(variable) ?? null
 
   /* --- Cuadro: pareja vieja con caída a la nueva (ver docblock) ------ */
   const itemsCuadro = items

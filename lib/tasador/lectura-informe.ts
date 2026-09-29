@@ -204,6 +204,31 @@ async function filasDeSolicitud<T extends Fields>(tableId: string, codigo: strin
   })
 }
 
+/**
+ * Lector de terminales del motor (`TX_Calculos`): `variable_output` → `resultado`,
+ * devuelto como función de consulta. Compartido por el ensamblador del PDF y el
+ * fallback del valor destacado (CI-072), para que ambos lean la MISMA fuente.
+ *
+ * `TX_Calculos` no tiene un Link `solicitud` evaluable por el filtro genérico:
+ * se filtra por `solicitud_codigo`, el campo de texto que el motor escribe en
+ * cada fila.
+ */
+export async function leerTerminales(
+  codigo: string
+): Promise<(variable: string) => number | null> {
+  const filas = codigo
+    ? await listRecords<Fields>(TABLE_IDS.calculos, {
+        filterByFormula: `{solicitud_codigo}="${codigo.replace(/"/g, '\\"')}"`,
+      })
+    : []
+  const terminal = new Map<string, number | null>()
+  for (const f of filas) {
+    const variable = texto(f.fields.variable_output)
+    if (variable) terminal.set(variable, numeroONull(f.fields.resultado))
+  }
+  return (variable) => terminal.get(variable) ?? null
+}
+
 /** `null` para ausente. **Nunca** `0`: ver la degradación del valor destacado. */
 function numeroONull(valor: unknown): number | null {
   if (valor === null || valor === undefined || valor === '') return null
@@ -288,8 +313,16 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
   /* --- Bloque 2 · valor destacado ------------------------------------ */
   // Cap rate ALMACENADO: override manual del tasador o el que trae la captura.
   // NO se computa desde `valorReferenciaClp` (CI-023 §1 · CI-063).
-  const valorUf =
+  /* CI-072: el motor AT03 deja sus terminales en TX_Calculos y NO escribe
+     valor_comercial_uf en la solicitud, así que sin este fallback el preview
+     muestra «—» con el valor ya calculado (el PDF sí lo ve: el ensamblador lee
+     TX_Calculos). La consulta es perezosa —solo cuando la solicitud no trae
+     valor— y `|| null` mantiene la regla del bloque: 0 es dato ausente, no
+     «0 UF». */
+  const valorSolicitud =
     numeroONull(s.valor_final_override) ?? numeroONull(s.valor_comercial_uf)
+  const valorUf =
+    valorSolicitud ?? ((await leerTerminales(codigo))('valor_comercial_uf') || null)
   const capRate =
     numeroONull(s.tasa_cap_rate_override) ?? numeroONull(d.tasa_cap_rate)
   const valorDestacado: ValorDestacado = {

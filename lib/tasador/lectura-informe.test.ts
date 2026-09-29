@@ -171,6 +171,67 @@ describe('construirInforme · valor destacado (bloque 2)', () => {
     expect(informe.valorDestacado.valorUf).toBeNull()
     expect(bloqueValor(informe.bloques).vacio).toBe(true)
   })
+
+  /* CI-072: AT03 deja los terminales en TX_Calculos y no escribe
+     valor_comercial_uf en la solicitud; el preview debe leer el terminal como
+     fallback (misma fuente que el ensamblador del PDF), no mostrar «—». */
+  it('cae al terminal valor_comercial_uf de TX_Calculos cuando la solicitud no lo trae (CI-072)', async () => {
+    airtableCon({
+      [TABLE_IDS.calculos]: [
+        fila('recCalc0000000UF1', {
+          solicitud_codigo: CODIGO,
+          variable_output: 'valor_comercial_uf',
+          resultado: 20125.86,
+        }),
+        fila('recCalc0000000UF2', {
+          solicitud_codigo: CODIGO,
+          variable_output: 'valor_comercial_clp',
+          resultado: 802913431,
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.valorDestacado.valorUf).toBe(20125.86)
+    expect(informe.valorDestacado.esOverride).toBe(false)
+  })
+
+  it('el override de la solicitud sigue mandando sobre el terminal (CI-072)', async () => {
+    airtableCon({
+      [TABLE_IDS.calculos]: [
+        fila('recCalc0000000UF3', {
+          solicitud_codigo: CODIGO,
+          variable_output: 'valor_comercial_uf',
+          resultado: 20125.86,
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      valor_final_override: 5200,
+    })
+
+    expect(informe.valorDestacado.valorUf).toBe(5200)
+    expect(informe.valorDestacado.esOverride).toBe(true)
+  })
+
+  it('terminal en 0 se trata como ausente: valorUf null, no «0 UF» (CI-072)', async () => {
+    airtableCon({
+      [TABLE_IDS.calculos]: [
+        fila('recCalc0000000UF4', {
+          solicitud_codigo: CODIGO,
+          variable_output: 'valor_comercial_uf',
+          resultado: 0,
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.valorDestacado.valorUf).toBeNull()
+  })
 })
 
 describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
