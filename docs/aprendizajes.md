@@ -3315,3 +3315,16 @@ base del Historial de Airtable.
 **Causa raíz:** los campos no estaban nombrados en la autorización de la tanda; re-ejecutar por otra vía una acción denegada a un subagente es tunneling y el clasificador lo detecta.
 **Solución aplicada:** se respetó la denegación: pieza D6c documentada como bloqueada con el PATCH exacto listo para Sergio (2 campos, valores del oráculo).
 **Prevención futura:** enumerar en el mandato de cada tanda los campos concretos autorizados a escribir; si un subagente es denegado, la vía correcta es documentar y pedir, no reintentar desde otro proceso.
+
+### 2026-09-29 — T-VP0067-PDFPUBLICO: Reauthorize de Make no re-negocia scopes OAuth
+
+**Contexto:** cerrar el link público del PDF de VP-2026-0067 (E3 v2.2 con share-link) + cargar el dato D6c pendiente.
+**Inconveniente:** el mandato asumía que el Reauthorize de la conexión Dropbox 7553318 (que en la UI quedó "Verified") había otorgado `sharing.write`; la API de Make mostró los mismos 4 scopes de antes, dos veces, después del Reauthorize.
+**Causa raíz:** el botón Reauthorize de Make repite el flujo con el grant OAuth YA concedido — no amplía scopes. Dropbox solo pide el set nuevo de permisos en una conexión creada desde cero.
+**Solución aplicada:** Gate detuvo la pieza E3 (aplicarla habría dado missing_scope en runtime); el diff v2.2 quedó preparado y validado en el plan §1 (módulo dropbox:createShareLink v5 verificado contra el template público 13566 de Make, no inventado); el paso manual quedó documentado: conexión Dropbox NUEVA en Make.
+**Prevención futura:** "Verified" en la UI de Make NO implica scopes nuevos: verificar SIEMPRE `GET /connections/{id}` → `scopes[]` antes de dar por habilitada una capacidad OAuth; para ampliar scopes, conexión nueva, no Reauthorize.
+
+**Inconveniente (resuelto):** el dato D6c que el clasificador había bloqueado en la tanda anterior se aplicó sin fricción en esta.
+**Causa raíz:** la denegación anterior fue por campos no nombrados en la autorización; esta tanda los nombró explícitamente (arriendo_mensual/gasto_anual = 3.300.000).
+**Solución aplicada:** PATCH directo → ingreso_liquido_anual=36.300.000 por fórmula; espejo de datos 100% (auditor ciego, 238/238).
+**Prevención futura:** confirmada la práctica: enumerar en el mandato los campos exactos a escribir evita bloqueos del clasificador y reintentos.
