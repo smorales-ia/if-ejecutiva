@@ -30,6 +30,7 @@ import type {
   DatosSii,
   ObservacionesBloque,
 } from "@/lib/tasador/lectura-informe"
+import type { AnexoResuelto } from "@/lib/informe/imagenes"
 import { combinarConBorrador } from "@/lib/tasador/recuperacion-borrador"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { numeroDe } from "@/lib/tasador/comparables"
@@ -200,12 +201,55 @@ function FotoMiniatura({ foto, label }: { foto: FotoAdjunta; label: string }) {
   )
 }
 
+/**
+ * Miniatura de una ranura de anexo del informe (T-PDF-E3-GENERICOS · plan
+ * §4). Mismo patrón visual que `FotoMiniatura`; la ranura sin documento (o
+ * con documento sin miniatura — un PDF, deuda P2) muestra el vacío honesto
+ * «Sin documento aún», sin jerga técnica (§6.1).
+ */
+function AnexoMiniatura({ anexo }: { anexo: AnexoResuelto }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+        {anexo.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={anexo.thumbnailUrl}
+            alt={`${anexo.label}: ${anexo.nombre ?? ""}`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center gap-1 px-2 text-center">
+            <ImageOff
+              className="h-5 w-5 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span className="text-[11px] text-muted-foreground">
+              Sin documento aún
+            </span>
+          </div>
+        )}
+      </div>
+      <p className="truncate text-xs font-medium text-foreground">
+        {anexo.label}
+      </p>
+      {anexo.nombre && (
+        <p className="-mt-1 truncate text-[11px] text-muted-foreground">
+          {anexo.nombre}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function InformePreview({
   tasacion,
   informeInicial,
   valorCanonico,
   siiCanonico,
   observacionesCanonico,
+  anexosCanonico,
+  firmaCanonico,
 }: {
   tasacion: Tasacion
   /**
@@ -248,6 +292,18 @@ export function InformePreview({
    * existen acá: el modelo cliente nunca los proyectó.
    */
   observacionesCanonico: ObservacionesBloque | null
+  /**
+   * Las 13 ranuras de anexo del informe (T-PDF-E3-GENERICOS · plan §4),
+   * resueltas por el modelo canónico contra el riel documental — la MISMA
+   * resolución que alimenta el payload Carbone, así que lo que se ve aquí es
+   * lo que imprime el PDF. `null` si el guard del canónico falló.
+   */
+  anexosCanonico: AnexoResuelto[] | null
+  /**
+   * Firma del tasador (`M_Tasadores.firma_url`, data-URI o URL https), desde
+   * el mismo punto de lectura que usa el PDF. `null` = sin firma registrada.
+   */
+  firmaCanonico: string | null
 }) {
   const router = useRouter()
   const { estado } = useEstadoTasador(tasacion.id)
@@ -745,7 +801,45 @@ export function InformePreview({
                   <Dato k="Recepción final" v={txt(legales?.recepcionFinal)} />
                 </DataGrid>
               </div>
+
+              {/* Firma del tasador — cierre del informe (T-PDF-E3-GENERICOS).
+                  Misma fuente que el PDF (M_Tasadores.firma_url vía el modelo
+                  canónico); sin firma → vacío honesto, sin jerga. */}
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">
+                  Firma del tasador
+                </p>
+                {firmaCanonico ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={firmaCanonico}
+                    alt="Firma del tasador"
+                    className="h-20 w-auto max-w-full rounded-lg border border-border bg-white object-contain p-2"
+                  />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Sin firma registrada aún. Se agrega desde tu perfil de
+                    tasador.
+                  </p>
+                )}
+              </div>
             </div>
+          </ReportSection>
+
+          {/* 9 · Anexos del informe (T-PDF-E3-GENERICOS · plan §4) */}
+          <ReportSection titulo="Anexos del informe" numero={9} listo={listo}>
+            {anexosCanonico && anexosCanonico.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {anexosCanonico.map((a) => (
+                  <AnexoMiniatura key={a.ranura} anexo={a} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Los documentos del expediente aparecerán aquí cuando estén
+                cargados.
+              </p>
+            )}
           </ReportSection>
         </div>
       </main>

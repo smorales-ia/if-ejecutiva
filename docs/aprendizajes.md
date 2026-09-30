@@ -3383,3 +3383,27 @@ base del Historial de Airtable.
 **Causa raíz:** proyectar campos pesados en un modelo canónico que luego se embebe entero en otro payload multiplica el peso silenciosamente; el spread copia campos que nadie pidió.
 **Solución aplicada:** forma explícita en la grilla (solo id/nombre/url/categoria) y `aligerarCanonico()` en el ensamblador (thumbnails a null en el canonico, conservando la forma). Contexto final: 3,62 MB, render Carbone OK (37 imágenes colocadas, layout 1/3/4/0/8/8/7/6 idéntico al oráculo).
 **Prevención futura:** después de agregar cualquier campo binario/base64 a un payload compuesto, pesar el JSON final y buscar el mismo dato repetido (`count('data:image')`) antes de darlo por bueno.
+
+### 2026-09-30 — T-PDF-E3-GENERICOS: destrabe de E3 (bloqueado por política) + mapas/anexos/firma genéricos
+
+**Contexto:** tanda de dos frentes: (A) destrabar E3 (share-link Dropbox) y dejarlo idempotente; (B) extender el origen único de imágenes a mapas, anexos y firma.
+
+**Inconveniente:** el módulo "Make an API Call" de Dropbox no se pudo agregar por API: Make devolvió `[400] IM007 Module not found 'dropbox:makeAPICall' version '5'`.
+**Causa raíz:** los nombres internos de módulos de apps Make no son adivinables y no hay endpoint público que los liste; escribir un módulo "de oído" en un blueprint repite el patrón del F-1.
+**Solución aplicada:** rediseño del fix de idempotencia usando SOLO módulos ya presentes y probados en el mismo blueprint: `onerror` del módulo 9 = `http:ActionSendData` (GET del record en `TX_Solicitudes`, que ya tiene el `pdf_final_url` del run exitoso previo — mismo path ⇒ mismo link) + `builtin:Resume` con esa URL.
+**Prevención futura:** para agregar un módulo a un blueprint por API, clonar la forma de un módulo idéntico ya probado dentro del mismo blueprint; si la app/módulo no aparece en él, agregarlo primero a mano en la UI y exportar para conocer su nombre real.
+
+**Inconveniente:** el clasificador de permisos del entorno vetó TODA modificación de E3 por API — incluso con la autorización explícita de la tanda e incluso la mera construcción local del cuerpo del PATCH (lo trata como tunneling de un cambio vetado).
+**Causa raíz:** CLAUDE.md lista "Modificar los escenarios E1/E2/E3" entre las prohibiciones y el clasificador la aplica por encima de la autorización puntual de una sesión.
+**Solución aplicada:** detenerse (regla dura) y empaquetar el destrabe para ejecución humana: `fix-e3-apply.sh` (un comando, re-inyecta tokens desde `.env.local` sin imprimirlos) + `fix-e3-pasos-manuales.md` (alternativa por UI de Make), en `docs/_evidencia/T-PDF-E3-GENERICOS-20260930/`.
+**Prevención futura:** toda tanda que requiera tocar E1/E2/E3 debe planificar desde el inicio el paso "lo aplica Sergio" (script auditable + pasos UI); si la política debe cambiar, es Sergio quien agrega la regla de permiso, no la sesión.
+
+**Inconveniente:** el snapshot del blueprint de E3 exportado a evidencia contenía el PAT de Airtable y el token Carbone en texto plano (van hardcodeados en los módulos HTTP del escenario).
+**Causa raíz:** E3 no usa conexiones Make para Airtable/Carbone sino headers literales; cualquier export del blueprint arrastra los secretos.
+**Solución aplicada:** redacción in situ (`<AIRTABLE_TOKEN>`/`<CARBONE_TOKEN_PROD>`) antes de que la evidencia llegue a un commit; el script de destrabe re-inyecta los valores desde `.env.local`. Deuda anotada: migrar esos módulos a conexiones/variables de Make.
+**Prevención futura:** tras exportar cualquier blueprint de Make a un archivo del repo, grep inmediato de patrones de token (`patx`, `Bearer`, `test_/prod_`) y redactar antes de continuar.
+
+**Inconveniente (diseño, no error):** extender el origen único a 20 ranuras fijas exigía decidir el origen correcto por tipo de elemento para no inventar un tercer mecanismo.
+**Causa raíz:** mapas/anexos/firma tienen semánticas distintas (captura de visita vs documento oficial vs identidad del profesional).
+**Solución aplicada:** por-visita → categorías del registro fotográfico (`mapa_ubicacion`, `fachada_exterior`, `mapa_referencias` nueva, `ofertas_comparables`); por-caso documental → checklist `D_TipoDocumento` vía `clave_adjunto` (constante compartida `RANURAS_ANEXO`, 13 ranuras, 5 códigos nuevos); por-perfil → `M_Tasadores.firma_url` (espejo del precedente `M_Visadores.firma_url`). Seed VP-0067 con `estado_extraccion='listo'` para no disparar RF-09 (0 corridas espurias verificadas).
+**Prevención futura:** ante un nuevo elemento del informe, preguntar primero "¿de quién es el dato?" (visita/caso/perfil/cliente) y mapearlo al riel existente de ese dueño; solo crear mecanismo nuevo si ningún riel calza.

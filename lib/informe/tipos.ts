@@ -404,13 +404,13 @@ export interface AnexosInforme {
 }
 
 /**
- * Ranuras de imagen del informe (contrato §3.3 del plan T-PDF-IDENTICO):
- * cada valor es una **URL pública o un data-URI base64** que Carbone v4
- * inserta sobre el placeholder correspondiente de la plantilla, o `null`
- * (ranura vacía). Los produce `lib/informe/imagenes.ts`: primero desde un
- * adjunto Airtable con URL http(s) utilizable; si no, desde los assets del
- * repo del caso espejo (fallback de tanda — columna nueva pendiente para el
- * flujo vivo).
+ * Ranuras de imagen del informe (contrato §3.3 del plan T-PDF-IDENTICO ·
+ * resolución genérica T-PDF-E3-GENERICOS §4): cada valor es una **URL
+ * pública o un data-URI base64** que Carbone v4 inserta sobre el placeholder
+ * correspondiente de la plantilla, o `null` (ranura vacía honesta). Los
+ * produce `lib/informe/imagenes.ts` desde fuentes vivas: fotos del bloque 7
+ * por categoría (`RANURAS_FOTO`), adjuntos documentales por `clave_adjunto`
+ * (`RANURAS_ANEXO`) y `M_Tasadores.firma_url` para la firma.
  */
 export interface ImagenesInforme {
   /** Hoja 1 · recuadro «Ubicación» (arriba-derecha). */

@@ -68,7 +68,12 @@
  *   AT03 publica su propio promedio, este módulo debe deferir a ése.
  */
 
-import { listRecords } from '@/lib/airtable-client'
+import { getRecord, listRecords } from '@/lib/airtable-client'
+import {
+  fuenteRenderizable,
+  resolverAnexos,
+  type AnexoResuelto,
+} from '@/lib/informe/imagenes'
 import { autorizarSolicitud, type ResultadoGuard } from '@/lib/tasador/auth-guard'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 
@@ -187,6 +192,21 @@ export interface InformeCanonico {
   datosSii: DatosSii
   /** Bloque 8 tipado (observaciones + legales). Cableado al preview en P9-TAS.B. */
   observaciones: ObservacionesBloque
+  /**
+   * Las 13 ranuras de anexo del informe resueltas contra el riel documental
+   * (T-PDF-E3-GENERICOS · plan §4): adjunto no-foto casado por
+   * `clave_adjunto` con thumbnail renderizable, o vacío honesto. Es el MISMO
+   * objeto que consume el ensamblador del PDF (`resolverImagenes`), para que
+   * UI y payload Carbone no puedan divergir.
+   */
+  anexosRanuras: AnexoResuelto[]
+  /**
+   * `M_Tasadores.firma_url` del tasador asignado (data-URI o URL https), ya
+   * filtrada por `fuenteRenderizable`; `null` = sin firma registrada. Punto
+   * único de lectura de la firma: el ensamblador la toma de acá para
+   * `imagenes.firma` y `partes.tasador.firmaUrl`.
+   */
+  firmaTasadorUrl: string | null
   bloques: Bloque[]
 }
 
@@ -271,14 +291,37 @@ function rolSiiConSentinel(valor: string | null): string {
 }
 
 /**
+ * `firma_url` del tasador asignado (M_Tasadores, campo nuevo de
+ * T-PDF-E3-GENERICOS): data-URI o URL https, filtrada por
+ * `fuenteRenderizable`. Degrada a `null` ante link vacío, registro
+ * inexistente, valor no renderizable o fallo de red — la firma nunca es
+ * motivo para romper el informe.
+ */
+async function leerFirmaTasador(link: unknown): Promise<string | null> {
+  const id = Array.isArray(link) ? link[0] : null
+  if (typeof id !== 'string' || !id) return null
+  try {
+    const registro = await getRecord<{ firma_url?: string }>(TABLE_IDS.tasadores, id)
+    const valor =
+      typeof registro?.fields.firma_url === 'string'
+        ? registro.fields.firma_url.trim()
+        : ''
+    return fuenteRenderizable(valor) ? valor : null
+  } catch (err) {
+    console.error('[lectura-informe] firma del tasador irresoluble', id, err)
+    return null
+  }
+}
+
+/**
  * Productor puro: dada la solicitud ya autorizada, arma el modelo canónico. No
  * hace guard —eso es `lecturaInforme`— para que el test lo ejercite sustituyendo
- * sólo `listRecords`, igual que el candado de `lectura-datos.test.ts`.
+ * sólo `listRecords`/`getRecord`, igual que el candado de `lectura-datos.test.ts`.
  */
 export async function construirInforme(id: string, s: Fields): Promise<InformeCanonico> {
   const codigo = String(s.codigo_solicitud ?? '')
 
-  const [datos, unidades, items, comparables, adjuntos, generados, legales] =
+  const [datos, unidades, items, comparables, adjuntos, generados, legales, firmaTasadorUrl] =
     await Promise.all([
       filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
       filasDeSolicitud<Fields>(TABLE_IDS.unidades, codigo),
@@ -287,6 +330,7 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       filasDeSolicitud<Fields>(TABLE_IDS.adjuntos, codigo),
       filasDeSolicitud<Fields>(TABLE_IDS.documentosGenerados, codigo),
       filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
+      leerFirmaTasador(s.tasador),
     ])
 
   const d = datos[0]?.fields ?? {}
@@ -401,6 +445,21 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       texto(foto.fields.descripcion) || texto(foto.fields.tipo_adjunto) || 'otro'
     porCategoria[categoria] = (porCategoria[categoria] ?? 0) + 1
   }
+
+  /* --- Anexos por ranura (riel documental · plan §4) ----------------- */
+  /* Los adjuntos no-foto casados por `clave_adjunto` contra el mapeo
+     compartido RANURAS_ANEXO. La MISMA resolución alimenta el preview
+     (sección «Anexos del informe») y el payload Carbone (resolverImagenes
+     vía el ensamblador): un solo origen, cero reglas duplicadas. */
+  const anexosRanuras = resolverAnexos(
+    adjuntos
+      .filter((a) => !texto(a.fields.tipo_adjunto).startsWith('foto'))
+      .map((a) => ({
+        codigo: texto(a.fields.clave_adjunto),
+        nombre: texto(a.fields.nombre_archivo),
+        thumbnailUrl: texto(a.fields.thumbnail_url) || null,
+      })),
+  )
 
   /* --- Bloque 8 · overrides ------------------------------------------ */
   const overrides = [
@@ -594,6 +653,8 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
     valorDestacado,
     datosSii,
     observaciones,
+    anexosRanuras,
+    firmaTasadorUrl,
     bloques,
   }
 }

@@ -19,10 +19,11 @@ const foto = (categoria: string, n = 1): FotoAdjunta => ({
   hashMd5: `hash-${n}`,
 })
 
-describe('las ocho del catálogo', () => {
-  it('parte con las ocho vacías, ni una más', () => {
+describe('las categorías del catálogo', () => {
+  it('parte con todas vacías, ni una más (8 de §2.6 + mapa_referencias)', () => {
     const vacias = fotosPorCategoriaVacias()
-    expect(Object.keys(vacias)).toHaveLength(8)
+    expect(Object.keys(vacias)).toHaveLength(CATEGORIAS_FOTO.length)
+    expect(Object.keys(vacias)).toHaveLength(9)
     expect(Object.values(vacias).every((v) => v.length === 0)).toBe(true)
   })
 
@@ -50,12 +51,12 @@ describe('las ocho del catálogo', () => {
     ])
   })
 
-  it('acepta los ocho ids reales del catálogo', () => {
+  it('acepta todos los ids reales del catálogo', () => {
     const todas = CATEGORIAS_FOTO.map((c, i) => foto(c.id, i))
     const { fotosPredefinidas, categoriasCustom } = repartirFotos(todas, [])
 
     expect(Object.values(fotosPredefinidas).every((v) => v.length === 1)).toBe(true)
-    // Ninguna de las ocho debe haberse tomado por personalizada.
+    // Ninguna del catálogo debe haberse tomado por personalizada.
     expect(categoriasCustom).toHaveLength(0)
   })
 })

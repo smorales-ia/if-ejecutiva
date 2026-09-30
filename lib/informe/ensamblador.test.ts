@@ -423,10 +423,84 @@ describe('construirInformeContexto · golden VP-2026-0066', () => {
     expect(terminales.valorLiquidacionUsd).toBeCloseTo(743998, 0)
   })
 
-  it('imagenes: todas las ranuras null fuera del caso espejo (0066 sin assets)', async () => {
-    const { imagenes, partes } = await contexto0066()
+  it('imagenes: sin fotos, sin adjuntos y sin firma → las 20 ranuras null (vacío honesto)', async () => {
+    const { imagenes, partes, huecos } = await contexto0066()
     expect(Object.values(imagenes).every((v) => v === null)).toBe(true)
     expect(partes.tasador.firmaUrl).toBeNull()
+    // Sin firma cargada se declara el hueco POR-CASO (ya no estructural).
+    expect(
+      huecos.some((h) => h.ruta === 'partes.tasador.firmaUrl' && h.pId === 'P1-9'),
+    ).toBe(true)
+  })
+
+  it('imagenes genéricas (plan §4): fotos por categoría + anexos por clave + firma del tasador', async () => {
+    // Fuentes vivas: 2 fotos categorizadas, 1 documento del riel con
+    // thumbnail, 1 documento PDF sin thumbnail, y firma_url en M_Tasadores.
+    const ADJUNTOS = [
+      fila('recFotoMapa', {
+        solicitud: [ID],
+        tipo_adjunto: 'foto_interior',
+        descripcion: 'mapa_ubicacion',
+        nombre_archivo: 'mapa.jpg',
+        thumbnail_url: 'data:image/jpeg;base64,MAPA',
+        orden: 1,
+      }),
+      fila('recFotoFachada', {
+        solicitud: [ID],
+        tipo_adjunto: 'foto_interior',
+        descripcion: 'fachada_exterior',
+        nombre_archivo: 'fachada.jpg',
+        thumbnail_url: 'data:image/jpeg;base64,FACHADA',
+        orden: 2,
+      }),
+      fila('recDocPermiso', {
+        solicitud: [ID],
+        clave_adjunto: 'permiso_edificacion',
+        nombre_archivo: 'permiso.jpg',
+        thumbnail_url: 'data:image/jpeg;base64,PERMISO',
+      }),
+      fila('recDocEscritura', {
+        solicitud: [ID],
+        clave_adjunto: 'escritura_compraventa',
+        nombre_archivo: 'escritura.pdf', // PDF: sin thumbnail (deuda P2)
+      }),
+    ]
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.adjuntos ? ADJUNTOS : (TABLAS_0066[tableId] ?? []),
+    )
+    getRecord.mockImplementation(async (_tableId: string, recordId: string) =>
+      recordId === 'recTJcV3BIvdcG4em'
+        ? fila('recTJcV3BIvdcG4em', {
+            nombre: 'Sergio (nutricionsaludketo)',
+            firma_url: 'data:image/png;base64,FIRMA',
+          })
+        : (MAESTROS_0066[recordId] ?? null),
+    )
+
+    const contexto = await contexto0066()
+
+    // Ranuras fotográficas por categoría (plan §4).
+    expect(contexto.imagenes.mapaUbicacion).toBe('data:image/jpeg;base64,MAPA')
+    expect(contexto.imagenes.fachada).toBe('data:image/jpeg;base64,FACHADA')
+    // Ranura documental por clave_adjunto; el PDF queda vacío honesto.
+    expect(contexto.imagenes.anexo2Permiso).toBe('data:image/jpeg;base64,PERMISO')
+    expect(contexto.imagenes.anexo2Escritura).toBeNull()
+    // Firma: un solo punto de lectura → imagenes.firma Y partes.tasador.firmaUrl.
+    expect(contexto.imagenes.firma).toBe('data:image/png;base64,FIRMA')
+    expect(contexto.partes.tasador.firmaUrl).toBe('data:image/png;base64,FIRMA')
+    // Con firma presente NO se declara el hueco de firma.
+    expect(contexto.huecos.some((h) => h.ruta === 'partes.tasador.firmaUrl')).toBe(false)
+    // La grilla sale de las fotos reales.
+    expect(contexto.fotos.total).toBe(2)
+    // El canónico embebido viaja aligerado: sin data-URIs duplicados (tope 5 MB).
+    expect(contexto.canonico.firmaTasadorUrl).toBeNull()
+    expect(
+      contexto.canonico.anexosRanuras.every((a) => a.thumbnailUrl === null),
+    ).toBe(true)
+    // …pero conserva el nombre del documento resuelto (forma = contrato).
+    expect(
+      contexto.canonico.anexosRanuras.find((a) => a.ranura === 'anexo2Permiso')!.nombre,
+    ).toBe('permiso.jpg')
   })
 
   it('visador vacío en la base → nombre null, sin inventar', async () => {

@@ -120,10 +120,10 @@ describe('normalizarFotosBorrador · borradores anteriores a P5-TAS', () => {
     expect(saneado.categoriasCustom[0].nombre).toBe('Bodega')
   })
 
-  it('deja las ocho categorías presentes aunque el borrador sólo trajera dos', () => {
+  it('deja todas las categorías del catálogo presentes aunque el borrador sólo trajera dos', () => {
     const saneado = normalizarFotosBorrador(borradorViejo())
 
-    expect(Object.keys(saneado.fotosPredefinidas)).toHaveLength(8)
+    expect(Object.keys(saneado.fotosPredefinidas)).toHaveLength(9)
   })
 
   it('no toca las fotos que ya tienen la forma nueva', () => {
@@ -147,7 +147,7 @@ describe('normalizarFotosBorrador · borradores anteriores a P5-TAS', () => {
 
     const saneado = normalizarFotosBorrador(roto)
 
-    expect(Object.keys(saneado.fotosPredefinidas)).toHaveLength(8)
+    expect(Object.keys(saneado.fotosPredefinidas)).toHaveLength(9)
     expect(saneado.categoriasCustom).toEqual([])
   })
 })

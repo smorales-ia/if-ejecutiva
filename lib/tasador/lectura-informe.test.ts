@@ -18,10 +18,17 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
  */
 
 const listRecords = vi.fn()
+const getRecord = vi.fn()
 
 vi.mock('@/lib/airtable-client', async (importOriginal) => {
   const real = await importOriginal<typeof import('@/lib/airtable-client')>()
-  return { ...real, listRecords: (...args: unknown[]) => listRecords(...args) }
+  return {
+    ...real,
+    listRecords: (...args: unknown[]) => listRecords(...args),
+    // T-PDF-E3-GENERICOS: la firma del tasador se lee con getRecord contra
+    // M_Tasadores cuando la solicitud trae el Link. Default null → firma null.
+    getRecord: (...args: unknown[]) => getRecord(...args),
+  }
 })
 
 import { construirInforme, type Bloque } from './lectura-informe'
@@ -62,6 +69,7 @@ function airtableCon(porTabla: Partial<Record<string, ReturnType<typeof fila>[]>
 beforeEach(() => {
   vi.clearAllMocks()
   airtableVacio()
+  getRecord.mockResolvedValue(null)
 })
 
 describe('construirInforme · estructura de los 8 bloques', () => {
@@ -393,6 +401,102 @@ describe('construirInforme · bloque 8 (observaciones + legales · P9-TAS.B)', (
     expect(informe.observaciones.overrides).toEqual([])
     // Antecedentes legales vacíos: la tabla no tiene fila (ausencia honesta).
     expect(informe.observaciones.antecedentesLegales.fojas).toBe('')
+  })
+})
+
+describe('construirInforme · anexos por ranura + firma (T-PDF-E3-GENERICOS · plan §4)', () => {
+  const TASADOR_ID = 'recTasador0000001'
+
+  it('proyecta anexosRanuras desde los adjuntos no-foto por clave_adjunto', async () => {
+    airtableCon({
+      [TABLE_IDS.adjuntos]: [
+        fila('recA1', {
+          clave_adjunto: 'permiso_edificacion',
+          nombre_archivo: 'permiso.jpg',
+          thumbnail_url: 'data:image/jpeg;base64,PERMISO',
+        }),
+        fila('recA2', {
+          clave_adjunto: 'escritura_compraventa',
+          nombre_archivo: 'escritura.pdf', // PDF sin thumbnail (deuda P2)
+        }),
+        fila('recA3', {
+          // Foto categorizada: NO entra al riel documental de anexos.
+          tipo_adjunto: 'foto_interior',
+          descripcion: 'fachada_exterior',
+          nombre_archivo: 'fachada.jpg',
+          thumbnail_url: 'data:image/jpeg;base64,FACHADA',
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.anexosRanuras).toHaveLength(13)
+    const porRanura = new Map(informe.anexosRanuras.map((a) => [a.ranura, a]))
+    expect(porRanura.get('anexo2Permiso')).toMatchObject({
+      nombre: 'permiso.jpg',
+      thumbnailUrl: 'data:image/jpeg;base64,PERMISO',
+    })
+    // Sin thumbnail renderizable → ranura vacía honesta.
+    expect(porRanura.get('anexo2Escritura')).toMatchObject({
+      nombre: null,
+      thumbnailUrl: null,
+    })
+    // La foto no contamina ninguna ranura documental.
+    expect(
+      informe.anexosRanuras.filter((a) => a.thumbnailUrl !== null),
+    ).toHaveLength(1)
+  })
+
+  it('lee firma_url del tasador asignado (data-URI o https) y degrada a null', async () => {
+    getRecord.mockResolvedValue(
+      fila(TASADOR_ID, { nombre: 'Tasador', firma_url: 'data:image/png;base64,FIRMA' }),
+    )
+
+    const informe = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      tasador: [TASADOR_ID],
+    })
+
+    expect(getRecord).toHaveBeenCalledWith(TABLE_IDS.tasadores, TASADOR_ID)
+    expect(informe.firmaTasadorUrl).toBe('data:image/png;base64,FIRMA')
+  })
+
+  it('firma no renderizable (path) o campo vacío → null, sin romper', async () => {
+    getRecord.mockResolvedValue(fila(TASADOR_ID, { firma_url: '/Dropbox/firma.png' }))
+
+    const conPath = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      tasador: [TASADOR_ID],
+    })
+    expect(conPath.firmaTasadorUrl).toBeNull()
+
+    getRecord.mockResolvedValue(fila(TASADOR_ID, { nombre: 'Tasador' }))
+    const sinCampo = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      tasador: [TASADOR_ID],
+    })
+    expect(sinCampo.firmaTasadorUrl).toBeNull()
+  })
+
+  it('sin Link tasador no consulta M_Tasadores y la firma queda null', async () => {
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.firmaTasadorUrl).toBeNull()
+    expect(getRecord).not.toHaveBeenCalled()
+  })
+
+  it('fallo de red del maestro degrada a null (la firma nunca tumba el informe)', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    getRecord.mockRejectedValue(new Error('red caída'))
+
+    const informe = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      tasador: [TASADOR_ID],
+    })
+
+    expect(informe.firmaTasadorUrl).toBeNull()
+    error.mockRestore()
   })
 })
 

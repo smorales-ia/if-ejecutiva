@@ -84,6 +84,16 @@ export default async function InformePage({
     ? resInforme.informe.observaciones
     : null
 
+  /*
+   * Anexos por ranura + firma del tasador (T-PDF-E3-GENERICOS · plan §4),
+   * desde el mismo modelo canónico: es la MISMA resolución
+   * (`resolverAnexos` / `M_Tasadores.firma_url`) que alimenta el payload
+   * Carbone, así que lo que se ve aquí es lo que imprime el PDF. Misma
+   * degradación: guard fallido → null → estados vacíos honestos.
+   */
+  const anexosCanonico = resInforme.ok ? resInforme.informe.anexosRanuras : null
+  const firmaCanonico = resInforme.ok ? resInforme.informe.firmaTasadorUrl : null
+
   return (
     <InformePreview
       tasacion={tasacion}
@@ -91,6 +101,8 @@ export default async function InformePage({
       valorCanonico={valorCanonico}
       siiCanonico={siiCanonico}
       observacionesCanonico={observacionesCanonico}
+      anexosCanonico={anexosCanonico}
+      firmaCanonico={firmaCanonico}
     />
   )
 }

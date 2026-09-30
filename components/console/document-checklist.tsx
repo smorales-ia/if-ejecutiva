@@ -35,6 +35,7 @@ import {
   type DestinoUnidad,
 } from "@/lib/adjuntos-destino"
 import { uploadConReintentos } from "@/lib/adjuntos-uploader"
+import { generarThumbnailDataUri } from "@/lib/tasador/thumbnail"
 import type { Adjunto } from "@/lib/adjuntos"
 import type { Unidad } from "@/lib/console-data"
 import type { TipoDocumento } from "@/lib/tipos-documento"
@@ -75,6 +76,19 @@ type EstadoCarga = "idle" | "uploading" | "error"
 function truncar(nombre: string, max = 24): string {
   if (nombre.length <= max) return nombre
   return `${nombre.slice(0, max - 1)}…`
+}
+
+/**
+ * ¿El documento es una imagen (jpg/png/webp)? Decide si se genera thumbnail
+ * al subir (T-PDF-E3-GENERICOS): sólo las imágenes alimentan las ranuras de
+ * anexo del informe. Un PDF no trae miniatura (deuda P2) — se mira también
+ * la extensión porque el navegador puede reportar un mime genérico.
+ */
+function esDocumentoImagen(file: File): boolean {
+  return (
+    /^image\/(jpeg|png|webp)$/.test(file.type) ||
+    /\.(jpe?g|png|webp)$/i.test(file.name)
+  )
 }
 
 function validar(file: File): string | null {
@@ -226,12 +240,26 @@ function DocumentRow({
     setErrorMsg(null)
 
     try {
+      /**
+       * Thumbnail del documento-imagen (T-PDF-E3-GENERICOS): mismo contrato
+       * que las fotos de la visita (`generarThumbnailDataUri`, data-URI JPEG
+       * ≤95k chars). Viaja en el payload de subida y el Route Handler lo
+       * persiste en `TX_Adjuntos.thumbnail_url` tras confirmar la fila, para
+       * que el documento alimente su ranura de anexo en el informe. `null`
+       * («este entorno no pudo», o el archivo es PDF) no viaja y la cadena
+       * sigue exactamente igual: la subida NUNCA falla por el thumbnail.
+       */
+      const thumbnailUrl = esDocumentoImagen(file)
+        ? await generarThumbnailDataUri(file)
+        : null
+
       const resultado = await uploadConReintentos({
         file,
         solicitud_id: solicitudId,
         codigo_ext: codigoExt,
         tipo_documento: item.codigo,
         subido_por: usuarioActual,
+        thumbnail_url: thumbnailUrl ?? undefined,
         signal: abort.signal,
         onProgress: setProgreso,
         ...destinoAPayload(destino, unidades.length > 0),

@@ -63,7 +63,7 @@ import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
 import { construirInforme, leerTerminales, type Bloque } from '@/lib/tasador/lectura-informe'
 import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
-import { resolverImagenes } from './imagenes'
+import { resolverImagenes, type AnexoResuelto } from './imagenes'
 import { aplicarOverridesLocales } from './overrides'
 import type {
   BloqueComparablesInforme,
@@ -227,12 +227,10 @@ const HUECOS_ESTRUCTURALES: readonly Hueco[] = Object.freeze([
     pId: 'P1-8',
     motivo: 'Promedios y fila TASACIÓN calculados por el ensamblador, sin persistencia (puente hasta T2)',
   },
-  {
-    ruta: 'partes.tasador.firmaUrl',
-    eIds: ['E-111'],
-    pId: 'P1-9',
-    motivo: 'Imagen de firma sin mecanismo en M_Tasadores',
-  },
+  /* `partes.tasador.firmaUrl` dejó de ser hueco estructural en
+     T-PDF-E3-GENERICOS: el mecanismo existe (`M_Tasadores.firma_url`, leído
+     por el modelo canónico y resuelto en `lib/informe/imagenes.ts`). Un
+     tasador sin firma cargada declara el hueco por-caso más abajo (P1-9). */
   {
     ruta: 'partes.fechaVisado',
     eIds: ['E-113'],
@@ -254,10 +252,23 @@ const HUECOS_ESTRUCTURALES: readonly Hueco[] = Object.freeze([
  * re-embebía ~1,3 MB que la plantilla no consume — el webhook de Make capea en
  * 5 MB. Acá se reemplaza por `null` (la clave se conserva: la forma del bloque
  * es contrato, el peso no).
+ *
+ * Mismo trato (T-PDF-E3-GENERICOS) para lo que el canónico trae desde esta
+ * tanda: los thumbnails de `anexosRanuras` y la firma (`firmaTasadorUrl`) ya
+ * viajan resueltos en `imagenes.*` / `partes.tasador.firmaUrl` — repetirlos
+ * dentro de `canonico` sumaría hasta ~1,3 MB más de data-URIs duplicados.
  */
-function aligerarCanonico<T extends { bloques: Bloque[] }>(informe: T): T {
+function aligerarCanonico<
+  T extends {
+    bloques: Bloque[]
+    anexosRanuras: AnexoResuelto[]
+    firmaTasadorUrl: string | null
+  },
+>(informe: T): T {
   return {
     ...informe,
+    anexosRanuras: informe.anexosRanuras.map((a) => ({ ...a, thumbnailUrl: null })),
+    firmaTasadorUrl: null,
     bloques: informe.bloques.map((b) => {
       if (b.id !== 'fotografico') return b
       const fotos = Array.isArray(b.datos.fotos) ? b.datos.fotos : []
@@ -454,9 +465,17 @@ export async function construirInformeContexto(
   /* --- Fotos (bloque 7 canónico) y anexos (adjuntos no-foto) --------- */
   const fotosCanonicas = informe.bloques.find((b) => b.id === 'fotografico')!
     .datos as unknown as FotosInforme
-  /* Ranuras de imagen + grilla resuelta (adjunto http(s) primero; fallback
-     assets del espejo — ver lib/informe/imagenes.ts). */
-  const { imagenes, fotos } = resolverImagenes(codigo, fotosCanonicas)
+  /* Ranuras de imagen + grilla, 100 % desde fuentes vivas (plan §4): fotos
+     por categoría del bloque 7, anexos por `clave_adjunto` (la resolución
+     compartida `informe.anexosRanuras` que también consume el preview) y
+     firma del tasador (`informe.firmaTasadorUrl` — punto único de lectura).
+     Ver lib/informe/imagenes.ts. */
+  const { imagenes, fotos } = resolverImagenes(
+    codigo,
+    fotosCanonicas,
+    informe.anexosRanuras,
+    informe.firmaTasadorUrl,
+  )
   const anexos = {
     documentos: adjuntos
       .filter((a) => !texto(a.fields.tipo_adjunto).startsWith('foto'))
@@ -530,6 +549,16 @@ export async function construirInformeContexto(
 
   /* --- Huecos: estructurales + los dependientes del caso ------------- */
   const huecos: Hueco[] = [...HUECOS_ESTRUCTURALES]
+  if (imagenes.firma === null) {
+    /* El mecanismo existe (M_Tasadores.firma_url · T-PDF-E3-GENERICOS); si
+       falta, es un dato de perfil sin cargar — hueco por-caso, no estructural. */
+    huecos.push({
+      ruta: 'partes.tasador.firmaUrl',
+      eIds: ['E-111'],
+      pId: 'P1-9',
+      motivo: 'Tasador sin firma_url cargada en M_Tasadores (dato de perfil)',
+    })
+  }
   if (clienteNombre === null) {
     huecos.push({
       ruta: 'clienteInforme.nombre',

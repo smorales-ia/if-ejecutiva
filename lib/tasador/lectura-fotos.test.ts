@@ -181,17 +181,17 @@ describe('proyección vacía', () => {
  * ---------------------------------------------------------------------- */
 
 describe('repartoDeCaptura sobre la proyección', () => {
-  it('reparte las ocho del catálogo y las personalizadas', async () => {
+  it('reparte todas las del catálogo y las personalizadas', async () => {
     listRecords.mockResolvedValue([
       ...CATEGORIAS_FOTO.map((c, i) => fila(`rec${i}`, { descripcion: c.id, orden: i })),
-      fila('recQ1', { descripcion: 'Quincho techado', orden: 8 }),
-      fila('recQ2', { descripcion: 'Quincho techado', orden: 9 }),
+      fila('recQ1', { descripcion: 'Quincho techado', orden: 90 }),
+      fila('recQ2', { descripcion: 'Quincho techado', orden: 91 }),
     ])
 
     const captura = await proyectarFotosCaptura({ codigo_solicitud: CODIGO })
     const reparto = repartoDeCaptura(captura)
 
-    expect(captura.total).toBe(10)
+    expect(captura.total).toBe(CATEGORIAS_FOTO.length + 2)
     for (const c of CATEGORIAS_FOTO) {
       expect(reparto.fotosPredefinidas[c.id]).toHaveLength(1)
     }

@@ -56,6 +56,15 @@ export interface UploadUnArchivoParams {
   unidad_id?: string
   carpeta?: "comun" | "ingreso" | "informe"
   subido_por?: string
+  /**
+   * Data-URI JPEG ≤95k chars generado en el navegador al subir un documento
+   * que es imagen (`generarThumbnailDataUri` — T-PDF-E3-GENERICOS). El Route
+   * Handler lo persiste en `TX_Adjuntos.thumbnail_url` tras confirmar la
+   * subida, para que el documento alimente su ranura de anexo en el informe.
+   * Opcional y best-effort: ausente (PDF, o el navegador no pudo) la clave no
+   * viaja y la fila queda sin miniatura — ranura vacía honesta.
+   */
+  thumbnail_url?: string
   onProgress?: (pct: number) => void
   signal?: AbortSignal
 }
@@ -120,6 +129,7 @@ export async function uploadUnArchivo(params: UploadUnArchivoParams): Promise<Up
     unidad_id,
     carpeta,
     subido_por = 'Ejecutivo',
+    thumbnail_url,
     onProgress,
     signal,
   } = params
@@ -194,6 +204,8 @@ export async function uploadUnArchivo(params: UploadUnArchivoParams): Promise<Up
         tamanio_kb: Math.round(file.size / 1024),
         hash_md5,
         subido_por,
+        // `undefined` no se serializa: sin thumbnail el body queda igual que antes.
+        thumbnail_url,
         contenido_base64,
       })
     )

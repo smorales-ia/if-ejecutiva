@@ -859,13 +859,18 @@ export interface Opcion {
   l: string
 }
 
-/** Las ocho categorías predefinidas del organizador de fotos (RF-TAS-14 · §2.6). */
+/**
+ * Las categorías predefinidas del organizador de fotos: las ocho de
+ * RF-TAS-14 · §2.6 más `mapa_referencias` (T-PDF-E3-GENERICOS · plan §4),
+ * la categoría fija que alimenta la ranura `refMapa` del informe.
+ */
 export type CategoriaFotoId =
   | 'ofertas_comparables'
   | 'habitaciones'
   | 'banos'
   | 'estacionamientos'
   | 'mapa_ubicacion'
+  | 'mapa_referencias'
   | 'fachada_exterior'
   | 'cocina'
   | 'living_comedor'
@@ -897,8 +902,12 @@ export interface CategoriaFoto {
  * muestra 2 · 2 · 1, que son los de la propiedad de ejemplo. Se implementa el
  * **mínimo dinámico** por ser la regla escrita, como asunción reversible.
  *
- * `max` es `null` en las ocho: la spec no declara ningún máximo, y no se
+ * `max` es `null` en todas: la spec no declara ningún máximo, y no se
  * inventa uno.
+ *
+ * `mapa_referencias` (T-PDF-E3-GENERICOS · plan §4) es fija con mínimo 0:
+ * alimenta la ranura `refMapa` del informe cuando existe, sin exigirse en
+ * terreno.
  */
 export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
   { id: 'ofertas_comparables', label: 'Ofertas / Comparables', min: 1, max: null },
@@ -906,6 +915,7 @@ export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
   { id: 'banos', label: 'Baños', min: 'banos', max: null },
   { id: 'estacionamientos', label: 'Estacionamientos', min: 'estac', max: null },
   { id: 'mapa_ubicacion', label: 'Mapa de Ubicación', min: 1, max: null },
+  { id: 'mapa_referencias', label: 'Mapa de referencias', min: 0, max: null },
   { id: 'fachada_exterior', label: 'Fachada / Exterior', min: 1, max: null },
   { id: 'cocina', label: 'Cocina', min: 1, max: null },
   { id: 'living_comedor', label: 'Living / Comedor', min: 1, max: null },

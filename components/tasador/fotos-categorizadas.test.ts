@@ -51,9 +51,9 @@ const totalHeader = (fotos: FotosPorCategoria, custom: FotoCategoriaCustom[]) =>
     0,
   )
 
-describe('evaluarCategorias · las ocho del catálogo', () => {
-  it('rinde exactamente ocho estados', () => {
-    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(8)
+describe('evaluarCategorias · las categorías del catálogo', () => {
+  it('rinde un estado por categoría (8 de §2.6 + mapa_referencias)', () => {
+    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(9)
   })
 
   it('no incluye ninguna categoría "Documentos" (§2.6 la elimina)', () => {

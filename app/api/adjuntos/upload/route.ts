@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@clerk/nextjs/server'
-import { isValidRecordId } from '@/lib/airtable-client'
+import { isValidRecordId, listRecords, updateRecord } from '@/lib/airtable-client'
+import { TX_ADJUNTOS } from '@/lib/adjuntos'
+import { MAX_CHARS_THUMBNAIL } from '@/lib/tasador/thumbnail'
 import { componerCarpetaDropbox } from '@/lib/dropbox-path'
 import {
   ErrorPathIrresoluble,
@@ -81,6 +83,19 @@ const uploadSchema = z.object({
   tamanio_kb: z.number().positive('Tamaño de archivo inválido.'),
   hash_md5: z.string().min(1, 'Falta el hash del archivo.'),
   subido_por: z.string().min(1).default('Ejecutivo'),
+  /**
+   * Miniatura del documento cuando el archivo es una imagen
+   * (T-PDF-E3-GENERICOS): data-URI JPEG generado en el navegador con el
+   * mismo contrato de las fotos (`generarThumbnailDataUri`, ≤95k chars).
+   * Se persiste en `TX_Adjuntos.thumbnail_url` DESPUÉS de que Make confirme
+   * la fila — el blueprint de `SC-Adjuntos-Upload` no se toca. Opcional:
+   * los PDF no traen miniatura (deuda P2) y la ranura queda vacía honesta.
+   */
+  thumbnail_url: z
+    .string()
+    .startsWith('data:image/')
+    .max(MAX_CHARS_THUMBNAIL)
+    .optional(),
   contenido_base64: z.string().min(1, 'Falta el contenido del archivo.'),
 })
 
@@ -319,6 +334,46 @@ export async function POST(request: NextRequest) {
   }
 
   const modo = data.modo ?? (data.reused ? 'reused' : 'nuevo')
+
+  /**
+   * Persistencia del thumbnail del documento (T-PDF-E3-GENERICOS · plan §4).
+   *
+   * El dueño de la fila es `SC-Adjuntos-Upload` (CI-052) y su blueprint no se
+   * toca en esta tanda, así que `thumbnail_url` se escribe DESPUÉS, directo
+   * en Airtable server-side — el mismo patrón que el PATCH de categorización
+   * de fotos (`app/api/tasaciones/[id]/fotos/route.ts`). Best-effort: la
+   * subida NUNCA falla por el thumbnail; si el update no llega, el documento
+   * queda íntegro y su ranura de anexo vacía honesta.
+   *
+   * Make puede devolver el autoNumber `adjunto_id` (no el record ID) mientras
+   * `SC-Adjuntos-Upload v1.4` no esté importado — mismo puente que CI-061:
+   * record ID tal cual; sólo-dígitos se resuelve por `filterByFormula`.
+   */
+  if (payload.thumbnail_url) {
+    try {
+      const crudo = String(data.adjunto_id)
+      const recordId = isValidRecordId(crudo)
+        ? crudo
+        : /^\d+$/.test(crudo)
+          ? ((await listRecords<{ adjunto_id?: number }>(TX_ADJUNTOS, {
+              filterByFormula: `{adjunto_id} = ${crudo}`,
+              maxRecords: '1',
+            }))[0]?.id ?? null)
+          : null
+      if (recordId) {
+        await updateRecord(TX_ADJUNTOS, recordId, {
+          thumbnail_url: payload.thumbnail_url,
+        })
+      } else {
+        console.error('[POST /api/adjuntos/upload] adjunto_id irresoluble para thumbnail', {
+          adjunto_id: data.adjunto_id,
+          codigo_ext: payload.codigo_ext,
+        })
+      }
+    } catch (err) {
+      console.error('[POST /api/adjuntos/upload] no se pudo persistir thumbnail_url', err)
+    }
+  }
 
   if (modo === 'reemplazo') {
     // El evento `adjunto_reemplazado` lo escribe Make en A_Eventos (§8.6.5);
