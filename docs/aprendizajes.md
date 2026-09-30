@@ -3328,3 +3328,14 @@ base del Historial de Airtable.
 **Causa raíz:** la denegación anterior fue por campos no nombrados en la autorización; esta tanda los nombró explícitamente (arriendo_mensual/gasto_anual = 3.300.000).
 **Solución aplicada:** PATCH directo → ingreso_liquido_anual=36.300.000 por fórmula; espejo de datos 100% (auditor ciego, 238/238).
 **Prevención futura:** confirmada la práctica: enumerar en el mandato los campos exactos a escribir evita bloqueos del clasificador y reintentos.
+
+### 2026-09-30 — T-VP0067-PDFPUBLICO-B: share-link público cerrado con conexión Dropbox nueva
+
+**Contexto:** aplicar E3 v2.2 (módulo share-link) con la conexión "Dropbox VProperty share" recién creada por Sergio, correr la cadena y validar el link sin login.
+**Inconveniente:** el `scopesCnt` de la API de Make era 4 tanto en la conexión vieja como en la nueva — mirar solo el contador habría repetido el falso negativo de la tanda anterior.
+**Causa raíz:** `scopesCnt` cuenta scopes, no dice cuáles: la vieja tenía 4 scopes de archivos; la nueva tiene 4 distintos (con `sharing.write` y `sharing.read`, sin `files.content.write`).
+**Solución aplicada:** comparar la LISTA `scopes[]`, no el contador; el diseño final usa dos conexiones por función — la vieja (7553318) sigue en el upload (necesita `files.content.write`) y la nueva (11421587) solo en el módulo share-link.
+**Prevención futura:** al auditar conexiones OAuth en Make, leer siempre `scopes[]` textual; y es válido (y a veces necesario) que un mismo escenario use conexiones distintas de la misma app según el scope que exige cada módulo.
+
+**Inconveniente:** ninguno en la aplicación del blueprint: el contrato del módulo `dropbox:createShareLink` v5 medido en el template público 13566 (mapper `{select:'map', path, settings:{}}`) funcionó al primer intento en producción (7 ops, status 1), sin `shared_link_already_exists` pese al `overwrite:true` del upload previo.
+**Prevención futura:** confirmada la práctica de las tandas Make: contrastar el mapper contra un blueprint real probado (template o escenario en producción) antes de escribir un módulo a mano; `settings:{}` = visibilidad pública por defecto en Dropbox, sin necesidad de `requested_visibility`.

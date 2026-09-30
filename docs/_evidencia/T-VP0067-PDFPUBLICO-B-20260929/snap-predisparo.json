@@ -1,0 +1,76 @@
+{
+  "timestamp_utc": "2026-09-30T00:57:58Z",
+  "docgen_vp0067": {
+    "records": [
+      {
+        "id": "rec0t8n2oXJB29cMZ",
+        "createdTime": "2026-09-29T16:18:39.000Z",
+        "fields": {
+          "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSÉ VERGARA UNDURRAGA_METLIFE -6283.pdf",
+          "url_pdf": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOS%C3%89%20VERGARA%20UNDURRAGA_METLIFE%20-6283.pdf",
+          "fecha_generacion": "2026-09-29",
+          "render_id_carbone": "MTAuMjAuMTEuNDAgICAgvSE3jh3vNH3jKoVIs2KaZQcmVwb3J0.pdf",
+          "plantilla_version": "PLANTILLA_MET_v2",
+          "doc_id": 7
+        }
+      },
+      {
+        "id": "rec2iw3c9ft5d1TXR",
+        "createdTime": "2026-09-29T02:43:10.000Z",
+        "fields": {
+          "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSÉ VERGARA UNDURRAGA_METLIFE -6283.pdf",
+          "url_pdf": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOS%C3%89%20VERGARA%20UNDURRAGA_METLIFE%20-6283.pdf",
+          "fecha_generacion": "2026-09-28",
+          "render_id_carbone": "MTAuMjAuMTEuNDAgICAgPHiLD9Unhj7KQm8zUGdQWgcmVwb3J0.pdf",
+          "plantilla_version": "PLANTILLA_MET_v2",
+          "doc_id": 6
+        }
+      },
+      {
+        "id": "recIxc5nmLZClvUM0",
+        "createdTime": "2026-09-29T22:18:12.000Z",
+        "fields": {
+          "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSÉ VERGARA UNDURRAGA_METLIFE -6283.pdf",
+          "url_pdf": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOS%C3%89%20VERGARA%20UNDURRAGA_METLIFE%20-6283.pdf",
+          "fecha_generacion": "2026-09-29",
+          "render_id_carbone": "MTAuMjAuMTEuNDIgICAg8XDo2ekLuJoRqxPX84tisQcmVwb3J0.pdf",
+          "plantilla_version": "PLANTILLA_MET_v2",
+          "doc_id": 8
+        }
+      },
+      {
+        "id": "recWP8Ex4XuPoNIfG",
+        "createdTime": "2026-09-27T23:36:57.000Z",
+        "fields": {
+          "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSE VERGARA UNDURRAGA_METLIFE-6283-REAL.pdf",
+          "url_pdf": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOSE%20VERGARA%20UNDURRAGA_METLIFE-6283-REAL.pdf",
+          "fecha_generacion": "2026-09-27",
+          "render_id_carbone": "MTAuMjAuMjEuNDMgICAgKfHlx5X_LfkUjL3yJYBrGQcmVwb3J0.pdf",
+          "plantilla_version": "PLANTILLA_MET_v1",
+          "doc_id": 4
+        }
+      },
+      {
+        "id": "recYasPnZWAAoA3pW",
+        "createdTime": "2026-09-29T23:13:13.000Z",
+        "fields": {
+          "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSÉ VERGARA UNDURRAGA_METLIFE -6283.pdf",
+          "url_pdf": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOS%C3%89%20VERGARA%20UNDURRAGA_METLIFE%20-6283.pdf",
+          "es_vigente": true,
+          "fecha_generacion": "2026-09-29",
+          "render_id_carbone": "MTAuMjAuMjEuNDEgICAghdNLEwAPXjHsuPMlMyLSYAcmVwb3J0.pdf",
+          "plantilla_version": "PLANTILLA_MET_v2",
+          "doc_id": 9
+        }
+      }
+    ]
+  },
+  "solicitud_pdf_final_url": {
+    "id": "recmMzeu3eWGxyXsf",
+    "fields": {
+      "codigo_ext": "VP-2026-0067",
+      "estado": "pdf_listo",
+      "pdf_final_url": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOS%C3%89%20VERGARA%20UNDURRAGA_METLIFE%20-6283.pdf"
+    }
+  }
+}
