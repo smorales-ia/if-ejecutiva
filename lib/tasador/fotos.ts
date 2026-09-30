@@ -49,6 +49,7 @@
 
 import { uploadConReintentos, type UploadResult } from "@/lib/adjuntos-uploader"
 import type { FotoAdjunta } from "@/lib/tasador/tasaciones"
+import { generarThumbnailDataUri } from "@/lib/tasador/thumbnail"
 import { claveAdjuntoDeCategoria } from "@/lib/tasador/tipo-documento-foto"
 
 /** Literal §6.1 para el fallo que no sabemos explicar al usuario. */
@@ -110,19 +111,33 @@ function falloDeSubida(resultado: UploadResult): ResultadoSubida {
  * Se exporta aparte de {@link subirFotoDeVisita} porque es también la operación
  * de **recategorizar** una foto que ya está en Dropbox, que no necesita volver a
  * subir nada.
+ *
+ * `thumbnailUrl` es el data-URI JPEG que generó el navegador al subir
+ * ({@link generarThumbnailDataUri}) — la única fuente renderizable de la foto
+ * (el server no puede leer Dropbox). Es opcional y best-effort: si no viene
+ * (`null`/`undefined`), la clave se **omite** del body y el server no toca
+ * `thumbnail_url` (RO-18.3: omitir ≠ mandar vacío).
  */
 export async function categorizarFoto(
   solicitudId: string,
   adjuntoId: string,
   categoria: string,
   orden?: number,
+  thumbnailUrl?: string | null,
 ): Promise<{ ok: boolean; mensaje?: string; reintentable?: boolean }> {
   try {
     const res = await fetch(`/api/tasaciones/${solicitudId}/fotos`, {
       method: "PATCH",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adjuntoId, categoria, orden }),
+      // JSON.stringify descarta las claves undefined: sin thumbnail el body
+      // queda byte a byte como antes de esta tanda.
+      body: JSON.stringify({
+        adjuntoId,
+        categoria,
+        orden,
+        thumbnailUrl: thumbnailUrl ?? undefined,
+      }),
     })
 
     if (!res.ok) {
@@ -186,11 +201,23 @@ export async function subirFotoDeVisita(
 
   const adjuntoId = String(subida.adjunto_id)
 
+  /**
+   * Thumbnail best-effort — T-VP0067-IMAGENES-UI.
+   *
+   * Se genera **después** de que la subida confirmó (no gastar CPU en terreno
+   * si el binario no llegó) y **antes** del PATCH, para que categoría y
+   * `thumbnail_url` viajen en un solo update. `null` significa «este entorno
+   * no pudo» (SSR, sin canvas, imagen indecodificable) y la cadena sigue
+   * exactamente igual que antes: la subida NUNCA falla por el thumbnail.
+   */
+  const thumbnailUrl = await generarThumbnailDataUri(p.file)
+
   const categorizada = await categorizarFoto(
     p.solicitudId,
     adjuntoId,
     p.categoria,
     p.orden,
+    thumbnailUrl,
   )
   if (!categorizada.ok) {
     return {
@@ -209,7 +236,9 @@ export async function subirFotoDeVisita(
       categoria: p.categoria,
       nombre: subida.nombre_archivo ?? p.file.name,
       url: subida.url_dropbox ?? null,
-      thumbnailUrl: null,
+      // El data-URI recién generado viaja al caller para pintado inmediato;
+      // la rehidratación desde GET /fotos lo confirmará leído de Airtable.
+      thumbnailUrl,
       // El hash lo calculó el uploader y no lo devuelve. Llega en la
       // rehidratación desde `GET /fotos`, que es lo que corre tras cada subida.
       hashMd5: null,

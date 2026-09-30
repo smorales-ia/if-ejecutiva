@@ -23,6 +23,23 @@ vi.mock('@/lib/adjuntos-uploader', async (importOriginal) => {
   }
 })
 
+/**
+ * T-VP0067-IMAGENES-UI: el generador de thumbnails se mockea con default
+ * `null` — que es además su comportamiento real en este entorno node sin
+ * canvas. Así los tests previos de la cadena conservan sus bodies byte a
+ * byte (JSON.stringify descarta la clave), y los nuevos activan el data-URI
+ * explícitamente.
+ */
+const generarThumbnailDataUri = vi.fn()
+
+vi.mock('@/lib/tasador/thumbnail', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/lib/tasador/thumbnail')>()
+  return {
+    ...real,
+    generarThumbnailDataUri: (...args: unknown[]) => generarThumbnailDataUri(...args),
+  }
+})
+
 import {
   categorizarFoto,
   eliminarFotoDeVisita,
@@ -58,6 +75,7 @@ beforeEach(() => {
     url_dropbox: '/VProperty/VP-2026-0060/IMG_1.jpg',
     nombre_archivo: 'IMG_1.jpg',
   })
+  generarThumbnailDataUri.mockResolvedValue(null)
 })
 
 afterEach(() => {
@@ -188,6 +206,55 @@ describe('subirFotoDeVisita · la cadena completa', () => {
     expect(res.ok === false && res.reintentable).toBe(true)
   })
 
+  it('manda el thumbnail generado en el mismo PATCH y lo devuelve para pintado inmediato', async () => {
+    const DATA_URI = `data:image/jpeg;base64,${'A'.repeat(1000)}`
+    generarThumbnailDataUri.mockResolvedValue(DATA_URI)
+
+    const res = await subirFotoDeVisita({
+      file: archivo(),
+      solicitudId: SOLICITUD,
+      codigoExt: CODIGO,
+      categoria: 'cocina',
+    })
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({
+      adjuntoId: ADJUNTO,
+      categoria: 'cocina',
+      thumbnailUrl: DATA_URI,
+    })
+    expect(res.ok && res.foto.thumbnailUrl).toBe(DATA_URI)
+  })
+
+  it('sin thumbnail (generador → null) la subida sigue OK y el body omite la clave', async () => {
+    generarThumbnailDataUri.mockResolvedValue(null)
+
+    const res = await subirFotoDeVisita({
+      file: archivo(),
+      solicitudId: SOLICITUD,
+      codigoExt: CODIGO,
+      categoria: 'cocina',
+    })
+
+    // El thumbnail es best-effort: un entorno sin canvas no aborta la cadena.
+    expect(res.ok).toBe(true)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect('thumbnailUrl' in body).toBe(false)
+    expect(res.ok && res.foto.thumbnailUrl).toBeNull()
+  })
+
+  it('no genera thumbnail si la subida ya falló: cero CPU gastada en terreno', async () => {
+    uploadConReintentos.mockResolvedValue({ ok: false, error: 'x', reintentable: false })
+
+    await subirFotoDeVisita({
+      file: archivo(),
+      solicitudId: SOLICITUD,
+      codigoExt: CODIGO,
+      categoria: 'cocina',
+    })
+
+    expect(generarThumbnailDataUri).not.toHaveBeenCalled()
+  })
+
   it('si la categorización falla, el fallo es reintentable y la foto ya está a salvo', async () => {
     fetchMock.mockResolvedValue(respuesta({ error: 'x' }, false, 502))
 
@@ -214,6 +281,27 @@ describe('categorizarFoto · también sirve para recategorizar', () => {
     expect(res.ok).toBe(true)
     expect(uploadConReintentos).not.toHaveBeenCalled()
     expect(fetchMock.mock.calls[0][1].method).toBe('PATCH')
+  })
+
+  it('incluye thumbnailUrl en el body cuando se lo pasan', async () => {
+    const DATA_URI = `data:image/jpeg;base64,${'B'.repeat(500)}`
+
+    const res = await categorizarFoto(SOLICITUD, ADJUNTO, 'cocina', 1, DATA_URI)
+
+    expect(res.ok).toBe(true)
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      adjuntoId: ADJUNTO,
+      categoria: 'cocina',
+      orden: 1,
+      thumbnailUrl: DATA_URI,
+    })
+  })
+
+  it('omite thumbnailUrl del body cuando no viene (RO-18.3: omitir ≠ vacío)', async () => {
+    await categorizarFoto(SOLICITUD, ADJUNTO, 'cocina', undefined, null)
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect('thumbnailUrl' in body).toBe(false)
   })
 
   it('devuelve el literal humano que mandó el servidor', async () => {

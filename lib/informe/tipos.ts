@@ -381,7 +381,21 @@ export interface RecintosInforme {
 export interface FotosInforme {
   total: number
   porCategoria: Record<string, number>
-  fotos: { id: string; nombre: string; categoria: string; url: string }[]
+  fotos: {
+    id: string
+    nombre: string
+    categoria: string
+    url: string
+    /**
+     * Fuente renderizable que viaja con la fila (`TX_Adjuntos.thumbnail_url`):
+     * data-URI JPEG o URL http(s). Contrato de origen único T-VP0067-IMAGENES
+     * §4 — mientras el server no lea Dropbox, la imagen de la grilla sale de
+     * acá. Opcional: el fallback del espejo no lo produce.
+     */
+    thumbnailUrl?: string | null
+    /** Posición global en la grilla 16 (`TX_Adjuntos.orden`); null = al final. */
+    orden?: number | null
+  }[]
 }
 
 /** Anexos 1-2: adjuntos no-foto que la plantilla insertará (E-214..223). */

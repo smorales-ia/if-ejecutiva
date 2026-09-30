@@ -1,0 +1,134 @@
+{
+ "creados": [
+  "recM3pvhvf42qe3cb",
+  "recTlZIupiHCyf0Qy",
+  "recTMcPu6X5GqMLdP",
+  "reckuOQ2EQ8II75Kj",
+  "recLz5v9v1QyMxrY0",
+  "recHjxePGcJ1gM0c1",
+  "recs57FpScfoe639m",
+  "recx3uCAlp6rBtnhT",
+  "recG6jAo8CK2EASDc",
+  "recHwkvir7mj9uAIB",
+  "recQ2d3LLiZf0qmK1",
+  "rec5t74bqVac4LiSJ",
+  "recoGxiYxeUs8kJlK",
+  "recxOSsax7KWH8QVU",
+  "rec5KpO655oCqDKYQ",
+  "receKlrASmHqsxGLO"
+ ],
+ "detalle": [
+  {
+   "id": "recM3pvhvf42qe3cb",
+   "orden": 0,
+   "archivo": "h4_01_ubicacion.jpg",
+   "categoria": "mapa_ubicacion",
+   "thumb_chars": 83591
+  },
+  {
+   "id": "recTlZIupiHCyf0Qy",
+   "orden": 1,
+   "archivo": "anexo1_plano.jpg",
+   "categoria": "Planificación",
+   "thumb_chars": 87863
+  },
+  {
+   "id": "recTMcPu6X5GqMLdP",
+   "orden": 2,
+   "archivo": "h4_03_fachada.jpg",
+   "categoria": "fachada_exterior",
+   "thumb_chars": 86203
+  },
+  {
+   "id": "reckuOQ2EQ8II75Kj",
+   "orden": 3,
+   "archivo": "h4_04_sector.jpg",
+   "categoria": "fachada_exterior",
+   "thumb_chars": 93923
+  },
+  {
+   "id": "recLz5v9v1QyMxrY0",
+   "orden": 4,
+   "archivo": "h4_05_living.jpg",
+   "categoria": "living_comedor",
+   "thumb_chars": 89039
+  },
+  {
+   "id": "recHjxePGcJ1gM0c1",
+   "orden": 5,
+   "archivo": "h4_06_comedor.jpg",
+   "categoria": "living_comedor",
+   "thumb_chars": 81515
+  },
+  {
+   "id": "recs57FpScfoe639m",
+   "orden": 6,
+   "archivo": "h4_07_cocina.jpg",
+   "categoria": "cocina",
+   "thumb_chars": 83191
+  },
+  {
+   "id": "recx3uCAlp6rBtnhT",
+   "orden": 7,
+   "archivo": "h4_08_bano_visitas.jpg",
+   "categoria": "banos",
+   "thumb_chars": 75295
+  },
+  {
+   "id": "recG6jAo8CK2EASDc",
+   "orden": 8,
+   "archivo": "h5_01_dormitorio_principal.jpg",
+   "categoria": "habitaciones",
+   "thumb_chars": 79707
+  },
+  {
+   "id": "recHwkvir7mj9uAIB",
+   "orden": 9,
+   "archivo": "h5_02_bano_principal.jpg",
+   "categoria": "banos",
+   "thumb_chars": 61535
+  },
+  {
+   "id": "recQ2d3LLiZf0qmK1",
+   "orden": 10,
+   "archivo": "h5_03_dormitorio_a.jpg",
+   "categoria": "habitaciones",
+   "thumb_chars": 89751
+  },
+  {
+   "id": "rec5t74bqVac4LiSJ",
+   "orden": 11,
+   "archivo": "h5_04_dormitorio_b.jpg",
+   "categoria": "habitaciones",
+   "thumb_chars": 83319
+  },
+  {
+   "id": "recoGxiYxeUs8kJlK",
+   "orden": 12,
+   "archivo": "h5_05_sala_estar.jpg",
+   "categoria": "living_comedor",
+   "thumb_chars": 92491
+  },
+  {
+   "id": "recxOSsax7KWH8QVU",
+   "orden": 13,
+   "archivo": "h5_06_piscina.jpg",
+   "categoria": "fachada_exterior",
+   "thumb_chars": 93339
+  },
+  {
+   "id": "rec5KpO655oCqDKYQ",
+   "orden": 14,
+   "archivo": "h5_07_terraza_quincho.jpg",
+   "categoria": "fachada_exterior",
+   "thumb_chars": 83811
+  },
+  {
+   "id": "receKlrASmHqsxGLO",
+   "orden": 15,
+   "archivo": "h5_08_fachada_posterior_patio.jpg",
+   "categoria": "fachada_exterior",
+   "thumb_chars": 87047
+  }
+ ]
+}

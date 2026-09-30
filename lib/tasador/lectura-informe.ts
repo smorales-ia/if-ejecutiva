@@ -570,6 +570,10 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
           nombre: texto(f.fields.nombre_archivo),
           categoria: texto(f.fields.descripcion) || texto(f.fields.tipo_adjunto),
           url: texto(f.fields.url_dropbox),
+          /* Contrato T-VP0067-IMAGENES §4: la fuente renderizable y la posición
+             de grilla viajan con la fila — las consume resolverImagenes. */
+          thumbnailUrl: texto(f.fields.thumbnail_url) || null,
+          orden: numeroONull(f.fields.orden),
         })),
       },
     },

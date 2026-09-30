@@ -61,7 +61,7 @@ import { getRecord, listRecords } from '@/lib/airtable-client'
 import { autorizarSolicitud, type ResultadoGuard } from '@/lib/tasador/auth-guard'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
-import { construirInforme, leerTerminales } from '@/lib/tasador/lectura-informe'
+import { construirInforme, leerTerminales, type Bloque } from '@/lib/tasador/lectura-informe'
 import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
 import { resolverImagenes } from './imagenes'
 import { aplicarOverridesLocales } from './overrides'
@@ -246,6 +246,31 @@ const HUECOS_ESTRUCTURALES: readonly Hueco[] = Object.freeze([
     motivo: 'F_VidaUtil existe pero está fuera de la regla v32',
   },
 ])
+
+/**
+ * El bloque 7 canónico viaja dentro de `contexto.canonico` además de alimentar
+ * a `resolverImagenes`. Desde el contrato §4 (T-VP0067-IMAGENES) cada foto trae
+ * su `thumbnailUrl` como data-URI (~85k chars): dejarlo también en `canonico`
+ * re-embebía ~1,3 MB que la plantilla no consume — el webhook de Make capea en
+ * 5 MB. Acá se reemplaza por `null` (la clave se conserva: la forma del bloque
+ * es contrato, el peso no).
+ */
+function aligerarCanonico<T extends { bloques: Bloque[] }>(informe: T): T {
+  return {
+    ...informe,
+    bloques: informe.bloques.map((b) => {
+      if (b.id !== 'fotografico') return b
+      const fotos = Array.isArray(b.datos.fotos) ? b.datos.fotos : []
+      return {
+        ...b,
+        datos: {
+          ...b.datos,
+          fotos: fotos.map((f) => ({ ...(f as Record<string, unknown>), thumbnailUrl: null })),
+        },
+      }
+    }),
+  }
+}
 
 /** La rama de fallo del guard — lo que `desdeGuard` traduce a HTTP. */
 type GuardFallido = Extract<ResultadoGuard, { ok: false }>
@@ -645,7 +670,7 @@ export async function construirInformeContexto(
     },
     legales: informe.observaciones.antecedentesLegales,
     huecos,
-    canonico: informe,
+    canonico: aligerarCanonico(informe),
   }
 
   /* Overrides locales (datos sin columna — puente de tanda, ver overrides.ts). */

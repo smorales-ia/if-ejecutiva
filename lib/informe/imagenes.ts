@@ -10,23 +10,39 @@
  * `TX_Adjuntos` es un path interno (no descargable) y la conexión Dropbox de
  * `.env.local` está vencida, así que la resolución es:
  *
- * 1. **Adjunto Airtable utilizable**: si la foto canónica ya trae una URL
- *    `http(s)` (p. ej. un attachment de Airtable), se usa tal cual.
- * 2. **Fallback de tanda (assets del repo)**: para el caso espejo
- *    VP-2026-0067, las imágenes extraídas del PDF de referencia MET-6283
- *    viven en `docs/_artefactos/carbone/assets_met6283/` (MANIFEST.md) y se
- *    emiten como data-URI. ⚠ Fallback-repo: TODAS las ranuras del espejo
- *    salen de acá — para el flujo vivo falta el mecanismo de captura/columna
- *    (firma en M_Tasadores, mapas P1-4, escaneados de anexos, fotos con
- *    attachment público). Queda declarado en el cierre de la tanda.
+ * ## Grilla de 16 fotos (`fotos.fotos[]`) — origen único (T-VP0067-IMAGENES §4)
  *
- * El fallback está **acotado por `codigo_solicitud`** (`ASSETS_POR_CODIGO`):
- * cualquier otra solicitud recibe `null` en cada ranura — ranura vacía
- * honesta, nunca la foto de otra propiedad.
+ * 1. **Fotos reales primero**: si el bloque 7 canónico trae filas
+ *    (`TX_Adjuntos` con `tipo_adjunto` prefijo `foto`), la grilla se
+ *    construye DESDE ELLAS: ordenadas por `orden` asc (null al final, orden
+ *    de llegada estable), `url` = `thumbnail_url` (data-URI JPEG o URL
+ *    http(s)) con caída a la `url` de la foto si es http(s) — Carbone
+ *    descarga URLs públicas tal cual, no hace falta bajarlas acá —, caption
+ *    (`categoria`) = **label** de `CATEGORIAS_FOTO` cuando la categoría es
+ *    uno de los 8 ids, o el nombre custom tal cual. Foto sin fuente
+ *    renderizable → **se omite** (con warn): una ranura sin imagen no aporta
+ *    nada al PDF y la plantilla imprime por índice. Máximo 16 (posiciones
+ *    fijas de la plantilla): sobrantes fuera, con warn.
+ * 2. **Fallback de tanda (assets del repo)** — ⚠ transitorio del espejo,
+ *    SOLO cuando el bloque 7 viene vacío (pre-siembra): para VP-2026-0067
+ *    las imágenes extraídas del PDF de referencia MET-6283 viven en
+ *    `docs/_artefactos/carbone/assets_met6283/` (MANIFEST.md) y se emiten
+ *    como data-URI con el caption del gold master. Muere cuando la siembra
+ *    D de la tanda puebla las 16 filas reales.
+ *
+ * ## Ranuras fijas (`ImagenesInforme`, 20 tags `{d.imagenes.*}`)
+ *
+ * Sin cambio de comportamiento en esta tanda: para el flujo vivo falta el
+ * mecanismo de captura/columna (firma en M_Tasadores, mapas P1-4, escaneados
+ * de anexos), así que el espejo sigue saliendo del fallback repo. El fallback
+ * está **acotado por `codigo_solicitud`** (`ASSETS_POR_CODIGO`): cualquier
+ * otra solicitud recibe `null` en cada ranura — ranura vacía honesta, nunca
+ * la foto de otra propiedad.
  */
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { CATEGORIAS_FOTO } from '@/lib/tasador/tasaciones'
 import type { FotosInforme, ImagenesInforme } from './tipos'
 
 /** Caso espejo → directorio de assets (relativo a la raíz del repo). */
@@ -60,9 +76,12 @@ const ARCHIVO_POR_RANURA: Record<keyof ImagenesInforme, string> = Object.freeze(
 })
 
 /**
- * Grillas 2×4 de las Hojas 4-5: archivo + caption EXACTO del gold master
- * (MANIFEST.md — la banda gris bajo cada foto). «Planificación» reutiliza el
- * plano del Anexo 1: misma imagen en ambas ranuras del PDF de referencia.
+ * ⚠ TRANSITORIO DEL ESPEJO (pre-siembra): grillas 2×4 de las Hojas 4-5,
+ * archivo + caption EXACTO del gold master (MANIFEST.md — la banda gris bajo
+ * cada foto). «Planificación» reutiliza el plano del Anexo 1: misma imagen en
+ * ambas ranuras del PDF de referencia. Es el **último recurso** cuando la
+ * solicitud espejo aún no tiene fotos reales en `TX_Adjuntos`; con bloque 7
+ * poblado, la grilla sale SIEMPRE de las fotos reales.
  */
 const GRILLA_FOTOS: ReadonlyArray<{ archivo: string; categoria: string }> =
   Object.freeze([
@@ -90,9 +109,82 @@ const RANURAS_VACIAS: ImagenesInforme = Object.freeze(
   ) as unknown as ImagenesInforme,
 )
 
-/** ¿URL que Carbone puede descargar? (attachment público, no path Dropbox). */
-function urlUtilizable(url: string): boolean {
-  return /^https?:\/\//.test(url)
+/** La plantilla tiene 16 posiciones fijas `{d.fotos.fotos[i=0..15]}`. */
+const MAX_FOTOS_GRILLA = 16
+
+/**
+ * Caption por categoría: label oficial de `CATEGORIAS_FOTO` cuando la
+ * categoría es uno de los 8 ids; el nombre custom pasa tal cual. Única fuente
+ * de labels (RO-05) — acá no se duplica ningún string de la UI.
+ */
+const LABEL_POR_CATEGORIA: ReadonlyMap<string, string> = new Map(
+  CATEGORIAS_FOTO.map((c) => [c.id, c.label]),
+)
+
+/**
+ * ¿Fuente que Carbone v4 puede renderizar? URL `http(s)` descargable
+ * (attachment público — se deja pasar tal cual, Carbone la baja solo) o
+ * data-URI de imagen (contrato `thumbnail_url` §4). Un path Dropbox no lo es.
+ */
+function fuenteRenderizable(url: string | null | undefined): url is string {
+  return typeof url === 'string' && /^(https?:\/\/|data:image\/)/.test(url)
+}
+
+/**
+ * Grilla construida desde las fotos reales del bloque 7 (origen único §4):
+ * orden asc con null al final (sort estable = orden de llegada), caption por
+ * label, fuente = thumbnail con caída a la url http(s). Foto sin fuente
+ * renderizable se OMITE (warn); si hay más de 16, entran las primeras 16.
+ */
+function grillaDesdeFotosReales(
+  codigo: string,
+  fotosCanonicas: FotosInforme,
+): FotosInforme {
+  const ordenadas = [...fotosCanonicas.fotos].sort(
+    (a, b) =>
+      (a.orden ?? Number.MAX_SAFE_INTEGER) - (b.orden ?? Number.MAX_SAFE_INTEGER),
+  )
+
+  const renderizables = ordenadas.flatMap((f) => {
+    const url = fuenteRenderizable(f.thumbnailUrl)
+      ? f.thumbnailUrl
+      : fuenteRenderizable(f.url)
+        ? f.url
+        : null
+    if (url === null) {
+      console.warn(
+        '[imagenes] foto sin fuente renderizable — se omite de la grilla',
+        codigo,
+        f.id,
+        f.nombre,
+      )
+      return []
+    }
+    /* Forma explícita, sin `...f`: el data-URI ya viaja en `url`; repetirlo en
+       `thumbnailUrl` duplicaba ~1,3 MB del payload a Carbone (límite del
+       webhook Make: 5 MB). `orden` tampoco se emite: la posición es el índice. */
+    return [
+      {
+        id: f.id,
+        nombre: f.nombre,
+        url,
+        categoria: LABEL_POR_CATEGORIA.get(f.categoria) ?? f.categoria,
+      },
+    ]
+  })
+
+  if (renderizables.length > MAX_FOTOS_GRILLA) {
+    console.warn(
+      `[imagenes] ${renderizables.length} fotos para ${MAX_FOTOS_GRILLA} posiciones — se imprimen las primeras ${MAX_FOTOS_GRILLA} por orden`,
+      codigo,
+    )
+  }
+  const fotos = renderizables.slice(0, MAX_FOTOS_GRILLA)
+
+  const porCategoria: Record<string, number> = {}
+  for (const f of fotos) porCategoria[f.categoria] = (porCategoria[f.categoria] ?? 0) + 1
+
+  return { total: fotos.length, porCategoria, fotos }
 }
 
 /**
@@ -124,47 +216,44 @@ function dataUri(dir: string, archivo: string): string | null {
 /**
  * Resuelve las ranuras de imagen y la grilla de fotos para una solicitud.
  *
- * `fotosCanonicas` es el bloque 7 del modelo canónico: si sus filas ya traen
- * URLs http(s) (regla 1), se respetan; con el fallback del espejo activo, la
- * grilla se completa/reemplaza con los 16 assets del gold master para que el
- * render sea idéntico al PDF de referencia.
+ * `fotosCanonicas` es el bloque 7 del modelo canónico. Con filas reales, la
+ * grilla sale SIEMPRE de ellas (`grillaDesdeFotosReales` — origen único §4).
+ * Con el bloque vacío y el fallback del espejo activo, la grilla se puebla
+ * con los 16 assets del gold master (transitorio pre-siembra) para que el
+ * render sea idéntico al PDF de referencia. Las 20 ranuras fijas
+ * (`ImagenesInforme`) no cambian: assets del espejo o `null`.
  */
 export function resolverImagenes(
   codigo: string,
   fotosCanonicas: FotosInforme,
 ): { imagenes: ImagenesInforme; fotos: FotosInforme } {
   const dir = ASSETS_POR_CODIGO[codigo]
-  const fotosUtilizables = fotosCanonicas.fotos.filter((f) => urlUtilizable(f.url))
 
-  if (!dir) {
-    // Sin assets para el caso: sólo sobreviven adjuntos con URL utilizable.
-    return {
-      imagenes: { ...RANURAS_VACIAS },
-      fotos:
-        fotosUtilizables.length === fotosCanonicas.fotos.length
-          ? fotosCanonicas
-          : { ...fotosCanonicas, fotos: fotosUtilizables },
-    }
+  const imagenes = dir
+    ? (Object.fromEntries(
+        (Object.entries(ARCHIVO_POR_RANURA) as [keyof ImagenesInforme, string][]).map(
+          ([ranura, archivo]) => [ranura, dataUri(dir, archivo)],
+        ),
+      ) as unknown as ImagenesInforme)
+    : { ...RANURAS_VACIAS }
+
+  // Fotos reales primero: el bloque 7 no vacío manda, espejo o no.
+  if (fotosCanonicas.fotos.length > 0) {
+    return { imagenes, fotos: grillaDesdeFotosReales(codigo, fotosCanonicas) }
   }
 
-  const imagenes = Object.fromEntries(
-    (Object.entries(ARCHIVO_POR_RANURA) as [keyof ImagenesInforme, string][]).map(
-      ([ranura, archivo]) => [ranura, dataUri(dir, archivo)],
-    ),
-  ) as unknown as ImagenesInforme
+  if (!dir) {
+    // Sin fotos reales ni assets del caso: grilla vacía honesta.
+    return { imagenes, fotos: { total: 0, porCategoria: {}, fotos: [] } }
+  }
 
-  // Adjuntos reales con URL pública primero; la grilla del espejo completa.
-  const fotos = GRILLA_FOTOS.map(({ archivo, categoria }, i) => {
-    const adjunto = fotosUtilizables.find((f) => f.categoria === categoria)
-    return (
-      adjunto ?? {
-        id: `asset-${i + 1}`,
-        nombre: archivo,
-        categoria,
-        url: dataUri(dir, archivo) ?? '',
-      }
-    )
-  }).filter((f) => f.url !== '')
+  // ⚠ Último recurso — espejo pre-siembra: grilla del gold master.
+  const fotos = GRILLA_FOTOS.map(({ archivo, categoria }, i) => ({
+    id: `asset-${i + 1}`,
+    nombre: archivo,
+    categoria,
+    url: dataUri(dir, archivo) ?? '',
+  })).filter((f) => f.url !== '')
 
   const porCategoria: Record<string, number> = {}
   for (const f of fotos) porCategoria[f.categoria] = (porCategoria[f.categoria] ?? 0) + 1

@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Download,
   Files,
+  ImageOff,
   Loader2,
   Check,
   X,
@@ -17,6 +18,9 @@ import {
   CATEGORIAS_FOTO,
   marcarPdfListo,
   guardarObservacionRechazo,
+  type CategoriaFotoId,
+  type FotoAdjunta,
+  type FotoCategoriaCustom,
   type Tasacion,
   type InformeData,
 } from "@/lib/tasador/tasaciones"
@@ -129,6 +133,69 @@ function Dato({ k, v }: { k: string; v: React.ReactNode }) {
     <div className="min-w-0">
       <dt className="text-xs text-muted-foreground">{k}</dt>
       <dd className="truncate text-sm font-medium text-foreground">{v}</dd>
+    </div>
+  )
+}
+
+/* ---------- Registro fotográfico (bloque 7) ---------- */
+
+/** Una categoría (predefinida o personalizada) con al menos una foto. */
+export interface GrupoFotos {
+  id: string
+  label: string
+  fotos: FotoAdjunta[]
+}
+
+/**
+ * Sólo las categorías **con fotos**, en el orden del catálogo y luego las
+ * personalizadas (T-VP0067-IMAGENES-UI). Una categoría en 0 no rinde grupo:
+ * en el preview sigue existiendo únicamente como contador.
+ */
+export function gruposConFotos(
+  fotosPredefinidas: Record<CategoriaFotoId, FotoAdjunta[]>,
+  categoriasCustom: FotoCategoriaCustom[],
+): GrupoFotos[] {
+  return [
+    ...CATEGORIAS_FOTO.map((c) => ({
+      id: c.id as string,
+      label: c.label,
+      fotos: fotosPredefinidas[c.id] ?? [],
+    })),
+    ...categoriasCustom.map((c) => ({
+      id: c.id,
+      label: c.nombre,
+      fotos: c.fotos,
+    })),
+  ].filter((g) => g.fotos.length > 0)
+}
+
+/**
+ * Miniatura de una foto persistida — mismo patrón visual que el organizador
+ * (`fotos-categorizadas.tsx`), replicado local a propósito: aquel trae botón
+ * de borrado y badge de cola offline que el informe no necesita.
+ *
+ * `foto.url` nunca va al `src`: es el `path_display` de Dropbox, no un enlace
+ * de imagen. Sólo `thumbnailUrl` (data-URI JPEG desde esta tanda) es
+ * renderizable; puede seguir siendo `null` en fotos antiguas → placeholder.
+ */
+function FotoMiniatura({ foto, label }: { foto: FotoAdjunta; label: string }) {
+  return (
+    <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+      {foto.thumbnailUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={foto.thumbnailUrl}
+          alt={`Foto de ${label}: ${foto.nombre}`}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center">
+          <ImageOff
+            className="h-5 w-5 text-muted-foreground"
+            aria-hidden="true"
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -271,6 +338,7 @@ export function InformePreview({
   const totalFotos =
     Object.values(d.fotosPredefinidas).reduce((a, b) => a + b.length, 0) +
     d.categoriasCustom.reduce((a, c) => a + c.fotos.length, 0)
+  const gruposFotos = gruposConFotos(d.fotosPredefinidas, d.categoriasCustom)
 
   /* ---- Acciones ---- */
   const handleDescargarPDF = () => {
@@ -596,6 +664,25 @@ export function InformePreview({
                 </div>
               ))}
             </div>
+
+            {/* Miniaturas por categoría — sólo las que tienen fotos
+                (T-VP0067-IMAGENES-UI · P1-MOSTRAR). */}
+            {gruposFotos.length > 0 && (
+              <div className="mt-4 flex flex-col gap-4">
+                {gruposFotos.map((g) => (
+                  <div key={g.id}>
+                    <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                      {g.label}
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {g.fotos.map((f) => (
+                        <FotoMiniatura key={f.id} foto={f} label={g.label} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </ReportSection>
 
           {/* 8 · Observaciones y overrides — canónico (P9-TAS.B) */}
