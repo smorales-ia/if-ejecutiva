@@ -381,6 +381,102 @@ describe('nombres_datos_faltantes', () => {
     expect(detalle(cuerpo)[0].nombres_datos_faltantes).toEqual([])
     expect(getAtributosPorTipo).not.toHaveBeenCalled()
   })
+
+  // Satisfacción por-carpeta · E3 del diagnóstico T-VP0067-LECTURA-DIAG-20260929:
+  // un obligatorio que otro adjunto de la misma solicitud ya trajo en items[]
+  // deja de reclamarse por-documento, salvo los `fecha_*`.
+  describe('satisfacción por-carpeta', () => {
+    // Los 3 obligatorios del TGR, en orden, con su nombre legible.
+    const ATRIBUTOS_TGR = [
+      { codigo_atributo: 'avaluo_afecto_clp', nombre_atributo: 'Avalúo Afecto', obligatorio: true, orden: 1 },
+      { codigo_atributo: 'contribucion_total_clp', nombre_atributo: 'Contribución Total', obligatorio: true, orden: 2 },
+      { codigo_atributo: 'fecha_emision', nombre_atributo: 'Fecha de Emisión', obligatorio: true, orden: 3 },
+    ]
+
+    function filaTGR(atributos_obtenidos?: string) {
+      return {
+        id: 'recTGR',
+        createdTime: '',
+        fields: {
+          nombre_archivo: 'tgr.pdf',
+          estado_extraccion: 'listo',
+          clave_adjunto: 'certificado_deuda_tgr',
+          atributos_obtenidos,
+        },
+      }
+    }
+
+    function filaSII(...codigos: string[]) {
+      return {
+        id: 'recSII',
+        createdTime: '',
+        fields: {
+          nombre_archivo: 'sii.pdf',
+          estado_extraccion: 'listo',
+          clave_adjunto: 'consulta_sii',
+          atributos_obtenidos: JSON.stringify({
+            items: codigos.map((codigo_atributo) => ({ codigo_atributo, valor: 'v', confianza: 1, fila: 1 })),
+            no_extraidos: [],
+          }),
+        },
+      }
+    }
+
+    beforeEach(() => {
+      getAtributosPorTipo.mockImplementation(async (clave: string) =>
+        clave === 'certificado_deuda_tgr' ? ATRIBUTOS_TGR : []
+      )
+    })
+
+    it('un obligatorio ausente en el TGR pero presente en la Consulta SII no se reclama (caso VP-0067)', async () => {
+      listRecords.mockResolvedValue([
+        // El TGR sólo trajo su fecha; los avalúos los tiene la SII.
+        filaTGR(JSON.stringify({
+          items: [{ codigo_atributo: 'fecha_emision', valor: '2026-09-01', confianza: 1, fila: 1 }],
+          no_extraidos: ['avaluo_afecto_clp', 'contribucion_total_clp'],
+        })),
+        filaSII('avaluo_afecto_clp', 'contribucion_total_clp'),
+      ])
+
+      const { cuerpo } = await llamar()
+
+      expect(detalle(cuerpo)[0].nombres_datos_faltantes).toEqual([])
+    })
+
+    it('un `fecha_*` ausente sigue faltando aunque otro adjunto tenga el mismo código', async () => {
+      listRecords.mockResolvedValue([
+        // El TGR no trajo su fecha; la `fecha_emision` de la SII es de OTRO documento.
+        filaTGR(JSON.stringify({
+          items: [{ codigo_atributo: 'avaluo_afecto_clp', valor: '50000000', confianza: 1, fila: 1 }],
+          no_extraidos: ['contribucion_total_clp', 'fecha_emision'],
+        })),
+        filaSII('contribucion_total_clp', 'fecha_emision'),
+      ])
+
+      const { cuerpo } = await llamar()
+
+      // La contribución viaja por la carpeta; la fecha no (exclusión `fecha_`).
+      expect(detalle(cuerpo)[0].nombres_datos_faltantes).toEqual(['Fecha de Emisión'])
+    })
+
+    it('un obligatorio ausente en TODOS los adjuntos sigue faltando (naranjo honesto)', async () => {
+      // Fallo total del TGR (estado `error`, sin JSON) y una SII que trajo otra
+      // cosa: nadie en la carpeta tiene los tres obligatorios.
+      const tgr = filaTGR(undefined)
+      listRecords.mockResolvedValue([
+        { ...tgr, fields: { ...tgr.fields, estado_extraccion: 'error' } },
+        filaSII('rol_avaluo'),
+      ])
+
+      const { cuerpo } = await llamar()
+
+      expect(detalle(cuerpo)[0].nombres_datos_faltantes).toEqual([
+        'Avalúo Afecto',
+        'Contribución Total',
+        'Fecha de Emisión',
+      ])
+    })
+  })
 })
 
 describe('R7 · la ruta sólo observa', () => {

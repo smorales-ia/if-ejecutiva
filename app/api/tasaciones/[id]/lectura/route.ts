@@ -122,6 +122,18 @@ async function proyectarAdjuntos(
     }
   }
 
+  // Satisfacción por-carpeta · E3 del diagnóstico T-VP0067-LECTURA-DIAG-20260929.
+  // Unión de los `codigo_atributo` presentes en los items[] de TODOS los
+  // adjuntos de la solicitud: un dato de la propiedad (avalúos, contribuciones,
+  // comuna, rol, nombres) obtenido por un documento vale para toda la carpeta,
+  // y reclamárselo a otro documento pintaba naranjos falsos (caso VP-0067: el
+  // TGR reclamaba `avaluo_afecto_clp` y `contribucion_total_clp` que la
+  // Consulta SII de la misma carpeta ya tenía).
+  const obtenidosCarpeta = new Set<string>()
+  for (const f of filas) {
+    for (const c of codigosObtenidos(f.fields.atributos_obtenidos)) obtenidosCarpeta.add(c)
+  }
+
   return filas.map((f) => {
     const codigo = (f.fields.clave_adjunto ?? '').trim()
     const nombreArchivo = (f.fields.nombre_archivo ?? '').trim()
@@ -132,7 +144,16 @@ async function proyectarAdjuntos(
       const esperados = atributosPorClave.get(codigo) ?? []
       const obtenidos = codigosObtenidos(f.fields.atributos_obtenidos)
       nombres_datos_faltantes = esperados
-        .filter((a) => a.obligatorio && !obtenidos.has(a.codigo_atributo))
+        .filter((a) => {
+          if (!a.obligatorio || obtenidos.has(a.codigo_atributo)) return false
+          // Prefijo `fecha_` excluido de la satisfacción por-carpeta: una fecha
+          // es un dato DEL DOCUMENTO (cada certificado tiene su propia fecha de
+          // emisión), no de la propiedad; que el SERVIU tenga `fecha_emision`
+          // no significa que se conozca la del TGR — sin esta exclusión se
+          // ocultaría un faltante real (naranjo honesto).
+          if (a.codigo_atributo.startsWith('fecha_')) return true
+          return !obtenidosCarpeta.has(a.codigo_atributo)
+        })
         .map((a) => a.nombre_atributo)
     }
 

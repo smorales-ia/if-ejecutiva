@@ -21,6 +21,14 @@ const MENSAJE_ERROR_RED =
   'No pudimos completar la acción. Intenta nuevamente en unos segundos.'
 const MENSAJE_ARCHIVO_GRANDE =
   'Este archivo supera el límite de 7 MB. Comprímelo o divídelo.'
+const MENSAJE_ARCHIVO_WORD =
+  'Este archivo está en Word y no podemos leerlo. Súbelo en PDF o como imagen (JPG o PNG).'
+
+/** MIME types de Word (.doc legado y .docx OOXML) que el pipeline no puede leer. */
+const MIMES_WORD = new Set([
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+])
 
 const MAX_TAMANIO_KB = 7 * 1024 // 7MB, ya en KB (D-13)
 
@@ -128,6 +136,27 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = parsed.data
+
+  /**
+   * Veto server-side a archivos Word (E2-A · diagnóstico
+   * T-VP0067-LECTURA-DIAG-20260929). El cliente ya restringe a PDF/JPG/PNG,
+   * pero este handler aceptaba cualquier `mime_type`: un docx que se colara
+   * llegaba al pipeline de extracción y viajaba a la API de Claude como bloque
+   * "image" con mime docx, degradando la corrida (caso VP-0067). Se corta aquí,
+   * antes de tocar Dropbox. Se mira también la extensión porque el navegador
+   * puede reportar un mime genérico (`application/octet-stream`).
+   */
+  const nombreLower = payload.nombre_archivo.toLowerCase()
+  if (
+    MIMES_WORD.has(payload.mime_type) ||
+    nombreLower.endsWith('.doc') ||
+    nombreLower.endsWith('.docx')
+  ) {
+    return NextResponse.json(
+      { ok: false, error: MENSAJE_ARCHIVO_WORD, reintentable: false },
+      { status: 400 }
+    )
+  }
 
   /**
    * `solicitud_id` alimenta el Link `solicitud` (`fldZTVpXDRtXXPjyv`) del

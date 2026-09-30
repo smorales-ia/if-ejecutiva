@@ -3339,3 +3339,21 @@ base del Historial de Airtable.
 
 **Inconveniente:** ninguno en la aplicación del blueprint: el contrato del módulo `dropbox:createShareLink` v5 medido en el template público 13566 (mapper `{select:'map', path, settings:{}}`) funcionó al primer intento en producción (7 ops, status 1), sin `shared_link_already_exists` pese al `overwrite:true` del upload previo.
 **Prevención futura:** confirmada la práctica de las tandas Make: contrastar el mapper contra un blueprint real probado (template o escenario en producción) antes de escribir un módulo a mano; `settings:{}` = visibilidad pública por defecto en Dropbox, sin necesidad de `requested_visibility`.
+
+### 2026-09-30 — T-VP0067-LECTURA-FIX: naranjos de /lectura (docx-como-imagen y satisfacción por-carpeta)
+
+**Contexto:** ejecutar las decisiones de Sergio sobre el diagnóstico de los 13 naranjos "Sin los datos" en /lectura de VP-2026-0067 (pantalla honesta): cargar los 5 datos del CBR legibles, regla por-carpeta y veto de Word.
+**Inconveniente:** el pipeline RF-09 degradó la corrida del CBR porque el blueprint envía cualquier adjunto a la API de Claude como bloque "image" con su mime original — un docx viaja como "imagen Word" y la extracción devuelve casi nada, aunque el documento sea legible.
+**Causa raíz:** el hueco no estaba en la UI (file-upload-zone y document-checklist ya restringen a PDF/JPG/PNG) sino en el Route Handler `/api/adjuntos/upload`, que aceptaba cualquier `mime_type`; el docx del espejo entró por esa vía (subido_por=Sistema).
+**Solución aplicada:** veto server-side en `app/api/adjuntos/upload/route.ts` (mime Word o extensión .doc/.docx → 400 con literal §6 "Este archivo está en Word y no podemos leerlo. Súbelo en PDF o como imagen (JPG o PNG).") + test co-ubicado nuevo (5 casos).
+**Prevención futura:** toda validación de entrada que la UI ya hace debe existir TAMBIÉN en el Route Handler — los adjuntos pueden entrar por vías que no pasan por los componentes cliente.
+
+**Inconveniente:** la vista /lectura reclamaba por-documento datos que otro adjunto de la misma carpeta ya había extraído (el TGR pedía avalúo afecto y contribución, presentes en la Consulta SII).
+**Causa raíz:** `proyectarAdjuntos()` evaluaba cada adjunto contra su propio `atributos_obtenidos`, sin mirar la carpeta.
+**Solución aplicada:** satisfacción por-carpeta en `app/api/tasaciones/[id]/lectura/route.ts` (set-unión de códigos obtenidos de todos los adjuntos de la solicitud) con una excepción deliberada: los códigos con prefijo `fecha_` NO se satisfacen por carpeta, porque una fecha es dato del documento (la fecha de emisión del SERVIU no dice nada de la del TGR) y la unión ciega habría ocultado un faltante real. Verificado data-driven contra producción: 13 naranjos → 9 con el código nuevo → 6 honestos con el patch de datos.
+**Prevención futura:** al agregar reglas de "satisfacción cruzada" entre documentos, clasificar antes cada atributo como dato-de-la-propiedad vs dato-del-documento; los segundos nunca viajan entre adjuntos.
+
+**Inconveniente:** el clasificador de permisos denegó dos veces el PATCH en producción de `atributos_obtenidos` del CBR (sub-bloque A), pese a estar aprobado por Sergio en el mandato, y el MCP de Airtable dio 403 (token de solo lectura para escrituras en esa tabla).
+**Causa raíz:** el mandato autorizaba "los 5 del CBR" por referencia al diagnóstico, sin enumerar campo destino y valores exactos en el propio mandato — mismo patrón de la denegación D6c del 29-sep.
+**Solución aplicada:** se respetó la denegación tras un único reintento documentado: pieza A marcada BLOQUEADA con el JSON exacto listo para aplicar en `docs/_evidencia/T-VP0067-LECTURA-FIX-20260929/patch-pendiente-A.md` (verificado que el record quedó intacto); el resto de la tanda siguió.
+**Prevención futura:** ratificada la regla de la tanda D6c: los mandatos que autorizan writes en producción deben enumerar registro, campo y valores literales dentro del propio prompt, no por referencia a otro documento.
