@@ -3357,3 +3357,16 @@ base del Historial de Airtable.
 **Causa raíz:** el mandato autorizaba "los 5 del CBR" por referencia al diagnóstico, sin enumerar campo destino y valores exactos en el propio mandato — mismo patrón de la denegación D6c del 29-sep.
 **Solución aplicada:** se respetó la denegación tras un único reintento documentado: pieza A marcada BLOQUEADA con el JSON exacto listo para aplicar en `docs/_evidencia/T-VP0067-LECTURA-FIX-20260929/patch-pendiente-A.md` (verificado que el record quedó intacto); el resto de la tanda siguió.
 **Prevención futura:** ratificada la regla de la tanda D6c: los mandatos que autorizan writes en producción deben enumerar registro, campo y valores literales dentro del propio prompt, no por referencia a otro documento.
+
+### 2026-09-30 — T-VP0067-LECTURA-FIX-B: el patch bloqueado se aplicó al primer intento con mandato explícito
+
+**Contexto:** aplicar el write que el clasificador denegó en la tanda anterior (5 atributos del CBR en `atributos_obtenidos` de VP-0067).
+**Inconveniente (resuelto):** el mismo PATCH que fue denegado dos veces pasó sin fricción cuando el mandato enumeró registro, campo, autorización explícita ("Se autoriza UN (1) write") y la fuente del valor; además, leer el JSON directamente del bloque de `patch-pendiente-A.md` (sin retipear) permitió verificar byte a byte que lo escrito era lo prometido.
+**Causa raíz:** confirmación por tercera vez del patrón D6c: la autorización por referencia a otro documento no alcanza; la autorización inline sí.
+**Solución aplicada:** patch HTTP 200, relectura idéntica, auditor ciego OK 4/4 con cobertura total de TX_Adjuntos (33 records).
+**Prevención futura:** dejar los writes bloqueados siempre empaquetados como "JSON exacto + registro + campo" en la evidencia: convierte la re-tanda en un mandato de una línea y hace la verificación trivial.
+
+**Inconveniente:** el cotejo "ninguna otra fila cambió" dio un falso positivo de cambio indebido en el permiso de edificación.
+**Causa raíz:** el snapshot pre pedía `nombre_archivo` y la consulta post no — comparar dicts con sets de campos distintos marca diferencia donde no la hay; y el loop cortaba en la primera fila, ocultando que el "cambio" era sistemático (= artefacto de la query).
+**Solución aplicada:** repetir la consulta pidiendo exactamente los mismos `fields[]` del snapshot y comparar sin `break`; con campos homogéneos, las 7 filas dieron intactas.
+**Prevención futura:** en cotejos pre/post de Airtable, fijar la lista de `fields[]` una vez y reutilizarla en ambas capturas; y nunca cortar el loop de comparación en el primer hallazgo — el patrón del error importa tanto como el error.

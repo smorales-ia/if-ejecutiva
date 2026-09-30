@@ -1,0 +1,84 @@
+{
+ "records": [
+  {
+   "id": "rec7t6MPxKu10WniF",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "inscripcion_dominio_cbr",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"foja_cbr\", \"valor\": \"13291\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"numero_cbr\", \"valor\": \"21565\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"ano_inscripcion_cbr\", \"valor\": 2006, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"vendedor\", \"valor\": \"RAUL FERNANDO VALENZUELA PEREZ\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"comprador\", \"valor\": \"FRANCISCO JOSE VERGARA UNDURRAGA / MARIA LUISA ORELLANA FERNANDEZ\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"nombre_propietario\", \"valor\": \"FRANCISCO JOSE VERGARA UNDURRAGA / MARIA LUISA ORELLANA FERNANDEZ\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"fecha_inscripcion\", \"valor\": \"2020-01-13\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"comuna\", \"valor\": \"COLINA\", \"confianza\": 1, \"fila\": 1}], \"no_extraidos\": [\"notaria\", \"superficie_servidumbre_m2\", \"nombre_cbr\", \"repertorio\"]}",
+    "nombre_archivo": "inscripcion_dominio_cbr_Met6283.docx"
+   }
+  },
+  {
+   "id": "rec95X1HPJB7ZUo5G",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "permiso_edificacion",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"direccion\", \"valor\": \"SERVIDUMBRE DE TRANSITO SIN NUMERO\", \"confianza\": 0.85, \"fila\": 1}, {\"codigo_atributo\": \"tipo_obra\", \"valor\": \"OBRA NUEVA\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"superficie_construida_m2\", \"valor\": 249.91, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"nombre_propietario\", \"valor\": \"FRANCISCO JOSE VERGARA UNDURRAGA / MARIA LUISA ORELLANA FERNANDEZ\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"numero_pisos\", \"valor\": 1, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"fecha_permiso\", \"valor\": \"2020-09-09\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"tipo_propiedad\", \"valor\": \"VIVIENDA UNIFAMILIAR\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"ano_construccion\", \"valor\": 2020, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"comuna\", \"valor\": \"COLINA\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"numero_permiso\", \"valor\": \"319-2020\", \"confianza\": 1, \"fila\": 1}], \"no_extraidos\": [\"arquitecto_responsable\", \"numero_subterraneos\", \"tipo_agrupamiento\", \"superficie_terreno_m2\"]}",
+    "nombre_archivo": "permiso_edificacion_Met6283.pdf"
+   }
+  },
+  {
+   "id": "recWdb4FAphNaTE0I",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "foto_fuente_sii",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"numero_dominio\", \"valor\": \"21565\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"cod_sii_manzana\", \"valor\": \"882\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"foja_dominio\", \"valor\": \"13291\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"avaluo_exento\", \"valor\": 0, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"ubicacion_urbano_rural\", \"valor\": \"rural\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"anio_dominio\", \"valor\": 2006, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"sup_terreno_m2\", \"valor\": 5024, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"contribucion_anual\", \"valor\": 0, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"cod_sii_comuna\", \"valor\": \"14201\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"destino_sii\", \"valor\": \"Sitio Eriazo\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"cod_sii_predio\", \"valor\": \"40\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"avaluo_fiscal_clp\", \"valor\": 120267353, \"confianza\": 1, \"fila\": 1}], \"no_extraidos\": [\"tipo_material\", \"g\", \"oc\", \"calidad_sii\", \"anio_construccion\", \"cg\", \"ociv\", \"rol_sii\", \"sup_m2\"]}",
+    "nombre_archivo": "foto_fuente_sii_Met6283.jpg"
+   }
+  },
+  {
+   "id": "rechQjmqpb3HMWyeb",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "certificado_deuda_tgr",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"monto_deuda_clp\", \"valor\": 1358324, \"confianza\": 0.99, \"fila\": 1}, {\"codigo_atributo\": \"rol_sii\", \"valor\": \"076-00882-040\", \"confianza\": 0.99, \"fila\": 1}, {\"codigo_atributo\": \"comuna\", \"valor\": \"COLINA\", \"confianza\": 0.99, \"fila\": 1}, {\"codigo_atributo\": \"nombre_propietario\", \"valor\": \"VERGARA UNDURRAGA FRANCISCO JOSE\", \"confianza\": 0.99, \"fila\": 1}, {\"codigo_atributo\": \"tiene_deuda\", \"valor\": true, \"confianza\": 0.99, \"fila\": 1}], \"no_extraidos\": [\"sobretasa_pct\", \"contribucion_total_clp\", \"avaluo_afecto_clp\", \"fecha_emision\", \"cuota_aseo_municipal_clp\"]}",
+    "nombre_archivo": "certificado_deuda_tgr_Met6283.pdf"
+   }
+  },
+  {
+   "id": "reckRZ0e9mwtR6xCC",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "consulta_antecedentes_bien_raiz",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"direccion\", \"valor\": \"LAS BRISAS 2 MZ A LT 40\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"contribucion_total_clp\", \"valor\": 679162, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"rol_sii\", \"valor\": \"00882-00040\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"avaluo_afecto_clp\", \"valor\": 279778719, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"comuna\", \"valor\": \"COLINA\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"avaluo_total_clp\", \"valor\": 339809429, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"fecha_consulta\", \"valor\": \"2026-04-15\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"sobretasa_pct\", \"valor\": 0.275, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"nombre_propietario\", \"valor\": \"VERGARA UNDURRAGA FRANCISCO JOSE\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"destino_sii\", \"valor\": \"HABITACIONAL\", \"confianza\": 1, \"fila\": 1}], \"no_extraidos\": [\"calidad_sii\", \"material_estructura\", \"ano_construccion\", \"superficie_terreno_m2\", \"superficie_construida_m2\"]}",
+    "nombre_archivo": "consulta_antecedentes_bien_raiz_Met6283.pdf"
+   }
+  },
+  {
+   "id": "recpI0wPyESJ0Etvs",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "informe_no_expropiacion_serviu",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"fecha_emision\", \"valor\": \"2026-04-15\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"afecto_expropiacion\", \"valor\": false, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"direccion\", \"valor\": \"LAS BRISAS 2 MZ A LT 40\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"rol_sii\", \"valor\": \"00882-00040\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"numero_documento\", \"valor\": \"3444743\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"comuna\", \"valor\": \"COLINA\", \"confianza\": 1, \"fila\": 1}], \"no_extraidos\": [\"longitud\", \"latitud\"]}",
+    "nombre_archivo": "informe_no_expropiacion_serviu_Met6283.pdf"
+   }
+  },
+  {
+   "id": "rectCtwDMT2mwN4GO",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "certificado_recepcion_final",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"superficie_construida_m2\", \"valor\": 243.91, \"confianza\": 0.85, \"fila\": 1}, {\"codigo_atributo\": \"direccion\", \"valor\": \"SERVIDUMBRE DE TRANSITO SIN NUMERO LOTE B/A 49 LAS BRISAS DE CHICUREO\", \"confianza\": 0.9, \"fila\": 1}, {\"codigo_atributo\": \"tipo_propiedad\", \"valor\": \"VIVIENDA UNIFAMILIAR\", \"confianza\": 0.95, \"fila\": 1}, {\"codigo_atributo\": \"fecha_recepcion\", \"valor\": \"2024-07-18\", \"confianza\": 0.97, \"fila\": 1}, {\"codigo_atributo\": \"numero_permiso\", \"valor\": \"CRDON.0408/2024\", \"confianza\": 0.85, \"fila\": 1}, {\"codigo_atributo\": \"destino_sii\", \"valor\": \"VIVIENDA UNIFAMILIAR\", \"confianza\": 0.9, \"fila\": 1}, {\"codigo_atributo\": \"numero_recepcion\", \"valor\": \"210-2024\", \"confianza\": 0.97, \"fila\": 1}, {\"codigo_atributo\": \"comuna\", \"valor\": \"COLINA\", \"confianza\": 0.99, \"fila\": 1}, {\"codigo_atributo\": \"rol_sii\", \"valor\": \"882-40\", \"confianza\": 0.95, \"fila\": 1}], \"no_extraidos\": [\"ano_construccion\"]}",
+    "nombre_archivo": "certificado_recepcion_final_Met6283.pdf"
+   }
+  },
+  {
+   "id": "rectcojWwOIonkQRA",
+   "createdTime": "2026-09-22T02:08:47.000Z",
+   "fields": {
+    "estado_extraccion": "listo",
+    "clave_adjunto": "foto_ofertas_comparables",
+    "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\":\"tipo_referencia\",\"valor\":\"Oferta\",\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"fecha_publicacion\",\"valor\":\"2026-04-01\",\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"direccion\",\"valor\":\"Las Brisas de Chicureo - Los Boldos\",\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"anio\",\"valor\":2015,\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"telefono_contacto\",\"valor\":\"979998714\",\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"precio_uf\",\"valor\":20000,\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"sup_terreno_m2\",\"valor\":5051.00,\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"sup_construccion_m2\",\"valor\":239.00,\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"oo_cc_uf\",\"valor\":750,\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"uf_m2_terreno_f\",\"valor\":2.20,\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"uf_m2_construccion_f\",\"valor\":34.05,\"confianza\":1,\"fila\":1},{\"codigo_atributo\":\"tipo_referencia\",\"valor\":\"Oferta\",\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"fecha_publicacion\",\"valor\":\"2026-04-01\",\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"direccion\",\"valor\":\"Las Brisas de Chicureo - La Viña 1060\",\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"anio\",\"valor\":2016,\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"telefono_contacto\",\"valor\":\"989225642\",\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"precio_uf\",\"valor\":24900,\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"sup_terreno_m2\",\"valor\":5077.00,\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"sup_construccion_m2\",\"valor\":239.00,\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"oo_cc_uf\",\"valor\":750,\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"uf_m2_terreno_f\",\"valor\":3.10,\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"uf_m2_construccion_f\",\"valor\":35.19,\"confianza\":1,\"fila\":2},{\"codigo_atributo\":\"tipo_referencia\",\"valor\":\"Oferta\",\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"fecha_publicacion\",\"valor\":\"2026-04-01\",\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"direccion\",\"valor\":\"La Viña & La Vendimia\",\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"anio\",\"valor\":2017,\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"telefono_contacto\",\"valor\":\"936820393\",\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"precio_uf\",\"valor\":19500,\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"sup_terreno_m2\",\"valor\":5001.00,\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"sup_construccion_m2\",\"valor\":252.00,\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"oo_cc_uf\",\"valor\":500,\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"uf_m2_terreno_f\",\"valor\":2.00,\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"uf_m2_construccion_f\",\"valor\":35.71,\"confianza\":1,\"fila\":3},{\"codigo_atributo\":\"tipo_referencia\",\"valor\":\"Oferta\",\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"fecha_publicacion\",\"valor\":\"2026-04-01\",\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"direccion\",\"valor\":\"Las Brisas 1-300\",\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"anio\",\"valor\":2005,\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"telefono_contacto\",\"valor\":\"995394000\",\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"precio_uf\",\"valor\":23900,\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"sup_terreno_m2\",\"valor\":5012.00,\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"sup_construccion_m2\",\"valor\":258.00,\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"oo_cc_uf\",\"valor\":750,\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"uf_m2_terreno_f\",\"valor\":3.00,\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"uf_m2_construccion_f\",\"valor\":31.45,\"confianza\":1,\"fila\":4},{\"codigo_atributo\":\"tipo_referencia\",\"valor\":\"Oferta\",\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"fecha_publicacion\",\"valor\":\"2026-04-01\",\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"direccion\",\"valor\":\"Liray - Lo Pinto\",\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"anio\",\"valor\":2023,\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"telefono_contacto\",\"valor\":\"942182983\",\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"precio_uf\",\"valor\":18900,\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"sup_terreno_m2\",\"valor\":5000.00,\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"sup_construccion_m2\",\"valor\":264.00,\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"oo_cc_uf\",\"valor\":500,\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"uf_m2_terreno_f\",\"valor\":2.00,\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"uf_m2_construccion_f\",\"valor\":31.82,\"confianza\":1,\"fila\":5},{\"codigo_atributo\":\"tipo_referencia\",\"valor\":\"CBR\",\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"fecha_publicacion\",\"valor\":\"2025-03-01\",\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"direccion\",\"valor\":\"Chicureo 3 LT 40\",\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"anio\",\"valor\":1996,\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"foja\",\"valor\":\"40132\",\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"numero\",\"valor\":\"55521\",\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"precio_uf\",\"valor\":20500,\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"sup_terreno_m2\",\"valor\":5002.00,\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"sup_construccion_m2\",\"valor\":250.00,\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"oo_cc_uf\",\"valor\":700,\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"uf_m2_terreno_f\",\"valor\":2.70,\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"uf_m2_construccion_f\",\"valor\":25.18,\"confianza\":1,\"fila\":6},{\"codigo_atributo\":\"tipo_referencia\",\"valor\":\"CBR\",\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"fecha_publicacion\",\"valor\":\"2025-05-01\",\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"direccion\",\"valor\":\"Las Brisas 3 MZ A LT 12\",\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"anio\",\"valor\":2004,\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"foja\",\"valor\":\"47523\",\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"numero\",\"valor\":\"66056\",\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"precio_uf\",\"valor\":18000,\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"sup_terreno_m2\",\"valor\":5013.00,\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"sup_construccion_m2\",\"valor\":360.00,\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"oo_cc_uf\",\"valor\":700,\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"uf_m2_terreno_f\",\"valor\":1.80,\"confianza\":1,\"fila\":7},{\"codigo_atributo\":\"uf_m2_construccion_f\",\"valor\":22.99,\"confianza\":1,\"fila\":7}],\"no_extraidos\":[]}",
+    "nombre_archivo": "foto_comparables_Met6283.jpg"
+   }
+  }
+ ]
+}
