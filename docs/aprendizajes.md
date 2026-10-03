@@ -3407,3 +3407,69 @@ base del Historial de Airtable.
 **Causa raíz:** mapas/anexos/firma tienen semánticas distintas (captura de visita vs documento oficial vs identidad del profesional).
 **Solución aplicada:** por-visita → categorías del registro fotográfico (`mapa_ubicacion`, `fachada_exterior`, `mapa_referencias` nueva, `ofertas_comparables`); por-caso documental → checklist `D_TipoDocumento` vía `clave_adjunto` (constante compartida `RANURAS_ANEXO`, 13 ranuras, 5 códigos nuevos); por-perfil → `M_Tasadores.firma_url` (espejo del precedente `M_Visadores.firma_url`). Seed VP-0067 con `estado_extraccion='listo'` para no disparar RF-09 (0 corridas espurias verificadas).
 **Prevención futura:** ante un nuevo elemento del informe, preguntar primero "¿de quién es el dato?" (visita/caso/perfil/cliente) y mapearlo al riel existente de ese dueño; solo crear mecanismo nuevo si ningún riel calza.
+
+### 2026-10-01 — Diseño fino plantilla v3 (T-PLANTILLA-DISENO-FINO)
+
+**Contexto:** cerrar la brecha visual residual plantilla v2 ↔ PDF original (oráculo MET-6283), espejo VP-0067.
+**Inconveniente:** los dos "arreglos obvios" (cambiar fuente a Arial y color de filas PROMEDIO) estaban invertidos respecto de la realidad.
+**Causa raíz:** el XLSM tiene fuente MIXTA (Arial/Arial Narrow en portada, Calibri en Impresion) y las filas PROMEDIO figuran sin relleno; pero lo que importa es lo que RENDERIZA el PDF, no la propiedad de celda del Excel.
+**Solución aplicada:** extraer fuentes embebidas del PDF original con pymupdf (`page.get_fonts`): es casi todo Calibri/Calibri-Bold (solo 1 Arial Narrow Bold en pág 2) — el v2 ya coincidía; y las filas PROMEDIO sí son celeste `#8DB4E2` en el original. Ambos cambios se descartaron antes de aplicarlos.
+**Prevención futura:** para fidelidad visual, la fuente de verdad es el render del oráculo (fuentes/colores embebidos del PDF), no las propiedades del archivo origen.
+
+**Inconveniente:** el render DIRECTO contra Carbone devolvía números en formato inglés (`802,913,431`) y la regresión marcaba terminales "faltantes".
+**Causa raíz:** el harness no pasaba `lang`; E2 sí envía `"lang":"es-cl"` en el body del render, que define el formato de `:formatN`/`:formatC`.
+**Solución aplicada:** añadir `lang:"es-cl"` al body en `render-carbone.mjs`. Re-render → 14/14 terminales OK con formato chileno.
+**Prevención futura:** todo render directo a Carbone debe replicar las opciones de E2 (`convertTo`, `lang`); el blueprint de E2 es la fuente del contrato. Esto permite VALIDAR la plantilla sin tocar E2/E3 (que siguen vetados por el clasificador).
+
+**Inconveniente:** el primer upload del v3 a Carbone devolvió `[500] w101 "Could not open document"`.
+**Causa raíz:** error de concatenación al construir bordes de tabla (`'<w:top '+B` con `B` iniciando en `<`), XML malformado.
+**Solución aplicada:** validar `document.xml` con `xml.dom.minidom.parseString` ANTES de empaquetar/subir; corregido el string de borde.
+**Prevención futura:** nunca subir un .docx editado sin validar el XML localmente; `w101` = documento ilegible, casi siempre XML roto por la edición.
+
+**Inconveniente:** las leyendas de fotos (págs 5-6) se veían gris-sobre-blanco en vez de blanco-sobre-azul.
+**Causa raíz:** las celdas ya tenían texto blanco (`<w:color FFFFFF>`) pero fondo gris `#D4D4D4` → casi invisible; los medianiles eran bordes grises `#808080`.
+**Solución aplicada:** confinar el reemplazo a los `<w:tbl>` que contienen `d.fotos.fotos` (no tocar las celdas grises de págs 2-3): fill `D4D4D4`→`095085`, bordes `808080`/`7F7F7F`→`095085`. Verificado por render: págs 5-6 recuperan la firma visual azul (auditor ciego: 62%→88-90%).
+**Prevención futura:** al reemplazar un color usado en muchos lugares (D4D4D4 ×226), targetear por bloque de tabla con un binding discriminante, nunca con replace global.
+
+**Inconveniente (metodología):** dos auditores ciegos independientes discreparon (85% vs 82%) y el segundo reportó un defecto falso ("faltan las bandas laterales verticales azules").
+**Causa raíz:** las franjas verticales finas al borde izquierdo no se aprecian en las comparaciones a baja resolución; el auditor concluyó ausencia.
+**Solución aplicada:** verificar la afirmación con extracción de texto del render (`Identificación`/`Síntesis`/`Referencias y Mercado` PRESENTES) antes de aceptarla como defecto; se documentó como falso positivo, no se actuó sobre él.
+**Prevención futura:** todo hallazgo "ALTA" de un auditor ciego que sea verificable objetivamente (texto/color/conteo) se contrasta antes de incorporarlo; el auditor ciego orienta, no dicta sin corroboración.
+
+### 2026-10-01 — Word de escritorio + XLSM como fuente de verdad del layout (T-PLANTILLA-WORD-XLSM)
+
+**Contexto:** cerrar identidad visual del PDF (meta ≥98%) tras tandas programáticas estancadas en 82-85%. Método nuevo: editar la plantilla en Word real y calibrar con el XLSM/original.
+**Inconveniente:** no hay "computer use" (clics GUI) en este entorno Claude Code; la tanda dependía de operar Word de escritorio.
+**Causa raíz:** el entorno es WSL/CLI, sin herramienta de computer-use.
+**Solución aplicada:** automatizar Word real vía **COM** desde `powershell.exe` (interop WSL→Windows). Word 16.0 responde; se editan `InlineShapes`/`Tables`/`ParagraphFormat` en puntos. Cumple la intención (Word real como editor) con más precisión que clics.
+**Prevención futura:** "computer use sobre la PC" se puede satisfacer con COM/PowerShell cuando hay interop WSL↔Windows; verificar `New-Object -ComObject Word.Application` en el gate antes de planificar.
+
+**Inconveniente:** riesgo de que Word corrompa los 528 bindings de Carbone al guardar.
+**Causa raíz:** Word re-pagina e inserta `<w:lastRenderedPageBreak/>` dentro del texto de un marcador (`…ufM2Construccion:formatN(2)` partido antes del `}`).
+**Solución aplicada:** prueba de round-trip ANTES de editar (abrir→guardar→render): count `{d.`=528 pre/post y, clave, **Carbone une markers partidos entre runs** → render sin huérfanos ni fragmentos literales. Método validado como Carbone-safe.
+**Prevención futura:** antes de adoptar un editor nuevo de la plantilla, hacer un round-trip vacío y renderizar; la prueba no es "¿sobrevive el conteo?" sino "¿Carbone lo renderiza sin huérfanos?".
+
+**Inconveniente:** el logo y el reparto vertical de la Hoja 1 no calzaban y era difícil acertar a ciegas.
+**Causa raíz:** faltaba medir la geometría objetivo.
+**Solución aplicada:** medir con pymupdf la geometría del PDF ORIGINAL (bbox de imágenes `get_image_rects`, posiciones de texto `search_for`): logo 281×165 r1.71, ANTECEDENTES y=465. Fijar esos targets vía Word COM → v4 quedó en logo r1.70, ANTECEDENTES y=463 (de 120pt de error a 2pt).
+**Prevención futura:** para geometría, medir coordenadas reales del oráculo renderizado y editar contra números, no contra impresión visual.
+
+**Inconveniente:** auditor reportó bandas/encabezados de sección en gris que deberían ser azules (hojas 2/4/7).
+**Causa raíz:** la plantilla usaba `#D4D4D4` para encabezados/etiquetas que en el XLSM Impresion son `#095085` (el XLSM no tiene gris) — error heredado de la plantilla, no del oráculo.
+**Solución aplicada:** flip targeteado de 209 celdas con texto-literal (no bindings, no vacías) `#D4D4D4`→`#095085` + texto blanco. Subió el global de ~92% a ~97%.
+**Prevención futura:** cuando el oráculo (XLSM) no contiene un color que sí está en la plantilla, ese color es sospechoso de error; contrastar la paleta del docx contra la del XLSM. Resultado de la tanda: ~97% (auditor: "muy difícil distinguirlos"), 1 punto bajo el objetivo por altos de fila/padding finos.
+
+### 2026-10-01 — Micro-pase: las brechas del auditor eran fantasma (T-PLANTILLA-WORD-XLSM)
+
+**Contexto:** cerrar el "último 1%" (R1 logo, R2 altos de fila, R3 color de leyendas) para cruzar el 98%.
+**Inconveniente:** las 3 brechas reportadas por el auditor ciego no resistieron la medición objetiva.
+**Causa raíz:** el auditor da impresiones holísticas; sus magnitudes/direcciones no son fiables. R1: logo ya idéntico (281×165 r1.70 == original, medido con pymupdf). R3: color ya idéntico (navy `#085080` muestreado en ambos). R2: dirección INVERSA — v4 tiene filas más ALTAS (17.81pt) que el original (14.65), no más compactas.
+**Solución aplicada:** NO aplicar R1/R3 (habrían introducido desviaciones). R2: dos intentos de reducir el alto de fila fallaron — `trHeight hRule="exact" val="293"` lo EMPEORÓ (24.56pt) y quitar el espaciado de párrafo fue no-op (el pitch de fila en el render Carbone/LibreOffice no lo controla el párrafo). Se revirtió al estado bueno. v5 quedó visualmente equivalente a v4.
+**Prevención futura:** (1) medir SIEMPRE magnitud y DIRECCIÓN de cada brecha antes de editar; 3/3 afirmaciones del auditor estaban mal. (2) El % del auditor ciego tiene ruido ±2-3% (v4→97%, v5→95% sobre material equivalente): un umbral de 98% puede quedar por debajo de esa dispersión — no perseguir décimas. (3) El alto de fila en el render de Carbone no se controla ni por `trHeight exact` ni por espaciado de párrafo; queda como pregunta abierta para igualar densidades al milímetro.
+
+### 2026-10-03 — Go-live v5 en producción: verificar antes de re-hacer
+**Contexto:** TANDA T-GOLIVE-V5-PROD-20261001 — dejar la plantilla v5 corriendo en producción (E2 → Carbone → Dropbox) y VP-0067 como prueba viva.
+**Inconveniente:** el "go-live" ya estaba hecho. La Fase 1 (sólo lectura) encontró E2 (scenario 5750023) ya apuntando a v5 y `.env.local` ya en v5, con una corrida de E2 exitosa el 2026-10-01 21:07 que había generado el PDF vivo de VP-0067. Una sesión previa (misma carpeta de evidencia, archivos del 2026-10-01) ya había ejecutado el re-apunte con `golive-e2-repoint.mjs`.
+**Causa raíz:** el objetivo de la tanda se había cumplido en una sesión anterior; el Gate G3 ("templateId de E2 debe ser DISTINTO de v5 para re-apuntar") estaba diseñado exactamente para este caso y disparó la detención correcta de la Fase 2 de escritura.
+**Solución aplicada:** NO re-ejecutar el re-apunte ni forzar un render redundante. Se verificó el estado final de forma objetiva: blueprint de E2 (módulo render es `http:ActionSendData`, NO un app-module Carbone — el templateId vive en la URL `POST api.carbone.io/render/<id>`, no en un campo `templateId`), y se bajó el `pdf_final_url` de Dropbox para VP-0067 → 8 págs, 0 marcadores `{d.}`, 288 imágenes, dólar 890,33, CI-057 -3%/36%. Se dejó plan, evidencia, auditor ciego y cierre documentando "ya en producción".
+**Prevención futura:** (1) Patrón de go-live con Make API para re-apuntar un template de Carbone: `GET /scenarios/{id}/blueprint` → reemplazar el id SÓLO en la URL del módulo HTTP de render → `PATCH /scenarios/{id}` con `{ blueprint: JSON.stringify(bp) }` (Make no acepta PATCH parcial del blueprint; se manda completo). No buscar un campo `templateId` en el mapper: en E2 no existe, el id está embebido en la URL. (2) Antes de cualquier go-live, LEER el estado real (blueprint + env + última corrida + PDF vivo) antes de escribir: evita re-aplicar algo ya hecho y mutar producción sin necesidad. El guard G3 por igualdad de templateId es el mecanismo correcto. (3) El templateId que E2 tenía antes del go-live era `31f3bfab…`, distinto del id del v4.docx subido a Carbone (`0ab0da67…`): el destino de rollback es el que estaba en E2, no el del artefacto docx.
