@@ -1,0 +1,1390 @@
+{
+  "meta": {
+    "codigo": "VP-2026-0074",
+    "codigoExt": "VP-2026-0074",
+    "nOperacionCliente": 1548,
+    "numeroSolicitudCliente": "AGH -1548",
+    "estado": "calculada",
+    "version": null,
+    "fechaEmision": null
+  },
+  "clienteInforme": {
+    "nombre": "Agencia Habitacional",
+    "logoUrl": null,
+    "nombreRevisor": null
+  },
+  "partes": {
+    "propietario": "ANDRES PABLO ISRAEL AVRAM",
+    "rut": "7.774.862-8",
+    "ejecutivo": "GERALDINE QUIVAQUI",
+    "tasador": {
+      "nombre": "Sergio (nutricionsaludketo)",
+      "firmaUrl": "«dataURI 6835»"
+    },
+    "visador": {
+      "nombre": "Héctor Martínez C."
+    },
+    "fechaVisita": "2026-05-12",
+    "fechaVisado": null
+  },
+  "propiedad": {
+    "direccion": "Coronel Souper N° 4060, Departamento: N°2502 B, Edificio Mirador Souper",
+    "comuna": "Estación Central",
+    "region": "Metropolitana de Santiago",
+    "tipoPropiedad": "Departamento",
+    "objetivo": "Refinanciamiento",
+    "nuevoUsado": "usada",
+    "proyectoCondominio": "EDIFICIO MIRADOR SOUPER",
+    "supTerrenoM2": 0,
+    "supConstruccionM2": 41,
+    "supPrimerPisoM2": null,
+    "supConstruidaTotal": 0,
+    "anioConstruccion": 2018,
+    "materialPredominante": "HORMIGON ARMADO",
+    "calidadConstruccion": null,
+    "estadoConservacion": "Bueno",
+    "agrupacion": "",
+    "orientacion": "",
+    "pisos": 1,
+    "dormitorios": 2,
+    "banos": 1,
+    "estacionamientos": 0,
+    "bodegas": 0,
+    "dfl2": "NO",
+    "velocidadVentaEstimada": "8 a 10 meses",
+    "tipoZonaDescripcion": "IPC (Estación Central)",
+    "vidaUtil": 40
+  },
+  "sii": {
+    "rolSii": "694-416",
+    "avaluoTotal": 50615903,
+    "avaluoFiscalUf": 50615903,
+    "avaluoExento": null,
+    "contribucionAnual": null,
+    "calidadSii": "",
+    "destinoSii": "HABITACIONAL",
+    "codComuna": "",
+    "codManzana": "694",
+    "codPredio": "416",
+    "ubicacionUrbanoRural": "urbano",
+    "cg": "",
+    "ociv": "",
+    "oc": "",
+    "g": "",
+    "porUnidad": []
+  },
+  "cuadro": {
+    "items": [
+      {
+        "id": "recWNTaCy6jn9i6DL",
+        "orden": 1,
+        "descripcion": "Departamento N°2502 B",
+        "tipoItem": "Edificacion",
+        "supM2": 41,
+        "ufM2Aplicado": 34,
+        "factorAplicado": 1,
+        "ufTotalItem": 1394,
+        "aportaAGarantia": false,
+        "situacionMunicipal": "Regularizado"
+      }
+    ],
+    "totalUf": 1394
+  },
+  "terminales": {
+    "valorComercialUf": 1394,
+    "valorComercialClp": 56164915.18,
+    "valorReposicionUf": 1115.2,
+    "valorReposicionClp": 44931932.144,
+    "seguroIncendioUf": 1394,
+    "seguroIncendioClp": 56164915.18,
+    "avaluoFiscalUf": 1256.2748213163063,
+    "valorRemateUf": 906.1,
+    "valorRemateClp": 36507194.867,
+    "valorLiquidacionUf": 1150.05,
+    "valorLiquidacionClp": 46336055.0235,
+    "rentaPerpetuaClp": 58666666.66666667,
+    "ingresoLiquidoAnualClp": 3520000,
+    "ufDia": 40290.47,
+    "usdDia": 894.25,
+    "fechaUf": "2026-05-12",
+    "valorReposicionUsd": 50245.38120659771,
+    "seguroIncendioUsd": 62806.726508247135,
+    "avaluoFiscalUsd": 56601.512999720435,
+    "valorRemateUsd": 40824.372230360634,
+    "valorLiquidacionUsd": 51815.54936930389
+  },
+  "comparablesInforme": {
+    "filas": [
+      {
+        "id": "recBvVFvSaGeaYkGM",
+        "numero": null,
+        "direccion": "Coronel Souper 4060, Estacion Central",
+        "comuna": "Estación Central",
+        "supTerreno": null,
+        "supConstruida": 45,
+        "precioUf": 1490,
+        "anio": 2017,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "56 9 3248 7153",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 33.111111111111114
+      },
+      {
+        "id": "recnjD6jJH08g8srk",
+        "numero": null,
+        "direccion": "Cnel. Souper 3900 - 4200, Estación Central",
+        "comuna": "Estación Central",
+        "supTerreno": null,
+        "supConstruida": 41,
+        "precioUf": 1300,
+        "anio": 2017,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "56 9 3399 5948",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 31.70731707317073
+      },
+      {
+        "id": "recupHjaAHNvRgk5K",
+        "numero": null,
+        "direccion": "Coronel Souper 4060, Estacion Central",
+        "comuna": "Estación Central",
+        "supTerreno": null,
+        "supConstruida": 42,
+        "precioUf": 1675,
+        "anio": 2017,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "56 9 9205 0952",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 39.88095238095238
+      },
+      {
+        "id": "recRDLDauyxsdp7l4",
+        "numero": null,
+        "direccion": "Coronel Souper 4060, Estacion Central",
+        "comuna": "Estación Central",
+        "supTerreno": null,
+        "supConstruida": 45,
+        "precioUf": 1600,
+        "anio": 2017,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "56 9 4145 5465",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 350,
+        "ufM2Construccion": 27.77777777777778
+      },
+      {
+        "id": "reciHsBADJLZR92dL",
+        "numero": null,
+        "direccion": "Coronel Souper 4060, Estacion Central",
+        "comuna": "Estación Central",
+        "supTerreno": null,
+        "supConstruida": 41,
+        "precioUf": 1900,
+        "anio": 2017,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "56 9 7561 6017",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 46.34146341463415
+      },
+      {
+        "id": "recViXhJqS3xMf2sM",
+        "numero": null,
+        "direccion": "Coronel Souper N° 4060 dp 1603 B",
+        "comuna": "Estación Central",
+        "supTerreno": null,
+        "supConstruida": 40,
+        "precioUf": 1640,
+        "anio": 2017,
+        "tipoReferencia": "CBR",
+        "fecha": "abr-24",
+        "telefono": "33924 47556",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 70,
+        "ufM2Construccion": 39.25
+      },
+      {
+        "id": "rec5FN0KWgx00rqv5",
+        "numero": null,
+        "direccion": "Coronel Souper N° 4060 dp 203",
+        "comuna": "Estación Central",
+        "supTerreno": null,
+        "supConstruida": 40,
+        "precioUf": 1100,
+        "anio": 2017,
+        "tipoReferencia": "CBR",
+        "fecha": "ene-24",
+        "telefono": "1975 2808",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 27.5
+      }
+    ],
+    "ofertas": {
+      "filas": [
+        {
+          "id": "recBvVFvSaGeaYkGM",
+          "numero": 1,
+          "direccion": "Coronel Souper 4060, Estacion Central",
+          "comuna": "Estación Central",
+          "supTerreno": null,
+          "supConstruida": 45,
+          "precioUf": 1490,
+          "anio": 2017,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "56 9 3248 7153",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 33.111111111111114
+        },
+        {
+          "id": "recnjD6jJH08g8srk",
+          "numero": 2,
+          "direccion": "Cnel. Souper 3900 - 4200, Estación Central",
+          "comuna": "Estación Central",
+          "supTerreno": null,
+          "supConstruida": 41,
+          "precioUf": 1300,
+          "anio": 2017,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "56 9 3399 5948",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 31.70731707317073
+        },
+        {
+          "id": "recupHjaAHNvRgk5K",
+          "numero": 3,
+          "direccion": "Coronel Souper 4060, Estacion Central",
+          "comuna": "Estación Central",
+          "supTerreno": null,
+          "supConstruida": 42,
+          "precioUf": 1675,
+          "anio": 2017,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "56 9 9205 0952",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 39.88095238095238
+        },
+        {
+          "id": "recRDLDauyxsdp7l4",
+          "numero": 4,
+          "direccion": "Coronel Souper 4060, Estacion Central",
+          "comuna": "Estación Central",
+          "supTerreno": null,
+          "supConstruida": 45,
+          "precioUf": 1600,
+          "anio": 2017,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "56 9 4145 5465",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 350,
+          "ufM2Construccion": 27.77777777777778
+        },
+        {
+          "id": "reciHsBADJLZR92dL",
+          "numero": 5,
+          "direccion": "Coronel Souper 4060, Estacion Central",
+          "comuna": "Estación Central",
+          "supTerreno": null,
+          "supConstruida": 41,
+          "precioUf": 1900,
+          "anio": 2017,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "56 9 7561 6017",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 46.34146341463415
+        }
+      ],
+      "promedio": {
+        "totalUf": 1593,
+        "supTerreno": null,
+        "supConstruida": 42.8,
+        "oocc": 350,
+        "ufM2Terreno": null,
+        "ufM2Construccion": 35.763724351529234
+      },
+      "tasacionVsPct": -4.931601457927629
+    },
+    "cbr": {
+      "filas": [
+        {
+          "id": "recViXhJqS3xMf2sM",
+          "numero": 1,
+          "direccion": "Coronel Souper N° 4060 dp 1603 B",
+          "comuna": "Estación Central",
+          "supTerreno": null,
+          "supConstruida": 40,
+          "precioUf": 1640,
+          "anio": 2017,
+          "tipoReferencia": "CBR",
+          "fecha": "abr-24",
+          "telefono": "33924 47556",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 70,
+          "ufM2Construccion": 39.25
+        },
+        {
+          "id": "rec5FN0KWgx00rqv5",
+          "numero": 2,
+          "direccion": "Coronel Souper N° 4060 dp 203",
+          "comuna": "Estación Central",
+          "supTerreno": null,
+          "supConstruida": 40,
+          "precioUf": 1100,
+          "anio": 2017,
+          "tipoReferencia": "CBR",
+          "fecha": "ene-24",
+          "telefono": "1975 2808",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 27.5
+        }
+      ],
+      "promedio": {
+        "totalUf": 1370,
+        "supTerreno": null,
+        "supConstruida": 40,
+        "oocc": 70,
+        "ufM2Terreno": null,
+        "ufM2Construccion": 33.375
+      },
+      "tasacionVsPct": 1.8726591760299627
+    },
+    "tasacionFila": {
+      "totalUf": 1394,
+      "supTerreno": 0,
+      "supConstruida": 41,
+      "oocc": null,
+      "ufM2Terreno": null,
+      "ufM2Construccion": 34
+    },
+    "promedioUfM2": 35.763724351529234,
+    "usadosEnPromedio": 7,
+    "cumpleMinimo": true,
+    "tasacionUfM2": 34,
+    "tasacionVsPct": -4.931601457927629
+  },
+  "rentabilidad": {
+    "arriendoBrutoMensualClp": 320000,
+    "gastoAnualClp": 320000,
+    "ingresoLiquidoAnualClp": 3520000,
+    "rentaPerpetuaClp": 58666666.66666667,
+    "tasaCapRate": 0.06,
+    "arriendoUfMes": 7.942324822718623
+  },
+  "textosIA": {
+    "sintesisPropiedad": "El bien es un departamento que se encuentra en Coronel Souper N° 4060. El edificio se desarrolla en un volumen de 30 pisos y 3 subterráneos el cual está conectado por 4 ascensores. Los espacios comunes se encuentran en primer piso más azotea y cuenta con sala multiuso, lavandería, gimnasio, quinchos. La propiedad se encuentra en el piso 25 con orientación oeste, tiene 41 m² interiores, sin terraza. El departamento cuenta con living comedor, cocina empotrada, 2 dormitorios, 1 baño de uso común.",
+    "descripcionSector": "El sector es de carácter mixto. El cual se compone de viviendas de baja densidad, algunas de las cuales han sido modificadas para albergar comercio, edificios habitacional de altura media, servicios y comercios varios. El comercio, el transporte y los servicios se encuentran en la avenida más cercana: Libertador Bernardo Ohiggins.",
+    "textoExpropiacion": null
+  },
+  "cualitativa": {
+    "normativa": null,
+    "sector": null,
+    "geometriaTerreno": null,
+    "emplazamiento": null,
+    "constructivas": null,
+    "servicios": null,
+    "comodidades": null,
+    "detallePropiedad": null
+  },
+  "recintos": {
+    "ampliaciones": [],
+    "habitacionesPorNivel": [
+      {
+        "id": "recJcDFi52WLdjAna",
+        "nivel": "Piso1",
+        "tipoRecinto": "Living",
+        "cantidad": 1
+      },
+      {
+        "id": "recJdqVmOtP1z8QKp",
+        "nivel": "Piso1",
+        "tipoRecinto": "Bano",
+        "cantidad": 1
+      },
+      {
+        "id": "recKOnKOVsrJRCNwC",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Simple",
+        "cantidad": 2
+      },
+      {
+        "id": "recgeskQD8nujaLTH",
+        "nivel": "Piso1",
+        "tipoRecinto": "Cocina",
+        "cantidad": 1
+      },
+      {
+        "id": "recmwBNx3IJXlTN8H",
+        "nivel": "Piso1",
+        "tipoRecinto": "Comedor",
+        "cantidad": 1
+      },
+      {
+        "id": "relleno-Piso1-Sala",
+        "nivel": "Piso1",
+        "tipoRecinto": "Sala",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Hall",
+        "nivel": "Piso1",
+        "tipoRecinto": "Hall",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Suite",
+        "nivel": "Piso1",
+        "tipoRecinto": "Suite",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-D.Servicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Servicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Escritorio",
+        "nivel": "Piso1",
+        "tipoRecinto": "Escritorio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-MedioBano",
+        "nivel": "Piso1",
+        "tipoRecinto": "MedioBano",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-BanoServicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "BanoServicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Lavadero",
+        "nivel": "Piso1",
+        "tipoRecinto": "Lavadero",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Otro",
+        "nivel": "Piso1",
+        "tipoRecinto": "Otro",
+        "cantidad": 0
+      }
+    ],
+    "totalRecintos": 6,
+    "terminacionesPorRecinto": []
+  },
+  "fotos": {
+    "total": 16,
+    "porCategoria": {
+      "Mapa de Ubicación": 1,
+      "Ofertas / Comparables": 3,
+      "Mapa de referencias": 1,
+      "planificacion": 1,
+      "Fachada / Exterior": 1,
+      "Living / Comedor": 3,
+      "Cocina": 2,
+      "Habitaciones": 4
+    },
+    "fotos": [
+      {
+        "id": "recrxbyP3mFmmVw72",
+        "nombre": "caso2_mapa_ubicacion_0.jpg",
+        "url": "«dataURI 86391»",
+        "categoria": "Mapa de Ubicación"
+      },
+      {
+        "id": "recYGPyuVGwn5LgEq",
+        "nombre": "caso2_ofertas_comparables_1.jpg",
+        "url": "«dataURI 43427»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recZhCPqlNnBBDP1D",
+        "nombre": "caso2_ofertas_comparables_2.jpg",
+        "url": "«dataURI 30007»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recvU4qRZSkeDsYaQ",
+        "nombre": "caso2_ofertas_comparables_3.jpg",
+        "url": "«dataURI 34407»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recMQVPn9UzqLwkQB",
+        "nombre": "caso2_mapa_referencias_4.jpg",
+        "url": "«dataURI 76571»",
+        "categoria": "Mapa de referencias"
+      },
+      {
+        "id": "recuQgimARRFuBz1M",
+        "nombre": "caso2_planificacion_5.jpg",
+        "url": "«dataURI 35351»",
+        "categoria": "planificacion"
+      },
+      {
+        "id": "recBlbCp09pp1fx7T",
+        "nombre": "caso2_fachada_exterior_6.jpg",
+        "url": "«dataURI 32647»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "recwQpNSp2zN7FIlk",
+        "nombre": "caso2_living_comedor_7.jpg",
+        "url": "«dataURI 18559»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "recDidNL79COftWwj",
+        "nombre": "caso2_living_comedor_8.jpg",
+        "url": "«dataURI 19207»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "recpmBjXvfzOSRXk9",
+        "nombre": "caso2_cocina_9.jpg",
+        "url": "«dataURI 20187»",
+        "categoria": "Cocina"
+      },
+      {
+        "id": "rec6v0IriP0uHdVWr",
+        "nombre": "caso2_cocina_10.jpg",
+        "url": "«dataURI 19339»",
+        "categoria": "Cocina"
+      },
+      {
+        "id": "recGbpsRoUTT4NEBp",
+        "nombre": "caso2_habitaciones_11.jpg",
+        "url": "«dataURI 15291»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recyOrIbLrm6Cki00",
+        "nombre": "caso2_habitaciones_12.jpg",
+        "url": "«dataURI 11351»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recZVeESu7JFVzUrY",
+        "nombre": "caso2_habitaciones_13.jpg",
+        "url": "«dataURI 17023»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recZXXR7Kb8wt0YhZ",
+        "nombre": "caso2_habitaciones_14.jpg",
+        "url": "«dataURI 12199»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recanMzALq3LQuhhR",
+        "nombre": "caso2_living_comedor_15.jpg",
+        "url": "«dataURI 15295»",
+        "categoria": "Living / Comedor"
+      }
+    ]
+  },
+  "anexos": {
+    "documentos": []
+  },
+  "imagenes": {
+    "mapaUbicacion": "«dataURI 86391»",
+    "fachada": "«dataURI 32647»",
+    "firma": "«dataURI 6835»",
+    "refMapa": "«dataURI 76571»",
+    "ref1": "«dataURI 43427»",
+    "ref2": "«dataURI 30007»",
+    "ref3": "«dataURI 34407»",
+    "anexo1Plano": null,
+    "anexo1Esquema": null,
+    "anexo1CuadroSup": null,
+    "anexo1Emplazamiento": null,
+    "anexo1Aerea": null,
+    "anexo1MapaSii": null,
+    "anexo1InfoSii": null,
+    "anexo2RolAvaluo": null,
+    "anexo2Permiso": null,
+    "anexo2Escritura": null,
+    "anexo2NoExpropiacion": null,
+    "anexo2Recepcion": null,
+    "anexo2Tgr": null
+  },
+  "mapa": {
+    "staticMapUrl": null,
+    "lat": null,
+    "long": null
+  },
+  "legales": {
+    "fojas": "",
+    "numeroInscripcion": "",
+    "anoInscripcion": null,
+    "permisoEdificacion": "N°65 // 28-04-2014",
+    "recepcionFinal": "N°03 // 26-02-2018"
+  },
+  "huecos": [
+    {
+      "ruta": "textosIA.sintesisPropiedad",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.descripcionSector",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.textoExpropiacion",
+      "eIds": [
+        "E-57"
+      ],
+      "pId": "P1-1",
+      "motivo": "Plantilla con variables; falta la columna afecto_expropiacion"
+    },
+    {
+      "ruta": "cualitativa.detallePropiedad",
+      "eIds": [
+        "E-37",
+        "E-39",
+        "E-41",
+        "E-45",
+        "E-52",
+        "E-56",
+        "E-54",
+        "E-55"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (CI-023): sin columnas destino"
+    },
+    {
+      "ruta": "cualitativa.constructivas",
+      "eIds": [
+        "E-176..E-191"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (6 CI-023 + 7 silenciosos): sin columnas"
+    },
+    {
+      "ruta": "cualitativa.comodidades",
+      "eIds": [
+        "E-207"
+      ],
+      "pId": "P1-1",
+      "motivo": "14 switches capturados y descartados; TX_Amenities no existe"
+    },
+    {
+      "ruta": "cualitativa.normativa",
+      "eIds": [
+        "E-125..E-140"
+      ],
+      "pId": "P1-2",
+      "motivo": "Sin catálogo normativo poblado ni UI (rescate M_Zonificacion en T4)"
+    },
+    {
+      "ruta": "cualitativa.sector",
+      "eIds": [
+        "E-141..E-146",
+        "E-148..E-157"
+      ],
+      "pId": "P1-2",
+      "motivo": "Mercado y sector sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.geometriaTerreno",
+      "eIds": [
+        "E-159..E-165"
+      ],
+      "pId": "P1-2",
+      "motivo": "Forma/pendiente/frente/deslindes sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.emplazamiento",
+      "eIds": [
+        "E-167..E-175"
+      ],
+      "pId": "P1-2",
+      "motivo": "Emplazamiento cualitativo sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.servicios",
+      "eIds": [
+        "E-197..E-201"
+      ],
+      "pId": "P1-2",
+      "motivo": "Servicios de la propiedad sin UI ni columnas"
+    },
+    {
+      "ruta": "terminales.usdDia",
+      "eIds": [
+        "E-103"
+      ],
+      "pId": "P1-3",
+      "motivo": "tipo_cambio_usd sin escritor automático (el cron UF no lo escribe; el valor de 0066 es seed manual)"
+    },
+    {
+      "ruta": "mapa.staticMapUrl",
+      "eIds": [
+        "E-120"
+      ],
+      "pId": "P1-4",
+      "motivo": "Google Static Maps sin implementación ni API key"
+    },
+    {
+      "ruta": "clienteInforme.logoUrl",
+      "eIds": [
+        "E-02"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente sin clientes reales (H9 — la portada MET salió con marca Austral)"
+    },
+    {
+      "ruta": "clienteInforme.nombreRevisor",
+      "eIds": [
+        "E-114"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente.nombre_revisor sin valor (H9)"
+    },
+    {
+      "ruta": "comparablesInforme.promedioUfM2",
+      "eIds": [
+        "E-66..E-68",
+        "E-73..E-75"
+      ],
+      "pId": "P1-8",
+      "motivo": "Promedios y fila TASACIÓN calculados por el ensamblador, sin persistencia (puente hasta T2)"
+    },
+    {
+      "ruta": "partes.fechaVisado",
+      "eIds": [
+        "E-113"
+      ],
+      "pId": "P1-9",
+      "motivo": "IF-04 (visación) no existe"
+    },
+    {
+      "ruta": "propiedad.vidaUtil",
+      "eIds": [
+        "E-48",
+        "E-76",
+        "E-81"
+      ],
+      "pId": "P1-9",
+      "motivo": "F_VidaUtil existe pero está fuera de la regla v32"
+    }
+  ],
+  "canonico": {
+    "id": "recconVQfAc8LSGJf",
+    "codigo": "VP-2026-0074",
+    "estado": "calculada",
+    "versionVigente": null,
+    "valorDestacado": {
+      "valorUf": 1394,
+      "capRate": 0.06,
+      "esOverride": false,
+      "ufDiaVisita": null
+    },
+    "datosSii": {
+      "rolSii": "694-416",
+      "avaluoTotal": 50615903,
+      "avaluoFiscalUf": 50615903,
+      "avaluoExento": null,
+      "contribucionAnual": null,
+      "calidadSii": "",
+      "destinoSii": "HABITACIONAL",
+      "codComuna": "",
+      "codManzana": "694",
+      "codPredio": "416",
+      "ubicacionUrbanoRural": "urbano",
+      "cg": "",
+      "ociv": "",
+      "oc": "",
+      "g": "",
+      "porUnidad": []
+    },
+    "observaciones": {
+      "observacionesTasador": "",
+      "observacionRechazo": "",
+      "overrides": [
+        {
+          "campo": "Vida útil",
+          "valor": 40
+        }
+      ],
+      "motivoOverride": "SANDBOX T-REPLICA-20261005: el XLSM AGH calcula Reposición = factor_garantia(0.8) × edificación a-nuevo (Portada BG72=1115.2) y F_ValorReposicionUF v32 calcula a-nuevo sin ese factor (daría 1394). Gap de fórmula documentado en overrides-caso2.md.",
+      "autorOverride": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente piloto)",
+      "antecedentesLegales": {
+        "fojas": "",
+        "numeroInscripcion": "",
+        "anoInscripcion": null,
+        "permisoEdificacion": "N°65 // 28-04-2014",
+        "recepcionFinal": "N°03 // 26-02-2018"
+      }
+    },
+    "anexosRanuras": [
+      {
+        "ranura": "anexo1Plano",
+        "codigo": "foto_plano_cuadro_superficies",
+        "label": "Plano / cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Esquema",
+        "codigo": "esquema_superficies",
+        "label": "Esquema de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1CuadroSup",
+        "codigo": "cuadro_superficies",
+        "label": "Cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Emplazamiento",
+        "codigo": "planta_emplazamiento",
+        "label": "Planta de emplazamiento",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Aerea",
+        "codigo": "foto_aerea",
+        "label": "Foto aérea",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1MapaSii",
+        "codigo": "mapa_sii",
+        "label": "Mapa SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1InfoSii",
+        "codigo": "foto_fuente_sii",
+        "label": "Información SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2RolAvaluo",
+        "codigo": "certificado_avaluo_fiscal",
+        "label": "Certificado de avalúo fiscal",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Permiso",
+        "codigo": "permiso_edificacion",
+        "label": "Permiso de edificación",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Escritura",
+        "codigo": "escritura_compraventa",
+        "label": "Escritura de compraventa",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2NoExpropiacion",
+        "codigo": "informe_no_expropiacion_serviu",
+        "label": "Informe de no expropiación (SERVIU)",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Recepcion",
+        "codigo": "certificado_recepcion_final",
+        "label": "Certificado de recepción final",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Tgr",
+        "codigo": "certificado_deuda_tgr",
+        "label": "Certificado de deuda TGR",
+        "nombre": null,
+        "thumbnailUrl": null
+      }
+    ],
+    "firmaTasadorUrl": null,
+    "bloques": [
+      {
+        "numero": 1,
+        "id": "cabecera",
+        "titulo": "Cabecera",
+        "vacio": false,
+        "datos": {
+          "codigo": "VP-2026-0074",
+          "codigoExt": "VP-2026-0074",
+          "nuevoUsado": "usada",
+          "cliente": [
+            "recX80z73mCtC4BBo"
+          ],
+          "direccion": "Coronel Souper N° 4060, Departamento: N°2502 B, Edificio Mirador Souper",
+          "comuna": [
+            "recIHTj4e6vkH977o"
+          ],
+          "fechaVisita": "2026-05-12",
+          "version": null
+        }
+      },
+      {
+        "numero": 2,
+        "id": "valor",
+        "titulo": "Valor de tasación",
+        "vacio": false,
+        "datos": {
+          "valorUf": 1394,
+          "capRate": 0.06,
+          "esOverride": false,
+          "ufDiaVisita": null
+        }
+      },
+      {
+        "numero": 3,
+        "id": "antecedentes",
+        "titulo": "Antecedentes de la propiedad",
+        "vacio": false,
+        "datos": {
+          "supTerrenoM2": 0,
+          "supConstruccionM2": 41,
+          "supPrimerPisoM2": null,
+          "supConstruidaTotal": 0,
+          "anioConstruccion": 2018,
+          "materialPredominante": "HORMIGON ARMADO",
+          "calidadConstruccion": null,
+          "estadoConservacion": "Bueno",
+          "agrupacion": "",
+          "dormitorios": 2,
+          "banos": 1,
+          "estacionamientos": 0,
+          "bodegas": 0,
+          "dfl2": "NO"
+        }
+      },
+      {
+        "numero": 4,
+        "id": "sii",
+        "titulo": "Datos SII y avalúo",
+        "vacio": false,
+        "datos": {
+          "rolSii": "694-416",
+          "avaluoTotal": 50615903,
+          "avaluoFiscalUf": 50615903,
+          "avaluoExento": null,
+          "contribucionAnual": null,
+          "calidadSii": "",
+          "destinoSii": "HABITACIONAL",
+          "codComuna": "",
+          "codManzana": "694",
+          "codPredio": "416",
+          "ubicacionUrbanoRural": "urbano",
+          "cg": "",
+          "ociv": "",
+          "oc": "",
+          "g": "",
+          "porUnidad": []
+        }
+      },
+      {
+        "numero": 5,
+        "id": "valoracion",
+        "titulo": "Cuadro de valoración",
+        "vacio": false,
+        "datos": {
+          "items": [
+            {
+              "id": "recWNTaCy6jn9i6DL",
+              "orden": 1,
+              "descripcion": "Departamento N°2502 B",
+              "tipoItem": "Edificacion",
+              "supM2": 41,
+              "ufM2Aplicado": 34,
+              "ufTotalItem": 1394,
+              "aportaAGarantia": false,
+              "situacionMunicipal": "Regularizado"
+            }
+          ],
+          "totalUf": 1394
+        }
+      },
+      {
+        "numero": 6,
+        "id": "comparables",
+        "titulo": "Comparables",
+        "vacio": false,
+        "datos": {
+          "comparables": [
+            {
+              "id": "recBvVFvSaGeaYkGM",
+              "numero": null,
+              "direccion": "Coronel Souper 4060, Estacion Central",
+              "comuna": "Estación Central",
+              "supTerreno": null,
+              "supConstruida": 45,
+              "precioUf": 1490,
+              "anio": 2017,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "56 9 3248 7153",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 33.111111111111114
+            },
+            {
+              "id": "recnjD6jJH08g8srk",
+              "numero": null,
+              "direccion": "Cnel. Souper 3900 - 4200, Estación Central",
+              "comuna": "Estación Central",
+              "supTerreno": null,
+              "supConstruida": 41,
+              "precioUf": 1300,
+              "anio": 2017,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "56 9 3399 5948",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 31.70731707317073
+            },
+            {
+              "id": "recupHjaAHNvRgk5K",
+              "numero": null,
+              "direccion": "Coronel Souper 4060, Estacion Central",
+              "comuna": "Estación Central",
+              "supTerreno": null,
+              "supConstruida": 42,
+              "precioUf": 1675,
+              "anio": 2017,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "56 9 9205 0952",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 39.88095238095238
+            },
+            {
+              "id": "recRDLDauyxsdp7l4",
+              "numero": null,
+              "direccion": "Coronel Souper 4060, Estacion Central",
+              "comuna": "Estación Central",
+              "supTerreno": null,
+              "supConstruida": 45,
+              "precioUf": 1600,
+              "anio": 2017,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "56 9 4145 5465",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 350,
+              "ufM2Construccion": 27.77777777777778
+            },
+            {
+              "id": "reciHsBADJLZR92dL",
+              "numero": null,
+              "direccion": "Coronel Souper 4060, Estacion Central",
+              "comuna": "Estación Central",
+              "supTerreno": null,
+              "supConstruida": 41,
+              "precioUf": 1900,
+              "anio": 2017,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "56 9 7561 6017",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 46.34146341463415
+            },
+            {
+              "id": "recViXhJqS3xMf2sM",
+              "numero": null,
+              "direccion": "Coronel Souper N° 4060 dp 1603 B",
+              "comuna": "Estación Central",
+              "supTerreno": null,
+              "supConstruida": 40,
+              "precioUf": 1640,
+              "anio": 2017,
+              "tipoReferencia": "CBR",
+              "fecha": "abr-24",
+              "telefono": "33924 47556",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 70,
+              "ufM2Construccion": 39.25
+            },
+            {
+              "id": "rec5FN0KWgx00rqv5",
+              "numero": null,
+              "direccion": "Coronel Souper N° 4060 dp 203",
+              "comuna": "Estación Central",
+              "supTerreno": null,
+              "supConstruida": 40,
+              "precioUf": 1100,
+              "anio": 2017,
+              "tipoReferencia": "CBR",
+              "fecha": "ene-24",
+              "telefono": "1975 2808",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 27.5
+            }
+          ],
+          "promedioUfM2": 35.08123167966374,
+          "usadosEnPromedio": 7,
+          "cumpleMinimo": true
+        }
+      },
+      {
+        "numero": 7,
+        "id": "fotografico",
+        "titulo": "Registro fotográfico",
+        "vacio": false,
+        "datos": {
+          "total": 16,
+          "porCategoria": {
+            "cocina": 2,
+            "fachada_exterior": 1,
+            "living_comedor": 3,
+            "habitaciones": 4,
+            "mapa_referencias": 1,
+            "ofertas_comparables": 3,
+            "mapa_ubicacion": 1,
+            "planificacion": 1
+          },
+          "fotos": [
+            {
+              "id": "rec6v0IriP0uHdVWr",
+              "nombre": "caso2_cocina_10.jpg",
+              "categoria": "cocina",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 10
+            },
+            {
+              "id": "recBlbCp09pp1fx7T",
+              "nombre": "caso2_fachada_exterior_6.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 6
+            },
+            {
+              "id": "recDidNL79COftWwj",
+              "nombre": "caso2_living_comedor_8.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 8
+            },
+            {
+              "id": "recGbpsRoUTT4NEBp",
+              "nombre": "caso2_habitaciones_11.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 11
+            },
+            {
+              "id": "recMQVPn9UzqLwkQB",
+              "nombre": "caso2_mapa_referencias_4.jpg",
+              "categoria": "mapa_referencias",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 4
+            },
+            {
+              "id": "recYGPyuVGwn5LgEq",
+              "nombre": "caso2_ofertas_comparables_1.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 1
+            },
+            {
+              "id": "recZVeESu7JFVzUrY",
+              "nombre": "caso2_habitaciones_13.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 13
+            },
+            {
+              "id": "recZXXR7Kb8wt0YhZ",
+              "nombre": "caso2_habitaciones_14.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 14
+            },
+            {
+              "id": "recZhCPqlNnBBDP1D",
+              "nombre": "caso2_ofertas_comparables_2.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 2
+            },
+            {
+              "id": "recanMzALq3LQuhhR",
+              "nombre": "caso2_living_comedor_15.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 15
+            },
+            {
+              "id": "recpmBjXvfzOSRXk9",
+              "nombre": "caso2_cocina_9.jpg",
+              "categoria": "cocina",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 9
+            },
+            {
+              "id": "recrxbyP3mFmmVw72",
+              "nombre": "caso2_mapa_ubicacion_0.jpg",
+              "categoria": "mapa_ubicacion",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 0
+            },
+            {
+              "id": "recuQgimARRFuBz1M",
+              "nombre": "caso2_planificacion_5.jpg",
+              "categoria": "planificacion",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 5
+            },
+            {
+              "id": "recvU4qRZSkeDsYaQ",
+              "nombre": "caso2_ofertas_comparables_3.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 3
+            },
+            {
+              "id": "recwQpNSp2zN7FIlk",
+              "nombre": "caso2_living_comedor_7.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 7
+            },
+            {
+              "id": "recyOrIbLrm6Cki00",
+              "nombre": "caso2_habitaciones_12.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 12
+            }
+          ]
+        }
+      },
+      {
+        "numero": 8,
+        "id": "observaciones",
+        "titulo": "Observaciones y overrides",
+        "vacio": false,
+        "datos": {
+          "observacionesTasador": "",
+          "observacionRechazo": "",
+          "overrides": [
+            {
+              "campo": "Vida útil",
+              "valor": 40
+            }
+          ],
+          "motivoOverride": "SANDBOX T-REPLICA-20261005: el XLSM AGH calcula Reposición = factor_garantia(0.8) × edificación a-nuevo (Portada BG72=1115.2) y F_ValorReposicionUF v32 calcula a-nuevo sin ese factor (daría 1394). Gap de fórmula documentado en overrides-caso2.md.",
+          "autorOverride": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente piloto)",
+          "antecedentesLegales": {
+            "fojas": "",
+            "numeroInscripcion": "",
+            "anoInscripcion": null,
+            "permisoEdificacion": "N°65 // 28-04-2014",
+            "recepcionFinal": "N°03 // 26-02-2018"
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "rectnGOaHvEioXZw3",
+  "codigo": "VP-2026-0076",
+  "estadoFin": "calculada",
+  "regla": "rec2QYP8yjMW1Smsm",
+  "calculos": 17,
+  "vals": {
+    "valor_comercial_uf": 1072.1699999999998,
+    "valor_remate_uf": 696.9105,
+    "desviacion_vs_promedio_cbr_pct": 0,
+    "valor_reposicion_uf": 902.88,
+    "valor_reposicion_clp": 35972292.1536,
+    "valor_liquidacion_clp": 35241604.969229996,
+    "desviacion_vs_promedio_pct": 0,
+    "seguro_incendio_clp": 34173677.54592,
+    "seguro_incendio_uf": 857.736,
+    "avaluo_fiscal_uf": 678.4269102839937,
+    "ingreso_liquido_anual_clp": 2750000,
+    "valor_comercial_clp": 42717096.932399996,
+    "valor_remate_clp": 27766113.00606,
+    "promedio_uf_m2_muestra": 37.32915538012057,
+    "promedio_uf_m2_cbr_out": 0,
+    "valor_liquidacion_uf": 884.5402499999998,
+    "renta_perpetua_clp": 50000000
+  },
+  "camposComputados": [
+    "uf_m2_construccion",
+    "es_dormitorio"
+  ],
+  "eventos": [
+    {
+      "id": "recFHH2Ja3Md80ztx",
+      "tipo": "at03_dag_completo",
+      "desc": "[COD=VP-2026-0076] AT03_v31 EJECUTOR 17/17 OK. overrides[final=0 repo=902.88 gar=0 tasa=0.055] motivo=NRB-01 (Motor v2.7): tasa exigida Las Rejas 5,5% en lugar "
+    },
+    {
+      "id": "reccwc6fY0YonvWOW",
+      "tipo": "at03_dag_completo",
+      "desc": "[COD=VP-2026-0075] AT03_v31 EJECUTOR 17/17 OK. overrides[final=0 repo=1024 gar=0 tasa=0] motivo=SANDBOX T-REPLICA-20261005: el XLSM ALH calcula Reposición = fac"
+    },
+    {
+      "id": "recqqQZR8U6mImYLQ",
+      "tipo": "at03_dag_completo",
+      "desc": "[COD=VP-2026-0074] AT03_v31 EJECUTOR 17/17 OK. overrides[final=0 repo=1115.2 gar=0 tasa=0] motivo=SANDBOX T-REPLICA-20261005: el XLSM AGH calcula Reposición = f"
+    }
+  ]
+}

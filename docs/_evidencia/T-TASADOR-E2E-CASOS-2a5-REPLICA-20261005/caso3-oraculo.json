@@ -1,0 +1,130 @@
+{
+  "_fuente": "XLSM 'caspana 310 dp 14, quilicura.xlsm' ∩ PDF 'Informe MIGUENSON RAMEAU.pdf' · extraído celda-a-celda 2026-10-05 (openpyxl data_only + pymupdf)",
+  "_modo": "ESPEJO VÍA MOTOR (patrón del piloto Caso 2): se siembran SOLO ENTRADAS; AT03 calcula las SALIDAS al transicionar a 'visitada'.",
+  "_nota_divergencias": {
+    "tipo_informe": "PDF dice 'Crédito Hipotecario' (FICHA E27); no existe en M_TiposInforme. La ruta Leasing SÍ existe ('Leasing Habitacional' recaBCLUiDNs3CRkq) pero su única regla, Regla_AustralLeasing_Habitacional_Casa (recIEZ7F3FGUF0l44), exige tipo_propiedad=Casa (recrXDAjlVCe59XBW) y apunta al set de fórmulas v31 — con Departamento AT01 la descarta y caería a Regla_Wildcard_Default (v31, terminales que el informe no lee). Se usa 'Refinanciamiento' (recreojxTjoAWOEHa) → REGLA_REFI_DEPTO_V32 (rec2QYP8yjMW1Smsm, 13 terminales v32). GAP de ruteo Leasing documentado en overrides-caso3.md.",
+    "cliente": "La solicitud vieja VP-2026-0005 (recPx0yiK9k4oPG4V, cancelada, nro_interno='SOL-ALH-335') linkea el MISMO canónico 'Austral Leasing Habitacional' (recU6gfHmmCWZN5Mm · fs=0.8 fg=0.8 tasa=0.045). El duplicado legacy 'LEASING AUSTRAL' (recklwpIt0Cv4eqk1 · fs=0.825) NO se usa. Tasa 4,5% del canónico = oráculo (BJ41) → sin override de tasa.",
+    "cliente_vs_propietario": "Portada del PDF imprime 'Nombre Cliente: Miguenson Rameau' (solicitante) y la Hoja 1 'Propietario: Víctor Leónidas González Moreno' — ambos con RUT 9.588.043-6 (inconsistencia del oráculo, PLAN §5). cliente_final_nombre='Miguenson Rameau' (es lo que el ensamblador proyecta a partes.propietario y la plantilla imprime como Nombre Cliente); propietario real va en TX_DatosTasacion.propietario_nombre.",
+    "tasador_pdf": "PDF dice 'Maria Eugenia Soto', visador 'Héctor Martínez C.'; por D2 se asigna a recTJcV3BIvdcG4em (nutricionsaludketo). visador = Héctor Martínez C. (coincide con el PDF)."
+  },
+  "links": {
+    "cliente": "recU6gfHmmCWZN5Mm",
+    "comuna": "rec4JGrdbOOTWpZ3L",
+    "tasador": "recTJcV3BIvdcG4em",
+    "visador": "recrjQDympldI186S",
+    "tipo_informe": "recreojxTjoAWOEHa",
+    "tipo_propiedad": "recf9hz8TbkQ6wsus"
+  },
+  "entradas": {
+    "solicitud": {
+      "cliente_final_nombre": "Miguenson Rameau",
+      "cliente_final_rut": "9.588.043-6",
+      "ejecutivo_solicitante": "Vicente Sepúlveda",
+      "direccion": "Calle Caspana N°310, Departamento: N° 14, Block A, Población Valle de la Luna",
+      "region": "Metropolitana de Santiago",
+      "rol_sii": "658-128",
+      "n_operacion_cliente": 335,
+      "numero_solicitud": "ALH -335",
+      "proyecto_condominio": "Valle de la Luna",
+      "tipo_propiedad_nuevo_usado": "usada",
+      "fecha_visita": "2026-05-07",
+      "fecha_visita_programada": "2026-05-07",
+      "fecha_solicitud": "2026-05-06T12:00:00.000Z",
+      "vida_util_override": 40,
+      "notas": "CASO3-ALH-335 · T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 · SANDBOX espejo vía motor AT03 (solo entradas sembradas) aislado por notas+numero_solicitud",
+      "valor_reposicion_override": 1024,
+      "override_motivo": "SANDBOX T-REPLICA-20261005: el XLSM ALH calcula Reposición = factor_garantia(0.8) × edificación a-nuevo (Portada BG72=1024 = 0.8×1280) y F_ValorReposicionUF v32 calcula a-nuevo sin ese factor (daría 1280). Mismo gap de fórmula del Caso 2 — ver overrides-caso3.md.",
+      "override_autor": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente caso 3)"
+    },
+    "datosTasacion": {
+      "propietario_nombre": "Víctor Leónidas González Moreno",
+      "propietario_rut": "9.588.043-6",
+      "sup_construccion_m2": 40,
+      "sup_terreno_m2": 0,
+      "anio_construccion": 1994,
+      "material_predominante": "ALBAÑILERIA LADRILLO",
+      "estado_conservacion": "Bueno",
+      "dormitorios": 2,
+      "banos": 1,
+      "estacionamientos": 0,
+      "bodegas": 0,
+      "pisos": 1,
+      "velocidad_venta_estimada": "8 a 10 meses",
+      "tipo_zona_descripcion": "PRMS (Quilicura)",
+      "ubicacion_urbano_rural": "urbano",
+      "destino_sii": "HABITACIONAL",
+      "cod_sii_manzana": "658",
+      "cod_sii_predio": "128",
+      "rol_sii": "658-128",
+      "avaluo_fiscal_clp": 16551115,
+      "avaluo_total": 16551115,
+      "arriendo_bruto_mensual_clp": 200000,
+      "arriendo_mensual": 200000,
+      "gasto_anual": 200000,
+      "gasto_anual_clp": 200000,
+      "tasa_cap_rate": 0.045,
+      "uf_dia_visita": 40213.45,
+      "origen_dato": "tipeado",
+      "sintesis_descriptiva": "El bien es un departamento que se encuentra en la Población Valle de la Luna, ubicado en Calle Caspana N° 310. El edificio se desarrolla en un volumen de 3 pisos el cual está conectado por escaleras. La propiedad se encuentra en el piso 1 con orientación norte, tiene 40 m² interiores, sin terraza. El departamento cuenta con living comedor, cocina, baño y 2 dormitorios.",
+      "descripcion_sector": "El sector es de carácter mixto. El cual se compone de viviendas de baja densidad, algunas de las cuales han sido modificadas para albergar comercio, edificios habitacional de altura media, servicios y comercios varios. El comercio, el transporte y los servicios se encuentran en la avenida más cercana: San Luis."
+    },
+    "items": [
+      { "item_id": 1, "tipo_item": "Edificacion", "nombre_item": "Depto N° 14, Block A", "sup_m2": 40, "uf_m2_unitario": 32, "factor_aplicado": 0.8, "valor_uf": 1024, "situacion_municipal": "Regularizado", "valoracion_por": "m2", "es_bien_no_garantia": 0 }
+    ],
+    "comparables": [
+      { "comp_id": 1, "tipo_referencia": "Oferta", "direccion": "Toconce 551, Quilicura", "comuna_comparable": "Quilicura", "anio": 1994, "telefono_contacto": "995941556", "precio_uf": 1017, "sup_construccion_m2": 40, "oo_cc_uf": 0, "uf_m2_construccion": 25.425, "fecha_publicacion": "2026-05-07" },
+      { "comp_id": 2, "tipo_referencia": "Oferta", "direccion": "Socoroma 580, Quilicura,", "comuna_comparable": "Quilicura", "anio": 1995, "telefono_contacto": "978484811", "precio_uf": 1096, "sup_construccion_m2": 40, "oo_cc_uf": 0, "uf_m2_construccion": 27.4, "fecha_publicacion": "2026-05-07" },
+      { "comp_id": 3, "tipo_referencia": "Oferta", "direccion": "Manuel Antonio Matta/ Villa Raul Silva Henriquez", "comuna_comparable": "Quilicura", "anio": 1994, "telefono_contacto": "997151166", "precio_uf": 1145, "sup_construccion_m2": 40, "oo_cc_uf": 0, "uf_m2_construccion": 28.625, "fecha_publicacion": "2026-05-07" },
+      { "comp_id": 4, "tipo_referencia": "Oferta", "direccion": "Las Violetas, Quilicura", "comuna_comparable": "Quilicura", "anio": 1992, "telefono_contacto": "996181515", "precio_uf": 1093, "sup_construccion_m2": 40, "oo_cc_uf": 0, "uf_m2_construccion": 27.325, "fecha_publicacion": "2026-05-07" },
+      { "comp_id": 5, "tipo_referencia": "Oferta", "direccion": "San Enrique, Quilicura", "comuna_comparable": "Quilicura", "anio": 1994, "telefono_contacto": "992811788", "precio_uf": 1505, "sup_construccion_m2": 52, "oo_cc_uf": 0, "uf_m2_construccion": 28.942307692307693, "fecha_publicacion": "2026-05-07" }
+    ],
+    "_nota_cbr": "REF.C.B.R. VACÍA en el oráculo (Portada B38-B41 sin datos, AX42=0, AX44=0) — es el hueco ⚠ del PLAN §5 (Comp. Of/CBR = 5/0). NO se siembran comparables CBR.",
+    "habitaciones": [
+      { "nivel": "Piso1", "tipo_recinto": "Comedor", "cantidad": 1, "es_dormitorio": 0 },
+      { "nivel": "Piso1", "tipo_recinto": "Living", "cantidad": 1, "es_dormitorio": 0 },
+      { "nivel": "Piso1", "tipo_recinto": "D.Simple", "cantidad": 2, "es_dormitorio": 1 },
+      { "nivel": "Piso1", "tipo_recinto": "Cocina", "cantidad": 1, "es_dormitorio": 0 },
+      { "nivel": "Piso1", "tipo_recinto": "Baños", "cantidad": 1, "es_dormitorio": 0 }
+    ],
+    "legales": {
+      "permiso_edificacion_numero": "S/I",
+      "recepcion_final_numero": "Año 1994",
+      "_nota": "Permiso 'S/I' (hueco conocido del oráculo, PLAN §5) y Recepción Final 'Año 1994' (Antecedentes J7/J8) — sin fechas exactas en el XLSM, no se inventan."
+    },
+    "preciosUf": { "fecha": "2026-05-07", "valor_clp": 40213.45, "tipo_cambio_usd": 892.83, "fuente": "XLSM caspana (Portada AQ71/BO71)" }
+  },
+  "salidas_esperadas": {
+    "_nota": "Contra esto se compara lo que escriba AT03 en TX_Calculos — NO se siembra.",
+    "valor_comercial_uf": 1024,
+    "valor_comercial_clp": 41178572.8,
+    "valor_reposicion_uf": 1024,
+    "valor_reposicion_clp": 41178572.8,
+    "seguro_incendio_uf": 1024,
+    "seguro_incendio_clp": 41178572.8,
+    "avaluo_fiscal_uf": 411.5815728319754,
+    "valor_remate_uf": 665.6,
+    "valor_remate_clp": 26766072.32,
+    "valor_liquidacion_uf": 844.8,
+    "valor_liquidacion_clp": 33972322.56,
+    "renta_perpetua_clp": 48888888.88888889,
+    "ingreso_liquido_anual_clp": 2200000,
+    "promedio_uf_m2_ofertas": 27.543461538461543,
+    "promedio_uf_m2_cbr": 0,
+    "desviacion_vs_promedio_pct": -7.055981455880922,
+    "desviacion_vs_promedio_cbr_pct": 0,
+    "uf_dia": 40213.45,
+    "usd_dia": 892.83,
+    "celdas_oraculo": {
+      "valor_comercial": "Portada AP69/AY69 = 1024 UF / $41.178.572,8",
+      "reposicion": "Portada BG72/BL72 = 1024 UF / $41.178.572,8 (= 0.8 × a-nuevo 1280; cuadro AT51=32 UF/m² nuevo, AX51 D.F.=0.8, BD51=25.6)",
+      "seguro": "Portada BG73/BL73 = 1024 UF / $41.178.572,8 (DB51=1.0)",
+      "avaluo_fiscal": "Portada BG74/BL74 = 411,5816 UF / $16.551.115",
+      "remate": "Portada AU77/BG77 = 0.65 → 665,6 UF / $26.766.072,32 (velocidad '8 a 10 meses' BF70)",
+      "liquidacion": "Portada AU78/BG78 = 0.825 → 844,8 UF / $33.972.322,56",
+      "renta_perpetua": "Portada BJ44 = $48.888.888,89 (tasa BJ41 = 4,5%)",
+      "ingreso_liquido": "Portada BJ43 = $2.200.000 (arriendo BJ38 = $200.000/mes · gasto anual BJ40 = $200.000)",
+      "ajuste_ofertas": "Portada AX36 = -7,06% (promedio AX34 = 27,5435 · tasación AX35 = 25,6 UF/m²)",
+      "ajuste_cbr": "Portada AX44 = 0 (REF.CBR vacía — hueco del oráculo)"
+    }
+  }
+}

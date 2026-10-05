@@ -1,0 +1,58 @@
+{
+  "tanda": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005",
+  "caso": "CASO4-HIPOTECARIA-SECURITY-6073",
+  "creado": "2026-10-05",
+  "created": {
+    "solicitud": [
+      "rectnGOaHvEioXZw3"
+    ],
+    "datosTasacion": [
+      "recBudYOKVXICjewg"
+    ],
+    "items": [
+      "recrlMFNfluJoSpqO",
+      "recOEgX2SXaK5EHUt"
+    ],
+    "comparables": [
+      "recopTkIXJYQQ7OnK",
+      "recaVmLebJGjSnvHg",
+      "recZwqiqsZlCuv4tZ",
+      "recQumofQ02aLJEuj",
+      "recxwRYT4bneXaQM1",
+      "rec2THYULAY6012Hf"
+    ],
+    "habitaciones": [
+      "recQ5HivbDuMhCpdK",
+      "rec39CJfzoHdCkut5",
+      "rectwKLW68KevUOAW",
+      "recDU6pfYdo8AzWh8",
+      "recPUC4a0FrasqVw3",
+      "recJeHSoBZyjEnexG"
+    ],
+    "docLegales": [
+      "recLgZ8sPhZgIqAT8"
+    ],
+    "adjuntos": [
+      "rec137stZXF2HbNev",
+      "recuDIAUreBu4fYTh",
+      "recI2CNI9PFjoIYoN",
+      "recI9iEmF4PZHyPfS",
+      "recroZpTbKq23bjdL",
+      "recNP67s2YSLzRGDN",
+      "rectYAQgUbWcpF1t5",
+      "recDbBVSbO6M57ms7",
+      "recIPHNxVVNld4e0X",
+      "rec4blXptystG3AJ6",
+      "recGpuUA3UWn0vAx4",
+      "recWh6QoAzijkx19b",
+      "recbjkcembwDDhQSV",
+      "recEBc3pxTmWQmy1i",
+      "recjjAkuE7MedUrSx",
+      "recragnj1Jw9smgdT"
+    ]
+  },
+  "preciosUf": {
+    "accion": "creado",
+    "id": "rec7I9BGQMsNzsRBe"
+  }
+}

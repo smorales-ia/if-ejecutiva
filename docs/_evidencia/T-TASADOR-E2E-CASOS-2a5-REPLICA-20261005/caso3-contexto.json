@@ -1,0 +1,1283 @@
+{
+  "meta": {
+    "codigo": "VP-2026-0075",
+    "codigoExt": "VP-2026-0075",
+    "nOperacionCliente": 335,
+    "numeroSolicitudCliente": "ALH -335",
+    "estado": "calculada",
+    "version": null,
+    "fechaEmision": null
+  },
+  "clienteInforme": {
+    "nombre": "Austral Leasing Habitacional",
+    "logoUrl": null,
+    "nombreRevisor": null
+  },
+  "partes": {
+    "propietario": "Miguenson Rameau",
+    "rut": "9.588.043-6",
+    "ejecutivo": "Vicente Sepúlveda",
+    "tasador": {
+      "nombre": "Sergio (nutricionsaludketo)",
+      "firmaUrl": "«dataURI 6835»"
+    },
+    "visador": {
+      "nombre": "Héctor Martínez C."
+    },
+    "fechaVisita": "2026-05-07",
+    "fechaVisado": null
+  },
+  "propiedad": {
+    "direccion": "Calle Caspana N°310, Departamento: N° 14, Block A, Población Valle de la Luna",
+    "comuna": "Quilicura",
+    "region": "Metropolitana de Santiago",
+    "tipoPropiedad": "Departamento",
+    "objetivo": "Refinanciamiento",
+    "nuevoUsado": "usada",
+    "proyectoCondominio": "Valle de la Luna",
+    "supTerrenoM2": 0,
+    "supConstruccionM2": 40,
+    "supPrimerPisoM2": null,
+    "supConstruidaTotal": 0,
+    "anioConstruccion": 1994,
+    "materialPredominante": "ALBAÑILERIA LADRILLO",
+    "calidadConstruccion": null,
+    "estadoConservacion": "Bueno",
+    "agrupacion": "",
+    "orientacion": "",
+    "pisos": 1,
+    "dormitorios": 2,
+    "banos": 1,
+    "estacionamientos": 0,
+    "bodegas": 0,
+    "dfl2": "NO",
+    "velocidadVentaEstimada": "8 a 10 meses",
+    "tipoZonaDescripcion": "PRMS (Quilicura)",
+    "vidaUtil": 40
+  },
+  "sii": {
+    "rolSii": "658-128",
+    "avaluoTotal": 16551115,
+    "avaluoFiscalUf": 16551115,
+    "avaluoExento": null,
+    "contribucionAnual": null,
+    "calidadSii": "",
+    "destinoSii": "HABITACIONAL",
+    "codComuna": "",
+    "codManzana": "658",
+    "codPredio": "128",
+    "ubicacionUrbanoRural": "urbano",
+    "cg": "",
+    "ociv": "",
+    "oc": "",
+    "g": "",
+    "porUnidad": []
+  },
+  "cuadro": {
+    "items": [
+      {
+        "id": "recqd8VSrrm9ZaVfY",
+        "orden": 1,
+        "descripcion": "Depto N° 14, Block A",
+        "tipoItem": "Edificacion",
+        "supM2": 40,
+        "ufM2Aplicado": 25.6,
+        "factorAplicado": 0.8,
+        "ufTotalItem": 1024,
+        "aportaAGarantia": false,
+        "situacionMunicipal": "Regularizado"
+      }
+    ],
+    "totalUf": 1024
+  },
+  "terminales": {
+    "valorComercialUf": 1024,
+    "valorComercialClp": 41178572.8,
+    "valorReposicionUf": 1024,
+    "valorReposicionClp": 41178572.8,
+    "seguroIncendioUf": 1024,
+    "seguroIncendioClp": 41178572.8,
+    "avaluoFiscalUf": 411.5815728319754,
+    "valorRemateUf": 665.6,
+    "valorRemateClp": 26766072.32,
+    "valorLiquidacionUf": 844.8,
+    "valorLiquidacionClp": 33972322.559999995,
+    "rentaPerpetuaClp": 48888888.88888889,
+    "ingresoLiquidoAnualClp": 2200000,
+    "ufDia": 40213.45,
+    "usdDia": 892.83,
+    "fechaUf": "2026-05-07",
+    "valorReposicionUsd": 46121.403626670246,
+    "seguroIncendioUsd": 46121.403626670246,
+    "avaluoFiscalUsd": 18537.812349495423,
+    "valorRemateUsd": 29978.912357335663,
+    "valorLiquidacionUsd": 38050.15799200295
+  },
+  "comparablesInforme": {
+    "filas": [
+      {
+        "id": "recfOt8TPcQu1fMG4",
+        "numero": null,
+        "direccion": "Toconce 551, Quilicura",
+        "comuna": "Quilicura",
+        "supTerreno": null,
+        "supConstruida": 40,
+        "precioUf": 1017,
+        "anio": 1994,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "995941556",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 25.425
+      },
+      {
+        "id": "recf7H6rfsQ4IBTl7",
+        "numero": null,
+        "direccion": "Socoroma 580, Quilicura,",
+        "comuna": "Quilicura",
+        "supTerreno": null,
+        "supConstruida": 40,
+        "precioUf": 1096,
+        "anio": 1995,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "978484811",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 27.4
+      },
+      {
+        "id": "recaojQfIfdvbgj0O",
+        "numero": null,
+        "direccion": "Manuel Antonio Matta/ Villa Raul Silva Henriquez",
+        "comuna": "Quilicura",
+        "supTerreno": null,
+        "supConstruida": 40,
+        "precioUf": 1145,
+        "anio": 1994,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "997151166",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 28.625
+      },
+      {
+        "id": "recMD8w6wIPMC1JuC",
+        "numero": null,
+        "direccion": "Las Violetas, Quilicura",
+        "comuna": "Quilicura",
+        "supTerreno": null,
+        "supConstruida": 40,
+        "precioUf": 1093,
+        "anio": 1992,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "996181515",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 27.325
+      },
+      {
+        "id": "rec8KVlwKrgXstI26",
+        "numero": null,
+        "direccion": "San Enrique, Quilicura",
+        "comuna": "Quilicura",
+        "supTerreno": null,
+        "supConstruida": 52,
+        "precioUf": 1505,
+        "anio": 1994,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "992811788",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 28.942307692307693
+      }
+    ],
+    "ofertas": {
+      "filas": [
+        {
+          "id": "recfOt8TPcQu1fMG4",
+          "numero": 1,
+          "direccion": "Toconce 551, Quilicura",
+          "comuna": "Quilicura",
+          "supTerreno": null,
+          "supConstruida": 40,
+          "precioUf": 1017,
+          "anio": 1994,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "995941556",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 25.425
+        },
+        {
+          "id": "recf7H6rfsQ4IBTl7",
+          "numero": 2,
+          "direccion": "Socoroma 580, Quilicura,",
+          "comuna": "Quilicura",
+          "supTerreno": null,
+          "supConstruida": 40,
+          "precioUf": 1096,
+          "anio": 1995,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "978484811",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 27.4
+        },
+        {
+          "id": "recaojQfIfdvbgj0O",
+          "numero": 3,
+          "direccion": "Manuel Antonio Matta/ Villa Raul Silva Henriquez",
+          "comuna": "Quilicura",
+          "supTerreno": null,
+          "supConstruida": 40,
+          "precioUf": 1145,
+          "anio": 1994,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "997151166",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 28.625
+        },
+        {
+          "id": "recMD8w6wIPMC1JuC",
+          "numero": 4,
+          "direccion": "Las Violetas, Quilicura",
+          "comuna": "Quilicura",
+          "supTerreno": null,
+          "supConstruida": 40,
+          "precioUf": 1093,
+          "anio": 1992,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "996181515",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 27.325
+        },
+        {
+          "id": "rec8KVlwKrgXstI26",
+          "numero": 5,
+          "direccion": "San Enrique, Quilicura",
+          "comuna": "Quilicura",
+          "supTerreno": null,
+          "supConstruida": 52,
+          "precioUf": 1505,
+          "anio": 1994,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "992811788",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 28.942307692307693
+        }
+      ],
+      "promedio": {
+        "totalUf": 1171.2,
+        "supTerreno": null,
+        "supConstruida": 42.4,
+        "oocc": null,
+        "ufM2Terreno": null,
+        "ufM2Construccion": 27.543461538461543
+      },
+      "tasacionVsPct": -7.055981455880925
+    },
+    "cbr": {
+      "filas": [],
+      "promedio": {
+        "totalUf": null,
+        "supTerreno": null,
+        "supConstruida": null,
+        "oocc": null,
+        "ufM2Terreno": null,
+        "ufM2Construccion": null
+      },
+      "tasacionVsPct": null
+    },
+    "tasacionFila": {
+      "totalUf": 1024,
+      "supTerreno": 0,
+      "supConstruida": 40,
+      "oocc": null,
+      "ufM2Terreno": null,
+      "ufM2Construccion": 25.6
+    },
+    "promedioUfM2": 27.543461538461543,
+    "usadosEnPromedio": 5,
+    "cumpleMinimo": true,
+    "tasacionUfM2": 25.6,
+    "tasacionVsPct": -7.055981455880925
+  },
+  "rentabilidad": {
+    "arriendoBrutoMensualClp": 200000,
+    "gastoAnualClp": 200000,
+    "ingresoLiquidoAnualClp": 2200000,
+    "rentaPerpetuaClp": 48888888.88888889,
+    "tasaCapRate": 0.045,
+    "arriendoUfMes": 4.973460372089438
+  },
+  "textosIA": {
+    "sintesisPropiedad": "El bien es un departamento que se encuentra en la Población Valle de la Luna, ubicado en Calle Caspana N° 310. El edificio se desarrolla en un volumen de 3 pisos el cual está conectado por escaleras. La propiedad se encuentra en el piso 1 con orientación norte, tiene 40 m² interiores, sin terraza. El departamento cuenta con living comedor, cocina, baño y 2 dormitorios.",
+    "descripcionSector": "El sector es de carácter mixto. El cual se compone de viviendas de baja densidad, algunas de las cuales han sido modificadas para albergar comercio, edificios habitacional de altura media, servicios y comercios varios. El comercio, el transporte y los servicios se encuentran en la avenida más cercana: San Luis.",
+    "textoExpropiacion": null
+  },
+  "cualitativa": {
+    "normativa": null,
+    "sector": null,
+    "geometriaTerreno": null,
+    "emplazamiento": null,
+    "constructivas": null,
+    "servicios": null,
+    "comodidades": null,
+    "detallePropiedad": null
+  },
+  "recintos": {
+    "ampliaciones": [],
+    "habitacionesPorNivel": [
+      {
+        "id": "rec0xm6CH3Ka0x314",
+        "nivel": "Piso1",
+        "tipoRecinto": "Bano",
+        "cantidad": 1
+      },
+      {
+        "id": "recX31Eb5hOiySgmt",
+        "nivel": "Piso1",
+        "tipoRecinto": "Cocina",
+        "cantidad": 1
+      },
+      {
+        "id": "recmyPZIG3gsur56P",
+        "nivel": "Piso1",
+        "tipoRecinto": "Comedor",
+        "cantidad": 1
+      },
+      {
+        "id": "reco5fibWH2acLw8h",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Simple",
+        "cantidad": 2
+      },
+      {
+        "id": "reczAcDaSodvPONHC",
+        "nivel": "Piso1",
+        "tipoRecinto": "Living",
+        "cantidad": 1
+      },
+      {
+        "id": "relleno-Piso1-Sala",
+        "nivel": "Piso1",
+        "tipoRecinto": "Sala",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Hall",
+        "nivel": "Piso1",
+        "tipoRecinto": "Hall",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Suite",
+        "nivel": "Piso1",
+        "tipoRecinto": "Suite",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-D.Servicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Servicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Escritorio",
+        "nivel": "Piso1",
+        "tipoRecinto": "Escritorio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-MedioBano",
+        "nivel": "Piso1",
+        "tipoRecinto": "MedioBano",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-BanoServicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "BanoServicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Lavadero",
+        "nivel": "Piso1",
+        "tipoRecinto": "Lavadero",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Otro",
+        "nivel": "Piso1",
+        "tipoRecinto": "Otro",
+        "cantidad": 0
+      }
+    ],
+    "totalRecintos": 6,
+    "terminacionesPorRecinto": []
+  },
+  "fotos": {
+    "total": 16,
+    "porCategoria": {
+      "Mapa de Ubicación": 1,
+      "Ofertas / Comparables": 3,
+      "Mapa de referencias": 1,
+      "planificacion": 1,
+      "Fachada / Exterior": 4,
+      "Living / Comedor": 2,
+      "Cocina": 1,
+      "Baños": 1,
+      "Habitaciones": 2
+    },
+    "fotos": [
+      {
+        "id": "recrkGPJE85WUT68D",
+        "nombre": "caso3_mapa_ubicacion_0.jpg",
+        "url": "«dataURI 94687»",
+        "categoria": "Mapa de Ubicación"
+      },
+      {
+        "id": "recnfzPvSpeliVNHv",
+        "nombre": "caso3_ofertas_comparables_1.jpg",
+        "url": "«dataURI 72911»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recrYDDG8aLFhnsdu",
+        "nombre": "caso3_ofertas_comparables_2.jpg",
+        "url": "«dataURI 65795»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recFL1hSlOQTRtcd0",
+        "nombre": "caso3_ofertas_comparables_3.jpg",
+        "url": "«dataURI 50299»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recXdxGqn3JIKL55K",
+        "nombre": "caso3_mapa_referencias_4.jpg",
+        "url": "«dataURI 87903»",
+        "categoria": "Mapa de referencias"
+      },
+      {
+        "id": "recMjL7YiPyKXmRxo",
+        "nombre": "caso3_planificacion_5.jpg",
+        "url": "«dataURI 26115»",
+        "categoria": "planificacion"
+      },
+      {
+        "id": "rec774cSAfUDqEZmn",
+        "nombre": "caso3_fachada_exterior_6.jpg",
+        "url": "«dataURI 73095»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "recQ9Lf8v4Fqh01QM",
+        "nombre": "caso3_fachada_exterior_7.jpg",
+        "url": "«dataURI 55743»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "rec4jAypMDEyCBnc9",
+        "nombre": "caso3_living_comedor_8.jpg",
+        "url": "«dataURI 35983»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "recRjUy7YcDN0usiv",
+        "nombre": "caso3_living_comedor_9.jpg",
+        "url": "«dataURI 44191»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "rec3V0vZwOl6hNiZf",
+        "nombre": "caso3_cocina_10.jpg",
+        "url": "«dataURI 29279»",
+        "categoria": "Cocina"
+      },
+      {
+        "id": "recFV3vdAoIukJDyx",
+        "nombre": "caso3_banos_11.jpg",
+        "url": "«dataURI 35023»",
+        "categoria": "Baños"
+      },
+      {
+        "id": "recN3UPHsl44XpBae",
+        "nombre": "caso3_habitaciones_12.jpg",
+        "url": "«dataURI 21671»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "reccXilm4dEKvgX6j",
+        "nombre": "caso3_habitaciones_13.jpg",
+        "url": "«dataURI 33055»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recY6RToNA6YiMt1E",
+        "nombre": "caso3_fachada_exterior_14.jpg",
+        "url": "«dataURI 37431»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "rectStUOwjNuffnBm",
+        "nombre": "caso3_fachada_exterior_15.jpg",
+        "url": "«dataURI 53687»",
+        "categoria": "Fachada / Exterior"
+      }
+    ]
+  },
+  "anexos": {
+    "documentos": []
+  },
+  "imagenes": {
+    "mapaUbicacion": "«dataURI 94687»",
+    "fachada": "«dataURI 73095»",
+    "firma": "«dataURI 6835»",
+    "refMapa": "«dataURI 87903»",
+    "ref1": "«dataURI 72911»",
+    "ref2": "«dataURI 65795»",
+    "ref3": "«dataURI 50299»",
+    "anexo1Plano": null,
+    "anexo1Esquema": null,
+    "anexo1CuadroSup": null,
+    "anexo1Emplazamiento": null,
+    "anexo1Aerea": null,
+    "anexo1MapaSii": null,
+    "anexo1InfoSii": null,
+    "anexo2RolAvaluo": null,
+    "anexo2Permiso": null,
+    "anexo2Escritura": null,
+    "anexo2NoExpropiacion": null,
+    "anexo2Recepcion": null,
+    "anexo2Tgr": null
+  },
+  "mapa": {
+    "staticMapUrl": null,
+    "lat": null,
+    "long": null
+  },
+  "legales": {
+    "fojas": "",
+    "numeroInscripcion": "",
+    "anoInscripcion": null,
+    "permisoEdificacion": "S/I",
+    "recepcionFinal": "Año 1994"
+  },
+  "huecos": [
+    {
+      "ruta": "textosIA.sintesisPropiedad",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.descripcionSector",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.textoExpropiacion",
+      "eIds": [
+        "E-57"
+      ],
+      "pId": "P1-1",
+      "motivo": "Plantilla con variables; falta la columna afecto_expropiacion"
+    },
+    {
+      "ruta": "cualitativa.detallePropiedad",
+      "eIds": [
+        "E-37",
+        "E-39",
+        "E-41",
+        "E-45",
+        "E-52",
+        "E-56",
+        "E-54",
+        "E-55"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (CI-023): sin columnas destino"
+    },
+    {
+      "ruta": "cualitativa.constructivas",
+      "eIds": [
+        "E-176..E-191"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (6 CI-023 + 7 silenciosos): sin columnas"
+    },
+    {
+      "ruta": "cualitativa.comodidades",
+      "eIds": [
+        "E-207"
+      ],
+      "pId": "P1-1",
+      "motivo": "14 switches capturados y descartados; TX_Amenities no existe"
+    },
+    {
+      "ruta": "cualitativa.normativa",
+      "eIds": [
+        "E-125..E-140"
+      ],
+      "pId": "P1-2",
+      "motivo": "Sin catálogo normativo poblado ni UI (rescate M_Zonificacion en T4)"
+    },
+    {
+      "ruta": "cualitativa.sector",
+      "eIds": [
+        "E-141..E-146",
+        "E-148..E-157"
+      ],
+      "pId": "P1-2",
+      "motivo": "Mercado y sector sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.geometriaTerreno",
+      "eIds": [
+        "E-159..E-165"
+      ],
+      "pId": "P1-2",
+      "motivo": "Forma/pendiente/frente/deslindes sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.emplazamiento",
+      "eIds": [
+        "E-167..E-175"
+      ],
+      "pId": "P1-2",
+      "motivo": "Emplazamiento cualitativo sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.servicios",
+      "eIds": [
+        "E-197..E-201"
+      ],
+      "pId": "P1-2",
+      "motivo": "Servicios de la propiedad sin UI ni columnas"
+    },
+    {
+      "ruta": "terminales.usdDia",
+      "eIds": [
+        "E-103"
+      ],
+      "pId": "P1-3",
+      "motivo": "tipo_cambio_usd sin escritor automático (el cron UF no lo escribe; el valor de 0066 es seed manual)"
+    },
+    {
+      "ruta": "mapa.staticMapUrl",
+      "eIds": [
+        "E-120"
+      ],
+      "pId": "P1-4",
+      "motivo": "Google Static Maps sin implementación ni API key"
+    },
+    {
+      "ruta": "clienteInforme.logoUrl",
+      "eIds": [
+        "E-02"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente sin clientes reales (H9 — la portada MET salió con marca Austral)"
+    },
+    {
+      "ruta": "clienteInforme.nombreRevisor",
+      "eIds": [
+        "E-114"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente.nombre_revisor sin valor (H9)"
+    },
+    {
+      "ruta": "comparablesInforme.promedioUfM2",
+      "eIds": [
+        "E-66..E-68",
+        "E-73..E-75"
+      ],
+      "pId": "P1-8",
+      "motivo": "Promedios y fila TASACIÓN calculados por el ensamblador, sin persistencia (puente hasta T2)"
+    },
+    {
+      "ruta": "partes.fechaVisado",
+      "eIds": [
+        "E-113"
+      ],
+      "pId": "P1-9",
+      "motivo": "IF-04 (visación) no existe"
+    },
+    {
+      "ruta": "propiedad.vidaUtil",
+      "eIds": [
+        "E-48",
+        "E-76",
+        "E-81"
+      ],
+      "pId": "P1-9",
+      "motivo": "F_VidaUtil existe pero está fuera de la regla v32"
+    }
+  ],
+  "canonico": {
+    "id": "recE1LwwH2xbcCHti",
+    "codigo": "VP-2026-0075",
+    "estado": "calculada",
+    "versionVigente": null,
+    "valorDestacado": {
+      "valorUf": 1024,
+      "capRate": 0.045,
+      "esOverride": false,
+      "ufDiaVisita": null
+    },
+    "datosSii": {
+      "rolSii": "658-128",
+      "avaluoTotal": 16551115,
+      "avaluoFiscalUf": 16551115,
+      "avaluoExento": null,
+      "contribucionAnual": null,
+      "calidadSii": "",
+      "destinoSii": "HABITACIONAL",
+      "codComuna": "",
+      "codManzana": "658",
+      "codPredio": "128",
+      "ubicacionUrbanoRural": "urbano",
+      "cg": "",
+      "ociv": "",
+      "oc": "",
+      "g": "",
+      "porUnidad": []
+    },
+    "observaciones": {
+      "observacionesTasador": "",
+      "observacionRechazo": "",
+      "overrides": [
+        {
+          "campo": "Vida útil",
+          "valor": 40
+        }
+      ],
+      "motivoOverride": "SANDBOX T-REPLICA-20261005: el XLSM ALH calcula Reposición = factor_garantia(0.8) × edificación a-nuevo (Portada BG72=1024 = 0.8×1280) y F_ValorReposicionUF v32 calcula a-nuevo sin ese factor (daría 1280). Mismo gap de fórmula del Caso 2 — ver overrides-caso3.md.",
+      "autorOverride": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente caso 3)",
+      "antecedentesLegales": {
+        "fojas": "",
+        "numeroInscripcion": "",
+        "anoInscripcion": null,
+        "permisoEdificacion": "S/I",
+        "recepcionFinal": "Año 1994"
+      }
+    },
+    "anexosRanuras": [
+      {
+        "ranura": "anexo1Plano",
+        "codigo": "foto_plano_cuadro_superficies",
+        "label": "Plano / cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Esquema",
+        "codigo": "esquema_superficies",
+        "label": "Esquema de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1CuadroSup",
+        "codigo": "cuadro_superficies",
+        "label": "Cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Emplazamiento",
+        "codigo": "planta_emplazamiento",
+        "label": "Planta de emplazamiento",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Aerea",
+        "codigo": "foto_aerea",
+        "label": "Foto aérea",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1MapaSii",
+        "codigo": "mapa_sii",
+        "label": "Mapa SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1InfoSii",
+        "codigo": "foto_fuente_sii",
+        "label": "Información SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2RolAvaluo",
+        "codigo": "certificado_avaluo_fiscal",
+        "label": "Certificado de avalúo fiscal",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Permiso",
+        "codigo": "permiso_edificacion",
+        "label": "Permiso de edificación",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Escritura",
+        "codigo": "escritura_compraventa",
+        "label": "Escritura de compraventa",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2NoExpropiacion",
+        "codigo": "informe_no_expropiacion_serviu",
+        "label": "Informe de no expropiación (SERVIU)",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Recepcion",
+        "codigo": "certificado_recepcion_final",
+        "label": "Certificado de recepción final",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Tgr",
+        "codigo": "certificado_deuda_tgr",
+        "label": "Certificado de deuda TGR",
+        "nombre": null,
+        "thumbnailUrl": null
+      }
+    ],
+    "firmaTasadorUrl": null,
+    "bloques": [
+      {
+        "numero": 1,
+        "id": "cabecera",
+        "titulo": "Cabecera",
+        "vacio": false,
+        "datos": {
+          "codigo": "VP-2026-0075",
+          "codigoExt": "VP-2026-0075",
+          "nuevoUsado": "usada",
+          "cliente": [
+            "recU6gfHmmCWZN5Mm"
+          ],
+          "direccion": "Calle Caspana N°310, Departamento: N° 14, Block A, Población Valle de la Luna",
+          "comuna": [
+            "rec4JGrdbOOTWpZ3L"
+          ],
+          "fechaVisita": "2026-05-07",
+          "version": null
+        }
+      },
+      {
+        "numero": 2,
+        "id": "valor",
+        "titulo": "Valor de tasación",
+        "vacio": false,
+        "datos": {
+          "valorUf": 1024,
+          "capRate": 0.045,
+          "esOverride": false,
+          "ufDiaVisita": null
+        }
+      },
+      {
+        "numero": 3,
+        "id": "antecedentes",
+        "titulo": "Antecedentes de la propiedad",
+        "vacio": false,
+        "datos": {
+          "supTerrenoM2": 0,
+          "supConstruccionM2": 40,
+          "supPrimerPisoM2": null,
+          "supConstruidaTotal": 0,
+          "anioConstruccion": 1994,
+          "materialPredominante": "ALBAÑILERIA LADRILLO",
+          "calidadConstruccion": null,
+          "estadoConservacion": "Bueno",
+          "agrupacion": "",
+          "dormitorios": 2,
+          "banos": 1,
+          "estacionamientos": 0,
+          "bodegas": 0,
+          "dfl2": "NO"
+        }
+      },
+      {
+        "numero": 4,
+        "id": "sii",
+        "titulo": "Datos SII y avalúo",
+        "vacio": false,
+        "datos": {
+          "rolSii": "658-128",
+          "avaluoTotal": 16551115,
+          "avaluoFiscalUf": 16551115,
+          "avaluoExento": null,
+          "contribucionAnual": null,
+          "calidadSii": "",
+          "destinoSii": "HABITACIONAL",
+          "codComuna": "",
+          "codManzana": "658",
+          "codPredio": "128",
+          "ubicacionUrbanoRural": "urbano",
+          "cg": "",
+          "ociv": "",
+          "oc": "",
+          "g": "",
+          "porUnidad": []
+        }
+      },
+      {
+        "numero": 5,
+        "id": "valoracion",
+        "titulo": "Cuadro de valoración",
+        "vacio": false,
+        "datos": {
+          "items": [
+            {
+              "id": "recqd8VSrrm9ZaVfY",
+              "orden": 1,
+              "descripcion": "Depto N° 14, Block A",
+              "tipoItem": "Edificacion",
+              "supM2": 40,
+              "ufM2Aplicado": 25.6,
+              "ufTotalItem": 1024,
+              "aportaAGarantia": false,
+              "situacionMunicipal": "Regularizado"
+            }
+          ],
+          "totalUf": 1024
+        }
+      },
+      {
+        "numero": 6,
+        "id": "comparables",
+        "titulo": "Comparables",
+        "vacio": false,
+        "datos": {
+          "comparables": [
+            {
+              "id": "recfOt8TPcQu1fMG4",
+              "numero": null,
+              "direccion": "Toconce 551, Quilicura",
+              "comuna": "Quilicura",
+              "supTerreno": null,
+              "supConstruida": 40,
+              "precioUf": 1017,
+              "anio": 1994,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "995941556",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 25.425
+            },
+            {
+              "id": "recf7H6rfsQ4IBTl7",
+              "numero": null,
+              "direccion": "Socoroma 580, Quilicura,",
+              "comuna": "Quilicura",
+              "supTerreno": null,
+              "supConstruida": 40,
+              "precioUf": 1096,
+              "anio": 1995,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "978484811",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 27.4
+            },
+            {
+              "id": "recaojQfIfdvbgj0O",
+              "numero": null,
+              "direccion": "Manuel Antonio Matta/ Villa Raul Silva Henriquez",
+              "comuna": "Quilicura",
+              "supTerreno": null,
+              "supConstruida": 40,
+              "precioUf": 1145,
+              "anio": 1994,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "997151166",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 28.625
+            },
+            {
+              "id": "recMD8w6wIPMC1JuC",
+              "numero": null,
+              "direccion": "Las Violetas, Quilicura",
+              "comuna": "Quilicura",
+              "supTerreno": null,
+              "supConstruida": 40,
+              "precioUf": 1093,
+              "anio": 1992,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "996181515",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 27.325
+            },
+            {
+              "id": "rec8KVlwKrgXstI26",
+              "numero": null,
+              "direccion": "San Enrique, Quilicura",
+              "comuna": "Quilicura",
+              "supTerreno": null,
+              "supConstruida": 52,
+              "precioUf": 1505,
+              "anio": 1994,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "992811788",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 28.942307692307693
+            }
+          ],
+          "promedioUfM2": 27.543461538461543,
+          "usadosEnPromedio": 5,
+          "cumpleMinimo": true
+        }
+      },
+      {
+        "numero": 7,
+        "id": "fotografico",
+        "titulo": "Registro fotográfico",
+        "vacio": false,
+        "datos": {
+          "total": 16,
+          "porCategoria": {
+            "cocina": 1,
+            "living_comedor": 2,
+            "fachada_exterior": 4,
+            "ofertas_comparables": 3,
+            "banos": 1,
+            "planificacion": 1,
+            "habitaciones": 2,
+            "mapa_referencias": 1,
+            "mapa_ubicacion": 1
+          },
+          "fotos": [
+            {
+              "id": "rec3V0vZwOl6hNiZf",
+              "nombre": "caso3_cocina_10.jpg",
+              "categoria": "cocina",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 10
+            },
+            {
+              "id": "rec4jAypMDEyCBnc9",
+              "nombre": "caso3_living_comedor_8.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 8
+            },
+            {
+              "id": "rec774cSAfUDqEZmn",
+              "nombre": "caso3_fachada_exterior_6.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 6
+            },
+            {
+              "id": "recFL1hSlOQTRtcd0",
+              "nombre": "caso3_ofertas_comparables_3.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 3
+            },
+            {
+              "id": "recFV3vdAoIukJDyx",
+              "nombre": "caso3_banos_11.jpg",
+              "categoria": "banos",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 11
+            },
+            {
+              "id": "recMjL7YiPyKXmRxo",
+              "nombre": "caso3_planificacion_5.jpg",
+              "categoria": "planificacion",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 5
+            },
+            {
+              "id": "recN3UPHsl44XpBae",
+              "nombre": "caso3_habitaciones_12.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 12
+            },
+            {
+              "id": "recQ9Lf8v4Fqh01QM",
+              "nombre": "caso3_fachada_exterior_7.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 7
+            },
+            {
+              "id": "recRjUy7YcDN0usiv",
+              "nombre": "caso3_living_comedor_9.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 9
+            },
+            {
+              "id": "recXdxGqn3JIKL55K",
+              "nombre": "caso3_mapa_referencias_4.jpg",
+              "categoria": "mapa_referencias",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 4
+            },
+            {
+              "id": "recY6RToNA6YiMt1E",
+              "nombre": "caso3_fachada_exterior_14.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 14
+            },
+            {
+              "id": "reccXilm4dEKvgX6j",
+              "nombre": "caso3_habitaciones_13.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 13
+            },
+            {
+              "id": "recnfzPvSpeliVNHv",
+              "nombre": "caso3_ofertas_comparables_1.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 1
+            },
+            {
+              "id": "recrYDDG8aLFhnsdu",
+              "nombre": "caso3_ofertas_comparables_2.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 2
+            },
+            {
+              "id": "recrkGPJE85WUT68D",
+              "nombre": "caso3_mapa_ubicacion_0.jpg",
+              "categoria": "mapa_ubicacion",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 0
+            },
+            {
+              "id": "rectStUOwjNuffnBm",
+              "nombre": "caso3_fachada_exterior_15.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 15
+            }
+          ]
+        }
+      },
+      {
+        "numero": 8,
+        "id": "observaciones",
+        "titulo": "Observaciones y overrides",
+        "vacio": false,
+        "datos": {
+          "observacionesTasador": "",
+          "observacionRechazo": "",
+          "overrides": [
+            {
+              "campo": "Vida útil",
+              "valor": 40
+            }
+          ],
+          "motivoOverride": "SANDBOX T-REPLICA-20261005: el XLSM ALH calcula Reposición = factor_garantia(0.8) × edificación a-nuevo (Portada BG72=1024 = 0.8×1280) y F_ValorReposicionUF v32 calcula a-nuevo sin ese factor (daría 1280). Mismo gap de fórmula del Caso 2 — ver overrides-caso3.md.",
+          "autorOverride": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente caso 3)",
+          "antecedentesLegales": {
+            "fojas": "",
+            "numeroInscripcion": "",
+            "anoInscripcion": null,
+            "permisoEdificacion": "S/I",
+            "recepcionFinal": "Año 1994"
+          }
+        }
+      }
+    ]
+  }
+}

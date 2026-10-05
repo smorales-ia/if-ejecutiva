@@ -1,0 +1,1267 @@
+{
+  "generado": "recon BLOQUE 0",
+  "vp0067": {
+    "solicitud": {
+      "TX_Adjuntos": [
+        "rec95X1HPJB7ZUo5G",
+        "recWdb4FAphNaTE0I",
+        "rectcojWwOIonkQRA",
+        "rechQjmqpb3HMWyeb",
+        "rectCtwDMT2mwN4GO",
+        "reckRZ0e9mwtR6xCC",
+        "recpI0wPyESJ0Etvs",
+        "rec7t6MPxKu10WniF",
+        "recM3pvhvf42qe3cb",
+        "recTlZIupiHCyf0Qy",
+        "recTMcPu6X5GqMLdP",
+        "reckuOQ2EQ8II75Kj",
+        "recLz5v9v1QyMxrY0",
+        "recHjxePGcJ1gM0c1",
+        "recs57FpScfoe639m",
+        "recx3uCAlp6rBtnhT",
+        "recG6jAo8CK2EASDc",
+        "recHwkvir7mj9uAIB",
+        "recQ2d3LLiZf0qmK1",
+        "rec5t74bqVac4LiSJ",
+        "recoGxiYxeUs8kJlK",
+        "recxOSsax7KWH8QVU",
+        "rec5KpO655oCqDKYQ",
+        "receKlrASmHqsxGLO",
+        "recO1c5RxM4gAXfAa",
+        "rec7KDUUpuPJ4ov06",
+        "recGuGlyh2WDHHxjr",
+        "recSSA0wfHsb8V2CN",
+        "recNktvt91eO41wo6",
+        "recaNIeSLo5c4GuRp",
+        "recyWOZY3faaDPbUj",
+        "recXsnwI5eLeWyrtw",
+        "rechuTt7dJgQzsu84",
+        "recSIYEtTs7yJ6FI8",
+        "rec30QF4gVWxj3Cfk",
+        "reccsOuryOiUsFAxL"
+      ],
+      "estado": "pdf_listo",
+      "tipo_propiedad": [
+        "recrXDAjlVCe59XBW"
+      ],
+      "cliente_final_nombre": "FRANCISCO JOSÉ VERGARA UNDURRAGA",
+      "lookup_rango_max": [
+        100
+      ],
+      "pdf_final_url": "https://www.dropbox.com/scl/fi/5nqngrsjdfelbtuic7s9b/FRANCISCO-JOS-VERGARA-UNDURRAGA_METLIFE-6283.pdf?rlkey=mgl40k4f98jz24knnzdr43osj&dl=0",
+      "sla_semaforo_etapa": "sin_dato",
+      "A_Eventos": [
+        "recs1yH45fF8yss67",
+        "rechCLEPB61eSHmST",
+        "recfQXs1yUbrWB6EY",
+        "recfVhSzINbLGaSKx",
+        "recbbYWTxqOwRYw4c",
+        "recTAPeyeW8OYSLpD",
+        "rec1RI5PnNGp16ALt",
+        "rec7Wej7nnS9cCJms"
+      ],
+      "codigo_solicitud": "VP-2026-0067",
+      "TX_ItemsCuadroValoracion": [
+        "recnIInvI1IchIfX2",
+        "recQuqMyXs7ttOHVb",
+        "recZCOq0TTlzVouzP",
+        "recTV6R4rxuDyamYG",
+        "rechm7Py8l1qtcMzl",
+        "recMBbJ4HHfZYOGTV"
+      ],
+      "TX_Comparables": [
+        "rec2aFg7XPsbSjufp",
+        "recXGxAeVg2ThVUfQ",
+        "recKGLWdMaK0lrXCh",
+        "recUAawogrtK3AJ59",
+        "recniOUZHto7ZaA1E",
+        "recmizO68egY2SUiR",
+        "recD9eZEG2Ilpm2lx"
+      ],
+      "override_motivo": "MET-6283-REAL · RF-09 en vivo con los 8 adjuntos reales de docs/_referencias/Met_6283 · SANDBOX aislado por notas+numero -REAL",
+      "tipo_propiedad_nuevo_usado": "usada",
+      "coordinacion_vigente": "confirmada",
+      "numero_solicitud": "METLIFE -6283",
+      "tipo_informe": [
+        "recreojxTjoAWOEHa"
+      ],
+      "comuna": [
+        "recKT9mUJkeq3YuBu"
+      ],
+      "direccion": "LOS EUCALIPTUS, Casa: N°2100, Condominio LAS BRISAS DE CHICUREO",
+      "regla_aplicada": [
+        "recYEf9XepX4SmLnH"
+      ],
+      "ultima_modificacion": "2026-10-05T11:00:24.000Z",
+      "fecha_visita_programada": "2026-04-13",
+      "fuera_rango": 0,
+      "ejecutivo_solicitante": "MONICA REYES PINTO",
+      "codigo_ext": "VP-2026-0067",
+      "semaforo_sla": "VENCIDO",
+      "TX_Calculos": [
+        "recJBJQdcuodR7Kxd",
+        "recC3AHAcXJUW58rr",
+        "rec63XSh57aHqFAEF",
+        "rec2BVb0aDWPQ5Csl",
+        "reci5VTW7Hg8nGuLd",
+        "rectIYWksC4IWONKZ",
+        "recqReUSZL2unLhVm",
+        "recwMUKdTrb6fFqjM",
+        "recRMbaSLqtu5tslm",
+        "recnKoDHrykaqYNGA",
+        "rec49wTN71mEwLR5n",
+        "recdLBNX3SrZYxulp",
+        "recHMcaG1RVVs41JR",
+        "recb1arfVgTtNZ4Uz",
+        "recOQzPNt1uZEmSls"
+      ],
+      "dias_desde_solicitud": 14,
+      "n_operacion_cliente": 900159638,
+      "proyecto_condominio": "LAS BRISAS DE CHICUREO",
+      "visador": [
+        "recrjQDympldI186S"
+      ],
+      "solicitud_id": 67,
+      "tasador": [
+        "recTJcV3BIvdcG4em"
+      ],
+      "TX_DatosTasacion": [
+        "recy8q3Tq9omjdNUf"
+      ],
+      "fecha_limite_entrega": "2026-04-15T00:00:00.000Z",
+      "fecha_creacion": "2026-09-22T02:07:50.000Z",
+      "TX_HabitacionesPorNivel": [
+        "recnMeFfU9jTfBAf6",
+        "recFxdYpaFDstXsFC",
+        "recL3B487noW4qrsL",
+        "recKBxWV8flOICDTY",
+        "recr5qBotjKdqKLtT",
+        "recTHqfySqehAwT56",
+        "rec7BKSfhPhKJshtF",
+        "recrRdpUe5EsxoAFH",
+        "recfd0RTx4q3xqrSc",
+        "rec5LRrxMRYeXImUW",
+        "recGj1VoH6b2PboOr",
+        "rec2FJTUr70MkIhCe"
+      ],
+      "dias_desde_visita": 175,
+      "fecha_visita": "2026-04-13",
+      "TX_DocumentosGenerados": [
+        "recWP8Ex4XuPoNIfG",
+        "rec2iw3c9ft5d1TXR",
+        "rec0t8n2oXJB29cMZ",
+        "recIxc5nmLZClvUM0",
+        "recYasPnZWAAoA3pW",
+        "rec2jNFZBEVTqSFHJ"
+      ],
+      "TX_DocumentosLegales": [
+        "rec7t4cD2zjuJKpXq"
+      ],
+      "cliente": [
+        "recIg8NtVhptXkEUJ"
+      ],
+      "fecha_solicitud": "2026-09-21T12:00:00.000Z",
+      "vida_util_override": 70,
+      "cliente_final_rut": "16.610.203-0",
+      "record_id": "recmMzeu3eWGxyXsf",
+      "region": "Metropolitana de Santiago",
+      "notas": "«str len=190: MET-6283-REAL-20260921 · REPLICA TASACION REAL FRANCISCO VER…»",
+      "rol_sii": "N°882-40"
+    },
+    "datosTasacion": {
+      "count": 1,
+      "sample": [
+        {
+          "id": "recy8q3Tq9omjdNUf",
+          "fields": {
+            "dormitorios": 4,
+            "arriendo_bruto_mensual_clp": 3300000,
+            "avaluo_exento": 0,
+            "estacionamientos": 4,
+            "velocidad_venta_estimada": "8 a 10 meses",
+            "sup_terreno_m2": 5024.86,
+            "avaluo_fiscal_uf": 339809429,
+            "origen_dato": "tipeado",
+            "descripcion_sector": "«str len=424: El sector corresponde a una zona rural de la comuna de Colin…»",
+            "sintesis_descriptiva": "«str len=543: La propiedad corresponde a una casa ubicada en Los Eucaliptu…»",
+            "avaluo_fiscal_clp": 339809429,
+            "ubicacion_urbano_rural": "rural",
+            "bodegas": 1,
+            "permiso_edif_num": "N°319  09/09/2020",
+            "ingreso_liquido_anual": 36300000,
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "cod_sii_comuna": "14201",
+            "propietario_nombre": "FRANCISCO JOSÉ VERGARA UNDURRAGA",
+            "gasto_anual_clp": 3300000,
+            "n_cert_no_expropiacion": "3444743",
+            "destino_sii": "HABITACIONAL",
+            "sup_construccion_m2": 249.91,
+            "cod_sii_manzana": "882",
+            "uf_dia_visita": 39894.61,
+            "arriendo_mensual": 3300000,
+            "tasa_cap_rate": 0.045,
+            "tipo_zona_descripcion": "Rural - IPB Colina",
+            "propietario_rut": "16.610.203-0",
+            "avaluo_total": 339809429,
+            "banos": 4,
+            "estado_conservacion": "Bueno",
+            "sup_construida_total": 0,
+            "contribucion_anual": 0,
+            "orientacion": "N",
+            "gasto_anual": 3300000,
+            "pisos": 1,
+            "coef_ocupacion_suelo": 0,
+            "recepcion_final": "N°210  18/07/2024",
+            "cod_sii_predio": "40",
+            "material_predominante": "ALBAÑILERÍA LADRILLO",
+            "dfl2": "NO",
+            "fecha_creacion": "2026-09-22T16:43:04.000Z",
+            "fecha_ultima_modificacion": "2026-09-29T23:47:18.000Z",
+            "anio_construccion": 2024
+          }
+        }
+      ]
+    },
+    "comparables": {
+      "count": 7,
+      "sample": [
+        {
+          "id": "rec2aFg7XPsbSjufp",
+          "fields": {
+            "oo_cc_uf": 750,
+            "adjunto_origen": [
+              "rectcojWwOIonkQRA"
+            ],
+            "antiguedad_meses": {
+              "specialValue": "NaN"
+            },
+            "ultima_modificacion": "2026-09-29T01:51:07.000Z",
+            "tipo_referencia": "Oferta",
+            "comp_id": 125,
+            "telefono_contacto": "979998714",
+            "anio": 2015,
+            "precio_uf": 20000,
+            "clave_natural": "VP-2026-0067|COMP-01",
+            "comuna_comparable": "Colina",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "valor_ajustado_uf": 0,
+            "valor_uf_m2": 0,
+            "sup_terreno_m2": 5051,
+            "sup_construccion_m2": 239,
+            "uf_m2_terreno": 3.959611958028113,
+            "direccion": "Las Brisas de Chicureo - Los Boldos",
+            "uf_m2_construccion": 83.68200836820084,
+            "uf_m2_terreno_f": 2.2,
+            "uf_m2_construccion_f": 34.05,
+            "fecha_publicacion": "2026-04-01"
+          }
+        },
+        {
+          "id": "recD9eZEG2Ilpm2lx",
+          "fields": {
+            "oo_cc_uf": 700,
+            "adjunto_origen": [
+              "rectcojWwOIonkQRA"
+            ],
+            "antiguedad_meses": {
+              "specialValue": "NaN"
+            },
+            "numero": "66056",
+            "ultima_modificacion": "2026-09-29T01:51:12.000Z",
+            "tipo_referencia": "CBR",
+            "comp_id": 131,
+            "foja": "47523",
+            "anio": 2004,
+            "precio_uf": 18000,
+            "clave_natural": "VP-2026-0067|COMP-07",
+            "comuna_comparable": "Colina",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "valor_ajustado_uf": 0,
+            "valor_uf_m2": 0,
+            "sup_terreno_m2": 5013,
+            "sup_construccion_m2": 360,
+            "uf_m2_terreno": 3.5906642728904847,
+            "direccion": "Las Brisas 3 MZ A LT 12",
+            "uf_m2_construccion": 50,
+            "uf_m2_terreno_f": 1.8,
+            "uf_m2_construccion_f": 22.99,
+            "fecha_publicacion": "2025-05-01"
+          }
+        },
+        {
+          "id": "recKGLWdMaK0lrXCh",
+          "fields": {
+            "oo_cc_uf": 500,
+            "adjunto_origen": [
+              "rectcojWwOIonkQRA"
+            ],
+            "antiguedad_meses": {
+              "specialValue": "NaN"
+            },
+            "ultima_modificacion": "2026-09-29T01:51:09.000Z",
+            "tipo_referencia": "Oferta",
+            "comp_id": 127,
+            "telefono_contacto": "936820393",
+            "anio": 2017,
+            "precio_uf": 19500,
+            "clave_natural": "VP-2026-0067|COMP-03",
+            "comuna_comparable": "Colina",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "valor_ajustado_uf": 0,
+            "valor_uf_m2": 0,
+            "sup_terreno_m2": 5001,
+            "sup_construccion_m2": 252,
+            "uf_m2_terreno": 3.8992201559688064,
+            "direccion": "La Viña & La Vendimia",
+            "uf_m2_construccion": 77.38095238095238,
+            "uf_m2_terreno_f": 2,
+            "uf_m2_construccion_f": 35.71,
+            "fecha_publicacion": "2026-04-01"
+          }
+        }
+      ]
+    },
+    "itemsCuadroValoracion": {
+      "count": 6,
+      "sample": [
+        {
+          "id": "recMBbJ4HHfZYOGTV",
+          "fields": {
+            "item_id": 18,
+            "valor_uf": 150,
+            "tipo_item": "OO.CC.",
+            "factor_aplicado": 1,
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nombre_item": "Cierros, pavimento exterior",
+            "uf_m2_aplicado": 150,
+            "sup_m2": 1,
+            "uf_m2_unitario": 150,
+            "valoracion_por": "unidad",
+            "anno_construccion": 56,
+            "descripcion": "Cierros, pavimento exterior",
+            "detalle_no_garantia": "-",
+            "es_bien_no_garantia": 0,
+            "situacion_municipal": "Regularizado",
+            "ultima_modificacion": "2026-09-29T23:25:04.000Z",
+            "uf_total_item": 150,
+            "valor_seguro_item_uf": 150
+          }
+        },
+        {
+          "id": "recQuqMyXs7ttOHVb",
+          "fields": {
+            "item_id": 14,
+            "valor_uf": 0,
+            "tipo_item": "Terreno",
+            "factor_aplicado": 1,
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nombre_item": "Servidumbre",
+            "uf_m2_aplicado": 0,
+            "sup_m2": 3622.51,
+            "uf_m2_unitario": 0,
+            "valoracion_por": "m2",
+            "anno_construccion": 52,
+            "descripcion": "Servidumbre",
+            "detalle_no_garantia": "-",
+            "es_bien_no_garantia": 0,
+            "situacion_municipal": "Regularizado",
+            "ultima_modificacion": "2026-09-29T23:25:04.000Z",
+            "uf_total_item": 0,
+            "valor_seguro_item_uf": 0
+          }
+        },
+        {
+          "id": "recTV6R4rxuDyamYG",
+          "fields": {
+            "item_id": 16,
+            "valor_uf": 350,
+            "tipo_item": "Piscina",
+            "factor_aplicado": 1,
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nombre_item": "Piscina",
+            "uf_m2_aplicado": 350,
+            "sup_m2": 1,
+            "uf_m2_unitario": 350,
+            "valoracion_por": "unidad",
+            "anno_construccion": 54,
+            "descripcion": "Piscina",
+            "detalle_no_garantia": "-",
+            "es_bien_no_garantia": 0,
+            "situacion_municipal": "Regularizado",
+            "ultima_modificacion": "2026-09-29T23:25:04.000Z",
+            "uf_total_item": 350,
+            "valor_seguro_item_uf": 350
+          }
+        }
+      ]
+    },
+    "unidades": {
+      "count": 0,
+      "sample": []
+    },
+    "ampliaciones": {
+      "count": 0,
+      "sample": []
+    },
+    "habitacionesPorNivel": {
+      "count": 12,
+      "sample": [
+        {
+          "id": "rec2FJTUr70MkIhCe",
+          "fields": {
+            "cantidad": 1,
+            "es_dormitorio": 0,
+            "tipo_recinto": "B.Servicio",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nivel": "Piso1"
+          }
+        },
+        {
+          "id": "rec5LRrxMRYeXImUW",
+          "fields": {
+            "cantidad": 1,
+            "es_dormitorio": 0,
+            "nombre": "Bano servicio",
+            "tipo_recinto": "1/2 Baño",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nivel": "Piso1"
+          }
+        },
+        {
+          "id": "rec7BKSfhPhKJshtF",
+          "fields": {
+            "cantidad": 1,
+            "es_dormitorio": 1,
+            "nombre": "Dormitorio servicio",
+            "tipo_recinto": "D.Servicio",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nivel": "Piso1"
+          }
+        }
+      ]
+    },
+    "terminacionesPorRecinto": {
+      "count": 0,
+      "sample": []
+    },
+    "documentosLegales": {
+      "count": 1,
+      "sample": [
+        {
+          "id": "rec7t4cD2zjuJKpXq",
+          "fields": {
+            "permiso_edificacion_numero": "N°319  09/09/2020",
+            "permiso_edificacion_fecha": "2020-09-09",
+            "ano_inscripcion": 2006,
+            "numero_inscripcion": "21565",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "recepcion_final_numero": "N°210  18/07/2024",
+            "recepcion_final_fecha": "2024-07-18",
+            "fojas": "13291"
+          }
+        }
+      ]
+    },
+    "adjuntos": {
+      "count": 36,
+      "sample": [
+        {
+          "id": "rec30QF4gVWxj3Cfk",
+          "fields": {
+            "orden": 15,
+            "tipo_adjunto": "otro",
+            "thumbnail_url": "«str len=86623: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAA4KC…»",
+            "estado_extraccion": "listo",
+            "tipo": "Certificado avaluo",
+            "adjunto_id": 104,
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "clave_adjunto": "certificado_avaluo_fiscal",
+            "nombre_archivo": "certificado_avaluo_fiscal_Met6283.jpg",
+            "fecha_subida": "2026-09-30T14:13:04.000Z",
+            "subido_por": "Sistema",
+            "ultima_modificacion": "2026-09-30T14:13:04.000Z",
+            "descripcion": "Certificado de avalúo fiscal",
+            "mime_type": "image/jpeg"
+          }
+        },
+        {
+          "id": "rec5KpO655oCqDKYQ",
+          "fields": {
+            "orden": 14,
+            "tipo_adjunto": "foto_interior",
+            "thumbnail_url": "«str len=83811: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAsHC…»",
+            "estado_extraccion": "listo",
+            "tamanio_kb": 104,
+            "adjunto_id": 92,
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nombre_archivo": "h5_07_terraza_quincho.jpg",
+            "fecha_subida": "2026-09-30T03:50:10.000Z",
+            "subido_por": "Tasador",
+            "ultima_modificacion": "2026-09-30T03:50:10.000Z",
+            "descripcion": "fachada_exterior",
+            "mime_type": "image/jpeg"
+          }
+        },
+        {
+          "id": "rec5t74bqVac4LiSJ",
+          "fields": {
+            "orden": 11,
+            "tipo_adjunto": "foto_interior",
+            "thumbnail_url": "«str len=83319: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGB…»",
+            "estado_extraccion": "listo",
+            "tamanio_kb": 88,
+            "adjunto_id": 89,
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "nombre_archivo": "h5_04_dormitorio_b.jpg",
+            "fecha_subida": "2026-09-30T03:50:10.000Z",
+            "subido_por": "Tasador",
+            "ultima_modificacion": "2026-09-30T03:50:10.000Z",
+            "descripcion": "habitaciones",
+            "mime_type": "image/jpeg"
+          }
+        }
+      ],
+      "porSubidoPor": {
+        "Sistema": 16,
+        "Tasador": 20
+      },
+      "tipos": {
+        "otro": 9,
+        "foto_interior": 20,
+        "cbr": 1,
+        "plano": 4,
+        "escritura": 1,
+        "cert_no_expropiacion": 1
+      }
+    },
+    "calculos": {
+      "count": 15,
+      "sample": [
+        {
+          "id": "rec2BVb0aDWPQ5Csl",
+          "fields": {
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "calculo_id": 1480,
+            "ultima_modificacion": "2026-09-27T17:09:15.000Z",
+            "formula_expresion_snapshot": "«str len=205: valor_final_override > 0 ? valor_final_override : (hay_cuadr…»",
+            "variable_output": "valor_comercial_uf",
+            "version_motor": "AT03_v11.2.0_v32b1",
+            "valor_calculado": 20125.862399999998,
+            "formula_nombre": "F_ValorComercialUF",
+            "formula": [
+              "rec8rv76smtjQh4Rb"
+            ],
+            "notas": "«str len=246: RES=20125.862399999998|nota=eval_ok|expr=valor_final_overrid…»",
+            "calculado_en": "2026-09-27T17:09:14.985Z",
+            "numero_resultado": 20125.862399999998,
+            "inputs_json": "«str len=569: {\"anio_actual\":2026,\"anio_construccion\":2020,\"sup_construcci…»",
+            "solicitud_codigo": "VP-2026-0067",
+            "formula_version": "v3.3",
+            "resultado": 20125.862399999998
+          }
+        },
+        {
+          "id": "rec49wTN71mEwLR5n",
+          "fields": {
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "calculo_id": 1487,
+            "ultima_modificacion": "2026-09-27T17:09:20.000Z",
+            "formula_expresion_snapshot": "valor_reposicion_uf * uf_dia_visita",
+            "variable_output": "valor_reposicion_clp",
+            "version_motor": "AT03_v11.2.0_v32b1",
+            "valor_calculado": 368903064.99340004,
+            "formula_nombre": "F_ValorReposicionCLP",
+            "formula": [
+              "recKZibH33lWDzbhD"
+            ],
+            "notas": "RES=368903064.99340004|nota=eval_ok|expr=valor_reposicion_uf * uf_dia_visita",
+            "calculado_en": "2026-09-27T17:09:19.791Z",
+            "numero_resultado": 368903064.99340004,
+            "inputs_json": "«str len=569: {\"anio_actual\":2026,\"anio_construccion\":2020,\"sup_construcci…»",
+            "solicitud_codigo": "VP-2026-0067",
+            "formula_version": "v3.2",
+            "resultado": 368903064.99340004
+          }
+        },
+        {
+          "id": "rec63XSh57aHqFAEF",
+          "fields": {
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "calculo_id": 1479,
+            "ultima_modificacion": "2026-09-27T17:09:14.000Z",
+            "formula_expresion_snapshot": "tasa_cap_rate_efectivo > 0 ? (ingreso_liquido_anual_clp / tasa_cap_rate_efectivo) : 0",
+            "variable_output": "renta_perpetua_clp",
+            "version_motor": "AT03_v11.2.0_v32b1",
+            "valor_calculado": 806666666.6666667,
+            "formula_nombre": "F_RentaPerpetuaCLP",
+            "formula": [
+              "rec4f0DRGLOYG9IMD"
+            ],
+            "notas": "RES=806666666.6666667|nota=eval_ok|expr=tasa_cap_rate_efectivo > 0 ? (ingreso_liquido_anual_clp / tasa_cap_rate_efectivo) : 0",
+            "calculado_en": "2026-09-27T17:09:14.346Z",
+            "numero_resultado": 806666666.6666667,
+            "inputs_json": "«str len=568: {\"anio_actual\":2026,\"anio_construccion\":2020,\"sup_construcci…»",
+            "solicitud_codigo": "VP-2026-0067",
+            "formula_version": "v3.2",
+            "resultado": 806666666.6666667
+          }
+        }
+      ],
+      "terminales": [
+        {
+          "v": "valor_comercial_uf",
+          "res": 20125.862399999998
+        },
+        {
+          "v": "valor_reposicion_clp",
+          "res": 368903064.99340004
+        },
+        {
+          "v": "renta_perpetua_clp",
+          "res": 806666666.6666667
+        },
+        {
+          "v": "ingreso_liquido_anual_clp",
+          "res": 36300000
+        },
+        {
+          "v": "valor_remate_clp",
+          "res": 521893730.3850816
+        },
+        {
+          "v": "promedio_uf_m2_muestra",
+          "res": 33.643447932388284
+        },
+        {
+          "v": "desviacion_vs_promedio_pct",
+          "res": -2.9825954058123494
+        },
+        {
+          "v": "valor_remate_uf",
+          "res": 13081.81056
+        },
+        {
+          "v": "valor_liquidacion_clp",
+          "res": 662403580.8733728
+        },
+        {
+          "v": "seguro_incendio_clp",
+          "res": 355343780.69366395
+        },
+        {
+          "v": "valor_comercial_clp",
+          "res": 802913431.3616639
+        },
+        {
+          "v": "valor_liquidacion_uf",
+          "res": 16603.836479999998
+        },
+        {
+          "v": "seguro_incendio_uf",
+          "res": 8907.062399999999
+        },
+        {
+          "v": "valor_reposicion_uf",
+          "res": 9246.94
+        },
+        {
+          "v": "avaluo_fiscal_uf",
+          "res": 8517.67767625752
+        }
+      ]
+    },
+    "preciosUf": {
+      "fecha": "2026-04-13",
+      "count": 1,
+      "sample": [
+        {
+          "id": "recbnHFtlFHQnyEM9",
+          "fields": {
+            "fecha": "2026-04-13",
+            "obtenido_en": "2026-06-01T14:07:00.298Z",
+            "fuente": "Banco Central",
+            "tipo_cambio_usd": 890.33,
+            "ultima_modificacion": "2026-06-01T14:07:02.000Z",
+            "valor_clp": 39894.61
+          }
+        }
+      ]
+    },
+    "documentosGenerados": {
+      "count": 6,
+      "sample": [
+        {
+          "id": "rec0t8n2oXJB29cMZ",
+          "fields": {
+            "clave_natural": "VP-2026-0067-PDF-v1",
+            "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSÉ VERGARA UNDURRAGA_METLIFE -6283.pdf",
+            "url_pdf": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOS%C3%89%20VERGARA%20UNDURRAGA_METLIFE%20-6283.pdf",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "version_doc": 1,
+            "fecha_generacion": "2026-09-29",
+            "render_id_carbone": "MTAuMjAuMTEuNDAgICAgvSE3jh3vNH3jKoVIs2KaZQcmVwb3J0.pdf",
+            "plantilla_version": "PLANTILLA_MET_v2",
+            "fecha_creacion": "2026-09-29T16:18:39.000Z",
+            "doc_id": 7,
+            "generado_en": "2026-09-29T16:18:39.000Z",
+            "version": 1
+          }
+        },
+        {
+          "id": "rec2iw3c9ft5d1TXR",
+          "fields": {
+            "clave_natural": "VP-2026-0067-PDF-v1",
+            "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSÉ VERGARA UNDURRAGA_METLIFE -6283.pdf",
+            "url_pdf": "https://www.dropbox.com/home/VProperty/Tasaciones?preview=FRANCISCO%20JOS%C3%89%20VERGARA%20UNDURRAGA_METLIFE%20-6283.pdf",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "version_doc": 1,
+            "fecha_generacion": "2026-09-28",
+            "render_id_carbone": "MTAuMjAuMTEuNDAgICAgPHiLD9Unhj7KQm8zUGdQWgcmVwb3J0.pdf",
+            "plantilla_version": "PLANTILLA_MET_v2",
+            "fecha_creacion": "2026-09-29T02:43:10.000Z",
+            "doc_id": 6,
+            "generado_en": "2026-09-29T02:43:09.000Z",
+            "version": 1
+          }
+        },
+        {
+          "id": "rec2jNFZBEVTqSFHJ",
+          "fields": {
+            "clave_natural": "VP-2026-0067-PDF-v1",
+            "url_dropbox": "/VProperty/Tasaciones/FRANCISCO JOSÉ VERGARA UNDURRAGA_METLIFE -6283.pdf",
+            "url_pdf": "https://www.dropbox.com/scl/fi/5nqngrsjdfelbtuic7s9b/FRANCISCO-JOS-VERGARA-UNDURRAGA_METLIFE-6283.pdf?rlkey=mgl40k4f98jz24knnzdr43osj&dl=0",
+            "solicitud": [
+              "recmMzeu3eWGxyXsf"
+            ],
+            "version_doc": 1,
+            "es_vigente": true,
+            "fecha_generacion": "2026-09-29",
+            "render_id_carbone": "MTAuMjAuMTEuNDEgICAg2wZwn2ipbfFmVlskw9zr-AcmVwb3J0.pdf",
+            "plantilla_version": "PLANTILLA_MET_v2",
+            "fecha_creacion": "2026-09-30T00:59:51.000Z",
+            "doc_id": 10,
+            "generado_en": "2026-09-30T00:59:51.000Z",
+            "version": 1
+          }
+        }
+      ]
+    }
+  },
+  "casos5": {
+    "hits": [
+      {
+        "caso": 2,
+        "matchQ": "Andrés",
+        "id": "recRjyT3kg0vYGcEH",
+        "codigo": "VP-2026-0038",
+        "estado": "cancelada",
+        "propietario": "Carlos Andrés Cortés Pérez",
+        "direccion": "Exequiel Fernandez 6150, Depto 411, La Florida",
+        "pdf_final_url": null,
+        "tasador": [
+          "rec8MsXmoMI49u46n",
+          "recSR3RxY6rsLb8k7"
+        ],
+        "cliente": [
+          "rec8QDoxN3LGvYLcm"
+        ]
+      },
+      {
+        "caso": 5,
+        "matchQ": "Carlos Andrés",
+        "id": "recRjyT3kg0vYGcEH",
+        "codigo": "VP-2026-0038",
+        "estado": "cancelada",
+        "propietario": "Carlos Andrés Cortés Pérez",
+        "direccion": "Exequiel Fernandez 6150, Depto 411, La Florida",
+        "pdf_final_url": null,
+        "tasador": [
+          "rec8MsXmoMI49u46n",
+          "recSR3RxY6rsLb8k7"
+        ],
+        "cliente": [
+          "rec8QDoxN3LGvYLcm"
+        ]
+      },
+      {
+        "caso": 5,
+        "matchQ": "Exequiel",
+        "id": "recRjyT3kg0vYGcEH",
+        "codigo": "VP-2026-0038",
+        "estado": "cancelada",
+        "propietario": "Carlos Andrés Cortés Pérez",
+        "direccion": "Exequiel Fernandez 6150, Depto 411, La Florida",
+        "pdf_final_url": null,
+        "tasador": [
+          "rec8MsXmoMI49u46n",
+          "recSR3RxY6rsLb8k7"
+        ],
+        "cliente": [
+          "rec8QDoxN3LGvYLcm"
+        ]
+      },
+      {
+        "caso": 5,
+        "matchQ": "Exequiel",
+        "id": "reci06q1kySVg43KG",
+        "codigo": "VP-2026-0006",
+        "estado": "cancelada",
+        "direccion": "Exequiel Fernandez Nº 6150",
+        "pdf_final_url": null,
+        "tasador": [
+          "rec8MsXmoMI49u46n"
+        ],
+        "cliente": [
+          "rec8QDoxN3LGvYLcm"
+        ]
+      }
+    ],
+    "clientes": [
+      {
+        "id": "rec0ztGhehWtblsr3",
+        "nombre": "Central Mutuos"
+      },
+      {
+        "id": "rec3fQVp2hbjpsyXb",
+        "nombre": "Penta Vida"
+      },
+      {
+        "id": "rec4m95uIERRnUmwZ",
+        "nombre": "Espacio Nuestro"
+      },
+      {
+        "id": "rec4rTNuxSjucS6XM",
+        "nombre": "VALÓN Hipotecaria"
+      },
+      {
+        "id": "rec532kYmluOreV3m",
+        "nombre": "NUEVO CAPITAL"
+      },
+      {
+        "id": "rec5QnUmnymAOcla9",
+        "nombre": "Santander Hipotecaria"
+      },
+      {
+        "id": "rec5fsRjNbLt9VcFt",
+        "nombre": "Banco Estado"
+      },
+      {
+        "id": "rec5nZyFK0IHniT6K",
+        "nombre": "Eurocapital"
+      },
+      {
+        "id": "rec6ETMQtes5VR7Kh",
+        "nombre": "La Construcción Hipotecaria"
+      },
+      {
+        "id": "rec6ulVTTtCUeD8QO",
+        "nombre": "AFIANZA"
+      },
+      {
+        "id": "rec6yblMwRzyFLSsL",
+        "nombre": "Credicasa Del Maule SPA"
+      },
+      {
+        "id": "rec8K5fUpTEoxD9yS",
+        "nombre": "AGENCIA"
+      },
+      {
+        "id": "rec8QDoxN3LGvYLcm",
+        "nombre": "EVOLUCIONA"
+      },
+      {
+        "id": "rec8VDwUnwuk9KZUw",
+        "nombre": "Scotia Crédito Hipotecario"
+      },
+      {
+        "id": "rec9AnivjtqivJcEB",
+        "nombre": "UNIDAD LEASING HABITACIONAL"
+      },
+      {
+        "id": "rec9RA23ezRX6gi4o",
+        "nombre": "Afianza"
+      },
+      {
+        "id": "rec9UF0Fj4er7OVA0",
+        "nombre": "VALOR PRESENTE"
+      },
+      {
+        "id": "rec9emcQ2xagiCyzp",
+        "nombre": "TESSI Servicios"
+      },
+      {
+        "id": "recAzjyjZW8RqzR6Z",
+        "nombre": "ServiHabit"
+      },
+      {
+        "id": "recBB2GJ6EZtt1Wpg",
+        "nombre": "Vivienda Plus"
+      },
+      {
+        "id": "recBVAW5lqBLGqQmy",
+        "nombre": "CREDITU"
+      },
+      {
+        "id": "recCveeu7mJ0Vl0Un",
+        "nombre": "BICE Hipotecaria"
+      },
+      {
+        "id": "recDhiwPgxjpEyX4d",
+        "nombre": "Chilevivienda"
+      },
+      {
+        "id": "recF3UI4qlah44VrN",
+        "nombre": "BCI Mutuos"
+      },
+      {
+        "id": "recFZ9Nvbo2EICHPS",
+        "nombre": "PARTICULARES"
+      },
+      {
+        "id": "recFZQQE4RIjyHbR6",
+        "nombre": "BICE MUTUOS"
+      },
+      {
+        "id": "recH4CU7AI1eYPVM3",
+        "nombre": "M&V"
+      },
+      {
+        "id": "recHXZHZsg33TpwoJ",
+        "nombre": "Coopeuch"
+      },
+      {
+        "id": "recI5rxWiUt1HJuSS",
+        "nombre": "Mutuosa"
+      },
+      {
+        "id": "recIXx6xMAGnOZT7T",
+        "nombre": "VALÓN Hipotecaria"
+      },
+      {
+        "id": "recIg8NtVhptXkEUJ",
+        "nombre": "MetLife"
+      },
+      {
+        "id": "recJExaBnlEVlyeuZ",
+        "nombre": "CrediTú"
+      },
+      {
+        "id": "recKaRXnwtqbM0qkJ",
+        "nombre": "ANDES"
+      },
+      {
+        "id": "recLVk6eAbYMmS3xW",
+        "nombre": "SANDBOX_SinFactores_T-AUDIT-CLOSE"
+      },
+      {
+        "id": "recLf6tbUfqhKZOgN",
+        "nombre": "Su Casa Hoy"
+      },
+      {
+        "id": "recM4Xm1IlKdnGvac",
+        "nombre": "Tu Hipotecaria Chile"
+      },
+      {
+        "id": "recO5DG0Veb1MVg2k",
+        "nombre": "Banco Itaú"
+      },
+      {
+        "id": "recOfiHWwHEUzgPCw",
+        "nombre": "BANCO DE CHILE"
+      },
+      {
+        "id": "recOxiYsVOTvoJPH7",
+        "nombre": "Casa Pronta"
+      },
+      {
+        "id": "recPDwixzybwHlJaQ",
+        "nombre": "Hipotecaria Evoluciona"
+      },
+      {
+        "id": "recPSVC4X8ConYKi2",
+        "nombre": "Concreces Leasing"
+      },
+      {
+        "id": "recQ9aR23JNI5qg5h",
+        "nombre": "SANDBOX_TAUDITCLOSE_Cliente_Sin_Factores"
+      },
+      {
+        "id": "recRC2WEkLfXkMO50",
+        "nombre": "MAS LEASING"
+      },
+      {
+        "id": "recSi2XsxHtByImuI",
+        "nombre": "SECURITY PRINCIPAL"
+      },
+      {
+        "id": "recU3PLgeapmpkGcI",
+        "nombre": "Ohio National"
+      },
+      {
+        "id": "recU6gfHmmCWZN5Mm",
+        "nombre": "Austral Leasing Habitacional"
+      },
+      {
+        "id": "recUHpMmk18AIamop",
+        "nombre": "Banco Falabella"
+      },
+      {
+        "id": "recVTKsZLNSDNInky",
+        "nombre": "Hipotecaria Security S.A."
+      },
+      {
+        "id": "recW7rw9EpxapRVFj",
+        "nombre": "Administradora Andes S.A."
+      },
+      {
+        "id": "recWvXIiwahdV7otI",
+        "nombre": "CONCRECES"
+      },
+      {
+        "id": "recX0HLhhcn1bBAgx",
+        "nombre": "Leasing Urbano"
+      },
+      {
+        "id": "recX80z73mCtC4BBo",
+        "nombre": "Agencia Habitacional"
+      },
+      {
+        "id": "recXFlArdmTAJvvYl",
+        "nombre": "ULH (BICE) Leasing"
+      },
+      {
+        "id": "recXVtuMT2wjIVzz2",
+        "nombre": "Hipotecaria Security"
+      },
+      {
+        "id": "recYAAxUCRqhCDgyn",
+        "nombre": "Penta Hipotecaria"
+      },
+      {
+        "id": "recYGkxnFlATx7Nv5",
+        "nombre": "﻿nombre"
+      },
+      {
+        "id": "recYY0ebDMrZ2Qu1c",
+        "nombre": "Másleasing"
+      },
+      {
+        "id": "reca15ak8l4C98V9l",
+        "nombre": "Mi Hipoteca"
+      },
+      {
+        "id": "recb5h4CuyLp3D9c7",
+        "nombre": "BICE Leasing"
+      },
+      {
+        "id": "recb9KnrD9wYvCp22",
+        "nombre": "CREDIHOME"
+      },
+      {
+        "id": "recbP0U8gxgvn5jjF",
+        "nombre": "HCS / Hipotecaria Compass"
+      },
+      {
+        "id": "recbrHmj9YUJ01BY5",
+        "nombre": "Particular"
+      },
+      {
+        "id": "recdchMPfjyGvKmak",
+        "nombre": "FINANCIERA Y HABITACIONAL"
+      },
+      {
+        "id": "recdldMS9TYs9sv39",
+        "nombre": "Valor Presente"
+      },
+      {
+        "id": "recdnihNoqtvfmSQA",
+        "nombre": "CENTRAL HIPOTECARIA"
+      },
+      {
+        "id": "receE0qIASmpRtZLE",
+        "nombre": "Casa Nuestra"
+      },
+      {
+        "id": "receWMWb6Qwe1gsnC",
+        "nombre": "4 LIFE"
+      },
+      {
+        "id": "recesePOB1AG4G6Jn",
+        "nombre": "Consorcio"
+      },
+      {
+        "id": "recfwJelCHYjuHWy4",
+        "nombre": "Nuevo Capital Mutuos Hipotecarios"
+      },
+      {
+        "id": "recg3a3iPVedlegWH",
+        "nombre": "HLC Hipotecaria Continental"
+      },
+      {
+        "id": "recimE810cuyWIR9q",
+        "nombre": "METLIFE"
+      },
+      {
+        "id": "reciyPPDIgLcyIH07",
+        "nombre": "Banco de Chile"
+      },
+      {
+        "id": "reckDh71r8Lm2Kv2s",
+        "nombre": "TESSI"
+      },
+      {
+        "id": "recklwpIt0Cv4eqk1",
+        "nombre": "LEASING AUSTRAL"
+      },
+      {
+        "id": "reclREZKDnYh5BQTI",
+        "nombre": "M&V (Munita y Vergara)"
+      },
+      {
+        "id": "recmJCixBQDq5c9Ao",
+        "nombre": "Citi Mutuos"
+      },
+      {
+        "id": "recn5JG4aHdlYzobI",
+        "nombre": "Sim Hipotecaria"
+      },
+      {
+        "id": "recnVPbH7PvJreMgV",
+        "nombre": "Banco Ripley"
+      },
+      {
+        "id": "recnY3zdDK4G5z81i",
+        "nombre": "EXTERIOR"
+      },
+      {
+        "id": "recngf122DQ5Tevtu",
+        "nombre": "4LIFE"
+      },
+      {
+        "id": "reco6l8flOx08T4bg",
+        "nombre": "SERVIHABIT"
+      },
+      {
+        "id": "recphwp4pgfkgNChn",
+        "nombre": "ICGE Internacional"
+      },
+      {
+        "id": "recqlmHfjwAsyJVNU",
+        "nombre": "CHILE VIVIENDA"
+      },
+      {
+        "id": "rectvgirk94PmIUKm",
+        "nombre": "Penta Hipotecario"
+      },
+      {
+        "id": "recucWvNTRDw8QISS",
+        "nombre": "ICGE"
+      },
+      {
+        "id": "recv4Dp8MqZZnMmya",
+        "nombre": "BBVA Hipotecaria"
+      },
+      {
+        "id": "recwDkXSzFG1alEhr",
+        "nombre": "Credihome"
+      },
+      {
+        "id": "recwZQDdME87Ke3Qw",
+        "nombre": "Paris Crédito Hipotecario"
+      },
+      {
+        "id": "recwiULOKnBcfWZAR",
+        "nombre": "Aseguradora Continental"
+      },
+      {
+        "id": "recwxQlPhJTXgig93",
+        "nombre": "MetLife Chile S.A."
+      },
+      {
+        "id": "recxEg7RiBxtqRCfY",
+        "nombre": "HIPOTECARIA LA CONSTRUCCION"
+      },
+      {
+        "id": "recyT7db4bylkygeS",
+        "nombre": "Scotiabank"
+      }
+    ],
+    "comunas": [
+      {
+        "id": "rec4JGrdbOOTWpZ3L",
+        "nombre": "Quilicura"
+      },
+      {
+        "id": "rec6fV4WyLIwC15JE",
+        "nombre": "San Miguel"
+      },
+      {
+        "id": "recIHTj4e6vkH977o",
+        "nombre": "Estación Central"
+      },
+      {
+        "id": "recXZKLIe9RedfCQ0",
+        "nombre": "La Florida"
+      }
+    ],
+    "tasadores": [
+      {
+        "id": "recJPSCLckxLuf9nV",
+        "nombre": "Nelcy Jaimes",
+        "clerk": "«SET»",
+        "firma": null
+      },
+      {
+        "id": "recTJcV3BIvdcG4em",
+        "nombre": "Sergio (nutricionsaludketo)",
+        "clerk": "«SET»",
+        "firma": "«SET»"
+      },
+      {
+        "id": "recaKT2ND8dIZpEIj",
+        "nombre": "Hector Martinez",
+        "clerk": "«SET»",
+        "firma": null
+      }
+    ]
+  },
+  "render": {}
+}

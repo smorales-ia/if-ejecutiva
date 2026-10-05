@@ -1,0 +1,36 @@
+{
+  "id": "recoZcwmgCBVKQMxF",
+  "codigo": "VP-2026-0077",
+  "estadoFin": "calculada",
+  "regla": "rec2QYP8yjMW1Smsm",
+  "calculos": 17,
+  "vals": {
+    "desviacion_vs_promedio_cbr_pct": 0,
+    "valor_reposicion_clp": 127605075.67016001,
+    "avaluo_fiscal_uf": 0,
+    "valor_remate_clp": 101060243.43200499,
+    "seguro_incendio_uf": 3087.128,
+    "seguro_incendio_clp": 124381838.07016002,
+    "promedio_uf_m2_muestra": 73.83718942011957,
+    "renta_perpetua_clp": 156444444.44444445,
+    "valor_comercial_uf": 3858.91,
+    "promedio_uf_m2_cbr_out": 0,
+    "valor_comercial_clp": 155477297.5877,
+    "ingreso_liquido_anual_clp": 7040000,
+    "valor_reposicion_uf": 3167.128,
+    "valor_liquidacion_uf": 3183.6007499999996,
+    "valor_remate_uf": 2508.2915,
+    "desviacion_vs_promedio_pct": 0,
+    "valor_liquidacion_clp": 128268770.50985248
+  },
+  "camposComputados": [
+    "es_bien_no_garantia (si aplicó)"
+  ],
+  "eventos": [
+    {
+      "id": "recJgCWBaV6hgnUmk",
+      "tipo": "at03_dag_completo",
+      "desc": "[COD=VP-2026-0077] AT03_v31 EJECUTOR 17/17 OK. overrides[final=0 repo=3167.128 gar=0 tasa=0] motivo=SANDBOX T-REPLICA-20261005 Caso 5 (HEV-3183): (1) Reposición: el XLSM calcula fa"
+    }
+  ]
+}

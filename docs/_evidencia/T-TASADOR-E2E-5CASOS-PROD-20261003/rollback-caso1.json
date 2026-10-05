@@ -1,0 +1,76 @@
+{
+  "created": {
+    "solicitud": [
+      "reczuns8NHdI45Owp"
+    ],
+    "datosTasacion": [
+      "rec2AQQJfvHczhWkZ"
+    ],
+    "items": [
+      "reca4ghqevkfWM663",
+      "recm5iUccSgMIreQa"
+    ],
+    "comparables": [
+      "recy8a2pn1bj5uTep",
+      "reclsbO2EgLhTfwdi",
+      "recHl8utumCYvnwqO",
+      "recSunzao1EgleLBg",
+      "recX2LFLPi9zew9Ta",
+      "recsbOqOZ8UYGgCvZ"
+    ],
+    "habitaciones": [
+      "recy4CnGMOziNYEdb",
+      "recVb9NgPaPlLn5eH",
+      "rec76sYY5mZYutgeA",
+      "recVXOQgfKVGOoBuE",
+      "recsV46B7TUtRnQmY",
+      "recFMVrmejLSQx0Z3",
+      "recG1YraGfjag0lCC"
+    ],
+    "docLegales": [
+      "recfTxfMhCNmxmJKM"
+    ],
+    "calculos": [
+      "recbdGT0evsIAzxfw",
+      "recCbSbyKK4qLFqnK",
+      "receh3aIaP5unlHUn",
+      "recMTpFJE9CaMviR1",
+      "recItSKf36y3pOT69",
+      "recwVUUlsz2KwddDW",
+      "recPLegpJLBTWsItG",
+      "recQiZ0pmTrjdBE0r",
+      "reca9c4qa38rXiWss",
+      "rec1hKjywlRdxAq9N",
+      "recwfV5N1LBp1kGYc",
+      "reckELkhbhEbFLlaY",
+      "recXe6Um2t4ICX3Tt",
+      "rec63oUONT5tzrmcU",
+      "recYGJ7OBSk4wcFc5"
+    ],
+    "adjuntos": [
+      "recnvd34OICwWONt6",
+      "recbA9mrBfSqeOCFx",
+      "recERcqd7B8A6gG8M",
+      "recmRsLnEOqnTigRh",
+      "recdKuFbnfKTTz7kn",
+      "reci01ig9Xmc7jjY4",
+      "recErMJ1SbjkLbxfs",
+      "recf9houbBiJ6s5no",
+      "rec608bJN3npCDWW1",
+      "rec9k78urlLYZS292",
+      "reclbzGckwxBwJmdp",
+      "recWphw0xUvgOz19S",
+      "recty9M7AJmOpcT1I",
+      "recq2yGj8T0KFiNf2",
+      "rec1QQ38akVl2C4Ra",
+      "recN2PLiDkVK0vFup",
+      "recRXAaw259brqb2V",
+      "recM1covUxyAAHjkM"
+    ]
+  },
+  "preciosUf": {
+    "accion": "creado",
+    "id": "recnMK3Z5qbswZIv5"
+  },
+  "nota": "IDs creados por seed-caso1 — borrar para revertir"
+}

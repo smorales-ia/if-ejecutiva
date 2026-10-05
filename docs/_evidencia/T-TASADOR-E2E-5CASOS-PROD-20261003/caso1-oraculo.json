@@ -1,0 +1,110 @@
+{
+  "_fuente": "XLSM 'La Marina 1176 dp 102' ∩ PDF 'Informe ALEJANDRO AVILA DURAN (II).pdf' · cruzado 2026-10-05",
+  "_nota_divergencias": {
+    "propietario_vs_cliente": "Propietario (dueño) = ALEJANDRO MOISES AVILA LEIVA RUT 5.523.876-6. Cliente/solicitante = ALEJANDRO AVILA DURAN RUT 16.723.833-5 (nombre del PDF). cliente_final_* = propietario, como VP-0067.",
+    "objetivo": "PDF dice 'Crédito Hipotecario'; M_TiposInforme no lo tiene → se usa 'Mutuo Hipotecario' (equivalente, sin crear registro en maestro). PDF imprimirá 'Mutuo Hipotecario'.",
+    "tasador_pdf": "PDF dice 'Sergio Gajardo' revisor 'Héctor Martínez C.'; por D2 se asigna a tasador recTJcV3BIvdcG4em (Sergio nutricionsaludketo). visador = Héctor Martínez C. (coincide)."
+  },
+  "links": {
+    "cliente": "recIg8NtVhptXkEUJ",
+    "comuna": "rec6fV4WyLIwC15JE",
+    "tasador": "recTJcV3BIvdcG4em",
+    "visador": "recrjQDympldI186S",
+    "tipo_informe": "recH02eJfKR0cVVbh",
+    "tipo_propiedad": "recf9hz8TbkQ6wsus"
+  },
+  "solicitud": {
+    "cliente_final_nombre": "ALEJANDRO MOISES AVILA LEIVA",
+    "cliente_final_rut": "5.523.876-6",
+    "ejecutivo_solicitante": "MONICA REYES PINTO",
+    "direccion": "LA MARINA Nº 1176, Departamento: Nº 102, Edificio GUILLERMO II",
+    "region": "Metropolitana de Santiago",
+    "rol_sii": "4852-250",
+    "n_operacion_cliente": 900158881,
+    "numero_solicitud": "METLIFE -6280",
+    "proyecto_condominio": "EDIFICIO GUILLERMO II",
+    "tipo_propiedad_nuevo_usado": "usada",
+    "fecha_visita": "2026-04-06",
+    "fecha_visita_programada": "2026-04-06",
+    "vida_util_override": 55,
+    "notas": "CASO1-METLIFE-6280 · T-TASADOR-E2E-5CASOS-PROD-20261003 · SANDBOX replica (D1) aislado por notas+numero_solicitud",
+    "override_motivo": "CASO1 E2E-5CASOS · valores del XLSM La Marina 1176 sembrados directo (sandbox, sin AT03)"
+  },
+  "datosTasacion": {
+    "propietario_nombre": "ALEJANDRO MOISES AVILA LEIVA",
+    "propietario_rut": "5.523.876-6",
+    "sup_construccion_m2": 102,
+    "sup_terreno_m2": 102,
+    "anio_construccion": 1998,
+    "material_predominante": "HORMIGON ARMADO",
+    "estado_conservacion": "Bueno",
+    "dormitorios": 5,
+    "banos": 2,
+    "estacionamientos": 0,
+    "bodegas": 1,
+    "pisos": 1,
+    "velocidad_venta_estimada": "8 a 10 meses",
+    "tipo_zona_descripcion": "EC-3 (San Miguel)",
+    "ubicacion_urbano_rural": "urbano",
+    "destino_sii": "HABITACIONAL",
+    "cod_sii_manzana": "4852",
+    "cod_sii_predio": "250",
+    "rol_sii": "4852-250",
+    "avaluo_fiscal_clp": 115461656,
+    "avaluo_total": 115461656,
+    "arriendo_bruto_mensual_clp": 710000,
+    "arriendo_mensual": 710000,
+    "gasto_anual": 710000,
+    "gasto_anual_clp": 710000,
+    "tasa_cap_rate": 0.045,
+    "uf_dia_visita": 39841.72,
+    "origen_dato": "tipeado",
+    "sintesis_descriptiva": "El bien es un departamento que se encuentra en el EDIFICIO GUILLERMO II, ubicado en LA MARINA Nº 1176. El edificio se desarrolla en un volumen de 5 pisos y 1 subterráneo el cual está conectado por 1 ascensor. Los espacios comunes se encuentran en primer piso y cuenta con estacionamientos, bicicleteros, jardines. La propiedad se encuentra en el piso 1 con orientación este, tiene 102 m² interiores. El departamento cuenta con living - comedor con salida a patio, cocina cerrada, logia, un dormitorio principal con baño en suite y closet mural, cuatro dormitorios simples con closet mural y otro baño completo. Tiene asignada la bodega N° 13.",
+    "descripcion_sector": "El sector es de carácter mixto. El cual se compone de viviendas de baja densidad, algunas de las cuales han sido modificadas para albergar comercio, edificios habitacional de altura media, servicios y comercios varios. El comercio, el transporte y los servicios se encuentran en la avenida más cercana: Gran Avenida José Miguel Carrera."
+  },
+  "calculos": {
+    "valor_comercial_uf": 3323.20,
+    "valor_comercial_clp": 132402004,
+    "valor_reposicion_uf": 3364.00,
+    "valor_reposicion_clp": 134027546.08,
+    "seguro_incendio_uf": 2658.56,
+    "seguro_incendio_clp": 105921603.12,
+    "avaluo_fiscal_uf": 2898.01,
+    "valor_remate_uf": 2160.08,
+    "valor_remate_clp": 86061302.54,
+    "valor_liquidacion_uf": 2741.64,
+    "valor_liquidacion_clp": 109231653.22,
+    "renta_perpetua_clp": 173555555.56,
+    "ingreso_liquido_anual_clp": 7810000,
+    "promedio_uf_m2_muestra": 45.30398120124996,
+    "desviacion_vs_promedio_pct": -30.248955694145174
+  },
+  "preciosUf": { "fecha": "2026-04-06", "valor_clp": 39841.72, "tipo_cambio_usd": 922.17, "fuente": "XLSM La Marina 1176 (Portada AQ71/BO71)" },
+  "items": [
+    { "item_id": 1, "tipo_item": "Edificacion", "nombre_item": "Departamento Nº 102", "sup_m2": 102, "uf_m2_unitario": 40, "factor_aplicado": 0.79, "valor_uf": 3223.20, "situacion_municipal": "Regularizado", "valoracion_por": "m2", "es_bien_no_garantia": 0 },
+    { "item_id": 2, "tipo_item": "OO.CC.", "nombre_item": "Bodega Nº 13", "sup_m2": 1, "uf_m2_unitario": 100, "factor_aplicado": 1, "valor_uf": 100, "situacion_municipal": "Regularizado", "valoracion_por": "unidad", "es_bien_no_garantia": 0 }
+  ],
+  "comparables": [
+    { "comp_id": 1, "tipo_referencia": "Oferta", "direccion": "Av. La Marina 1176, San Miguel", "comuna_comparable": "San Miguel", "anio": 1998, "telefono_contacto": "936531334", "precio_uf": 4590, "sup_construccion_m2": 95, "oo_cc_uf": 500, "uf_m2_construccion": 43.05263157894737, "fecha_publicacion": "2026-04-06" },
+    { "comp_id": 2, "tipo_referencia": "Oferta", "direccion": "Avenida La Marina, San Miguel", "comuna_comparable": "San Miguel", "anio": 2004, "telefono_contacto": "935329053", "precio_uf": 4648, "sup_construccion_m2": 92, "oo_cc_uf": 400, "uf_m2_construccion": 46.17391304347826, "fecha_publicacion": "2026-04-06" },
+    { "comp_id": 3, "tipo_referencia": "Oferta", "direccion": "Avenida La Marina / Monja Alferesz, San Miguel", "comuna_comparable": "San Miguel", "anio": 2009, "telefono_contacto": "929786318", "precio_uf": 4850, "sup_construccion_m2": 92, "oo_cc_uf": 500, "uf_m2_construccion": 47.28260869565217, "fecha_publicacion": "2026-04-06" },
+    { "comp_id": 4, "tipo_referencia": "Oferta", "direccion": "San Nicolas, San Miguel", "comuna_comparable": "San Miguel", "anio": 2007, "telefono_contacto": "223836240", "precio_uf": 4500, "sup_construccion_m2": 93, "oo_cc_uf": 500, "uf_m2_construccion": 43.01075268817204, "fecha_publicacion": "2026-04-06" },
+    { "comp_id": 5, "tipo_referencia": "Oferta", "direccion": "Calle San Nicolás 1331, San Miguel", "comuna_comparable": "San Miguel", "anio": 2008, "telefono_contacto": "961699556", "precio_uf": 5200, "sup_construccion_m2": 100, "oo_cc_uf": 500, "uf_m2_construccion": 47.0, "fecha_publicacion": "2026-04-06" },
+    { "comp_id": 6, "tipo_referencia": "CBR", "direccion": "Rey Alberto 4208 DP 102", "comuna_comparable": "San Miguel", "anio": 2014, "telefono_contacto": "513 507", "precio_uf": 4172, "sup_construccion_m2": 96, "oo_cc_uf": 500, "uf_m2_construccion": 38.25, "fecha_publicacion": "2024-12-01" }
+  ],
+  "habitaciones": [
+    { "nivel": "Piso1", "tipo_recinto": "Living", "cantidad": 1, "es_dormitorio": 0 },
+    { "nivel": "Piso1", "tipo_recinto": "Comedor", "cantidad": 1, "es_dormitorio": 0 },
+    { "nivel": "Piso1", "tipo_recinto": "Cocina", "cantidad": 1, "es_dormitorio": 0 },
+    { "nivel": "Piso1", "tipo_recinto": "Suite", "cantidad": 1, "es_dormitorio": 1 },
+    { "nivel": "Piso1", "tipo_recinto": "D.Simple", "cantidad": 4, "es_dormitorio": 1 },
+    { "nivel": "Piso1", "tipo_recinto": "Baños", "cantidad": 2, "es_dormitorio": 0 },
+    { "nivel": "Piso1", "tipo_recinto": "Loggia", "cantidad": 1, "es_dormitorio": 0 }
+  ],
+  "legales": {
+    "permiso_edificacion_numero": "N°60 // 02-09-1996",
+    "permiso_edificacion_fecha": "1996-09-02",
+    "recepcion_final_numero": "N°56 // 28-12-1998",
+    "recepcion_final_fecha": "1998-12-28"
+  }
+}

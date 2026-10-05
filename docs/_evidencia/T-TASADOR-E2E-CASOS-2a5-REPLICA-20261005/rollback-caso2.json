@@ -1,0 +1,55 @@
+{
+  "created": {
+    "solicitud": [
+      "recconVQfAc8LSGJf"
+    ],
+    "datosTasacion": [
+      "recH7CKbksOfNu0OZ"
+    ],
+    "items": [
+      "recWNTaCy6jn9i6DL"
+    ],
+    "comparables": [
+      "recBvVFvSaGeaYkGM",
+      "recnjD6jJH08g8srk",
+      "recupHjaAHNvRgk5K",
+      "recRDLDauyxsdp7l4",
+      "reciHsBADJLZR92dL",
+      "recViXhJqS3xMf2sM",
+      "rec5FN0KWgx00rqv5"
+    ],
+    "habitaciones": [
+      "recJcDFi52WLdjAna",
+      "recmwBNx3IJXlTN8H",
+      "recgeskQD8nujaLTH",
+      "recKOnKOVsrJRCNwC",
+      "recJdqVmOtP1z8QKp"
+    ],
+    "docLegales": [
+      "recRekMg1gE4mshln"
+    ],
+    "adjuntos": [
+      "recrxbyP3mFmmVw72",
+      "recYGPyuVGwn5LgEq",
+      "recZhCPqlNnBBDP1D",
+      "recvU4qRZSkeDsYaQ",
+      "recMQVPn9UzqLwkQB",
+      "recuQgimARRFuBz1M",
+      "recBlbCp09pp1fx7T",
+      "recwQpNSp2zN7FIlk",
+      "recDidNL79COftWwj",
+      "recpmBjXvfzOSRXk9",
+      "rec6v0IriP0uHdVWr",
+      "recGbpsRoUTT4NEBp",
+      "recyOrIbLrm6Cki00",
+      "recZVeESu7JFVzUrY",
+      "recZXXR7Kb8wt0YhZ",
+      "recanMzALq3LQuhhR"
+    ]
+  },
+  "preciosUf": {
+    "accion": "creado",
+    "id": "reczzhTrUvmFf9xUM"
+  },
+  "nota": "IDs creados por el seed del Caso 2 (AGH-1548) — borrar para revertir. Vacío = aún sin escrituras."
+}

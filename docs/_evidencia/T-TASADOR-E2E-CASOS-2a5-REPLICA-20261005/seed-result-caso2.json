@@ -1,0 +1,37 @@
+{
+  "id": "recconVQfAc8LSGJf",
+  "codigo": "VP-2026-0074",
+  "estadoFin": "calculada",
+  "regla": "rec2QYP8yjMW1Smsm",
+  "calculos": 17,
+  "vals": {
+    "seguro_incendio_clp": 56164915.18,
+    "desviacion_vs_promedio_cbr_pct": 0,
+    "valor_reposicion_uf": 1115.2,
+    "valor_remate_clp": 36507194.867,
+    "desviacion_vs_promedio_pct": 0,
+    "renta_perpetua_clp": 58666666.66666667,
+    "promedio_uf_m2_cbr_out": 0,
+    "valor_remate_uf": 906.1,
+    "valor_comercial_clp": 56164915.18,
+    "promedio_uf_m2_muestra": 35.08123167966374,
+    "avaluo_fiscal_uf": 1256.2748213163063,
+    "valor_reposicion_clp": 44931932.144,
+    "valor_liquidacion_uf": 1150.05,
+    "valor_comercial_uf": 1394,
+    "seguro_incendio_uf": 1394,
+    "valor_liquidacion_clp": 46336055.0235,
+    "ingreso_liquido_anual_clp": 3520000
+  },
+  "camposComputados": [
+    "uf_m2_construccion",
+    "es_dormitorio"
+  ],
+  "eventos": [
+    {
+      "id": "recqqQZR8U6mImYLQ",
+      "tipo": "at03_dag_completo",
+      "desc": "[COD=VP-2026-0074] AT03_v31 EJECUTOR 17/17 OK. overrides[final=0 repo=1115.2 gar=0 tasa=0] motivo=SANDBOX T-REPLICA-20261005: el XLSM AGH calcula Reposición = f"
+    }
+  ]
+}

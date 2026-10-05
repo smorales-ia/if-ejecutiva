@@ -1,0 +1,233 @@
+{
+  "codigo": "VP-2026-0075",
+  "checks": [
+    {
+      "nombre": "meta.codigo",
+      "got": "VP-2026-0075",
+      "esperado": "VP-2026-0075",
+      "ok": true
+    },
+    {
+      "nombre": "numeroSolicitud (nº interno)",
+      "got": "ALH -335",
+      "esperado": "ALH -335",
+      "ok": true
+    },
+    {
+      "nombre": "cliente",
+      "got": "Austral Leasing Habitacional",
+      "esperado": "Austral Leasing Habitacional",
+      "ok": true
+    },
+    {
+      "nombre": "nombreCliente (portada)",
+      "got": "Miguenson Rameau",
+      "esperado": "Miguenson Rameau",
+      "ok": true
+    },
+    {
+      "nombre": "rut",
+      "got": "9.588.043-6",
+      "esperado": "9.588.043-6",
+      "ok": true
+    },
+    {
+      "nombre": "comuna",
+      "got": "Quilicura",
+      "esperado": "Quilicura",
+      "ok": true
+    },
+    {
+      "nombre": "tipoPropiedad",
+      "got": "Departamento",
+      "esperado": "Departamento",
+      "ok": true
+    },
+    {
+      "nombre": "rol SII",
+      "got": "658-128",
+      "esperado": "658-128",
+      "ok": true
+    },
+    {
+      "nombre": "supConstruccion",
+      "got": 40,
+      "esperado": 40,
+      "ok": true
+    },
+    {
+      "nombre": "anioConstruccion",
+      "got": 1994,
+      "esperado": 1994,
+      "ok": true
+    },
+    {
+      "nombre": "vidaUtil",
+      "got": 40,
+      "esperado": 40,
+      "ok": true
+    },
+    {
+      "nombre": "valorComercialUf",
+      "got": 1024,
+      "esperado": 1024,
+      "ok": true
+    },
+    {
+      "nombre": "valorComercialClp",
+      "got": 41178572.8,
+      "esperado": 41178572.8,
+      "ok": true
+    },
+    {
+      "nombre": "valorReposicionUf",
+      "got": 1024,
+      "esperado": 1024,
+      "ok": true
+    },
+    {
+      "nombre": "valorReposicionClp",
+      "got": 41178572.8,
+      "esperado": 41178572.8,
+      "ok": true
+    },
+    {
+      "nombre": "seguroIncendioUf",
+      "got": 1024,
+      "esperado": 1024,
+      "ok": true
+    },
+    {
+      "nombre": "seguroIncendioClp",
+      "got": 41178572.8,
+      "esperado": 41178572.8,
+      "ok": true
+    },
+    {
+      "nombre": "avaluoFiscalUf",
+      "got": 411.5815728319754,
+      "esperado": 411.5815728319754,
+      "ok": true
+    },
+    {
+      "nombre": "valorRemateUf",
+      "got": 665.6,
+      "esperado": 665.6,
+      "ok": true
+    },
+    {
+      "nombre": "valorRemateClp",
+      "got": 26766072.32,
+      "esperado": 26766072.32,
+      "ok": true
+    },
+    {
+      "nombre": "valorLiquidacionUf",
+      "got": 844.8,
+      "esperado": 844.8,
+      "ok": true
+    },
+    {
+      "nombre": "valorLiquidacionClp",
+      "got": 33972322.559999995,
+      "esperado": 33972322.56,
+      "ok": true
+    },
+    {
+      "nombre": "ufDia",
+      "got": 40213.45,
+      "esperado": 40213.45,
+      "ok": true
+    },
+    {
+      "nombre": "usdDia",
+      "got": 892.83,
+      "esperado": 892.83,
+      "ok": true
+    },
+    {
+      "nombre": "cuadro.totalUf",
+      "got": 1024,
+      "esperado": 1024,
+      "ok": true
+    },
+    {
+      "nombre": "rentaPerpetua",
+      "got": 48888888.88888889,
+      "esperado": 48888888.88888889,
+      "ok": true
+    },
+    {
+      "nombre": "ingresoLiquidoAnual",
+      "got": 2200000,
+      "esperado": 2200000,
+      "ok": true
+    },
+    {
+      "nombre": "ofertas.promedioUfM2",
+      "got": 27.543461538461543,
+      "esperado": 27.543461538461543,
+      "ok": true
+    },
+    {
+      "nombre": "ajusteOfertas% (-7.06)",
+      "got": -7.055981455880925,
+      "esperado": -7.055981455880922,
+      "ok": true
+    },
+    {
+      "nombre": "cbr.promedioUfM2 (vacío=0)",
+      "got": null,
+      "esperado": 0,
+      "ok": true
+    },
+    {
+      "nombre": "ajusteCBR% (vacío=0)",
+      "got": null,
+      "esperado": 0,
+      "ok": true
+    },
+    {
+      "nombre": "cbr.filas#",
+      "got": 0,
+      "esperado": 0,
+      "ok": true
+    },
+    {
+      "nombre": "comparables#",
+      "got": 5,
+      "esperado": 5,
+      "ok": true
+    },
+    {
+      "nombre": "fotos grilla#",
+      "got": 16,
+      "esperado": 16,
+      "ok": true
+    },
+    {
+      "nombre": "ranura fachada",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    },
+    {
+      "nombre": "ranura ref1",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    },
+    {
+      "nombre": "ranura mapaUbicacion",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    }
+  ],
+  "render": {
+    "e2Status": 200,
+    "pdfUrl": null,
+    "estadoFinal": "calculada"
+  },
+  "resumen": "37/37"
+}

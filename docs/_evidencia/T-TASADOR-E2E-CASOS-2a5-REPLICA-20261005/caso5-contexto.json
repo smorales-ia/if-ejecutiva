@@ -1,0 +1,1384 @@
+{
+  "meta": {
+    "codigo": "VP-2026-0077",
+    "codigoExt": "VP-2026-0077",
+    "nOperacionCliente": 25678,
+    "numeroSolicitudCliente": "HEV -3183",
+    "estado": "calculada",
+    "version": null,
+    "fechaEmision": null
+  },
+  "clienteInforme": {
+    "nombre": "Hipotecaria Evoluciona",
+    "logoUrl": null,
+    "nombreRevisor": null
+  },
+  "partes": {
+    "propietario": "Carlos Andrés Cortes Pérez",
+    "rut": "0",
+    "ejecutivo": "Felipe Ramírez Silva",
+    "tasador": {
+      "nombre": "Sergio (nutricionsaludketo)",
+      "firmaUrl": "«dataURI 6835»"
+    },
+    "visador": {
+      "nombre": "Héctor Martínez C."
+    },
+    "fechaVisita": "2026-05-12",
+    "fechaVisado": null
+  },
+  "propiedad": {
+    "direccion": "Exequiel Fernandez Nº 6150, Departamento: Nº 411, Torre 3, Edificio Exequiel Fernandez",
+    "comuna": "La Florida",
+    "region": "Metropolitana de Santiago",
+    "tipoPropiedad": "Departamento",
+    "objetivo": "Refinanciamiento",
+    "nuevoUsado": "nueva",
+    "proyectoCondominio": "Exequiel Fernandez",
+    "supTerrenoM2": 0,
+    "supConstruccionM2": 47.61,
+    "supPrimerPisoM2": null,
+    "supConstruidaTotal": 0,
+    "anioConstruccion": 2026,
+    "materialPredominante": "HORMIGON ARMADO",
+    "calidadConstruccion": null,
+    "estadoConservacion": "NUEVO - S/USO",
+    "agrupacion": "",
+    "orientacion": "",
+    "pisos": 1,
+    "dormitorios": 2,
+    "banos": 1,
+    "estacionamientos": 1,
+    "bodegas": 0,
+    "dfl2": "NO",
+    "velocidadVentaEstimada": "8 a 10 meses",
+    "tipoZonaDescripcion": "E-AA1 (La Florida)",
+    "vidaUtil": 70
+  },
+  "sii": {
+    "rolSii": "31-516",
+    "avaluoTotal": null,
+    "avaluoFiscalUf": null,
+    "avaluoExento": null,
+    "contribucionAnual": null,
+    "calidadSii": "",
+    "destinoSii": "HABITACIONAL",
+    "codComuna": "",
+    "codManzana": "31",
+    "codPredio": "516",
+    "ubicacionUrbanoRural": "urbano",
+    "cg": "",
+    "ociv": "",
+    "oc": "",
+    "g": "",
+    "porUnidad": []
+  },
+  "cuadro": {
+    "items": [
+      {
+        "id": "recz3t68XQE0ie7SB",
+        "orden": 1,
+        "descripcion": "Depto Nº 411, Torre 3",
+        "tipoItem": "Edificacion",
+        "supM2": 41.08,
+        "ufM2Aplicado": 78,
+        "factorAplicado": 1,
+        "ufTotalItem": 3204.24,
+        "aportaAGarantia": false,
+        "situacionMunicipal": "Regularizado"
+      },
+      {
+        "id": "reckTtSDPlD7jDn5j",
+        "orden": 2,
+        "descripcion": "Terraza",
+        "tipoItem": "Edificacion",
+        "supM2": 6.53,
+        "ufM2Aplicado": 39,
+        "factorAplicado": 1,
+        "ufTotalItem": 254.67,
+        "aportaAGarantia": false,
+        "situacionMunicipal": "Regularizado"
+      },
+      {
+        "id": "recn1dqHr7kX5K2VL",
+        "orden": 3,
+        "descripcion": "Estacionamiento Nº 105",
+        "tipoItem": "OO.CC.",
+        "supM2": 1,
+        "ufM2Aplicado": 400,
+        "factorAplicado": 1,
+        "ufTotalItem": 400,
+        "aportaAGarantia": false,
+        "situacionMunicipal": "Regularizado"
+      }
+    ],
+    "totalUf": 3858.91
+  },
+  "terminales": {
+    "valorComercialUf": 3858.91,
+    "valorComercialClp": 155477297.5877,
+    "valorReposicionUf": 3167.128,
+    "valorReposicionClp": 127605075.67016001,
+    "seguroIncendioUf": 3087.128,
+    "seguroIncendioClp": 124381838.07016002,
+    "avaluoFiscalUf": 0,
+    "valorRemateUf": 2508.2915,
+    "valorRemateClp": 101060243.43200499,
+    "valorLiquidacionUf": 3183.6007499999996,
+    "valorLiquidacionClp": 128268770.50985248,
+    "rentaPerpetuaClp": 156444444.44444445,
+    "ingresoLiquidoAnualClp": 7040000,
+    "ufDia": 40290.47,
+    "usdDia": 894.25,
+    "fechaUf": "2026-05-12",
+    "valorReposicionUsd": 142695.08042511603,
+    "seguroIncendioUsd": 139090.67718217502,
+    "avaluoFiscalUsd": null,
+    "valorRemateUsd": 113011.17521051718,
+    "valorLiquidacionUsd": 143437.26084411796
+  },
+  "comparablesInforme": {
+    "filas": [
+      {
+        "id": "recmLHBjDsTZwDyrs",
+        "numero": null,
+        "direccion": "Froilán Lagos 1360 , La Florida",
+        "comuna": "La Florida",
+        "supTerreno": null,
+        "supConstruida": 54.8,
+        "precioUf": 4100,
+        "anio": 2026,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "9 4096 4293",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 74.81751824817519
+      },
+      {
+        "id": "reczSxTwx1tf3sd9b",
+        "numero": null,
+        "direccion": "Av. Vicuña Mackenna Oriente 6480 , La Florida",
+        "comuna": "La Florida",
+        "supTerreno": null,
+        "supConstruida": 55.77,
+        "precioUf": 4050,
+        "anio": 2026,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "9 9231 0134",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 72.61968800430338
+      },
+      {
+        "id": "recCHvme0YS9R972G",
+        "numero": null,
+        "direccion": "Mirador Azul 835 , La Florida",
+        "comuna": "La Florida",
+        "supTerreno": null,
+        "supConstruida": 57.52,
+        "precioUf": 4130,
+        "anio": 2026,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "9 4096 4293",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 71.80111265646731
+      },
+      {
+        "id": "recmtsaik6S6hExxF",
+        "numero": null,
+        "direccion": "Vicuña Mackenna 5790 , La Florida",
+        "comuna": "La Florida",
+        "supTerreno": null,
+        "supConstruida": 56.18,
+        "precioUf": 3939,
+        "anio": 2026,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "9 7512 1219",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 70.11391954432182
+      },
+      {
+        "id": "rectOfF6eTsx27HIV",
+        "numero": null,
+        "direccion": "Avenida Departamental 4730",
+        "comuna": "La Florida",
+        "supTerreno": null,
+        "supConstruida": 52.78,
+        "precioUf": 4609,
+        "anio": 2026,
+        "tipoReferencia": "Oferta",
+        "fecha": "may-26",
+        "telefono": "9 3445 4991",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 87.32474422129594
+      },
+      {
+        "id": "recsxzLoKLJ7Puzay",
+        "numero": null,
+        "direccion": "Vicuña Mackenna Poniente 5954 Dp 1105",
+        "comuna": "La Florida",
+        "supTerreno": null,
+        "supConstruida": 52,
+        "precioUf": 3450,
+        "anio": 2010,
+        "tipoReferencia": "CBR",
+        "fecha": "feb-24",
+        "telefono": "17076 24013",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 0,
+        "ufM2Construccion": 66.34615384615384
+      }
+    ],
+    "ofertas": {
+      "filas": [
+        {
+          "id": "recmLHBjDsTZwDyrs",
+          "numero": 1,
+          "direccion": "Froilán Lagos 1360 , La Florida",
+          "comuna": "La Florida",
+          "supTerreno": null,
+          "supConstruida": 54.8,
+          "precioUf": 4100,
+          "anio": 2026,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "9 4096 4293",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 74.81751824817519
+        },
+        {
+          "id": "reczSxTwx1tf3sd9b",
+          "numero": 2,
+          "direccion": "Av. Vicuña Mackenna Oriente 6480 , La Florida",
+          "comuna": "La Florida",
+          "supTerreno": null,
+          "supConstruida": 55.77,
+          "precioUf": 4050,
+          "anio": 2026,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "9 9231 0134",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 72.61968800430338
+        },
+        {
+          "id": "recCHvme0YS9R972G",
+          "numero": 3,
+          "direccion": "Mirador Azul 835 , La Florida",
+          "comuna": "La Florida",
+          "supTerreno": null,
+          "supConstruida": 57.52,
+          "precioUf": 4130,
+          "anio": 2026,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "9 4096 4293",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 71.80111265646731
+        },
+        {
+          "id": "recmtsaik6S6hExxF",
+          "numero": 4,
+          "direccion": "Vicuña Mackenna 5790 , La Florida",
+          "comuna": "La Florida",
+          "supTerreno": null,
+          "supConstruida": 56.18,
+          "precioUf": 3939,
+          "anio": 2026,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "9 7512 1219",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 70.11391954432182
+        },
+        {
+          "id": "rectOfF6eTsx27HIV",
+          "numero": 5,
+          "direccion": "Avenida Departamental 4730",
+          "comuna": "La Florida",
+          "supTerreno": null,
+          "supConstruida": 52.78,
+          "precioUf": 4609,
+          "anio": 2026,
+          "tipoReferencia": "Oferta",
+          "fecha": "may-26",
+          "telefono": "9 3445 4991",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 87.32474422129594
+        }
+      ],
+      "promedio": {
+        "totalUf": 4165.6,
+        "supTerreno": null,
+        "supConstruida": 55.410000000000004,
+        "oocc": null,
+        "ufM2Terreno": null,
+        "ufM2Construccion": 75.33539653491272
+      },
+      "tasacionVsPct": -3.56337523234601
+    },
+    "cbr": {
+      "filas": [
+        {
+          "id": "recsxzLoKLJ7Puzay",
+          "numero": 1,
+          "direccion": "Vicuña Mackenna Poniente 5954 Dp 1105",
+          "comuna": "La Florida",
+          "supTerreno": null,
+          "supConstruida": 52,
+          "precioUf": 3450,
+          "anio": 2010,
+          "tipoReferencia": "CBR",
+          "fecha": "feb-24",
+          "telefono": "17076 24013",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 0,
+          "ufM2Construccion": 66.34615384615384
+        }
+      ],
+      "promedio": {
+        "totalUf": 3450,
+        "supTerreno": null,
+        "supConstruida": 52,
+        "oocc": null,
+        "ufM2Terreno": null,
+        "ufM2Construccion": 66.34615384615384
+      },
+      "tasacionVsPct": 9.502826406582479
+    },
+    "tasacionFila": {
+      "totalUf": 3858.91,
+      "supTerreno": 0,
+      "supConstruida": 47.61,
+      "oocc": 400,
+      "ufM2Terreno": null,
+      "ufM2Construccion": 72.65091367359798
+    },
+    "promedioUfM2": 75.33539653491272,
+    "usadosEnPromedio": 6,
+    "cumpleMinimo": true,
+    "tasacionUfM2": 72.65091367359798,
+    "tasacionVsPct": -3.56337523234601
+  },
+  "rentabilidad": {
+    "arriendoBrutoMensualClp": 640000,
+    "gastoAnualClp": 640000,
+    "ingresoLiquidoAnualClp": 7040000,
+    "rentaPerpetuaClp": 156444444.44444445,
+    "tasaCapRate": 0.045,
+    "arriendoUfMes": 15.884649645437246
+  },
+  "textosIA": {
+    "sintesisPropiedad": "El bien es un departamento que se encuentra en el Edificio Exequiel Fernandez - Torre 3, ubicado en Exequiel Fernandez Nº 6150. El edificio se desarrolla en un volumen de 22 pisos y 4 subterráneos el cual está conectado por 3 ascensores. Los espacios comunes se encuentran azotea y en primer piso, cuenta con sala de eventos, gimnasio, sala lavado mascotas, piscina, quincho, bicicletero, jardines interiores. La propiedad se encuentra en el piso 4 con orientación este, tiene 41,08 m² interiores y 6,53 m² de terraza. El departamento cuenta con living - comedor con salida a terraza, cocina americana, espacio para lavadora, dos dormitorios con baño en suite y closet mural. Tiene asignado el estacionamiento cubierto N° 105.",
+    "descripcionSector": "El sector es de carácter mixto. El cual se compone de viviendas de baja densidad, algunas de las cuales han sido modificadas para albergar comercio, edificios habitacional de altura media, servicios y comercios varios. El comercio, el transporte y los servicios se encuentran en la avenida más cercana: Avenida Departamental.",
+    "textoExpropiacion": null
+  },
+  "cualitativa": {
+    "normativa": null,
+    "sector": null,
+    "geometriaTerreno": null,
+    "emplazamiento": null,
+    "constructivas": null,
+    "servicios": null,
+    "comodidades": null,
+    "detallePropiedad": null
+  },
+  "recintos": {
+    "ampliaciones": [],
+    "habitacionesPorNivel": [
+      {
+        "id": "recLg1PBvIoxQL8eA",
+        "nivel": "Piso1",
+        "tipoRecinto": "Otro",
+        "cantidad": 1
+      },
+      {
+        "id": "recMSZk73V1v6uevJ",
+        "nivel": "Piso1",
+        "tipoRecinto": "Cocina",
+        "cantidad": 1
+      },
+      {
+        "id": "recVnDiJ2yNzN3RcN",
+        "nivel": "Piso1",
+        "tipoRecinto": "Bano",
+        "cantidad": 1
+      },
+      {
+        "id": "recXvenJKTjO4ulZD",
+        "nivel": "Piso1",
+        "tipoRecinto": "Suite",
+        "cantidad": 2
+      },
+      {
+        "id": "rechT5mfSPRHsmRKj",
+        "nivel": "Piso1",
+        "tipoRecinto": "Comedor",
+        "cantidad": 1
+      },
+      {
+        "id": "rechovTebzobs12b5",
+        "nivel": "Piso1",
+        "tipoRecinto": "Living",
+        "cantidad": 1
+      },
+      {
+        "id": "relleno-Piso1-Sala",
+        "nivel": "Piso1",
+        "tipoRecinto": "Sala",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Hall",
+        "nivel": "Piso1",
+        "tipoRecinto": "Hall",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-D.Simple",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Simple",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-D.Servicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Servicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Escritorio",
+        "nivel": "Piso1",
+        "tipoRecinto": "Escritorio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-MedioBano",
+        "nivel": "Piso1",
+        "tipoRecinto": "MedioBano",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-BanoServicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "BanoServicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Lavadero",
+        "nivel": "Piso1",
+        "tipoRecinto": "Lavadero",
+        "cantidad": 0
+      }
+    ],
+    "totalRecintos": 7,
+    "terminacionesPorRecinto": []
+  },
+  "fotos": {
+    "total": 16,
+    "porCategoria": {
+      "Mapa de Ubicación": 1,
+      "Ofertas / Comparables": 3,
+      "Mapa de referencias": 1,
+      "planificacion": 1,
+      "Fachada / Exterior": 2,
+      "Living / Comedor": 3,
+      "Cocina": 2,
+      "Baños": 1,
+      "Habitaciones": 2
+    },
+    "fotos": [
+      {
+        "id": "recqpYHN4I9YDLN2m",
+        "nombre": "caso5_mapa_ubicacion_0.jpg",
+        "url": "«dataURI 87835»",
+        "categoria": "Mapa de Ubicación"
+      },
+      {
+        "id": "recJB0y5RyyYfbTdB",
+        "nombre": "caso5_ofertas_comparables_1.jpg",
+        "url": "«dataURI 26563»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recFCqO5qdyzGSJ9V",
+        "nombre": "caso5_ofertas_comparables_2.jpg",
+        "url": "«dataURI 39911»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "rec04L2RESMVDEnOj",
+        "nombre": "caso5_ofertas_comparables_3.jpg",
+        "url": "«dataURI 30371»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recNKIUnzeuwC6iNx",
+        "nombre": "caso5_mapa_referencias_4.jpg",
+        "url": "«dataURI 69375»",
+        "categoria": "Mapa de referencias"
+      },
+      {
+        "id": "recsUN9piT6ayyxcA",
+        "nombre": "caso5_planificacion_5.jpg",
+        "url": "«dataURI 55787»",
+        "categoria": "planificacion"
+      },
+      {
+        "id": "recHW2C0yp86mZ8ts",
+        "nombre": "caso5_fachada_exterior_6.jpg",
+        "url": "«dataURI 65811»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "recaU4zSMhnmVDfxQ",
+        "nombre": "caso5_living_comedor_7.jpg",
+        "url": "«dataURI 60463»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "rechzApPer58BvTiu",
+        "nombre": "caso5_living_comedor_8.jpg",
+        "url": "«dataURI 47003»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "rec4Z5ljpMT0IhJjc",
+        "nombre": "caso5_cocina_9.jpg",
+        "url": "«dataURI 60135»",
+        "categoria": "Cocina"
+      },
+      {
+        "id": "reczosCiMgzY8raax",
+        "nombre": "caso5_banos_10.jpg",
+        "url": "«dataURI 30895»",
+        "categoria": "Baños"
+      },
+      {
+        "id": "rec9a9se0xCVAmnpK",
+        "nombre": "caso5_habitaciones_11.jpg",
+        "url": "«dataURI 59363»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recXfPUjW6ti4GJeD",
+        "nombre": "caso5_habitaciones_12.jpg",
+        "url": "«dataURI 65223»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recdCaaih23YbI1ES",
+        "nombre": "caso5_living_comedor_13.jpg",
+        "url": "«dataURI 88319»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "recU1qj00Jl7bZKc7",
+        "nombre": "caso5_cocina_14.jpg",
+        "url": "«dataURI 27487»",
+        "categoria": "Cocina"
+      },
+      {
+        "id": "recSMag91fnInWvm7",
+        "nombre": "caso5_fachada_exterior_15.jpg",
+        "url": "«dataURI 91403»",
+        "categoria": "Fachada / Exterior"
+      }
+    ]
+  },
+  "anexos": {
+    "documentos": []
+  },
+  "imagenes": {
+    "mapaUbicacion": "«dataURI 87835»",
+    "fachada": "«dataURI 65811»",
+    "firma": "«dataURI 6835»",
+    "refMapa": "«dataURI 69375»",
+    "ref1": "«dataURI 26563»",
+    "ref2": "«dataURI 39911»",
+    "ref3": "«dataURI 30371»",
+    "anexo1Plano": null,
+    "anexo1Esquema": null,
+    "anexo1CuadroSup": null,
+    "anexo1Emplazamiento": null,
+    "anexo1Aerea": null,
+    "anexo1MapaSii": null,
+    "anexo1InfoSii": null,
+    "anexo2RolAvaluo": null,
+    "anexo2Permiso": null,
+    "anexo2Escritura": null,
+    "anexo2NoExpropiacion": null,
+    "anexo2Recepcion": null,
+    "anexo2Tgr": null
+  },
+  "mapa": {
+    "staticMapUrl": null,
+    "lat": null,
+    "long": null
+  },
+  "legales": {
+    "fojas": "",
+    "numeroInscripcion": "",
+    "anoInscripcion": null,
+    "permisoEdificacion": "N° 508 22-08-2025",
+    "recepcionFinal": "N° 27 13-01-2026"
+  },
+  "huecos": [
+    {
+      "ruta": "textosIA.sintesisPropiedad",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.descripcionSector",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.textoExpropiacion",
+      "eIds": [
+        "E-57"
+      ],
+      "pId": "P1-1",
+      "motivo": "Plantilla con variables; falta la columna afecto_expropiacion"
+    },
+    {
+      "ruta": "cualitativa.detallePropiedad",
+      "eIds": [
+        "E-37",
+        "E-39",
+        "E-41",
+        "E-45",
+        "E-52",
+        "E-56",
+        "E-54",
+        "E-55"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (CI-023): sin columnas destino"
+    },
+    {
+      "ruta": "cualitativa.constructivas",
+      "eIds": [
+        "E-176..E-191"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (6 CI-023 + 7 silenciosos): sin columnas"
+    },
+    {
+      "ruta": "cualitativa.comodidades",
+      "eIds": [
+        "E-207"
+      ],
+      "pId": "P1-1",
+      "motivo": "14 switches capturados y descartados; TX_Amenities no existe"
+    },
+    {
+      "ruta": "cualitativa.normativa",
+      "eIds": [
+        "E-125..E-140"
+      ],
+      "pId": "P1-2",
+      "motivo": "Sin catálogo normativo poblado ni UI (rescate M_Zonificacion en T4)"
+    },
+    {
+      "ruta": "cualitativa.sector",
+      "eIds": [
+        "E-141..E-146",
+        "E-148..E-157"
+      ],
+      "pId": "P1-2",
+      "motivo": "Mercado y sector sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.geometriaTerreno",
+      "eIds": [
+        "E-159..E-165"
+      ],
+      "pId": "P1-2",
+      "motivo": "Forma/pendiente/frente/deslindes sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.emplazamiento",
+      "eIds": [
+        "E-167..E-175"
+      ],
+      "pId": "P1-2",
+      "motivo": "Emplazamiento cualitativo sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.servicios",
+      "eIds": [
+        "E-197..E-201"
+      ],
+      "pId": "P1-2",
+      "motivo": "Servicios de la propiedad sin UI ni columnas"
+    },
+    {
+      "ruta": "terminales.usdDia",
+      "eIds": [
+        "E-103"
+      ],
+      "pId": "P1-3",
+      "motivo": "tipo_cambio_usd sin escritor automático (el cron UF no lo escribe; el valor de 0066 es seed manual)"
+    },
+    {
+      "ruta": "mapa.staticMapUrl",
+      "eIds": [
+        "E-120"
+      ],
+      "pId": "P1-4",
+      "motivo": "Google Static Maps sin implementación ni API key"
+    },
+    {
+      "ruta": "clienteInforme.logoUrl",
+      "eIds": [
+        "E-02"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente sin clientes reales (H9 — la portada MET salió con marca Austral)"
+    },
+    {
+      "ruta": "clienteInforme.nombreRevisor",
+      "eIds": [
+        "E-114"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente.nombre_revisor sin valor (H9)"
+    },
+    {
+      "ruta": "comparablesInforme.promedioUfM2",
+      "eIds": [
+        "E-66..E-68",
+        "E-73..E-75"
+      ],
+      "pId": "P1-8",
+      "motivo": "Promedios y fila TASACIÓN calculados por el ensamblador, sin persistencia (puente hasta T2)"
+    },
+    {
+      "ruta": "partes.fechaVisado",
+      "eIds": [
+        "E-113"
+      ],
+      "pId": "P1-9",
+      "motivo": "IF-04 (visación) no existe"
+    },
+    {
+      "ruta": "propiedad.vidaUtil",
+      "eIds": [
+        "E-48",
+        "E-76",
+        "E-81"
+      ],
+      "pId": "P1-9",
+      "motivo": "F_VidaUtil existe pero está fuera de la regla v32"
+    }
+  ],
+  "canonico": {
+    "id": "recoZcwmgCBVKQMxF",
+    "codigo": "VP-2026-0077",
+    "estado": "calculada",
+    "versionVigente": null,
+    "valorDestacado": {
+      "valorUf": 3858.91,
+      "capRate": 0.045,
+      "esOverride": false,
+      "ufDiaVisita": null
+    },
+    "datosSii": {
+      "rolSii": "31-516",
+      "avaluoTotal": null,
+      "avaluoFiscalUf": null,
+      "avaluoExento": null,
+      "contribucionAnual": null,
+      "calidadSii": "",
+      "destinoSii": "HABITACIONAL",
+      "codComuna": "",
+      "codManzana": "31",
+      "codPredio": "516",
+      "ubicacionUrbanoRural": "urbano",
+      "cg": "",
+      "ociv": "",
+      "oc": "",
+      "g": "",
+      "porUnidad": []
+    },
+    "observaciones": {
+      "observacionesTasador": "",
+      "observacionRechazo": "",
+      "overrides": [
+        {
+          "campo": "Vida útil",
+          "valor": 70
+        }
+      ],
+      "motivoOverride": "SANDBOX T-REPLICA-20261005 Caso 5 (HEV-3183): (1) Reposición: el XLSM calcula factor_garantia(0.8)×edificación-a-nuevo + OO.CC. (Portada BG72 = 0.8×3458,91+400 = 3167,128) y F_ValorReposicionUF v32 suma a-nuevo SIN el factor (daría 3858,91) — MISMO gap del Caso 2. (2) Seguro: el XLSM aplica DB51=0.8 a TODO el cuadro incl. estacionamiento (Portada BG73 = 0.8×3858,91 = 3087,128) y el motor usa valor_seguro_base_items_uf (excluye Estac. y no aplica factor → 3458,91). Gaps documentados en overrides-caso5.md.",
+      "autorOverride": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente caso 5)",
+      "antecedentesLegales": {
+        "fojas": "",
+        "numeroInscripcion": "",
+        "anoInscripcion": null,
+        "permisoEdificacion": "N° 508 22-08-2025",
+        "recepcionFinal": "N° 27 13-01-2026"
+      }
+    },
+    "anexosRanuras": [
+      {
+        "ranura": "anexo1Plano",
+        "codigo": "foto_plano_cuadro_superficies",
+        "label": "Plano / cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Esquema",
+        "codigo": "esquema_superficies",
+        "label": "Esquema de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1CuadroSup",
+        "codigo": "cuadro_superficies",
+        "label": "Cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Emplazamiento",
+        "codigo": "planta_emplazamiento",
+        "label": "Planta de emplazamiento",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Aerea",
+        "codigo": "foto_aerea",
+        "label": "Foto aérea",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1MapaSii",
+        "codigo": "mapa_sii",
+        "label": "Mapa SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1InfoSii",
+        "codigo": "foto_fuente_sii",
+        "label": "Información SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2RolAvaluo",
+        "codigo": "certificado_avaluo_fiscal",
+        "label": "Certificado de avalúo fiscal",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Permiso",
+        "codigo": "permiso_edificacion",
+        "label": "Permiso de edificación",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Escritura",
+        "codigo": "escritura_compraventa",
+        "label": "Escritura de compraventa",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2NoExpropiacion",
+        "codigo": "informe_no_expropiacion_serviu",
+        "label": "Informe de no expropiación (SERVIU)",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Recepcion",
+        "codigo": "certificado_recepcion_final",
+        "label": "Certificado de recepción final",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Tgr",
+        "codigo": "certificado_deuda_tgr",
+        "label": "Certificado de deuda TGR",
+        "nombre": null,
+        "thumbnailUrl": null
+      }
+    ],
+    "firmaTasadorUrl": null,
+    "bloques": [
+      {
+        "numero": 1,
+        "id": "cabecera",
+        "titulo": "Cabecera",
+        "vacio": false,
+        "datos": {
+          "codigo": "VP-2026-0077",
+          "codigoExt": "VP-2026-0077",
+          "nuevoUsado": "nueva",
+          "cliente": [
+            "recPDwixzybwHlJaQ"
+          ],
+          "direccion": "Exequiel Fernandez Nº 6150, Departamento: Nº 411, Torre 3, Edificio Exequiel Fernandez",
+          "comuna": [
+            "recXZKLIe9RedfCQ0"
+          ],
+          "fechaVisita": "2026-05-12",
+          "version": null
+        }
+      },
+      {
+        "numero": 2,
+        "id": "valor",
+        "titulo": "Valor de tasación",
+        "vacio": false,
+        "datos": {
+          "valorUf": 3858.91,
+          "capRate": 0.045,
+          "esOverride": false,
+          "ufDiaVisita": null
+        }
+      },
+      {
+        "numero": 3,
+        "id": "antecedentes",
+        "titulo": "Antecedentes de la propiedad",
+        "vacio": false,
+        "datos": {
+          "supTerrenoM2": 0,
+          "supConstruccionM2": 47.61,
+          "supPrimerPisoM2": null,
+          "supConstruidaTotal": 0,
+          "anioConstruccion": 2026,
+          "materialPredominante": "HORMIGON ARMADO",
+          "calidadConstruccion": null,
+          "estadoConservacion": "NUEVO - S/USO",
+          "agrupacion": "",
+          "dormitorios": 2,
+          "banos": 1,
+          "estacionamientos": 1,
+          "bodegas": 0,
+          "dfl2": "NO"
+        }
+      },
+      {
+        "numero": 4,
+        "id": "sii",
+        "titulo": "Datos SII y avalúo",
+        "vacio": false,
+        "datos": {
+          "rolSii": "31-516",
+          "avaluoTotal": null,
+          "avaluoFiscalUf": null,
+          "avaluoExento": null,
+          "contribucionAnual": null,
+          "calidadSii": "",
+          "destinoSii": "HABITACIONAL",
+          "codComuna": "",
+          "codManzana": "31",
+          "codPredio": "516",
+          "ubicacionUrbanoRural": "urbano",
+          "cg": "",
+          "ociv": "",
+          "oc": "",
+          "g": "",
+          "porUnidad": []
+        }
+      },
+      {
+        "numero": 5,
+        "id": "valoracion",
+        "titulo": "Cuadro de valoración",
+        "vacio": false,
+        "datos": {
+          "items": [
+            {
+              "id": "reckTtSDPlD7jDn5j",
+              "orden": 2,
+              "descripcion": "Terraza",
+              "tipoItem": "Edificacion",
+              "supM2": 6.53,
+              "ufM2Aplicado": 39,
+              "ufTotalItem": 254.67,
+              "aportaAGarantia": false,
+              "situacionMunicipal": "Regularizado"
+            },
+            {
+              "id": "recn1dqHr7kX5K2VL",
+              "orden": 3,
+              "descripcion": "Estacionamiento Nº 105",
+              "tipoItem": "OO.CC.",
+              "supM2": 1,
+              "ufM2Aplicado": 400,
+              "ufTotalItem": 400,
+              "aportaAGarantia": false,
+              "situacionMunicipal": "Regularizado"
+            },
+            {
+              "id": "recz3t68XQE0ie7SB",
+              "orden": 1,
+              "descripcion": "Depto Nº 411, Torre 3",
+              "tipoItem": "Edificacion",
+              "supM2": 41.08,
+              "ufM2Aplicado": 78,
+              "ufTotalItem": 3204.24,
+              "aportaAGarantia": false,
+              "situacionMunicipal": "Regularizado"
+            }
+          ],
+          "totalUf": 3858.91
+        }
+      },
+      {
+        "numero": 6,
+        "id": "comparables",
+        "titulo": "Comparables",
+        "vacio": false,
+        "datos": {
+          "comparables": [
+            {
+              "id": "recmLHBjDsTZwDyrs",
+              "numero": null,
+              "direccion": "Froilán Lagos 1360 , La Florida",
+              "comuna": "La Florida",
+              "supTerreno": null,
+              "supConstruida": 54.8,
+              "precioUf": 4100,
+              "anio": 2026,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "9 4096 4293",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 74.81751824817519
+            },
+            {
+              "id": "reczSxTwx1tf3sd9b",
+              "numero": null,
+              "direccion": "Av. Vicuña Mackenna Oriente 6480 , La Florida",
+              "comuna": "La Florida",
+              "supTerreno": null,
+              "supConstruida": 55.77,
+              "precioUf": 4050,
+              "anio": 2026,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "9 9231 0134",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 72.61968800430338
+            },
+            {
+              "id": "recCHvme0YS9R972G",
+              "numero": null,
+              "direccion": "Mirador Azul 835 , La Florida",
+              "comuna": "La Florida",
+              "supTerreno": null,
+              "supConstruida": 57.52,
+              "precioUf": 4130,
+              "anio": 2026,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "9 4096 4293",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 71.80111265646731
+            },
+            {
+              "id": "recmtsaik6S6hExxF",
+              "numero": null,
+              "direccion": "Vicuña Mackenna 5790 , La Florida",
+              "comuna": "La Florida",
+              "supTerreno": null,
+              "supConstruida": 56.18,
+              "precioUf": 3939,
+              "anio": 2026,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "9 7512 1219",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 70.11391954432182
+            },
+            {
+              "id": "rectOfF6eTsx27HIV",
+              "numero": null,
+              "direccion": "Avenida Departamental 4730",
+              "comuna": "La Florida",
+              "supTerreno": null,
+              "supConstruida": 52.78,
+              "precioUf": 4609,
+              "anio": 2026,
+              "tipoReferencia": "Oferta",
+              "fecha": "may-26",
+              "telefono": "9 3445 4991",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 87.32474422129594
+            },
+            {
+              "id": "recsxzLoKLJ7Puzay",
+              "numero": null,
+              "direccion": "Vicuña Mackenna Poniente 5954 Dp 1105",
+              "comuna": "La Florida",
+              "supTerreno": null,
+              "supConstruida": 52,
+              "precioUf": 3450,
+              "anio": 2010,
+              "tipoReferencia": "CBR",
+              "fecha": "feb-24",
+              "telefono": "17076 24013",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 0,
+              "ufM2Construccion": 66.34615384615384
+            }
+          ],
+          "promedioUfM2": 73.83718942011957,
+          "usadosEnPromedio": 6,
+          "cumpleMinimo": true
+        }
+      },
+      {
+        "numero": 7,
+        "id": "fotografico",
+        "titulo": "Registro fotográfico",
+        "vacio": false,
+        "datos": {
+          "total": 16,
+          "porCategoria": {
+            "ofertas_comparables": 3,
+            "cocina": 2,
+            "habitaciones": 2,
+            "fachada_exterior": 2,
+            "mapa_referencias": 1,
+            "living_comedor": 3,
+            "mapa_ubicacion": 1,
+            "planificacion": 1,
+            "banos": 1
+          },
+          "fotos": [
+            {
+              "id": "rec04L2RESMVDEnOj",
+              "nombre": "caso5_ofertas_comparables_3.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 3
+            },
+            {
+              "id": "rec4Z5ljpMT0IhJjc",
+              "nombre": "caso5_cocina_9.jpg",
+              "categoria": "cocina",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 9
+            },
+            {
+              "id": "rec9a9se0xCVAmnpK",
+              "nombre": "caso5_habitaciones_11.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 11
+            },
+            {
+              "id": "recFCqO5qdyzGSJ9V",
+              "nombre": "caso5_ofertas_comparables_2.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 2
+            },
+            {
+              "id": "recHW2C0yp86mZ8ts",
+              "nombre": "caso5_fachada_exterior_6.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 6
+            },
+            {
+              "id": "recJB0y5RyyYfbTdB",
+              "nombre": "caso5_ofertas_comparables_1.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 1
+            },
+            {
+              "id": "recNKIUnzeuwC6iNx",
+              "nombre": "caso5_mapa_referencias_4.jpg",
+              "categoria": "mapa_referencias",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 4
+            },
+            {
+              "id": "recSMag91fnInWvm7",
+              "nombre": "caso5_fachada_exterior_15.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 15
+            },
+            {
+              "id": "recU1qj00Jl7bZKc7",
+              "nombre": "caso5_cocina_14.jpg",
+              "categoria": "cocina",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 14
+            },
+            {
+              "id": "recXfPUjW6ti4GJeD",
+              "nombre": "caso5_habitaciones_12.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 12
+            },
+            {
+              "id": "recaU4zSMhnmVDfxQ",
+              "nombre": "caso5_living_comedor_7.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 7
+            },
+            {
+              "id": "recdCaaih23YbI1ES",
+              "nombre": "caso5_living_comedor_13.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 13
+            },
+            {
+              "id": "rechzApPer58BvTiu",
+              "nombre": "caso5_living_comedor_8.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 8
+            },
+            {
+              "id": "recqpYHN4I9YDLN2m",
+              "nombre": "caso5_mapa_ubicacion_0.jpg",
+              "categoria": "mapa_ubicacion",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 0
+            },
+            {
+              "id": "recsUN9piT6ayyxcA",
+              "nombre": "caso5_planificacion_5.jpg",
+              "categoria": "planificacion",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 5
+            },
+            {
+              "id": "reczosCiMgzY8raax",
+              "nombre": "caso5_banos_10.jpg",
+              "categoria": "banos",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 10
+            }
+          ]
+        }
+      },
+      {
+        "numero": 8,
+        "id": "observaciones",
+        "titulo": "Observaciones y overrides",
+        "vacio": false,
+        "datos": {
+          "observacionesTasador": "",
+          "observacionRechazo": "",
+          "overrides": [
+            {
+              "campo": "Vida útil",
+              "valor": 70
+            }
+          ],
+          "motivoOverride": "SANDBOX T-REPLICA-20261005 Caso 5 (HEV-3183): (1) Reposición: el XLSM calcula factor_garantia(0.8)×edificación-a-nuevo + OO.CC. (Portada BG72 = 0.8×3458,91+400 = 3167,128) y F_ValorReposicionUF v32 suma a-nuevo SIN el factor (daría 3858,91) — MISMO gap del Caso 2. (2) Seguro: el XLSM aplica DB51=0.8 a TODO el cuadro incl. estacionamiento (Portada BG73 = 0.8×3858,91 = 3087,128) y el motor usa valor_seguro_base_items_uf (excluye Estac. y no aplica factor → 3458,91). Gaps documentados en overrides-caso5.md.",
+          "autorOverride": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente caso 5)",
+          "antecedentesLegales": {
+            "fojas": "",
+            "numeroInscripcion": "",
+            "anoInscripcion": null,
+            "permisoEdificacion": "N° 508 22-08-2025",
+            "recepcionFinal": "N° 27 13-01-2026"
+          }
+        }
+      }
+    ]
+  }
+}

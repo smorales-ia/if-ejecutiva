@@ -1,0 +1,56 @@
+{
+  "tanda": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005",
+  "caso": "CASO3-ALH-335",
+  "numero_solicitud_guard": "ALH -335",
+  "creado_antes_de_escrituras": "2026-10-05",
+  "created": {
+    "solicitud": [
+      "recE1LwwH2xbcCHti"
+    ],
+    "datosTasacion": [
+      "recC2Y04YnPLnzznD"
+    ],
+    "items": [
+      "recqd8VSrrm9ZaVfY"
+    ],
+    "comparables": [
+      "recfOt8TPcQu1fMG4",
+      "recf7H6rfsQ4IBTl7",
+      "recaojQfIfdvbgj0O",
+      "recMD8w6wIPMC1JuC",
+      "rec8KVlwKrgXstI26"
+    ],
+    "habitaciones": [
+      "recmyPZIG3gsur56P",
+      "reczAcDaSodvPONHC",
+      "reco5fibWH2acLw8h",
+      "recX31Eb5hOiySgmt",
+      "rec0xm6CH3Ka0x314"
+    ],
+    "docLegales": [
+      "recdD5VI2edYcRZUB"
+    ],
+    "adjuntos": [
+      "recrkGPJE85WUT68D",
+      "recnfzPvSpeliVNHv",
+      "recrYDDG8aLFhnsdu",
+      "recFL1hSlOQTRtcd0",
+      "recXdxGqn3JIKL55K",
+      "recMjL7YiPyKXmRxo",
+      "rec774cSAfUDqEZmn",
+      "recQ9Lf8v4Fqh01QM",
+      "rec4jAypMDEyCBnc9",
+      "recRjUy7YcDN0usiv",
+      "rec3V0vZwOl6hNiZf",
+      "recFV3vdAoIukJDyx",
+      "recN3UPHsl44XpBae",
+      "reccXilm4dEKvgX6j",
+      "recY6RToNA6YiMt1E",
+      "rectStUOwjNuffnBm"
+    ]
+  },
+  "preciosUf": {
+    "accion": "creado",
+    "id": "recPimidugG1LeoYr"
+  }
+}

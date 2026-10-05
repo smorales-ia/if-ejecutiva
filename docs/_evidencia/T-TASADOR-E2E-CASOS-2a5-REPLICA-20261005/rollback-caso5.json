@@ -1,0 +1,61 @@
+{
+  "tanda": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005",
+  "caso": "CASO5-HEV-3183",
+  "creado": "2026-10-05",
+  "created": {
+    "solicitud": [
+      "recoZcwmgCBVKQMxF"
+    ],
+    "datosTasacion": [
+      "recQaqsQEtCkizgnb"
+    ],
+    "items": [
+      "recz3t68XQE0ie7SB",
+      "reckTtSDPlD7jDn5j",
+      "recn1dqHr7kX5K2VL"
+    ],
+    "comparables": [
+      "recmLHBjDsTZwDyrs",
+      "reczSxTwx1tf3sd9b",
+      "recCHvme0YS9R972G",
+      "recmtsaik6S6hExxF",
+      "rectOfF6eTsx27HIV",
+      "recsxzLoKLJ7Puzay"
+    ],
+    "habitaciones": [
+      "rechT5mfSPRHsmRKj",
+      "rechovTebzobs12b5",
+      "recXvenJKTjO4ulZD",
+      "recMSZk73V1v6uevJ",
+      "recVnDiJ2yNzN3RcN",
+      "recLg1PBvIoxQL8eA"
+    ],
+    "docLegales": [
+      "recEmWhcmDG6Y6M2H"
+    ],
+    "adjuntos": [
+      "recqpYHN4I9YDLN2m",
+      "recJB0y5RyyYfbTdB",
+      "recFCqO5qdyzGSJ9V",
+      "rec04L2RESMVDEnOj",
+      "recNKIUnzeuwC6iNx",
+      "recsUN9piT6ayyxcA",
+      "recHW2C0yp86mZ8ts",
+      "recaU4zSMhnmVDfxQ",
+      "rechzApPer58BvTiu",
+      "rec4Z5ljpMT0IhJjc",
+      "reczosCiMgzY8raax",
+      "rec9a9se0xCVAmnpK",
+      "recXfPUjW6ti4GJeD",
+      "recdCaaih23YbI1ES",
+      "recU1qj00Jl7bZKc7",
+      "recSMag91fnInWvm7"
+    ]
+  },
+  "preciosUf": {
+    "accion": "preexistente",
+    "id": "reczzhTrUvmFf9xUM",
+    "valor_clp": 40290.47,
+    "tipo_cambio_usd": 894.25
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "codigo": "VP-2026-0074",
+  "checks": [
+    {
+      "nombre": "meta.codigo",
+      "got": "VP-2026-0074",
+      "esperado": "VP-2026-0074",
+      "ok": true
+    },
+    {
+      "nombre": "numeroSolicitud (nº interno)",
+      "got": "AGH -1548",
+      "esperado": "AGH -1548",
+      "ok": true
+    },
+    {
+      "nombre": "cliente",
+      "got": "Agencia Habitacional",
+      "esperado": "Agencia Habitacional",
+      "ok": true
+    },
+    {
+      "nombre": "propietario",
+      "got": "ANDRES PABLO ISRAEL AVRAM",
+      "esperado": "ANDRES PABLO ISRAEL AVRAM",
+      "ok": true
+    },
+    {
+      "nombre": "rut",
+      "got": "7.774.862-8",
+      "esperado": "7.774.862-8",
+      "ok": true
+    },
+    {
+      "nombre": "comuna",
+      "got": "Estación Central",
+      "esperado": "Estación Central",
+      "ok": true
+    },
+    {
+      "nombre": "tipoPropiedad",
+      "got": "Departamento",
+      "esperado": "Departamento",
+      "ok": true
+    },
+    {
+      "nombre": "rol SII",
+      "got": "694-416",
+      "esperado": "694-416",
+      "ok": true
+    },
+    {
+      "nombre": "supConstruccion",
+      "got": 41,
+      "esperado": 41,
+      "ok": true
+    },
+    {
+      "nombre": "anioConstruccion",
+      "got": 2018,
+      "esperado": 2018,
+      "ok": true
+    },
+    {
+      "nombre": "vidaUtil",
+      "got": 40,
+      "esperado": 40,
+      "ok": true
+    },
+    {
+      "nombre": "valorComercialUf",
+      "got": 1394,
+      "esperado": 1394,
+      "ok": true
+    },
+    {
+      "nombre": "valorComercialClp",
+      "got": 56164915.18,
+      "esperado": 56164915.18,
+      "ok": true
+    },
+    {
+      "nombre": "valorReposicionUf",
+      "got": 1115.2,
+      "esperado": 1115.2,
+      "ok": true
+    },
+    {
+      "nombre": "valorReposicionClp",
+      "got": 44931932.144,
+      "esperado": 44931932.144,
+      "ok": true
+    },
+    {
+      "nombre": "seguroIncendioUf",
+      "got": 1394,
+      "esperado": 1394,
+      "ok": true
+    },
+    {
+      "nombre": "seguroIncendioClp",
+      "got": 56164915.18,
+      "esperado": 56164915.18,
+      "ok": true
+    },
+    {
+      "nombre": "avaluoFiscalUf",
+      "got": 1256.2748213163063,
+      "esperado": 1256.2748213163063,
+      "ok": true
+    },
+    {
+      "nombre": "valorRemateUf",
+      "got": 906.1,
+      "esperado": 906.1,
+      "ok": true
+    },
+    {
+      "nombre": "valorRemateClp",
+      "got": 36507194.867,
+      "esperado": 36507194.867,
+      "ok": true
+    },
+    {
+      "nombre": "valorLiquidacionUf",
+      "got": 1150.05,
+      "esperado": 1150.05,
+      "ok": true
+    },
+    {
+      "nombre": "valorLiquidacionClp",
+      "got": 46336055.0235,
+      "esperado": 46336055.0235,
+      "ok": true
+    },
+    {
+      "nombre": "ufDia",
+      "got": 40290.47,
+      "esperado": 40290.47,
+      "ok": true
+    },
+    {
+      "nombre": "usdDia",
+      "got": 894.25,
+      "esperado": 894.25,
+      "ok": true
+    },
+    {
+      "nombre": "cuadro.totalUf",
+      "got": 1394,
+      "esperado": 1394,
+      "ok": true
+    },
+    {
+      "nombre": "rentaPerpetua",
+      "got": 58666666.66666667,
+      "esperado": 58666666.66666667,
+      "ok": true
+    },
+    {
+      "nombre": "ingresoLiquidoAnual",
+      "got": 3520000,
+      "esperado": 3520000,
+      "ok": true
+    },
+    {
+      "nombre": "ofertas.promedioUfM2",
+      "got": 35.763724351529234,
+      "esperado": 35.763724351529234,
+      "ok": true
+    },
+    {
+      "nombre": "cbr.promedioUfM2",
+      "got": 33.375,
+      "esperado": 33.375,
+      "ok": true
+    },
+    {
+      "nombre": "ajusteOfertas% (-4.93)",
+      "got": -4.931601457927629,
+      "esperado": -4.931601457927626,
+      "ok": true
+    },
+    {
+      "nombre": "ajusteCBR% (+1.87)",
+      "got": 1.8726591760299627,
+      "esperado": 1.872659176029967,
+      "ok": true
+    },
+    {
+      "nombre": "comparables#",
+      "got": 7,
+      "esperado": 7,
+      "ok": true
+    },
+    {
+      "nombre": "fotos grilla#",
+      "got": 16,
+      "esperado": 16,
+      "ok": true
+    },
+    {
+      "nombre": "ranura fachada",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    },
+    {
+      "nombre": "ranura ref1",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    },
+    {
+      "nombre": "ranura mapaUbicacion",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    }
+  ],
+  "render": {},
+  "resumen": "36/36"
+}

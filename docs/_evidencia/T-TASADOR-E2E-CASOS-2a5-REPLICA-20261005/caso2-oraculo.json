@@ -1,0 +1,132 @@
+{
+  "_fuente": "XLSM 'AG 1548.xlsm' ∩ PDF 'Informe JANETH PATRICIA CANDO ARIAS.pdf' · extraído celda-a-celda 2026-10-05 (openpyxl data_only + pymupdf)",
+  "_modo": "ESPEJO VÍA MOTOR (contrario a Caso 1): se siembran SOLO ENTRADAS; AT03 calcula las SALIDAS al transicionar a 'visitada'.",
+  "_nota_divergencias": {
+    "tipo_informe": "PDF dice 'Crédito Hipotecario' (FICHA E27); no existe en M_TiposInforme. Se usa 'Refinanciamiento' (recreojxTjoAWOEHa) porque es el ÚNICO tipo ruteado a las reglas V32 (REGLA_REFI_DEPTO_V32) cuyos 13 terminales consume el ensamblador. Con 'Mutuo Hipotecario' (lo que usó Caso 1) AT01 cae a Regla_Wildcard_Default → set v31 (variable_output distintos: valor_seguro_uf, renta_perpetua_uf, sin *_clp) y el informe quedaría sin terminales. GAP de ruteo documentado en overrides-caso2.md.",
+    "cliente": "La solicitud vieja VP-2026-0004 (rec19zYDt8muMQ9G4) linkea el cliente LEGACY 'AGENCIA' (rec8K5fUpTEoxD9yS · fs=0.825 fg=0.8 tasa=0.045). Se usa el canónico 'Agencia Habitacional' (recX80z73mCtC4BBo · fs=0.8 fg=0.8 tasa=0.06) — nombre correcto en portada y tasa 6,0% = oráculo.",
+    "anio_construccion": "PLAN §5 decía 2017; el XLSM dice 2018 (Portada AE8 'Año propiedad'=2018, cuadro T51=2018, Recepción Final N°03 26-02-2018). Se usa 2018. Los comparables sí son año 2017.",
+    "tasador_pdf": "PDF dice 'Marcela Gómez', visador 'Héctor Martínez C.'; por D2 se asigna a recTJcV3BIvdcG4em (nutricionsaludketo). visador = Héctor Martínez C. (coincide con el PDF)."
+  },
+  "links": {
+    "cliente": "recX80z73mCtC4BBo",
+    "comuna": "recIHTj4e6vkH977o",
+    "tasador": "recTJcV3BIvdcG4em",
+    "visador": "recrjQDympldI186S",
+    "tipo_informe": "recreojxTjoAWOEHa",
+    "tipo_propiedad": "recf9hz8TbkQ6wsus"
+  },
+  "entradas": {
+    "solicitud": {
+      "cliente_final_nombre": "ANDRES PABLO ISRAEL AVRAM",
+      "cliente_final_rut": "7.774.862-8",
+      "ejecutivo_solicitante": "GERALDINE QUIVAQUI",
+      "direccion": "Coronel Souper N° 4060, Departamento: N°2502 B, Edificio Mirador Souper",
+      "region": "Metropolitana de Santiago",
+      "rol_sii": "694-416",
+      "n_operacion_cliente": 1548,
+      "numero_solicitud": "AGH -1548",
+      "proyecto_condominio": "EDIFICIO MIRADOR SOUPER",
+      "tipo_propiedad_nuevo_usado": "usada",
+      "fecha_visita": "2026-05-12",
+      "fecha_visita_programada": "2026-05-12",
+      "fecha_solicitud": "2026-05-08T12:00:00.000Z",
+      "vida_util_override": 40,
+      "notas": "CASO2-AGH-1548 · T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 · SANDBOX espejo vía motor AT03 (solo entradas sembradas) aislado por notas+numero_solicitud",
+      "valor_reposicion_override": 1115.2,
+      "override_motivo": "SANDBOX T-REPLICA-20261005: el XLSM AGH calcula Reposición = factor_garantia(0.8) × edificación a-nuevo (Portada BG72=1115.2) y F_ValorReposicionUF v32 calcula a-nuevo sin ese factor (daría 1394). Gap de fórmula documentado en overrides-caso2.md.",
+      "override_autor": "T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 (agente piloto)"
+    },
+    "datosTasacion": {
+      "propietario_nombre": "ANDRES PABLO ISRAEL AVRAM",
+      "propietario_rut": "7.774.862-8",
+      "sup_construccion_m2": 41,
+      "sup_terreno_m2": 0,
+      "anio_construccion": 2018,
+      "material_predominante": "HORMIGON ARMADO",
+      "estado_conservacion": "Bueno",
+      "dormitorios": 2,
+      "banos": 1,
+      "estacionamientos": 0,
+      "bodegas": 0,
+      "pisos": 1,
+      "velocidad_venta_estimada": "8 a 10 meses",
+      "tipo_zona_descripcion": "IPC (Estación Central)",
+      "ubicacion_urbano_rural": "urbano",
+      "destino_sii": "HABITACIONAL",
+      "cod_sii_manzana": "694",
+      "cod_sii_predio": "416",
+      "rol_sii": "694-416",
+      "avaluo_fiscal_clp": 50615903,
+      "avaluo_total": 50615903,
+      "arriendo_bruto_mensual_clp": 320000,
+      "arriendo_mensual": 320000,
+      "gasto_anual": 320000,
+      "gasto_anual_clp": 320000,
+      "tasa_cap_rate": 0.06,
+      "uf_dia_visita": 40290.47,
+      "origen_dato": "tipeado",
+      "sintesis_descriptiva": "El bien es un departamento que se encuentra en Coronel Souper N° 4060. El edificio se desarrolla en un volumen de 30 pisos y 3 subterráneos el cual está conectado por 4 ascensores. Los espacios comunes se encuentran en primer piso más azotea y cuenta con sala multiuso, lavandería, gimnasio, quinchos. La propiedad se encuentra en el piso 25 con orientación oeste, tiene 41 m² interiores, sin terraza. El departamento cuenta con living comedor, cocina empotrada, 2 dormitorios, 1 baño de uso común.",
+      "descripcion_sector": "El sector es de carácter mixto. El cual se compone de viviendas de baja densidad, algunas de las cuales han sido modificadas para albergar comercio, edificios habitacional de altura media, servicios y comercios varios. El comercio, el transporte y los servicios se encuentran en la avenida más cercana: Libertador Bernardo Ohiggins."
+    },
+    "items": [
+      { "item_id": 1, "tipo_item": "Edificacion", "nombre_item": "Departamento N°2502 B", "sup_m2": 41, "uf_m2_unitario": 34, "factor_aplicado": 1, "valor_uf": 1394, "situacion_municipal": "Regularizado", "valoracion_por": "m2", "es_bien_no_garantia": 0 }
+    ],
+    "comparables": [
+      { "comp_id": 1, "tipo_referencia": "Oferta", "direccion": "Coronel Souper 4060, Estacion Central", "comuna_comparable": "Estación Central", "anio": 2017, "telefono_contacto": "56 9 3248 7153", "precio_uf": 1490, "sup_construccion_m2": 45, "oo_cc_uf": 0, "uf_m2_construccion": 33.111111111111114, "fecha_publicacion": "2026-05-12" },
+      { "comp_id": 2, "tipo_referencia": "Oferta", "direccion": "Cnel. Souper 3900 - 4200, Estación Central", "comuna_comparable": "Estación Central", "anio": 2017, "telefono_contacto": "56 9 3399 5948", "precio_uf": 1300, "sup_construccion_m2": 41, "oo_cc_uf": 0, "uf_m2_construccion": 31.70731707317073, "fecha_publicacion": "2026-05-12" },
+      { "comp_id": 3, "tipo_referencia": "Oferta", "direccion": "Coronel Souper 4060, Estacion Central", "comuna_comparable": "Estación Central", "anio": 2017, "telefono_contacto": "56 9 9205 0952", "precio_uf": 1675, "sup_construccion_m2": 42, "oo_cc_uf": 0, "uf_m2_construccion": 39.88095238095238, "fecha_publicacion": "2026-05-12" },
+      { "comp_id": 4, "tipo_referencia": "Oferta", "direccion": "Coronel Souper 4060, Estacion Central", "comuna_comparable": "Estación Central", "anio": 2017, "telefono_contacto": "56 9 4145 5465", "precio_uf": 1600, "sup_construccion_m2": 45, "oo_cc_uf": 350, "uf_m2_construccion": 27.77777777777778, "fecha_publicacion": "2026-05-12" },
+      { "comp_id": 5, "tipo_referencia": "Oferta", "direccion": "Coronel Souper 4060, Estacion Central", "comuna_comparable": "Estación Central", "anio": 2017, "telefono_contacto": "56 9 7561 6017", "precio_uf": 1900, "sup_construccion_m2": 41, "oo_cc_uf": 0, "uf_m2_construccion": 46.34146341463415, "fecha_publicacion": "2026-05-12" },
+      { "comp_id": 6, "tipo_referencia": "CBR", "direccion": "Coronel Souper N° 4060 dp 1603 B", "comuna_comparable": "Estación Central", "anio": 2017, "telefono_contacto": "33924 47556", "precio_uf": 1640, "sup_construccion_m2": 40, "oo_cc_uf": 70, "uf_m2_construccion": 39.25, "fecha_publicacion": "2024-04-01" },
+      { "comp_id": 7, "tipo_referencia": "CBR", "direccion": "Coronel Souper N° 4060 dp 203", "comuna_comparable": "Estación Central", "anio": 2017, "telefono_contacto": "1975 2808", "precio_uf": 1100, "sup_construccion_m2": 40, "oo_cc_uf": 0, "uf_m2_construccion": 27.5, "fecha_publicacion": "2024-01-01" }
+    ],
+    "habitaciones": [
+      { "nivel": "Piso1", "tipo_recinto": "Living", "cantidad": 1, "es_dormitorio": 0 },
+      { "nivel": "Piso1", "tipo_recinto": "Comedor", "cantidad": 1, "es_dormitorio": 0 },
+      { "nivel": "Piso1", "tipo_recinto": "Cocina", "cantidad": 1, "es_dormitorio": 0 },
+      { "nivel": "Piso1", "tipo_recinto": "D.Simple", "cantidad": 2, "es_dormitorio": 1 },
+      { "nivel": "Piso1", "tipo_recinto": "Baños", "cantidad": 1, "es_dormitorio": 0 }
+    ],
+    "legales": {
+      "permiso_edificacion_numero": "N°65 // 28-04-2014",
+      "permiso_edificacion_fecha": "2014-04-28",
+      "recepcion_final_numero": "N°03 // 26-02-2018",
+      "recepcion_final_fecha": "2018-02-26"
+    },
+    "preciosUf": { "fecha": "2026-05-12", "valor_clp": 40290.47, "tipo_cambio_usd": 894.25, "fuente": "XLSM AG 1548 (Portada AQ71/BO71)" }
+  },
+  "salidas_esperadas": {
+    "_nota": "Contra esto se compara lo que escriba AT03 en TX_Calculos — NO se siembra.",
+    "valor_comercial_uf": 1394,
+    "valor_comercial_clp": 56164915.18,
+    "valor_reposicion_uf": 1115.2,
+    "valor_reposicion_clp": 44931932.144,
+    "seguro_incendio_uf": 1394,
+    "seguro_incendio_clp": 56164915.18,
+    "avaluo_fiscal_uf": 1256.2748213163063,
+    "valor_remate_uf": 906.1,
+    "valor_remate_clp": 36507194.867,
+    "valor_liquidacion_uf": 1150.05,
+    "valor_liquidacion_clp": 46336055.0235,
+    "renta_perpetua_clp": 58666666.66666667,
+    "ingreso_liquido_anual_clp": 3520000,
+    "promedio_uf_m2_ofertas": 35.763724351529234,
+    "promedio_uf_m2_cbr": 33.375,
+    "desviacion_vs_promedio_pct": -4.931601457927626,
+    "desviacion_vs_promedio_cbr_pct": 1.872659176029967,
+    "uf_dia": 40290.47,
+    "usd_dia": 894.25,
+    "celdas_oraculo": {
+      "valor_comercial": "Portada AP69/AY69 = 1394 UF / $56.164.915,18",
+      "reposicion": "Portada BG72/BL72 = 1115,2 UF / $44.931.932,144",
+      "seguro": "Portada BG73/BL73 = 1394 UF / $56.164.915,18 (DB51=1.0)",
+      "avaluo_fiscal": "Portada BG74/BL74 = 1256,2748 UF / $50.615.903",
+      "remate": "Portada AU77/BG77 = 0.65 → 906,1 UF",
+      "liquidacion": "Portada AU78/BG78 = 0.825 → 1150,05 UF",
+      "renta_perpetua": "Portada BJ44 = $58.666.666,67 (tasa BJ41 = 6,0%)",
+      "ingreso_liquido": "Portada BJ43 = $3.520.000",
+      "ajuste_ofertas": "Portada AX36 = -4,93% (promedio AX34 = 35,7637)",
+      "ajuste_cbr": "Portada AX44 = +1,87% (promedio AX42 = 33,375)"
+    }
+  }
+}

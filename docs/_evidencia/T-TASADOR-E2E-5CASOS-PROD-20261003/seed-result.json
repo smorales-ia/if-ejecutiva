@@ -1,0 +1,30 @@
+{
+  "id": "reczuns8NHdI45Owp",
+  "codigo": "VP-2026-0073",
+  "estadoFin": "calculada",
+  "calculos": 15,
+  "calculosOk": true,
+  "vals": {
+    "valor_liquidacion_uf": 2741.64,
+    "promedio_uf_m2_muestra": 45.30398120124996,
+    "valor_comercial_clp": 132402004,
+    "seguro_incendio_uf": 2658.56,
+    "valor_reposicion_clp": 134027546.08,
+    "avaluo_fiscal_uf": 2898.01,
+    "valor_remate_uf": 2160.08,
+    "ingreso_liquido_anual_clp": 7810000,
+    "desviacion_vs_promedio_pct": -30.248955694145174,
+    "valor_remate_clp": 86061302.54,
+    "valor_comercial_uf": 3323.2,
+    "valor_reposicion_uf": 3364,
+    "renta_perpetua_clp": 173555555.56,
+    "seguro_incendio_clp": 105921603.12,
+    "valor_liquidacion_clp": 109231653.22
+  },
+  "camposComputados": [
+    "valor_uf",
+    "es_bien_no_garantia",
+    "uf_m2_construccion",
+    "es_dormitorio"
+  ]
+}

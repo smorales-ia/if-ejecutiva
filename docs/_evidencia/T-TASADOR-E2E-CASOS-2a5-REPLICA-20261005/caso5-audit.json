@@ -1,0 +1,263 @@
+{
+  "codigo": "VP-2026-0077",
+  "checks": [
+    {
+      "nombre": "meta.codigo",
+      "got": "VP-2026-0077",
+      "esperado": "VP-2026-0077",
+      "ok": true
+    },
+    {
+      "nombre": "numeroSolicitud (nº interno)",
+      "got": "HEV -3183",
+      "esperado": "HEV -3183",
+      "ok": true
+    },
+    {
+      "nombre": "nOperacionCliente (folio mandante)",
+      "got": 25678,
+      "esperado": 25678,
+      "ok": true
+    },
+    {
+      "nombre": "cliente",
+      "got": "Hipotecaria Evoluciona",
+      "esperado": "Hipotecaria Evoluciona",
+      "ok": true
+    },
+    {
+      "nombre": "nombre cliente (solicitante)",
+      "got": "Carlos Andrés Cortes Pérez",
+      "esperado": "Carlos Andrés Cortes Pérez",
+      "ok": true
+    },
+    {
+      "nombre": "rut solicitante (PDF imprime 0)",
+      "got": "0",
+      "esperado": "0",
+      "ok": true
+    },
+    {
+      "nombre": "comuna",
+      "got": "La Florida",
+      "esperado": "La Florida",
+      "ok": true
+    },
+    {
+      "nombre": "tipoPropiedad",
+      "got": "Departamento",
+      "esperado": "Departamento",
+      "ok": true
+    },
+    {
+      "nombre": "rol SII",
+      "got": "31-516",
+      "esperado": "31-516",
+      "ok": true
+    },
+    {
+      "nombre": "supConstruccion",
+      "got": 47.61,
+      "esperado": 47.61,
+      "ok": true
+    },
+    {
+      "nombre": "anioConstruccion",
+      "got": 2026,
+      "esperado": 2026,
+      "ok": true
+    },
+    {
+      "nombre": "estadoConservacion",
+      "got": "NUEVO - S/USO",
+      "esperado": "NUEVO - S/USO",
+      "ok": true
+    },
+    {
+      "nombre": "vidaUtil",
+      "got": 70,
+      "esperado": 70,
+      "ok": true
+    },
+    {
+      "nombre": "valorComercialUf",
+      "got": 3858.91,
+      "esperado": 3858.91,
+      "ok": true
+    },
+    {
+      "nombre": "valorComercialClp",
+      "got": 155477297.5877,
+      "esperado": 155477297.5877,
+      "ok": true
+    },
+    {
+      "nombre": "valorReposicionUf",
+      "got": 3167.128,
+      "esperado": 3167.128,
+      "ok": true
+    },
+    {
+      "nombre": "valorReposicionClp",
+      "got": 127605075.67016001,
+      "esperado": 127605075.67016001,
+      "ok": true
+    },
+    {
+      "nombre": "seguroIncendioUf",
+      "got": 3087.128,
+      "esperado": 3087.128,
+      "ok": true
+    },
+    {
+      "nombre": "seguroIncendioClp",
+      "got": 124381838.07016002,
+      "esperado": 124381838.07015999,
+      "ok": true
+    },
+    {
+      "nombre": "avaluoFiscalUf (0 por NO REGISTRA)",
+      "got": 0,
+      "esperado": 0,
+      "ok": true
+    },
+    {
+      "nombre": "avaluoFiscalUsd (null por RN-37)",
+      "got": null,
+      "esperado": null,
+      "ok": true
+    },
+    {
+      "nombre": "valorRemateUf",
+      "got": 2508.2915,
+      "esperado": 2508.2915,
+      "ok": true
+    },
+    {
+      "nombre": "valorRemateClp",
+      "got": 101060243.43200499,
+      "esperado": 101060243.43200497,
+      "ok": true
+    },
+    {
+      "nombre": "valorLiquidacionUf",
+      "got": 3183.6007499999996,
+      "esperado": 3183.60075,
+      "ok": true
+    },
+    {
+      "nombre": "valorLiquidacionClp",
+      "got": 128268770.50985248,
+      "esperado": 128268770.50985248,
+      "ok": true
+    },
+    {
+      "nombre": "ufDia",
+      "got": 40290.47,
+      "esperado": 40290.47,
+      "ok": true
+    },
+    {
+      "nombre": "usdDia",
+      "got": 894.25,
+      "esperado": 894.25,
+      "ok": true
+    },
+    {
+      "nombre": "cuadro.totalUf",
+      "got": 3858.91,
+      "esperado": 3858.91,
+      "ok": true
+    },
+    {
+      "nombre": "cuadro.items#",
+      "got": 3,
+      "esperado": 3,
+      "ok": true
+    },
+    {
+      "nombre": "rentaPerpetua",
+      "got": 156444444.44444445,
+      "esperado": 156444444.44444445,
+      "ok": true
+    },
+    {
+      "nombre": "ingresoLiquidoAnual",
+      "got": 7040000,
+      "esperado": 7040000,
+      "ok": true
+    },
+    {
+      "nombre": "tasacionUfM2 (72.65 excl. OO.CC.)",
+      "got": 72.65091367359798,
+      "esperado": 72.65091367359798,
+      "ok": true
+    },
+    {
+      "nombre": "tasacionFila.oocc (400)",
+      "got": 400,
+      "esperado": 400,
+      "ok": true
+    },
+    {
+      "nombre": "ofertas.promedioUfM2",
+      "got": 75.33539653491272,
+      "esperado": 75.33539653491272,
+      "ok": true
+    },
+    {
+      "nombre": "cbr.promedioUfM2",
+      "got": 66.34615384615384,
+      "esperado": 66.34615384615384,
+      "ok": true
+    },
+    {
+      "nombre": "ajusteOfertas% (-3.56)",
+      "got": -3.56337523234601,
+      "esperado": -3.563375232346011,
+      "ok": true
+    },
+    {
+      "nombre": "ajusteCBR% (+9.50)",
+      "got": 9.502826406582479,
+      "esperado": 9.502826406582487,
+      "ok": true
+    },
+    {
+      "nombre": "comparables#",
+      "got": 6,
+      "esperado": 6,
+      "ok": true
+    },
+    {
+      "nombre": "fotos grilla#",
+      "got": 16,
+      "esperado": 16,
+      "ok": true
+    },
+    {
+      "nombre": "ranura fachada",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    },
+    {
+      "nombre": "ranura ref1",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    },
+    {
+      "nombre": "ranura mapaUbicacion",
+      "got": "set",
+      "esperado": "set",
+      "ok": true
+    }
+  ],
+  "render": {
+    "e2Status": 200,
+    "pdfUrl": null,
+    "nota": "E2 webhook aceptó el payload (postToMake OK, observado en el log del test); E3 no persistió pdf_final_url en 170s de poll (DocGen=0) — mismo comportamiento que casos 1 y 2, no bloqueante. Espejo = render directo Carbone v5 (pdf-caso5.pdf, 11 pp)."
+  },
+  "resumen": "42/42"
+}

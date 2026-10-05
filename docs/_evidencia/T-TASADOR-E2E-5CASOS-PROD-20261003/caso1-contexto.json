@@ -1,0 +1,1369 @@
+{
+  "meta": {
+    "codigo": "VP-2026-0073",
+    "codigoExt": "VP-2026-0073",
+    "nOperacionCliente": 900158881,
+    "numeroSolicitudCliente": "METLIFE -6280",
+    "estado": "calculada",
+    "version": null,
+    "fechaEmision": null
+  },
+  "clienteInforme": {
+    "nombre": "MetLife",
+    "logoUrl": null,
+    "nombreRevisor": null
+  },
+  "partes": {
+    "propietario": "ALEJANDRO MOISES AVILA LEIVA",
+    "rut": "5.523.876-6",
+    "ejecutivo": "MONICA REYES PINTO",
+    "tasador": {
+      "nombre": "Sergio (nutricionsaludketo)",
+      "firmaUrl": "«dataURI 6835»"
+    },
+    "visador": {
+      "nombre": "Héctor Martínez C."
+    },
+    "fechaVisita": "2026-04-06",
+    "fechaVisado": null
+  },
+  "propiedad": {
+    "direccion": "LA MARINA Nº 1176, Departamento: Nº 102, Edificio GUILLERMO II",
+    "comuna": "San Miguel",
+    "region": "Metropolitana de Santiago",
+    "tipoPropiedad": "Departamento",
+    "objetivo": "Mutuo Hipotecario",
+    "nuevoUsado": "usada",
+    "proyectoCondominio": "EDIFICIO GUILLERMO II",
+    "supTerrenoM2": 102,
+    "supConstruccionM2": 102,
+    "supPrimerPisoM2": null,
+    "supConstruidaTotal": 0,
+    "anioConstruccion": 1998,
+    "materialPredominante": "HORMIGON ARMADO",
+    "calidadConstruccion": null,
+    "estadoConservacion": "Bueno",
+    "agrupacion": "",
+    "orientacion": "",
+    "pisos": 1,
+    "dormitorios": 5,
+    "banos": 2,
+    "estacionamientos": 0,
+    "bodegas": 1,
+    "dfl2": "NO",
+    "velocidadVentaEstimada": "8 a 10 meses",
+    "tipoZonaDescripcion": "EC-3 (San Miguel)",
+    "vidaUtil": 55
+  },
+  "sii": {
+    "rolSii": "4852-250",
+    "avaluoTotal": 115461656,
+    "avaluoFiscalUf": 115461656,
+    "avaluoExento": null,
+    "contribucionAnual": null,
+    "calidadSii": "",
+    "destinoSii": "HABITACIONAL",
+    "codComuna": "",
+    "codManzana": "4852",
+    "codPredio": "250",
+    "ubicacionUrbanoRural": "urbano",
+    "cg": "",
+    "ociv": "",
+    "oc": "",
+    "g": "",
+    "porUnidad": []
+  },
+  "cuadro": {
+    "items": [
+      {
+        "id": "reca4ghqevkfWM663",
+        "orden": 1,
+        "descripcion": "Departamento Nº 102",
+        "tipoItem": "Edificacion",
+        "supM2": 102,
+        "ufM2Aplicado": 31.6,
+        "factorAplicado": 0.79,
+        "ufTotalItem": 3223.2,
+        "aportaAGarantia": false,
+        "situacionMunicipal": "Regularizado"
+      },
+      {
+        "id": "recm5iUccSgMIreQa",
+        "orden": 2,
+        "descripcion": "Bodega Nº 13",
+        "tipoItem": "OO.CC.",
+        "supM2": 1,
+        "ufM2Aplicado": 100,
+        "factorAplicado": 1,
+        "ufTotalItem": 100,
+        "aportaAGarantia": false,
+        "situacionMunicipal": "Regularizado"
+      }
+    ],
+    "totalUf": 3323.2
+  },
+  "terminales": {
+    "valorComercialUf": 3323.2,
+    "valorComercialClp": 132402004,
+    "valorReposicionUf": 3364,
+    "valorReposicionClp": 134027546.08,
+    "seguroIncendioUf": 2658.56,
+    "seguroIncendioClp": 105921603.12,
+    "avaluoFiscalUf": 2898.01,
+    "valorRemateUf": 2160.08,
+    "valorRemateClp": 86061302.54,
+    "valorLiquidacionUf": 2741.64,
+    "valorLiquidacionClp": 109231653.22,
+    "rentaPerpetuaClp": 173555555.56,
+    "ingresoLiquidoAnualClp": 7810000,
+    "ufDia": 39841.72,
+    "usdDia": 922.17,
+    "fechaUf": "2026-04-06",
+    "valorReposicionUsd": 145339.30411963086,
+    "seguroIncendioUsd": 114861.25456260778,
+    "avaluoFiscalUsd": 125206.47602936553,
+    "valorRemateUsd": 93324.76933754081,
+    "valorLiquidacionUsd": 118450.66877040025
+  },
+  "comparablesInforme": {
+    "filas": [
+      {
+        "id": "recy8a2pn1bj5uTep",
+        "numero": null,
+        "direccion": "Av. La Marina 1176, San Miguel",
+        "comuna": "San Miguel",
+        "supTerreno": null,
+        "supConstruida": 95,
+        "precioUf": 4590,
+        "anio": 1998,
+        "tipoReferencia": "Oferta",
+        "fecha": "abr-26",
+        "telefono": "936531334",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 500,
+        "ufM2Construccion": 43.05263157894737
+      },
+      {
+        "id": "reclsbO2EgLhTfwdi",
+        "numero": null,
+        "direccion": "Avenida La Marina, San Miguel",
+        "comuna": "San Miguel",
+        "supTerreno": null,
+        "supConstruida": 92,
+        "precioUf": 4648,
+        "anio": 2004,
+        "tipoReferencia": "Oferta",
+        "fecha": "abr-26",
+        "telefono": "935329053",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 400,
+        "ufM2Construccion": 46.17391304347826
+      },
+      {
+        "id": "recHl8utumCYvnwqO",
+        "numero": null,
+        "direccion": "Avenida La Marina / Monja Alferesz, San Miguel",
+        "comuna": "San Miguel",
+        "supTerreno": null,
+        "supConstruida": 92,
+        "precioUf": 4850,
+        "anio": 2009,
+        "tipoReferencia": "Oferta",
+        "fecha": "abr-26",
+        "telefono": "929786318",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 500,
+        "ufM2Construccion": 47.28260869565217
+      },
+      {
+        "id": "recSunzao1EgleLBg",
+        "numero": null,
+        "direccion": "San Nicolas, San Miguel",
+        "comuna": "San Miguel",
+        "supTerreno": null,
+        "supConstruida": 93,
+        "precioUf": 4500,
+        "anio": 2007,
+        "tipoReferencia": "Oferta",
+        "fecha": "abr-26",
+        "telefono": "223836240",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 500,
+        "ufM2Construccion": 43.01075268817204
+      },
+      {
+        "id": "recX2LFLPi9zew9Ta",
+        "numero": null,
+        "direccion": "Calle San Nicolás 1331, San Miguel",
+        "comuna": "San Miguel",
+        "supTerreno": null,
+        "supConstruida": 100,
+        "precioUf": 5200,
+        "anio": 2008,
+        "tipoReferencia": "Oferta",
+        "fecha": "abr-26",
+        "telefono": "961699556",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 500,
+        "ufM2Construccion": 47
+      },
+      {
+        "id": "recsbOqOZ8UYGgCvZ",
+        "numero": null,
+        "direccion": "Rey Alberto 4208 DP 102",
+        "comuna": "San Miguel",
+        "supTerreno": null,
+        "supConstruida": 96,
+        "precioUf": 4172,
+        "anio": 2014,
+        "tipoReferencia": "CBR",
+        "fecha": "dic-24",
+        "telefono": "513 507",
+        "fojaNumero": "",
+        "comentarios": "",
+        "ufM2Terreno": null,
+        "oocc": 500,
+        "ufM2Construccion": 38.25
+      }
+    ],
+    "ofertas": {
+      "filas": [
+        {
+          "id": "recy8a2pn1bj5uTep",
+          "numero": 1,
+          "direccion": "Av. La Marina 1176, San Miguel",
+          "comuna": "San Miguel",
+          "supTerreno": null,
+          "supConstruida": 95,
+          "precioUf": 4590,
+          "anio": 1998,
+          "tipoReferencia": "Oferta",
+          "fecha": "abr-26",
+          "telefono": "936531334",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 500,
+          "ufM2Construccion": 43.05263157894737
+        },
+        {
+          "id": "reclsbO2EgLhTfwdi",
+          "numero": 2,
+          "direccion": "Avenida La Marina, San Miguel",
+          "comuna": "San Miguel",
+          "supTerreno": null,
+          "supConstruida": 92,
+          "precioUf": 4648,
+          "anio": 2004,
+          "tipoReferencia": "Oferta",
+          "fecha": "abr-26",
+          "telefono": "935329053",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 400,
+          "ufM2Construccion": 46.17391304347826
+        },
+        {
+          "id": "recHl8utumCYvnwqO",
+          "numero": 3,
+          "direccion": "Avenida La Marina / Monja Alferesz, San Miguel",
+          "comuna": "San Miguel",
+          "supTerreno": null,
+          "supConstruida": 92,
+          "precioUf": 4850,
+          "anio": 2009,
+          "tipoReferencia": "Oferta",
+          "fecha": "abr-26",
+          "telefono": "929786318",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 500,
+          "ufM2Construccion": 47.28260869565217
+        },
+        {
+          "id": "recSunzao1EgleLBg",
+          "numero": 4,
+          "direccion": "San Nicolas, San Miguel",
+          "comuna": "San Miguel",
+          "supTerreno": null,
+          "supConstruida": 93,
+          "precioUf": 4500,
+          "anio": 2007,
+          "tipoReferencia": "Oferta",
+          "fecha": "abr-26",
+          "telefono": "223836240",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 500,
+          "ufM2Construccion": 43.01075268817204
+        },
+        {
+          "id": "recX2LFLPi9zew9Ta",
+          "numero": 5,
+          "direccion": "Calle San Nicolás 1331, San Miguel",
+          "comuna": "San Miguel",
+          "supTerreno": null,
+          "supConstruida": 100,
+          "precioUf": 5200,
+          "anio": 2008,
+          "tipoReferencia": "Oferta",
+          "fecha": "abr-26",
+          "telefono": "961699556",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 500,
+          "ufM2Construccion": 47
+        }
+      ],
+      "promedio": {
+        "totalUf": 4757.6,
+        "supTerreno": null,
+        "supConstruida": 94.4,
+        "oocc": 480,
+        "ufM2Terreno": null,
+        "ufM2Construccion": 45.30398120124996
+      },
+      "tasacionVsPct": -30.24895569414518
+    },
+    "cbr": {
+      "filas": [
+        {
+          "id": "recsbOqOZ8UYGgCvZ",
+          "numero": 1,
+          "direccion": "Rey Alberto 4208 DP 102",
+          "comuna": "San Miguel",
+          "supTerreno": null,
+          "supConstruida": 96,
+          "precioUf": 4172,
+          "anio": 2014,
+          "tipoReferencia": "CBR",
+          "fecha": "dic-24",
+          "telefono": "513 507",
+          "fojaNumero": "",
+          "comentarios": "",
+          "ufM2Terreno": null,
+          "oocc": 500,
+          "ufM2Construccion": 38.25
+        }
+      ],
+      "promedio": {
+        "totalUf": 4172,
+        "supTerreno": null,
+        "supConstruida": 96,
+        "oocc": 500,
+        "ufM2Terreno": null,
+        "ufM2Construccion": 38.25
+      },
+      "tasacionVsPct": -17.385620915032685
+    },
+    "tasacionFila": {
+      "totalUf": 3323.2,
+      "supTerreno": 102,
+      "supConstruida": 102,
+      "oocc": 100,
+      "ufM2Terreno": null,
+      "ufM2Construccion": 31.599999999999998
+    },
+    "promedioUfM2": 45.30398120124996,
+    "usadosEnPromedio": 6,
+    "cumpleMinimo": true,
+    "tasacionUfM2": 31.599999999999998,
+    "tasacionVsPct": -30.24895569414518
+  },
+  "rentabilidad": {
+    "arriendoBrutoMensualClp": 710000,
+    "gastoAnualClp": 710000,
+    "ingresoLiquidoAnualClp": 7810000,
+    "rentaPerpetuaClp": 173555555.56,
+    "tasaCapRate": 0.045,
+    "arriendoUfMes": 17.8205157809452
+  },
+  "textosIA": {
+    "sintesisPropiedad": "El bien es un departamento que se encuentra en el EDIFICIO GUILLERMO II, ubicado en LA MARINA Nº 1176. El edificio se desarrolla en un volumen de 5 pisos y 1 subterráneo el cual está conectado por 1 ascensor. Los espacios comunes se encuentran en primer piso y cuenta con estacionamientos, bicicleteros, jardines. La propiedad se encuentra en el piso 1 con orientación este, tiene 102 m² interiores. El departamento cuenta con living - comedor con salida a patio, cocina cerrada, logia, un dormitorio principal con baño en suite y closet mural, cuatro dormitorios simples con closet mural y otro baño completo. Tiene asignada la bodega N° 13.",
+    "descripcionSector": "El sector es de carácter mixto. El cual se compone de viviendas de baja densidad, algunas de las cuales han sido modificadas para albergar comercio, edificios habitacional de altura media, servicios y comercios varios. El comercio, el transporte y los servicios se encuentran en la avenida más cercana: Gran Avenida José Miguel Carrera.",
+    "textoExpropiacion": null
+  },
+  "cualitativa": {
+    "normativa": null,
+    "sector": null,
+    "geometriaTerreno": null,
+    "emplazamiento": null,
+    "constructivas": null,
+    "servicios": null,
+    "comodidades": null,
+    "detallePropiedad": null
+  },
+  "recintos": {
+    "ampliaciones": [],
+    "habitacionesPorNivel": [
+      {
+        "id": "rec76sYY5mZYutgeA",
+        "nivel": "Piso1",
+        "tipoRecinto": "Cocina",
+        "cantidad": 1
+      },
+      {
+        "id": "recFMVrmejLSQx0Z3",
+        "nivel": "Piso1",
+        "tipoRecinto": "Bano",
+        "cantidad": 2
+      },
+      {
+        "id": "recG1YraGfjag0lCC",
+        "nivel": "Piso1",
+        "tipoRecinto": "Lavadero",
+        "cantidad": 1
+      },
+      {
+        "id": "recVXOQgfKVGOoBuE",
+        "nivel": "Piso1",
+        "tipoRecinto": "Suite",
+        "cantidad": 1
+      },
+      {
+        "id": "recVb9NgPaPlLn5eH",
+        "nivel": "Piso1",
+        "tipoRecinto": "Comedor",
+        "cantidad": 1
+      },
+      {
+        "id": "recsV46B7TUtRnQmY",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Simple",
+        "cantidad": 4
+      },
+      {
+        "id": "recy4CnGMOziNYEdb",
+        "nivel": "Piso1",
+        "tipoRecinto": "Living",
+        "cantidad": 1
+      },
+      {
+        "id": "relleno-Piso1-Sala",
+        "nivel": "Piso1",
+        "tipoRecinto": "Sala",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Hall",
+        "nivel": "Piso1",
+        "tipoRecinto": "Hall",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-D.Servicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "D.Servicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Escritorio",
+        "nivel": "Piso1",
+        "tipoRecinto": "Escritorio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-MedioBano",
+        "nivel": "Piso1",
+        "tipoRecinto": "MedioBano",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-BanoServicio",
+        "nivel": "Piso1",
+        "tipoRecinto": "BanoServicio",
+        "cantidad": 0
+      },
+      {
+        "id": "relleno-Piso1-Otro",
+        "nivel": "Piso1",
+        "tipoRecinto": "Otro",
+        "cantidad": 0
+      }
+    ],
+    "totalRecintos": 11,
+    "terminacionesPorRecinto": []
+  },
+  "fotos": {
+    "total": 16,
+    "porCategoria": {
+      "Mapa de Ubicación": 1,
+      "Ofertas / Comparables": 3,
+      "Fachada / Exterior": 5,
+      "Living / Comedor": 3,
+      "Habitaciones": 4
+    },
+    "fotos": [
+      {
+        "id": "recnvd34OICwWONt6",
+        "nombre": "caso1_mapa_ubicacion_0.jpg",
+        "url": "«dataURI 80539»",
+        "categoria": "Mapa de Ubicación"
+      },
+      {
+        "id": "recbA9mrBfSqeOCFx",
+        "nombre": "caso1_ofertas_comparables_1.jpg",
+        "url": "«dataURI 39279»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recERcqd7B8A6gG8M",
+        "nombre": "caso1_ofertas_comparables_2.jpg",
+        "url": "«dataURI 27783»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recmRsLnEOqnTigRh",
+        "nombre": "caso1_ofertas_comparables_3.jpg",
+        "url": "«dataURI 48443»",
+        "categoria": "Ofertas / Comparables"
+      },
+      {
+        "id": "recdKuFbnfKTTz7kn",
+        "nombre": "caso1_fachada_exterior_4.jpg",
+        "url": "«dataURI 76255»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "reci01ig9Xmc7jjY4",
+        "nombre": "caso1_fachada_exterior_5.jpg",
+        "url": "«dataURI 93715»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "recErMJ1SbjkLbxfs",
+        "nombre": "caso1_fachada_exterior_6.jpg",
+        "url": "«dataURI 60555»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "recf9houbBiJ6s5no",
+        "nombre": "caso1_living_comedor_7.jpg",
+        "url": "«dataURI 93863»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "rec608bJN3npCDWW1",
+        "nombre": "caso1_living_comedor_8.jpg",
+        "url": "«dataURI 65175»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "rec9k78urlLYZS292",
+        "nombre": "caso1_fachada_exterior_9.jpg",
+        "url": "«dataURI 74403»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "reclbzGckwxBwJmdp",
+        "nombre": "caso1_living_comedor_10.jpg",
+        "url": "«dataURI 69571»",
+        "categoria": "Living / Comedor"
+      },
+      {
+        "id": "recWphw0xUvgOz19S",
+        "nombre": "caso1_fachada_exterior_11.jpg",
+        "url": "«dataURI 27723»",
+        "categoria": "Fachada / Exterior"
+      },
+      {
+        "id": "recty9M7AJmOpcT1I",
+        "nombre": "caso1_habitaciones_12.jpg",
+        "url": "«dataURI 68879»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recq2yGj8T0KFiNf2",
+        "nombre": "caso1_habitaciones_13.jpg",
+        "url": "«dataURI 73311»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "rec1QQ38akVl2C4Ra",
+        "nombre": "caso1_habitaciones_14.jpg",
+        "url": "«dataURI 62651»",
+        "categoria": "Habitaciones"
+      },
+      {
+        "id": "recN2PLiDkVK0vFup",
+        "nombre": "caso1_habitaciones_15.jpg",
+        "url": "«dataURI 93527»",
+        "categoria": "Habitaciones"
+      }
+    ]
+  },
+  "anexos": {
+    "documentos": []
+  },
+  "imagenes": {
+    "mapaUbicacion": "«dataURI 80539»",
+    "fachada": "«dataURI 76255»",
+    "firma": "«dataURI 6835»",
+    "refMapa": null,
+    "ref1": "«dataURI 39279»",
+    "ref2": "«dataURI 27783»",
+    "ref3": "«dataURI 48443»",
+    "anexo1Plano": null,
+    "anexo1Esquema": null,
+    "anexo1CuadroSup": null,
+    "anexo1Emplazamiento": null,
+    "anexo1Aerea": null,
+    "anexo1MapaSii": null,
+    "anexo1InfoSii": null,
+    "anexo2RolAvaluo": null,
+    "anexo2Permiso": null,
+    "anexo2Escritura": null,
+    "anexo2NoExpropiacion": null,
+    "anexo2Recepcion": null,
+    "anexo2Tgr": null
+  },
+  "mapa": {
+    "staticMapUrl": null,
+    "lat": null,
+    "long": null
+  },
+  "legales": {
+    "fojas": "",
+    "numeroInscripcion": "",
+    "anoInscripcion": null,
+    "permisoEdificacion": "N°60 // 02-09-1996",
+    "recepcionFinal": "N°56 // 28-12-1998"
+  },
+  "huecos": [
+    {
+      "ruta": "textosIA.sintesisPropiedad",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.descripcionSector",
+      "eIds": [
+        "E-59",
+        "E-60"
+      ],
+      "pId": "P0-2",
+      "motivo": "Textos redactados sin productor (Claude RN-25/RF-32 en SC09 · T5)"
+    },
+    {
+      "ruta": "textosIA.textoExpropiacion",
+      "eIds": [
+        "E-57"
+      ],
+      "pId": "P1-1",
+      "motivo": "Plantilla con variables; falta la columna afecto_expropiacion"
+    },
+    {
+      "ruta": "cualitativa.detallePropiedad",
+      "eIds": [
+        "E-37",
+        "E-39",
+        "E-41",
+        "E-45",
+        "E-52",
+        "E-56",
+        "E-54",
+        "E-55"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (CI-023): sin columnas destino"
+    },
+    {
+      "ruta": "cualitativa.constructivas",
+      "eIds": [
+        "E-176..E-191"
+      ],
+      "pId": "P1-1",
+      "motivo": "La UI captura y descarta (6 CI-023 + 7 silenciosos): sin columnas"
+    },
+    {
+      "ruta": "cualitativa.comodidades",
+      "eIds": [
+        "E-207"
+      ],
+      "pId": "P1-1",
+      "motivo": "14 switches capturados y descartados; TX_Amenities no existe"
+    },
+    {
+      "ruta": "cualitativa.normativa",
+      "eIds": [
+        "E-125..E-140"
+      ],
+      "pId": "P1-2",
+      "motivo": "Sin catálogo normativo poblado ni UI (rescate M_Zonificacion en T4)"
+    },
+    {
+      "ruta": "cualitativa.sector",
+      "eIds": [
+        "E-141..E-146",
+        "E-148..E-157"
+      ],
+      "pId": "P1-2",
+      "motivo": "Mercado y sector sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.geometriaTerreno",
+      "eIds": [
+        "E-159..E-165"
+      ],
+      "pId": "P1-2",
+      "motivo": "Forma/pendiente/frente/deslindes sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.emplazamiento",
+      "eIds": [
+        "E-167..E-175"
+      ],
+      "pId": "P1-2",
+      "motivo": "Emplazamiento cualitativo sin UI ni columnas"
+    },
+    {
+      "ruta": "cualitativa.servicios",
+      "eIds": [
+        "E-197..E-201"
+      ],
+      "pId": "P1-2",
+      "motivo": "Servicios de la propiedad sin UI ni columnas"
+    },
+    {
+      "ruta": "terminales.usdDia",
+      "eIds": [
+        "E-103"
+      ],
+      "pId": "P1-3",
+      "motivo": "tipo_cambio_usd sin escritor automático (el cron UF no lo escribe; el valor de 0066 es seed manual)"
+    },
+    {
+      "ruta": "mapa.staticMapUrl",
+      "eIds": [
+        "E-120"
+      ],
+      "pId": "P1-4",
+      "motivo": "Google Static Maps sin implementación ni API key"
+    },
+    {
+      "ruta": "clienteInforme.logoUrl",
+      "eIds": [
+        "E-02"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente sin clientes reales (H9 — la portada MET salió con marca Austral)"
+    },
+    {
+      "ruta": "clienteInforme.nombreRevisor",
+      "eIds": [
+        "E-114"
+      ],
+      "pId": "P1-5",
+      "motivo": "C_VariablesCliente.nombre_revisor sin valor (H9)"
+    },
+    {
+      "ruta": "comparablesInforme.promedioUfM2",
+      "eIds": [
+        "E-66..E-68",
+        "E-73..E-75"
+      ],
+      "pId": "P1-8",
+      "motivo": "Promedios y fila TASACIÓN calculados por el ensamblador, sin persistencia (puente hasta T2)"
+    },
+    {
+      "ruta": "partes.fechaVisado",
+      "eIds": [
+        "E-113"
+      ],
+      "pId": "P1-9",
+      "motivo": "IF-04 (visación) no existe"
+    },
+    {
+      "ruta": "propiedad.vidaUtil",
+      "eIds": [
+        "E-48",
+        "E-76",
+        "E-81"
+      ],
+      "pId": "P1-9",
+      "motivo": "F_VidaUtil existe pero está fuera de la regla v32"
+    }
+  ],
+  "canonico": {
+    "id": "reczuns8NHdI45Owp",
+    "codigo": "VP-2026-0073",
+    "estado": "calculada",
+    "versionVigente": null,
+    "valorDestacado": {
+      "valorUf": 3323.2,
+      "capRate": 0.045,
+      "esOverride": false,
+      "ufDiaVisita": null
+    },
+    "datosSii": {
+      "rolSii": "4852-250",
+      "avaluoTotal": 115461656,
+      "avaluoFiscalUf": 115461656,
+      "avaluoExento": null,
+      "contribucionAnual": null,
+      "calidadSii": "",
+      "destinoSii": "HABITACIONAL",
+      "codComuna": "",
+      "codManzana": "4852",
+      "codPredio": "250",
+      "ubicacionUrbanoRural": "urbano",
+      "cg": "",
+      "ociv": "",
+      "oc": "",
+      "g": "",
+      "porUnidad": []
+    },
+    "observaciones": {
+      "observacionesTasador": "",
+      "observacionRechazo": "",
+      "overrides": [
+        {
+          "campo": "Vida útil",
+          "valor": 55
+        }
+      ],
+      "motivoOverride": "CASO1 E2E-5CASOS · valores del XLSM La Marina 1176 sembrados directo (sandbox, sin AT03)",
+      "autorOverride": "",
+      "antecedentesLegales": {
+        "fojas": "",
+        "numeroInscripcion": "",
+        "anoInscripcion": null,
+        "permisoEdificacion": "N°60 // 02-09-1996",
+        "recepcionFinal": "N°56 // 28-12-1998"
+      }
+    },
+    "anexosRanuras": [
+      {
+        "ranura": "anexo1Plano",
+        "codigo": "foto_plano_cuadro_superficies",
+        "label": "Plano / cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Esquema",
+        "codigo": "esquema_superficies",
+        "label": "Esquema de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1CuadroSup",
+        "codigo": "cuadro_superficies",
+        "label": "Cuadro de superficies",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Emplazamiento",
+        "codigo": "planta_emplazamiento",
+        "label": "Planta de emplazamiento",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1Aerea",
+        "codigo": "foto_aerea",
+        "label": "Foto aérea",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1MapaSii",
+        "codigo": "mapa_sii",
+        "label": "Mapa SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo1InfoSii",
+        "codigo": "foto_fuente_sii",
+        "label": "Información SII",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2RolAvaluo",
+        "codigo": "certificado_avaluo_fiscal",
+        "label": "Certificado de avalúo fiscal",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Permiso",
+        "codigo": "permiso_edificacion",
+        "label": "Permiso de edificación",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Escritura",
+        "codigo": "escritura_compraventa",
+        "label": "Escritura de compraventa",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2NoExpropiacion",
+        "codigo": "informe_no_expropiacion_serviu",
+        "label": "Informe de no expropiación (SERVIU)",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Recepcion",
+        "codigo": "certificado_recepcion_final",
+        "label": "Certificado de recepción final",
+        "nombre": null,
+        "thumbnailUrl": null
+      },
+      {
+        "ranura": "anexo2Tgr",
+        "codigo": "certificado_deuda_tgr",
+        "label": "Certificado de deuda TGR",
+        "nombre": null,
+        "thumbnailUrl": null
+      }
+    ],
+    "firmaTasadorUrl": null,
+    "bloques": [
+      {
+        "numero": 1,
+        "id": "cabecera",
+        "titulo": "Cabecera",
+        "vacio": false,
+        "datos": {
+          "codigo": "VP-2026-0073",
+          "codigoExt": "VP-2026-0073",
+          "nuevoUsado": "usada",
+          "cliente": [
+            "recIg8NtVhptXkEUJ"
+          ],
+          "direccion": "LA MARINA Nº 1176, Departamento: Nº 102, Edificio GUILLERMO II",
+          "comuna": [
+            "rec6fV4WyLIwC15JE"
+          ],
+          "fechaVisita": "2026-04-06",
+          "version": null
+        }
+      },
+      {
+        "numero": 2,
+        "id": "valor",
+        "titulo": "Valor de tasación",
+        "vacio": false,
+        "datos": {
+          "valorUf": 3323.2,
+          "capRate": 0.045,
+          "esOverride": false,
+          "ufDiaVisita": null
+        }
+      },
+      {
+        "numero": 3,
+        "id": "antecedentes",
+        "titulo": "Antecedentes de la propiedad",
+        "vacio": false,
+        "datos": {
+          "supTerrenoM2": 102,
+          "supConstruccionM2": 102,
+          "supPrimerPisoM2": null,
+          "supConstruidaTotal": 0,
+          "anioConstruccion": 1998,
+          "materialPredominante": "HORMIGON ARMADO",
+          "calidadConstruccion": null,
+          "estadoConservacion": "Bueno",
+          "agrupacion": "",
+          "dormitorios": 5,
+          "banos": 2,
+          "estacionamientos": 0,
+          "bodegas": 1,
+          "dfl2": "NO"
+        }
+      },
+      {
+        "numero": 4,
+        "id": "sii",
+        "titulo": "Datos SII y avalúo",
+        "vacio": false,
+        "datos": {
+          "rolSii": "4852-250",
+          "avaluoTotal": 115461656,
+          "avaluoFiscalUf": 115461656,
+          "avaluoExento": null,
+          "contribucionAnual": null,
+          "calidadSii": "",
+          "destinoSii": "HABITACIONAL",
+          "codComuna": "",
+          "codManzana": "4852",
+          "codPredio": "250",
+          "ubicacionUrbanoRural": "urbano",
+          "cg": "",
+          "ociv": "",
+          "oc": "",
+          "g": "",
+          "porUnidad": []
+        }
+      },
+      {
+        "numero": 5,
+        "id": "valoracion",
+        "titulo": "Cuadro de valoración",
+        "vacio": false,
+        "datos": {
+          "items": [
+            {
+              "id": "reca4ghqevkfWM663",
+              "orden": 1,
+              "descripcion": "Departamento Nº 102",
+              "tipoItem": "Edificacion",
+              "supM2": 102,
+              "ufM2Aplicado": 31.6,
+              "ufTotalItem": 3223.2,
+              "aportaAGarantia": false,
+              "situacionMunicipal": "Regularizado"
+            },
+            {
+              "id": "recm5iUccSgMIreQa",
+              "orden": 2,
+              "descripcion": "Bodega Nº 13",
+              "tipoItem": "OO.CC.",
+              "supM2": 1,
+              "ufM2Aplicado": 100,
+              "ufTotalItem": 100,
+              "aportaAGarantia": false,
+              "situacionMunicipal": "Regularizado"
+            }
+          ],
+          "totalUf": 3323.2
+        }
+      },
+      {
+        "numero": 6,
+        "id": "comparables",
+        "titulo": "Comparables",
+        "vacio": false,
+        "datos": {
+          "comparables": [
+            {
+              "id": "recy8a2pn1bj5uTep",
+              "numero": null,
+              "direccion": "Av. La Marina 1176, San Miguel",
+              "comuna": "San Miguel",
+              "supTerreno": null,
+              "supConstruida": 95,
+              "precioUf": 4590,
+              "anio": 1998,
+              "tipoReferencia": "Oferta",
+              "fecha": "abr-26",
+              "telefono": "936531334",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 500,
+              "ufM2Construccion": 43.05263157894737
+            },
+            {
+              "id": "reclsbO2EgLhTfwdi",
+              "numero": null,
+              "direccion": "Avenida La Marina, San Miguel",
+              "comuna": "San Miguel",
+              "supTerreno": null,
+              "supConstruida": 92,
+              "precioUf": 4648,
+              "anio": 2004,
+              "tipoReferencia": "Oferta",
+              "fecha": "abr-26",
+              "telefono": "935329053",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 400,
+              "ufM2Construccion": 46.17391304347826
+            },
+            {
+              "id": "recHl8utumCYvnwqO",
+              "numero": null,
+              "direccion": "Avenida La Marina / Monja Alferesz, San Miguel",
+              "comuna": "San Miguel",
+              "supTerreno": null,
+              "supConstruida": 92,
+              "precioUf": 4850,
+              "anio": 2009,
+              "tipoReferencia": "Oferta",
+              "fecha": "abr-26",
+              "telefono": "929786318",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 500,
+              "ufM2Construccion": 47.28260869565217
+            },
+            {
+              "id": "recSunzao1EgleLBg",
+              "numero": null,
+              "direccion": "San Nicolas, San Miguel",
+              "comuna": "San Miguel",
+              "supTerreno": null,
+              "supConstruida": 93,
+              "precioUf": 4500,
+              "anio": 2007,
+              "tipoReferencia": "Oferta",
+              "fecha": "abr-26",
+              "telefono": "223836240",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 500,
+              "ufM2Construccion": 43.01075268817204
+            },
+            {
+              "id": "recX2LFLPi9zew9Ta",
+              "numero": null,
+              "direccion": "Calle San Nicolás 1331, San Miguel",
+              "comuna": "San Miguel",
+              "supTerreno": null,
+              "supConstruida": 100,
+              "precioUf": 5200,
+              "anio": 2008,
+              "tipoReferencia": "Oferta",
+              "fecha": "abr-26",
+              "telefono": "961699556",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 500,
+              "ufM2Construccion": 47
+            },
+            {
+              "id": "recsbOqOZ8UYGgCvZ",
+              "numero": null,
+              "direccion": "Rey Alberto 4208 DP 102",
+              "comuna": "San Miguel",
+              "supTerreno": null,
+              "supConstruida": 96,
+              "precioUf": 4172,
+              "anio": 2014,
+              "tipoReferencia": "CBR",
+              "fecha": "dic-24",
+              "telefono": "513 507",
+              "fojaNumero": "",
+              "comentarios": "",
+              "ufM2Terreno": null,
+              "oocc": 500,
+              "ufM2Construccion": 38.25
+            }
+          ],
+          "promedioUfM2": 44.1283176677083,
+          "usadosEnPromedio": 6,
+          "cumpleMinimo": true
+        }
+      },
+      {
+        "numero": 7,
+        "id": "fotografico",
+        "titulo": "Registro fotográfico",
+        "vacio": false,
+        "datos": {
+          "total": 18,
+          "porCategoria": {
+            "habitaciones": 6,
+            "living_comedor": 3,
+            "fachada_exterior": 5,
+            "ofertas_comparables": 3,
+            "mapa_ubicacion": 1
+          },
+          "fotos": [
+            {
+              "id": "rec1QQ38akVl2C4Ra",
+              "nombre": "caso1_habitaciones_14.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 14
+            },
+            {
+              "id": "rec608bJN3npCDWW1",
+              "nombre": "caso1_living_comedor_8.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 8
+            },
+            {
+              "id": "rec9k78urlLYZS292",
+              "nombre": "caso1_fachada_exterior_9.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 9
+            },
+            {
+              "id": "recERcqd7B8A6gG8M",
+              "nombre": "caso1_ofertas_comparables_2.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 2
+            },
+            {
+              "id": "recErMJ1SbjkLbxfs",
+              "nombre": "caso1_fachada_exterior_6.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 6
+            },
+            {
+              "id": "recM1covUxyAAHjkM",
+              "nombre": "caso1_habitaciones_17.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 17
+            },
+            {
+              "id": "recN2PLiDkVK0vFup",
+              "nombre": "caso1_habitaciones_15.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 15
+            },
+            {
+              "id": "recRXAaw259brqb2V",
+              "nombre": "caso1_habitaciones_16.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 16
+            },
+            {
+              "id": "recWphw0xUvgOz19S",
+              "nombre": "caso1_fachada_exterior_11.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 11
+            },
+            {
+              "id": "recbA9mrBfSqeOCFx",
+              "nombre": "caso1_ofertas_comparables_1.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 1
+            },
+            {
+              "id": "recdKuFbnfKTTz7kn",
+              "nombre": "caso1_fachada_exterior_4.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 4
+            },
+            {
+              "id": "recf9houbBiJ6s5no",
+              "nombre": "caso1_living_comedor_7.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 7
+            },
+            {
+              "id": "reci01ig9Xmc7jjY4",
+              "nombre": "caso1_fachada_exterior_5.jpg",
+              "categoria": "fachada_exterior",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 5
+            },
+            {
+              "id": "reclbzGckwxBwJmdp",
+              "nombre": "caso1_living_comedor_10.jpg",
+              "categoria": "living_comedor",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 10
+            },
+            {
+              "id": "recmRsLnEOqnTigRh",
+              "nombre": "caso1_ofertas_comparables_3.jpg",
+              "categoria": "ofertas_comparables",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 3
+            },
+            {
+              "id": "recnvd34OICwWONt6",
+              "nombre": "caso1_mapa_ubicacion_0.jpg",
+              "categoria": "mapa_ubicacion",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 0
+            },
+            {
+              "id": "recq2yGj8T0KFiNf2",
+              "nombre": "caso1_habitaciones_13.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 13
+            },
+            {
+              "id": "recty9M7AJmOpcT1I",
+              "nombre": "caso1_habitaciones_12.jpg",
+              "categoria": "habitaciones",
+              "url": "",
+              "thumbnailUrl": null,
+              "orden": 12
+            }
+          ]
+        }
+      },
+      {
+        "numero": 8,
+        "id": "observaciones",
+        "titulo": "Observaciones y overrides",
+        "vacio": false,
+        "datos": {
+          "observacionesTasador": "",
+          "observacionRechazo": "",
+          "overrides": [
+            {
+              "campo": "Vida útil",
+              "valor": 55
+            }
+          ],
+          "motivoOverride": "CASO1 E2E-5CASOS · valores del XLSM La Marina 1176 sembrados directo (sandbox, sin AT03)",
+          "autorOverride": "",
+          "antecedentesLegales": {
+            "fojas": "",
+            "numeroInscripcion": "",
+            "anoInscripcion": null,
+            "permisoEdificacion": "N°60 // 02-09-1996",
+            "recepcionFinal": "N°56 // 28-12-1998"
+          }
+        }
+      }
+    ]
+  }
+}
