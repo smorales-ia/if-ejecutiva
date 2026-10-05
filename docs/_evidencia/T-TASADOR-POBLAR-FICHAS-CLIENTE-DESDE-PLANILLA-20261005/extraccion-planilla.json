@@ -1,0 +1,694 @@
+{
+  "_meta": {
+    "fecha": "2026-10-05",
+    "tanda": "T-TASADOR-POBLAR-FICHAS-CLIENTE-DESDE-PLANILLA-20261005 · BLOQUE 0 · DESCUBRIR-PLANILLA",
+    "hallazgo_principal": "La planilla maestra 'NUEVA_VERSION_PLANILLA MARZO 2026.xlsm' NO contiene parametros de calculo por cliente (ni factor_garantia, ni factor_seguro, ni tasa_cap_rate, ni redondeo). Es el libro operativo de registro/bandeja de solicitudes.",
+    "fuente_de_la_tabla": "Derivada del template de calculo 'Formato-Informe-VProperty-Enero2026.xlsm' (FICHA SOLIC!V25:W64 = lista de clientes/ClienteN; Portada!BO51 = whitelist factor seguro/garantia; Portada!BJ41 = tasa). Formulas identicas verificadas en 'caspana 310 dp 14, quilicura.xlsm'.",
+    "regla_factor_seguro": "Portada!BO51: x1.0 si tipoPropiedad='Casa' O ClienteN en whitelist {3,5,6,7,8,9,12,13,15,18,20,21,23,28,29,34,41,43,44,45,46}; x0.8 el resto. El mismo terminal alimenta garantia y seguro (DB51=BO51/BI51): la planilla/el template NO distinguen factor_garantia de factor_seguro.",
+    "regla_tasa": "Portada!BJ41: 6,0% si nombre de cliente (FICHA SOLIC!K8) en {Unidad Leasing Habitacional, Concreces, Agencia Habitacional, Credihome, Masleasing, TESSI} (comparacion Excel case-insensitive); 4,5% el resto. OJO: la rama 'ICGE Gestion Empresa' NUNCA matchea el nombre de lista 'ICGE' (string distinto) -> ICGE queda hoy en 4,5%. BJ41 ademas aparece sobrescrita a mano en casos reales (Security 5,5% en 'Las Rejas Norte 65').",
+    "redondeo": "NO definido por cliente en ninguna fuente estable: template canonico Enero2026 tiene Portada!BI62='=SUM(BI59:BM61)' sin FIXED; el FIXED(...,0) si ClienteN=13 se observo solo en algun caso real (DESCUBRIMIENTO_REGLAS_PLANTILLAS_COMPARABLES_20261005.md). redondeo_decimales = null en toda la tabla.",
+    "clave_cruce": "M_Clientes.'Hoja planilla' <-> hoja de la planilla maestra (Variables!H2:H29) · nombre textual del formato (FICHA SOLIC!V) y prefijo (FICHA SOLIC!X) ~ M_Clientes.'Prefijo codigo'. El campo nombre_planilla de abajo es el nombre de hoja en la planilla maestra; null = el cliente del formato no tiene hoja en la planilla maestra (match INFERIDO por nombre)."
+  },
+  "clientes": [
+    {
+      "clienteN": 1,
+      "nombre_formato": "Hipotecaria Security S.A.",
+      "prefijo_formato": "HIPOTECARIA SECURITY",
+      "nombre_planilla": "PRI",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V25:X25",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 2,
+      "nombre_formato": "MetLife",
+      "prefijo_formato": "METLIFE",
+      "nombre_planilla": "MET",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V26:X26",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 3,
+      "nombre_formato": "Unidad Leasing Habitacional",
+      "prefijo_formato": "ULH",
+      "nombre_planilla": "ULH",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.06,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V27:X27",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 4,
+      "nombre_formato": "Hipotecaria Evoluciona",
+      "prefijo_formato": "HEV",
+      "nombre_planilla": "HEV",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V28:X28",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 5,
+      "nombre_formato": "M&V",
+      "prefijo_formato": "M&V",
+      "nombre_planilla": "M&V",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V29:X29",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 6,
+      "nombre_formato": "MásLeasing",
+      "prefijo_formato": "MLS",
+      "nombre_planilla": "MAS LEASING",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.06,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V30:X30",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 7,
+      "nombre_formato": "Agencia Habitacional",
+      "prefijo_formato": "AGH",
+      "nombre_planilla": "AG",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.06,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V31:X31",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 8,
+      "nombre_formato": "Administradora Andes S.A.",
+      "prefijo_formato": "ANDES",
+      "nombre_planilla": "ANDES",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V32:X32",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 9,
+      "nombre_formato": "Afianza",
+      "prefijo_formato": "AFZ",
+      "nombre_planilla": "AFZ",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V33:X33",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 10,
+      "nombre_formato": "Particular",
+      "prefijo_formato": "PART",
+      "nombre_planilla": "PAR",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V34:X34",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 11,
+      "nombre_formato": "4 LIFE",
+      "prefijo_formato": "4Life",
+      "nombre_planilla": "4LIFE",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V35:X35",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 12,
+      "nombre_formato": "Chile Vivienda",
+      "prefijo_formato": "CHV",
+      "nombre_planilla": "CHILE VIVIENDA",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V36:X36",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 13,
+      "nombre_formato": "Concreces",
+      "prefijo_formato": "CCES",
+      "nombre_planilla": "CONCRECES",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.06,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V37:X37",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 14,
+      "nombre_formato": "Bice Hipotecaria",
+      "prefijo_formato": "BCH",
+      "nombre_planilla": "BMU",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V38:X38",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 15,
+      "nombre_formato": "CrediHome",
+      "prefijo_formato": "CRDH",
+      "nombre_planilla": "CREDIHOME",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.06,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V39:X39",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 16,
+      "nombre_formato": "Banco de Chile",
+      "prefijo_formato": "BCH",
+      "nombre_planilla": "BCH",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V40:X40",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 17,
+      "nombre_formato": "ServiHabit",
+      "prefijo_formato": "SVH",
+      "nombre_planilla": "SERVIH",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V41:X41",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 18,
+      "nombre_formato": "Credicasa Del Maule SPA",
+      "prefijo_formato": "Credicasa",
+      "nombre_planilla": null,
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V42:X42",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 19,
+      "nombre_formato": "Copeuch",
+      "prefijo_formato": "COPE",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V43:X43",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 20,
+      "nombre_formato": "Austral Leasing Habitacional",
+      "prefijo_formato": "ALH",
+      "nombre_planilla": "LEASING AUSTRAL",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V44:X44",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 21,
+      "nombre_formato": "Tu Hipotecaria Chile",
+      "prefijo_formato": "THCH",
+      "nombre_planilla": null,
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V45:X45",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 22,
+      "nombre_formato": "ICGE",
+      "prefijo_formato": "ICGE",
+      "nombre_planilla": "ICGE ",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V46:X46",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 23,
+      "nombre_formato": "Casa Pronta",
+      "prefijo_formato": "CP",
+      "nombre_planilla": null,
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V47:X47",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 24,
+      "nombre_formato": "Leasing Urbano",
+      "prefijo_formato": "LU",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V48:X48",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 25,
+      "nombre_formato": "Ohio National",
+      "prefijo_formato": "OHNA",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V49:X49",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 26,
+      "nombre_formato": "Penta Hipotecario",
+      "prefijo_formato": "PENH",
+      "nombre_planilla": "Penta Hipotecario",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V50:X50",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 27,
+      "nombre_formato": "Banco Estado",
+      "prefijo_formato": "BECH",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V51:X51",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 28,
+      "nombre_formato": "Su Casa Hoy",
+      "prefijo_formato": "SCAH",
+      "nombre_planilla": null,
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V52:X52",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 29,
+      "nombre_formato": "Casa Nuestra",
+      "prefijo_formato": "CN",
+      "nombre_planilla": null,
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V53:X53",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 30,
+      "nombre_formato": "Penta Vida",
+      "prefijo_formato": "PENV",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V54:X54",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 31,
+      "nombre_formato": "Valor Presente",
+      "prefijo_formato": "VP",
+      "nombre_planilla": "VLP",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V55:X55",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 32,
+      "nombre_formato": "Espacio Nuestro",
+      "prefijo_formato": "EN",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V56:X56",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 33,
+      "nombre_formato": "Nuevo Capital Mutuos Hipotecarios",
+      "prefijo_formato": "NCH",
+      "nombre_planilla": "NCH",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V57:X57",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 34,
+      "nombre_formato": "Central Mutuos",
+      "prefijo_formato": "CM",
+      "nombre_planilla": "CHI",
+      "factor_garantia": 1.0,
+      "factor_seguro": 1.0,
+      "factor_seguro_condicion": null,
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V58:X58",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 35,
+      "nombre_formato": "Tessi",
+      "prefijo_formato": "TESSI",
+      "nombre_planilla": "TESSI",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.06,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V59:X59",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 36,
+      "nombre_formato": "CrediTú",
+      "prefijo_formato": "CrediTú",
+      "nombre_planilla": "CREDITU",
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V60:X60",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": "NUEVA_VERSION_PLANILLA MARZO 2026.xlsm · Variables!G2:H29 (match por nombre, INFERIDO)"
+      }
+    },
+    {
+      "clienteN": 37,
+      "nombre_formato": "Banco Santander-Chile",
+      "prefijo_formato": "BSAN",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V61:X61",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 38,
+      "nombre_formato": "BCI",
+      "prefijo_formato": "BCI",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V62:X62",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 39,
+      "nombre_formato": "Consorcio",
+      "prefijo_formato": "Consorcio",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V63:X63",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    },
+    {
+      "clienteN": 40,
+      "nombre_formato": "Scotiabank",
+      "prefijo_formato": "SCTB",
+      "nombre_planilla": null,
+      "factor_garantia": 0.8,
+      "factor_seguro": 0.8,
+      "factor_seguro_condicion": "x1.0 si tipoPropiedad='Casa' (independiente del cliente)",
+      "tasa_cap_rate": 0.045,
+      "redondeo_decimales": null,
+      "celdas_origen": {
+        "clienteN": "Formato-Informe-VProperty-Enero2026.xlsm · FICHA SOLIC!V64:X64",
+        "factor": "Portada!BO51 (whitelist) · ratio en DB51",
+        "tasa": "Portada!BJ41",
+        "hoja_planilla": null
+      }
+    }
+  ]
+}

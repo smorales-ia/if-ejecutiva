@@ -1,0 +1,1796 @@
+{
+  "exportedAt": "2026-10-05T21:26:12.188Z",
+  "baseId": "app9G7lLkIV3CpeLa",
+  "tableId": "tblpK7AcYBMH93apK",
+  "method": "GET REST API v0 (todas las columnas, sin fields[] param)",
+  "recordCount": 92,
+  "records": [
+    {
+      "id": "rec0ztGhehWtblsr3",
+      "createdTime": "2026-06-08T16:54:12.000Z",
+      "fields": {
+        "email": "tasaciones@centralmutuos.cl",
+        "ultima_modificacion": "2026-06-09T02:57:53.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Central Mutuos",
+        "codigo": "CM",
+        "carbone_template": "MUTUO_CM.docx",
+        "Prefijo codigo": "CM",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Hoja CHI (Central Hipotecaria) en plantilla madre.",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec3fQVp2hbjpsyXb",
+      "createdTime": "2026-06-08T16:54:02.000Z",
+      "fields": {
+        "email": "tasaciones@pentavida.cl",
+        "ultima_modificacion": "2026-06-09T02:57:41.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Penta Vida",
+        "codigo": "PENV",
+        "carbone_template": "MUTUO_PENV.docx",
+        "Prefijo codigo": "PENV",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Distinta de Penta Hipotecario (ClienteN 26).",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec4m95uIERRnUmwZ",
+      "createdTime": "2026-06-08T16:54:08.000Z",
+      "fields": {
+        "email": "tasaciones@espacionuestro.cl",
+        "ultima_modificacion": "2026-06-09T02:57:46.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Espacio Nuestro",
+        "codigo": "EN",
+        "carbone_template": "MUTUO_EN.docx",
+        "Prefijo codigo": "EN",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase.",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec4rTNuxSjucS6XM",
+      "createdTime": "2026-06-08T16:53:12.000Z",
+      "fields": {
+        "email": "tasaciones@valon.cl",
+        "ultima_modificacion": "2026-06-08T16:53:12.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "VALÓN Hipotecaria",
+        "codigo": "VAL",
+        "carbone_template": "MUTUO_VAL.docx",
+        "Prefijo codigo": "VAL",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec532kYmluOreV3m",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "NUEVO CAPITAL",
+        "codigo": "NCH",
+        "Prefijo codigo": "NCH",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec5QnUmnymAOcla9",
+      "createdTime": "2026-06-08T16:52:29.000Z",
+      "fields": {
+        "email": "tasaciones@santander.cl",
+        "ultima_modificacion": "2026-06-08T16:52:29.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Santander Hipotecaria",
+        "codigo": "SAH",
+        "carbone_template": "MUTUO_SAH.docx",
+        "Prefijo codigo": "SAH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "activo": true
+      }
+    },
+    {
+      "id": "rec5fsRjNbLt9VcFt",
+      "createdTime": "2026-06-08T16:53:52.000Z",
+      "fields": {
+        "email": "tasaciones@bancoestado.cl",
+        "ultima_modificacion": "2026-07-27T23:14:05.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Banco Estado",
+        "codigo": "BECH",
+        "carbone_template": "MUTUO_BECH.docx",
+        "Prefijo codigo": "BECH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "TX_Solicitudes 2": [
+          "recWrgVM0iLA9FBTG",
+          "recBqKrJqgGw9wj7k",
+          "recnS28rQxzqPrlh5",
+          "recPN3ExYyivi6uhR",
+          "recgKuhMFV4PHuLEM",
+          "recidZZ0H9CSEIrsg"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase.",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec5nZyFK0IHniT6K",
+      "createdTime": "2026-06-08T16:52:22.000Z",
+      "fields": {
+        "email": "tasaciones@eurocapital.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:22.000Z",
+        "tipo": "Leasing",
+        "nombre": "Eurocapital",
+        "codigo": "EUR",
+        "carbone_template": "LEASING_EUR.docx",
+        "Prefijo codigo": "EUR",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "activo": true
+      }
+    },
+    {
+      "id": "rec6ETMQtes5VR7Kh",
+      "createdTime": "2026-06-08T16:52:17.000Z",
+      "fields": {
+        "email": "tasaciones@lch.cl",
+        "ultima_modificacion": "2026-06-08T16:52:17.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "La Construcción Hipotecaria",
+        "codigo": "LCH",
+        "carbone_template": "MUTUO_LCH.docx",
+        "Prefijo codigo": "LCH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec6ulVTTtCUeD8QO",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-07-29T17:25:45.000Z",
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "AFIANZA",
+        "codigo": "AFZ",
+        "Prefijo codigo": "AFZ",
+        "TX_Solicitudes 2": [
+          "recHeANrcSL2w0wnH",
+          "recIEvKCbe7J8TDaB"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec6yblMwRzyFLSsL",
+      "createdTime": "2026-06-08T16:53:40.000Z",
+      "fields": {
+        "email": "tasaciones@credicasa.cl",
+        "ultima_modificacion": "2026-06-09T02:57:17.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Credicasa Del Maule SPA",
+        "codigo": "Credicasa",
+        "carbone_template": "MUTUO_CREDICASA.docx",
+        "Prefijo codigo": "Credicasa",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Institución regional (Maule).",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec8K5fUpTEoxD9yS",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:25.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "AGENCIA",
+        "codigo": "AG",
+        "Prefijo codigo": "AG",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "TX_Solicitudes 2": [
+          "rec19zYDt8muMQ9G4"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec8QDoxN3LGvYLcm",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-07-27T02:50:03.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "EVOLUCIONA",
+        "codigo": "HEV",
+        "Prefijo codigo": "HEV",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "TX_Solicitudes 2": [
+          "reci06q1kySVg43KG",
+          "recRjyT3kg0vYGcEH",
+          "recLRlZg1gSSE4WrM",
+          "reczcw7nC2UM9kfYV",
+          "recJigoQcsGH9Xuem",
+          "recga8JAig4wiyFwb"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec8VDwUnwuk9KZUw",
+      "createdTime": "2026-06-08T16:52:27.000Z",
+      "fields": {
+        "email": "tasaciones@scotia.cl",
+        "ultima_modificacion": "2026-06-08T16:52:27.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Scotia Crédito Hipotecario",
+        "codigo": "SCO",
+        "carbone_template": "MUTUO_SCO.docx",
+        "Prefijo codigo": "SCO",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec9AnivjtqivJcEB",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-08-17T22:36:20.000Z",
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "UNIDAD LEASING HABITACIONAL",
+        "codigo": "ULH",
+        "Prefijo codigo": "ULH",
+        "TX_Solicitudes 2": [
+          "rec75VXoWvRImjd0f"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec9RA23ezRX6gi4o",
+      "createdTime": "2026-06-08T16:53:31.000Z",
+      "fields": {
+        "email": "tasaciones@afianza.cl",
+        "ultima_modificacion": "2026-06-09T02:57:07.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Afianza",
+        "codigo": "AFZ",
+        "carbone_template": "MUTUO_AFZ.docx",
+        "Prefijo codigo": "AFZ",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Hoja AFZ en plantilla madre (692 registros históricos).",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec9UF0Fj4er7OVA0",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "VALOR PRESENTE",
+        "codigo": "VLP",
+        "Prefijo codigo": "VLP",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "rec9emcQ2xagiCyzp",
+      "createdTime": "2026-06-08T16:52:52.000Z",
+      "fields": {
+        "email": "tasaciones@tessi.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:52.000Z",
+        "tipo": "Leasing",
+        "nombre": "TESSI Servicios",
+        "codigo": "TES",
+        "carbone_template": "LEASING_TES.docx",
+        "Prefijo codigo": "TES",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "notas": "Cap rate 6,0% leasing (RB-36) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "recAzjyjZW8RqzR6Z",
+      "createdTime": "2026-06-08T16:53:37.000Z",
+      "fields": {
+        "email": "tasaciones@servihabit.cl",
+        "ultima_modificacion": "2026-06-09T02:57:14.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "ServiHabit",
+        "codigo": "SVH",
+        "carbone_template": "MUTUO_SVH.docx",
+        "Prefijo codigo": "SVH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Hoja SERVIH en plantilla madre.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recBB2GJ6EZtt1Wpg",
+      "createdTime": "2026-06-08T16:53:19.000Z",
+      "fields": {
+        "email": "tasaciones@viviendaplus.cl",
+        "ultima_modificacion": "2026-06-08T16:53:19.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Vivienda Plus",
+        "codigo": "VIV",
+        "carbone_template": "MUTUO_VIV.docx",
+        "Prefijo codigo": "VIV",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "recBVAW5lqBLGqQmy",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:37.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "CREDITU",
+        "codigo": "CREDITU",
+        "Prefijo codigo": "CREDITU",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recCveeu7mJ0Vl0Un",
+      "createdTime": "2026-06-08T16:51:58.000Z",
+      "fields": {
+        "email": "tasaciones@bice.cl",
+        "ultima_modificacion": "2026-06-08T16:51:58.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "BICE Hipotecaria",
+        "codigo": "BIC",
+        "carbone_template": "MUTUO_BICE.docx",
+        "Prefijo codigo": "BIC",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "notas": "Workflow BICE Mutuos (ExportarBICE.bas)",
+        "activo": true
+      }
+    },
+    {
+      "id": "recDhiwPgxjpEyX4d",
+      "createdTime": "2026-06-08T16:53:02.000Z",
+      "fields": {
+        "email": "tasaciones@chilevivienda.cl",
+        "ultima_modificacion": "2026-06-08T16:53:02.000Z",
+        "tipo": "Especial",
+        "nombre": "Chilevivienda",
+        "codigo": "CHV",
+        "carbone_template": "ESPECIAL_CHV.docx",
+        "Prefijo codigo": "CHV",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Checklist visador (RB-53) + Factor 1.0 (RB-35)",
+        "activo": true
+      }
+    },
+    {
+      "id": "recF3UI4qlah44VrN",
+      "createdTime": "2026-06-08T16:52:05.000Z",
+      "fields": {
+        "email": "tasaciones@bci.cl",
+        "ultima_modificacion": "2026-07-13T02:25:13.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "BCI Mutuos",
+        "codigo": "BCI",
+        "carbone_template": "MUTUO_BCI.docx",
+        "Prefijo codigo": "BCI",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "TX_Solicitudes 2": [
+          "recwOChmg4Cnk9JMG",
+          "reczWyNuc2Mu9EPWl",
+          "recYaVgMChc8QJVRG",
+          "recJm4yZuZPMOBSLT"
+        ],
+        "SLA dias entrega": 3,
+        "activo": true
+      }
+    },
+    {
+      "id": "recFZ9Nvbo2EICHPS",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "PARTICULARES",
+        "codigo": "PAR",
+        "Prefijo codigo": "PAR",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recFZQQE4RIjyHbR6",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:12.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "BICE MUTUOS",
+        "codigo": "BMU",
+        "Prefijo codigo": "BMU",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recH4CU7AI1eYPVM3",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:03.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "M&V",
+        "codigo": "M&V",
+        "Prefijo codigo": "M&V",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recHXZHZsg33TpwoJ",
+      "createdTime": "2026-06-08T16:52:40.000Z",
+      "fields": {
+        "email": "tasaciones@coopeuch.cl",
+        "ultima_modificacion": "2026-06-08T16:52:40.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Coopeuch",
+        "codigo": "COR",
+        "carbone_template": "MUTUO_COR.docx",
+        "Prefijo codigo": "COR",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "activo": true
+      }
+    },
+    {
+      "id": "recI5rxWiUt1HJuSS",
+      "createdTime": "2026-06-08T16:52:19.000Z",
+      "fields": {
+        "email": "tasaciones@mutuosa.cl",
+        "ultima_modificacion": "2026-06-08T16:52:19.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Mutuosa",
+        "codigo": "MUT",
+        "carbone_template": "MUTUO_MUT.docx",
+        "Prefijo codigo": "MUT",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "activo": true
+      }
+    },
+    {
+      "id": "recIXx6xMAGnOZT7T",
+      "createdTime": "2026-06-09T19:37:57.000Z",
+      "fields": {
+        "email": "tasaciones@valon.cl",
+        "ultima_modificacion": "2026-06-09T19:37:57.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "VALÓN Hipotecaria",
+        "codigo": "VAL",
+        "carbone_template": "MUTUO_VAL.docx",
+        "Prefijo codigo": "VAL",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "recIg8NtVhptXkEUJ",
+      "createdTime": "2026-05-31T21:24:20.000Z",
+      "fields": {
+        "email": "tasaciones@metlife.cl",
+        "C_NotificacionesConfig": [
+          "recRKsr8K9ePTeaB6"
+        ],
+        "ultima_modificacion": "2026-10-05T14:27:58.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "C_SLA": [
+          "recePRZ2pxuYimNoe"
+        ],
+        "nombre": "MetLife",
+        "Factores": [
+          "recEcMS836Akj93vA",
+          "recRayKkcSXFq0xnb",
+          "recui3HqGx22eSuMw",
+          "recpea3cXsiQhHilj",
+          "reckOSJBtSY5yNXYf",
+          "recWcJC8a8ekKdfXO"
+        ],
+        "codigo": "MET",
+        "bancos_asociados": [
+          "recnfdH3ztLM9QpS8"
+        ],
+        "carbone_template": "MUTUO_MET.docx",
+        "Prefijo codigo": "MET",
+        "tasa_cap_rate": 0.045,
+        "C_Plantillas": [
+          "recbC79jChtK5M9fX",
+          "recK3ICXfmbEdWpFQ"
+        ],
+        "factor_garantia": 0.8,
+        "C_VariablesCliente": [
+          "rec4jzEEj3qpNZkrO"
+        ],
+        "productos": [
+          "recUmb4KlqAk8Ocn8"
+        ],
+        "factor_seguro": 1,
+        "C_ReglasNegocio": [
+          "recoZuF6otZ5Bcs2g"
+        ],
+        "TX_Solicitudes 2": [
+          "reclzOOmRHH5LLa8x",
+          "recxqDCp0mIYd7jr5",
+          "recni55rcRpiqtNjE",
+          "recNiwM4s1ibr3sbO",
+          "recmMzeu3eWGxyXsf",
+          "reczuns8NHdI45Owp"
+        ],
+        "Plantilla": [
+          "recbC79jChtK5M9fX",
+          "recK3ICXfmbEdWpFQ"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "⭐ Cliente actual MET-6283 • Factor 1.0 (RB-35)",
+        "activo": true
+      }
+    },
+    {
+      "id": "recJExaBnlEVlyeuZ",
+      "createdTime": "2026-06-08T16:54:15.000Z",
+      "fields": {
+        "email": "tasaciones@creditu.cl",
+        "ultima_modificacion": "2026-06-09T02:57:55.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "CrediTú",
+        "codigo": "CrediTú",
+        "carbone_template": "MUTUO_CREDITU.docx",
+        "Prefijo codigo": "CrediTú",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Hoja CREDITU en plantilla madre.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recKaRXnwtqbM0qkJ",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "ANDES",
+        "codigo": "ANDES",
+        "Prefijo codigo": "ANDES",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recLVk6eAbYMmS3xW",
+      "createdTime": "2026-09-23T19:04:59.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-09-23T19:05:14.000Z",
+        "nombre": "SANDBOX_SinFactores_T-AUDIT-CLOSE",
+        "codigo": "SBXAC",
+        "C_VariablesCliente": [
+          "rec5vZU9BYj8ezbhz",
+          "recIVTUqcMpnoxZvt"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "SANDBOX · T-AUDIT-CLOSE-20260923 · cliente SIN factor_seguro/factor_garantia/tasa_cap_rate → fuerza guards H5/H6 fail-ruidoso. Registro sintético borrable (§9 rollback)."
+      }
+    },
+    {
+      "id": "recLf6tbUfqhKZOgN",
+      "createdTime": "2026-06-08T16:53:54.000Z",
+      "fields": {
+        "email": "tasaciones@sucasahoy.cl",
+        "ultima_modificacion": "2026-06-09T02:57:35.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Su Casa Hoy",
+        "codigo": "SCAH",
+        "carbone_template": "MUTUO_SCAH.docx",
+        "Prefijo codigo": "SCAH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. También en col U (institución antigua reactivada).",
+        "activo": true
+      }
+    },
+    {
+      "id": "recM4Xm1IlKdnGvac",
+      "createdTime": "2026-06-08T16:53:42.000Z",
+      "fields": {
+        "email": "tasaciones@thch.cl",
+        "ultima_modificacion": "2026-06-09T02:57:20.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Tu Hipotecaria Chile",
+        "codigo": "THCH",
+        "carbone_template": "MUTUO_THCH.docx",
+        "Prefijo codigo": "THCH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recO5DG0Veb1MVg2k",
+      "createdTime": "2026-06-08T16:52:10.000Z",
+      "fields": {
+        "email": "tasaciones@itau.cl",
+        "ultima_modificacion": "2026-06-08T16:52:10.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Banco Itaú",
+        "codigo": "CIT",
+        "carbone_template": "MUTUO_CIT.docx",
+        "Prefijo codigo": "CIT",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "recOfiHWwHEUzgPCw",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-07-11T16:52:11.000Z",
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "BANCO DE CHILE",
+        "codigo": "BCH",
+        "Prefijo codigo": "BCH",
+        "TX_Solicitudes 2": [
+          "recnuyVVLpA7L7i68",
+          "recuntRy8ZH1hzsqV",
+          "recbg9KL66iZXGa5c",
+          "recd7tJVAqoPvBLf5",
+          "recH0MNSojVMl8VHV",
+          "recD3rCtZwHjmPpoo",
+          "rec6rom8NXByRsCwN",
+          "recno9uLIZfsHXDFP",
+          "rec5ktsyekyC1vGjb",
+          "recpQYXm50mSgoeOy"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recOxiYsVOTvoJPH7",
+      "createdTime": "2026-06-08T16:53:45.000Z",
+      "fields": {
+        "email": "tasaciones@casapronta.cl",
+        "ultima_modificacion": "2026-06-09T02:57:23.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Casa Pronta",
+        "codigo": "CP",
+        "carbone_template": "MUTUO_CP.docx",
+        "Prefijo codigo": "CP",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recPDwixzybwHlJaQ",
+      "createdTime": "2026-06-06T03:04:27.000Z",
+      "fields": {
+        "email": "tasaciones@evoluciona.cl",
+        "ultima_modificacion": "2026-10-05T18:13:18.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Hipotecaria Evoluciona",
+        "codigo": "EVO",
+        "carbone_template": "MUTUO_EVO.docx",
+        "Prefijo codigo": "EVO",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "C_ReglasNegocio": [
+          "recGsNl62Hi8VE6nW"
+        ],
+        "TX_Solicitudes 2": [
+          "recoZcwmgCBVKQMxF"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "🔬 Caso Exequiel Fernández (2º pase). Avalúo 'NO REGISTRA' → saneamiento RB-57.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recPSVC4X8ConYKi2",
+      "createdTime": "2026-06-08T16:52:46.000Z",
+      "fields": {
+        "email": "tasaciones@concreces.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:46.000Z",
+        "tipo": "Leasing",
+        "nombre": "Concreces Leasing",
+        "codigo": "CON",
+        "carbone_template": "LEASING_CON.docx",
+        "Prefijo codigo": "CON",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Hoja CCES dedicada (RB-51) ✨ + Cap rate 6,0%",
+        "activo": true
+      }
+    },
+    {
+      "id": "recQ9aR23JNI5qg5h",
+      "createdTime": "2026-09-23T19:17:02.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-09-23T19:17:23.000Z",
+        "nombre": "SANDBOX_TAUDITCLOSE_Cliente_Sin_Factores",
+        "C_VariablesCliente": [
+          "recCnOyToXTWRXJkO",
+          "recriAP2XzkpNOdOg"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "SANDBOX T-AUDIT-CLOSE-20260923 · fixture guard H5/H6 · SIN tasa_cap_rate/factor_seguro/factor_garantia a propósito · borrable (rollback §9)"
+      }
+    },
+    {
+      "id": "recRC2WEkLfXkMO50",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:29.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "MAS LEASING",
+        "codigo": "MAS LEASING",
+        "Prefijo codigo": "MAS LEASING",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recSi2XsxHtByImuI",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:00.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "SECURITY PRINCIPAL",
+        "codigo": "PRI",
+        "Prefijo codigo": "PRI",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recU3PLgeapmpkGcI",
+      "createdTime": "2026-06-08T16:53:49.000Z",
+      "fields": {
+        "email": "tasaciones@ohna.cl",
+        "ultima_modificacion": "2026-06-09T02:57:29.000Z",
+        "tipo": "Especial",
+        "nombre": "Ohio National",
+        "codigo": "OHNA",
+        "carbone_template": "ESPECIAL_OHNA.docx",
+        "Prefijo codigo": "OHNA",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Ohio National presente en col U deprecated + en catálogo oficial.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recU6gfHmmCWZN5Mm",
+      "createdTime": "2026-06-06T03:04:14.000Z",
+      "fields": {
+        "email": "tasaciones@austral.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-10-05T18:05:11.000Z",
+        "tipo": "Leasing",
+        "nombre": "Austral Leasing Habitacional",
+        "codigo": "AUS",
+        "carbone_template": "LEASING_AUS.docx",
+        "Prefijo codigo": "AUS",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "C_ReglasNegocio": [
+          "recIEZ7F3FGUF0l44"
+        ],
+        "TX_Solicitudes 2": [
+          "recPx0yiK9k4oPG4V",
+          "recE1LwwH2xbcCHti"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "🔬 Caso Caspana (2º pase). Leasing pero cap rate 4,5% (NO 6,0%) → tasa por cliente RB-52. Albañilería RB-61.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recUHpMmk18AIamop",
+      "createdTime": "2026-06-08T16:52:33.000Z",
+      "fields": {
+        "email": "tasaciones@falabella.cl",
+        "ultima_modificacion": "2026-06-08T16:52:33.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Banco Falabella",
+        "codigo": "FAL",
+        "carbone_template": "MUTUO_FAL.docx",
+        "Prefijo codigo": "FAL",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "activo": true
+      }
+    },
+    {
+      "id": "recVTKsZLNSDNInky",
+      "createdTime": "2026-06-06T03:03:55.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-10-05T18:05:31.000Z",
+        "sla_dias_default": 3,
+        "nombre": "Hipotecaria Security S.A.",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "C_ReglasNegocio": [
+          "reccwJrigkDZMBvmM"
+        ],
+        "TX_Solicitudes 2": [
+          "reclC1CE5VHLTisKD",
+          "rectnGOaHvEioXZw3"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Auto-creado desde JSON tasacion v17",
+        "activo": true
+      }
+    },
+    {
+      "id": "recW7rw9EpxapRVFj",
+      "createdTime": "2026-06-08T16:53:28.000Z",
+      "fields": {
+        "email": "tasaciones@andes.cl",
+        "ultima_modificacion": "2026-07-29T18:19:24.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Administradora Andes S.A.",
+        "codigo": "ANDES",
+        "carbone_template": "MUTUO_ANDES.docx",
+        "Prefijo codigo": "ANDES",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "TX_Solicitudes 2": [
+          "recYcijo7kb1NDjqM"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Mencionada en RB-36 lista resto. Hoja ANDES en plantilla madre.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recWvXIiwahdV7otI",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:33.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "CONCRECES",
+        "codigo": "CONCRECES",
+        "Prefijo codigo": "CONCRECES",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recX0HLhhcn1bBAgx",
+      "createdTime": "2026-06-08T16:53:47.000Z",
+      "fields": {
+        "email": "tasaciones@leasingurbano.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-09T02:57:26.000Z",
+        "tipo": "Leasing",
+        "nombre": "Leasing Urbano",
+        "codigo": "LU",
+        "carbone_template": "LEASING_LU.docx",
+        "Prefijo codigo": "LU",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Leasing → cap rate 6,0%.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recX80z73mCtC4BBo",
+      "createdTime": "2026-06-06T03:04:23.000Z",
+      "fields": {
+        "email": "tasaciones@aghabitacional.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-10-05T17:36:19.000Z",
+        "tipo": "Leasing",
+        "nombre": "Agencia Habitacional",
+        "codigo": "AGH",
+        "carbone_template": "LEASING_AGH.docx",
+        "Prefijo codigo": "AGH",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "C_ReglasNegocio": [
+          "recAJFIbIXV1X93i3"
+        ],
+        "TX_Solicitudes 2": [
+          "recconVQfAc8LSGJf"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Cap rate 6,0% leasing (RB-36) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "recXFlArdmTAJvvYl",
+      "createdTime": "2026-06-08T16:52:50.000Z",
+      "fields": {
+        "email": "tasaciones@ulh.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:50.000Z",
+        "tipo": "Leasing",
+        "nombre": "ULH (BICE) Leasing",
+        "codigo": "ULH",
+        "carbone_template": "LEASING_ULH.docx",
+        "Prefijo codigo": "ULH",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Hoja ULH dedicada (RB-47) ✨ • Cap rate 6,0% • Factor 1.0",
+        "activo": true
+      }
+    },
+    {
+      "id": "recXVtuMT2wjIVzz2",
+      "createdTime": "2026-06-08T16:53:26.000Z",
+      "fields": {
+        "email": "tasaciones@security.cl",
+        "ultima_modificacion": "2026-06-08T16:53:26.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Hipotecaria Security",
+        "codigo": "SEC",
+        "carbone_template": "MUTUO_SEC.docx",
+        "Prefijo codigo": "SEC",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "notas": "🔬 Caso Las Rejas (2º pase). Override manual tasa 5,5% sobre 4,5% → RB-51.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recYAAxUCRqhCDgyn",
+      "createdTime": "2026-06-08T16:53:07.000Z",
+      "fields": {
+        "email": "tasaciones@penta.cl",
+        "ultima_modificacion": "2026-06-08T16:53:07.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Penta Hipotecaria",
+        "codigo": "PEN",
+        "carbone_template": "MUTUO_PEN.docx",
+        "Prefijo codigo": "PEN",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "recYGkxnFlATx7Nv5",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "email": "email",
+        "Email tasaciones": "tipo",
+        "Hoja planilla": "notas",
+        "tipo": "tipo",
+        "nombre": "﻿nombre",
+        "Lista de nombres y emails": "carbone_template",
+        "codigo": "codigo",
+        "codigo_externo": "codigo_externo",
+        "carbone_template": "carbone_template",
+        "Prefijo codigo": "codigo",
+        "Solicitud": "tasa_cap_rate",
+        "Solicitudes": "factor_seguro",
+        "rut": "bice_workflow",
+        "SLA dias entrega": 3,
+        "notas": "notas",
+        "Ejecutivos comerciales": "email"
+      }
+    },
+    {
+      "id": "recYY0ebDMrZ2Qu1c",
+      "createdTime": "2026-06-08T16:52:48.000Z",
+      "fields": {
+        "email": "tasaciones@masleasing.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:48.000Z",
+        "tipo": "Leasing",
+        "nombre": "Másleasing",
+        "codigo": "MAS",
+        "carbone_template": "LEASING_MAS.docx",
+        "Prefijo codigo": "MAS",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "notas": "Cap rate 6,0% leasing (RB-36) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "reca15ak8l4C98V9l",
+      "createdTime": "2026-06-08T16:53:14.000Z",
+      "fields": {
+        "email": "tasaciones@mihipoteca.cl",
+        "ultima_modificacion": "2026-06-08T16:53:14.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Mi Hipoteca",
+        "codigo": "MIH",
+        "carbone_template": "MUTUO_MIH.docx",
+        "Prefijo codigo": "MIH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "recb5h4CuyLp3D9c7",
+      "createdTime": "2026-06-08T16:52:01.000Z",
+      "fields": {
+        "email": "leasing@bice.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:01.000Z",
+        "tipo": "Leasing",
+        "nombre": "BICE Leasing",
+        "codigo": "BIL",
+        "carbone_template": "LEASING_BICE.docx",
+        "Prefijo codigo": "BIL",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "notas": "Hoja ULH activa. Exportación independiente.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recb9KnrD9wYvCp22",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "CREDIHOME",
+        "codigo": "CREDIHOME",
+        "Prefijo codigo": "CREDIHOME",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recbP0U8gxgvn5jjF",
+      "createdTime": "2026-06-08T16:52:12.000Z",
+      "fields": {
+        "email": "tasaciones@compass.cl",
+        "ultima_modificacion": "2026-06-08T16:52:12.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "HCS / Hipotecaria Compass",
+        "codigo": "HCS",
+        "carbone_template": "MUTUO_HCS.docx",
+        "Prefijo codigo": "HCS",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "recbrHmj9YUJ01BY5",
+      "createdTime": "2026-06-08T16:53:33.000Z",
+      "fields": {
+        "email": "—",
+        "ultima_modificacion": "2026-06-09T02:57:09.000Z",
+        "tipo": "Particular",
+        "nombre": "Particular",
+        "codigo": "PART",
+        "carbone_template": "PARTICULAR.docx",
+        "Prefijo codigo": "PART",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Tipo \"Particular\" sin institución financiera (uso directo).",
+        "activo": true
+      }
+    },
+    {
+      "id": "recdchMPfjyGvKmak",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:21.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "FINANCIERA Y HABITACIONAL",
+        "codigo": "FINANCIERA Y HABITACIONAL",
+        "Prefijo codigo": "FINANCIERA Y HABITACIONAL",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recdldMS9TYs9sv39",
+      "createdTime": "2026-06-08T16:54:05.000Z",
+      "fields": {
+        "email": "tasaciones@valorpresente.cl",
+        "ultima_modificacion": "2026-06-09T02:57:44.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Valor Presente",
+        "codigo": "VP",
+        "carbone_template": "MUTUO_VP.docx",
+        "Prefijo codigo": "VP",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Hoja VLP en plantilla madre.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recdnihNoqtvfmSQA",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:14.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "CENTRAL HIPOTECARIA",
+        "codigo": "CHI",
+        "Prefijo codigo": "CHI",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "receE0qIASmpRtZLE",
+      "createdTime": "2026-06-08T16:54:00.000Z",
+      "fields": {
+        "email": "tasaciones@casanuestra.cl",
+        "ultima_modificacion": "2026-06-09T02:57:37.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Casa Nuestra",
+        "codigo": "CN",
+        "carbone_template": "MUTUO_CN.docx",
+        "Prefijo codigo": "CN",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase.",
+        "activo": true
+      }
+    },
+    {
+      "id": "receWMWb6Qwe1gsnC",
+      "createdTime": "2026-06-08T16:53:35.000Z",
+      "fields": {
+        "email": "tasaciones@4life.cl",
+        "ultima_modificacion": "2026-08-19T15:58:33.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "4 LIFE",
+        "codigo": "4Life",
+        "carbone_template": "MUTUO_4LIFE.docx",
+        "Prefijo codigo": "4Life",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "TX_Solicitudes 2": [
+          "recXC2NvItjnJy1kK",
+          "recQgfhUPirXCnSR8",
+          "recy5MD3qCuYhPevr",
+          "recjPkLir5FNaQZWy",
+          "recvtkiqSUPzTKEQ0",
+          "rec9qf3DchOY5Lk2N",
+          "recrx1YQYJuecthqd",
+          "recdBwN9OimaCcL9T"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Hoja 4LIFE plantilla madre (172 registros 2025).",
+        "activo": true
+      }
+    },
+    {
+      "id": "recesePOB1AG4G6Jn",
+      "createdTime": "2026-06-08T16:54:18.000Z",
+      "fields": {
+        "email": "tasaciones@consorcio.cl",
+        "ultima_modificacion": "2026-06-09T02:57:58.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Consorcio",
+        "codigo": "Consorcio",
+        "carbone_template": "MUTUO_CONSORCIO.docx",
+        "Prefijo codigo": "Consorcio",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recfwJelCHYjuHWy4",
+      "createdTime": "2026-06-08T16:54:10.000Z",
+      "fields": {
+        "email": "tasaciones@nuevocapital.cl",
+        "ultima_modificacion": "2026-06-09T02:57:49.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Nuevo Capital Mutuos Hipotecarios",
+        "codigo": "NCH",
+        "carbone_template": "MUTUO_NCH.docx",
+        "Prefijo codigo": "NCH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "🔬 3er pase. Hoja NCH en plantilla madre (51 registros 2020).",
+        "activo": true
+      }
+    },
+    {
+      "id": "recg3a3iPVedlegWH",
+      "createdTime": "2026-06-08T16:52:14.000Z",
+      "fields": {
+        "email": "tasaciones@hlc.cl",
+        "ultima_modificacion": "2026-06-08T16:52:14.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "HLC Hipotecaria Continental",
+        "codigo": "HLC",
+        "carbone_template": "MUTUO_HLC.docx",
+        "Prefijo codigo": "HLC",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) + Caso Casa = factor 1.0 SIEMPRE",
+        "activo": true
+      }
+    },
+    {
+      "id": "recimE810cuyWIR9q",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "METLIFE",
+        "codigo": "MET",
+        "Prefijo codigo": "MET",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "reciyPPDIgLcyIH07",
+      "createdTime": "2026-06-08T16:52:03.000Z",
+      "fields": {
+        "email": "tasaciones@bch.cl",
+        "ultima_modificacion": "2026-06-08T16:52:03.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Banco de Chile",
+        "codigo": "BCH",
+        "carbone_template": "MUTUO_BCH.docx",
+        "Prefijo codigo": "BCH",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "reckDh71r8Lm2Kv2s",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:23.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "TESSI",
+        "codigo": "TESSI",
+        "Prefijo codigo": "TESSI",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recklwpIt0Cv4eqk1",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:35.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "LEASING AUSTRAL",
+        "codigo": "LEASING AUSTRAL",
+        "Prefijo codigo": "LEASING AUSTRAL",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "reclREZKDnYh5BQTI",
+      "createdTime": "2026-06-08T16:53:00.000Z",
+      "fields": {
+        "email": "tasaciones@myv.cl",
+        "ultima_modificacion": "2026-06-08T16:53:00.000Z",
+        "tipo": "Especial",
+        "nombre": "M&V (Munita y Vergara)",
+        "codigo": "MyV",
+        "carbone_template": "ESPECIAL_MYV.docx",
+        "Prefijo codigo": "MyV",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "notas": "Checklist visador especial (RB-53): incluir N° dpto/estac/bodega",
+        "activo": true
+      }
+    },
+    {
+      "id": "recmJCixBQDq5c9Ao",
+      "createdTime": "2026-06-08T16:52:07.000Z",
+      "fields": {
+        "email": "tasaciones@citi.cl",
+        "ultima_modificacion": "2026-06-08T16:52:07.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Citi Mutuos",
+        "codigo": "CIM",
+        "carbone_template": "MUTUO_CIM.docx",
+        "Prefijo codigo": "CIM",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "recn5JG4aHdlYzobI",
+      "createdTime": "2026-06-08T16:53:10.000Z",
+      "fields": {
+        "email": "tasaciones@sim.cl",
+        "ultima_modificacion": "2026-06-08T16:53:10.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Sim Hipotecaria",
+        "codigo": "SIM",
+        "carbone_template": "MUTUO_SIM.docx",
+        "Prefijo codigo": "SIM",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "recnVPbH7PvJreMgV",
+      "createdTime": "2026-06-08T16:52:36.000Z",
+      "fields": {
+        "email": "tasaciones@ripley.cl",
+        "ultima_modificacion": "2026-06-08T16:52:36.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Banco Ripley",
+        "codigo": "RIP",
+        "carbone_template": "MUTUO_RIP.docx",
+        "Prefijo codigo": "RIP",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "activo": true
+      }
+    },
+    {
+      "id": "recnY3zdDK4G5z81i",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:09.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "EXTERIOR",
+        "codigo": "EXTERIOR",
+        "Prefijo codigo": "EXTERIOR",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recngf122DQ5Tevtu",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-08-14T17:27:01.000Z",
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "4LIFE",
+        "codigo": "4LIFE",
+        "Prefijo codigo": "4LIFE",
+        "TX_Solicitudes 2": [
+          "recU4PknUhFgyQQhr"
+        ],
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "reco6l8flOx08T4bg",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "SERVIHABIT",
+        "codigo": "SERVIH",
+        "Prefijo codigo": "SERVIH",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recphwp4pgfkgNChn",
+      "createdTime": "2026-06-08T16:52:43.000Z",
+      "fields": {
+        "email": "tasaciones@icge.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:43.000Z",
+        "tipo": "Leasing",
+        "nombre": "ICGE Internacional",
+        "codigo": "ICG",
+        "carbone_template": "LEASING_ICG.docx",
+        "Prefijo codigo": "ICG",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Cap rate leasing 6,0% (RB-36) ✨ + Factor 1.0",
+        "activo": true
+      }
+    },
+    {
+      "id": "recqlmHfjwAsyJVNU",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "CHILE VIVIENDA",
+        "codigo": "CHILE VIVIENDA",
+        "Prefijo codigo": "CHILE VIVIENDA",
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "rectvgirk94PmIUKm",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:27.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "Penta Hipotecario",
+        "codigo": "Penta Hipotecario",
+        "Prefijo codigo": "Penta Hipotecario",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recucWvNTRDw8QISS",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:32.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "ICGE",
+        "codigo": "ICGE",
+        "Prefijo codigo": "ICGE",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recv4Dp8MqZZnMmya",
+      "createdTime": "2026-06-08T16:52:38.000Z",
+      "fields": {
+        "email": "tasaciones@bbva.cl",
+        "ultima_modificacion": "2026-06-08T16:52:38.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "BBVA Hipotecaria",
+        "codigo": "BBV",
+        "carbone_template": "MUTUO_BBV.docx",
+        "Prefijo codigo": "BBV",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "recwDkXSzFG1alEhr",
+      "createdTime": "2026-06-08T16:52:58.000Z",
+      "fields": {
+        "email": "tasaciones@credihome.cl",
+        "es_leasing": true,
+        "ultima_modificacion": "2026-06-08T16:52:58.000Z",
+        "tipo": "Leasing",
+        "nombre": "Credihome",
+        "codigo": "CRD",
+        "carbone_template": "LEASING_CRD.docx",
+        "Prefijo codigo": "CRD",
+        "tasa_cap_rate": 0.06,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.8,
+        "SLA dias entrega": 3,
+        "notas": "Cap rate 6,0% leasing (RB-36) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "recwZQDdME87Ke3Qw",
+      "createdTime": "2026-06-08T16:53:05.000Z",
+      "fields": {
+        "email": "tasaciones@paris.cl",
+        "ultima_modificacion": "2026-06-08T16:53:05.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Paris Crédito Hipotecario",
+        "codigo": "PAR",
+        "carbone_template": "MUTUO_PAR.docx",
+        "Prefijo codigo": "PAR",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨ • Listado oficial dropdown",
+        "activo": true
+      }
+    },
+    {
+      "id": "recwiULOKnBcfWZAR",
+      "createdTime": "2026-06-08T16:53:17.000Z",
+      "fields": {
+        "email": "tasaciones@asecontinental.cl",
+        "ultima_modificacion": "2026-06-08T16:53:17.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Aseguradora Continental",
+        "codigo": "ASE",
+        "carbone_template": "MUTUO_ASE.docx",
+        "Prefijo codigo": "ASE",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨",
+        "activo": true
+      }
+    },
+    {
+      "id": "recwxQlPhJTXgig93",
+      "createdTime": "2026-06-06T01:46:07.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-08T16:54:59.000Z",
+        "sla_dias_default": 7,
+        "tipo": "Banco",
+        "nombre": "MetLife Chile S.A.",
+        "codigo": "MetLife",
+        "Prefijo codigo": "MetLife",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "rut": "99500880-7",
+        "factor_seguro": 0.825,
+        "redondeo_decimales": 2,
+        "SLA dias entrega": 3,
+        "notas": "Cliente confirmado documento v2.4 §18.4. Cap rate 4.5% para refinanciamiento.",
+        "activo": true
+      }
+    },
+    {
+      "id": "recxEg7RiBxtqRCfY",
+      "createdTime": "2026-06-04T03:25:50.000Z",
+      "fields": {
+        "ultima_modificacion": "2026-06-09T02:58:06.000Z",
+        "sla_dias_default": 3,
+        "Hoja planilla": "Importado desde madre.xlsm hoja Variables",
+        "nombre": "HIPOTECARIA LA CONSTRUCCION",
+        "codigo": "HLCO",
+        "Prefijo codigo": "HLCO",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 0.825,
+        "SLA dias entrega": 3,
+        "notas": "Importado desde madre.xlsm hoja Variables",
+        "activo": true
+      }
+    },
+    {
+      "id": "recyT7db4bylkygeS",
+      "createdTime": "2026-06-08T16:52:24.000Z",
+      "fields": {
+        "email": "tasaciones@scotiabank.cl",
+        "ultima_modificacion": "2026-07-08T21:02:08.000Z",
+        "tipo": "Mutuo Hipotecario",
+        "nombre": "Scotiabank",
+        "codigo": "SCB",
+        "carbone_template": "MUTUO_SCB.docx",
+        "Prefijo codigo": "SCB",
+        "tasa_cap_rate": 0.045,
+        "factor_garantia": 0.8,
+        "factor_seguro": 1,
+        "SLA dias entrega": 3,
+        "notas": "Factor 1.0 (RB-35) ✨",
+        "activo": true
+      }
+    }
+  ]
+}
