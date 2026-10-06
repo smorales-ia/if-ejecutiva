@@ -1,0 +1,754 @@
+{
+ "caso1": {
+  "record_id": "reczuns8NHdI45Owp",
+  "solicitud": {
+   "id": "reczuns8NHdI45Owp",
+   "createdTime": "2026-10-05T14:27:58.000Z",
+   "fields": {
+    "TX_Adjuntos": [
+     "recnvd34OICwWONt6",
+     "recbA9mrBfSqeOCFx",
+     "recERcqd7B8A6gG8M",
+     "recmRsLnEOqnTigRh",
+     "recdKuFbnfKTTz7kn",
+     "reci01ig9Xmc7jjY4",
+     "recErMJ1SbjkLbxfs",
+     "recf9houbBiJ6s5no",
+     "rec608bJN3npCDWW1",
+     "rec9k78urlLYZS292",
+     "reclbzGckwxBwJmdp",
+     "recWphw0xUvgOz19S",
+     "recty9M7AJmOpcT1I",
+     "recq2yGj8T0KFiNf2",
+     "rec1QQ38akVl2C4Ra",
+     "recN2PLiDkVK0vFup",
+     "recRXAaw259brqb2V",
+     "recM1covUxyAAHjkM"
+    ],
+    "estado": "calculada",
+    "A_DecisionesMotor": [
+     "recmXPp6ENw5HNzWK"
+    ],
+    "tipo_propiedad": [
+     "recf9hz8TbkQ6wsus"
+    ],
+    "cliente_final_nombre": "ALEJANDRO MOISES AVILA LEIVA",
+    "lookup_rango_max": [
+     75
+    ],
+    "sla_semaforo_etapa": "sin_dato",
+    "codigo_solicitud": "VP-2026-0073",
+    "TX_ItemsCuadroValoracion": [
+     "reca4ghqevkfWM663",
+     "recm5iUccSgMIreQa"
+    ],
+    "TX_Comparables": [
+     "recy8a2pn1bj5uTep",
+     "reclsbO2EgLhTfwdi",
+     "recHl8utumCYvnwqO",
+     "recSunzao1EgleLBg",
+     "recX2LFLPi9zew9Ta",
+     "recsbOqOZ8UYGgCvZ"
+    ],
+    "override_motivo": "CASO1 E2E-5CASOS · valores del XLSM La Marina 1176 sembrados directo (sandbox, sin AT03)",
+    "tipo_propiedad_nuevo_usado": "usada",
+    "numero_solicitud": "METLIFE -6280",
+    "tipo_informe": [
+     "recH02eJfKR0cVVbh"
+    ],
+    "comuna": [
+     "rec6fV4WyLIwC15JE"
+    ],
+    "direccion": "LA MARINA Nº 1176, Departamento: Nº 102, Edificio GUILLERMO II",
+    "regla_aplicada": [
+     "recToI9X3qCb6qFTx"
+    ],
+    "ultima_modificacion": "2026-10-05T14:28:16.000Z",
+    "fecha_visita_programada": "2026-04-06",
+    "fuera_rango": 0,
+    "ejecutivo_solicitante": "MONICA REYES PINTO",
+    "codigo_ext": "VP-2026-0073",
+    "semaforo_sla": "VENCIDO",
+    "dias_desde_solicitud": 199,
+    "n_operacion_cliente": 900158881,
+    "proyecto_condominio": "EDIFICIO GUILLERMO II",
+    "visador": [
+     "recrjQDympldI186S"
+    ],
+    "solicitud_id": 73,
+    "tasador": [
+     "recTJcV3BIvdcG4em"
+    ],
+    "TX_DatosTasacion": [
+     "rec2AQQJfvHczhWkZ"
+    ],
+    "fecha_limite_entrega": "2026-04-08T00:00:00.000Z",
+    "fecha_creacion": "2026-10-05T14:27:58.000Z",
+    "TX_HabitacionesPorNivel": [
+     "recy4CnGMOziNYEdb",
+     "recVb9NgPaPlLn5eH",
+     "rec76sYY5mZYutgeA",
+     "recVXOQgfKVGOoBuE",
+     "recsV46B7TUtRnQmY",
+     "recFMVrmejLSQx0Z3",
+     "recG1YraGfjag0lCC"
+    ],
+    "dias_desde_visita": 182,
+    "fecha_visita": "2026-04-06",
+    "TX_DocumentosLegales": [
+     "recfTxfMhCNmxmJKM"
+    ],
+    "cliente": [
+     "recIg8NtVhptXkEUJ"
+    ],
+    "fecha_solicitud": "2026-03-20T12:00:00.000Z",
+    "vida_util_override": 55,
+    "cliente_final_rut": "5.523.876-6",
+    "record_id": "reczuns8NHdI45Owp",
+    "region": "Metropolitana de Santiago",
+    "notas": "CASO1-METLIFE-6280 · T-TASADOR-E2E-5CASOS-PROD-20261003 · SANDBOX replica (D1) aislado por notas+numero_solicitud",
+    "rol_sii": "4852-250"
+   }
+  },
+  "adjuntos_ids_previos": [
+   "recnvd34OICwWONt6",
+   "recbA9mrBfSqeOCFx",
+   "recERcqd7B8A6gG8M",
+   "recmRsLnEOqnTigRh",
+   "recdKuFbnfKTTz7kn",
+   "reci01ig9Xmc7jjY4",
+   "recErMJ1SbjkLbxfs",
+   "recf9houbBiJ6s5no",
+   "rec608bJN3npCDWW1",
+   "rec9k78urlLYZS292",
+   "reclbzGckwxBwJmdp",
+   "recWphw0xUvgOz19S",
+   "recty9M7AJmOpcT1I",
+   "recq2yGj8T0KFiNf2",
+   "rec1QQ38akVl2C4Ra",
+   "recN2PLiDkVK0vFup",
+   "recRXAaw259brqb2V",
+   "recM1covUxyAAHjkM"
+  ],
+  "docgen_ids_previos": [],
+  "estado_previo": "calculada",
+  "pdf_final_url_previo": null
+ },
+ "caso2": {
+  "record_id": "recconVQfAc8LSGJf",
+  "solicitud": {
+   "id": "recconVQfAc8LSGJf",
+   "createdTime": "2026-10-05T17:36:19.000Z",
+   "fields": {
+    "TX_Adjuntos": [
+     "recrxbyP3mFmmVw72",
+     "recYGPyuVGwn5LgEq",
+     "recZhCPqlNnBBDP1D",
+     "recvU4qRZSkeDsYaQ",
+     "recMQVPn9UzqLwkQB",
+     "recuQgimARRFuBz1M",
+     "recBlbCp09pp1fx7T",
+     "recwQpNSp2zN7FIlk",
+     "recDidNL79COftWwj",
+     "recpmBjXvfzOSRXk9",
+     "rec6v0IriP0uHdVWr",
+     "recGbpsRoUTT4NEBp",
+     "recyOrIbLrm6Cki00",
+     "recZVeESu7JFVzUrY",
+     "recZXXR7Kb8wt0YhZ",
+     "recanMzALq3LQuhhR"
+    ],
+    "estado": "calculada",
+    "A_DecisionesMotor": [
+     "recyD44x7WkoS1BQG"
+    ],
+    "tipo_propiedad": [
+     "recf9hz8TbkQ6wsus"
+    ],
+    "cliente_final_nombre": "ANDRES PABLO ISRAEL AVRAM",
+    "lookup_rango_max": [
+     80
+    ],
+    "override_autor": "T-TASADOR-FIX-MOTOR-REPOSICION-SEGURO-20261005 (agente fix+piloto)",
+    "sla_semaforo_etapa": "sin_dato",
+    "A_Eventos": [
+     "recqqQZR8U6mImYLQ",
+     "recnkiTICmzL1A5PQ"
+    ],
+    "codigo_solicitud": "VP-2026-0074",
+    "TX_ItemsCuadroValoracion": [
+     "recWNTaCy6jn9i6DL"
+    ],
+    "TX_Comparables": [
+     "recBvVFvSaGeaYkGM",
+     "recnjD6jJH08g8srk",
+     "recupHjaAHNvRgk5K",
+     "recRDLDauyxsdp7l4",
+     "reciHsBADJLZR92dL",
+     "recViXhJqS3xMf2sM",
+     "rec5FN0KWgx00rqv5"
+    ],
+    "override_motivo": "SANDBOX T-TASADOR-FIX-MOTOR-REPOSICION-SEGURO-20261005 (piloto G-1/G-2): valor_reposicion_override RETIRADO para ejercitar el fix G-1 (esperado 1115.2 = 0.8 x 1394 sin terreno). valor_seguro_override=1394 SUPLE el factor_seguro=1.0 del oraculo AGH (ClienteN=7 whitelist BO): M_Clientes canonico tiene fs=0.8 (gap G-7, intocable en esta tanda) y TX_Solicitudes no tiene campo factor_seguro_override. vida_util_override=40 es dato legitimo del tasador y se conserva.",
+    "tipo_propiedad_nuevo_usado": "usada",
+    "numero_solicitud": "AGH -1548",
+    "tipo_informe": [
+     "recreojxTjoAWOEHa"
+    ],
+    "comuna": [
+     "recIHTj4e6vkH977o"
+    ],
+    "direccion": "Coronel Souper N° 4060, Departamento: N°2502 B, Edificio Mirador Souper",
+    "regla_aplicada": [
+     "rec2QYP8yjMW1Smsm"
+    ],
+    "ultima_modificacion": "2026-10-05T20:24:55.000Z",
+    "fecha_visita_programada": "2026-05-12",
+    "fuera_rango": 0,
+    "ejecutivo_solicitante": "GERALDINE QUIVAQUI",
+    "codigo_ext": "VP-2026-0074",
+    "semaforo_sla": "VENCIDO",
+    "TX_Calculos": [
+     "recBqQdiK9XSIugML",
+     "recYcs7u3fFCND7fF",
+     "recWrR529qYlo42mO",
+     "rec7PxhqF4FIfnrJW",
+     "recsxw6WmzY7voYTr",
+     "rec6giuDNqwKJOZq5",
+     "recKQbkh0lKt4fpEF",
+     "recF9vfRxv8NmsW04",
+     "rece58t4MorxuLZCW",
+     "recZPQKzvQMXcXD77",
+     "recIqebuAxQelzirB",
+     "recKV7T4WAA5zBQRZ",
+     "recnlBVxHhAOLBDG3",
+     "recCXk4dh1taEwIB3",
+     "recxox6kmuWEL7d1v",
+     "rec0gJ3zxTnnzJnT8",
+     "recH9Dmg8KqtrPUTP"
+    ],
+    "dias_desde_solicitud": 150,
+    "n_operacion_cliente": 1548,
+    "proyecto_condominio": "EDIFICIO MIRADOR SOUPER",
+    "valor_seguro_override": 1394,
+    "visador": [
+     "recrjQDympldI186S"
+    ],
+    "solicitud_id": 74,
+    "tasador": [
+     "recTJcV3BIvdcG4em"
+    ],
+    "TX_DatosTasacion": [
+     "recH7CKbksOfNu0OZ"
+    ],
+    "fecha_limite_entrega": "2026-05-14T00:00:00.000Z",
+    "fecha_creacion": "2026-10-05T17:36:19.000Z",
+    "TX_HabitacionesPorNivel": [
+     "recJcDFi52WLdjAna",
+     "recmwBNx3IJXlTN8H",
+     "recgeskQD8nujaLTH",
+     "recKOnKOVsrJRCNwC",
+     "recJdqVmOtP1z8QKp"
+    ],
+    "dias_desde_visita": 146,
+    "fecha_visita": "2026-05-12",
+    "TX_DocumentosLegales": [
+     "recRekMg1gE4mshln"
+    ],
+    "cliente": [
+     "recX80z73mCtC4BBo"
+    ],
+    "fecha_solicitud": "2026-05-08T12:00:00.000Z",
+    "vida_util_override": 40,
+    "cliente_final_rut": "7.774.862-8",
+    "record_id": "recconVQfAc8LSGJf",
+    "region": "Metropolitana de Santiago",
+    "notas": "CASO2-AGH-1548 · T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 · SANDBOX espejo vía motor AT03 (solo entradas sembradas) aislado por notas+numero_solicitud",
+    "rol_sii": "694-416"
+   }
+  },
+  "adjuntos_ids_previos": [
+   "recrxbyP3mFmmVw72",
+   "recYGPyuVGwn5LgEq",
+   "recZhCPqlNnBBDP1D",
+   "recvU4qRZSkeDsYaQ",
+   "recMQVPn9UzqLwkQB",
+   "recuQgimARRFuBz1M",
+   "recBlbCp09pp1fx7T",
+   "recwQpNSp2zN7FIlk",
+   "recDidNL79COftWwj",
+   "recpmBjXvfzOSRXk9",
+   "rec6v0IriP0uHdVWr",
+   "recGbpsRoUTT4NEBp",
+   "recyOrIbLrm6Cki00",
+   "recZVeESu7JFVzUrY",
+   "recZXXR7Kb8wt0YhZ",
+   "recanMzALq3LQuhhR"
+  ],
+  "docgen_ids_previos": [],
+  "estado_previo": "calculada",
+  "pdf_final_url_previo": null
+ },
+ "caso3": {
+  "record_id": "recE1LwwH2xbcCHti",
+  "solicitud": {
+   "id": "recE1LwwH2xbcCHti",
+   "createdTime": "2026-10-05T18:05:11.000Z",
+   "fields": {
+    "TX_Adjuntos": [
+     "recrkGPJE85WUT68D",
+     "recnfzPvSpeliVNHv",
+     "recrYDDG8aLFhnsdu",
+     "recFL1hSlOQTRtcd0",
+     "recXdxGqn3JIKL55K",
+     "recMjL7YiPyKXmRxo",
+     "rec774cSAfUDqEZmn",
+     "recQ9Lf8v4Fqh01QM",
+     "rec4jAypMDEyCBnc9",
+     "recRjUy7YcDN0usiv",
+     "rec3V0vZwOl6hNiZf",
+     "recFV3vdAoIukJDyx",
+     "recN3UPHsl44XpBae",
+     "reccXilm4dEKvgX6j",
+     "recY6RToNA6YiMt1E",
+     "rectStUOwjNuffnBm"
+    ],
+    "estado": "calculada",
+    "A_DecisionesMotor": [
+     "recJaGfPA09FLl1DL"
+    ],
+    "tipo_propiedad": [
+     "recf9hz8TbkQ6wsus"
+    ],
+    "cliente_final_nombre": "Miguenson Rameau",
+    "lookup_rango_max": [
+     60
+    ],
+    "override_autor": "T-TASADOR-FIX-MOTOR-REPOSICION-SEGURO-20261005 (carril C3)",
+    "sla_semaforo_etapa": "sin_dato",
+    "A_Eventos": [
+     "reccwc6fY0YonvWOW",
+     "recCtTbUIQOs2TaMC"
+    ],
+    "codigo_solicitud": "VP-2026-0075",
+    "TX_ItemsCuadroValoracion": [
+     "recqd8VSrrm9ZaVfY"
+    ],
+    "TX_Comparables": [
+     "recfOt8TPcQu1fMG4",
+     "recf7H6rfsQ4IBTl7",
+     "recaojQfIfdvbgj0O",
+     "recMD8w6wIPMC1JuC",
+     "rec8KVlwKrgXstI26"
+    ],
+    "override_motivo": "SANDBOX G-7 · T-TASADOR-FIX-MOTOR-REPOSICION-SEGURO-20261005 (carril C3): el maestro ALH en M_Clientes trae factor_seguro=0.8 pero el oraculo (caspana 310 dp14 XLSM) exige fs efectivo 1.0 (whitelist BO). M_Clientes es intocable en esta tanda y TX_Solicitudes no tiene factor_seguro_override, asi que se suple el resultado oraculo via valor_seguro_override=1024. Retirar cuando Hector sanee G-7 en M_Clientes. La reposicion ya NO lleva override: la calcula la formula nueva G-1 (rama x0.8 sin terreno).",
+    "tipo_propiedad_nuevo_usado": "usada",
+    "numero_solicitud": "ALH -335",
+    "tipo_informe": [
+     "recreojxTjoAWOEHa"
+    ],
+    "comuna": [
+     "rec4JGrdbOOTWpZ3L"
+    ],
+    "direccion": "Calle Caspana N°310, Departamento: N° 14, Block A, Población Valle de la Luna",
+    "regla_aplicada": [
+     "rec2QYP8yjMW1Smsm"
+    ],
+    "ultima_modificacion": "2026-10-05T20:29:18.000Z",
+    "fecha_visita_programada": "2026-05-07",
+    "fuera_rango": 0,
+    "ejecutivo_solicitante": "Vicente Sepúlveda",
+    "codigo_ext": "VP-2026-0075",
+    "semaforo_sla": "VENCIDO",
+    "TX_Calculos": [
+     "recB72rxfxEsqJefI",
+     "recbM3I7yKR3ewLIE",
+     "recVd3VsiKKsH6MNG",
+     "rec0kB8h1xPpbk8O5",
+     "recV4LLG6pR3r88uR",
+     "rec4I8elDxDiFgOmw",
+     "recUz2ywnudKbetts",
+     "recpb4rCU0gy36ZL2",
+     "rec8FV0LE6ZHIu9uM",
+     "recFLRznJh1TFOa8d",
+     "recz8zrjBj8lCDvai",
+     "recGKi3kBIXEOqIln",
+     "recsK5ynzc7o5ntGT",
+     "recKiru7WhajbTFQh",
+     "recInDm4dhD27IkE2",
+     "recPTCNTo9aw8KzTB",
+     "recjVahi0P1MnwGz0"
+    ],
+    "dias_desde_solicitud": 152,
+    "n_operacion_cliente": 335,
+    "proyecto_condominio": "Valle de la Luna",
+    "valor_seguro_override": 1024,
+    "visador": [
+     "recrjQDympldI186S"
+    ],
+    "solicitud_id": 75,
+    "tasador": [
+     "recTJcV3BIvdcG4em"
+    ],
+    "TX_DatosTasacion": [
+     "recC2Y04YnPLnzznD"
+    ],
+    "fecha_limite_entrega": "2026-05-09T00:00:00.000Z",
+    "fecha_creacion": "2026-10-05T18:05:11.000Z",
+    "TX_HabitacionesPorNivel": [
+     "recmyPZIG3gsur56P",
+     "reczAcDaSodvPONHC",
+     "reco5fibWH2acLw8h",
+     "recX31Eb5hOiySgmt",
+     "rec0xm6CH3Ka0x314"
+    ],
+    "dias_desde_visita": 151,
+    "fecha_visita": "2026-05-07",
+    "TX_DocumentosLegales": [
+     "recdD5VI2edYcRZUB"
+    ],
+    "cliente": [
+     "recU6gfHmmCWZN5Mm"
+    ],
+    "fecha_solicitud": "2026-05-06T12:00:00.000Z",
+    "vida_util_override": 40,
+    "cliente_final_rut": "9.588.043-6",
+    "record_id": "recE1LwwH2xbcCHti",
+    "region": "Metropolitana de Santiago",
+    "notas": "CASO3-ALH-335 · T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 · SANDBOX espejo vía motor AT03 (solo entradas sembradas) aislado por notas+numero_solicitud",
+    "rol_sii": "658-128"
+   }
+  },
+  "adjuntos_ids_previos": [
+   "recrkGPJE85WUT68D",
+   "recnfzPvSpeliVNHv",
+   "recrYDDG8aLFhnsdu",
+   "recFL1hSlOQTRtcd0",
+   "recXdxGqn3JIKL55K",
+   "recMjL7YiPyKXmRxo",
+   "rec774cSAfUDqEZmn",
+   "recQ9Lf8v4Fqh01QM",
+   "rec4jAypMDEyCBnc9",
+   "recRjUy7YcDN0usiv",
+   "rec3V0vZwOl6hNiZf",
+   "recFV3vdAoIukJDyx",
+   "recN3UPHsl44XpBae",
+   "reccXilm4dEKvgX6j",
+   "recY6RToNA6YiMt1E",
+   "rectStUOwjNuffnBm"
+  ],
+  "docgen_ids_previos": [],
+  "estado_previo": "calculada",
+  "pdf_final_url_previo": null
+ },
+ "caso4": {
+  "record_id": "rectnGOaHvEioXZw3",
+  "solicitud": {
+   "id": "rectnGOaHvEioXZw3",
+   "createdTime": "2026-10-05T18:05:31.000Z",
+   "fields": {
+    "tasa_cap_rate_override": 0.055,
+    "TX_Adjuntos": [
+     "rec137stZXF2HbNev",
+     "recuDIAUreBu4fYTh",
+     "recI2CNI9PFjoIYoN",
+     "recI9iEmF4PZHyPfS",
+     "recroZpTbKq23bjdL",
+     "recNP67s2YSLzRGDN",
+     "rectYAQgUbWcpF1t5",
+     "recDbBVSbO6M57ms7",
+     "recIPHNxVVNld4e0X",
+     "rec4blXptystG3AJ6",
+     "recGpuUA3UWn0vAx4",
+     "recWh6QoAzijkx19b",
+     "recbjkcembwDDhQSV",
+     "recEBc3pxTmWQmy1i",
+     "recjjAkuE7MedUrSx",
+     "recragnj1Jw9smgdT"
+    ],
+    "estado": "calculada",
+    "A_DecisionesMotor": [
+     "rec8mZ0H0oXaQ96Ly"
+    ],
+    "tipo_propiedad": [
+     "recf9hz8TbkQ6wsus"
+    ],
+    "cliente_final_nombre": "PATRICIO ADRIAN TORO NIEVAS",
+    "lookup_rango_max": [
+     80
+    ],
+    "override_autor": "T-TASADOR-FIX-MOTOR-REPOSICION-SEGURO-20261005 (carril C4)",
+    "sla_semaforo_etapa": "sin_dato",
+    "A_Eventos": [
+     "recFHH2Ja3Md80ztx",
+     "recRh38P3KaVCsDGQ"
+    ],
+    "codigo_solicitud": "VP-2026-0076",
+    "TX_ItemsCuadroValoracion": [
+     "recrlMFNfluJoSpqO",
+     "recOEgX2SXaK5EHUt"
+    ],
+    "TX_Comparables": [
+     "recopTkIXJYQQ7OnK",
+     "recaVmLebJGjSnvHg",
+     "recZwqiqsZlCuv4tZ",
+     "recQumofQ02aLJEuj",
+     "recxwRYT4bneXaQM1",
+     "rec2THYULAY6012Hf"
+    ],
+    "override_motivo": "NRB-01 (Motor v2.7): tasa exigida Las Rejas 5,5% en lugar del 4,5% default del cliente (Portada BJ41=0.055) — override legítimo especificado. SANDBOX T-TASADOR-FIX-MOTOR-REPOSICION-SEGURO-20261005: valor_reposicion_override VACIADO — fix G-1 en F_ValorReposicionUF aplica el x0,8 sin terreno (debe dar 902,88 solo). valor_seguro_override=857.736 se CONSERVA por gap de DATO (sandbox-G-7/RB-53): el maestro linkeado recVTKsZLNSDNInky trae factor_seguro=0.825 (errata RB-53; el duplicado recXVtuMT2wjIVzz2 trae 0.8 correcto) y la formula nueva G-2 daria 1072,17x0,825=884,54 ≠ oraculo 857,736 (=1072,17x0,8, XLSM DB51=0.8). Gap de dato, no de formula — retirar override cuando se sanee M_Clientes con Hector.",
+    "tipo_propiedad_nuevo_usado": "usada",
+    "numero_solicitud": "HIPOTECARIA SECURITY -6073",
+    "tipo_informe": [
+     "recreojxTjoAWOEHa"
+    ],
+    "comuna": [
+     "recIHTj4e6vkH977o"
+    ],
+    "direccion": "AV. MARIA ROZAS VELASQUEZ Nº 65, Departamento: Nº 211 P, Edificio ALAMEDA URBANO - TORRE PONIENTE",
+    "regla_aplicada": [
+     "rec2QYP8yjMW1Smsm"
+    ],
+    "ultima_modificacion": "2026-10-05T20:30:35.000Z",
+    "fecha_visita_programada": "2026-03-13",
+    "fuera_rango": 0,
+    "ejecutivo_solicitante": "GENESIS ZUÑIGA TRONCOSO",
+    "codigo_ext": "VP-2026-0076",
+    "semaforo_sla": "VENCIDO",
+    "TX_Calculos": [
+     "recWx0mFHLApHw1mI",
+     "rec07cwSp8ZAQYRux",
+     "recREAXyAGw8jOXgS",
+     "rec9eiEpnPo3nZNGB",
+     "recrnh1kiEuqvDQRc",
+     "recFSZDnpnvGWUtGc",
+     "recsrc8xNq3wzYima",
+     "rec6WL1LxyDSogMC6",
+     "recqEb39z0glPvE0Y",
+     "recXAOFASNiCsfpgw",
+     "recJOMBNIsFEpAaoE",
+     "recowMh0Na8iIWjh5",
+     "rec82sN0EhNDolZjb",
+     "recmF1TaQsdG40rRJ",
+     "recDG45sVr36SAQw2",
+     "recGsvStNyztnPzLq",
+     "recrPsFmXj2smFRvA"
+    ],
+    "dias_desde_solicitud": 208,
+    "n_operacion_cliente": 133251,
+    "proyecto_condominio": "ALAMEDA URBANO - TORRE PONIENTE",
+    "valor_seguro_override": 857.736,
+    "visador": [
+     "recrjQDympldI186S"
+    ],
+    "solicitud_id": 76,
+    "tasador": [
+     "recTJcV3BIvdcG4em"
+    ],
+    "TX_DatosTasacion": [
+     "recBudYOKVXICjewg"
+    ],
+    "fecha_limite_entrega": "2026-03-15T00:00:00.000Z",
+    "fecha_creacion": "2026-10-05T18:05:31.000Z",
+    "TX_HabitacionesPorNivel": [
+     "recQ5HivbDuMhCpdK",
+     "rec39CJfzoHdCkut5",
+     "rectwKLW68KevUOAW",
+     "recDU6pfYdo8AzWh8",
+     "recPUC4a0FrasqVw3",
+     "recJeHSoBZyjEnexG"
+    ],
+    "dias_desde_visita": 206,
+    "fecha_visita": "2026-03-13",
+    "TX_DocumentosLegales": [
+     "recLgZ8sPhZgIqAT8"
+    ],
+    "cliente": [
+     "recVTKsZLNSDNInky"
+    ],
+    "fecha_solicitud": "2026-03-11T12:00:00.000Z",
+    "vida_util_override": 65,
+    "cliente_final_rut": "13.918.055-0",
+    "record_id": "rectnGOaHvEioXZw3",
+    "region": "Metropolitana de Santiago",
+    "notas": "CASO4-HIPOTECARIA-SECURITY-6073 · T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 · SANDBOX espejo vía motor AT03 (solo entradas sembradas) aislado por notas+numero_solicitud",
+    "rol_sii": "7038-11"
+   }
+  },
+  "adjuntos_ids_previos": [
+   "rec137stZXF2HbNev",
+   "recuDIAUreBu4fYTh",
+   "recI2CNI9PFjoIYoN",
+   "recI9iEmF4PZHyPfS",
+   "recroZpTbKq23bjdL",
+   "recNP67s2YSLzRGDN",
+   "rectYAQgUbWcpF1t5",
+   "recDbBVSbO6M57ms7",
+   "recIPHNxVVNld4e0X",
+   "rec4blXptystG3AJ6",
+   "recGpuUA3UWn0vAx4",
+   "recWh6QoAzijkx19b",
+   "recbjkcembwDDhQSV",
+   "recEBc3pxTmWQmy1i",
+   "recjjAkuE7MedUrSx",
+   "recragnj1Jw9smgdT"
+  ],
+  "docgen_ids_previos": [],
+  "estado_previo": "calculada",
+  "pdf_final_url_previo": null
+ },
+ "caso5": {
+  "record_id": "recoZcwmgCBVKQMxF",
+  "solicitud": {
+   "id": "recoZcwmgCBVKQMxF",
+   "createdTime": "2026-10-05T18:13:18.000Z",
+   "fields": {
+    "TX_Adjuntos": [
+     "recqpYHN4I9YDLN2m",
+     "recJB0y5RyyYfbTdB",
+     "recFCqO5qdyzGSJ9V",
+     "rec04L2RESMVDEnOj",
+     "recNKIUnzeuwC6iNx",
+     "recsUN9piT6ayyxcA",
+     "recHW2C0yp86mZ8ts",
+     "recaU4zSMhnmVDfxQ",
+     "rechzApPer58BvTiu",
+     "rec4Z5ljpMT0IhJjc",
+     "reczosCiMgzY8raax",
+     "rec9a9se0xCVAmnpK",
+     "recXfPUjW6ti4GJeD",
+     "recdCaaih23YbI1ES",
+     "recU1qj00Jl7bZKc7",
+     "recSMag91fnInWvm7"
+    ],
+    "estado": "calculada",
+    "A_DecisionesMotor": [
+     "rec0QoGJoSXBiIGzJ"
+    ],
+    "tipo_propiedad": [
+     "recf9hz8TbkQ6wsus"
+    ],
+    "cliente_final_nombre": "Carlos Andrés Cortes Pérez",
+    "lookup_rango_max": [
+     95
+    ],
+    "override_autor": "T-TASADOR-FIX-MOTOR-REPOSICION-SEGURO-20261005 (carril C5)",
+    "sla_semaforo_etapa": "sin_dato",
+    "A_Eventos": [
+     "recJgCWBaV6hgnUmk",
+     "rec6vTwjgxtb7RhJp"
+    ],
+    "codigo_solicitud": "VP-2026-0077",
+    "TX_ItemsCuadroValoracion": [
+     "recz3t68XQE0ie7SB",
+     "reckTtSDPlD7jDn5j",
+     "recn1dqHr7kX5K2VL"
+    ],
+    "TX_Comparables": [
+     "recmLHBjDsTZwDyrs",
+     "reczSxTwx1tf3sd9b",
+     "recCHvme0YS9R972G",
+     "recmtsaik6S6hExxF",
+     "rectOfF6eTsx27HIV",
+     "recsxzLoKLJ7Puzay"
+    ],
+    "override_motivo": "SANDBOX T-FIX-MOTOR-20261005 Caso 5 (HEV-3183): retirados valor_reposicion_override y valor_seguro_override para ejercitar las formulas corregidas de C_Formulas (G-1 reposicion x0.8 sin terreno; G-2 seguro = base x factor_seguro). factor_seguro del maestro Evoluciona = 0.8, coincide con el oraculo — no se requiere override de seguro. Se conserva vida_util_override=70 (dato del tasador, XLSM BJ37).",
+    "tipo_propiedad_nuevo_usado": "nueva",
+    "numero_solicitud": "HEV -3183",
+    "tipo_informe": [
+     "recreojxTjoAWOEHa"
+    ],
+    "comuna": [
+     "recXZKLIe9RedfCQ0"
+    ],
+    "direccion": "Exequiel Fernandez Nº 6150, Departamento: Nº 411, Torre 3, Edificio Exequiel Fernandez",
+    "regla_aplicada": [
+     "rec2QYP8yjMW1Smsm"
+    ],
+    "ultima_modificacion": "2026-10-05T20:30:29.000Z",
+    "fecha_visita_programada": "2026-05-12",
+    "fuera_rango": 0,
+    "ejecutivo_solicitante": "Felipe Ramírez Silva",
+    "codigo_ext": "VP-2026-0077",
+    "semaforo_sla": "VENCIDO",
+    "TX_Calculos": [
+     "recNWtqZ6L753d51T",
+     "recjaodmLP5aHyEyR",
+     "recndBKYMJjoVmjAO",
+     "rec0gwxiaiVPBtov0",
+     "rec6jSJmJkSNDeNiA",
+     "rec4WXQ4RUA6MZEBc",
+     "recdtmjEo4sx1ZPqr",
+     "reccH3LuvDuxtRGFe",
+     "recrgcacKNj55u1Zv",
+     "recljn1oh07GBIr4O",
+     "reclk1E52ahkSYTpg",
+     "reccSYS3vG5HYVRbX",
+     "recEpgCKPHfVrnawj",
+     "recKSuR19CBSd9vgs",
+     "recLVmpYgmmND14PU",
+     "recYnyCTW4SpHplD5",
+     "recdcFKSvJrk6F6S9"
+    ],
+    "dias_desde_solicitud": 146,
+    "n_operacion_cliente": 25678,
+    "proyecto_condominio": "Exequiel Fernandez",
+    "visador": [
+     "recrjQDympldI186S"
+    ],
+    "solicitud_id": 77,
+    "tasador": [
+     "recTJcV3BIvdcG4em"
+    ],
+    "TX_DatosTasacion": [
+     "recQaqsQEtCkizgnb"
+    ],
+    "fecha_limite_entrega": "2026-05-14T00:00:00.000Z",
+    "fecha_creacion": "2026-10-05T18:13:18.000Z",
+    "TX_HabitacionesPorNivel": [
+     "rechT5mfSPRHsmRKj",
+     "rechovTebzobs12b5",
+     "recXvenJKTjO4ulZD",
+     "recMSZk73V1v6uevJ",
+     "recVnDiJ2yNzN3RcN",
+     "recLg1PBvIoxQL8eA"
+    ],
+    "dias_desde_visita": 146,
+    "fecha_visita": "2026-05-12",
+    "TX_DocumentosLegales": [
+     "recEmWhcmDG6Y6M2H"
+    ],
+    "cliente": [
+     "recPDwixzybwHlJaQ"
+    ],
+    "fecha_solicitud": "2026-05-12T12:00:00.000Z",
+    "vida_util_override": 70,
+    "cliente_final_rut": "0",
+    "record_id": "recoZcwmgCBVKQMxF",
+    "region": "Metropolitana de Santiago",
+    "notas": "CASO5-HEV-3183 · T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005 · SANDBOX espejo vía motor AT03 (solo entradas sembradas) aislado por notas+numero_solicitud",
+    "rol_sii": "31-516"
+   }
+  },
+  "adjuntos_ids_previos": [
+   "recqpYHN4I9YDLN2m",
+   "recJB0y5RyyYfbTdB",
+   "recFCqO5qdyzGSJ9V",
+   "rec04L2RESMVDEnOj",
+   "recNKIUnzeuwC6iNx",
+   "recsUN9piT6ayyxcA",
+   "recHW2C0yp86mZ8ts",
+   "recaU4zSMhnmVDfxQ",
+   "rechzApPer58BvTiu",
+   "rec4Z5ljpMT0IhJjc",
+   "reczosCiMgzY8raax",
+   "rec9a9se0xCVAmnpK",
+   "recXfPUjW6ti4GJeD",
+   "recdCaaih23YbI1ES",
+   "recU1qj00Jl7bZKc7",
+   "recSMag91fnInWvm7"
+  ],
+  "docgen_ids_previos": [],
+  "estado_previo": "calculada",
+  "pdf_final_url_previo": null
+ }
+}

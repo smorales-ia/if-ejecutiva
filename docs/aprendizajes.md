@@ -3533,3 +3533,38 @@ base del Historial de Airtable.
 **Solución aplicada:** no aplanar: MetLife quedó [CONDICIONAL] en mapeo.md y la decisión de modelado (excepción Casa en F_SeguroIncendioUF vs escalar con divergencia aceptada) quedó explícita en el CIERRE §4.2.
 **Prevención futura:** antes de poblar un campo escalar desde una fórmula de un libro, leer la fórmula completa (data_only=False) y clasificar si el valor es constante, parámetro o CONDICIONAL; los valores "validados" por informes reales heredan las condiciones del caso que los validó.
 **Hallazgo colateral (refuerza RB-53):** los 37 records con fs=0,825 no pueden salir del formato (que solo produce 0,8/1,0) — semilla errónea confirmada; y el template no define un factor_garantia separado del de seguro (terminal único BO51), lo que cuestiona el fg=0,8 uniforme de 77 records.
+
+### 2026-10-05 — T-TASADOR-E2E-5CASOS-PROD-TEST: 6 vistas por caso y el gap era solo V2/V6
+**Contexto:** dejar los 5 casos sandbox (VP-2026-0073…0077) listos para probar en producción con las 6 vistas del tasador, espejo de sus PDFs oráculo.
+
+**Inconveniente 1 — las vistas "faltantes" eran un gap de datos, no de código.** La réplica había validado motor y PDF pero /lectura (V2) rendía vacía y "Descargar PDF" (V6) caía a window.print() en los 5 casos.
+**Causa raíz:** la réplica nunca sembró adjuntos `subido_por=Sistema` (documentos fuente con `atributos_obtenidos`) ni existía `pdf_final_url` (E3 inactivo desde el 30-sep). Las vistas consumen contrato de datos puro: V2 = TX_Adjuntos Sistema con JSON de atributos; V6 = un campo de TX_Solicitudes.
+**Solución aplicada:** 8 filas Sistema por caso clonando el patrón exacto de VP-0067 (`atributos_esperados` verbatim; `atributos_obtenidos` construidos desde TX_DatosTasacion/TX_Comparables del propio caso, ya auditados espejo — cero invención), vía `seed-sistema-caso.py` (piloto caso 1 → GATE → fan-out 2–5 en 4 carriles). 5/5 aprobados por auditores ciegos.
+**Prevención futura:** antes de atribuir una vista vacía a falta de features, mapear su contrato de datos archivo:línea y comparar contra un caso que sí funcione (VP-0067 como golden record); la diferencia suele ser una tabla sin filas.
+
+**Inconveniente 2 — no disparar E2 con E3 caído.** La tentación era disparar E2 (que está ACTIVO y responde 200) para "avanzar" V6.
+**Causa raíz:** E2 200 solo significa webhook encolado; con E3 `isActive=false` el render de Carbone se consume/expira y la cola del hook de E3 acumula payloads que, al reactivar sin fix, repiten el 409 del share-link que tumbó E3 originalmente.
+**Solución aplicada:** V6 quedó como pieza bloqueada con causa única y dos artefactos listos: el fix manual preexistente (`fix-e3-apply.sh`, lo corre Sergio) y `disparar-e2-5casos.test.mts` (idempotente: omite casos con pdf_final_url ya poblado).
+**Prevención futura:** antes de disparar una cadena asíncrona, verificar `isActive` de TODOS los eslabones aguas abajo vía Make API (GET es seguro); un eslabón caído convierte el disparo en deuda.
+
+**Inconveniente 3 — misceláneas de API que costaron minutos.** (a) Make API devuelve 403 "error code: 1010" al urllib de Python (Cloudflare filtra el user-agent): usar curl con `User-Agent: Mozilla/5.0`. (b) TX_Calculos usa `variable_output`/`resultado` (no `formula_codigo`/`valor_calculado` — ese es otro juego de columnas): una regresión con el campo equivocado da 0/15 "MISS" falsos. (c) El reverse-link `TX_Calculos` puede no aparecer en la proyección del record padre aunque las filas existan — verificar por filtro en la tabla hija (`{solicitud_codigo}='VP-…'`), no por el array del padre.
+
+### 2026-10-05 — T-5CASOS-PDF-GOLIVE: reactivación de E3 y los 3 desvíos del "solo correr dos comandos"
+**Contexto:** encender la vista 6 (Descargar PDF) en los 5 casos sandbox ejecutando el fix de E3 y el disparador ya preparados.
+
+**Inconveniente 1 — `.env.local` rompía cualquier script con `set -e`.** `fix-e3-apply.sh` moría con "completar: command not found".
+**Causa raíz:** la línea `MAKE_WEBHOOK_E4=# completar cuando exista` no es un comentario: bash asigna `#` y ejecuta "completar" como comando. Los `source` tolerantes de sesiones previas lo ocultaban; `set -euo pipefail` lo volvió fatal.
+**Solución aplicada:** comentar la línea 23 completa en `.env.local`.
+**Prevención futura:** en `.env.local` los placeholders van comentados con `#` AL INICIO de línea; nunca `VAR=# texto`.
+
+**Inconveniente 2 — la cola del hook de E3 tenía 8 incomings stale, no 1.** El empaquetado del fix asumía un solo duplicado VP-0067 encolado.
+**Causa raíz:** cada disparo de E2 de las tandas previas (réplica, caso 1) posteó su renderId al hook de E3 mientras E3 estaba apagada; los renders de Carbone expiran, así que la cola solo contenía basura procesable con `overwrite:true` sobre PDFs buenos.
+**Solución aplicada:** purga documentada de los 8 incomings (ids en evidencia, DELETE 200, queueCount 8→0) ANTES de reactivar; los 5 casos re-emitieron render fresco minutos después.
+**Prevención futura:** antes de reactivar un escenario Make con webhook, listar y clasificar su cola (`GET /hooks/{id}/incomings`); drenar en frío lo stale es parte de la reactivación, no un extra.
+
+**Inconveniente 3 — Node fallaba intermitente contra api.airtable.com donde curl nunca falló.** El disparador (vitest) daba ETIMEDOUT/ENETUNREACH a los ~2 s.
+**Causa raíz:** happy-eyeballs de Node 20 en WSL: IPv6 local inalcanzable (ENETUNREACH inmediato) y ventana de 250 ms por intento IPv4, menor que el connect real (~2 s en esta red).
+**Solución aplicada:** `NODE_OPTIONS="--dns-result-order=ipv4first --no-network-family-autoselection"` para la sesión; 5/5 passed estable.
+**Prevención futura:** si un harness Node da `fetch failed` y curl/python conectan, es la autoselección de familia — aplicar esas flags antes de dudar de la cadena.
+
+**Hallazgo (no inconveniente de esta tanda):** el auditor ciego elevó G-4 (PDF imprime Propietario=solicitante; `ensamblador.ts:587`) a FAIL estricto en C3/C4/C5. Preexistente, dato correcto en Airtable, fix en la tanda de plantilla + re-render de esos 3 con el mismo disparador.
