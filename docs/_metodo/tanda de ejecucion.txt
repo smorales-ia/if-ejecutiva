@@ -1,0 +1,100 @@
+Arrancamos TANDA <ID> — FASE 2: EJECUCIÓN.
+
+Contexto:
+- Plan aprobado por Sergio: docs/_planes/PLAN_<tanda-id>.md
+- Rama plan: `plan/<tanda-id>` (merged o referencia).
+- Estado anterior: <ruta al cierre de FASE 1>
+- Repo: C:\Users\Sergio\Documents\GitHub\if-ejecutiva
+
+Autorización para esta FASE 2:
+- Se autoriza EJECUTAR todo lo listado en § 5 del plan aprobado.
+- Se autoriza APLICAR patches Airtable, poblar sandbox, disparar automations, levantar
+  dev server, tomar screenshots.
+- Se autoriza REVERTIR automáticamente un paso si su test falla (rollback § 9 del plan).
+- NO se autoriza salir del alcance § 2 del plan.
+- NO se autoriza commit/push (lo hace Sergio).
+
+Objetivo:
+Como EQUIPO DE EXPERTOS, ejecutar el plan end-to-end con MÁXIMO PARALELISMO, y entregar el
+resultado PROBADO — no solo escrito. Criterio HECHO = todos los tests en § 6 pasan +
+auditor ciego valida.
+
+Trabajo a ejecutar:
+
+BLOQUE 0 — Snapshot de estado real (secuencial, antes de tocar nada):
+  Verificar rama activa, estado de Airtable (schemas, records objetivo), versión del DAG en
+  Automation. Si el estado real difiere del plan, DETENER y reportar. No confiar en el
+  plan sin verificar.
+
+BLOQUE 1 — EJECUCIÓN PARALELA (lanzar todos los agentes con run_in_background=true según
+§ 5 del plan; cada uno con autorización específica):
+
+  AGENTE A — Ejecutor Airtable: aplica patches / crea records / actualiza fields según su
+  sub-lista del plan.
+
+  AGENTE B — Ejecutor código/repo: crea rama `feat/<tanda-id>`, edita archivos frontend/
+  backend según el plan.
+
+  AGENTE C — Ejecutor sandbox/datos: puebla cuadros, retira overrides, prepara fixtures.
+
+  (Añadir agentes adicionales si el plan los define.)
+
+  Cada agente debe reportar: archivos tocados, records afectados, errores encontrados.
+  Un fallo en un agente NO aborta a los otros — solo marca su sub-bloque como bloqueado.
+
+BLOQUE 2 — TESTS OBLIGATORIOS (secuencial tras BLOQUE 1, sin excepción):
+  - Unit tests: correr `pnpm test` o equivalente. Adjuntar output.
+  - Integración: disparar automation / endpoint según plan, esperar tiempo definido, leer
+    resultado.
+  - Regresión contra oráculo: comparar 100% de los valores de la tabla § 4 del plan con
+    tolerancia definida. Producir tabla Valor / Esperado / Obtenido / Delta / OK-FAIL.
+  - Smoke UI: levantar dev server Next.js, usar built-in browser para navegar la ruta
+    objetivo, tomar screenshot, guardarlo en docs/_evidencia/<tanda-id>/.
+
+BLOQUE 3 — AUDITOR CIEGO (agente independiente, general-purpose):
+  Prompt: "NO leer los logs de los agentes A/B/C. Verificar SOLO desde el estado final:
+  Airtable, archivos en repo, screenshot UI. Confirmar contra los criterios § 6 del plan.
+  Reportar OK / FAIL por cada criterio con evidencia."
+
+BLOQUE 4 — ROLLBACK CONDICIONAL:
+  Por cada test/criterio en FAIL: aplicar rollback § 9 del plan para esa pieza específica.
+  Documentar en el cierre qué quedó revertido y por qué.
+
+Entregables (crear en rama `feat/<tanda-id>`, sin adendas — nueva versión de cada archivo
+modificado):
+
+  - Todos los archivos código/datos según el plan.
+  - `docs/_evidencia/<tanda-id>/regresion.md` — tabla completa Esperado/Obtenido/Delta/OK.
+  - `docs/_evidencia/<tanda-id>/ui.png` — screenshot UI (o nota de bloqueo).
+  - `docs/_evidencia/<tanda-id>/tests-output.txt` — output crudo de unit + integración.
+  - `docs/_evidencia/<tanda-id>/auditor.md` — reporte del auditor ciego.
+  - `docs/_analisis/CIERRE_<tanda-id>.md` con:
+    § 1: Resumen ejecutivo.
+    § 2: Bloques ejecutados / paralelismo real logrado.
+    § 3: Tests: X/Y OK.
+    § 4: Auditor ciego: OK / FAIL con detalle.
+    § 5: Rollbacks aplicados.
+    § 6: Piezas bloqueadas + causa raíz.
+    § 7: Checklist para la próxima tanda.
+
+Restricciones duras:
+- NO tocar nada fuera de § 2 del plan aprobado.
+- NO marcar HECHO ningún ítem sin evidencia en docs/_evidencia/.
+- NO omitir el auditor ciego, ni siquiera si todos los tests pasan.
+- NO commits ni pushes.
+- Ante fallo del snapshot BLOQUE 0: detener y reportar, no avanzar.
+
+CIERRE
+
+Sobreescribe C:\Users\Sergio\Documents\claude-out.txt con:
+- Rama feat creada.
+- Archivos creados/modificados (rutas + estado ?? / M).
+- Paralelismo: X agentes en paralelo, tiempo total vs. estimado secuencial.
+- Tests: unit X/Y, integración X/Y, regresión X/Y, UI OK/pendiente.
+- Auditor ciego: OK / FAIL con conteo.
+- Rollbacks aplicados: lista.
+- Piezas bloqueadas: lista + causa.
+- Estado: TANDA <ID> cerrada / bloqueada en bloque N.
+
+Tráeme el cierre en un solo bloque markdown listo para copiar, sin spinners ni decoraciones
+de terminal.

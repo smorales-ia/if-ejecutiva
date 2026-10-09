@@ -1,0 +1,82 @@
+Arrancamos TANDA <ID> — FASE 1: PLANIFICACIÓN.
+
+Contexto (leer antes de tocar nada):
+- Repo: C:\Users\Sergio\Documents\GitHub\if-ejecutiva
+- Fuente de verdad: <ruta xlsm / doc / spec>
+- Estado anterior: <ruta al cierre de la tanda previa>
+- Plan maestro: C:\Users\Sergio\Documents\GitHub\if-ejecutiva\plan_ejecucion_UItasador_v1_3.md
+- Sandbox / entorno objetivo: <VP-XXXX / branch / base>
+
+Autorización para esta FASE 1:
+- Se autoriza LEER todo el repo, Airtable (schemas, records, automations), xlsm, docs.
+- Se autoriza CREAR una rama nueva `plan/<tanda-id>` SOLO para el documento de plan.
+- NO se autoriza modificar código, esquema, datos, automations ni sandbox.
+- NO se autoriza commit/push (lo hace Sergio).
+
+Objetivo:
+Como EQUIPO DE EXPERTOS EN PARALELO, producir un plan de ejecución consensuado, verificable y
+listo para OK Gate de Sergio. El plan debe ser tan completo que la FASE 2 pueda ejecutarse
+end-to-end sin decisiones humanas intermedias.
+
+Trabajo a ejecutar (LANZAR TODOS LOS AGENTES EN PARALELO con run_in_background=true):
+
+AGENTE 1 — Arquitecto de sistema (general-purpose):
+  Prompt: "Leer <archivos clave>. Producir diseño técnico: qué se toca, qué NO se toca,
+  contratos entre capas, orden de dependencias. Reportar en <300 palabras."
+
+AGENTE 2 — Auditor de fuente de verdad (general-purpose):
+  Prompt: "Leer xlsm/spec + código actual. Producir tabla oráculo con TODOS los valores
+  esperados y su celda/línea fuente. Detectar discrepancias entre spec y código. Reportar
+  en tabla markdown."
+
+AGENTE 3 — QA de regresión (general-purpose):
+  Prompt: "Diseñar la batería de tests: unit, integración, regresión contra oráculo,
+  smoke UI. Cada test: precondición / paso / criterio de éxito / tolerancia. Reportar
+  como checklist ejecutable."
+
+AGENTE 4 — Frontend Next.js (Explore + general-purpose):
+  Prompt: "Localizar rutas, componentes y hooks impactados en la UI del tasador. Listar
+  archivos a tocar y screenshots necesarios para validación visual. Reportar rutas
+  exactas."
+
+AGENTE 5 — Seguridad y hard rules (general-purpose):
+  Prompt: "Verificar contra ways-of-working.md: R5, R7, R12, T-C/R8, RO-05. Listar
+  riesgos y qué NO se puede tocar en esta tanda. Reportar en <200 palabras."
+
+Cuando los 5 agentes cierren, CONSOLIDAR sus salidas en un plan único. Si dos agentes se
+contradicen, marcar el punto como CONFLICTO y proponer resolución.
+
+Entregables (crear en rama `plan/<tanda-id>`, sin adendas):
+
+`docs/_planes/PLAN_<tanda-id>.md` con:
+  § 1: Resumen ejecutivo (5 líneas máx.).
+  § 2: Alcance — qué SÍ / qué NO se toca.
+  § 3: Diseño técnico consolidado (agente 1).
+  § 4: Tabla oráculo completa (agente 2).
+  § 5: Plan de ejecución paso a paso, con dependencias marcadas (qué puede correr en
+       paralelo en FASE 2, qué debe ser secuencial).
+  § 6: Batería de tests obligatoria (agente 3) — criterio HECHO = TODOS EN VERDE.
+  § 7: Archivos frontend a tocar + screenshots requeridos (agente 4).
+  § 8: Restricciones y riesgos (agente 5).
+  § 9: Criterios de rollback por paso.
+  § 10: Prompt sugerido para FASE 2 (bloque markdown listo para pegar).
+  § 11: Conflictos entre agentes y resolución propuesta (si los hay).
+  § 12: OK Gate — lista de preguntas concretas para Sergio antes de autorizar FASE 2.
+
+Restricciones duras:
+- NO ejecutar código, patches, ni MCP writes.
+- NO tocar sandbox ni automations.
+- Todo agente debe justificar cada aserto con ruta/línea/celda o marcarlo como INFERIDO.
+
+CIERRE
+
+Sobreescribe C:\Users\Sergio\Documents\claude-out.txt con:
+- Rama plan creada.
+- Ruta del PLAN_<tanda-id>.md.
+- Cantidad de pasos totales / cuántos paralelizables en FASE 2.
+- Cantidad de tests obligatorios.
+- Conflictos entre agentes: X.
+- Estado: FASE 1 lista para OK Gate.
+
+Tráeme el cierre en un solo bloque markdown listo para copiar, sin spinners ni decoraciones
+de terminal.

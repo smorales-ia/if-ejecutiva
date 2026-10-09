@@ -1,0 +1,122 @@
+Arrancamos TANDA T-VP0067-IMAGENES-UI-20260930 — hacer que las IMÁGENES del informe se VEAN en la UI del tasador y que la PLANTILLA del PDF se pueble con ellas DESDE EL MISMO ORIGEN, de forma GENÉRICA para CUALQUIER cliente. Fase 1 (plan) + Fase 2 (ejecución) en una sola tanda con GATE interno, ejecutada por un EQUIPO DE EXPERTOS con MÁXIMO PARALELISMO. Sergio ya autorizó ejecutar sobre VP-2026-0067 como espejo de MET-6283.
+
+SÍNTOMA CONFIRMADO (evidencia visual de Sergio)
+En la vista del informe del tasador — URL real: https://if-ejecutiva-production.up.railway.app/tasaciones/recmMzeu3eWGxyXsf/informe — la SECCIÓN 7 "REGISTRO FOTOGRÁFICO" muestra "0 fotografías" y sus 8 contadores por categoría están TODOS en 0: Ofertas/Comparables, Baños, Mapa de Ubicación, Cocina, Habitaciones, Estacionamientos, Fachada/Exterior, Living/Comedor. El RESTO del informe SÍ trae datos (REF. C.B.R. poblada, sección 8 "Observaciones y overrides" con Vida útil 70, fojas 13291/21565/2006, permiso, recepción). Conclusión del equipo: el informe está poblado de datos pero NO de imágenes; el fallo es específico del binding de imágenes hacia la UI (y hay que dejarlo consistente con el PDF y genérico por cliente).
+
+OBJETIVO FINAL
+Hoy el PDF de VP-2026-0067 ya muestra TODAS las imágenes (quedó espejo de MET-6283), pero la vista /informe del tasador NO muestra NINGUNA (el REGISTRO FOTOGRÁFICO cuenta 0). Dejar las 3 piezas correlacionadas leyendo de UN ÚNICO ORIGEN:
+  P1 (MOSTRAR) — La vista /informe debe MOSTRAR cada imagen en su lugar y el REGISTRO FOTOGRÁFICO debe CONTAR bien por categoría (los 8 casilleros con su número real), iguales a las del PDF.
+  P2 (INGRESAR) — Cada imagen debe poder INGRESARSE/asociarse en la UI DONDE CORRESPONDE (cada foto a su categoría/ranura), para que el tasador de cualquier cliente las aporte.
+  P3 (POBLAR PLANTILLA) — La plantilla Carbone debe poblarse con esas imágenes DESDE EL MISMO ORIGEN en que se cargan (a nivel de código), sin depender de un asset "hardcodeado" de MET-6283 ni de rutas duplicadas.
+Resultado: la cadena imagen → UI (con su categoría) → PDF queda CORRELACIONADA y CONSISTENTE, sirve para todo cliente, y VP-0067 se ve idéntica a MET-6283 en la vista y en el PDF.
+El equipo DIAGNOSTICA el flujo actual y DECIDE el cómo (contrato de origen, categorías, storage, binding). El objetivo son las 3 piezas correlacionadas desde un origen único y genérico — no un recetario impuesto.
+
+ORÁCULO (fuente de verdad — SOLO LECTURA, no modificar):
+- PDF de referencia (todas las imágenes reales y su ubicación): docs/_referencias/Informe FRANCISCO VERGARA UNDURRAGA_Met6283.pdf
+- XLSM que lo generó: docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm
+- Imágenes YA extraídas (reutilizar, no re-extraer): docs/_artefactos/carbone/assets_met6283/
+- Plantilla v2 vigente: docs/_artefactos/carbone/PLANTILLA_MET_v2.docx (CARBONE_TEMPLATE_ID en .env.local)
+- Trabajo previo REUTILIZABLE: tandas T-PDF-IDENTICO-20260927 y T-VP0067-CONSISTENTE-PROD-20260929 (mapa de ranuras de imagen, valores exactos, cadena de render). Y si existe, la AUDITORÍA UNIVERSAL de inputs (docs/_analisis/AUDITORIA_inputs_motor_UNIVERSAL_*.md) para el criterio multi-cliente.
+- Solicitud objetivo: VP-2026-0067 (recmMzeu3eWGxyXsf), base Airtable app9G7lLkIV3CpeLa.
+
+CONTRATO DE CATEGORÍAS (visible en la UI, tratarlo como GENÉRICO, no MET-6283)
+El REGISTRO FOTOGRÁFICO clasifica las fotos en estos 8 buckets: Ofertas/Comparables, Baños, Mapa de Ubicación, Cocina, Habitaciones, Estacionamientos, Fachada/Exterior, Living/Comedor. El origen único debe ETIQUETAR cada imagen con su categoría, de modo que el mismo dato alimente el contador/miniaturas de la UI y la ranura del PDF. Estas categorías son atributos de propiedad (sirven para cualquier cliente); NO inventar categorías nuevas: usar EXACTAMENTE las que la UI ya define (ubicarlas en el código y respetarlas).
+
+RANURAS DE IMAGEN A CORRELACIONAR (set completo del informe, según el oráculo): logo Value Property, foto fachada, mapa "Ubicación/Empresa" (Hoja 1), mapa de ubicación de referencias + 3 fotos de referencias (Hoja 2), TODAS las fotos de la propiedad (Hojas 4-5, que caen en los buckets del REGISTRO FOTOGRÁFICO), plano + esquema de superficies + planta de emplazamiento + foto aérea + info SII (Anexo 1), escaneados rol-avalúo/permiso/no-expropiación/recepción/TGR (Anexo 2), y la firma. Distinguir cuáles caen dentro del REGISTRO FOTOGRÁFICO (fotos + mapa) y cuáles son ranuras de OTRAS secciones (logo, firma, anexos, planos). Cada una debe quedar mapeada a: (a) su lugar/categoría en la UI, (b) su origen de storage, (c) su binding en la plantilla.
+
+ENTORNO
+- Repo: C:\Users\Sergio\Documents\GitHub\if-ejecutiva
+- PRODUCCIÓN: app en Railway (rama main). La vista del informe es la ruta /tasaciones/[id]/informe. Reportar la URL BASE real y construir TODAS las URLs sobre ese dominio (NUNCA localhost).
+- Auth: Clerk. Cuentas de prueba: ganardineroporinternet29@gmail.com y nutricionsaludketo@gmail.com. VP-0067 debe estar asignada al tasador de UNA de ellas; decir a Sergio con cuál loguearse.
+- Datos: Airtable app9G7lLkIV3CpeLa. Cadena de PDF: Carbone (plantilla v2) + Make E2/E3 + Dropbox.
+
+CREDENCIALES (todas en .env.local): AIRTABLE_TOKEN, AIRTABLE_BASE_ID, CLERK_SECRET_KEY, MAKE_API_TOKEN, ANTHROPIC_API_KEY, DROPBOX_*, CARBONE_API_URL, CARBONE_TEMPLATE_ID, CARBONE_API_TOKEN_PROD/TEST. NUNCA imprimir secretos (usar <AIRTABLE_TOKEN>, <CARBONE_PROD>, etc.). Si falta una credencial: DETENER en el Gate y pedirla.
+
+PRINCIPIO DE PARALELISMO (toda la tanda)
+- Lanzar agentes CONCURRENTES con run_in_background=true. No correr en serie lo que puede ir en paralelo.
+- REGLA DE COLISIÓN: cambios de código en archivos DISTINTOS → paralelo; escrituras al MISMO record/tabla de Airtable → un solo patch consolidado o en serie.
+- GATES DE SINCRONÍA entre olas: el render no arranca hasta que código + datos estén listos.
+- AISLAMIENTO DE FALLOS: un fallo marca su sub-bloque como bloqueado y se reporta; no aborta a los demás.
+- Cada agente reporta: qué tocó (archivos/records), errores, y OK/BLOQUEADO.
+
+═══════════════════════════════
+FASE 1 — PLANIFICACIÓN (6 AGENTES EN PARALELO, run_in_background=true, SOLO LECTURA)
+═══════════════════════════════
+Autorización Fase 1: LEER repo, Airtable (schemas/records/automations), XLSM, PDF, assets, blueprints. Crear SOLO la rama plan/T-VP0067-IMAGENES-UI-20260930 para el documento de plan. NO tocar código, datos, esquema, automations ni Make. NO commit/push.
+
+AGENTE 1 — Arquitecto del flujo de imágenes (Explore + general-purpose):
+  Mapear CÓMO llegan hoy las imágenes a la plantilla Carbone (¿base64 o URL?, ¿qué etiqueta/campo espera cada foto/mapa/anexo?, ¿de qué tabla/campo/adjunto/Dropbox sale?) y POR QUÉ la vista /informe cuenta 0. Entregar tabla: ranura/categoría → origen actual → binding plantilla → estado en la vista. Evidencia ruta:línea.
+
+AGENTE 2 — Auditor de la vista /informe y del REGISTRO FOTOGRÁFICO (Explore + general-purpose):
+  Localizar el componente/ruta que renderiza /tasaciones/[id]/informe y, dentro, el bloque "REGISTRO FOTOGRÁFICO": de dónde saca el conteo por categoría (los 8 buckets), qué campo/relación lee, y por qué da 0. Ubicar el punto EXACTO donde debería contar/pintar cada categoría. URL de producción + archivo:línea.
+
+AGENTE 3 — Especialista en origen de imágenes GENÉRICO multi-cliente (Explore + general-purpose):
+  Definir DÓNDE deben vivir las imágenes y CÓMO se etiqueta su categoría (los 8 buckets) para que el tasador de CUALQUIER cliente las aporte, con un contrato ÚNICO que alimente a la vez el REGISTRO FOTOGRÁFICO, el resto de la UI y la plantilla. Distinguir lo que hoy es asset/hardcode MET-6283 vs lo que sería BLOQUEANTE para un cliente nuevo. Cruzar con la AUDITORÍA UNIVERSAL si existe. Evidencia ruta/tabla/campo.
+
+AGENTE 4 — Mapeo assets MET-6283 → categoría/ranura/UI/binding (general-purpose):
+  Desde docs/_artefactos/carbone/assets_met6283/ y el PDF, asignar cada imagen 1:1 a su categoría del REGISTRO FOTOGRÁFICO (o a su ranura fuera de él: logo, firma, anexos, planos), a su lugar en la UI y a su binding en la plantilla. Marcar cualquier imagen sin categoría/ranura o sin binding.
+
+AGENTE 5 — Integrador Carbone/Make/Dropbox/Airtable (general-purpose):
+  Confirmar que la cadena de render está VIVA y cómo consume las imágenes; identificar pasos manuales (Dropbox "Reauthorize" es OAuth); cómo sembrar las imágenes de VP-0067 en el origen genérico con su categoría. Confirmar a qué tasador (cuenta Clerk) queda asignada VP-0067.
+
+AGENTE 6 — Seguridad y hard rules (general-purpose):
+  Verificar contra ways-of-working: R5, R7, R12, T-C/R8, RO-05. Riesgos de tocar código + escribir en producción, manejo de secretos, rollback, invariantes intocables (abajo). <200 palabras.
+
+CONSOLIDAR en docs/_planes/PLAN_T-VP0067-IMAGENES-UI-20260930.md: §1 resumen · §2 alcance SÍ/NO · §3 TABLA CLAVE imagen → categoría/ranura → UI(lugar) → origen(storage) → binding plantilla (faltantes marcadas) · §4 diseño del contrato de origen ÚNICO y GENÉRICO con las 8 categorías respetadas (mismo origen para UI y plantilla) · §5 plan de ejecución con OLAS y dependencias (qué va en paralelo / qué en serie) · §6 batería de tests (REGISTRO FOTOGRÁFICO cuenta el número real por cada categoría, cada imagen visible en la UI, cada imagen presente en el PDF, correlación 1:1 UI↔PDF, VP-0067 = MET-6283 en imágenes, y verificación de que el código NO depende de nombres MET-6283 = genérico) · §7 riesgos y pasos manuales · §8 rollback por paso · §9 GATES.
+
+GATE INTERNO — pasar a Fase 2 solo si: (G1) credenciales OK; (G2) claro el flujo actual y el punto donde el REGISTRO FOTOGRÁFICO cuenta 0; (G3) contrato de origen único + categorías genéricas definido sin ambigüedad; (G4) assets MET-6283 mapeados 1:1 a categoría/ranura/UI/binding; (G5) cadena de render accesible. Si algo falla: DETENER, escribir cierre con el plan y pedir a Sergio. Si G1–G5 pasan, seguir (Sergio ya autorizó) y registrar que el Gate pasó.
+
+═══════════════════════════════
+FASE 2 — EJECUCIÓN EN OLAS PARALELAS (rama feat/T-VP0067-IMAGENES-UI-20260930)
+═══════════════════════════════
+Autorización Fase 2: aplicar cambios de código en la rama feat; sobre VP-0067 en PRODUCCIÓN, sembrar/asociar las imágenes en el origen genérico con su categoría y disparar el render. Revertir automáticamente un paso si su test falla. NO salir del alcance §2. NO commit/push (lo hace Sergio).
+Antes de cada cambio, registrar el estado original en docs/_evidencia/T-VP0067-IMAGENES-UI-20260930/rollback.md.
+
+BLOQUE 0 — Snapshot real (secuencial, antes de tocar nada): estado del REGISTRO FOTOGRÁFICO (conteo actual), binding actual de la plantilla, origen de imágenes de VP-0067, y contenido original de los archivos de código a tocar. Si difiere del plan, DETENER y reportar.
+
+BLOQUE 1 — OLA 1 (PARALELA, run_in_background=true):
+  AGENTE A — Código, MOSTRAR (P1): que la vista /informe pinte cada imagen y el REGISTRO FOTOGRÁFICO cuente correctamente por cada una de las 8 categorías, leyendo del origen genérico del plan. Reportar archivo:línea.
+  AGENTE B — Código, POBLAR PLANTILLA (P3): que la plantilla se pueble desde el MISMO origen (no del asset hardcodeado), genérico por cliente. Reportar archivo:línea.
+  AGENTE C — Código, INGRESAR (P2): asegurar/cablear el punto de la UI donde cada imagen se sube/asocia a su categoría/ranura "donde corresponde"; si ya existe, conectarlo al origen; si falta, prepararlo en la rama feat sin jerga técnica en la UI (T-C/R8). Reportar archivo:línea.
+  AGENTE D — Datos/seed VP-0067: asociar las imágenes MET-6283 extraídas en el origen genérico, cada una con su categoría correcta, para VP-0067 (único write en Airtable/Dropbox; mismo record → UN solo patch), de modo que se vean en UI y en PDF y el conteo deje de ser 0. NO tocar otros campos/solicitudes. Reportar record/campos.
+  Regla de colisión: A/B/C en archivos distintos → paralelo; D en un solo patch.
+
+GATE DE SINCRONÍA S1 — esperar a que A/B/C (código) y D (datos) cierren OK antes de la OLA 2.
+
+BLOQUE 1 — OLA 2 (depende de S1):
+  AGENTE E — Corrida real: con el build nuevo, cargar /informe de VP-0067 y disparar el render del PDF; confirmar imágenes presentes en AMBOS y el REGISTRO FOTOGRÁFICO con conteos reales.
+
+BLOQUE 2 — TESTS (secuencial tras OLA 2):
+  - REGISTRO FOTOGRÁFICO: cada uno de los 8 casilleros muestra su número real (no 0) y el total "N fotografías" coincide → screenshot en docs/_evidencia/T-VP0067-IMAGENES-UI-20260930/vista-informe.png.
+  - UI: cada imagen/miniatura se ve en su lugar (X/Y ranuras OK).
+  - PDF: cada imagen presente (X/Y) → pdf-imagenes-check.md.
+  - Correlación 1:1: la imagen (y su categoría) que se ve en la UI es la misma que sale en el PDF, ranura por ranura → correlacion.md.
+  - Espejo: VP-0067 idéntico a MET-6283 en imágenes.
+  - GENÉRICO: verificar que el código no depende de nombres/rutas MET-6283 y que las 8 categorías salen de la definición de la UI, no hardcodeadas. Documentar cómo se probó.
+  - Regresión: no se rompió lo ya logrado (datos, REF. C.B.R., overrides, CI-057, /lectura, botones Descargar PDF y Ver expediente).
+
+BLOQUE 3 — AUDITOR CIEGO (agente independiente): "Sin leer los logs de los agentes, verificar desde el estado final: (1) el REGISTRO FOTOGRÁFICO cuenta bien por categoría (ya no 0) y la UI muestra las imágenes; (2) el PDF las muestra; (3) UI y PDF correlacionados 1:1 leyendo del mismo origen; (4) código genérico (no atado a MET-6283, categorías desde la UI); (5) nada más se rompió. OK/FAIL por criterio con evidencia, e indicar X/Y imágenes correlacionadas y el conteo por categoría."
+
+BLOQUE 4 — ROLLBACK CONDICIONAL: por cada FAIL, revertir esa pieza (datos desde snapshot; código descartando el cambio) y documentar.
+
+INVARIANTES INTOCABLES: no alterar los archivos del oráculo ni las imágenes ya extraídas; credenciales/tokens; conexiones Google/Apify/Dropbox; IDs de Airtable; la inscripción del informe/gold master; no romper otras solicitudes.
+
+REGLAS DURAS: NUNCA exponer secretos · si un endpoint/credencial falla, DETENER con status+body · si una pieza no se valida con evidencia real (screenshot/PDF), NO marcar HECHO · NO commit/push · rollback ANTES de cada cambio · auditor ciego obligatorio · SIN adendas: nueva versión COMPLETA por archivo modificado, aplicando los cambios donde corresponde.
+
+ENTREGABLES (rama feat/T-VP0067-IMAGENES-UI-20260930):
+  docs/_planes/PLAN_T-VP0067-IMAGENES-UI-20260930.md
+  archivos de código modificados (versión completa)
+  docs/_evidencia/T-VP0067-IMAGENES-UI-20260930/ → rollback.md, vista-informe.png, pdf-imagenes-check.md, correlacion.md, regresion.md, auditor.md
+  docs/_analisis/CIERRE_T-VP0067-IMAGENES-UI-20260930.md
+  entrada en docs/aprendizajes.md (lección: origen único de imágenes con categoría que alimenta REGISTRO FOTOGRÁFICO + UI + plantilla, genérico por cliente).
+
+CIERRE — sobreescribí C:\Users\Sergio\Documents\claude-out.txt con UN SOLO bloque markdown, sin decoraciones, para alguien NO TÉCNICO:
+1) ¿SE VEN LAS IMÁGENES Y EL REGISTRO FOTOGRÁFICO YA NO CUENTA 0? Sí/No en 1 línea + cuántas imágenes quedaron correlacionadas (X/Y) y el total de fotos que ahora muestra.
+2) QUÉ PROBAR: abrí https://if-ejecutiva-production.up.railway.app/tasaciones/recmMzeu3eWGxyXsf/informe logueado con la cuenta indicada; la sección "Registro Fotográfico" debe mostrar los números reales por categoría y las fotos. Aviso: los cambios de código se ven recién tras publicar la rama y que Railway despliegue.
+3) LO QUE HIZO CLAUDE CODE (3-4 líneas simples): la vista del informe ahora muestra las fotos y las cuenta por categoría; se cargan desde un solo lugar que sirve para cualquier cliente; la plantilla del PDF se llena desde ese mismo lugar; VP-0067 quedó con las imágenes de MET-6283. Reversible.
+4) PASOS MANUALES PARA VOS: commit+push de la rama feat/T-VP0067-IMAGENES-UI-20260930 para que Railway despliegue; Dropbox "Reauthorize" si el equipo lo pidió; si no hay nada más, "ninguno".
+5) GENÉRICO PARA TODO CLIENTE: 1 línea confirmando que el código no depende de MET-6283 y que un cliente nuevo puede cargar sus propias fotos, por categoría, desde la UI.
+6) PIEZAS BLOQUEADAS + causa (si las hay).
+7) Estado: TANDA T-VP0067-IMAGENES-UI-20260930 cerrada / detenida en Gate G#.
+
+Tráeme el cierre en un solo bloque markdown listo para copiar, sin spinners ni decoraciones de terminal. Solo el resumen final que necesito pasarle a Claude en el chat.

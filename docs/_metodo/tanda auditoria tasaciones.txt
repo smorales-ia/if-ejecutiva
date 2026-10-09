@@ -1,0 +1,97 @@
+AUDITORÍA UNIVERSAL — Inputs del motor DAG vs. RF-09 vs. UI del tasador
+Sergio · 2026-09-22 · reutilizable para todo el proyecto (no solo MET-6283).
+
+OBJETIVO
+Determinar EXACTAMENTE qué datos necesita el motor DAG v11.1.1 para calcular una tasación,
+y para cada dato confirmar:
+  - Si viene de RF-09 (extracción documental).
+  - Si el tasador tiene UI para ingresarlo.
+  - Si es un HUECO DE PRODUCTO (motor lo pide y nadie lo puede aportar hoy).
+Foco: solución que sirva para CUALQUIER cliente (no solo MetLife con xlsm histórico).
+
+AUTORIZACIÓN
+- SOLO LECTURA. Cero writes en Airtable, Make, código, sandbox, ni commits.
+- Investigar código + Airtable + docs de referencia.
+
+FUENTES OBLIGATORIAS DE LECTURA (además del código)
+- C:\Users\Sergio\Documents\GitHub\if-ejecutiva\docs\_md\VProperty_Origen_Datos_Informe_v1.7.md
+- C:\Users\Sergio\Documents\GitHub\if-ejecutiva\docs\_md\VProperty_Motor_Calculo_AT01_AT10_v2_7.md
+- Blueprint SC-RF09-ExtraccionClaude* en docs\_artefactos\make\
+- AT03_Calculos_DAG.js en docs\_artefactos\airtable\
+- C_Formulas, D_TipoDocumentoAtributo, TX_* en Airtable (vía MCP)
+- Frontend /components/tasador/**, app/api/tasaciones/[id]/**, lib/tasador/**
+
+EQUIPO DE EXPERTOS (5 AGENTES EN PARALELO, run_in_background=true)
+
+AGENTE 1 — Arquitecto Motor DAG (Explore + general-purpose):
+  - Leer AT03_Calculos_DAG.js y VProperty_Motor_Calculo_AT01_AT10_v2_7.md.
+  - Listar EXHAUSTIVAMENTE cada input que el motor necesita para las 13 fórmulas terminales.
+  - Por cada input: nombre, tabla origen, obligatorio/default, qué cálculo lo usa,
+    qué regla lo activa (REGLA_REFI_CASA_V32 u otras).
+
+AGENTE 2 — Especialista en Fuentes de Datos (Explore + general-purpose):
+  - Leer VProperty_Origen_Datos_Informe_v1.7.md + blueprint SC-RF09 + D_TipoDocumentoAtributo.
+  - Para cada input del agente 1, clasificar fuente REAL:
+    (a) VIENE_DE_RF09 (docs extraídos por AT03-Ext)
+    (b) VIENE_DE_TASADOR (UI durante visita)
+    (c) VIENE_DE_SISTEMA (default, AT01, upstream, UF diaria)
+    (d) VIENE_DE_XLSM (histórico MetLife, sin UI)
+    (e) DESCONOCIDO
+  - Cruzar con VP-2026-0066 (recNiwM4s1ibr3sbO) como referencia poblada.
+
+AGENTE 3 — Auditor UI Tasador (Explore + general-purpose):
+  - Para cada input (b) o (d), localizar EXACTAMENTE en el frontend Next.js:
+    sección UI (A-H), componente, label visible, archivo + línea.
+  - Si NO hay UI: marcar HUECO_UI + explicar cómo se pobló en 0066.
+
+AGENTE 4 — Product Owner Multi-Cliente (Explore + general-purpose):
+  - Evaluar cada HUECO_UI en contexto CUALQUIER CLIENTE (no solo MetLife).
+  - Distinguir: hueco resuelto por xlsm en MetLife pero BLOQUEANTE para otro cliente.
+  - Proponer solución productiva por hueco: (nuevo campo UI / ampliar RF-09 / escenario sistema / regla motor / decisión de negocio).
+  - Priorizar (P0 bloqueante · P1 alto · P2 mejora).
+
+AGENTE 5 — Integrador Airtable/Make (Explore + general-purpose):
+  - Verificar coherencia AT03-Ext (enrutamiento cardinalidad) + escritores automáticos por tabla.
+  - Detectar deuda de artefactos (automatizaciones en producción sin blueprint en repo).
+  - Confirmar si "UF diaria" u otros escenarios de sistema están implementados.
+
+CONSOLIDACIÓN
+
+A) Documento markdown:
+docs/_analisis/AUDITORIA_inputs_motor_UNIVERSAL_<YYYYMMDD>.md con:
+  § 1 Resumen ejecutivo (N inputs · X RF-09 · Y UI-tasador · Z sin-UI · W sistema · H huecos producto).
+  § 2 Tabla completa: Input · Tabla · Fuente · UI Sección · Componente · HUECO_UI · Cómo se pobló en 0066.
+  § 3 GAPS por escenario: MetLife (mirror-xlsm válido) vs. Cliente Nuevo (bloqueantes reales).
+  § 4 HUECOS DE PRODUCTO priorizados P0/P1/P2 con solución propuesta.
+  § 5 Deuda de artefactos (automatizaciones sin blueprint, escenarios pendientes).
+  § 6 Recomendación consolidada del equipo.
+
+B) Archivo Excel:
+docs/_analisis/AUDITORIA_inputs_motor_UNIVERSAL_<YYYYMMDD>.xlsx con DOS hojas.
+
+  HOJA 1 — "Datos_y_Solucion":
+    Columnas:
+      | nombre_del_dato | para_que_se_usa | donde_se_usa | solucion_propuesta |
+    Una fila por cada input que necesita el motor.
+    "solucion_propuesta" debe ser la respuesta consensuada del equipo de 5 expertos,
+    orientada a que sirva para CUALQUIER cliente.
+
+  HOJA 2 — "Contexto_Tecnico" (información que el equipo considera indispensable):
+    Columnas propuestas (el equipo puede ajustar si detecta algo más crítico):
+      | nombre_del_dato | tabla_airtable | campo_id | tipo_dato | obligatorio | default_actual
+      | fuente_real (a/b/c/d/e) | cliente_metlife_ok | cliente_nuevo_ok
+      | prioridad (P0/P1/P2) | esfuerzo_estimado | dependencias | responsable_sugerido
+      | issue_futuro | evidencia (ruta archivo:línea) |
+
+CIERRE
+
+Sobreescribí C:\Users\Sergio\Documents\claude-out.txt con:
+- Ruta del .md y del .xlsx generados.
+- Resumen numérico: N inputs · X RF-09 · Y UI · Z sin-UI · W sistema · H huecos.
+- Top 3 huecos P0 con solución propuesta (una línea cada uno).
+- Deuda de artefactos detectada.
+- Recomendación consolidada del equipo (1 párrafo).
+- Estado: AUDITORÍA CERRADA · esperando decisión Sergio.
+
+Bloque markdown único, sin decoraciones. NO tocar Airtable, Make ni código.
+Solo lectura + 2 archivos nuevos (.md y .xlsx).

@@ -1,0 +1,86 @@
+PATRON PARA CORREGIR ESCENARIOS MAKE USANDO API KEY:
+
+
+Voy a conectar Claude Code a la API REST de Make.com para debugar en vivo el 
+scenario SC-IApro-LeadsScraper v1.8 sin exportar/importar más blueprints.
+
+CREDENCIALES
+Hay un API token de Make ya guardado en un archivo .env.local del repo. 
+Búscalo y úsalo. Rutas probables donde buscar:
+- C:\Users\Sergio\Documents\GitHub\if-ejecutiva\.env.local
+- C:\Users\Sergio\Documents\GitHub\if-ejecutiva\.env
+- Cualquier .env.local dentro de subcarpetas del repo
+
+Nombres de variable probables (elige la que exista): 
+MAKE_API_TOKEN, MAKE_API_KEY, MAKE_TOKEN, MAKECOM_API_KEY.
+
+Si encuentras más de una, reporta cuál elegiste y por qué.
+Si no encuentras ninguna, DETENTE y pide.
+
+DATOS DEL ENTORNO
+- Base URL: https://eu1.make.com/api/v2
+- Team ID: 1594725
+- Scenario ID: 7380314 (SC-IApro-LeadsScraper v1.8)
+- Ejecución más reciente que falló: la del 12-09-2026 19:36:35 (m12 con IMLError)
+
+TAREAS
+1. Verifica en https://developers.make.com/api-documentation los endpoints 
+   correctos para:
+   (a) Leer el blueprint completo de un scenario
+   (b) Listar ejecuciones de un scenario
+   (c) Obtener el detalle de una ejecución (con input/output de cada módulo)
+   (d) Actualizar el blueprint de un scenario
+   (e) Ejecutar un scenario (run once)
+   Reporta las URLs exactas con parámetros que vas a usar.
+
+2. Autentícate con el token y verifica acceso:
+   - GET del scenario 7380314 → devuelve nombre = "SC-IApro-LeadsScraper v1.8"
+   - Listar las últimas ejecuciones y encontrar la del 19:36:35
+
+3. Del run 19:36:35, obtén y reporta VERBATIM:
+   - El OUTPUT del módulo m11 (C.1 Extrae link del bundle) — quiero ver qué 
+     guardó realmente en "value"
+   - El INPUT del módulo m12 (D Apify Run an Actor) — qué inputBody recibió 
+     Apify exactamente
+   - El error completo de m12
+   Con esto confirmamos si {{10.link}} en el SetVariable resolvió a un string 
+   URL o a un objeto.
+
+4. Con esa evidencia, DIAGNOSTICA la causa raíz sin margen. Si el output de 
+   m11 es un objeto (no una URL string), la ruta correcta es {{10.value.link}} 
+   como sospechaste. Si es una URL string, el problema está en otro lado y 
+   hay que buscarlo.
+
+5. Aplica el fix en el scenario mismo vía API (PATCH/PUT del blueprint), no 
+   como archivo local. Nombre nuevo del scenario: 
+   "SC-IApro-LeadsScraper v1.9 FINAL - LinkedIn leads scraper (SerpAPI + 
+   Apify -> Google Sheets)".
+
+6. Ejecuta un smoke test (POST run) con 1 fila activa=TRUE y max_pages=1.
+
+7. Reporta el resultado del smoke test:
+   - Duration, Operations
+   - Status de cada módulo
+   - Si m17 (addRow) completó, qué filas escribió en Google Sheets
+
+INVARIANTES INTOCABLES
+- Google 10804788 (x3), Apify 10804977
+- spreadsheetIds (busquedas 1lZC..tYA, leads 15Qv..G5NE)
+- api_key SerpAPI (e9160b95…c37e441)
+- flags: sequential=true, dlq=true, autoCommit=true, dataloss=false
+- filtro de m12: solo text:contain "linkedin.com/in/"
+
+REGLAS
+- Nunca imprimas el token en logs, claude-out.txt ni en respuestas — solo úsalo 
+  para autenticar. Si lo mencionas, reemplázalo por <MAKE_TOKEN>.
+- Si un endpoint no está documentado o falla, DETENTE y reporta con el status 
+  code y el body de la respuesta. No inventes.
+- Si el fix no se puede validar con evidencia empírica del run real, DETENTE.
+
+Sobrescribe C:\Users\Sergio\Documents\claude-out.txt con:
+- Ruta del .env.local que usaste y nombre de la variable (sin el valor)
+- Endpoints usados
+- Output verbatim de m11 y m12 del run fallido
+- Diagnóstico definitivo
+- Diff aplicado
+- Resultado del smoke test

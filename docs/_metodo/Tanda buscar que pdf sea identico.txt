@@ -1,0 +1,89 @@
+Arrancamos TANDA T-PDF-IDENTICO-20260927 — llevar el PDF de MET-6283 al 100% idéntico (datos, imágenes y diseño) y dejar la imprenta viva. Fase 1 (plan) + Fase 2 (ejecución) en una sola tanda con GATE interno.
+
+OBJETIVO FINAL
+Que el PDF generado para la solicitud espejo sea IDÉNTICO al informe de referencia en datos, imágenes y diseño — al nivel en que un tasador no distinga cuál es cuál — y que la cadena quede lista para generar desde la app.
+
+ORÁCULO (fuente de verdad):
+
+PDF objetivo: docs/_referencias/Informe FRANCISCO VERGARA UNDURRAGA_Met6283.pdf (tiene TODAS las imágenes, datos y diseño reales).
+XLSM que lo generó (datos exactos + layout): docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm.
+PDF a mejorar (salida actual con la plantilla v1): docs/_evidencia/T-PDF-IMPRENTA-20260927/PDF_generado_VP0067.pdf.
+Solicitud espejo: VP-2026-0067 (recmMzeu3eWGxyXsf), base Airtable app9G7lLkIV3CpeLa.
+
+DIAGNÓSTICO YA CONFIRMADO (revisión visual de Sergio, hoja por hoja) — cerrar estas 4 brechas:
+
+IMÁGENES: hoy salen como recuadros vacíos. Faltan: logo Value Property, foto fachada, mapa "Ubicación/Empresa" (Hoja 1), mapa de ubicación de referencias + 3 fotos de referencias (Hoja 2), TODAS las fotos de la propiedad (Hojas 4-5), plano + esquema de superficies + planta de emplazamiento + foto aérea + info SII (Anexo 1), y los escaneados rol-avalúo/permiso/no-expropiación/recepción/TGR (Anexo 2), y la firma. → EXTRAERLAS del PDF de referencia e incrustarlas (ver más abajo).
+HOJA 3 casi vacía: Exigencias, Sector, Terreno, Características Constructivas, Comodidades salen sin datos. El original está lleno. → poblarlas con los valores del XLSM.
+CI-057 + DÓLARES: "TASACION V/S PROMEDIO" imprime 161% (debe dar -3% ofertas / 36% CBR); PROMEDIO DE LA MUESTRA sale 30,91 (debe dar 33,64 ofertas / 24,08 CBR); columnas UF/m² Terreno vs Construcción colapsadas; columna US$ vacía (debe usar 1US$=$890,33). → arreglar la fórmula con la aritmética correcta del XLSM y poblar el dólar.
+DATOS DE PRUEBA ≠ REALES: VP-0067 trae Año 2020 (real 2024), Vida útil vacío (real 70), Tasador "Nelcy Jaimes" (real "María Eugenia Soto"), Nº solicitud y dirección abreviados, Rol/Permiso/Recepción con otro formato. → cargar en la solicitud los valores EXACTOS del XLSM para que el PDF sea fiel.
+
+CREDENCIALES (todas en .env.local): MAKE_API_TOKEN, ANTHROPIC_API_KEY, DROPBOX_*, CARBONE_API_URL, CARBONE_TEMPLATE_ID, CARBONE_API_TOKEN_PROD/TEST. Reglas Carbone: header carbone-version: 4; subir plantilla POST /template (token PROD, permite pdf/docx); render POST /render/{templateId}; descarga GET /render/{renderId} con parseResponse=FALSE en Make. NUNCA imprimir secretos (usar <CARBONE_PROD>, etc.). Si falta una credencial: DETENER en el Gate y pedirla.
+
+═══════════════════════════════
+FASE 1 — PLANIFICACIÓN (AGENTES EN PARALELO, run_in_background=true, SOLO LECTURA)
+═══════════════════════════════
+
+AGENTE 1 — Arquitecto de la cadena: mapear cómo el template consume cada imagen y cada campo (¿qué etiqueta {d.xxx} espera cada foto/mapa/anexo?, ¿de qué tabla/campo/adjunto sale?), y cómo se disparan E2/E3. Evidencia ruta/línea/scenario_id.
+AGENTE 2 — Extractor del PDF de referencia (Explore + general-purpose): extraer TODAS las imágenes del PDF de referencia (logo, fachada, mapas, fotos propiedad, fotos referencias, plano, esquema, aérea, SII, escaneados anexos, firma), guardarlas en docs/_artefactos/carbone/assets_met6283/ con nombres claros, y mapear cada una a la ranura del informe donde va.
+AGENTE 3 — Auditor del XLSM (general-purpose): extraer del XLSM los valores EXACTOS de MET-6283 para (a) los campos que hoy difieren en VP-0067 (año, vida útil, tasador, rol, permiso, recepción, nº solicitud, dirección), (b) todos los campos de la Hoja 3, (c) la aritmética correcta del promedio de la muestra y del "-3%/36%" y del dólar (CI-057). Tabla campo → valor_exacto → celda_xlsm.
+AGENTE 4 — Analista de diseño fino: comparar el PDF generado v1 contra el de referencia hoja por hoja y listar cada diferencia de layout que quede además de las 4 brechas (tipografías, anchos, bandas, posiciones). Priorizar.
+AGENTE 5 — QA punta-a-punta: batería de tests: datos valor-por-valor, presencia de cada imagen, Hoja 3 completa, CI-057 = -3%/36%, dólar poblado, y comparación visual final vs referencia. Criterio/tolerancia por test.
+AGENTE 6 — Seguridad y motor: riesgos del fix CI-057 sobre C_Formulas con AT03 en producción; si editar la fórmula en caliente es inseguro, definir que se pide a Sergio togglear AT03 (paso manual mínimo). Manejo de secretos, rollback, qué NO tocar.
+AGENTE 7 — Frontend Next.js: confirmar que el botón "Enviar informe" y la ruta de PDF quedan alineados con el flujo nuevo; pantallas a capturar.
+
+CONSOLIDAR en docs/_planes/PLAN_T-PDF-IDENTICO-20260927.md (rama plan/T-PDF-IDENTICO-20260927): §1 resumen · §2 alcance SÍ/NO · §3 diseño · §4 tabla oráculo (datos exactos + mapa de imágenes + Hoja 3 + aritmética CI-057) · §5 pasos con paralelismo · §6 tests · §7 riesgos y pasos manuales · §8 rollback · §9 GATES · §10 conflictos.
+
+GATE INTERNO — continuar a Fase 2 sólo si: (G1) credenciales OK; (G2) se extrajeron todas las imágenes y cada una tiene ranura en el template; (G3) el XLSM entrega los datos exactos + la aritmética correcta del CI-057 sin ambigüedad; (G4) E2/E3 accesibles por API. Si algo falla: DETENER, escribir cierre con el plan y pedir a Sergio. Si G1-G4 pasan, seguir (Sergio ya autorizó todo de una) y registrar que el Gate pasó.
+
+═══════════════════════════════
+FASE 2 — EJECUCIÓN (rama feat/T-PDF-IDENTICO-20260927)
+═══════════════════════════════
+Antes de cada cambio, registrar estado original en docs/_evidencia/T-PDF-IDENTICO-20260927/rollback.md (incluye valores viejos de VP-0067, C_Formulas, blueprints E2/E3, CARBONE_TEMPLATE_ID).
+
+BLOQUE 0 — Snapshot real: credenciales, escenarios, VP-0067, AT03, template actual. Si difiere del plan, DETENER.
+
+BLOQUE 1 — Ejecución (paralela donde se pueda; escritura secuencial si colisiona):
+
+PLANTILLA v2: construir el .docx que replica el diseño del PDF con TODAS las ranuras de imagen y TODOS los campos de la Hoja 3 cableados; incrustar logo y firma como parte de la plantilla; subirla por POST /template → nuevo templateId → escribirlo en .env.local y re-apuntar E2. Guardar el .docx en docs/_artefactos/carbone/PLANTILLA_MET_v2.docx.
+IMÁGENES: cargar las imágenes extraídas del PDF de referencia en la solicitud espejo (adjuntos/campos/Dropbox según el contrato hallado en Fase 1), de modo que el render las tome (fachada, fotos propiedad, mapa, fotos referencias, plano, esquema, aérea, SII, escaneados anexos).
+DATOS: cargar en VP-0067 los valores EXACTOS del XLSM (los 4 campos que difieren + Hoja 3 completa). Donde no exista columna en Airtable, alimentar el input del render y marcar en el cierre qué requeriría columna nueva para el flujo vivo.
+CI-057 + DÓLARES: validar la aritmética corregida contra el XLSM usando el harness local (at03-harness.mjs) SIN tocar producción; luego aplicar el fix a C_Formulas (con rollback). Si el equipo juzga inseguro editar con AT03 activo, DETENER y pedir a Sergio togglear AT03 off→on (único toque en Airtable). Poblar el dólar (1US$=$890,33).
+
+BLOQUE 2 — Corrida REAL punta a punta + tests:
+
+Disparar la cadena completa para VP-0067 → PDF real → docs/_evidencia/T-PDF-IDENTICO-20260927/PDF_generado_VP0067_v2.pdf.
+Comparar vs referencia: regresion.md (dato-por-dato, incluido -3%/36% y dólar), imagenes-check.md (cada imagen presente sí/no), diseno-checklist.md (layout hoja por hoja), e imágenes de comparación lado a lado por hoja.
+Confirmar link del PDF en Airtable.
+
+BLOQUE 3 — AUDITOR CIEGO (agente independiente): verificar desde el estado final (PDF v2, Airtable, template, escenarios) contra §6. OK/FAIL por criterio con evidencia. Debe dictaminar explícitamente el % de igualdad alcanzado y qué diferencias residuales quedan.
+
+BLOQUE 4 — ROLLBACK CONDICIONAL: por cada FAIL, revertir esa pieza y documentar.
+
+GO-LIVE (al final, si los tests pasan):
+
+Encender E2 y E3 vía Make API (activar scenarios) y dejar registrado.
+Dropbox: NO se puede reautorizar por API (es OAuth). Dejar instrucción para Sergio (botón "Reauthorize" en la conexión "My Dropbox connection") y avisar que hasta que lo haga, el link del PDF abre logueado en Dropbox pero no es público.
+
+ENTREGABLES (rama feat, versión completa por archivo, SIN adendas):
+
+docs/_artefactos/carbone/PLANTILLA_MET_v2.docx + assets_met6283/
+docs/_artefactos/make/E2_*.blueprint.json y E3_*.blueprint.json (si cambian)
+docs/_evidencia/T-PDF-IDENTICO-20260927/ → PDF_generado_VP0067_v2.pdf, rollback.md, regresion.md, imagenes-check.md, diseno-checklist.md, comparaciones lado a lado, auditor.md, tests-output.txt, endpoints (sin tokens)
+docs/_planes/PLAN_T-PDF-IDENTICO-20260927.md · docs/_analisis/CIERRE_T-PDF-IDENTICO-20260927.md · entrada en docs/aprendizajes.md
+
+REGLAS DURAS: NUNCA exponer secretos · si un endpoint/credencial falla, DETENER con status+body · si el PDF no se valida con corrida real, no marcar HECHO · NO commit/push · todo cambio al rollback ANTES · auditor ciego obligatorio · nueva versión completa por archivo.
+
+CIERRE — sobreescribí C:\Users\Sergio\Documents\claude-out.txt con UN SOLO bloque markdown, sin decoraciones, para alguien NO técnico:
+
+% DE IGUALDAD ALCANZADO vs el informe de referencia, en 1 línea, y qué diferencias quedan (si quedan).
+HECHO POR CLAUDE CODE: plantilla v2 con imágenes, Hoja 3 llena, CI-057 y dólares arreglados, datos reales cargados — 4-5 líneas. Reversible.
+RESULTADO CORRIDA REAL: PDF v2 generado sí/no, dónde, link en Airtable sí/no.
+TESTS: cuántos en verde; datos idénticos sí/no; imágenes presentes X/Y; CI-057 = -3%/36% sí/no.
+AUDITOR CIEGO: OK/FAIL + % igualdad.
+GATE: pasó / detenido en G#.
+PASOS PARA VOS: 1) mirá el PDF v2 vs referencia y dame el OK final; 2) Dropbox → "Reauthorize" (único paso manual, es login tuyo); 3) las 3 capturas como tasador; 4) commit+push rama feat/T-PDF-IDENTICO-20260927. Y togglear AT03 si el equipo lo pidió.
+PIEZAS BLOQUEADAS + causa (1 línea c/u).
+Archivos generados (rutas).
+Estado: TANDA T-PDF-IDENTICO-20260927 cerrada / detenida en Gate G#.
+
+Tráeme el cierre en un solo bloque markdown listo para copiar, sin spinners ni decoraciones de terminal.

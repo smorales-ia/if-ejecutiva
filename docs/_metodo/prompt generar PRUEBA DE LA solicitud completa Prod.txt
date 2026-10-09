@@ -1,0 +1,118 @@
+Arrancamos TANDA T-VP0067-CONSISTENTE-PROD-20260929 — dejar la solicitud VP-2026-0067 100% CONSISTENTE en PRODUCCIÓN, como ESPEJO de la tasación MET-6283, y probada punta a punta. Fase 1 (plan) + Fase 2 (ejecución) en una sola tanda con GATE interno, ejecutada por un EQUIPO DE EXPERTOS con MÁXIMO PARALELISMO. Sergio ya autorizó ejecutar todo en producción SOBRE ESTA SOLICITUD.
+
+OBJETIVO FINAL
+Que en PRODUCCIÓN, un tasador logueado pueda, sobre VP-2026-0067, ver y hacer estas 6 cosas, con datos idénticos a MET-6283:
+  V1. Ver los ARCHIVOS ADJUNTOS de la solicitud.
+  V2. Ver los DATOS EXTRAÍDOS de esos archivos (extracción documental / RF-09).
+  V3. Ver los DATOS que la UI del TASADOR pide para esta tasación (todos poblados).
+  V4. Ver la UI del INFORME con TODOS los datos.
+  V5. Dentro de la UI del Informe, ver el EXPEDIENTE.
+  V6. Dentro de la UI del Informe, DESCARGAR el PDF.
+La tasación resultante debe ser un ESPEJO de MET-6283 (datos, imágenes, diseño y cálculos). El equipo DIAGNOSTICA y DECIDE el cómo; el objetivo son las 6 vistas visibles y consistentes, no un recetario impuesto.
+
+PRINCIPIO DE PARALELISMO (aplica a toda la tanda)
+- Lanzar los agentes CONCURRENTES con run_in_background=true. No correr en serie lo que puede ir en paralelo.
+- REGLA DE COLISIÓN: escrituras al MISMO record o tabla de Airtable van en UN SOLO patch consolidado o en serie; objetivos distintos (adjuntos, Dropbox, repo, harness) van en paralelo.
+- Entre olas hay GATES DE SINCRONÍA: la ola que depende de otra no arranca hasta que la anterior cierre OK (ej.: el render del PDF necesita datos + adjuntos ya cargados).
+- AISLAMIENTO DE FALLOS: un fallo en un agente NO aborta a los demás; solo marca su sub-bloque como bloqueado y se reporta.
+- Cada agente reporta: qué tocó (archivos/records), errores, y OK/BLOQUEADO.
+
+ORÁCULO (fuente de verdad — SOLO LECTURA, no modificar estos archivos):
+- PDF de referencia (todas las imágenes/datos/diseño reales): docs/_referencias/Informe FRANCISCO VERGARA UNDURRAGA_Met6283.pdf
+- XLSM que lo generó (datos exactos + layout): docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm
+- Solicitud objetivo: VP-2026-0067 (recmMzeu3eWGxyXsf), base Airtable app9G7lLkIV3CpeLa.
+- Trabajo previo REUTILIZABLE si existe: tanda T-PDF-IDENTICO-20260927 (plantilla Carbone v2, imágenes en docs/_artefactos/carbone/assets_met6283/, valores exactos + aritmética CI-057 + dólar). Reutilizar, no rehacer.
+
+ENTORNO
+- Repo: C:\Users\Sergio\Documents\GitHub\if-ejecutiva
+- PRODUCCIÓN: app desplegada en Railway (rama main). Reportar la URL BASE REAL de producción y construir TODAS las URLs del recorrido sobre ese dominio (NUNCA localhost).
+- Auth: Clerk. La UI del tasador toma la solicitud desde el estado "asignada" en adelante y el tasador SOLO la ve si está ASIGNADA a él. Cuentas de prueba disponibles: ganardineroporinternet29@gmail.com y nutricionsaludketo@gmail.com. VP-0067 debe quedar asignada al tasador vinculado a UNA de estas cuentas, y hay que decirle a Sergio con cuál loguearse.
+- Datos: Airtable app9G7lLkIV3CpeLa (curl con AIRTABLE_TOKEN/AIRTABLE_BASE_ID de .env.local; Python3 para parsear si no hay jq).
+- Cadena de PDF: Carbone (plantilla v2) + escenarios Make E2/E3 + Dropbox para el link del PDF.
+
+CREDENCIALES (todas en .env.local): AIRTABLE_TOKEN, AIRTABLE_BASE_ID, CLERK_SECRET_KEY, MAKE_API_TOKEN, ANTHROPIC_API_KEY, DROPBOX_*, CARBONE_API_URL, CARBONE_TEMPLATE_ID, CARBONE_API_TOKEN_PROD/TEST. NUNCA imprimir secretos (usar <AIRTABLE_TOKEN>, <CARBONE_PROD>, etc.). Si falta una credencial: DETENER en el Gate y pedirla.
+
+═══════════════════════════════
+FASE 1 — PLANIFICACIÓN (6 AGENTES EN PARALELO, run_in_background=true, SOLO LECTURA)
+═══════════════════════════════
+Autorización Fase 1: LEER repo, Airtable (schemas/records/automations), XLSM, PDF, blueprints. Crear SOLO la rama plan/T-VP0067-CONSISTENTE-PROD-20260929 para el documento de plan. NO tocar código, datos, esquema, automations ni Make. NO commit/push. Lanzar los 6 a la vez; un fallo no aborta a los otros.
+
+AGENTE 1 — Arquitecto de estados y rutas (Explore + general-purpose):
+  Leer lib/informe/estados.ts, el state machine del tasador y las rutas Next.js. Para CADA vista V1..V6: en qué ESTADO(S) real(es) queda habilitada y qué RUTA/URL de producción la renderiza. Confirmar el estado ACTUAL de VP-0067 y la SECUENCIA de estados para recorrer las 6 vistas. Nombres de estado exactos (no inventar) + ruta:línea.
+
+AGENTE 2 — Auditor del oráculo MET-6283 (general-purpose):
+  Del XLSM + PDF (y de T-PDF-IDENTICO si existe), extraer los valores EXACTOS que VP-0067 debe tener para ser espejo: todos los campos, Hoja 3 completa, aritmética CI-057 (-3%/36%, promedio muestra, columnas UF/m² y US$ con 1US$=$890,33), año, vida útil, tasador (María Eugenia Soto), rol/permiso/recepción, nº solicitud, dirección. Tabla: campo → valor_exacto → celda_xlsm. Marcar diferencias vs lo que hoy tiene VP-0067.
+
+AGENTE 3 — Especialista en Adjuntos + Extracción (RF-09) (Explore + general-purpose):
+  Confirmar qué ADJUNTOS necesita el espejo y dónde viven (adjuntos Airtable / Dropbox), y que la EXTRACCIÓN (salida RF-09) esté poblada para VP-0067. Huecos (adjuntos/valores faltantes). Ubicar qué compone el EXPEDIENTE y dónde vive el LINK del PDF. Evidencia ruta/tabla/campo.
+
+AGENTE 4 — Auditor UI Tasador + UI Informe (Explore + general-purpose):
+  Para CADA vista V1..V6, localizar componente/ruta que la renderiza y los datos que lee; qué falta para que VP-0067 se vea completa. URL de producción por vista y el punto exacto (tab/botón) para "ver expediente" y "descargar PDF".
+
+AGENTE 5 — Integrador Airtable/Make/Carbone/Dropbox (general-purpose):
+  Confirmar que la cadena de render (Carbone v2, E2/E3, Dropbox) está VIVA y produce el PDF con link en Airtable/expediente. Identificar pasos manuales (Dropbox "Reauthorize" es OAuth; toggle AT03 si editar C_Formulas en caliente es inseguro). A qué tasador (vinculado a cuenta Clerk disponible) asignar VP-0067.
+
+AGENTE 6 — Seguridad y hard rules (general-purpose):
+  Verificar contra ways-of-working: R5, R7, R12, T-C/R8, RO-05. Riesgos de escribir en producción, qué NO tocar (invariantes de abajo), manejo de secretos y rollback. <200 palabras.
+
+CONSOLIDAR en docs/_planes/PLAN_T-VP0067-CONSISTENTE-PROD-20260929.md: §1 resumen · §2 alcance SÍ/NO · §3 mapa VISTA→ESTADO→URL (las 6) · §4 tabla oráculo (valores exactos + huecos VP-0067) · §5 plan de ejecución con OLAS y dependencias marcadas (qué va en paralelo / qué en serie) · §6 batería de tests (dato-por-dato, presencia de cada adjunto, extracción visible, informe completo, expediente, PDF descargable, CI-057=-3%/36%, dólar) · §7 riesgos y pasos manuales · §8 rollback por paso · §9 GATES.
+
+GATE INTERNO — pasar a Fase 2 solo si: (G1) credenciales OK; (G2) oráculo entrega valores exactos sin ambigüedad; (G3) mapa VISTA→ESTADO→URL completo para las 6; (G4) cadena de PDF y Clerk accesibles. Si algo falla: DETENER, escribir cierre con el plan y pedir a Sergio. Si G1–G4 pasan, seguir (Sergio ya autorizó) y registrar que el Gate pasó.
+
+═══════════════════════════════
+FASE 2 — EJECUCIÓN EN OLAS PARALELAS (rama feat/T-VP0067-CONSISTENTE-PROD-20260929)
+═══════════════════════════════
+Autorización Fase 2: sobre VP-0067 en PRODUCCIÓN se autoriza aplicar patches Airtable, cargar adjuntos, poblar extracción, disparar E2/E3, generar el PDF real y asignar el tasador. Revertir automáticamente un paso si su test falla. NO salir del alcance §2. NO commit/push (lo hace Sergio).
+Antes de cada cambio, registrar el estado original en docs/_evidencia/T-VP0067-CONSISTENTE-PROD-20260929/rollback.md.
+
+BLOQUE 0 — Snapshot real (secuencial, antes de tocar nada): credenciales, URL prod, estado de VP-0067, cadena de render, cuenta Clerk. Si difiere del plan, DETENER y reportar.
+
+BLOQUE 1 — OLA 1 (PARALELA, run_in_background=true — preparación sin colisión):
+  AGENTE A — Ejecutor Datos+Asignación (VP-0067): UN SOLO patch consolidado con todos los valores exactos del oráculo + Hoja 3 + asignación al tasador (mismo record → un solo agente, un solo patch, sin colisión). Donde no exista columna en Airtable, marcar qué requeriría columna nueva y alimentar el input del render.
+  AGENTE B — Ejecutor Adjuntos+Extracción: dejar visibles los archivos adjuntos y sus datos extraídos (V1/V2) para VP-0067 (adjuntos Airtable/Dropbox — objetivo distinto al de A, corre en paralelo).
+  AGENTE C — Ejecutor CI-057 (offline): validar la aritmética corregida contra el XLSM con el harness local (at03-harness.mjs) SIN tocar producción, y dejar el fix listo para aplicar.
+  AGENTE D — Ejecutor Código/Repo: SOLO si una vista exige un cambio de UI inevitable; prepararlo en la rama feat para que Sergio commitee. Preferir datos/config sobre código.
+  Cada uno reporta archivos/records tocados y OK/BLOQUEADO. Un fallo marca solo su sub-bloque.
+
+GATE DE SINCRONÍA S1 — esperar a que A y B cierren OK antes de la OLA 2 (el render necesita datos + adjuntos listos). Aplicar el fix CI-057 de C con rollback; si el equipo juzga inseguro editar C_Formulas con AT03 activo, DETENER y pedir a Sergio togglear AT03 off→on (único toque). Poblar 1US$=$890,33.
+
+BLOQUE 1 — OLA 2 (depende de S1):
+  AGENTE E — Ejecutor Cadena PDF: disparar E2/E3 + Carbone v2 → PDF REAL → dejar el link en Airtable/expediente (habilita V4/V5/V6).
+
+BLOQUE 2 — Corrida REAL punta a punta + tests en PRODUCCIÓN (secuencial tras OLA 2):
+  Recorrer las 6 vistas en la URL de producción, avanzando por los estados del §3, y verificar cada una. Generar: regresion.md (dato-por-dato vs oráculo, incluido -3%/36% y dólar), adjuntos-check.md, extraccion-check.md, informe-check.md (todos los datos + expediente), pdf-check.md (descarga OK). Capturas por vista en docs/_evidencia/T-VP0067-CONSISTENTE-PROD-20260929/.
+
+BLOQUE 3 — AUDITOR CIEGO (agente independiente, general-purpose): "NO leer los logs de los agentes. Verificar SOLO desde el estado final en producción (Airtable, app, PDF): las 6 vistas contra §6, y dictaminar el % de igualdad alcanzado vs MET-6283 y qué diferencias residuales quedan." OK/FAIL por criterio con evidencia.
+
+BLOQUE 4 — ROLLBACK CONDICIONAL: por cada FAIL, revertir esa pieza y documentar.
+
+INVARIANTES INTOCABLES: no alterar los archivos del oráculo; credenciales/tokens; conexiones Google/Apify/Dropbox; IDs de Airtable; C_Formulas/AT03 salvo el fix validado con rollback; no romper otras solicitudes.
+
+REGLAS DURAS: NUNCA exponer secretos · si un endpoint/credencial falla, DETENER con status+body · si una vista no se valida con corrida real, NO marcar HECHO · NO commit/push · todo cambio al rollback ANTES · auditor ciego obligatorio · SIN adendas: entregar una NUEVA VERSIÓN COMPLETA de cada archivo modificado, aplicando los cambios donde corresponde.
+
+ENTREGABLES (rama feat, versión completa por archivo):
+  docs/_planes/PLAN_T-VP0067-CONSISTENTE-PROD-20260929.md
+  docs/_evidencia/T-VP0067-CONSISTENTE-PROD-20260929/ → rollback.md, regresion.md, adjuntos-check.md, extraccion-check.md, informe-check.md, pdf-check.md, capturas por vista, auditor.md, endpoints (sin tokens)
+  docs/_analisis/CIERRE_T-VP0067-CONSISTENTE-PROD-20260929.md (incluir §: paralelismo real logrado — cuántos agentes en paralelo por ola y tiempo total vs estimado secuencial) · entrada en docs/aprendizajes.md
+
+CIERRE — sobreescribí C:\Users\Sergio\Documents\claude-out.txt con UN SOLO bloque markdown, sin decoraciones, escrito para alguien NO TÉCNICO:
+
+1) CONSISTENCIA + ESPEJO: en 1 línea, si VP-0067 quedó consistente en producción y el % de igualdad vs MET-6283 (y qué diferencias quedan, si quedan).
+2) CÓMO LOGUEARTE: con qué cuenta Google entrar para ver VP-0067 como tasador, y en qué URL de producción está el login.
+3) RECORRIDO PASO A PASO (lo principal) — una fila por vista, con el ESTADO que Sergio debe ponerle a la solicitud y la URL exacta a abrir:
+   - PASO 1 · Ver Archivos Adjuntos → estado: ____ · URL: ____
+   - PASO 2 · Ver Datos Extraídos de los archivos → estado: ____ · URL: ____
+   - PASO 3 · Ver la UI del Tasador (datos de esta tasación) → estado: ____ · URL: ____
+   - PASO 4 · Ver la UI del Informe con todos los datos → estado: ____ · URL: ____
+   - PASO 5 · En el Informe, ver el Expediente → dónde tocar · URL: ____
+   - PASO 6 · En el Informe, descargar el PDF → dónde tocar · URL: ____
+   Indicar CLARO el estado de cada paso y, si hay que cambiarlo entre pasos, el ORDEN de estados a seguir (Sergio avanza cambiando el estado manualmente).
+4) LO QUE HIZO CLAUDE CODE (4-6 líneas simples): datos reales cargados, adjuntos y extracción visibles, informe completo, expediente y PDF funcionando. Reversible.
+5) PASOS MANUALES PARA VOS (si aplican): Dropbox → botón "Reauthorize" (es tu login, no va por API); togglear AT03 off→on si el equipo lo pidió; commit+push de la rama feat/T-VP0067-CONSISTENTE-PROD-20260929 si hubo cambios de código. Si NO hay, decir "ninguno".
+6) PARALELISMO: en 1 línea, cuántos agentes corrieron en paralelo y cuánto se ahorró vs hacerlo en serie.
+7) PIEZAS BLOQUEADAS + causa (1 línea c/u), si las hay.
+8) Archivos generados (rutas).
+9) GATE: pasó / detenido en G#.
+10) Estado: TANDA T-VP0067-CONSISTENTE-PROD-20260929 cerrada / detenida en Gate G#.
+
+Tráeme el cierre en un solo bloque markdown listo para copiar, sin spinners ni decoraciones de terminal. Solo el resumen final que necesito pasarle a Claude en el chat.

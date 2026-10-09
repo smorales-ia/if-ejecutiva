@@ -1,0 +1,37 @@
+GUIA DE INICIO · TRABAJO NOCTURNO EN LA NUBE · UI EJECUTIVA
+(un paso por linea; tiempo total: ~10 minutos antes de dormir)
+
+ANTES DE EMPEZAR (solo la primera vez)
+1. Abre GitHub Desktop y confirma que no hay cambios sin commit en if-ejecutiva.
+2. Si hay archivos nuevos (SPEC, Objetivo.md, .claude/agents, esta guia): haz commit y push.
+3. Entra a claude.ai/code desde el navegador e inicia sesion con tu cuenta.
+4. Verifica que puedes crear una "sesion cloud" y que aparece el repo if-ejecutiva.
+5. Si el repo no aparece: conecta GitHub cuando te lo pida (2 clics) y vuelve al paso 4.
+
+CADA NOCHE (lanzar el trabajo)
+6. Abre el archivo docs/Objetivo.md del repo.
+7. Elige las Actividades CONFIRMADAS que quieres correr esta noche (maximo 3 la primera vez).
+8. En claude.ai/code crea una sesion cloud nueva sobre el repo if-ejecutiva.
+9. Copia el "Prompt de lanzamiento" de la primera Actividad y pegalo tal cual. Envia.
+10. Repite los pasos 8 y 9 para cada Actividad elegida (una sesion por Actividad).
+11. Mira 2 minutos que cada sesion arranco a trabajar (sin preguntas pendientes).
+12. Cierra el navegador y vete a dormir. Tu PC puede quedar apagado.
+
+A LA MANANA SIGUIENTE (revisar resultados)
+13. Entra a github.com/smorales-ia/if-ejecutiva y abre la pestana "Pull requests".
+14. Habra un PR por Actividad. Titulo con [OK] = salio bien; [BLOQUEADA] = hubo problema.
+15. En cada PR, lee el resumen y la seccion "Como probarlo tu" (pasos de click en espanol).
+16. En cada PR, abre el archivo docs/_evidencia/ del dia: ahi esta que se hizo y que se probo.
+17. Si te convence un PR: boton verde "Merge pull request". Railway redespliega solo.
+18. Si no te convence: escribe un comentario en el PR o cierralo; nada entro a tu sistema.
+19. Marca en docs/Objetivo.md como HECHA cada Actividad mergeada (o pidele a Claude que lo haga).
+
+SI ALGO SALE MAL
+20. Un PR [BLOQUEADA] no rompe nada: el sistema real no se toco. Lee la seccion "Bloqueos"
+    de su evidencia y comentalo con Claude al dia siguiente.
+21. Si una sesion quedo "esperando respuesta": abrela en claude.ai/code, contesta y sigue sola.
+22. Ante cualquier duda, pregunta en una sesion normal de Claude Code: "lee
+    docs/_planes/SPEC_NOCHE-NUBE-UIEJECUTIVA_20261008.md y dime que paso anoche".
+
+REGLA DE ORO
+Nada entra a tu software real sin que TU apruebes el PR. La noche solo prepara trabajo.

@@ -1,0 +1,111 @@
+Arrancamos TANDA T-PLANTILLA-WORD-XLSM-20261001 — cerrar el 100% de identidad visual usando WORD DE ESCRITORIO sobre la PC de Sergio y el XLSM ORIGINAL como fuente de verdad del layout, celda por celda. Fase 1 (plan) + Fase 2 (ejecución) en una sola tanda con GATE interno, ejecutada por un EQUIPO DE EXPERTOS con MÁXIMO PARALELISMO. Sergio ya autorizó ejecutar sobre VP-2026-0067 y usar su computadora.
+
+CAMBIO DE ESTRATEGIA (respecto a tandas previas)
+Las tandas T-PDF-IDENTICO-20260927 y T-PLANTILLA-DISENO-FINO-20261001 llegaron hasta 82-85% editando la plantilla docx de forma programática. Hoy cambiamos de método: la plantilla se abre y se edita en WORD DE ESCRITORIO (computer use sobre la PC de Sergio) y se calibra tomando los estilos EXACTOS del XLSM que generó el PDF original (anchos de columna en caracteres y pulgadas, altos de fila en puntos, fuentes y tamaños por celda, pesos, colores hex de relleno, bordes con grosor y color, celdas combinadas, alineaciones y padding). El XLSM es la ESPECIFICACIÓN; Word es el EDITOR; Carbone es el RENDER.
+
+OBJETIVO FINAL
+Que el PDF generado para VP-2026-0067 sea VISUALMENTE IDÉNTICO al PDF original (≥98%, meta 100%). Olas previas ya cerraron fotos (Hojas 5-6, 90%); esta tanda cierra Hojas 1, 2, 3 y 8, y verifica el resto. No tocar bindings {d.xxx} ni loops de imágenes; no romper datos ni cálculos.
+
+ORÁCULO (fuente de verdad — SOLO LECTURA, no modificar)
+- PDF ORIGINAL (meta visual): C:\Users\Sergio\Documents\GitHub\if-ejecutiva\docs\_referencias\Informe FRANCISCO VERGARA UNDURRAGA_Met6283.pdf
+- XLSM FUENTE DEL LAYOUT (clave de esta tanda): C:\Users\Sergio\Documents\GitHub\if-ejecutiva\docs\_referencias\1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm
+- PDF línea base vigente (v3): C:\Users\Sergio\Documents\GitHub\if-ejecutiva\docs\_evidencia\T-PLANTILLA-DISENO-FINO-20261001\PDF_generado_VP0067_v3.pdf
+- Plantilla línea base: C:\Users\Sergio\Documents\GitHub\if-ejecutiva\docs\_artefactos\carbone\PLANTILLA_MET_v3.docx
+- Assets reutilizables: docs\_artefactos\carbone\assets_met6283\
+- Motor de render directo contra Carbone (reutilizar, no re-hacer E2/E3): docs\_evidencia\T-PLANTILLA-DISENO-FINO-20261001\render-carbone.mjs
+- Solicitud objetivo: VP-2026-0067 (recmMzeu3eWGxyXsf), base Airtable app9G7lLkIV3CpeLa
+
+ENTORNO
+- Repo: C:\Users\Sergio\Documents\GitHub\if-ejecutiva
+- PC de Sergio con Microsoft Word instalado y vinculado al desktop app (computer use habilitado).
+- PRODUCCIÓN: Railway (main). No se re-apunta E2 en esta tanda — primero validar v4; el re-apunte lo hace Sergio al final.
+- Cadena de PDF: Carbone (plantilla v4) + render directo del motor local; E2/E3 se tocan sólo cuando Sergio confirme el OK final.
+
+CREDENCIALES (todas en .env.local): AIRTABLE_TOKEN, AIRTABLE_BASE_ID, MAKE_API_TOKEN, DROPBOX_*, CARBONE_API_URL, CARBONE_TEMPLATE_ID, CARBONE_API_TOKEN_PROD/TEST. NUNCA imprimir secretos (<CARBONE_PROD>, etc.). Si falta una credencial: DETENER en el Gate y pedirla.
+
+PRINCIPIO DE PARALELISMO (toda la tanda)
+- Lanzar agentes CONCURRENTES con run_in_background=true. No correr en serie lo que puede ir en paralelo.
+- REGLA DE COLISIÓN: Word sólo puede editar un .docx a la vez → OLA 1 trabaja en serie por hoja sobre el mismo documento; el análisis previo (XLSM, PDF, diff) y las validaciones posteriores van en paralelo.
+- GATES DE SINCRONÍA entre olas.
+- AISLAMIENTO DE FALLOS: un fallo marca su sub-bloque como bloqueado; no aborta a los demás.
+- Cada agente reporta: qué tocó, errores, OK/BLOQUEADO.
+
+═══════════════════════════════
+FASE 1 — PLANIFICACIÓN (6 AGENTES EN PARALELO, run_in_background=true, SOLO LECTURA)
+═══════════════════════════════
+Autorización Fase 1: LEER repo, XLSM, PDF original, PDF v3, plantilla v3 y assets. Crear SOLO la rama plan/T-PLANTILLA-WORD-XLSM-20261001 para el documento de plan. NO tocar la plantilla, Airtable, Make ni código. NO commit/push.
+
+AGENTE 1 — Extractor de la ESPECIFICACIÓN de layout desde el XLSM (general-purpose):
+  Abrir el XLSM y, para cada hoja relevante (1, 2, 3, 4, 5, 6, 7, 8), producir una tabla CELDA-POR-CELDA con: fila, columna, texto, fuente (familia/tamaño/peso), color de letra, color de relleno (hex), bordes (lados, grosor en pt, color), ancho de columna en caracteres y pulgadas, alto de fila en puntos, merges (rango), alineación horizontal/vertical, padding, formato de número. Esto es la ESPECIFICACIÓN de identidad visual. Entregar docs/_evidencia/T-PLANTILLA-WORD-XLSM-20261001/xlsm-layout-spec.md con una sub-tabla por hoja.
+
+AGENTE 2 — Comparador PDF v3 vs PDF original hoja por hoja (general-purpose):
+  Diferenciar visualmente ambos PDF y producir diff residual priorizado (alto/medio/bajo impacto). Confirmar las 3 brechas conocidas (Hoja 1 logo + reparto, Hoja 2 densidad tablas + caja VALOR TASACIÓN, Hoja 8 documentos legales + firma) y detectar cualquier otra. Entregar comparacion-v3-residual.md con capturas lado a lado.
+
+AGENTE 3 — Auditor de PLANTILLA_MET_v3.docx (Explore + general-purpose):
+  Abrir la plantilla v3 y mapear cada tabla/sección/estilo contra la especificación del AGENTE 1. Marcar celda por celda qué está desalineado (ancho, alto, fuente, color, borde, merge). Entregar plantilla-v3-desviaciones.md.
+
+AGENTE 4 — Especialista en Word de escritorio sobre PC de Sergio (general-purpose + computer use):
+  Verificar que la PC de Sergio está vinculada (device bridge activo), que Word está instalado y disponible, y preparar la secuencia de operaciones Word que la Fase 2 va a ejecutar: abrir .docx, navegar por páginas, seleccionar tablas, aplicar ancho/alto, fuente, color, borde, merges; usar "Pegado especial" si hace falta importar formato desde el XLSM. Documentar limitaciones conocidas (saltos de página, estilos heredados, interacción con bindings de Carbone). Entregar word-ops-playbook.md.
+
+AGENTE 5 — Guardián de bindings Carbone (general-purpose):
+  Listar TODOS los {d.xxx} y loops {d.images.xxx} de la plantilla v3 con su ubicación exacta en el documento (página/tabla/celda). La Fase 2 debe preservarlos textualmente; ninguna edición en Word puede modificar un marcador. Entregar bindings-inventario.md.
+
+AGENTE 6 — Seguridad y hard rules (general-purpose):
+  Verificar contra ways-of-working: R5, R7, R12, T-C/R8, RO-05. Riesgos de computer use sobre PC del usuario, manejo de secretos, rollback de la plantilla (copia de v3 antes de empezar). <200 palabras.
+
+CONSOLIDAR en docs/_planes/PLAN_T-PLANTILLA-WORD-XLSM-20261001.md: §1 resumen · §2 alcance SÍ/NO · §3 especificación de layout del XLSM (Agente 1) · §4 diff residual priorizado (Agente 2) · §5 desviaciones de la plantilla v3 (Agente 3) · §6 playbook de operaciones Word (Agente 4) · §7 inventario de bindings a preservar (Agente 5) · §8 plan de ejecución por hoja con dependencias · §9 batería de tests visuales (comparación lado a lado, OCR de valores, bindings intactos, regresión de datos) · §10 riesgos y rollback · §11 GATES.
+
+GATE INTERNO — pasar a Fase 2 solo si: (G1) credenciales OK; (G2) especificación del XLSM completa, sin ambigüedad, para las hojas residuales; (G3) PC de Sergio vinculada y Word operable vía computer use; (G4) inventario de bindings cerrado y respaldado; (G5) rollback de v3 preparado. Si algo falla: DETENER, escribir cierre con el plan y pedir a Sergio. Si G1–G5 pasan, seguir y registrar que el Gate pasó.
+
+═══════════════════════════════
+FASE 2 — EJECUCIÓN (rama feat/T-PLANTILLA-WORD-XLSM-20261001)
+═══════════════════════════════
+Autorización Fase 2: editar la plantilla en Word sobre la PC de Sergio vía computer use; subir la nueva versión a Carbone; renderizar PDF v4 con el motor local; validar. NO re-apuntar E2 (lo hace Sergio tras OK). NO commit/push.
+Antes de cada cambio, respaldar la plantilla v3 en docs/_evidencia/T-PLANTILLA-WORD-XLSM-20261001/rollback/PLANTILLA_MET_v3_BACKUP.docx.
+
+BLOQUE 0 — Snapshot real (secuencial): confirmar v3 vigente, bindings 528/528, PC vinculada, Word responde. Si difiere, DETENER.
+
+BLOQUE 1 — OLA 1 (SERIE por colisión en Word: un único .docx abierto):
+  Copiar v3 → PLANTILLA_MET_v4.docx. Abrirla en Word sobre la PC de Sergio vía computer use. Aplicar los ajustes por hoja, en este orden, usando la especificación del XLSM como fuente de verdad y preservando los bindings textualmente:
+  AGENTE A — Hoja 1: marco y proporción del logo, reparto vertical, etiquetas de antecedentes.
+  AGENTE B — Hoja 2: anchos/altos/padding/bordes/fuentes de las 4 tablas (REF. OFERTAS, REF. C.B.R., ANALISIS DE RENTABILIDAD, CUADRO DE VALORACION) y caja VALOR TASACIÓN (tipografía del número, bordes, color de fondo, alineación).
+  AGENTE C — Hoja 3: verificar y corregir Exigencias, Sector, Terreno, Emplazamiento, Características Constructivas, Terminaciones, Habitaciones, Comodidades, Ampliaciones + etiquetas verticales laterales.
+  AGENTE D — Hojas 4 y 7 (ANEXO 1): planos, esquema de superficies, planta de emplazamiento, foto aérea, info SII — alinear a la especificación.
+  AGENTE E — Hoja 8 (ANEXO 2): ROL - AVALUO, PERMISO DE EDIFICACION, RECEPCION FINAL, ESCRITURA, NO EXPROPIACIÓN SERVIU, CERTIFICADO DEUDA TGR + bloque firma.
+  Entre agente y agente, guardar el .docx y correr una verificación rápida de bindings (deben seguir siendo 528/528). Guardar final como PLANTILLA_MET_v4.docx en docs/_artefactos/carbone/.
+
+GATE DE SINCRONÍA S1 — v4 cerrada, bindings 528/528, sin marcadores huérfanos.
+
+BLOQUE 1 — OLA 2 (depende de S1):
+  AGENTE F — Subir PLANTILLA_MET_v4.docx vía POST /template → nuevo CARBONE_TEMPLATE_ID_V4 → render real de VP-0067 con el motor local → PDF_generado_VP0067_v4.pdf en docs/_evidencia/T-PLANTILLA-WORD-XLSM-20261001/. Guardar el templateId en v4-templateid.txt.
+
+BLOQUE 2 — TESTS VISUALES (secuencial tras OLA 2):
+  comparacion-v4-hoja1..8.png lado a lado contra el original · diseno-checklist-v4.md ítem por ítem con tolerancia · regresion-datos-v4.md (14/14, formato chileno, CI-057 = -3%/36%, dólar 1US$=$890,33) · bindings-check-v4.md (sin huérfanos) · correlacion-UI-PDF-v4.md (regresión de la tanda de fotos: Registro Fotográfico no vuelve a cero).
+
+BLOQUE 3 — AUDITOR CIEGO (agente independiente, general-purpose): "Sin leer los logs, abrir el PDF original y el PDF v4 y dictaminar hoja por hoja: % de identidad visual, qué diferencias residuales quedan y si cada una es alta/media/baja. OK/FAIL por criterio del §9 del plan. Reportar % global."
+
+BLOQUE 4 — ROLLBACK CONDICIONAL: por cada FAIL, revertir ese ajuste desde el backup y re-renderizar. Si el conjunto no alcanza ≥98%, DETENER y reportar las piezas que faltan para que Sergio decida.
+
+INVARIANTES INTOCABLES: no modificar los archivos del oráculo; no cambiar bindings {d.xxx} ni loops de imágenes; no alterar datos de VP-0067 ni otras solicitudes; no re-apuntar E2 (lo hace Sergio); conexiones Google/Apify/Dropbox; IDs de Airtable; no re-abrir fotos (Hojas 5-6 OK).
+
+REGLAS DURAS: NUNCA exponer secretos · si computer use falla o Word no responde, DETENER y pedir intervención · si una pieza no se valida con render real, NO marcar HECHO · NO commit/push · rollback preparado ANTES de abrir Word · auditor ciego obligatorio · SIN adendas: PLANTILLA_MET_v4.docx como versión COMPLETA nueva.
+
+ENTREGABLES (rama feat/T-PLANTILLA-WORD-XLSM-20261001):
+  docs/_planes/PLAN_T-PLANTILLA-WORD-XLSM-20261001.md
+  docs/_artefactos/carbone/PLANTILLA_MET_v4.docx (nueva versión completa)
+  docs/_evidencia/T-PLANTILLA-WORD-XLSM-20261001/: xlsm-layout-spec.md, comparacion-v3-residual.md, plantilla-v3-desviaciones.md, word-ops-playbook.md, bindings-inventario.md, rollback/PLANTILLA_MET_v3_BACKUP.docx, PDF_generado_VP0067_v4.pdf, comparacion-v4-hoja1..8.png, diseno-checklist-v4.md, regresion-datos-v4.md, bindings-check-v4.md, correlacion-UI-PDF-v4.md, auditor-ciego-v4.md, v4-templateid.txt
+  docs/_analisis/CIERRE_T-PLANTILLA-WORD-XLSM-20261001.md
+  entrada en docs/aprendizajes.md (lección: Word + XLSM como fuente de verdad del layout, no edición programática del docx a ciegas)
+
+CIERRE — sobreescribí C:\Users\Sergio\Documents\claude-out.txt con UN SOLO bloque markdown, sin decoraciones, para alguien NO TÉCNICO:
+1) % DE IDENTIDAD VISUAL alcanzado vs el original (1 línea) y qué diferencias residuales quedan si las hay.
+2) HECHO (4-5 líneas simples): abrí tu plantilla en Word sobre tu PC, le copié el formato exacto del XLSM original (anchos, altos, fuentes, colores, bordes) hoja por hoja; subí la v4 a Carbone y regeneré el PDF de VP-0067; datos, bindings y fotos quedaron intactos. Reversible.
+3) QUÉ MIRAR: ruta del PDF v4 y de las comparaciones lado a lado por hoja.
+4) TESTS: en verde / total; auditor ciego OK/FAIL con % global.
+5) GATE: ≥98% alcanzado SÍ/NO · si NO, qué piezas faltan.
+6) PASOS MANUALES PARA VOS: a) comparar PDF v4 vs original; b) si OK, actualizar CARBONE_TEMPLATE_ID en .env.local con el id de v4-templateid.txt y re-apuntar el escenario E2; c) commit+push de la rama feat/T-PLANTILLA-WORD-XLSM-20261001.
+7) PIEZAS BLOQUEADAS + causa (si las hay).
+8) Archivos generados (rutas).
+9) Estado: TANDA T-PLANTILLA-WORD-XLSM-20261001 cerrada en ≥98% / detenida en el gate con % actual.
+
+Tráeme el cierre en un solo bloque markdown listo para copiar, sin spinners ni decoraciones de terminal. Solo el resumen final que necesito pasarle a Claude en el chat.
