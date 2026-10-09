@@ -447,7 +447,8 @@ describe('fetchSolicitudes · filtro sin fecha de visita (A-03)', () => {
 
   // Orden de Airtable deliberadamente no cronológico, para ver que se conserva.
   const REGISTROS = [
-    // Lunes 3-ago 09:00, asignada, sin visita → venció el martes 4-ago 15:00.
+    // Lunes 3-ago 09:00, asignada, sin visita → venció el miércoles 5-ago 15:00
+    // (9 + 9 + 6 h hábiles).
     registro('VP-4', { estado: 'asignada', sla_e1_inicio_ts: '2026-08-03 09:00' }),
     // Con fecha de visita → nunca.
     registro('VP-2', {
@@ -492,8 +493,8 @@ describe('fetchSolicitudes · filtro sin fecha de visita (A-03)', () => {
   it('los feriados que devuelve C_Feriados entran al cómputo', async () => {
     // Con miércoles 5 y jueves 6 de agosto como no hábiles, VP-1 (martes 10:00)
     // pasa a vencer el lunes 10-ago 16:00 y a las 12:00 todavía no se lista.
-    // VP-4 (lunes 3-ago 09:00) venció el martes 4-ago 15:00, antes de los
-    // feriados, y se mantiene.
+    // VP-4 (lunes 3-ago 09:00) se corre al viernes 7-ago 15:00 (9 + 9 + 0 + 0
+    // + 6 h hábiles), igual antes del 10-ago, y se mantiene.
     obtenerFeriados.mockResolvedValue(new Set(['2026-08-05', '2026-08-06']))
     const { data } = await fetchSolicitudes('todas', undefined, { sin_fecha_visita: '1' })
     expect(codigos(data)).toEqual(['VP-4'])
