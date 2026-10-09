@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { nuevaSolicitudInternaDefaults } from '../validators/nueva-solicitud-interna'
+import {
+  nuevaSolicitudInternaDefaults,
+  nuevaSolicitudInternaSchema,
+} from '../validators/nueva-solicitud-interna'
 import { toMakeSnakePayload } from './crear-solicitud'
 
 /**
@@ -54,5 +57,86 @@ describe('regresión · el contrato previo sigue intacto', () => {
     const p = payload()
     expect(p.origen_canal).toBe('ingreso_manual')
     expect(p.ejecutiva_clerk_id).toBe('user_123')
+  })
+})
+
+/**
+ * A-01 · C-08 — el precio de venta es referencia para valorizar y se captura
+ * en nueva y en usada. El resto del bloque financiero sigue siendo sólo de
+ * propiedades nuevas.
+ */
+
+const FIN7 = {
+  valorTotalUf: '4.200',
+  subsidio: '100',
+  ahorro: '50',
+  mutuo: '3.000',
+  pagoContado: '10',
+  bonoCaptacion: '5',
+  bonoIntegracion: '5',
+}
+
+const CLAVES_SOLO_NUEVA = [
+  'financiero_valor_total_uf',
+  'financiero_subsidio_uf',
+  'financiero_ahorro_uf',
+  'financiero_mutuo_uf',
+  'financiero_pago_contado_uf',
+  'financiero_bono_captacion_uf',
+  'financiero_bono_integracion_uf',
+  'valor_uf',
+] as const
+
+describe('toMakeSnakePayload · precio de venta (A-01)', () => {
+  it('envía el precio normalizado en una usada', () => {
+    const p = payload({ tipoPropiedadNuevoUsado: 'usada', precioVenta: '2.800' })
+    expect(p.financiero_precio_venta_uf).toBe('2800')
+  })
+
+  it('omite la clave cuando la usada no trae precio, sin romper el armado', () => {
+    let p: Record<string, unknown> = {}
+    expect(() => {
+      p = payload({ tipoPropiedadNuevoUsado: 'usada', precioVenta: '' })
+    }).not.toThrow()
+    expect('financiero_precio_venta_uf' in p).toBe(false)
+  })
+
+  it('el schema no rechaza un precio de venta vacío', () => {
+    const r = nuevaSolicitudInternaSchema.safeParse({
+      ...nuevaSolicitudInternaDefaults,
+      precioVenta: '',
+    })
+    const issues = r.success ? [] : r.error.issues
+    expect(issues.some((i) => i.path[0] === 'precioVenta')).toBe(false)
+  })
+
+  it('en una usada no arrastra el resto del financiero, pero sí el precio', () => {
+    const p = payload({
+      tipoPropiedadNuevoUsado: 'usada',
+      ...FIN7,
+      precioVenta: '2.800',
+    })
+    for (const clave of CLAVES_SOLO_NUEVA) {
+      expect(clave in p).toBe(false)
+    }
+    expect(p.financiero_precio_venta_uf).toBe('2800')
+  })
+
+  it('en una nueva envía las 9 claves normalizadas', () => {
+    const p = payload({
+      tipoPropiedadNuevoUsado: 'nueva',
+      proyecto: 'Condominio Los Andes',
+      ...FIN7,
+      precioVenta: '2.800',
+    })
+    expect(p.financiero_valor_total_uf).toBe('4200')
+    expect(p.financiero_subsidio_uf).toBe('100')
+    expect(p.financiero_ahorro_uf).toBe('50')
+    expect(p.financiero_mutuo_uf).toBe('3000')
+    expect(p.financiero_pago_contado_uf).toBe('10')
+    expect(p.financiero_bono_captacion_uf).toBe('5')
+    expect(p.financiero_bono_integracion_uf).toBe('5')
+    expect(p.valor_uf).toBe('4200')
+    expect(p.financiero_precio_venta_uf).toBe('2800')
   })
 })

@@ -1163,6 +1163,16 @@ function DatosTab({
         </>
       )}
 
+      {/* Precio de venta en usadas — sólo si viene informado (A-01 · C-08) */}
+      {!esNuevo && s.financiero?.precioVenta && (
+        <>
+          <Separator />
+          <Section title="Financiero">
+            <DataRow label="Precio de venta">{s.financiero.precioVenta}</DataRow>
+          </Section>
+        </>
+      )}
+
       <Separator />
 
       <DecisionMotorSection estado={motor} />

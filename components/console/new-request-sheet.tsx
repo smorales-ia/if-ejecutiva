@@ -2187,6 +2187,16 @@ export function NewRequestSheet({
                   </Field>
                 )}
               />
+              {/* Precio de venta: visible en nueva y usada (A-01 · C-08). */}
+              <Controller
+                control={control}
+                name="precioVenta"
+                render={({ field }) => (
+                  <Field label="Precio de venta">
+                    <Input inputMode="numeric" placeholder="0" {...field} />
+                  </Field>
+                )}
+              />
 
               {esNuevo && (
                 <Collapsible title="Financiero" defaultOpen={false}>
@@ -2200,7 +2210,6 @@ export function NewRequestSheet({
                         ["pagoContado", "Pago contado"],
                         ["bonoCaptacion", "Bono captación"],
                         ["bonoIntegracion", "Bono integración"],
-                        ["precioVenta", "Precio de venta"],
                       ] as const
                     ).map(([name, label]) => (
                       <Controller
