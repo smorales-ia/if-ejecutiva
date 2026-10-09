@@ -11,15 +11,25 @@
 ## A-01 · Precio de venta siempre capturable  [CONFIRMADA · prioridad 1]
 
 - **Origen:** C-08 (transcripción `r21.txt`) — «tiene que incorporar el precio de venta… es un precio que a nosotros nos da referencia para poder valorizar».
-- **Qué se hace:** el campo precio de venta debe poder capturarse SIEMPRE al crear y al editar una solicitud, como campo opcional. Hoy sólo existe dentro del bloque Financiero, que se despliega únicamente cuando la propiedad es Nueva — en propiedades usadas es inalcanzable.
-- **Qué NO se hace:** no se crea ningún campo en Airtable (ya existe y viaja en los mappers); no se toca el motor de cálculo; no se hace obligatorio.
-- **Archivos probables:** `components/console/new-request-sheet.tsx`, `components/console/editar-solicitud-form.tsx`, `components/console/solicitud-detail.tsx`, `lib/validators/nueva-solicitud-interna.ts`, `lib/mappers/crear-solicitud.ts`, `lib/mappers/editar-solicitud.ts`.
+- **Qué se hace:** el campo precio de venta debe poder capturarse SIEMPRE al crear y al editar una solicitud, como campo opcional. Hoy está encerrado tras el guard `esNuevo` — y el bloqueo NO es solo visual: los mappers descartan el valor a propósito cuando la propiedad no es Nueva, así que mostrarlo sin tocar los mappers no serviría de nada.
+- **Los 5 puntos del guard `esNuevo` a modificar (verificados en código el 2026-10-08, dry-run):**
+  1. `components/console/new-request-sheet.tsx:2191` — el Collapsible «Financiero» entero sólo se renderiza si `esNuevo`. Sacar el input «Precio de venta» del bloque condicional (visible también en usadas).
+  2. `components/console/editar-solicitud-form.tsx:~1096` — mismo guard en edición («Financiero — sólo propiedades nuevas»). Ídem.
+  3. `components/console/solicitud-detail.tsx:~1137` — el detalle sólo muestra el bloque si `esNuevo && s.financiero`. Mostrar DataRow «Precio de venta» también en usadas cuando hay valor.
+  4. `lib/mappers/crear-solicitud.ts:379-396` — `if (esNuevo)`: en usadas, `financiero_precio_venta_uf` ni siquiera viaja en el payload a SC01. Mover SOLO esa clave fuera del guard.
+  5. `lib/mappers/editar-solicitud.ts:284-296` — mismo guard hacia SC-Edicion con `financieroPrecioVentaUf`. Mover SOLO esa clave fuera del guard.
+- **Qué NO se hace:** no se crea ningún campo en Airtable (`financiero_precio_venta_uf` ya existe); no se toca Make ni el motor de cálculo; no se hace obligatorio; y **los otros 7 campos del bloque Financiero quedan intactos tras el guard `esNuevo`** — ese guard existe a propósito («evita arrastrar valores residuales si la Ejecutiva cambió de rama», comentario en `crear-solicitud.ts`) y se conserva para todo lo que no sea `precioVenta`.
+- **BLOQUE 0 (verificación previa obligatoria, solo lectura):**
+  1. **Primer paso:** leer `docs/_artefactos/make/SC01 - Crear solicitud.blueprint.json` y confirmar que el módulo Airtable mapea `financiero_precio_venta_uf` incondicionalmente (sin filtro por tipo de propiedad). Verificar lo mismo para `financieroPrecioVentaUf` en `docs/_artefactos/make/SC-Edicion.blueprint.json`. Si cualquiera de los dos condiciona la clave → la Actividad queda BLOQUEADA y se documenta (el fix sería de Make, fuera de la noche).
+  2. Confirmar que la Actividad sigue CONFIRMADA en este archivo y que el estado del repo coincide con los 5 puntos de arriba.
+- **Archivos a tocar (lista confirmada por dry-run):** `components/console/new-request-sheet.tsx` · `components/console/editar-solicitud-form.tsx` · `components/console/solicitud-detail.tsx` · `lib/mappers/crear-solicitud.ts` · `lib/mappers/editar-solicitud.ts` · `lib/mappers/crear-solicitud.test.ts` (ampliar, ya existe) · `lib/mappers/editar-solicitud.test.ts` (**nuevo** — hoy no existe). `lib/validators/nueva-solicitud-interna.ts` se verifica pero NO se edita (`precioVenta: z.string()` en la línea 208 ya es opcional de facto).
 - **Criterios de aceptación:**
   - Dado el alta de una solicitud con tipo de propiedad Usada, cuando abro el formulario, entonces puedo ingresar precio de venta sin abrir ningún bloque condicional.
-  - Dado que dejo precio de venta vacío, cuando envío el formulario, entonces el alta procede sin error (campo opcional).
-  - Dado que ingreso un precio, cuando se arma el payload, entonces el mapper lo incluye con el mismo nombre de campo que ya usaba el bloque Financiero.
-  - El bloque Financiero existente no pierde ningún otro campo ni cambia su comportamiento para propiedades Nuevas.
-- **Pruebas:** tests unitarios de `lib/validators/nueva-solicitud-interna.ts` y de los mappers (co-ubicados) + batería estándar (`pnpm lint/typecheck/test/build`).
+  - Dado que dejo precio de venta vacío, cuando envío el formulario, entonces el alta procede sin error (campo opcional) y la clave se omite del payload.
+  - Dada una usada con precio ingresado, cuando se arma el payload (crear y editar), entonces incluye `financiero_precio_venta_uf` / `financieroPrecioVentaUf` con el valor.
+  - Dada una usada, los OTROS campos financieros (`valorTotalUf`, `subsidio`, `ahorro`, `mutuo`, `pagoContado`, `bonoCaptacion`, `bonoIntegracion`, `valor_uf`) siguen SIN viajar en el payload.
+  - Dada una Nueva, el comportamiento es idéntico al actual (sin regresión en formularios, detalle ni payloads).
+- **Pruebas:** ampliar `lib/mappers/crear-solicitud.test.ts` y crear `lib/mappers/editar-solicitud.test.ts` con los 4 casos de los criterios (usada con precio / usada sin precio / usada no arrastra el resto / nueva idéntica) + batería estándar (`pnpm lint/typecheck/test/build`).
 - **Rollback:** cerrar el PR sin merge.
 - **Slug evidencia:** `precio-venta-siempre`
 - **Prompt de lanzamiento (pegar tal cual en la sesión cloud):**
