@@ -381,6 +381,14 @@ describe('píldora de etapa · toneDeEtapa (D-1)', () => {
  * se leen feriados.
  */
 describe('mapRecord · ingresoTs y fechaVisitaProgramada (A-03)', () => {
+  it('la proyección sigue pidiendo los campos que el filtro necesita', () => {
+    // Sin `fecha_visita_programada` en la proyección, toda fila vencida se
+    // listaría como "sin fecha" en silencio; sin `fecha_solicitud` se pierde el
+    // respaldo del ingreso para la cartera sin `sla_e1_inicio_ts`.
+    expect(SOLICITUD_FIELDS).toContain('fecha_visita_programada')
+    expect(SOLICITUD_FIELDS).toContain('fecha_solicitud')
+  })
+
   it('usa sla_e1_inicio_ts como ingreso cuando existe', () => {
     const s = mapear({
       sla_e1_inicio_ts: '2026-08-04 10:00',
