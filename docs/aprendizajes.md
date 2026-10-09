@@ -3568,3 +3568,15 @@ base del Historial de Airtable.
 **Prevención futura:** si un harness Node da `fetch failed` y curl/python conectan, es la autoselección de familia — aplicar esas flags antes de dudar de la cadena.
 
 **Hallazgo (no inconveniente de esta tanda):** el auditor ciego elevó G-4 (PDF imprime Propietario=solicitante; `ensamblador.ts:587`) a FAIL estricto en C3/C4/C5. Preexistente, dato correcto en Airtable, fix en la tanda de plantilla + re-render de esos 3 con el mismo disparador.
+
+### 2026-10-09 — Guía de carga manual MET-6283 como solicitud nueva en producción
+**Contexto:** preparar una guía Word para replicar MET-6283 recorriendo a mano todas las UIs (consola → tasador → informe).
+**Inconveniente:** el alta de la consola no permitía elegir la comuna Colina, así que el recorrido 100 % UI era imposible.
+**Causa raíz:** `COMUNAS_POR_REGION` (`lib/console-data.ts`) es un catálogo fijo y parcial; SC01 resuelve el link a `M_Comunas` por `UPPER({nombre})`, de modo que cualquier comuna fuera de la lista queda inalcanzable desde la UI.
+**Solución aplicada:** se agregó "Colina" a Metropolitana (una línea; `pnpm typecheck` y `pnpm build` limpios).
+**Prevención futura:** antes de un E2E por UI con una comuna nueva, verificar que esté en `COMUNAS_POR_REGION`; a mediano plazo, servir comunas desde `M_Comunas`.
+
+**Inconveniente:** los anexos del PDF salen vacíos si el documento se sube como PDF.
+**Causa raíz:** las ranuras de anexo (`RANURAS_ANEXO`, `lib/informe/imagenes.ts`) exigen `thumbnail_url`, y el checklist sólo genera miniatura para imágenes (`document-checklist.tsx`).
+**Solución aplicada:** la guía hace subir cada documento como JPG y usa un PDF sólo como respaldo de unidad en la consola, para que no entre a la grilla de fotos.
+**Prevención futura:** mientras no exista miniatura para PDF (deuda P2), toda carga que deba imprimirse en anexos va como imagen.
