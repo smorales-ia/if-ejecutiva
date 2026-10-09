@@ -18,6 +18,11 @@ import {
 // escribir la misma duración con el mismo formato (RO-05).
 import { duracionCorta } from '@/lib/sla-cronologia'
 import { desdeSantiago } from '@/lib/sla-habil'
+// A-03: predicado puro del tope de 24 h hábiles y lector de feriados (sólo
+// servidor). El filtro se resuelve acá y no en la UI porque `C_Feriados` sólo
+// se lee del lado del servidor.
+import { obtenerFeriados } from '@/lib/feriados'
+import { sinFechaVisitaVencida, VALOR_SIN_FECHA_VISITA } from '@/lib/sin-fecha-visita'
 // CI-070 Fase 1: normalización de género del eje nuevo/usado (paliativo P-5).
 import { normalizarTipoPropiedad } from '@/lib/tasador/tipo-propiedad'
 // `lib/sla-etapas.ts` importa `TX_SOLICITUDES` de este módulo, así que esto
@@ -108,6 +113,13 @@ export interface SolicitudesFiltros {
   prioridad?: string
   /** Búsqueda: código VP, RUT del comprador o dirección. */
   q?: string
+  /**
+   * `'1'` = sólo las que superaron el tope de 24 h hábiles sin fecha de visita
+   * (§5.2.8 · A-03). **No genera fórmula Airtable**: necesita el calendario
+   * hábil y los feriados, así que se resuelve en memoria en `fetchSolicitudes`,
+   * igual que el orden por SLA. Cualquier otro valor se ignora.
+   */
+  sin_fecha_visita?: string
 }
 
 // Orden de la lista (P5). Mapea a un sort de Airtable.
@@ -698,6 +710,12 @@ export function mapRecord(
     }
   }
   const e1Inicio = parseInstante(f['sla_e1_inicio_ts'])
+  // Instante de ingreso para el tope de §5.2.8 (A-03). El hito de §5.2.2 manda;
+  // si falta, `fecha_solicitud` (dateTime real, no el texto de pantalla de
+  // `fechaSolicitud`) y, último respaldo, el `createdTime` del registro —mismo
+  // criterio que `fechaSolicitud` para las filas legacy—.
+  const ingreso =
+    e1Inicio ?? parseInstante(f['fecha_solicitud']) ?? parseInstante(createdTime)
 
   return {
     id,
@@ -784,6 +802,10 @@ export function mapRecord(
     // Hito §5.2.2 normalizado a ISO para que el formulario de edición lo pueda
     // poner en un `<input type="datetime-local">` sin volver a parsear es-CL.
     slaE1InicioTs: e1Inicio ? e1Inicio.toISOString() : undefined,
+    // A-03: crudos para el filtro «sin fecha de visita · más de 24 h hábiles».
+    // `fechaVisita` no sirve para eso: lleva el centinela 'Por agendar'.
+    ingresoTs: ingreso ? ingreso.toISOString() : undefined,
+    fechaVisitaProgramada: txt(f['fecha_visita_programada']),
 
     // ── Campos operacionales (Tanda D-02) ──────────────────────────────────
     nOperacionCliente: num(f['n_operacion_cliente']),
@@ -932,7 +954,25 @@ export async function fetchSolicitudes(
       'sort[0][direction]': sort.direction,
       fields: SOLICITUD_FIELDS,
     })
-    const data = records.map((r) => mapRecord(r.id, r.createdTime, r.fields, nombresEtapa))
+    let data = records.map((r) => mapRecord(r.id, r.createdTime, r.fields, nombresEtapa))
+    // A-03 · filtro «sin fecha de visita · más de 24 h hábiles» (§5.2.8). Va en
+    // memoria y no en `filterByFormula`: necesita el calendario hábil con
+    // feriados, que Airtable no conoce. `filter` conserva el orden de Airtable,
+    // así que el orden por defecto de la bandeja no cambia. Los feriados sólo
+    // se leen cuando el filtro está activo, y su fallo no tumba la lista: se
+    // degrada a contar sin feriados, que sólo adelanta el corte cuando hay uno
+    // en el intervalo.
+    if (filtros?.sin_fecha_visita === VALOR_SIN_FECHA_VISITA) {
+      let feriados: ReadonlySet<string>
+      try {
+        feriados = await obtenerFeriados()
+      } catch (err) {
+        console.warn('[fetchSolicitudes] no se pudo leer C_Feriados; tope sin feriados', err)
+        feriados = new Set<string>()
+      }
+      const ahora = new Date()
+      data = data.filter((s) => sinFechaVisitaVencida(s, ahora, feriados))
+    }
     // El orden por SLA se resuelve aquí y no en Airtable (ver `ordenarPorSla`).
     // Es seguro hacerlo en memoria porque esta función ya devuelve el conjunto
     // completo y la paginación se aplica después, sobre el array ordenado.

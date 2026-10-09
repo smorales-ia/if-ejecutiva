@@ -1,8 +1,36 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { partesEnSantiago } from './sla-habil'
+// A-03: `fetchSolicitudes` se prueba sin red. Se mockean el cliente de
+// Airtable, el lector de feriados y el catálogo de etapas, conservando lo real
+// de cada módulo (`importOriginal`) para que el resto de este archivo —que
+// prueba funciones puras— no cambie de comportamiento. Las claves son las del
+// alias `@/`; vitest las resuelve a la misma ruta que los imports relativos.
+const listRecords = vi.fn()
+const obtenerFeriados = vi.fn()
+const obtenerMatrizEtapas = vi.fn()
+
+vi.mock('@/lib/airtable-client', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/lib/airtable-client')>()
+  return { ...real, listRecords: (...args: unknown[]) => listRecords(...args) }
+})
+
+vi.mock('@/lib/feriados', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/lib/feriados')>()
+  return { ...real, obtenerFeriados: (...args: unknown[]) => obtenerFeriados(...args) }
+})
+
+vi.mock('@/lib/sla-etapas', async (importOriginal) => {
+  const real = await importOriginal<typeof import('@/lib/sla-etapas')>()
+  return {
+    ...real,
+    obtenerMatrizEtapas: (...args: unknown[]) => obtenerMatrizEtapas(...args),
+  }
+})
+
+import { desdeSantiago, partesEnSantiago } from './sla-habil'
 import {
   buildFormula,
+  fetchSolicitudes,
   mapRecord,
   nombresDeEtapas,
   SLA_ETAPA_FILTROS_VALIDOS,
@@ -341,5 +369,150 @@ describe('píldora de etapa · toneDeEtapa (D-1)', () => {
     for (const valor of SLA_ETAPA_FILTROS) {
       expect(toneDeEtapa(valor)).not.toBeNull()
     }
+  })
+})
+
+/**
+ * A-03 · filtro «sin fecha de visita · más de 24 h hábiles» (§5.2.8).
+ *
+ * El predicado se prueba en `sin-fecha-visita.test.ts`. Acá se fija el
+ * **cableado**: qué instante usa `mapRecord` como ingreso, que el filtro no
+ * toca la fórmula de Airtable, que conserva el orden y que sin el parámetro no
+ * se leen feriados.
+ */
+describe('mapRecord · ingresoTs y fechaVisitaProgramada (A-03)', () => {
+  it('usa sla_e1_inicio_ts como ingreso cuando existe', () => {
+    const s = mapear({
+      sla_e1_inicio_ts: '2026-08-04 10:00',
+      fecha_solicitud: '2026-08-05 11:30',
+    })
+    // Reloj de pared de Santiago (GMT−4 en agosto), no del proceso.
+    expect(s.ingresoTs).toBe('2026-08-04T14:00:00.000Z')
+  })
+
+  it('cae a fecha_solicitud (dateTime) si falta el hito de §5.2.2', () => {
+    const s = mapear({ fecha_solicitud: '2026-08-05 11:30' })
+    expect(s.ingresoTs).toBe('2026-08-05T15:30:00.000Z')
+  })
+
+  it('cae al createdTime del registro como último respaldo', () => {
+    const s = mapear({})
+    expect(s.ingresoTs).toBe('2026-08-10T12:00:00.000Z')
+  })
+
+  it('expone fecha_visita_programada cruda, sin el centinela de pantalla', () => {
+    const con = mapear({ fecha_visita_programada: '2026-08-12' })
+    expect(con.fechaVisitaProgramada).toBe('2026-08-12')
+
+    const sin = mapear({})
+    expect(sin.fechaVisitaProgramada).toBeUndefined()
+    // `fechaVisita` sigue siendo el texto de pantalla; el filtro no lo usa.
+    expect(sin.fechaVisita).toBe('Por agendar')
+
+    expect(mapear({ fecha_visita_programada: '   ' }).fechaVisitaProgramada).toBeUndefined()
+  })
+})
+
+describe('buildFormula · ?sin_fecha_visita no genera fórmula (A-03)', () => {
+  it('la fórmula es idéntica con y sin el filtro', () => {
+    expect(buildFormula('todas', undefined, { sin_fecha_visita: '1' })).toBe(
+      buildFormula('todas', undefined, {})
+    )
+    expect(buildFormula('todas', undefined, { sin_fecha_visita: '1', sla: 'rojo' })).toBe(
+      buildFormula('todas', undefined, { sla: 'rojo' })
+    )
+  })
+})
+
+describe('fetchSolicitudes · filtro sin fecha de visita (A-03)', () => {
+  // Lunes 10-ago-2026 12:00 Santiago.
+  const AHORA = desdeSantiago(2026, 8, 10, 12, 0)
+
+  /** Registro crudo como lo devuelve `listRecords` con `cellFormat: 'string'`. */
+  function registro(codigo: string, fields: Record<string, string | undefined>) {
+    return {
+      id: `rec${codigo}`,
+      createdTime: '2026-07-01T12:00:00.000Z',
+      fields: { codigo_ext: codigo, estado: 'creada', ...fields },
+    }
+  }
+
+  // Orden de Airtable deliberadamente no cronológico, para ver que se conserva.
+  const REGISTROS = [
+    // Lunes 3-ago 09:00, asignada, sin visita → venció el martes 4-ago 15:00.
+    registro('VP-4', { estado: 'asignada', sla_e1_inicio_ts: '2026-08-03 09:00' }),
+    // Con fecha de visita → nunca.
+    registro('VP-2', {
+      sla_e1_inicio_ts: '2026-08-04 10:00',
+      fecha_visita_programada: '2026-08-12',
+    }),
+    // Martes 4-ago 10:00 sin visita → venció el jueves 6-ago 16:00.
+    registro('VP-1', { sla_e1_inicio_ts: '2026-08-04 10:00' }),
+    // Viernes 7-ago 10:00 → vence el martes 11-ago 16:00: todavía no.
+    registro('VP-3', { sla_e1_inicio_ts: '2026-08-07 10:00' }),
+    // Terminal → nunca.
+    registro('VP-5', { estado: 'cerrada', sla_e1_inicio_ts: '2026-07-01 10:00' }),
+  ]
+
+  function codigos(data: { codigoExt: string }[]) {
+    return data.map((s) => s.codigoExt)
+  }
+
+  function formulaDeLlamada(i: number): string {
+    return (listRecords.mock.calls[i][1] as { filterByFormula: string }).filterByFormula
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(AHORA)
+    listRecords.mockResolvedValue(REGISTROS)
+    obtenerFeriados.mockResolvedValue(new Set<string>())
+    obtenerMatrizEtapas.mockResolvedValue(MATRIZ)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("con '1' devuelve sólo las vencidas, en el orden de Airtable", async () => {
+    const { data } = await fetchSolicitudes('todas', undefined, { sin_fecha_visita: '1' })
+    expect(codigos(data)).toEqual(['VP-4', 'VP-1'])
+    expect(obtenerFeriados).toHaveBeenCalledTimes(1)
+  })
+
+  it('los feriados que devuelve C_Feriados entran al cómputo', async () => {
+    // Con miércoles 5 y jueves 6 de agosto como no hábiles, VP-1 (martes 10:00)
+    // pasa a vencer el lunes 10-ago 16:00 y a las 12:00 todavía no se lista.
+    // VP-4 (lunes 3-ago 09:00) venció el martes 4-ago 15:00, antes de los
+    // feriados, y se mantiene.
+    obtenerFeriados.mockResolvedValue(new Set(['2026-08-05', '2026-08-06']))
+    const { data } = await fetchSolicitudes('todas', undefined, { sin_fecha_visita: '1' })
+    expect(codigos(data)).toEqual(['VP-4'])
+  })
+
+  it("sin el parámetro, o con otro valor, devuelve todas y no lee feriados", async () => {
+    for (const filtros of [undefined, {}, { sin_fecha_visita: '0' }, { sin_fecha_visita: 'true' }]) {
+      const { data } = await fetchSolicitudes('todas', undefined, filtros)
+      expect(codigos(data)).toEqual(['VP-4', 'VP-2', 'VP-1', 'VP-3', 'VP-5'])
+    }
+    expect(obtenerFeriados).not.toHaveBeenCalled()
+  })
+
+  it('el filterByFormula enviado a Airtable es idéntico con y sin el filtro', async () => {
+    await fetchSolicitudes('todas', undefined, { estado: 'creada' })
+    await fetchSolicitudes('todas', undefined, { estado: 'creada', sin_fecha_visita: '1' })
+    expect(formulaDeLlamada(1)).toBe(formulaDeLlamada(0))
+  })
+
+  it('si C_Feriados falla no lanza: cuenta sin feriados', async () => {
+    obtenerFeriados.mockRejectedValue(new Error('Airtable caído'))
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const { data } = await fetchSolicitudes('todas', undefined, { sin_fecha_visita: '1' })
+    expect(codigos(data)).toEqual(['VP-4', 'VP-1'])
+    expect(warnSpy).toHaveBeenCalled()
+
+    warnSpy.mockRestore()
   })
 })

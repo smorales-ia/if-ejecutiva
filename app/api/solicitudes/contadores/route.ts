@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { fetchSolicitudes, VISTAS_VALIDAS, type Vista } from '@/lib/solicitudes'
+import {
+  CLAVE_CONTADOR_SIN_FECHA_VISITA,
+  VALOR_SIN_FECHA_VISITA,
+} from '@/lib/sin-fecha-visita'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +27,8 @@ export const CLAVE_CARTERA_ROJO = 'mi_cartera_rojo'
  * GET /api/solicitudes/contadores — conteo por vista para las pestañas (P5) y
  * para el indicador de cartera del header (§1.2).
  *
- * Devuelve `{ contadores: { <vista>: number, mi_cartera_rojo: number } }`.
+ * Devuelve `{ contadores: { <vista>: number, mi_cartera_rojo: number,
+ * sin_fecha_visita_24h: number } }`.
  *
  * Cada entrada es una consulta independiente a Airtable — se ejecutan en
  * paralelo. Un fallo puntual degrada esa entrada a 0 sin tumbar el resto: un
@@ -64,6 +69,22 @@ export async function GET(_request: NextRequest) {
       } catch (err) {
         console.error('[GET /api/solicitudes/contadores] mi_cartera_rojo', err)
         return [CLAVE_CARTERA_ROJO, 0]
+      }
+    })(),
+    (async (): Promise<[string, number]> => {
+      // A-03 · «sin fecha de visita · más de 24 h hábiles» (§5.2.8). Cuenta
+      // sobre `todas`, exactamente la consulta que hace la bandeja con
+      // `?sin_fecha_visita=1` y sin otros filtros: el número y el filtro miden
+      // lo mismo. Es un contador neutro del panel de filtros, no una alerta
+      // (D-18): no alimenta ningún indicador del header.
+      try {
+        const { data } = await fetchSolicitudes('todas', undefined, {
+          sin_fecha_visita: VALOR_SIN_FECHA_VISITA,
+        })
+        return [CLAVE_CONTADOR_SIN_FECHA_VISITA, data.length]
+      } catch (err) {
+        console.error(`[GET /api/solicitudes/contadores] ${CLAVE_CONTADOR_SIN_FECHA_VISITA}`, err)
+        return [CLAVE_CONTADOR_SIN_FECHA_VISITA, 0]
       }
     })(),
   ])

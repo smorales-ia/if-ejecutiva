@@ -35,6 +35,9 @@ export async function GET(request: NextRequest) {
     tasador: searchParams.get('tasador') ?? undefined,
     prioridad: searchParams.get('prioridad') ?? undefined,
     q: searchParams.get('q') ?? undefined,
+    // `?sin_fecha_visita=1` (§5.2.8 · A-03). Se resuelve en memoria dentro de
+    // `fetchSolicitudes`, no en la fórmula: necesita el calendario hábil.
+    sin_fecha_visita: searchParams.get('sin_fecha_visita') ?? undefined,
   }
 
   const rawOrden = searchParams.get('orden') ?? undefined
