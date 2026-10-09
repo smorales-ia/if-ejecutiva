@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { partesEnSantiago } from './sla-habil'
+import { desdeSantiago, partesEnSantiago } from './sla-habil'
 import {
   buildFormula,
   mapRecord,
@@ -212,6 +212,50 @@ describe('mapRecord · slaEtapa (C-2)', () => {
     const s = mapear({})
     expect(s.slaEtapa).toBeUndefined()
     expect(s.slaE1InicioTs).toBeUndefined()
+  })
+
+  // ── A-02 · plazo de etapa en horas hábiles ────────────────────────────────
+  // Mismo string del wire real que arriba ("2026-08-11 14:00", martes).
+
+  it('con feriados y ahora inyectado llena minutosHabilesAlVence (A-02)', () => {
+    const ahora = desdeSantiago(2026, 8, 11, 10, 0)
+    const s = mapRecord(
+      'recAAAAAAAAAAAAAA',
+      '2026-08-10T12:00:00.000Z',
+      { ...BASE, sla_etapa_actual: '2', sla_semaforo_etapa: 'verde', sla_etapa_vence_ts: '2026-08-11 14:00' },
+      NOMBRES,
+      new Set<string>(),
+      ahora
+    )
+    // 10:00 → 14:00 del mismo martes hábil = 240 minutos hábiles.
+    expect(s.slaEtapa?.minutosHabilesAlVence).toBe(240)
+    // La etiqueta de reloj de pared no cambia: usa el mismo `ahora`.
+    expect(s.slaEtapa?.etiqueta).toBe('Vence en 4h')
+  })
+
+  it('sin feriados el plazo hábil no se calcula y la etiqueta queda como hoy (A-02)', () => {
+    const ahora = desdeSantiago(2026, 8, 11, 10, 0)
+    const campos = { ...BASE, sla_etapa_actual: '2', sla_etapa_vence_ts: '2026-08-11 14:00' }
+    const sin = mapRecord('recAAAAAAAAAAAAAA', '2026-08-10T12:00:00.000Z', campos, NOMBRES, undefined, ahora)
+    const con = mapRecord('recAAAAAAAAAAAAAA', '2026-08-10T12:00:00.000Z', campos, NOMBRES, new Set(), ahora)
+    // `null` = no calculable (el helper no fabrica un número sin calendario).
+    expect(sin.slaEtapa?.minutosHabilesAlVence).toBeNull()
+    expect(sin.slaEtapa?.etiqueta).toBe(con.slaEtapa?.etiqueta)
+    // Y la llamada de 4 argumentos de siempre tampoco lo calcula.
+    expect(mapear(campos).slaEtapa?.minutosHabilesAlVence).toBeNull()
+  })
+
+  it('sin slaEtapa no aparece el campo nuevo aunque lleguen feriados (A-02)', () => {
+    const s = mapRecord(
+      'recAAAAAAAAAAAAAA',
+      '2026-08-10T12:00:00.000Z',
+      { ...BASE },
+      NOMBRES,
+      new Set<string>(),
+      desdeSantiago(2026, 8, 11, 10, 0)
+    )
+    expect(s.slaEtapa).toBeUndefined()
+    expect(s).not.toHaveProperty('minutosHabilesAlVence')
   })
 })
 

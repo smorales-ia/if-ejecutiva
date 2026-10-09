@@ -18,6 +18,10 @@ import {
 // escribir la misma duración con el mismo formato (RO-05).
 import { duracionCorta } from '@/lib/sla-cronologia'
 import { desdeSantiago } from '@/lib/sla-habil'
+// A-02: plazo de la etapa en horas hábiles (§5.2.1). Los feriados se leen aquí,
+// server-side, porque el helper es puro y lo consume también el cliente.
+import { obtenerFeriados } from '@/lib/feriados'
+import { minutosHabilesAlVence } from '@/lib/sla-plazo-etapa'
 // CI-070 Fase 1: normalización de género del eje nuevo/usado (paliativo P-5).
 import { normalizarTipoPropiedad } from '@/lib/tasador/tipo-propiedad'
 // `lib/sla-etapas.ts` importa `TX_SOLICITUDES` de este módulo, así que esto
@@ -666,12 +670,18 @@ export function relativeTime(iso: string): string {
  * @param nombresEtapa Rótulos de §5.2.4 por número de etapa, leídos de
  *   `C_SLA_Etapas` una vez por request (ver `nombresDeEtapas`). Opcional: sin
  *   él la etapa se rotula `Etapa {n}` en vez de tumbar la lectura.
+ * @param feriados Fechas `YYYY-MM-DD` de `C_Feriados` (`obtenerFeriados`).
+ *   Opcional: sin ellas `slaEtapa.minutosHabilesAlVence` queda `null` y la UI
+ *   presenta la etapa como antes (A-02 · `lib/sla-plazo-etapa.ts`).
+ * @param ahora Instante de referencia; inyectable para tests.
  */
 export function mapRecord(
   id: string,
   createdTime: string,
   f: Record<string, string | undefined>,
-  nombresEtapa?: ReadonlyMap<number, string>
+  nombresEtapa?: ReadonlyMap<number, string>,
+  feriados?: ReadonlySet<string>,
+  ahora: Date = new Date()
 ): Solicitud {
   // ── Reloj por etapa (RF-53) ──────────────────────────────────────────────
   // `sla_etapa_actual` es la señal de "hay dato de etapa", no el semáforo: lo
@@ -692,9 +702,10 @@ export function mapRecord(
       numero: numeroEtapa,
       nombre: nombresEtapa?.get(numeroEtapa) ?? `Etapa ${numeroEtapa}`,
       tono: tonoEtapaDeFormula(f['sla_semaforo_etapa']),
-      etiqueta: etiquetaEtapa(vence, new Date()),
+      etiqueta: etiquetaEtapa(vence, ahora),
       alertaTs: alerta ? alerta.toISOString() : null,
       venceTs: vence ? vence.toISOString() : null,
+      minutosHabilesAlVence: minutosHabilesAlVence(vence, ahora, feriados),
     }
   }
   const e1Inicio = parseInstante(f['sla_e1_inicio_ts'])
@@ -922,6 +933,16 @@ export async function fetchSolicitudes(
     console.warn('[fetchSolicitudes] no se pudo leer C_SLA_Etapas; etapas sin rótulo', err)
   }
 
+  // Mismo criterio tolerante para los feriados (A-02): sin ellos el plazo de
+  // etapa en horas hábiles no se calcula y la bandeja se ve como antes.
+  // `obtenerFeriados` va cacheado en `lib/feriados.ts`.
+  let feriados: ReadonlySet<string> | undefined
+  try {
+    feriados = await obtenerFeriados()
+  } catch (err) {
+    console.warn('[fetchSolicitudes] no se pudo leer C_Feriados; plazo de etapa sin horas hábiles', err)
+  }
+
   try {
     const records = await listRecords<RawFields>(TX_SOLICITUDES, {
       cellFormat: 'string',
@@ -932,7 +953,9 @@ export async function fetchSolicitudes(
       'sort[0][direction]': sort.direction,
       fields: SOLICITUD_FIELDS,
     })
-    const data = records.map((r) => mapRecord(r.id, r.createdTime, r.fields, nombresEtapa))
+    const data = records.map((r) =>
+      mapRecord(r.id, r.createdTime, r.fields, nombresEtapa, feriados)
+    )
     // El orden por SLA se resuelve aquí y no en Airtable (ver `ordenarPorSla`).
     // Es seguro hacerlo en memoria porque esta función ya devuelve el conjunto
     // completo y la paginación se aplica después, sobre el array ordenado.

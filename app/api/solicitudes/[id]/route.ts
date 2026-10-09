@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { AirtableError, getRecord, isValidRecordId } from '@/lib/airtable-client'
 import { mapRecord, nombresDeEtapas, SOLICITUD_FIELDS, TX_SOLICITUDES } from '@/lib/solicitudes'
 import { obtenerMatrizEtapas } from '@/lib/sla-etapas'
+import { obtenerFeriados } from '@/lib/feriados'
 import { postToMake } from '@/lib/make-client'
 import { editarSolicitudSchema, issuesToCampos } from '@/lib/validators/acciones-solicitud'
 
@@ -44,7 +45,17 @@ export async function GET(
       console.warn('[GET /api/solicitudes/[id]] C_SLA_Etapas ilegible; etapa sin rótulo', errMatriz)
     }
 
-    const data = mapRecord(record.id, record.createdTime, record.fields, nombresEtapa)
+    // A-02: mismos feriados que la bandeja, para que el plazo en horas hábiles
+    // del detalle sea el mismo número (RO-05). Tolerante: si falla, el campo
+    // queda sin calcular y el detalle se ve como antes.
+    let feriados: ReadonlySet<string> | undefined
+    try {
+      feriados = await obtenerFeriados()
+    } catch (errFeriados) {
+      console.warn('[GET /api/solicitudes/[id]] C_Feriados ilegible; plazo de etapa sin horas hábiles', errFeriados)
+    }
+
+    const data = mapRecord(record.id, record.createdTime, record.fields, nombresEtapa, feriados)
     return NextResponse.json({ data })
   } catch (err) {
     if (err instanceof AirtableError && err.status === 404) {
