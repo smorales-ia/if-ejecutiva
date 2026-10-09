@@ -278,14 +278,17 @@ export function mapearEdicionSolicitud(
     // `limpiar` lo omite si viene vacío, de modo que guardar sin tocarlo nunca
     // borra un hito ya escrito.
     slaE1InicioTs: limpiar(d.slaE1InicioTs),
+
+    // Precio de venta: viaja siempre, en nueva y en usada (A-01). Vacío ⇒ clave
+    // omitida ⇒ SC-Edicion escribe vacío.
+    financieroPrecioVentaUf: numeroPlano(d.financiero?.precioVenta),
   }
 
-  // — Financiero (sólo propiedades nuevas) —
+  // — Resto del financiero (sólo propiedades nuevas) —
   if (esNuevo && d.financiero) {
     const f = d.financiero
     Object.assign(cambios, {
       financieroValorTotalUf: numeroPlano(f.valorTotalUf),
-      financieroPrecioVentaUf: numeroPlano(f.precioVenta),
       financieroSubsidioUf: numeroPlano(f.subsidio),
       financieroAhorroUf: numeroPlano(f.ahorro),
       financieroMutuoUf: numeroPlano(f.mutuo),

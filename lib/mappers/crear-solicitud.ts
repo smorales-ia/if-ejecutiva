@@ -371,11 +371,15 @@ export function toMakeSnakePayload(
     // Requiere el módulo 9 apuntando a `{{1.banco_financista_nombre}}`.
     banco_financista_nombre: texto(datos.banco),
     observaciones: texto(datos.observaciones),
+    // Precio de venta: referencia para valorizar, capturable tanto en nueva
+    // como en usada (A-01 · C-08). Queda fuera del guard `esNuevo` a propósito.
+    financiero_precio_venta_uf: numeroPlano(datos.precioVenta),
   }
 
   // ── Bloque financiero (sólo propiedades nuevas) ──────────────────────────
-  // El formulario sólo muestra estos campos cuando la propiedad es nueva; el
-  // guard evita arrastrar valores residuales si la Ejecutiva cambió de rama.
+  // El resto del financiero sigue siendo sólo para propiedades nuevas: el
+  // formulario sólo muestra esos campos en esa rama y el guard evita arrastrar
+  // valores residuales si la Ejecutiva cambió de rama.
   if (esNuevo) {
     Object.assign(campos, {
       financiero_valor_total_uf: numeroPlano(datos.valorTotalUf),
@@ -385,7 +389,6 @@ export function toMakeSnakePayload(
       financiero_pago_contado_uf: numeroPlano(datos.pagoContado),
       financiero_bono_captacion_uf: numeroPlano(datos.bonoCaptacion),
       financiero_bono_integracion_uf: numeroPlano(datos.bonoIntegracion),
-      financiero_precio_venta_uf: numeroPlano(datos.precioVenta),
       // `valor_uf` alimenta `monto_estimado_uf` (fldKZW799xIqMFN1I), que la
       // consola lee y muestra como `montoUf` (lib/solicitudes.ts:209,292).
       // Duplica `financiero_valor_total_uf` a sabiendas: es la misma familia
