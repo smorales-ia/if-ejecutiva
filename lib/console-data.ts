@@ -424,6 +424,15 @@ export interface SlaEtapaSolicitud {
   alertaTs: string | null
   /** `sla_etapa_vence_ts` — instante en que supera su SLA máximo. */
   venceTs: string | null
+  /**
+   * Minutos **hábiles** (§5.2.1) entre el momento de la lectura y `venceTs`,
+   * con signo: positivo = falta, negativo = venció hace ese tiempo hábil.
+   * Lo calcula el read-layer server-side (`mapRecord`) con los feriados de
+   * `C_Feriados`; el cliente no los tiene. `undefined`/`null` = no calculable
+   * (sin feriados o sin `venceTs`), y la UI vuelve a la presentación previa.
+   * Ver `lib/sla-plazo-etapa.ts`.
+   */
+  minutosHabilesAlVence?: number | null
 }
 
 export function slaTone(dias: number, total: number): SlaTone {

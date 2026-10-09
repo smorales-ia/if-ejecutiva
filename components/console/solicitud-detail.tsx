@@ -49,6 +49,7 @@ import { AsignarTasadorDialog } from "@/components/console/asignar-tasador-dialo
 import { EditarSolicitudForm } from "@/components/console/editar-solicitud-form"
 import { DocumentosAdjuntosSheet } from "@/components/console/documentos-adjuntos-sheet"
 import { mapearEdicionSolicitud } from "@/lib/mappers/editar-solicitud"
+import { plazoEtapaDestacado } from "@/lib/sla-plazo-etapa"
 import { cn } from "@/lib/utils"
 import {
   ESTADO_CORREO_CLASSES,
@@ -472,6 +473,17 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       })
     : null
 
+  // A-02 · plazo de etapa en horas hábiles en el lugar destacado. Se evalúa con
+  // el `estado` LOCAL: tras la asignación optimista pasa a `asignada` mientras
+  // `s.slaEtapa` sigue siendo la e1 leída, la etapa deja de corresponder al
+  // estado y la cabecera vuelve a la presentación previa hasta la relectura.
+  const plazo = plazoEtapaDestacado({
+    estado,
+    slaEtapa: s.slaEtapa,
+    slaDias: s.slaDias,
+    slaTotal: s.slaTotal,
+  })
+
   return (
     <div className="flex h-full w-full flex-col bg-background">
       {/* Detail header */}
@@ -481,12 +493,24 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
             {s.codigoExt}
           </h1>
           <StateBadge estado={estado} />
-          <SLABadge dias={s.slaDias} total={s.slaTotal} />
-          <PriorityChip prioridad={s.prioridad} />
-          {/* D-4: la etapa acompaña al agregado, con la misma condición de
-              render que en la bandeja — sin `slaEtapa` no se pinta nada, y
+          {/* D-4 · A-02: misma regla que la bandeja. Con `plazo`, la etapa en
+              horas hábiles va destacada junto al estado y el agregado en días
+              pasa al final. Sin `plazo`, como antes: agregado destacado y la
+              etapa acompañándolo — sin `slaEtapa` no se pinta nada, y
               `SLABadge` además descarta el tono `sin_dato`. */}
-          {s.slaEtapa && <SLABadge etapa={s.slaEtapa} />}
+          {plazo ? (
+            <>
+              <SLABadge etapa={plazo.etapa} />
+              <PriorityChip prioridad={s.prioridad} />
+              <SLABadge dias={plazo.agregado.dias} total={plazo.agregado.total} />
+            </>
+          ) : (
+            <>
+              <SLABadge dias={s.slaDias} total={s.slaTotal} />
+              <PriorityChip prioridad={s.prioridad} />
+              {s.slaEtapa && <SLABadge etapa={s.slaEtapa} />}
+            </>
+          )}
         </div>
         <p className="text-xs text-muted-foreground">
           Modificado {s.modificado} por {s.modificadoPor}

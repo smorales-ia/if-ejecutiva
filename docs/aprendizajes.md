@@ -3568,3 +3568,16 @@ base del Historial de Airtable.
 **Prevención futura:** si un harness Node da `fetch failed` y curl/python conectan, es la autoselección de familia — aplicar esas flags antes de dudar de la cadena.
 
 **Hallazgo (no inconveniente de esta tanda):** el auditor ciego elevó G-4 (PDF imprime Propietario=solicitante; `ensamblador.ts:587`) a FAIL estricto en C3/C4/C5. Preexistente, dato correcto en Airtable, fix en la tanda de plantilla + re-render de esos 3 con el mismo disparador.
+
+### 2026-10-09 — A-02 · plazo de la etapa vigente (tanda nocturna cloud)
+**Contexto:** Actividad A-02 de `docs/Objetivo.md`, tanda autónoma en sesión cloud sin secretos (SPEC_NOCHE-NUBE §4/§7). Evidencia: `docs/_evidencia/20261009_0403_plazo-etapa-vigente.md`.
+
+**Inconveniente 1 — una ficha de `CODE_INCONSISTENCIES.md` desactualizada indujo un fix equivocado.** La primera auditoría ciega, apoyada en CI-037 («nada cierra e2»), recomendó no destacar la e2 roja, y se commiteó (`e631608`).
+**Causa raíz:** CI-037 (19-ago) es anterior al Frente C. Desde el 21-ago, `app/api/tasaciones/[id]/coordinacion/route.ts:229-233` llama a `marcarFinEtapa(id, 2…)` y `(id, 3…)`. Nadie actualizó la ficha.
+**Solución aplicada:** la segunda auditoría ciega lo detectó con un `grep -rn "marcarFinEtapa"`; `e4a09cc` restituyó el comportamiento y dejó la constante `ETAPAS_CON_CIERRE_ESCRITO = {1, 2}` con las rutas citadas.
+**Prevención futura:** antes de actuar sobre una ficha CI-xxx que afirma «nadie llama a X», correr el `grep` de los llamadores (RO-02). La ficha es una foto con fecha, no el estado actual.
+
+**Inconveniente 2 — el gate estándar no puede quedar verde en una VM cloud aunque el diff esté limpio.** `pnpm lint` aborta porque no existe `eslint.config.*`, y `pnpm test` incluye 10 suites de `docs/_evidencia/T-TASADOR-E2E-*` que leen `.env.local`.
+**Causa raíz:** ambas cosas son preexistentes en `main`: la deuda de eslint viene desde el 22-jul, y vitest no excluye `docs/**`.
+**Solución aplicada:** se midió la línea base en `main` antes de tocar nada, se clasificó cada rojo como PREEXISTENTE y se reportó aparte la suite de la app (`pnpm vitest run lib app components`, verde).
+**Prevención futura:** en toda tanda, medir la batería sobre `main` antes del primer cambio. Hasta que se resuelva (tanda propia), el gate de las sesiones cloud debe leerse como «sin rojos nuevos + suite de la app verde».
