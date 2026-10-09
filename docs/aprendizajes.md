@@ -3568,3 +3568,16 @@ base del Historial de Airtable.
 **Prevención futura:** si un harness Node da `fetch failed` y curl/python conectan, es la autoselección de familia — aplicar esas flags antes de dudar de la cadena.
 
 **Hallazgo (no inconveniente de esta tanda):** el auditor ciego elevó G-4 (PDF imprime Propietario=solicitante; `ensamblador.ts:587`) a FAIL estricto en C3/C4/C5. Preexistente, dato correcto en Airtable, fix en la tanda de plantilla + re-render de esos 3 con el mismo disparador.
+
+### 2026-10-09 — A-01 precio de venta siempre capturable (primera tanda nocturna en la nube)
+**Contexto:** Actividad A-01 de `docs/Objetivo.md`, ejecutada en sesión cloud sin secretos siguiendo el SPEC NOCHE-NUBE (planificador → ejecutor → probador → auditor ciego).
+
+**Inconveniente 1 — el gate de 4 verdes no se puede cumplir en una VM limpia.** `pnpm lint` y `pnpm test` salen rojos antes de tocar código.
+**Causa raíz:** el repo no tiene `eslint.config.*` (ESLint 10 aborta), y `vitest` recoge 10 `*.test.mts` de `docs/_evidencia/T-TASADOR-E2E-*` que hacen `readFileSync('.env.local')` al cargar; en la nube no hay `.env.local` por diseño (SPEC §4).
+**Solución aplicada:** se tomó línea base antes de editar (1066 verdes, mismos 10 fallos), se corrió además `pnpm vitest run lib components app` como prueba del código de producto (1079/1079) y la Actividad quedó PARCIAL con la excepción documentada en `docs/_evidencia/20261009_0402_precio-venta-siempre.md`.
+**Prevención futura:** antes de la próxima noche, agregar config de ESLint y excluir `docs/**` del `include` de `vitest.config.mts` (o `skip` sin `.env.local`). Hasta entonces, toda tanda nocturna debe registrar línea base del gate antes de editar.
+
+**Inconveniente 2 — el guard `esNuevo` del mapper de edición borraba datos, no solo los ocultaba.**
+**Causa raíz:** `mapearEdicionSolicitud` manda la foto completa y SC-Edicion escribe todo lo que mapea; una clave omitida llega como `parseNumber(vacío)` y vacía el campo (INFERIDO de `editar-solicitud.ts:29-32,263-265` + blueprint). Una usada con precio lo perdía al guardar.
+**Solución aplicada:** `financieroPrecioVentaUf` fuera del guard (`lib/mappers/editar-solicitud.ts`), con test en `lib/mappers/editar-solicitud.test.ts`.
+**Prevención futura:** al condicionar una clave en un mapper hacia SC-Edicion, asumir que omitirla equivale a borrarla en Airtable.
