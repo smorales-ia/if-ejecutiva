@@ -1093,7 +1093,18 @@ export function EditarSolicitudForm({
         </div>
       </section>
 
-      {/* Financiero — sólo propiedades nuevas */}
+      {/* Precio de venta — siempre visible, nueva y usada (A-01 · C-08) */}
+      <Separator />
+      <FormSection title="Precio de venta">
+        <EditField label="Precio de venta">
+          <Input
+            value={d.financiero?.precioVenta ?? ""}
+            onChange={(e) => setFinanciero("precioVenta", e.target.value)}
+          />
+        </EditField>
+      </FormSection>
+
+      {/* Resto del financiero — sólo propiedades nuevas */}
       {esNuevo && (
         <>
           <Separator />
@@ -1102,12 +1113,6 @@ export function EditarSolicitudForm({
               <Input
                 value={d.financiero?.valorTotalUf ?? ""}
                 onChange={(e) => setFinanciero("valorTotalUf", e.target.value)}
-              />
-            </EditField>
-            <EditField label="Precio de venta">
-              <Input
-                value={d.financiero?.precioVenta ?? ""}
-                onChange={(e) => setFinanciero("precioVenta", e.target.value)}
               />
             </EditField>
             <EditField label="Subsidio">
