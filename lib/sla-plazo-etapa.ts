@@ -36,8 +36,10 @@
  * visita, la que abre SC-Asignar en `app/api/solicitudes/[id]/asignar/route.ts`).
  * Es una condición de presentación, no un número de SLA. El emparejamiento
  * estado↔etapa evita destacar etapas que no corresponden al estado: por
- * ejemplo, una e2 sin cerrar en una solicitud ya `visitada`, o filas antiguas
- * anteriores al Frente C (RF-TAS-05) en las que nadie escribió el fin de e2.
+ * ejemplo, una e2 sin cerrar en una solicitud ya `visitada`. Ojo: una fila
+ * anterior al Frente C (RF-TAS-05) que siga `asignada` con e2 abierta **sí** se
+ * destaca —si está roja, como «Vencida hace …»—, porque para el sistema el
+ * llamado nunca se registró.
  *
  * Además, un **rojo** sólo se destaca si la etapa tiene escritor de cierre
  * (`ETAPAS_CON_CIERRE_ESCRITO`): sin escritor, «Vencida hace …» podría ser un
