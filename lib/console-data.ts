@@ -1415,6 +1415,8 @@ export const COMUNAS_POR_REGION: Record<string, string[]> = {
     "San Miguel",
     "Puente Alto",
     "Colina",
+    "Estación Central",
+    "Quilicura",
   ],
   Valparaíso: ["Valparaíso", "Viña del Mar", "Quilpué", "Concón"],
   Biobío: ["Concepción", "Talcahuano", "San Pedro de la Paz"],
