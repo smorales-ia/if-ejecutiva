@@ -37,6 +37,7 @@ import {
   type Prioridad,
   type Solicitud,
 } from "@/lib/console-data"
+import { plazoEtapaDestacado } from "@/lib/sla-plazo-etapa"
 import { useCatalogos } from "@/lib/use-catalogos"
 import type { Vista } from "@/lib/solicitudes"
 
@@ -471,6 +472,10 @@ function FilaSolicitud({
   selected: boolean
   onSelect: () => void
 }) {
+  // A-02: si el plazo de la etapa es calculable en horas hábiles, ocupa el
+  // lugar destacado y el agregado en días pasa al secundario. Si no, igual que
+  // antes. La decisión es sólo de presentación (`lib/sla-plazo-etapa.ts`).
+  const plazo = plazoEtapaDestacado(s)
   return (
     <li>
       <button
@@ -487,7 +492,11 @@ function FilaSolicitud({
           <span className="text-xs font-bold tracking-tight text-foreground">
             {s.codigoExt}
           </span>
-          <SLABadge dias={s.slaDias} total={s.slaTotal} />
+          {plazo ? (
+            <SLABadge etapa={plazo.etapa} />
+          ) : (
+            <SLABadge dias={s.slaDias} total={s.slaTotal} />
+          )}
         </div>
 
         <div className="flex items-baseline justify-between gap-2">
@@ -497,15 +506,20 @@ function FilaSolicitud({
           <span className="shrink-0 text-xs text-muted-foreground">{s.comuna}</span>
         </div>
 
-        {/* Los dos relojes de §5.2 conviven: el agregado (RF-08) va arriba,
-            relleno y en días; la etapa (RF-53) va acá, neutra y con punto de
-            color. Sin `slaEtapa` no se renderiza nada — el mapper omite el
-            campo cuando `sla_etapa_actual` está vacío, y `SLABadge` además no
-            pinta el tono `sin_dato`. */}
+        {/* Los dos relojes de §5.2 conviven. Con `plazo` (A-02) la etapa
+            (RF-53) va arriba en horas hábiles y el agregado (RF-08, en días)
+            baja acá. Sin `plazo`, como antes: agregado arriba y la etapa acá,
+            neutra y con punto de color. Sin `slaEtapa` no se renderiza nada —
+            el mapper omite el campo cuando `sla_etapa_actual` está vacío, y
+            `SLABadge` además no pinta el tono `sin_dato`. */}
         <div className="flex flex-wrap items-center gap-1.5">
           <StateBadge estado={s.estado} />
           <PriorityChip prioridad={s.prioridad} />
-          {s.slaEtapa && <SLABadge etapa={s.slaEtapa} />}
+          {plazo ? (
+            <SLABadge dias={plazo.agregado.dias} total={plazo.agregado.total} />
+          ) : (
+            s.slaEtapa && <SLABadge etapa={s.slaEtapa} />
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
