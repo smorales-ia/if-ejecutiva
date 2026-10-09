@@ -34,18 +34,21 @@
  * Sólo si la etapa vigente es la que corresponde al estado según §5.2.4 «De →
  * A»: `creada` ↔ e1 (Ingreso de solicitud) y `asignada` ↔ e2 (Coordinación de
  * visita, la que abre SC-Asignar en `app/api/solicitudes/[id]/asignar/route.ts`).
- * Es una condición de presentación, no un número de SLA. Evita destacar una e2
- * que quedó pegada en solicitudes ya visitadas porque las etapas 3–7 no tienen
- * escritor (CI-037).
+ * Es una condición de presentación, no un número de SLA. El emparejamiento
+ * estado↔etapa evita destacar etapas que no corresponden al estado: por
+ * ejemplo, una e2 sin cerrar en una solicitud ya `visitada`, o filas antiguas
+ * anteriores al Frente C (RF-TAS-05) en las que nadie escribió el fin de e2.
  *
  * Además, un **rojo** sólo se destaca si la etapa tiene escritor de cierre
- * (`ETAPAS_CON_CIERRE_ESCRITO`). Hoy es sólo e1, que cierra SC-Asignar vía
- * `marcarFinEtapa(id, 1…)` en `app/api/solicitudes/[id]/asignar/route.ts`.
- * Nada cierra e2 (CI-037): una `asignada` cuyo tasador ya coordinó sigue en e2
- * roja indefinidamente, y destacar «Vencida hace …» sería un vencimiento que
- * puede ser falso (Spec §8: si la etapa no es computable, caer al
- * comportamiento actual, nunca inventar datos). Un e2 verde/ámbar dentro de
- * plazo sí se destaca: mientras quedan horas el dato no depende del cierre.
+ * (`ETAPAS_CON_CIERRE_ESCRITO`): sin escritor, «Vencida hace …» podría ser un
+ * vencimiento falso (Spec §8: si la etapa no es computable, caer al
+ * comportamiento actual, nunca inventar datos). Hoy lo tienen e1 y e2. e1 la
+ * cierra SC-Asignar vía `marcarFinEtapa(id, 1…)` en
+ * `app/api/solicitudes/[id]/asignar/route.ts`; e2 la cierra el registro del
+ * resultado del llamado en IF-03 (`marcarFinEtapa(id, 2…)` en
+ * `app/api/tasaciones/[id]/coordinacion/route.ts`, Frente C · RF-TAS-05). Por
+ * eso una `asignada` con e2 roja es un llamado vencido real que no se
+ * registró, y se destaca como «Vencida hace … hábiles».
  *
  * En cualquier otro caso, `plazoEtapaDestacado` devuelve `null` y la UI se ve
  * exactamente igual que antes.
@@ -99,15 +102,26 @@ export const ETAPA_DESTACABLE_POR_ESTADO: Partial<Record<EstadoSolicitud, 1 | 2>
 
 /**
  * Etapas cuyo fin tiene escritor hoy; sólo para ellas un rojo es un
- * vencimiento verificable. e1 la cierra SC-Asignar (`marcarFinEtapa(id, 1…)`
- * en `app/api/solicitudes/[id]/asignar/route.ts`); e2–e7 no tienen escritor
- * de cierre (CI-037), así que su rojo puede ser una etapa ya terminada que
- * nadie cerró. Cuando el reloj de etapas tenga escritores (CI-005/CI-037), se
- * agregan aquí. Condición de presentación, no número de SLA (RO-05).
+ * vencimiento verificable.
+ *
+ * - e1 la cierra SC-Asignar (`marcarFinEtapa(id, 1…)` en
+ *   `app/api/solicitudes/[id]/asignar/route.ts`).
+ * - e2 la cierra el registro del resultado del llamado en IF-03
+ *   (`marcarFinEtapa(id, 2…)` en `app/api/tasaciones/[id]/coordinacion/route.ts`,
+ *   Frente C · RF-TAS-05). La ficha CI-037 de `docs/CODE_INCONSISTENCIES.md`
+ *   está desactualizada respecto de e2 desde el Frente C.
+ * - e3–e7 no tienen escritor de fin destacable aquí (CI-037). e3 se cierra en
+ *   el mismo `updateRecord` que e2 y la solicitud pasa a e4, que no es
+ *   destacable para ningún estado (`ETAPA_DESTACABLE_POR_ESTADO`).
+ *
+ * Se mantiene como constante aunque hoy cubra todas las etapas destacables:
+ * cuando se agreguen etapas futuras al emparejamiento, su rojo sólo se
+ * destacará si tienen escritor (CI-005/CI-037). Condición de presentación, no
+ * número de SLA (RO-05).
  */
 export const ETAPAS_CON_CIERRE_ESCRITO: ReadonlySet<SlaEtapaSolicitud['numero']> = new Set<
   SlaEtapaSolicitud['numero']
->([1])
+>([1, 2])
 
 export interface PlazoEtapaDestacado {
   /** Lo que consume `SLABadge`; `etiqueta` es el texto en horas hábiles. */
@@ -122,8 +136,11 @@ export interface PlazoEtapaDestacado {
  * `null` (= la UI de antes) si no hay `slaEtapa`, si el tono es `sin_dato`, si
  * falta `venceTs` o `minutosHabilesAlVence`, si la etapa no es la del estado,
  * si un rojo llega en una etapa sin escritor de cierre
- * (`ETAPAS_CON_CIERRE_ESCRITO` · CI-037), o si un verde/ámbar llega con
- * minutos ≤ 0.
+ * (`ETAPAS_CON_CIERRE_ESCRITO`; hoy e1 y e2 lo tienen, así que esta rama sólo
+ * filtra etapas futuras), o si un verde/ámbar llega con minutos ≤ 0.
+ *
+ * Una `asignada` con e2 roja sí se destaca: es un llamado vencido que el
+ * tasador no registró en `app/api/tasaciones/[id]/coordinacion/route.ts`.
  */
 export function plazoEtapaDestacado(
   s: Pick<Solicitud, 'estado' | 'slaEtapa' | 'slaDias' | 'slaTotal'>

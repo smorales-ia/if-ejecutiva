@@ -109,9 +109,10 @@ describe('ETAPA_DESTACABLE_POR_ESTADO', () => {
 })
 
 describe('ETAPAS_CON_CIERRE_ESCRITO', () => {
-  it('contiene e1 (cierre en asignar/route.ts) y no e2 (sin escritor · CI-037)', () => {
+  it('contiene e1 (asignar/route.ts) y e2 (coordinacion/route.ts), no e3 (CI-037)', () => {
     expect(ETAPAS_CON_CIERRE_ESCRITO.has(1)).toBe(true)
-    expect(ETAPAS_CON_CIERRE_ESCRITO.has(2)).toBe(false)
+    expect(ETAPAS_CON_CIERRE_ESCRITO.has(2)).toBe(true)
+    expect(ETAPAS_CON_CIERRE_ESCRITO.has(3)).toBe(false)
   })
 })
 
@@ -177,6 +178,12 @@ describe('plazoEtapaDestacado', () => {
       expect(plazoEtapaDestacado(solicitud('visitada', { numero: 2 }))).toBeNull()
       expect(plazoEtapaDestacado(solicitud('asignada', { numero: 1 }))).toBeNull()
     })
+    it('una asignada ya coordinada (etapa 4 tras cerrar e2 y e3) no se destaca', () => {
+      expect(plazoEtapaDestacado(solicitud('asignada', { numero: 4 }))).toBeNull()
+      expect(
+        plazoEtapaDestacado(solicitud('asignada', { numero: 4, tono: 'rojo', minutosHabilesAlVence: -60 }))
+      ).toBeNull()
+    })
     it('un verde o ámbar llega con minutos ≤ 0', () => {
       expect(plazoEtapaDestacado(solicitud('creada', { minutosHabilesAlVence: 0 }))).toBeNull()
       expect(plazoEtapaDestacado(solicitud('creada', { minutosHabilesAlVence: -10 }))).toBeNull()
@@ -209,19 +216,22 @@ describe('plazoEtapaDestacado', () => {
       expect(plazo?.etapa.etiqueta).toBe('Vencida')
     })
 
-    it('CI-037 · e2 sin escritor de cierre no se destaca como vencida (minutos negativos)', () => {
-      // Nada cierra e2: una asignada cuyo tasador ya coordinó sigue en e2 roja
-      // para siempre. «Vencida hace NNNh hábiles» podría ser falso → UI de antes.
+    it('regresión · e2 roja = llamado vencido no registrado; se destaca (escritor en coordinacion/route.ts)', () => {
+      // e2 la cierra `marcarFinEtapa(id, 2…)` en
+      // app/api/tasaciones/[id]/coordinacion/route.ts cuando el tasador registra
+      // el llamado (Frente C · RF-TAS-05). Una asignada que sigue en e2 roja es
+      // un llamado vencido real: el caso más accionable de C-02.
       const plazo = plazoEtapaDestacado(
         solicitud('asignada', { numero: 2, tono: 'rojo', minutosHabilesAlVence: -2460 })
       )
-      expect(plazo).toBeNull()
+      expect(plazo?.etapa.etiqueta).toBe('Vencida hace 41h hábiles')
+      expect(plazo?.etapa.tono).toBe('rojo')
     })
-    it('CI-037 · e2 roja con 0 minutos tampoco se destaca', () => {
+    it('asignada/e2/rojo con 0 minutos → «Vencida»', () => {
       const plazo = plazoEtapaDestacado(
         solicitud('asignada', { numero: 2, tono: 'rojo', minutosHabilesAlVence: 0 })
       )
-      expect(plazo).toBeNull()
+      expect(plazo?.etapa.etiqueta).toBe('Vencida')
     })
   })
 
