@@ -36,8 +36,19 @@
  * visita, la que abre SC-Asignar en `app/api/solicitudes/[id]/asignar/route.ts`).
  * Es una condición de presentación, no un número de SLA. Evita destacar una e2
  * que quedó pegada en solicitudes ya visitadas porque las etapas 3–7 no tienen
- * escritor (CI-037). En cualquier otro caso, `plazoEtapaDestacado` devuelve
- * `null` y la UI se ve exactamente igual que antes.
+ * escritor (CI-037).
+ *
+ * Además, un **rojo** sólo se destaca si la etapa tiene escritor de cierre
+ * (`ETAPAS_CON_CIERRE_ESCRITO`). Hoy es sólo e1, que cierra SC-Asignar vía
+ * `marcarFinEtapa(id, 1…)` en `app/api/solicitudes/[id]/asignar/route.ts`.
+ * Nada cierra e2 (CI-037): una `asignada` cuyo tasador ya coordinó sigue en e2
+ * roja indefinidamente, y destacar «Vencida hace …» sería un vencimiento que
+ * puede ser falso (Spec §8: si la etapa no es computable, caer al
+ * comportamiento actual, nunca inventar datos). Un e2 verde/ámbar dentro de
+ * plazo sí se destaca: mientras quedan horas el dato no depende del cierre.
+ *
+ * En cualquier otro caso, `plazoEtapaDestacado` devuelve `null` y la UI se ve
+ * exactamente igual que antes.
  */
 
 import { minutosHabilesEntre } from './sla-habil'
@@ -86,6 +97,18 @@ export const ETAPA_DESTACABLE_POR_ESTADO: Partial<Record<EstadoSolicitud, 1 | 2>
   asignada: 2,
 }
 
+/**
+ * Etapas cuyo fin tiene escritor hoy; sólo para ellas un rojo es un
+ * vencimiento verificable. e1 la cierra SC-Asignar (`marcarFinEtapa(id, 1…)`
+ * en `app/api/solicitudes/[id]/asignar/route.ts`); e2–e7 no tienen escritor
+ * de cierre (CI-037), así que su rojo puede ser una etapa ya terminada que
+ * nadie cerró. Cuando el reloj de etapas tenga escritores (CI-005/CI-037), se
+ * agregan aquí. Condición de presentación, no número de SLA (RO-05).
+ */
+export const ETAPAS_CON_CIERRE_ESCRITO: ReadonlySet<SlaEtapaSolicitud['numero']> = new Set<
+  SlaEtapaSolicitud['numero']
+>([1])
+
 export interface PlazoEtapaDestacado {
   /** Lo que consume `SLABadge`; `etiqueta` es el texto en horas hábiles. */
   etapa: Pick<SlaEtapaSolicitud, 'numero' | 'nombre' | 'tono' | 'etiqueta'>
@@ -97,8 +120,10 @@ export interface PlazoEtapaDestacado {
  * Decide si el plazo de la etapa ocupa el lugar destacado y con qué texto.
  *
  * `null` (= la UI de antes) si no hay `slaEtapa`, si el tono es `sin_dato`, si
- * falta `venceTs` o `minutosHabilesAlVence`, si la etapa no es la del estado, o
- * si un verde/ámbar llega con minutos ≤ 0.
+ * falta `venceTs` o `minutosHabilesAlVence`, si la etapa no es la del estado,
+ * si un rojo llega en una etapa sin escritor de cierre
+ * (`ETAPAS_CON_CIERRE_ESCRITO` · CI-037), o si un verde/ámbar llega con
+ * minutos ≤ 0.
  */
 export function plazoEtapaDestacado(
   s: Pick<Solicitud, 'estado' | 'slaEtapa' | 'slaDias' | 'slaTotal'>
@@ -113,6 +138,7 @@ export function plazoEtapaDestacado(
 
   let etiqueta: string
   if (etapa.tono === 'rojo') {
+    if (!ETAPAS_CON_CIERRE_ESCRITO.has(etapa.numero)) return null
     etiqueta = m < 0 ? `Vencida hace ${duracionHabil(-m)} hábiles` : 'Vencida'
   } else {
     if (m <= 0) return null

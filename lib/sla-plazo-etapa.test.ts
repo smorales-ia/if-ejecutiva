@@ -7,6 +7,7 @@ import { desdeSantiago, minutosHabilesEntre } from './sla-habil'
 import {
   duracionHabil,
   ETAPA_DESTACABLE_POR_ESTADO,
+  ETAPAS_CON_CIERRE_ESCRITO,
   minutosHabilesAlVence,
   plazoEtapaDestacado,
 } from './sla-plazo-etapa'
@@ -107,6 +108,13 @@ describe('ETAPA_DESTACABLE_POR_ESTADO', () => {
   })
 })
 
+describe('ETAPAS_CON_CIERRE_ESCRITO', () => {
+  it('contiene e1 (cierre en asignar/route.ts) y no e2 (sin escritor · CI-037)', () => {
+    expect(ETAPAS_CON_CIERRE_ESCRITO.has(1)).toBe(true)
+    expect(ETAPAS_CON_CIERRE_ESCRITO.has(2)).toBe(false)
+  })
+})
+
 describe('plazoEtapaDestacado', () => {
   it('creada/e1/verde, viernes 17:00 → lunes 11:00: «Quedan 3h hábiles», no «2d 18h»', () => {
     const m = minutosHabilesAlVence(
@@ -199,6 +207,21 @@ describe('plazoEtapaDestacado', () => {
       )
       const plazo = plazoEtapaDestacado(solicitud('creada', { tono: 'rojo', minutosHabilesAlVence: m }))
       expect(plazo?.etapa.etiqueta).toBe('Vencida')
+    })
+
+    it('CI-037 · e2 sin escritor de cierre no se destaca como vencida (minutos negativos)', () => {
+      // Nada cierra e2: una asignada cuyo tasador ya coordinó sigue en e2 roja
+      // para siempre. «Vencida hace NNNh hábiles» podría ser falso → UI de antes.
+      const plazo = plazoEtapaDestacado(
+        solicitud('asignada', { numero: 2, tono: 'rojo', minutosHabilesAlVence: -2460 })
+      )
+      expect(plazo).toBeNull()
+    })
+    it('CI-037 · e2 roja con 0 minutos tampoco se destaca', () => {
+      const plazo = plazoEtapaDestacado(
+        solicitud('asignada', { numero: 2, tono: 'rojo', minutosHabilesAlVence: 0 })
+      )
+      expect(plazo).toBeNull()
     })
   })
 
