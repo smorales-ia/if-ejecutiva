@@ -29,6 +29,8 @@ export default async function ConsolaPage({
     tasador?: string
     prioridad?: string
     q?: string
+    /** `'1'` = sin fecha de visita · más de 24 h hábiles (§5.2.8 · A-03). */
+    sin_fecha_visita?: string
     orden?: string
     page?: string
     /** Deep link al detalle (D-01): record ID de la solicitud a preseleccionar. */
@@ -51,6 +53,7 @@ export default async function ConsolaPage({
     tasador: sp.tasador,
     prioridad: sp.prioridad,
     q: sp.q,
+    sin_fecha_visita: sp.sin_fecha_visita,
   }
 
   const orden: OrdenParam | undefined = ORDENES_VALIDOS.includes(sp.orden as OrdenParam)

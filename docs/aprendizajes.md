@@ -3568,3 +3568,10 @@ base del Historial de Airtable.
 **Prevención futura:** si un harness Node da `fetch failed` y curl/python conectan, es la autoselección de familia — aplicar esas flags antes de dudar de la cadena.
 
 **Hallazgo (no inconveniente de esta tanda):** el auditor ciego elevó G-4 (PDF imprime Propietario=solicitante; `ensamblador.ts:587`) a FAIL estricto en C3/C4/C5. Preexistente, dato correcto en Airtable, fix en la tanda de plantilla + re-render de esos 3 con el mismo disparador.
+
+### 2026-10-09 — A-03 filtro «sin fecha de visita > 24 h» (tanda nocturna cloud)
+**Contexto:** primera tanda nocturna autónoma en VM cloud (SPEC_NOCHE-NUBE-UIEJECUTIVA), Actividad A-03 de `docs/Objetivo.md`.
+**Inconveniente:** el gate del SPEC §7 exige `pnpm lint` y `pnpm test` verdes, y ninguno de los dos puede estar verde en un clon limpio de main.
+**Causa raíz:** (a) `pnpm lint` ya no falla con `eslint: not found` como dice la entrada anterior: eslint 10.1.0 está instalado, pero no existe `eslint.config.(js|mjs|cjs)`, así que muere con exit 2. (b) `vitest` sin `include` recoge también `docs/_evidencia/**/*.test.mts`: diez tests E2E de producción que hacen `readFileSync('.env.local')` al cargar el módulo. La VM no tiene `.env.local` y fallan con ENOENT. Por suerte fallan antes de cualquier llamada de red, así que en la nube no tocan Airtable. En la máquina de Sergio, con `.env.local` presente, `pnpm test` **sí** los ejecutaría contra producción.
+**Solución aplicada:** medir la línea base en main antes de editar, verificar `vitest run --exclude 'docs/**' --exclude 'node_modules/**'` por separado y registrar los dos rojos como preexistentes en la evidencia (`docs/_evidencia/20261009_0426_filtro-sin-fecha-visita.md`). La Actividad quedó PARCIAL, no HECHA, por R2.
+**Prevención futura:** en toda tanda nocturna, medir la batería en main antes del primer cambio. Hace falta una tanda propia (con OK de Sergio) para dos cosas: crear `eslint.config.mjs` y agregar `exclude: ['docs/**', ...]` en `vitest.config.mts`, para que `pnpm test` nunca ejecute tests de evidencia contra producción por accidente.

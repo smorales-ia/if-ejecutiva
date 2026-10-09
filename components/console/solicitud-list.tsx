@@ -37,6 +37,12 @@ import {
   type Prioridad,
   type Solicitud,
 } from "@/lib/console-data"
+import {
+  CLAVE_CONTADOR_SIN_FECHA_VISITA,
+  ETIQUETA_SIN_FECHA_VISITA,
+  PARAM_SIN_FECHA_VISITA,
+  VALOR_SIN_FECHA_VISITA,
+} from "@/lib/sin-fecha-visita"
 import { useCatalogos } from "@/lib/use-catalogos"
 import type { Vista } from "@/lib/solicitudes"
 
@@ -85,6 +91,9 @@ const CLAVES_FILTRO = [
   "desde",
   "hasta",
   "q",
+  // Tope de 24 h hábiles sin fecha de visita (§5.2.8 · A-03). Se resuelve en
+  // memoria en el servidor, pero para la URL es un filtro más.
+  PARAM_SIN_FECHA_VISITA,
 ] as const
 
 export function SolicitudList({
@@ -354,6 +363,15 @@ export function SolicitudList({
               }))}
               onChange={(v) => updateParams({ sla_etapa: v })}
             />
+            <FiltroSinFechaVisita
+              activo={get(PARAM_SIN_FECHA_VISITA) === VALOR_SIN_FECHA_VISITA}
+              count={contadores[CLAVE_CONTADOR_SIN_FECHA_VISITA]}
+              onToggle={(activo) =>
+                updateParams({
+                  [PARAM_SIN_FECHA_VISITA]: activo ? null : VALOR_SIN_FECHA_VISITA,
+                })
+              }
+            />
             <div className="col-span-2 flex flex-col gap-1">
               <span className="text-[11px] font-medium text-muted-foreground">
                 Fecha solicitud
@@ -552,5 +570,47 @@ function FilterSelect({
         </SelectContent>
       </Select>
     </div>
+  )
+}
+
+/**
+ * Filtro «sin fecha de visita · más de 24 h hábiles» (§5.2.8 · §5.2.9 · A-03).
+ *
+ * Un toggle nativo con `aria-pressed`, mismo patrón que los chips de la cola
+ * del tasador: es binario, así que un `Select` con "Todas / Sí" sobraría.
+ * Navega (escribe la URL) y no muta nada, por eso la Regla D no aplica.
+ *
+ * **Neutro a propósito** (D-18): el tope no tiene alerta en pantalla, así que
+ * acá no hay rojo, ámbar ni icono de aviso. El número es el mismo contador
+ * gris de las pestañas sin tono y sólo aparece si es mayor que cero.
+ */
+function FiltroSinFechaVisita({
+  activo,
+  count,
+  onToggle,
+}: {
+  activo: boolean
+  count: number | undefined
+  onToggle: (activo: boolean) => void
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={activo}
+      onClick={() => onToggle(activo)}
+      className={cn(
+        "col-span-2 inline-flex h-8 items-center justify-between gap-2 rounded-md border px-2.5 text-xs font-medium transition-colors",
+        activo
+          ? "border-brand bg-brand/10 text-foreground"
+          : "border-input bg-card text-muted-foreground hover:bg-muted hover:text-foreground"
+      )}
+    >
+      <span className="truncate">{ETIQUETA_SIN_FECHA_VISITA}</span>
+      {typeof count === "number" && count > 0 && (
+        <span className="inline-flex min-w-4 items-center justify-center rounded-full bg-muted-foreground/15 px-1 text-[10px] font-semibold leading-none text-muted-foreground">
+          {count}
+        </span>
+      )}
+    </button>
   )
 }

@@ -208,6 +208,19 @@ export interface Solicitud {
    * (REGLA C). ISO 8601.
    */
   slaE1InicioTs?: string
+  /**
+   * Instante de ingreso para el tope de 24 h hábiles de §5.2.8 (A-03), en ISO
+   * 8601. Es `sla_e1_inicio_ts` cuando existe; si falta, `fecha_solicitud`
+   * (dateTime) y, como último respaldo, el `createdTime` del registro. No se
+   * usa `fechaSolicitud`, que es texto de pantalla sin hora.
+   */
+  ingresoTs?: string
+  /**
+   * `fecha_visita_programada` tal como llega de Airtable, `undefined` si está
+   * vacía. Existe porque `fechaVisita` es texto de pantalla con el centinela
+   * 'Por agendar', contra el que no se debe comparar (A-03).
+   */
+  fechaVisitaProgramada?: string
 
   // ── Campos operacionales de TX_Solicitudes (Tanda D-02, 29-jul-2026) ──────
   // Todos opcionales: el tipo lo construyen también los 8 mocks de este archivo
