@@ -1,0 +1,23 @@
+﻿[
+    {
+        "id":  "reckHz7aNdA7W9cNk",
+        "nombre_archivo":  "h2_ref1.jpg",
+        "descripcion":  "ofertas_comparables",
+        "clave_adjunto":  "foto_ofertas_comparables",
+        "estado_extraccion":  "skipped"
+    },
+    {
+        "id":  "recTGF90ucEOKO7xZ",
+        "nombre_archivo":  "h2_ref2.jpg",
+        "descripcion":  "ofertas_comparables",
+        "clave_adjunto":  "foto_ofertas_comparables",
+        "estado_extraccion":  "error"
+    },
+    {
+        "id":  "recmP4prIyp6SqnSY",
+        "nombre_archivo":  "h2_ref3.jpg",
+        "descripcion":  "ofertas_comparables",
+        "clave_adjunto":  "foto_ofertas_comparables",
+        "estado_extraccion":  "skipped"
+    }
+]
