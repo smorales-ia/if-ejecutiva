@@ -338,10 +338,14 @@ export function FotosCategorizadas({
     await onEliminarCategoria(id)
   }
 
-  /* Incluye los rótulos del informe: una personalizada «Habitaciones» o
-     «Ofertas / Comparables» duplicaría en el PDF el pie de una fija. */
+  /* Incluye los rótulos del informe: una personalizada «Ofertas / Comparables»
+     duplicaría en el PDF el pie de una fija. Sólo cuentan las categorías
+     visibles: una heredada vacía («Baños», «Quincho»…) no debe impedir crear la
+     personalizada con ese nombre, que es justo lo que reemplaza a la fija. */
   const nombresExistentes = [
-    ...CATEGORIAS_FOTO.flatMap((c) => [c.label, c.labelInforme]),
+    ...CATEGORIAS_FOTO.filter((c) => categoriaFotoVisible(c, fotos[c.id]?.length ?? 0)).flatMap(
+      (c) => [c.label, c.labelInforme],
+    ),
     ...custom.map((c) => c.nombre),
   ]
 

@@ -10,11 +10,12 @@ import {
 import { CATEGORIAS_FOTO } from './tasaciones'
 
 /**
- * A-16 · los mínimos dinámicos se resuelven **sólo acá** (plan §6.3).
+ * A-16 · los mínimos se resuelven **sólo acá** (plan §6.3).
  *
- * Estos tests fijan el comportamiento que la ficha A-16 declara como asunción
- * reversible. Si el negocio decide mínimos fijos, **estos tests deben fallar**:
- * son el aviso de que el cambio llegó, no un obstáculo a rodear.
+ * Desde el 14-oct-2026 (tarde) **no queda ningún mínimo dinámico**: Sergio retiró
+ * de la pantalla las categorías fijas Baños, Dormitorios y Estacionamientos, que
+ * quedan como heredadas con mínimo 0. Estos tests fijan ese estado; si el negocio
+ * repone los mínimos según lo declarado, deben fallar: son el aviso.
  */
 
 const declarados = (dorm: number, banos: number, estac: number): DeclaradosSeccionB => ({
@@ -23,26 +24,25 @@ const declarados = (dorm: number, banos: number, estac: number): DeclaradosSecci
   estac,
 })
 
-describe('resolverMinimo · A-16 · mínimos dinámicos', () => {
-  it('deriva habitaciones, baños y estacionamientos de lo declarado en la sección B', () => {
+describe('resolverMinimo · A-16 · mínimos', () => {
+  it('14-oct-2026: habitaciones, baños y estacionamientos ya no siguen lo declarado (heredadas, mínimo 0)', () => {
     const d = declarados(5, 3, 2)
-    expect(resolverMinimo('habitaciones', d)).toBe(5)
-    expect(resolverMinimo('banos', d)).toBe(3)
-    expect(resolverMinimo('estacionamientos', d)).toBe(2)
-  })
-
-  it('es el caso que A-16 protege: una casa de 5 dormitorios exige 5 fotos, no 2', () => {
-    // Con mínimos fijos (2·2·1) esta casa se daría por completa con 2 fotos de
-    // habitaciones, que es la degradación de evidencia que la ficha describe.
-    expect(resolverMinimo('habitaciones', declarados(5, 2, 1))).toBe(5)
+    expect(resolverMinimo('habitaciones', d)).toBe(0)
+    expect(resolverMinimo('banos', d)).toBe(0)
+    expect(resolverMinimo('estacionamientos', d)).toBe(0)
   })
 
   it('mantiene fijos los cuatro mínimos de 1 que no dependen de lo declarado', () => {
     const d = declarados(9, 9, 9)
+    expect(resolverMinimo('datos_comparables', d)).toBe(1)
     expect(resolverMinimo('ofertas_comparables', d)).toBe(1)
     expect(resolverMinimo('mapa_ubicacion', d)).toBe(1)
     expect(resolverMinimo('fachada_exterior', d)).toBe(1)
-    expect(resolverMinimo('cocina', d)).toBe(1)
+  })
+
+  it('14-oct-2026 · Dormitorio y Baño (fijas) y Cocina (heredada) exigen 0', () => {
+    const d = declarados(9, 9, 9)
+    for (const id of ['dormitorio', 'bano', 'cocina'] as const) expect(resolverMinimo(id, d)).toBe(0)
   })
 
   it('T-TEMAS1 · las seis nuevas y la heredada living_comedor exigen 0 (Q3)', () => {
@@ -62,10 +62,8 @@ describe('resolverMinimo · A-16 · mínimos dinámicos', () => {
 })
 
 describe('esMinimoDinamico', () => {
-  it('marca exactamente las tres categorías de A-16', () => {
-    expect(esMinimoDinamico('habitaciones')).toBe(true)
-    expect(esMinimoDinamico('banos')).toBe(true)
-    expect(esMinimoDinamico('estacionamientos')).toBe(true)
+  it('14-oct-2026: ninguna categoría es dinámica', () => {
+    for (const { id } of CATEGORIAS_FOTO) expect(esMinimoDinamico(id)).toBe(false)
   })
 
   it('no marca las cinco fijas', () => {
@@ -139,29 +137,18 @@ describe('H-1 · el mínimo se resuelve contra el informe hidratado', () => {
     estac: Number(form.estacionamientos) || 0,
   })
 
-  it('con `informeInicial` hidratado a 5 dormitorios exige 5, no 0', () => {
-    const hidratado = { dormitorios: '5', banos: '3', estacionamientos: '2' }
-    const d = declaradosDeFormulario(hidratado)
-
-    expect(resolverMinimo('habitaciones', d)).toBe(5)
-    expect(resolverMinimo('banos', d)).toBe(3)
-    expect(resolverMinimo('estacionamientos', d)).toBe(2)
+  it('el declarado se sigue derivando del formulario hidratado', () => {
+    // La cadena que H-1 arregló sigue armada: si se reponen los mínimos
+    // dinámicos, `resolverLimiteFoto` los traduce desde estos números.
+    const d = declaradosDeFormulario({ dormitorios: '5', banos: '3', estacionamientos: '2' })
+    expect(d).toEqual({ dorm: 5, banos: 3, estac: 2 })
+    expect(resolverLimiteFoto('dorm', d)).toBe(5)
   })
 
-  it('sin hidratar valdría 0 — el defecto que .A.4 cierra', () => {
-    // Ésta es la forma que devolvía `resolverInforme(tasacion)` a secas, y es
-    // lo que la pantalla usaba hasta .A.4. Se deja explícito para que quede
-    // claro qué se rompió y por qué la página tiene que pasar `informeInicial`.
-    const sinHidratar = { dormitorios: '', banos: '', estacionamientos: '' }
-
-    expect(resolverMinimo('habitaciones', declaradosDeFormulario(sinHidratar))).toBe(0)
-  })
-
-  it('las tres categorías dinámicas siguen siendo dinámicas', () => {
-    // Si alguien fija los mínimos en `MINIMOS_DINAMICOS`, este test cae junto
-    // con los de A-16 de arriba: es el aviso, no un obstáculo a rodear.
-    expect(esMinimoDinamico('habitaciones')).toBe(true)
-    expect(esMinimoDinamico('banos')).toBe(true)
-    expect(esMinimoDinamico('estacionamientos')).toBe(true)
+  it('14-oct-2026: con las categorías retiradas, el mínimo es 0 haya o no hidratación', () => {
+    const hidratado = declaradosDeFormulario({ dormitorios: '5', banos: '3', estacionamientos: '2' })
+    const sinHidratar = declaradosDeFormulario({ dormitorios: '', banos: '', estacionamientos: '' })
+    expect(resolverMinimo('habitaciones', hidratado)).toBe(0)
+    expect(resolverMinimo('habitaciones', sinHidratar)).toBe(0)
   })
 })

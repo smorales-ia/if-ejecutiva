@@ -22,6 +22,33 @@ import {
 const FOTO_IDS = CATEGORIAS_FOTO.map((c) => c.id)
 const ES_PREDEFINIDA = new Set<string>(FOTO_IDS)
 
+const normalizar = (s: string) => s.trim().toLowerCase()
+
+/**
+ * Rótulo de pantalla de cada categoría fija **activa** (no heredada) → su id.
+ *
+ * 14-oct-2026: al volver fijas «Dormitorio» y «Baño», una solicitud podía tener
+ * ya una personalizada con ese mismo nombre (VP-2026-0079 creó «Dormitorio» a
+ * mano). Sin este mapa la pantalla mostraba dos bloques «Dormitorio», uno fijo
+ * vacío y otro personalizado con las fotos. Es sólo de pantalla: la foto sigue
+ * guardada con su `descripcion` original y el PDF imprime el mismo pie, porque el
+ * rótulo personalizado y el `labelInforme` de la fija coinciden.
+ */
+const FIJA_POR_ROTULO: ReadonlyMap<string, CategoriaFotoId> = new Map(
+  CATEGORIAS_FOTO.filter(
+    // Sólo fijas activas de la propiedad cuyo pie de PDF es su rótulo (Sector,
+    // Dormitorio, Baño): así juntar no cambia nada fuera de la pantalla. Quedan
+    // fuera «Fachada» (pie «Fachada / Exterior» y ranura propia del PDF) y las de
+    // referencias (una personalizada «Datos de Comparables» no dispara RF-09).
+    (c) => !c.heredada && c.seccion === 'propiedad' && c.labelInforme === c.label,
+  ).map((c) => [normalizar(c.label), c.id]),
+)
+
+/** Id de la fija activa cuyo rótulo es `nombre`, o `undefined`. */
+function fijaConRotulo(nombre: string): CategoriaFotoId | undefined {
+  return FIJA_POR_ROTULO.get(normalizar(nombre))
+}
+
 export type FotosPorCategoriaId = Record<CategoriaFotoId, FotoAdjunta[]>
 
 export interface RepartoFotos {
@@ -68,14 +95,21 @@ export function repartirFotos(
   customPrevio: readonly FotoCategoriaCustom[],
 ): RepartoFotos {
   const fotosPredefinidas = fotosPorCategoriaVacias()
-  const categoriasCustom: FotoCategoriaCustom[] = customPrevio.map((c) => ({
-    ...c,
-    fotos: [],
-  }))
+  // Una personalizada del borrador con el nombre de una fija activa se descarta:
+  // sus fotos van a la fija (ver FIJA_POR_ROTULO).
+  const categoriasCustom: FotoCategoriaCustom[] = customPrevio
+    .filter((c) => fijaConRotulo(c.nombre) === undefined)
+    .map((c) => ({ ...c, fotos: [] }))
 
   for (const foto of fotos) {
     if (ES_PREDEFINIDA.has(foto.categoria)) {
       fotosPredefinidas[foto.categoria as CategoriaFotoId].push(foto)
+      continue
+    }
+
+    const fija = fijaConRotulo(foto.categoria)
+    if (fija) {
+      fotosPredefinidas[fija].push(foto)
       continue
     }
 

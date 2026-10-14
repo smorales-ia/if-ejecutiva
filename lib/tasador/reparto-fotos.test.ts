@@ -20,10 +20,10 @@ const foto = (categoria: string, n = 1): FotoAdjunta => ({
 })
 
 describe('las categorías del catálogo', () => {
-  it('parte con todas vacías, ni una más (8 de §2.6 + mapa_referencias + 6 de T-TEMAS1 + datos_comparables)', () => {
+  it('parte con todas vacías, ni una más (8 de §2.6 + mapa_referencias + 6 de T-TEMAS1 + datos_comparables + dormitorio/bano)', () => {
     const vacias = fotosPorCategoriaVacias()
     expect(Object.keys(vacias)).toHaveLength(CATEGORIAS_FOTO.length)
-    expect(Object.keys(vacias)).toHaveLength(16)
+    expect(Object.keys(vacias)).toHaveLength(18)
     expect(Object.values(vacias).every((v) => v.length === 0)).toBe(true)
   })
 
@@ -119,6 +119,33 @@ describe('categorías personalizadas', () => {
     expect(fotosPredefinidas.cocina[0].nombre).toBe('IMG_2.jpg')
     expect(categoriasCustom).toHaveLength(1)
     expect(categoriasCustom[0].nombre).toBe('Cocina')
+  })
+
+  it('14-oct-2026 · una personalizada «Dormitorio» se muestra dentro de la fija Dormitorio (VP-2026-0079)', () => {
+    const previa: FotoCategoriaCustom = { id: 'cat-d', nombre: 'Dormitorio', minimo: 0, fotos: [] }
+    const { fotosPredefinidas, categoriasCustom } = repartirFotos(
+      [foto('Dormitorio', 1), foto('Dormitorio', 2), foto('dormitorio', 3)],
+      [previa],
+    )
+
+    expect(fotosPredefinidas.dormitorio.map((f) => f.nombre)).toEqual([
+      'IMG_1.jpg',
+      'IMG_2.jpg',
+      'IMG_3.jpg',
+    ])
+    // Ni la categoría del borrador ni una nueva: no queda un segundo bloque.
+    expect(categoriasCustom).toHaveLength(0)
+  })
+
+  it('sólo junta con Sector, Dormitorio y Baño: «Fachada» y «Baño Principal» siguen personalizadas', () => {
+    const { fotosPredefinidas, categoriasCustom } = repartirFotos(
+      [foto('Baño', 1), foto('Fachada', 2), foto('Baño Principal', 3)],
+      [],
+    )
+
+    expect(fotosPredefinidas.bano).toHaveLength(1)
+    expect(fotosPredefinidas.fachada_exterior).toHaveLength(0)
+    expect(categoriasCustom.map((c) => c.nombre)).toEqual(['Fachada', 'Baño Principal'])
   })
 })
 

@@ -29,6 +29,14 @@
  * **Si el negocio fija los mínimos, cambiar SÓLO las tres entradas de
  * `MINIMOS_DINAMICOS` a su número.** No hay otro punto de cambio: el catálogo
  * declara qué categoría es dinámica, y este módulo decide en qué se traduce.
+ *
+ * ## Retirados el 14-oct-2026 (tarde)
+ *
+ * Sergio sacó de la pantalla las categorías fijas Baños, Dormitorios y
+ * Estacionamientos (quedan como heredadas con mínimo 0, ver `CATEGORIAS_FOTO`).
+ * Sin categoría no hay dónde exigir el mínimo, así que hoy **ninguna categoría
+ * es dinámica** y `MINIMOS_DINAMICOS` queda vacío. `resolverLimiteFoto` sigue
+ * sabiendo traducir `'dorm' | 'banos' | 'estac'` por si el negocio los repone.
  */
 
 import { CATEGORIAS_FOTO, type CategoriaFotoId, type LimiteFoto } from '@/lib/tasador/tasaciones'
@@ -49,16 +57,13 @@ export interface DeclaradosSeccionB {
 }
 
 /**
- * Las tres categorías cuyo mínimo depende de lo declarado (**A-16**).
+ * Las categorías cuyo mínimo depende de lo declarado (**A-16**). Vacío desde el
+ * 14-oct-2026: eran `habitaciones → 'dorm'`, `banos → 'banos'` y
+ * `estacionamientos → 'estac'`, hoy categorías heredadas con mínimo 0.
  *
- * El valor es la **clave del dato declarado**, no un número: es lo que hace que
- * fijarlos sea sustituir `'dorm'` por `2` acá y nada más.
+ * El valor es la **clave del dato declarado**, no un número.
  */
-const MINIMOS_DINAMICOS = {
-  habitaciones: 'dorm',
-  banos: 'banos',
-  estacionamientos: 'estac',
-} as const satisfies Partial<Record<CategoriaFotoId, keyof DeclaradosSeccionB>>
+const MINIMOS_DINAMICOS: Partial<Record<CategoriaFotoId, keyof DeclaradosSeccionB>> = {}
 
 /**
  * Traduce el límite declarado en el catálogo a un número concreto.

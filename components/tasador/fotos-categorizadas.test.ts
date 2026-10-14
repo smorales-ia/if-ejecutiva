@@ -52,8 +52,8 @@ const totalHeader = (fotos: FotosPorCategoria, custom: FotoCategoriaCustom[]) =>
   )
 
 describe('evaluarCategorias · las categorías del catálogo', () => {
-  it('rinde un estado por categoría visible (16 del catálogo menos la heredada vacía)', () => {
-    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(15)
+  it('rinde un estado por categoría visible (18 del catálogo menos las 10 heredadas vacías)', () => {
+    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(8)
   })
 
   it('14-oct-2026 · primero las referencias (con «Datos de Comparables»), después la visita', () => {
@@ -64,17 +64,34 @@ describe('evaluarCategorias · las categorías del catálogo', () => {
       'Mapa de referencias',
       'Fachada',
       'Sector',
-      'Casa',
-      'Living',
-      'Comedor',
-      'Cocina',
-      'Baños',
-      'Dormitorios',
-      'Terraza',
-      'Quincho',
-      'Estacionamientos',
+      'Dormitorio',
+      'Baño',
     ])
   })
+
+  it.each([
+    'living',
+    'comedor',
+    'cocina',
+    'casa',
+    'banos',
+    'habitaciones',
+    'terraza',
+    'quincho',
+    'estacionamientos',
+  ] as const)(
+    '14-oct-2026 · la fija retirada %s no se ofrece; con fotos previas aparece y exige 0',
+    (id) => {
+      expect(evaluarCategorias(vacio(), declarados).some((e) => e.id === id)).toBe(false)
+      const conFotos = { ...vacio(), [id]: [foto(1), foto(2)] }
+      const estado = evaluarCategorias(conFotos, { dorm: 5, banos: 4, estac: 3 }).find(
+        (e) => e.id === id,
+      )!
+      expect(estado.count).toBe(2)
+      expect(estado.min).toBe(0)
+      expect(estado.completa).toBe(true)
+    },
+  )
 
   it('las cuatro de referencias van juntas y al principio', () => {
     const secciones = evaluarCategorias(vacio(), declarados).map((e) => e.seccion)
@@ -106,42 +123,28 @@ describe('evaluarCategorias · las categorías del catálogo', () => {
 
   it('el contador sube en la misma interacción en que se agrega una foto', () => {
     const fotos = vacio()
-    expect(evaluarCategorias(fotos, declarados).find((e) => e.id === 'cocina')!.count).toBe(0)
+    expect(evaluarCategorias(fotos, declarados).find((e) => e.id === 'fachada_exterior')!.count).toBe(0)
 
-    const conFoto = { ...fotos, cocina: [foto(1)] }
-    const cocina = evaluarCategorias(conFoto, declarados).find((e) => e.id === 'cocina')!
-    expect(cocina.count).toBe(1)
-    expect(cocina.completa).toBe(true)
-    expect(cocina.faltan).toBe(0)
+    const conFoto = { ...fotos, fachada_exterior: [foto(1)] }
+    const fachada = evaluarCategorias(conFoto, declarados).find((e) => e.id === 'fachada_exterior')!
+    expect(fachada.count).toBe(1)
+    expect(fachada.completa).toBe(true)
+    expect(fachada.faltan).toBe(0)
   })
 
   it('el contador baja en la misma interacción en que se elimina', () => {
-    const conDos = { ...vacio(), banos: [foto(1), foto(2)] }
-    expect(evaluarCategorias(conDos, declarados).find((e) => e.id === 'banos')!.completa).toBe(
-      true,
-    )
+    const conUna = { ...vacio(), fachada_exterior: [foto(1)] }
+    expect(
+      evaluarCategorias(conUna, declarados).find((e) => e.id === 'fachada_exterior')!.completa,
+    ).toBe(true)
 
-    const conUna = { ...conDos, banos: [foto(1)] }
-    const banos = evaluarCategorias(conUna, declarados).find((e) => e.id === 'banos')!
-    expect(banos.count).toBe(1)
-    expect(banos.completa).toBe(false)
-    expect(banos.faltan).toBe(1)
-  })
-
-  it('el mínimo de habitaciones sigue lo declarado, no un literal del componente', () => {
-    const fotos = { ...vacio(), habitaciones: [foto(1), foto(2)] }
-    const conDos = evaluarCategorias(fotos, declarados).find((e) => e.id === 'habitaciones')!
-    expect(conDos.completa).toBe(true)
-
-    // La misma foto contra una casa de 5 dormitorios ya no alcanza.
-    const conCinco = evaluarCategorias(fotos, { dorm: 5, banos: 2, estac: 1 }).find(
-      (e) => e.id === 'habitaciones',
-    )!
-    expect(conCinco.min).toBe(5)
-    expect(conCinco.completa).toBe(false)
+    const sinFotos = { ...conUna, fachada_exterior: [] }
+    const fachada = evaluarCategorias(sinFotos, declarados).find((e) => e.id === 'fachada_exterior')!
+    expect(fachada.count).toBe(0)
+    expect(fachada.completa).toBe(false)
+    expect(fachada.faltan).toBe(1)
   })
 })
-
 describe('evaluarCustom · RF-TAS-14 · sin mínimo', () => {
   const nueva = (over: Partial<FotoCategoriaCustom> = {}): FotoCategoriaCustom => ({
     id: 'cat-1',

@@ -874,6 +874,8 @@ export type CategoriaFotoId =
   | 'datos_comparables'
   | 'fachada_exterior'
   | 'sector'
+  | 'dormitorio'
+  | 'bano'
   | 'casa'
   | 'living'
   | 'comedor'
@@ -954,6 +956,30 @@ export interface CategoriaFoto {
  * `living_comedor` queda **heredada**: la reemplazan `living` y `comedor`, pero
  * hay solicitudes con fotos ahí (VP-2026-0067/0073–0077) que no se migran.
  *
+ * ## Heredadas de la tarde del 14-oct-2026 (pedido de Sergio)
+ *
+ * `casa`, `banos`, `habitaciones`, `terraza`, `quincho` y `estacionamientos`
+ * dejan de ofrecerse: el tasador usa categorías personalizadas con el rótulo
+ * exacto del informe («Baño Principal», «Dormitorio»…). Quedan como
+ * **heredadas** y no se borran del catálogo porque hay solicitudes con fotos en
+ * ellas (VP-2026-0067: 2 en `banos`, 3 en `habitaciones`): sin la clave, esas
+ * fotos caerían como personalizadas «banos»/«habitaciones» y el PDF imprimiría
+ * la clave cruda en vez de «Baños»/«Habitaciones».
+ *
+ * ⚠ Con esto **se retiran los mínimos dinámicos de A-16**: ninguna categoría
+ * exige ya tantas fotos como dormitorios, baños o estacionamientos declarados.
+ *
+ * ## Las cuatro fijas de la propiedad (14-oct-2026, tarde · pedido de Sergio)
+ *
+ * «Fotos de la propiedad» ofrece siempre, en toda propiedad y en este orden:
+ * **Fachada, Sector, Dormitorio y Baño**. `living`, `comedor` y `cocina` pasan a
+ * heredadas. `dormitorio` y `bano` son claves **nuevas** —no reutilizan
+ * `habitaciones`/`banos`— para que el PDF imprima «Dormitorio» y «Baño» como el
+ * informe original, sin cambiar el «Habitaciones»/«Baños» de las solicitudes
+ * antiguas. Una personalizada que ya se llamaba igual que una fija (p. ej. la
+ * «Dormitorio» que se creó a mano en VP-2026-0079) se muestra dentro de la fija
+ * (`lib/tasador/reparto-fotos.ts`).
+ *
  * `labelInforme` conserva los pies de foto que el PDF imprimía antes de
  * T-TEMAS1; en las categorías nuevas coincide con `label`, que es lo que el PDF
  * ya imprimía cuando el tasador las creaba como personalizadas.
@@ -975,15 +1001,17 @@ export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
   { id: 'mapa_referencias', label: 'Mapa de referencias', labelCorto: 'Mapa ref.', labelInforme: 'Mapa de referencias', seccion: 'referencias', min: 0, max: null },
   { id: 'fachada_exterior', label: 'Fachada', labelCorto: 'Fachada', labelInforme: 'Fachada / Exterior', seccion: 'propiedad', min: 1, max: null },
   { id: 'sector', label: 'Sector', labelCorto: 'Sector', labelInforme: 'Sector', seccion: 'propiedad', min: 0, max: null },
-  { id: 'casa', label: 'Casa', labelCorto: 'Casa', labelInforme: 'Casa', seccion: 'propiedad', min: 0, max: null },
-  { id: 'living', label: 'Living', labelCorto: 'Living', labelInforme: 'Living', seccion: 'propiedad', min: 0, max: null },
-  { id: 'comedor', label: 'Comedor', labelCorto: 'Comedor', labelInforme: 'Comedor', seccion: 'propiedad', min: 0, max: null },
-  { id: 'cocina', label: 'Cocina', labelCorto: 'Cocina', labelInforme: 'Cocina', seccion: 'propiedad', min: 1, max: null },
-  { id: 'banos', label: 'Baños', labelCorto: 'Baños', labelInforme: 'Baños', seccion: 'propiedad', min: 'banos', max: null },
-  { id: 'habitaciones', label: 'Dormitorios', labelCorto: 'Dormitorios', labelInforme: 'Habitaciones', seccion: 'propiedad', min: 'dorm', max: null },
-  { id: 'terraza', label: 'Terraza', labelCorto: 'Terraza', labelInforme: 'Terraza', seccion: 'propiedad', min: 0, max: null },
-  { id: 'quincho', label: 'Quincho', labelCorto: 'Quincho', labelInforme: 'Quincho', seccion: 'propiedad', min: 0, max: null },
-  { id: 'estacionamientos', label: 'Estacionamientos', labelCorto: 'Estac.', labelInforme: 'Estacionamientos', seccion: 'propiedad', min: 'estac', max: null },
+  { id: 'dormitorio', label: 'Dormitorio', labelCorto: 'Dormitorio', labelInforme: 'Dormitorio', seccion: 'propiedad', min: 0, max: null },
+  { id: 'bano', label: 'Baño', labelCorto: 'Baño', labelInforme: 'Baño', seccion: 'propiedad', min: 0, max: null },
+  { id: 'living', label: 'Living', labelCorto: 'Living', labelInforme: 'Living', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'comedor', label: 'Comedor', labelCorto: 'Comedor', labelInforme: 'Comedor', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'cocina', label: 'Cocina', labelCorto: 'Cocina', labelInforme: 'Cocina', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'casa', label: 'Casa', labelCorto: 'Casa', labelInforme: 'Casa', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'banos', label: 'Baños', labelCorto: 'Baños', labelInforme: 'Baños', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'habitaciones', label: 'Dormitorios', labelCorto: 'Dormitorios', labelInforme: 'Habitaciones', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'terraza', label: 'Terraza', labelCorto: 'Terraza', labelInforme: 'Terraza', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'quincho', label: 'Quincho', labelCorto: 'Quincho', labelInforme: 'Quincho', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'estacionamientos', label: 'Estacionamientos', labelCorto: 'Estac.', labelInforme: 'Estacionamientos', seccion: 'propiedad', heredada: true, min: 0, max: null },
   { id: 'living_comedor', label: 'Living / Comedor', labelCorto: 'Living/Com.', labelInforme: 'Living / Comedor', seccion: 'propiedad', heredada: true, min: 0, max: null },
 ] as const)
 
