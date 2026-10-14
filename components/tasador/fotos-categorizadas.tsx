@@ -363,9 +363,10 @@ export function FotosCategorizadas({
       />
 
       {/*
-        T-TEMAS1 · R2 · una sección por grupo del catálogo. Las personalizadas y
-        su creador cierran la sección de la propiedad, antes de las referencias:
-        son recintos de la propiedad que el catálogo no trae.
+        T-TEMAS1 · R2 · una sección por grupo del catálogo, en el orden de
+        SECCIONES_FOTO (referencias arriba desde el 14-oct-2026). Las
+        personalizadas y su creador cierran la sección de la propiedad: son
+        recintos de la propiedad que el catálogo no trae.
       */}
       {SECCIONES_FOTO.map((s) => (
         <section key={s.id} className="flex flex-col gap-4" aria-labelledby={`seccion-fotos-${s.id}`}>

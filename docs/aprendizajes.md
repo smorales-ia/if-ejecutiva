@@ -3633,3 +3633,14 @@ base del Historial de Airtable.
 **Inconveniente 5 — `next dev` en frío sobre `/mnt/c` cayó en `ChunkLoadError: Unexpected end of input`.** Tras `rm -rf .next`, la primera petición leyó un chunk de Clerk a medio escribir y el servidor quedó al 125 % de CPU sin responder.
 **Solución aplicada:** parar el preview, confirmar en WSL que no queda ningún `next` vivo y arrancar de nuevo; no pedir páginas hasta que `/api/health` responda.
 **Prevención futura:** `.claude/launch.json` (`if-ejecutiva-dev`) arranca por WSL con `rm -rf .next`; tras cada edición de código el watcher no la ve (entrada 2026-08-11 c), así que hay que reiniciar el servidor, y el primer arranque tarda ~40–60 s.
+
+### 2026-10-14 — Réplica MET-6283 en producción (VP-2026-0079): fotos que se borraban entre sí
+**Contexto:** guía `Guia_Carga_Manual_MET6283_iapro.docx`, Etapas 4–5 (13 documentos y 21 fotos) en producción, con el tasador subiendo y Claude verificando cada paso contra `GET /api/tasaciones/[id]/fotos`.
+**Inconveniente 1 — la segunda foto de referencias borró la primera.** Tras subir `h2_ref2.jpg`, `h2_ref1.jpg` desapareció de `TX_Adjuntos`.
+**Causa raíz:** `subirFotoDeVisita` mandaba `tipo_documento = foto_ofertas_comparables` para esa categoría y `SC-Adjuntos-Upload` aplicó la unicidad por tipo de RN-60 (modo `reemplazo`). La categoría nunca pudo guardar más de una foto subida desde la pantalla; VP-2026-0067 tenía 3 porque se cargó por otra vía.
+**Solución aplicada:** commit `248aa45`: las fotos ya no declaran `tipo_documento`; la llave de RF-09 la escribe sólo el PATCH server-side. Después, a pedido de Sergio, el cuadro pasó a su propia categoría fija `datos_comparables` («Datos de Comparables», primera de la sección de referencias, que subió arriba), única que dispara RF-09; queda fuera de la grilla del PDF.
+**Prevención futura:** una foto no es un documento del checklist: nunca mandarle `tipo_documento` al uploader. Ante una foto «desaparecida», mirar primero el modo `reemplazo` del upload.
+
+**Inconveniente 2 — F02 quedó primera en la grilla.** `anexo1_plano.jpg` ya estaba subido como documento D08; la foto F02 (mismo archivo) reutilizó esa fila por `hash_md5` y heredó su fecha de creación, anterior a todas las fotos. La grilla, que ordena por llegada (`orden` llega vacío desde la pantalla), puso «Planificación» antes del mapa de ubicación.
+**Solución aplicada:** ninguna en datos (es estético); se avisó que borrar esa foto borraría también el anexo D08, porque es la misma fila.
+**Prevención futura:** una foto que repite un archivo ya cargado como documento comparte fila con él. Si debe ir en otra posición de la grilla, usar una copia con otro binario (por ejemplo `assets_met6283/render/anexo1_plano.jpg`).

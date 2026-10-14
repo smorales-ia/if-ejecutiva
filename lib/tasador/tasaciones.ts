@@ -863,13 +863,15 @@ export interface Opcion {
  * Las categorías predefinidas del organizador de fotos: las ocho de
  * RF-TAS-14 · §2.6, `mapa_referencias` (T-PDF-E3-GENERICOS · plan §4) y las
  * seis de T-TEMAS1 (`sector`, `casa`, `living`, `comedor`, `terraza`,
- * `quincho`).
+ * `quincho`) y `datos_comparables` (14-oct-2026, tarde), la foto del cuadro de
+ * comparables que lee RF-09.
  *
  * ⚠ El id es lo que se persiste en `TX_Adjuntos.descripcion` y la llave de
  * RF-09, de las ranuras del PDF y del borrado en cascada: **nunca se renombra**.
  * Para cambiar lo que ve el tasador se toca `label`.
  */
 export type CategoriaFotoId =
+  | 'datos_comparables'
   | 'fachada_exterior'
   | 'sector'
   | 'casa'
@@ -944,8 +946,10 @@ export interface CategoriaFoto {
  *
  * ## Orden (T-TEMAS1 · R1/R2 · 14-oct-2026)
  *
- * El del array es el orden en pantalla: primero la propiedad en el recorrido de
- * la visita, después la sección de referencias. Las seis categorías nuevas
+ * El del array es el orden en pantalla: primero la sección de referencias
+ * —encabezada por «Datos de Comparables»— y después la propiedad en el recorrido
+ * de la visita (la sección de referencias subió arriba el 14-oct-2026 por la
+ * tarde, a pedido de Sergio durante la réplica MET-6283). Las seis categorías nuevas
  * tienen mínimo 0 (Q3) y `casa` aplica también a departamento (Q4).
  * `living_comedor` queda **heredada**: la reemplazan `living` y `comedor`, pero
  * hay solicitudes con fotos ahí (VP-2026-0067/0073–0077) que no se migran.
@@ -953,8 +957,22 @@ export interface CategoriaFoto {
  * `labelInforme` conserva los pies de foto que el PDF imprimía antes de
  * T-TEMAS1; en las categorías nuevas coincide con `label`, que es lo que el PDF
  * ya imprimía cuando el tasador las creaba como personalizadas.
+ *
+ * ## `datos_comparables` · el cuadro que lee RF-09
+ *
+ * Es la **única** categoría de foto que dispara la lectura de comparables
+ * (`lib/tasador/tipo-documento-foto.ts`). Hasta el 14-oct-2026 esa lectura la
+ * disparaba cualquier foto de `ofertas_comparables`, donde conviven las 3
+ * fachadas de referencia con el cuadro: cada fachada corría una extracción sin
+ * datos. Separarla deja `ofertas_comparables` como fotos puras para las ranuras
+ * `ref1..ref3` del informe. No se imprime en la grilla de fotos del PDF
+ * (`lib/informe/imagenes.ts`): es un documento, no una foto de la propiedad.
  */
 export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
+  { id: 'datos_comparables', label: 'Datos de Comparables', labelCorto: 'Comparables', labelInforme: 'Datos de Comparables', seccion: 'referencias', min: 1, max: null },
+  { id: 'mapa_ubicacion', label: 'Mapa ubicaciones propiedad', labelCorto: 'Mapa', labelInforme: 'Mapa de Ubicación', seccion: 'referencias', min: 1, max: null },
+  { id: 'ofertas_comparables', label: 'Fotos de las 3 primeras referencias', labelCorto: 'Referencia', labelInforme: 'Ofertas / Comparables', seccion: 'referencias', min: 1, max: null },
+  { id: 'mapa_referencias', label: 'Mapa de referencias', labelCorto: 'Mapa ref.', labelInforme: 'Mapa de referencias', seccion: 'referencias', min: 0, max: null },
   { id: 'fachada_exterior', label: 'Fachada', labelCorto: 'Fachada', labelInforme: 'Fachada / Exterior', seccion: 'propiedad', min: 1, max: null },
   { id: 'sector', label: 'Sector', labelCorto: 'Sector', labelInforme: 'Sector', seccion: 'propiedad', min: 0, max: null },
   { id: 'casa', label: 'Casa', labelCorto: 'Casa', labelInforme: 'Casa', seccion: 'propiedad', min: 0, max: null },
@@ -967,15 +985,12 @@ export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
   { id: 'quincho', label: 'Quincho', labelCorto: 'Quincho', labelInforme: 'Quincho', seccion: 'propiedad', min: 0, max: null },
   { id: 'estacionamientos', label: 'Estacionamientos', labelCorto: 'Estac.', labelInforme: 'Estacionamientos', seccion: 'propiedad', min: 'estac', max: null },
   { id: 'living_comedor', label: 'Living / Comedor', labelCorto: 'Living/Com.', labelInforme: 'Living / Comedor', seccion: 'propiedad', heredada: true, min: 0, max: null },
-  { id: 'mapa_ubicacion', label: 'Mapa ubicaciones propiedad', labelCorto: 'Mapa', labelInforme: 'Mapa de Ubicación', seccion: 'referencias', min: 1, max: null },
-  { id: 'ofertas_comparables', label: 'Fotos de las 3 primeras referencias', labelCorto: 'Referencia', labelInforme: 'Ofertas / Comparables', seccion: 'referencias', min: 1, max: null },
-  { id: 'mapa_referencias', label: 'Mapa de referencias', labelCorto: 'Mapa ref.', labelInforme: 'Mapa de referencias', seccion: 'referencias', min: 0, max: null },
 ] as const)
 
 /** Título de cada sección del organizador, en el orden en que se pintan. */
 export const SECCIONES_FOTO: readonly { id: SeccionFoto; titulo: string }[] = Object.freeze([
-  { id: 'propiedad', titulo: 'Fotos de la propiedad' },
   { id: 'referencias', titulo: 'Fotos o documentos de las referencias' },
+  { id: 'propiedad', titulo: 'Fotos de la propiedad' },
 ])
 
 /**

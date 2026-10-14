@@ -67,15 +67,15 @@ describe('gruposConFotos · qué categorías rinden grilla de miniaturas', () =>
     expect(grupos.map((g) => g.label)).toEqual(['Fachada', 'Quincho'])
   })
 
-  it('conserva el orden del catálogo entre predefinidas: propiedad antes que referencias', () => {
+  it('conserva el orden del catálogo entre predefinidas: referencias antes que propiedad', () => {
     const fotos = {
       ...vacias(),
-      ofertas_comparables: [foto(2)],
       living_comedor: [foto(1)],
+      ofertas_comparables: [foto(2)],
       sector: [foto(3)],
     }
     const ids = gruposConFotos(fotos, []).map((g) => g.id)
-    expect(ids).toEqual(['sector', 'living_comedor', 'ofertas_comparables'])
+    expect(ids).toEqual(['ofertas_comparables', 'sector', 'living_comedor'])
   })
 
   it('las fotos viajan tal cual, con o sin thumbnailUrl (fotos viejas → null)', () => {

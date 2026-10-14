@@ -20,10 +20,10 @@ const foto = (categoria: string, n = 1): FotoAdjunta => ({
 })
 
 describe('las categorías del catálogo', () => {
-  it('parte con todas vacías, ni una más (8 de §2.6 + mapa_referencias + 6 de T-TEMAS1)', () => {
+  it('parte con todas vacías, ni una más (8 de §2.6 + mapa_referencias + 6 de T-TEMAS1 + datos_comparables)', () => {
     const vacias = fotosPorCategoriaVacias()
     expect(Object.keys(vacias)).toHaveLength(CATEGORIAS_FOTO.length)
-    expect(Object.keys(vacias)).toHaveLength(15)
+    expect(Object.keys(vacias)).toHaveLength(16)
     expect(Object.values(vacias).every((v) => v.length === 0)).toBe(true)
   })
 

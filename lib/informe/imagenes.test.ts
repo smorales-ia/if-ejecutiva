@@ -158,6 +158,16 @@ describe('resolverImagenes · grilla desde fotos reales (origen único §4)', ()
     for (const f of grilla.fotos) expect(f.categoria).toBe(previos[f.id])
   })
 
+  it('14-oct-2026 · la foto «Datos de Comparables» no entra a la grilla aunque se suba primero', () => {
+    const fotos = [
+      foto({ id: 'cuadro', categoria: 'datos_comparables', orden: null, thumbnailUrl: 'data:image/jpeg;base64,CUADRO' }),
+      foto({ id: 'fachada', categoria: 'fachada_exterior', orden: null, thumbnailUrl: 'data:image/jpeg;base64,FACH' }),
+    ]
+    const { fotos: grilla } = resolver(fotos)
+    expect(grilla.fotos.map((f) => f.id)).toEqual(['fachada'])
+    expect(grilla.total).toBe(1)
+  })
+
   it('null en orden va al final, en orden de llegada estable', () => {
     const { fotos: grilla } = resolver([
       foto({ id: 'sin-orden-a', orden: null }),

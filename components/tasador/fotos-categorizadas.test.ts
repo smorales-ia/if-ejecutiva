@@ -52,12 +52,16 @@ const totalHeader = (fotos: FotosPorCategoria, custom: FotoCategoriaCustom[]) =>
   )
 
 describe('evaluarCategorias · las categorías del catálogo', () => {
-  it('rinde un estado por categoría visible (15 del catálogo menos la heredada vacía)', () => {
-    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(14)
+  it('rinde un estado por categoría visible (16 del catálogo menos la heredada vacía)', () => {
+    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(15)
   })
 
-  it('T-TEMAS1 · R1 · orden de la visita y después la sección de referencias', () => {
+  it('14-oct-2026 · primero las referencias (con «Datos de Comparables»), después la visita', () => {
     expect(evaluarCategorias(vacio(), declarados).map((e) => e.label)).toEqual([
+      'Datos de Comparables',
+      'Mapa ubicaciones propiedad',
+      'Fotos de las 3 primeras referencias',
+      'Mapa de referencias',
       'Fachada',
       'Sector',
       'Casa',
@@ -69,17 +73,13 @@ describe('evaluarCategorias · las categorías del catálogo', () => {
       'Terraza',
       'Quincho',
       'Estacionamientos',
-      'Mapa ubicaciones propiedad',
-      'Fotos de las 3 primeras referencias',
-      'Mapa de referencias',
     ])
   })
 
-  it('T-TEMAS1 · R2 · las tres de referencias van juntas y al final', () => {
+  it('las cuatro de referencias van juntas y al principio', () => {
     const secciones = evaluarCategorias(vacio(), declarados).map((e) => e.seccion)
-    const primera = secciones.indexOf('referencias')
-    expect(secciones.slice(primera).every((s) => s === 'referencias')).toBe(true)
-    expect(secciones.filter((s) => s === 'referencias')).toHaveLength(3)
+    expect(secciones.slice(0, 4).every((s) => s === 'referencias')).toBe(true)
+    expect(secciones.filter((s) => s === 'referencias')).toHaveLength(4)
   })
 
   it('T-TEMAS1 · living_comedor sólo aparece si ya tiene fotos (VP-2026-0067)', () => {

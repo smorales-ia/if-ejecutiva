@@ -133,6 +133,14 @@ export interface AnexoResuelto {
 const MAX_FOTOS_GRILLA = 16
 
 /**
+ * Categorías que no entran a la grilla de fotos. `datos_comparables` (14-oct-2026)
+ * es la foto del cuadro de comparables: un documento que lee RF-09, no una foto
+ * de la propiedad. Como su sección va arriba en la pantalla, si entrara a la
+ * grilla ocuparía la primera posición cuando el tasador la sube primero.
+ */
+const FUERA_DE_GRILLA: ReadonlySet<string> = new Set(['datos_comparables'])
+
+/**
  * Caption por categoría: `labelInforme` de `CATEGORIAS_FOTO` cuando la
  * categoría es uno de los ids del catálogo; el nombre custom pasa tal cual.
  * Única fuente de labels (RO-05) — acá no se duplica ningún string de la UI.
@@ -203,7 +211,9 @@ function grillaDesdeFotosReales(
   codigo: string,
   fotosCanonicas: FotosInforme,
 ): FotosInforme {
-  const ordenadas = ordenarPorOrden(fotosCanonicas.fotos)
+  const ordenadas = ordenarPorOrden(
+    fotosCanonicas.fotos.filter((f) => !FUERA_DE_GRILLA.has(f.categoria)),
+  )
 
   const renderizables = ordenadas.flatMap((f) => {
     const url = fuenteDeFoto(f)

@@ -2596,10 +2596,14 @@ Categorías predefinidas con mínimos ligados a los dormitorios, baños y estaci
 
 Los mínimos de Habitaciones, Baños y Estacionamientos que muestra el diseño (2 · 2 · 1) corresponden a la propiedad de ejemplo. Si esas tres categorías conservan el mínimo dinámico que esta sección declara, o si el diseño los fija, está pendiente de definición (**A-16**).
 
-**Catálogo vigente desde v1.9.18 («Temas 1» · R1/R2).** La tabla anterior queda como registro del diseño v4. Lo que el organizador presenta hoy, en este orden —el del recorrido de la visita— es:
+**Catálogo vigente desde v1.9.18 («Temas 1» · R1/R2, ajustado el 14-oct-2026 por la tarde).** La tabla anterior queda como registro del diseño v4. Lo que el organizador presenta hoy, en este orden —primero la sección de referencias, después la propiedad en el recorrido de la visita— es:
 
 | # | Clave interna | Rótulo en pantalla | Mínimo | Sección |
 |---|---|---|---|---|
+| R0 | `datos_comparables` | Datos de Comparables | 1 | Referencias |
+| R1 | `mapa_ubicacion` | Mapa ubicaciones propiedad | 1 | Referencias |
+| R2 | `ofertas_comparables` | Fotos de las 3 primeras referencias | 1 | Referencias |
+| R3 | `mapa_referencias` | Mapa de referencias | 0 | Referencias |
 | 1 | `fachada_exterior` | Fachada | 1 | Propiedad |
 | 2 | `sector` | Sector | 0 | Propiedad |
 | 3 | `casa` | Casa | 0 | Propiedad |
@@ -2612,15 +2616,14 @@ Los mínimos de Habitaciones, Baños y Estacionamientos que muestra el diseño (
 | 10 | `quincho` | Quincho | 0 | Propiedad |
 | 11 | `estacionamientos` | Estacionamientos | estacionamientos declarados | Propiedad |
 | — | `living_comedor` | Living / Comedor | 0 | Propiedad · **heredada** |
-| 12 | `mapa_ubicacion` | Mapa ubicaciones propiedad | 1 | Referencias |
-| 13 | `ofertas_comparables` | Fotos de las 3 primeras referencias | 1 | Referencias |
-| 14 | `mapa_referencias` | Mapa de referencias | 0 | Referencias |
 
 Reglas del catálogo vigente:
 
-- **Las claves internas no cambian.** Son lo que se guarda en `TX_Adjuntos.descripcion` y la llave de RF-09 (`ofertas_comparables` → `clave_adjunto = foto_ofertas_comparables`), de las ranuras de imagen del PDF y del borrado en cascada. Sólo cambian el rótulo y la posición.
+- **Las claves internas no cambian.** Son lo que se guarda en `TX_Adjuntos.descripcion` y la llave de las ranuras de imagen del PDF y del borrado en cascada. Sólo cambian el rótulo y la posición.
+- **«Datos de Comparables» es la única categoría que dispara RF-09** (14-oct-2026). Al categorizar la foto, el servidor escribe `clave_adjunto = foto_ofertas_comparables` y deja `estado_extraccion = idle`, y la lectura llena la sección D del tasador. Hasta ese día la disparaba cualquier foto de `ofertas_comparables`, donde conviven las 3 fachadas de referencia con el cuadro: cada fachada corría una lectura sin datos que podía pisar los comparables. Las referencias quedan como fotos puras para las ranuras ref1–ref3. La foto del cuadro no se imprime en la grilla de fotos del informe.
+- **Ninguna foto declara tipo de documento al subirse** (14-oct-2026). Hacerlo activaba la unicidad por tipo de §1.5.1.1 en el escenario de subida, y cada foto nueva de la categoría reemplazaba y borraba a la anterior. La clave de RF-09 la escribe sólo el servidor al categorizar.
 - **El cambio es sólo de pantalla** (decisión Q1 de Sergio, 14-oct-2026). Cada categoría guarda aparte el pie de foto que imprime el informe, con los mismos textos de antes («Fachada / Exterior», «Habitaciones», «Mapa de Ubicación», «Ofertas / Comparables»…); los recuadros del PDF y la grilla de 16 fotos no cambian.
-- **Sección «Fotos o documentos de las referencias».** Mapa de ubicación, fotos de las tres primeras referencias y mapa de referencias se agrupan bajo ese encabezado, después de las categorías de la propiedad. Es encabezado de sección y no categoría: RF-TAS-06 sigue prohibiendo una categoría «Documentos».
+- **Sección «Fotos o documentos de las referencias».** Datos de comparables, mapa de ubicación, fotos de las tres primeras referencias y mapa de referencias se agrupan bajo ese encabezado, **antes** de las categorías de la propiedad (decisión de Sergio del 14-oct-2026 por la tarde; hasta entonces iba después). Es encabezado de sección y no categoría: RF-TAS-06 sigue prohibiendo una categoría «Documentos».
 - **Mínimo 0 en las seis categorías nuevas** (Q3). «Casa» se ofrece en todo tipo de propiedad, también en departamento (Q4).
 - **«Living / Comedor» queda heredada.** No se ofrece para fotos nuevas —la reemplazan Living y Comedor— pero se muestra, con mínimo 0, en las solicitudes que ya tienen fotos ahí. Las fotos existentes no se migran.
 - **Personalizadas.** Siguen después de las fijas, dentro de la sección de la propiedad. Si el tasador intenta crear una con el nombre de una fija (p. ej. «Quincho»), se le avisa que ya existe.
@@ -2642,7 +2645,7 @@ Guardado en Dropbox por API Route con retry offline (cola local IndexedDB) en `{
 
 | **RF-TAS-14** | **Catálogo de categorías de fotos con mínimos y contadores** |
 |---|---|
-| **Descripción** | El organizador presenta las categorías del catálogo vigente de esta sección (v1.9.18: catorce fijas más la heredada «Living / Comedor» cuando tiene fotos), en el orden de la visita y agrupadas en las secciones Propiedad y Referencias, cada una con su contador "X/N", su acción "Agregar a {categoría}" y una marca visible mientras el mínimo no se cumple. El header agrega el total en la forma "N fotos · N docs". El tasador puede crear categorías personalizadas indicando un nombre. El carácter fijo o dinámico de los mínimos de Habitaciones, Baños y Estacionamientos está pendiente de definición (**A-16**). |
+| **Descripción** | El organizador presenta las categorías del catálogo vigente de esta sección (v1.9.18: quince fijas más la heredada «Living / Comedor» cuando tiene fotos), agrupadas en las secciones Referencias (primero) y Propiedad (en el orden de la visita), cada una con su contador "X/N", su acción "Agregar a {categoría}" y una marca visible mientras el mínimo no se cumple. El header agrega el total en la forma "N fotos · N docs". El tasador puede crear categorías personalizadas indicando un nombre. El carácter fijo o dinámico de los mínimos de Habitaciones, Baños y Estacionamientos está pendiente de definición (**A-16**). |
 | **Criterio de aceptación** | El contador de cada categoría y el total del header se actualizan en la misma interacción en que se agrega o elimina una foto. Una categoría personalizada aparece en el listado inmediatamente después de crearse y admite fotos sin exigir mínimo. |
 
 ---

@@ -199,7 +199,7 @@ describe('[PUENTE CI-061] autoNumber → record ID', () => {
 
 describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
   it('escribe clave_adjunto=foto_ofertas_comparables server-side para el cuadro', async () => {
-    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+    await patch({ adjuntoId: ADJUNTO, categoria: 'datos_comparables' })
 
     // Sin esta llave AT-RF09-Trigger salta la extracción (RN-25) y la sección D
     // queda en «0 de 3 comparables leídos». Se escribe directo en Airtable, sin
@@ -215,13 +215,23 @@ describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
     expect(campos).not.toHaveProperty('clave_adjunto')
   })
 
+  it('14-oct-2026: una foto de referencias (ofertas_comparables) ya no escribe la llave de RF-09', async () => {
+    // Las 3 fachadas de referencia no traen tabla: extraerlas no daba datos y
+    // podía pisar los comparables del cuadro, que ahora va en datos_comparables.
+    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+
+    const [, , campos] = updateRecord.mock.calls[0]
+    expect(campos).not.toHaveProperty('clave_adjunto')
+    expect(campos).not.toHaveProperty('estado_extraccion')
+  })
+
   it('rescata el skipped: repone estado_extraccion=idle al reponer la llave', async () => {
     // El disparo en recordCreated dejó la fila en `skipped` (RN-25, sin llave).
     // Reponer clave_adjunto no basta: `skipped` es terminal. Hay que devolverla
     // a `idle` para que recordUpdated re-evalúe con la llave ya poblada.
     getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: 'skipped' }))
 
-    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+    await patch({ adjuntoId: ADJUNTO, categoria: 'datos_comparables' })
 
     const [, , campos] = updateRecord.mock.calls[0]
     expect(campos.clave_adjunto).toBe('foto_ofertas_comparables')
@@ -232,7 +242,7 @@ describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
     // Un intento previo que erró debe poder reintentarse al recategorizar.
     getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: 'error' }))
 
-    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+    await patch({ adjuntoId: ADJUNTO, categoria: 'datos_comparables' })
 
     const [, , campos] = updateRecord.mock.calls[0]
     expect(campos.estado_extraccion).toBe('idle')
@@ -244,7 +254,7 @@ describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
     // fallaría y RF-09 nunca correría para la foto de comparables.
     getRecord.mockResolvedValue(adjuntoDe([ID]))
 
-    await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+    await patch({ adjuntoId: ADJUNTO, categoria: 'datos_comparables' })
 
     const [, , campos] = updateRecord.mock.calls[0]
     expect(campos.estado_extraccion).toBe('idle')
@@ -255,7 +265,7 @@ describe('clave_adjunto · llave de RF-09 para la foto de comparables', () => {
       updateRecord.mockClear()
       getRecord.mockResolvedValue(adjuntoDe([ID], { estado_extraccion: estado }))
 
-      await patch({ adjuntoId: ADJUNTO, categoria: 'ofertas_comparables' })
+      await patch({ adjuntoId: ADJUNTO, categoria: 'datos_comparables' })
 
       const [, , campos] = updateRecord.mock.calls[0]
       expect(campos).not.toHaveProperty('estado_extraccion')
