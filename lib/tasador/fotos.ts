@@ -50,7 +50,6 @@
 import { uploadConReintentos, type UploadResult } from "@/lib/adjuntos-uploader"
 import type { FotoAdjunta } from "@/lib/tasador/tasaciones"
 import { generarThumbnailDataUri } from "@/lib/tasador/thumbnail"
-import { claveAdjuntoDeCategoria } from "@/lib/tasador/tipo-documento-foto"
 
 /** Literal §6.1 para el fallo que no sabemos explicar al usuario. */
 const MSG_ERROR_RED =
@@ -186,12 +185,17 @@ export async function subirFotoDeVisita(
     file: p.file,
     solicitud_id: p.solicitudId,
     codigo_ext: p.codigoExt,
-    // Declara el tipo de documento sólo para la foto del cuadro de comparables,
-    // que es lo que dispara RF-09 vía `clave_adjunto`. Para el resto de las
-    // categorías es `undefined` y el campo se omite. El servidor lo reescribe
-    // igual en el PATCH (vía robusta), así que esto es la ruta rápida, no la
-    // única (ver claveAdjuntoDeCategoria).
-    tipo_documento: claveAdjuntoDeCategoria(p.categoria),
+    // ⚠ Una foto de la visita **nunca** declara `tipo_documento` al subir
+    // (14-oct-2026, réplica MET-6283 en VP-2026-0079). Declararlo activaba en
+    // `SC-Adjuntos-Upload` la unicidad por tipo de RN-60 (§1.5.1.1): la segunda
+    // foto de «Fotos de las 3 primeras referencias» **reemplazaba y borraba** a
+    // la primera, así que la categoría nunca podía tener las 3 referencias.
+    // RF-09 no lo necesita: el PATCH de `categorizarFoto` escribe
+    // `clave_adjunto = foto_ofertas_comparables` y deja `estado_extraccion` en
+    // `idle` server-side (`claveAdjuntoDeCategoria` en
+    // `app/api/tasaciones/[id]/fotos/route.ts`), y eso es lo que dispara
+    // `AT-RF09-Trigger-Update`.
+    tipo_documento: undefined,
     subido_por: SUBIDO_POR_TASADOR,
     signal: p.signal,
     onProgress: p.onProgress,

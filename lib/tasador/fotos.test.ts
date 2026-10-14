@@ -97,7 +97,7 @@ describe('subirFotoDeVisita · la cadena completa', () => {
     expect(SUBIDO_POR_TASADOR).toBe('Tasador')
   })
 
-  it('la foto del cuadro de comparables declara tipo_documento para disparar RF-09', async () => {
+  it('regresión 14-oct-2026: una foto de referencias NO declara tipo_documento al subir', async () => {
     await subirFotoDeVisita({
       file: archivo(),
       solicitudId: SOLICITUD,
@@ -105,11 +105,12 @@ describe('subirFotoDeVisita · la cadena completa', () => {
       categoria: 'ofertas_comparables',
     })
 
-    // Sin este código `TX_Adjuntos.clave_adjunto` queda vacío y AT-RF09-Trigger
-    // salta la extracción (RN-25): el webhook nunca se llama y la sección D
-    // queda en «0 de 3 comparables leídos».
+    // Declararlo activaba la unicidad por tipo (RN-60) en SC-Adjuntos-Upload y la
+    // segunda referencia borraba a la primera (VP-2026-0079). RF-09 se sigue
+    // disparando porque `clave_adjunto` lo escribe el PATCH server-side
+    // (`app/api/tasaciones/[id]/fotos/route.test.ts`).
     const [params] = uploadConReintentos.mock.calls[0]
-    expect(params.tipo_documento).toBe('foto_ofertas_comparables')
+    expect(params.tipo_documento).toBeUndefined()
   })
 
   it('una foto de registro normal no declara tipo_documento', async () => {
