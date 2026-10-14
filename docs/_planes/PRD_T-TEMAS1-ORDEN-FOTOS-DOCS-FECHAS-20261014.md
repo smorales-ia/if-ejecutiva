@@ -8,9 +8,33 @@
 > integra en la spec con **bump a v1.9.18**, porque dos puntos la contradicen
 > (§1.5.1.1 exige orden alfabético de documentos; §2.6 fija el catálogo de fotos).
 >
-> **Estado al 14-oct-2026:** F1–F4 aplicadas en código (sin commit al cierre de la
-> sesión) e integradas en la spec v1.9.18 (§1.5.1.1, §2.6, §4.2.1 y RNF-23). F5 (R6)
-> descartada por Q1. Pendiente: verificación en casos reales (§8).
+> **Estado al 14-oct-2026 (cierre ~13:45):** F1–F4 aplicadas, **commiteadas y subidas en
+> `da60f39`**, e integradas en la spec v1.9.18 (§1.5.1.1, §2.6, §4.2.1 y RNF-23). F5
+> (R6) descartada por Q1. Auditoría ciega: D1 (fecha de asignación cruda) corregido.
+> Corregidos después en la revisión local: `fecha_limite_entrega` llega en formato US
+> («4/15/2026», `fechaFormulaUsAIso` en `lib/solicitudes.ts`; el contador de días de
+> VP-2026-0066/0067 pasa de «141» a «-181», que es el valor correcto) y Trazabilidad
+> («Creada» / «Última modificación») ahora pasa por `formatearFechaHora`.
+>
+> **Para retomar:**
+> 1. Segundo commit + push con lo que quedó **fuera de `da60f39`**: límite US y
+>    Trazabilidad (`lib/solicitudes.ts`, `components/console/solicitud-detail.tsx` y
+>    sus tests), fecha de los comparables en dd/mm/aaaa
+>    (`components/tasador/form-sections/seccion-comparables.tsx`, visto en la vista
+>    previa de producción el 14-oct), `.claude/launch.json`, este PRD y
+>    `docs/aprendizajes.md`. Verificado en producción el 14-oct: fotos 0067/0079,
+>    vista previa 0067 y campo de fecha de coordinar (31/02 rechazada, 13/04/2026
+>    aceptada, sin enviar). `tsc` y
+>    tests verdes; correr `next build` antes (el último build limpio fue previo a
+>    estos dos arreglos).
+> 2. Verificación en casos reales (§8): VP-2026-0067 (`recmMzeu3eWGxyXsf`) y
+>    VP-2026-0079 (`rec6XubOR92X6gnOH`) — `/tasaciones/<id>/fotos`, `/informe`,
+>    `/coordinar`, `/lectura` y `/consola?solicitud=<id>`. Ya verificado en local:
+>    límite 15/04/2026 y fecha de visita 13/04/2026 en la consola.
+> 3. Revisar que AT03-Ext v4 esté pegado en la automation de Airtable (el push no lo hace).
+> 4. Observaciones abiertas de la auditoría: O2 (personalizadas homónimas de las fijas
+>    nuevas), O3 («Limpiar filtros» no borra fecha a medias), O4 (fecha imposible
+>    vacía un campo opcional), comentarios desactualizados.
 
 | Campo | Valor |
 |---|---|

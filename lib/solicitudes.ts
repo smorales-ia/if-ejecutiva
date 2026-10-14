@@ -431,6 +431,25 @@ function parseDate(str: string | undefined): Date | null {
   return null
 }
 
+/**
+ * `fecha_limite_entrega` (fórmula `DATEADD`) llega con `cellFormat: 'string'` en
+ * formato **US** —`"4/15/2026"` es el 15 de abril (VP-2026-0067, golden
+ * MET-6283: visita 13-abr + 2 días)—, pese a `userLocale: 'es-CL'`: la fórmula no
+ * tiene formato propio y Airtable usa M/D/YYYY. Se pasa a ISO antes de mostrarla
+ * o calcular con ella. Si el primer número no puede ser mes (>12) se lee como
+ * D/M, por si algún día se le fija formato europeo al campo. Cualquier otra forma
+ * pasa intacta.
+ */
+function fechaFormulaUsAIso(str: string | undefined): string | undefined {
+  const m = (str ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!m) return str
+  const [a, b, anio] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const [mes, dia] = a > 12 ? [b, a] : [a, b]
+  const d = new Date(Date.UTC(anio, mes - 1, dia))
+  if (d.getUTCMonth() !== mes - 1 || d.getUTCDate() !== dia) return str
+  return `${anio}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`
+}
+
 /** `dd/mm/yyyy` (PRD «Temas 1» R4). Un texto que no es fecha se devuelve tal cual. */
 function formatDisplay(str: string | undefined, fallback = '—'): string {
   return formatearFecha(str, fallback)
@@ -704,12 +723,12 @@ export function mapRecord(
     cliente: f['cliente'] ?? '—',
     comuna: f['comuna'] ?? '—',
     estado: (f['estado'] as EstadoSolicitud) ?? 'creada',
-    slaDias: computeSlaDias(f['fecha_limite_entrega'], f['semaforo_sla']),
+    slaDias: computeSlaDias(fechaFormulaUsAIso(f['fecha_limite_entrega']), f['semaforo_sla']),
     slaTotal: 5,
     prioridad: (f['prioridad'] as Prioridad) ?? 'normal',
     tasador: f['tasador'] || 'Sin asignar',
     visador: f['visador'] || 'Sin asignar',
-    fechaLimite: formatDisplay(f['fecha_limite_entrega']),
+    fechaLimite: formatDisplay(fechaFormulaUsAIso(f['fecha_limite_entrega'])),
     // D-C3 (Fase 3): fecha_solicitud es el dato de negocio real (poblado por
     // SC01 desde Fase 2); createdTime queda solo como fallback para filas
     // legacy creadas antes del fix del bug VP-NaN-XXXX.

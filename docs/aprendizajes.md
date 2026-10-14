@@ -3625,3 +3625,11 @@ base del Historial de Airtable.
 **Inconveniente 3 — `wsl.exe -e bash -lc '… | grep -E "A|B"'` desde PowerShell falla.** Salía `|Test: command not found`: PowerShell reparte las comillas internas y bash recibe el patrón partido.
 **Solución aplicada:** el comando va en un script `.sh` del scratchpad y se invoca con `wsl.exe -e bash <ruta /mnt/c/...>`.
 **Prevención futura:** cualquier pipeline con comillas o `|` hacia WSL, en script; nunca inline. ESLint no está instalado en el repo (`node_modules/.bin/eslint` no existe): el gate real es `tsc` + `vitest run lib app components` + `next build`.
+
+**Inconveniente 4 — `fecha_limite_entrega` se mostraba «4/15/2026».** Con `cellFormat: 'string'` y `userLocale: 'es-CL'`, esa fórmula `DATEADD` igual llega en formato US (M/D/YYYY); `parseDate` la leía como D/M y daba el 4 de marzo de 2027, de ahí los «141 días» a favor en VP-2026-0066/0067.
+**Solución aplicada:** `fechaFormulaUsAIso` en `lib/solicitudes.ts` (M/D salvo que el primer número sea >12) antes de mostrar y de `computeSlaDias`; test en `lib/solicitudes.test.ts`. Los `createdTime`/`lastModifiedTime` sí llegan en D/M es-CL («21/9/2026 23:07»).
+**Prevención futura:** con `cellFormat: 'string'` el formato de fecha depende de cada campo, no del `userLocale`; verificar con un valor real cuyo día sea >12 antes de asumir el orden.
+
+**Inconveniente 5 — `next dev` en frío sobre `/mnt/c` cayó en `ChunkLoadError: Unexpected end of input`.** Tras `rm -rf .next`, la primera petición leyó un chunk de Clerk a medio escribir y el servidor quedó al 125 % de CPU sin responder.
+**Solución aplicada:** parar el preview, confirmar en WSL que no queda ningún `next` vivo y arrancar de nuevo; no pedir páginas hasta que `/api/health` responda.
+**Prevención futura:** `.claude/launch.json` (`if-ejecutiva-dev`) arranca por WSL con `rm -rf .next`; tras cada edición de código el watcher no la ve (entrada 2026-08-11 c), así que hay que reiniciar el servidor, y el primer arranque tarda ~40–60 s.

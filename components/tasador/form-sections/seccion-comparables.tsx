@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { formatearFecha } from "@/lib/fechas"
 import type { Comparable, InformeData } from "@/lib/tasador/tasaciones"
 /*
  * A-13 cerró el 23-ago-2026: **la sección D es de sólo lectura**. El tasador no
@@ -131,7 +132,8 @@ function BloqueComparables({
                   <span className="text-sm text-foreground">{texto(c.direccionReferencia)}</span>
                 </div>
               </td>
-              <td className={TD_TXT}>{texto(c.fechaPublicacion)}</td>
+              {/* RNF-23 · dd/mm/aaaa; un texto que no es fecha pasa tal cual. */}
+              <td className={TD_TXT}>{formatearFecha(c.fechaPublicacion)}</td>
               <td className={TD_TXT}>{texto(c.anio)}</td>
               <td className={TD_TXT}>{contacto === "telefono" ? texto(c.telefonoContacto) : fojaNumero(c)}</td>
               {COLS_NUM.map((col) => (

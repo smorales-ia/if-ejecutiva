@@ -343,3 +343,21 @@ describe('píldora de etapa · toneDeEtapa (D-1)', () => {
     }
   })
 })
+
+describe('fecha_limite_entrega · fórmula en formato US (captura 14-oct-2026)', () => {
+  it('«4/15/2026» es el 15 de abril, no un mes 15 (VP-2026-0067)', () => {
+    expect(mapear({ fecha_limite_entrega: '4/15/2026' }).fechaLimite).toBe('15/04/2026')
+  })
+
+  it('ambigua «4/5/2026» se lee como US: 5 de abril', () => {
+    expect(mapear({ fecha_limite_entrega: '4/5/2026' }).fechaLimite).toBe('05/04/2026')
+  })
+
+  it('si el primer número no puede ser mes, se lee día/mes', () => {
+    expect(mapear({ fecha_limite_entrega: '15/4/2026' }).fechaLimite).toBe('15/04/2026')
+  })
+
+  it('ISO pasa igual', () => {
+    expect(mapear({ fecha_limite_entrega: '2026-04-15' }).fechaLimite).toBe('15/04/2026')
+  })
+})

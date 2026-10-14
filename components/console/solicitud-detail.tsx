@@ -1216,9 +1216,9 @@ function DatosTab({
           escriben Airtable (createdTime / lastModifiedTime / formulas) o los
           escenarios Make aguas abajo, nunca la Ejecutiva. */}
       <Section title="Trazabilidad">
-        <DataRow label="Creada">{s.fechaCreacion ?? "—"}</DataRow>
+        <DataRow label="Creada">{formatearFechaHora(s.fechaCreacion)}</DataRow>
         <DataRow label="Última modificación">
-          {s.ultimaModificacion ?? "—"}
+          {formatearFechaHora(s.ultimaModificacion)}
         </DataRow>
         <DataRow label="Días desde la solicitud">
           {s.diasDesdeSolicitud ?? "—"}

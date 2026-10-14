@@ -107,6 +107,11 @@ describe('reloj de pared de Airtable con cellFormat string (auditoría D1)', () 
     expect(formatearFecha('5/8/2026')).toBe('05/08/2026')
   })
 
+  it('createdTime / lastModifiedTime es-CL de la Trazabilidad (VP-2026-0067)', () => {
+    expect(formatearFechaHora('21/9/2026 23:07')).toBe('21/09/2026 23:07')
+    expect(formatearFechaHora('14/10/2026 8:01am')).toBe('14/10/2026 08:01')
+  })
+
   it('una fecha imposible no se disfraza de válida', () => {
     expect(formatearFecha('31-02-2026')).toBe('31-02-2026')
   })
