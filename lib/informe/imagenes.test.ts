@@ -66,7 +66,8 @@ function resolver(
   return resolverImagenes(CODIGO, canonicas(fotos), resolverAnexos(documentos), firmaUrl)
 }
 
-const label = (id: string) => CATEGORIAS_FOTO.find((c) => c.id === id)!.label
+/** Pie de foto del PDF: `labelInforme`, no el rótulo de pantalla (T-TEMAS1 · Q1). */
+const label = (id: string) => CATEGORIAS_FOTO.find((c) => c.id === id)!.labelInforme
 
 let warn: ReturnType<typeof vi.spyOn>
 
@@ -134,6 +135,27 @@ describe('resolverImagenes · grilla desde fotos reales (origen único §4)', ()
     expect(grilla.porCategoria[label('fachada_exterior')]).toBe(5)
     expect(grilla.porCategoria[label('living_comedor')]).toBe(3)
     expect(grilla.porCategoria['Planificación']).toBe(1)
+  })
+
+  it('T-TEMAS1 · los pies de foto del PDF no cambian con los rótulos de pantalla', () => {
+    // Literales que imprimía el informe antes del 14-oct-2026. Si uno cambia,
+    // cambió el PDF, que la decisión Q1 dejó fuera de alcance.
+    const previos: Record<string, string> = {
+      fachada_exterior: 'Fachada / Exterior',
+      habitaciones: 'Habitaciones',
+      mapa_ubicacion: 'Mapa de Ubicación',
+      ofertas_comparables: 'Ofertas / Comparables',
+      mapa_referencias: 'Mapa de referencias',
+      living_comedor: 'Living / Comedor',
+      cocina: 'Cocina',
+      banos: 'Baños',
+      estacionamientos: 'Estacionamientos',
+    }
+    const fotos = Object.keys(previos).map((categoria, i) =>
+      foto({ id: categoria, categoria, orden: i, thumbnailUrl: `data:image/jpeg;base64,${i}` }),
+    )
+    const { fotos: grilla } = resolver(fotos)
+    for (const f of grilla.fotos) expect(f.categoria).toBe(previos[f.id])
   })
 
   it('null en orden va al final, en orden de llegada estable', () => {

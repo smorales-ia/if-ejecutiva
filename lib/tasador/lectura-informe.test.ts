@@ -248,7 +248,9 @@ describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
       [TABLE_IDS.datosTasacion]: [
         fila('recD1', {
           avaluo_total: 45000000,
-          avaluo_fiscal_uf: 1200.5,
+          avaluo_fiscal_clp: 339809429,
+          // Fórmula engañosa del schema: devuelve pesos con nombre de UF. No se lee.
+          avaluo_fiscal_uf: 339809429,
           avaluo_exento: 30000000,
           contribucion_anual: 350000,
           calidad_sii: 'B',
@@ -269,10 +271,13 @@ describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
     const informe = await construirInforme(ID, {
       codigo_solicitud: CODIGO,
       rol_sii: '658-128',
+      uf_dia_visita: 39894.61,
     })
 
     expect(informe.datosSii.avaluoTotal).toBe(45000000)
-    expect(informe.datosSii.avaluoFiscalUf).toBe(1200.5)
+    expect(informe.datosSii.avaluoFiscalClp).toBe(339809429)
+    // Golden MET-6283: F_AvaluoFiscalUF = 8.517,68 (motor-ports-t-mc-p0.test.ts).
+    expect(informe.datosSii.avaluoFiscalUf).toBeCloseTo(8517.6777, 2)
     expect(informe.datosSii.rolSii).toBe('658-128')
     expect(informe.datosSii.calidadSii).toBe('B')
     // Códigos catastrales SII y resumen de superficie construida.
@@ -307,8 +312,36 @@ describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
       numeroUnidad: 'Depto 101',
       subtipo: 'Departamento',
       supM2: 62.5,
+      avaluoClp: null,
       avaluoUf: 900,
     })
+  })
+
+  it('avalúo por unidad: con avaluo_clp la UF se deriva con uf_dia_visita', async () => {
+    airtableCon({
+      [TABLE_IDS.unidades]: [
+        fila('recU1', { rol_sii: '882-40', avaluo_clp: 339809429, avaluo_uf: 339809429 }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, {
+      codigo_solicitud: CODIGO,
+      uf_dia_visita: 39894.61,
+    })
+
+    expect(informe.datosSii.porUnidad[0].avaluoClp).toBe(339809429)
+    expect(informe.datosSii.porUnidad[0].avaluoUf).toBeCloseTo(8517.6777, 2)
+  })
+
+  it('avalúo sin uf_dia_visita: la UF queda null, nunca los pesos', async () => {
+    airtableCon({
+      [TABLE_IDS.datosTasacion]: [fila('recD1', { avaluo_fiscal_clp: 339809429 })],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.datosSii.avaluoFiscalClp).toBe(339809429)
+    expect(informe.datosSii.avaluoFiscalUf).toBeNull()
   })
 
   it.each([

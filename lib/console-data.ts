@@ -1593,63 +1593,14 @@ export const ADJUNTOS: Adjunto[] = [
 ]
 
 // ──────────────────────────────────────────────────────────────────────────
-// Mock de bloques de sólo lectura del detalle (SII, legales, motor, versiones)
+// Bloques de sólo lectura del detalle (SII, legales, motor, versiones)
 // ──────────────────────────────────────────────────────────────────────────
 
-export interface DatosSiiUnidad {
-  unidadId: string
-  ubicacion: string
-  destino: string
-  codigoSii: string
-  avaluoFiscal: string
-}
-
-export interface DatosSii {
-  destinoPrincipal: string
-  unidades: DatosSiiUnidad[]
-  avaluoTotal: string
-  contribucionAnual: string
-}
-
-export function mockDatosSii(s: Solicitud): DatosSii {
-  // Avalúo numérico por unidad (base para el total, RN-48).
-  const avaluos = s.unidades.map((_u, i) => 1200 + i * 350)
-  const unidades = s.unidades.map((u, i) => ({
-    unidadId: u.id,
-    ubicacion: u.ubicacion,
-    destino: u.tipoBien === "Edificación" ? "Habitacional" : "Complementario",
-    codigoSii: u.rolSii || `S/R-${i + 1}`,
-    avaluoFiscal: `${avaluos[i].toLocaleString("es-CL")} UF`,
-  }))
-  // RN-48: el avalúo fiscal total es la suma de los avalúos de las unidades.
-  const avaluoTotal = avaluos.reduce((acc, v) => acc + v, 0)
-  return {
-    destinoPrincipal: "Habitacional",
-    unidades,
-    avaluoTotal: `${avaluoTotal.toLocaleString("es-CL")} UF`,
-    contribucionAnual: "18,4 UF",
-  }
-}
-
-export interface AntecedentesLegales {
-  permisoEdificacion: string
-  fechaPermiso: string
-  recepcionFinal: string
-  fojas: string
-  numeroInscripcion: string
-  anioInscripcion: string
-}
-
-export function mockAntecedentesLegales(s: Solicitud): AntecedentesLegales {
-  return {
-    permisoEdificacion: s.tipoPropiedadNuevoUsado === "nueva" ? "N° 214-2024" : "N° 108-2009",
-    fechaPermiso: s.tipoPropiedadNuevoUsado === "nueva" ? "12 mar 2024" : "05 ago 2009",
-    recepcionFinal: s.tipoPropiedadNuevoUsado === "nueva" ? "Pendiente" : "N° 76-2010",
-    fojas: "12.345",
-    numeroInscripcion: "8.901",
-    anioInscripcion: s.tipoPropiedadNuevoUsado === "nueva" ? "2024" : "2010",
-  }
-}
+// `mockDatosSii` / `mockAntecedentesLegales` vivían aquí e inventaban los
+// valores de «Datos SII» y «Antecedentes legales» («1.200 UF», «N° 108-2009»),
+// que la consola mostraba como datos de la solicitud. Se retiraron el
+// 14-oct-2026 (PRD R3): los bloques se leen de Airtable vía
+// `GET /api/solicitudes/[id]/sii-legales` (`lib/sii-legales.ts`).
 
 // `DecisionMotor` / `mockDecisionMotor` y `VersionInforme` /
 // `mockVersionesInforme` vivían aquí y se retiraron al cablear la pestaña Datos

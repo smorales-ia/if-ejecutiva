@@ -115,6 +115,9 @@ export interface UnidadSii {
   rolSii: string
   subtipo: string
   supM2: number | null
+  /** Avalúo del certificado en pesos (`TX_Unidades.avaluo_clp`). */
+  avaluoClp: number | null
+  /** UF derivada: `avaluo_clp / uf_dia_visita`; si no hay CLP, el `avaluo_uf` legado. */
   avaluoUf: number | null
   /* Línea de edificación SII (Tarea 4 · Opción A): estos tres los escribe el
      pipeline en TX_Unidades desde `foto_fuente_sii` (`orden`, `tipo_material`,
@@ -133,6 +136,13 @@ export interface UnidadSii {
 export type DatosSii = {
   rolSii: string
   avaluoTotal: number | null
+  /** Entrada del motor en pesos (`TX_DatosTasacion.avaluo_fiscal_clp`). */
+  avaluoFiscalClp: number | null
+  /**
+   * `avaluo_fiscal_clp / uf_dia_visita`, la misma cuenta que `F_AvaluoFiscalUF`.
+   * No se lee `TX_DatosTasacion.avaluo_fiscal_uf`: pese al nombre, esa fórmula
+   * devuelve pesos y el preview la mostraba rotulada como UF.
+   */
   avaluoFiscalUf: number | null
   avaluoExento: number | null
   contribucionAnual: number | null
@@ -474,10 +484,16 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
    * campos top-level de `InformeCanonico` para que el preview los consuma sin
    * depender del índice del array —mismo trato que `valorDestacado` en CI-063—.
    */
+  const ufDia = numeroONull(s.uf_dia_visita)
+  const aUf = (clp: number | null): number | null =>
+    clp !== null && ufDia !== null && ufDia > 0 ? clp / ufDia : null
+  const avaluoFiscalClp = numeroONull(d.avaluo_fiscal_clp)
+
   const datosSii: DatosSii = {
     rolSii: rolSiiConSentinel(texto(s.rol_sii)),
     avaluoTotal: numeroONull(d.avaluo_total),
-    avaluoFiscalUf: numeroONull(d.avaluo_fiscal_uf),
+    avaluoFiscalClp,
+    avaluoFiscalUf: aUf(avaluoFiscalClp),
     avaluoExento: numeroONull(d.avaluo_exento),
     contribucionAnual: numeroONull(d.contribucion_anual),
     calidadSii: texto(d.calidad_sii),
@@ -496,7 +512,8 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       rolSii: rolSiiConSentinel(texto(u.fields.rol_sii)),
       subtipo: texto(u.fields.subtipo),
       supM2: numeroONull(u.fields.sup_m2),
-      avaluoUf: numeroONull(u.fields.avaluo_uf),
+      avaluoClp: numeroONull(u.fields.avaluo_clp),
+      avaluoUf: aUf(numeroONull(u.fields.avaluo_clp)) ?? numeroONull(u.fields.avaluo_uf),
       orden: numeroONull(u.fields.orden),
       material: texto(u.fields.tipo_material),
       anioConstruccion: numeroONull(u.fields.anio_construccion),

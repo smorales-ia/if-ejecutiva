@@ -4,6 +4,7 @@ import { createContext, useContext, useId, useState } from "react"
 import { ChevronDown, Star } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
+import { FechaInput } from "@/components/ui/fecha-input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -198,23 +199,41 @@ export function TextField({
         </Label>
         {mostrarPrellenado && <PrellenadoBadge />}
       </div>
-      <Input
-        id={id}
-        type={type}
-        inputMode={type === "number" ? "decimal" : undefined}
-        value={value}
-        placeholder={placeholder}
-        disabled={deshabilitado}
-        data-faltante={vacioRequerido ? "true" : undefined}
-        onChange={(e) => {
-          setEditado(true)
-          onChange(e.target.value)
-        }}
-        className={cn(
-          "min-h-12 text-base",
-          vacioRequerido && "data-[faltante=true]:border-danger",
-        )}
-      />
+      {type === "date" ? (
+        /* PRD «Temas 1» R5 · se escribe dd/mm/aaaa y viaja ISO, como el nativo. */
+        <FechaInput
+          id={id}
+          value={value}
+          disabled={deshabilitado}
+          data-faltante={vacioRequerido ? "true" : undefined}
+          onChange={(v) => {
+            setEditado(true)
+            onChange(v)
+          }}
+          className={cn(
+            "min-h-12 text-base",
+            vacioRequerido && "data-[faltante=true]:border-danger",
+          )}
+        />
+      ) : (
+        <Input
+          id={id}
+          type={type}
+          inputMode={type === "number" ? "decimal" : undefined}
+          value={value}
+          placeholder={placeholder}
+          disabled={deshabilitado}
+          data-faltante={vacioRequerido ? "true" : undefined}
+          onChange={(e) => {
+            setEditado(true)
+            onChange(e.target.value)
+          }}
+          className={cn(
+            "min-h-12 text-base",
+            vacioRequerido && "data-[faltante=true]:border-danger",
+          )}
+        />
+      )}
       {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
     </div>
   )

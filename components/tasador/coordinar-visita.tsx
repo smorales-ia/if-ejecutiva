@@ -17,6 +17,7 @@ import {
   Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatearFecha } from "@/lib/fechas"
 import {
   cargarMotivosDevolucion,
   confirmarCoordinacion,
@@ -26,7 +27,7 @@ import {
 } from "@/lib/tasador/tasaciones"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { FechaInput } from "@/components/ui/fecha-input"
 import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
@@ -230,7 +231,7 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
             <div className="divide-y divide-border">
               <Campo label="Empresa">{tasacion.cliente}</Campo>
               {tasacion.fechaSolicitud && (
-                <Campo label="Fecha de solicitud">{tasacion.fechaSolicitud}</Campo>
+                <Campo label="Fecha de solicitud">{formatearFecha(tasacion.fechaSolicitud)}</Campo>
               )}
               <div className="flex items-center justify-between gap-3 py-1.5">
                 <div className="flex flex-col">
@@ -485,11 +486,10 @@ export function CoordinarVisita({ tasacion }: { tasacion: Tasacion }) {
                 <Label htmlFor="fecha-visita" className="text-sm font-medium">
                   Fecha planificada de visita <span className="text-danger">*</span>
                 </Label>
-                <Input
+                <FechaInput
                   id="fecha-visita"
-                  type="date"
                   value={fechaVisita}
-                  onChange={(e) => setFechaVisita(e.target.value)}
+                  onChange={setFechaVisita}
                   disabled={enviando}
                   className="min-h-12 text-base"
                 />

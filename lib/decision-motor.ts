@@ -11,6 +11,8 @@
  * el mapeo puro; la lectura vive en `lib/decision-motor-airtable.ts`.
  */
 
+import { formatearFechaHora } from '@/lib/fechas'
+
 /** Una regla que compitió por la solicitud y perdió. */
 export interface ReglaCandidata {
   nombre: string
@@ -175,18 +177,12 @@ function parseFormulas(raw: string | undefined): string[] {
     .filter((f) => f !== '')
 }
 
+/** `dd/mm/yyyy HH:mm` en hora de Santiago (PRD «Temas 1» R4). */
 function formatearInstante(iso: string | undefined): string | undefined {
   if (!iso) return undefined
   const d = new Date(iso)
   if (isNaN(d.getTime())) return undefined
-  return d.toLocaleString('es-CL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'America/Santiago',
-  })
+  return formatearFechaHora(d)
 }
 
 /**

@@ -3568,3 +3568,60 @@ base del Historial de Airtable.
 **Prevención futura:** si un harness Node da `fetch failed` y curl/python conectan, es la autoselección de familia — aplicar esas flags antes de dudar de la cadena.
 
 **Hallazgo (no inconveniente de esta tanda):** el auditor ciego elevó G-4 (PDF imprime Propietario=solicitante; `ensamblador.ts:587`) a FAIL estricto en C3/C4/C5. Preexistente, dato correcto en Airtable, fix en la tanda de plantilla + re-render de esos 3 con el mismo disparador.
+
+### 2026-10-09 — Primera noche en la nube: lanzamiento de A-01/A-02/A-03 y el agente local que no estaba muerto
+**Contexto:** lanzar las tres tandas nocturnas de `SPEC_NOCHE-NUBE-UIEJECUTIVA_20261008` como sesiones cloud, tras un intento de correrlas en local con subagentes en worktrees.
+
+**Inconveniente 1 — el agente local se dio por muerto dos veces y seguía vivo.** Tras un error interno de la llamada al agente y un PAUSA, la sesión de terminal informó «no se lanzó ninguna tanda»; el agente ya editaba los archivos de A-01 en `.claude/worktrees/agent-…`. Más tarde informó «limpieza completa y verificada» y el agente recreó worktree y rama minutos después (metadata `agent-…-r1`).
+**Causa raíz:** el error llegó al hilo principal pero el subagente en segundo plano siguió corriendo; la limpieza se verificó antes de que el agente quedara en reposo.
+**Solución aplicada:** estado leído desde disco (mtime de los archivos del worktree + `git worktree list`), no desde el relato de la sesión. Con el agente ya detenido: `git stash` de las 4 ediciones a medias («respaldo A-01 agente local descartado 2026-10-09»), `git worktree remove`, `git branch -d claude/precio-venta-siempre` y borrado de `.claude/worktrees/`. `main` quedó en `834998b` = origin.
+**Prevención futura:** antes de afirmar «no se lanzó nada» o de limpiar un worktree de agente, mirar el mtime de sus archivos y confirmar que el agente terminó; re-verificar después de que termine. No correr la misma Actividad en local y en la nube: ambas usarían la rama `claude/<slug>`.
+
+**Inconveniente 2 — worktrees creados desde WSL no se pueden operar con el git de Windows.** `git worktree list` los marca `prunable` y `git -C <worktree>` falla con «not a git repository: /mnt/c/…». Además `git` no está en el PATH de PowerShell.
+**Causa raíz:** el worktree queda registrado con rutas `/mnt/c/…`, que el git de Windows no resuelve.
+**Solución aplicada:** operar el worktree con `wsl.exe -e git -C /mnt/c/…` (el `worktree remove` con `node_modules` tardó ~2 min sobre `/mnt/c`); para el checkout principal desde PowerShell, el git de GitHub Desktop (`%LOCALAPPDATA%\GitHubDesktop\app-*\resources\app\git\cmd\git.exe`).
+**Prevención futura:** limpiar cada worktree con el mismo git que lo creó y darle timeout largo.
+
+**Inconveniente 3 — cuenta y modelo equivocados al lanzar.** Un enlace a claude.ai/code abierto desde la app de escritorio cayó en una cuenta Pro distinta de la cuenta Max del navegador; la terminal se detuvo con «out of usage credits» usando Fable.
+**Causa raíz:** cada cuenta tiene límites propios, y Fable tiene un límite semanal independiente del general (estaba al 100 % con el general al 53 %).
+**Solución aplicada:** las tres sesiones se lanzaron desde el navegador en la cuenta Max, entorno `Default`, rama `main`, modo `Auto`, Opus 5.5 (A-01 esfuerzo Medio; A-02 y A-03 Alto).
+**Prevención futura:** antes de pulsar Enter, leer la etiqueta de cuenta (abajo a la izquierda) y `claude.ai/settings/usage`; tandas nocturnas en Opus, no en Fable.
+
+### 2026-10-14 — Réplica MET-6283 por MCP (VP-2026-0079): unidad duplicada por formato de rol
+**Contexto:** crear vía MCP la solicitud de la guía `Guia_Carga_Manual_MET6283_iapro.docx` (Etapas 1–2) y dejarla lista para que el tasador replique el resto desde `/tasaciones`.
+**Inconveniente 1 — AT01 eligió la regla antigua.** Recién creada, VP-2026-0079 quedó con `Regla_MetLife_Refinanciamiento_Casa` (prioridad 200, gana por score 3 vs 2) en vez de `REGLA_REFI_CASA_V32`. Pasa igual creando desde la consola.
+**Causa raíz:** bloqueo #1 ya conocido (línea 3064): la regla MetLife-específica sigue activa y compite con la v32.
+**Solución aplicada:** PATCH `regla_aplicada = recYEf9XepX4SmLnH` en el mismo update que pasa a `asignada` (con `creada` todavía AT01 podría re-decidir). Verificado que no se revirtió.
+**Prevención futura:** toda réplica MetLife Casa debe revisar `regla_aplicada` antes de calcular; el fix de fondo es R4 de `docs/_planes/PRD_T-UNIDADES-SII-REGLA-20261014.md`.
+
+**Inconveniente 2 — la consola mostró dos unidades.** Al subir `anexo2_rol_avaluo.jpg` (certificado de avalúo), apareció una segunda fila en `TX_Unidades` con rol `00882-00040` y `avaluo_uf = 339809429`.
+**Causa raíz:** AT03-Ext resuelve la unidad por igualdad exacta de texto del rol (`AT03-Ext_script.js:516-542`); `882-40` ≠ `00882-00040` y crea una unidad nueva. Además el atributo `certificado_avaluo_fiscal__avaluo_total` destina pesos a `avaluo_uf`.
+**Solución aplicada:** borrada la unidad duplicada `rec2F33IJvqowfub9` (con OK de Sergio); los fixes de fondo quedaron especificados en el PRD citado (R1 rol normalizado, R2 moneda del avalúo).
+**Prevención futura:** al crear unidades a mano o por MCP, escribir el rol como lo imprime el SII (`00882-00040`) hasta que R1 esté desplegado. Y ojo: «Datos SII» y «Antecedentes legales» de la consola son mocks (`lib/console-data.ts:1614-1652`): no sirven para verificar datos.
+
+**Inconveniente 3 — escrituras por MCP bloqueadas a mitad de camino.** El clasificador de permisos dejó pasar el create de `A_Eventos` pero bloqueó el update de `TX_Solicitudes`, dejando un evento `asignacion_manual` adelantado al hecho.
+**Solución aplicada:** el update pasó cuando Sergio lo pidió explícitamente en el chat.
+**Prevención futura:** en secuencias multi-escritura por MCP, escribir primero el cambio de estado y después el evento de auditoría, nunca al revés.
+
+**Inconveniente 4 — `vitest run` completo reescribe la evidencia de tandas cerradas.** Al correr la suite para validar el fix del avalúo, los tests de `docs/_evidencia/T-TASADOR-E2E-*` volvieron a leer Airtable, renderizar en Carbone y sobrescribir `pdf-casoN.pdf`, `casoN-audit.json` y `casoN-contexto.json`.
+**Causa raíz:** `vitest.config.mts` no excluye `docs/_evidencia/**`; esos `.test.mts` son scripts de tanda con efectos (red y escritura de archivos), no tests unitarios.
+**Solución aplicada:** `git restore -- docs/_evidencia/T-TASADOR-E2E-5CASOS-PROD-20261003 docs/_evidencia/T-TASADOR-E2E-CASOS-2a5-REPLICA-20261005` y verificación con `git status`.
+**Prevención futura:** para validar, correr `vitest run lib app components` (o excluir `docs/_evidencia/**` en la config) y revisar `git status` después de cualquier corrida completa. Además, en este equipo `pnpm` desde PowerShell intenta reinstalar `node_modules` (instalado desde WSL) y aborta: correr los binarios por WSL (`wsl.exe -e bash -lc 'cd /mnt/c/... && ./node_modules/.bin/vitest run ...'`).
+
+**Inconveniente 5 — el avalúo del certificado iba a la columna equivocada y el preview rotulaba pesos como UF.** Ver PRD §9.2. **Solución aplicada:** campo nuevo `TX_Unidades.avaluo_clp` (`fld7QVj2KR8X4yRlo`), atributo `recyfinCf1PgGYMMN` redirigido a él, y `lectura-informe.ts` deriva la UF (`avaluo_fiscal_clp / uf_dia_visita`) en vez de leer la fórmula `avaluo_fiscal_uf`, que devuelve pesos. **Prevención futura:** un campo con «_uf» en el nombre no garantiza la moneda; verificar contra un valor conocido (golden MET-6283: $339.809.429 = UF 8.517,68).
+
+### 2026-10-14 — «Temas 1»: fechas dd/mm/aaaa, orden de documentos y de fotos (PRD T-TEMAS1 · F1–F4)
+**Contexto:** ejecutar el PRD `docs/_planes/PRD_T-TEMAS1-ORDEN-FOTOS-DOCS-FECHAS-20261014.md` en cuatro fases, retomado en una segunda cuenta tras agotarse el límite de uso a mitad de F3.
+**Inconveniente 1 — una edición en lote dañó un test.** Al actualizar los esperados de fecha en varios tests a la vez, `lib/historial-airtable.test.ts` quedó con una lista de un elemento aplanada y las comillas cambiadas.
+**Causa raíz:** reemplazo masivo por patrón sobre archivos con estructuras distintas; el patrón calzaba en sitios que no eran fechas.
+**Solución aplicada:** `git restore` del archivo y corrección a mano; verificado con `git diff` que el lote no tocó otros archivos.
+**Prevención futura:** los esperados de tests se editan archivo por archivo; un reemplazo en lote sólo para literales exactos y únicos, revisando el diff antes de correr nada.
+
+**Inconveniente 2 — el rótulo de pantalla de una categoría de foto era también el pie de foto del PDF.** Cambiar «Fachada / Exterior» por «Fachada» habría cambiado la grilla del informe, que la decisión Q1 dejó fuera de alcance.
+**Causa raíz:** `lib/informe/imagenes.ts` tomaba el caption de `CATEGORIAS_FOTO[].label`, el mismo campo que pinta el organizador: una sola fuente para dos usos que pueden divergir.
+**Solución aplicada:** campo `labelInforme` en el catálogo (`lib/tasador/tasaciones.ts`) con los textos que el PDF ya imprimía, consumido por `imagenes.ts`; test que fija esos literales en `lib/informe/imagenes.test.ts`.
+**Prevención futura:** antes de cambiar un rótulo, buscar todos sus consumidores (`grep` del campo, no del texto); si uno es el PDF, separar el campo.
+
+**Inconveniente 3 — `wsl.exe -e bash -lc '… | grep -E "A|B"'` desde PowerShell falla.** Salía `|Test: command not found`: PowerShell reparte las comillas internas y bash recibe el patrón partido.
+**Solución aplicada:** el comando va en un script `.sh` del scratchpad y se invoca con `wsl.exe -e bash <ruta /mnt/c/...>`.
+**Prevención futura:** cualquier pipeline con comillas o `|` hacia WSL, en script; nunca inline. ESLint no está instalado en el repo (`node_modules/.bin/eslint` no existe): el gate real es `tsc` + `vitest run lib app components` + `next build`.

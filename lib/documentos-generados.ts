@@ -20,6 +20,8 @@
  * separación que `lib/decision-motor.ts` / `lib/decision-motor-airtable.ts`.
  */
 
+import { formatearFechaHora } from '@/lib/fechas'
+
 export interface VersionInformeGenerado {
   id: string
   /** `version_doc`, o `version` como respaldo. */
@@ -57,18 +59,12 @@ export interface DocumentoGeneradoFields {
   solicitud?: string[]
 }
 
+/** `dd/mm/yyyy HH:mm` en hora de Santiago (PRD «Temas 1» R4). */
 function formatearInstante(valor: string | undefined): string | undefined {
   if (!valor) return undefined
   const d = new Date(valor)
   if (isNaN(d.getTime())) return undefined
-  return d.toLocaleString('es-CL', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'America/Santiago',
-  })
+  return formatearFechaHora(d)
 }
 
 /**

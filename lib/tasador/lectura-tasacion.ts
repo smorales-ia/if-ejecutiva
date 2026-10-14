@@ -37,6 +37,7 @@
 
 import { listRecords } from '@/lib/airtable-client'
 import { fetchCatalogos } from '@/lib/catalogos'
+import { formatearFecha } from '@/lib/fechas'
 import type { SlaTonoEtapa } from '@/lib/console-data'
 import { obtenerMatrizEtapas } from '@/lib/sla-etapas'
 import { etiquetaEtapa, nombresDeEtapas } from '@/lib/solicitudes'
@@ -265,16 +266,10 @@ function texto(valor: unknown, porDefecto = VACIO): string {
 function fechaVisible(valor: unknown, sinFecha: string = SIN_FECHA_VISITA): string {
   const crudo = typeof valor === 'string' ? valor.trim() : ''
   if (!crudo) return sinFecha
-
-  const soloFecha = /^\d{4}-\d{2}-\d{2}/.exec(crudo)
-  const fecha = soloFecha ? new Date(`${soloFecha[0]}T12:00:00`) : new Date(crudo)
-  if (Number.isNaN(fecha.getTime())) return sinFecha
-
-  return fecha.toLocaleDateString('es-CL', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+  // `dd/mm/yyyy` (PRD «Temas 1» R4). `formatearFecha` parte el `YYYY-MM-DD`
+  // sin pasar por `new Date`, así que el desfase descrito arriba no ocurre.
+  const r = formatearFecha(crudo, sinFecha)
+  return /^\d{2}\/\d{2}\/\d{4}$/.test(r) ? r : sinFecha
 }
 
 /** Sólo para el test del desfase de huso. No tiene otros consumidores. */

@@ -167,6 +167,7 @@ export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
         { fieldId: FIELD_IDS_UNIDADES.rolSii, label: 'Rol SII' },
         { fieldId: FIELD_IDS_UNIDADES.supM2, label: 'Superficie construida (m²)' },
         { fieldId: FIELD_IDS_UNIDADES.anioConstruccion, label: 'Año de construcción' },
+        { fieldId: FIELD_IDS_UNIDADES.avaluoClp, label: 'Avalúo ($)' },
         { fieldId: FIELD_IDS_UNIDADES.avaluoUf, label: 'Avalúo (UF)' },
       ],
     },

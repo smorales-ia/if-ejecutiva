@@ -5,9 +5,12 @@ import { Camera, Check, CloudOff, Loader2, Plus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   CATEGORIAS_FOTO,
+  SECCIONES_FOTO,
+  categoriaFotoVisible,
   type CategoriaFotoId,
   type FotoAdjunta,
   type FotoCategoriaCustom,
+  type SeccionFoto,
 } from "@/lib/tasador/tasaciones"
 import {
   minimoCategoriaPersonalizada,
@@ -23,6 +26,9 @@ export type FotosPorCategoria = Record<CategoriaFotoId, FotoAdjunta[]>
 export type EstadoCategoria = {
   id: string
   label: string
+  /** Insignia de la miniatura. */
+  labelCorto: string
+  seccion: SeccionFoto
   count: number
   min: number
   max: number | null
@@ -31,7 +37,8 @@ export type EstadoCategoria = {
 }
 
 /**
- * Estado de las ocho categorías del catálogo.
+ * Estado de las categorías visibles del catálogo, en su orden (T-TEMAS1 · R1).
+ * Una heredada sin fotos no rinde estado: ni se ofrece ni cuenta.
  *
  * **Ningún mínimo se calcula acá** (§6.3): `resolverMinimo` y `resolverMaximo`
  * viven en `lib/tasador/minimos-fotos.ts`, que es el punto único de **A-16**.
@@ -40,12 +47,24 @@ export function evaluarCategorias(
   fotos: FotosPorCategoria,
   declarados: DeclaradosSeccionB,
 ): EstadoCategoria[] {
-  return CATEGORIAS_FOTO.map((c) => {
+  return CATEGORIAS_FOTO.filter((c) =>
+    categoriaFotoVisible(c, fotos[c.id]?.length ?? 0),
+  ).map((c) => {
     const min = resolverMinimo(c.id, declarados)
     const max = resolverMaximo(c.id, declarados)
     const count = fotos[c.id]?.length ?? 0
     const faltan = Math.max(0, min - count)
-    return { id: c.id, label: c.label, count, min, max, completa: count >= min, faltan }
+    return {
+      id: c.id,
+      label: c.label,
+      labelCorto: c.labelCorto,
+      seccion: c.seccion,
+      count,
+      min,
+      max,
+      completa: count >= min,
+      faltan,
+    }
   })
 }
 
@@ -69,6 +88,8 @@ export function evaluarCustom(custom: FotoCategoriaCustom[]): EstadoCategoria[] 
     return {
       id: c.id,
       label: c.nombre,
+      labelCorto: c.nombre.split(" ")[0],
+      seccion: "propiedad",
       count,
       min,
       max: null,
@@ -94,13 +115,13 @@ type Target =
 function Miniatura({
   foto,
   label,
-  primeraPalabra,
+  labelCorto,
   borrando,
   onBorrar,
 }: {
   foto: FotoAdjunta
   label: string
-  primeraPalabra: string
+  labelCorto: string
   borrando: boolean
   onBorrar: () => void
 }) {
@@ -126,7 +147,7 @@ function Miniatura({
         )}
       >
         {foto.pendiente && <CloudOff className="h-3 w-3 shrink-0" aria-hidden="true" />}
-        {foto.pendiente ? "Pendiente" : primeraPalabra}
+        {foto.pendiente ? "Pendiente" : labelCorto}
       </span>
 
       <button
@@ -153,7 +174,7 @@ function Bloque({
   max,
   completa,
   fotos,
-  primeraPalabra,
+  labelCorto,
   subiendo,
   borrandoId,
   onAdd,
@@ -166,7 +187,7 @@ function Bloque({
   max: number | null
   completa: boolean
   fotos: FotoAdjunta[]
-  primeraPalabra: string
+  labelCorto: string
   subiendo: boolean
   borrandoId: string | null
   onAdd: () => void
@@ -213,7 +234,7 @@ function Bloque({
               key={f.id}
               foto={f}
               label={label}
-              primeraPalabra={primeraPalabra}
+              labelCorto={labelCorto}
               borrando={borrandoId === f.id}
               onBorrar={() => onBorrar(f)}
             />
@@ -317,13 +338,15 @@ export function FotosCategorizadas({
     await onEliminarCategoria(id)
   }
 
+  /* Incluye los rótulos del informe: una personalizada «Habitaciones» o
+     «Ofertas / Comparables» duplicaría en el PDF el pie de una fija. */
   const nombresExistentes = [
-    ...CATEGORIAS_FOTO.map((c) => c.label),
+    ...CATEGORIAS_FOTO.flatMap((c) => [c.label, c.labelInforme]),
     ...custom.map((c) => c.nombre),
   ]
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       {/*
         Regla D · el input se deshabilita mientras hay una subida en vuelo, para
         que no se pueda encolar una segunda foto sobre la misma operación.
@@ -339,50 +362,70 @@ export function FotosCategorizadas({
         tabIndex={-1}
       />
 
-      <div className="flex flex-col gap-4">
-        {estados.map((e) => (
-          <Bloque
-            key={e.id}
-            label={e.label}
-            count={e.count}
-            min={e.min}
-            max={e.max}
-            completa={e.completa}
-            fotos={fotos[e.id as CategoriaFotoId] ?? []}
-            primeraPalabra={e.label.split(" ")[0]}
-            subiendo={subiendoEn === e.id}
-            borrandoId={borrandoId}
-            onAdd={() => abrirSelector({ kind: "pre", id: e.id as CategoriaFotoId })}
-            onBorrar={(foto) => void onBorrarFoto(e.id, foto)}
-          />
-        ))}
+      {/*
+        T-TEMAS1 · R2 · una sección por grupo del catálogo. Las personalizadas y
+        su creador cierran la sección de la propiedad, antes de las referencias:
+        son recintos de la propiedad que el catálogo no trae.
+      */}
+      {SECCIONES_FOTO.map((s) => (
+        <section key={s.id} className="flex flex-col gap-4" aria-labelledby={`seccion-fotos-${s.id}`}>
+          <h2
+            id={`seccion-fotos-${s.id}`}
+            className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+          >
+            {s.titulo}
+          </h2>
 
-        {estadosCustom.map((e) => {
-          const cat = custom.find((c) => c.id === e.id)!
-          return (
-            <Bloque
-              key={e.id}
-              label={e.label}
-              count={e.count}
-              min={e.min}
-              max={null}
-              completa={e.completa}
-              fotos={cat.fotos}
-              primeraPalabra={e.label.split(" ")[0]}
-              subiendo={subiendoEn === cat.nombre}
-              borrandoId={borrandoId}
-              onAdd={() => abrirSelector({ kind: "custom", id: e.id })}
-              onBorrar={(foto) => void onBorrarFoto(cat.nombre, foto)}
-              onEliminarCategoria={() => void eliminarCategoria(e.id)}
-            />
-          )
-        })}
-      </div>
+          {estados
+            .filter((e) => e.seccion === s.id)
+            .map((e) => (
+              <Bloque
+                key={e.id}
+                label={e.label}
+                count={e.count}
+                min={e.min}
+                max={e.max}
+                completa={e.completa}
+                fotos={fotos[e.id as CategoriaFotoId] ?? []}
+                labelCorto={e.labelCorto}
+                subiendo={subiendoEn === e.id}
+                borrandoId={borrandoId}
+                onAdd={() => abrirSelector({ kind: "pre", id: e.id as CategoriaFotoId })}
+                onBorrar={(foto) => void onBorrarFoto(e.id, foto)}
+              />
+            ))}
 
-      <FotoCategoriaCreator
-        nombresExistentes={nombresExistentes}
-        onCrear={crearCategoria}
-      />
+          {s.id === "propiedad" && (
+            <>
+              {estadosCustom.map((e) => {
+                const cat = custom.find((c) => c.id === e.id)!
+                return (
+                  <Bloque
+                    key={e.id}
+                    label={e.label}
+                    count={e.count}
+                    min={e.min}
+                    max={null}
+                    completa={e.completa}
+                    fotos={cat.fotos}
+                    labelCorto={e.labelCorto}
+                    subiendo={subiendoEn === cat.nombre}
+                    borrandoId={borrandoId}
+                    onAdd={() => abrirSelector({ kind: "custom", id: e.id })}
+                    onBorrar={(foto) => void onBorrarFoto(cat.nombre, foto)}
+                    onEliminarCategoria={() => void eliminarCategoria(e.id)}
+                  />
+                )
+              })}
+
+              <FotoCategoriaCreator
+                nombresExistentes={nombresExistentes}
+                onCrear={crearCategoria}
+              />
+            </>
+          )}
+        </section>
+      ))}
     </div>
   )
 }

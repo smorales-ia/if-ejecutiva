@@ -186,7 +186,10 @@ export const FIELD_IDS_UNIDADES = Object.freeze({
      (Q2). IDs verificados vía meta API el 10-sep-2026. Sin homónimo en esta
      tabla (a diferencia de TX_DatosTasacion). */
   supM2: 'fldZLvJKuXuWhRV8P',
+  /** `avaluo_uf` · number. Legado: RF-09 ya no lo escribe (el certificado trae pesos). */
   avaluoUf: 'fld3fwTUt4GN8pYXf',
+  /** `avaluo_clp` · number(0). Avalúo del certificado en pesos (creado 14-oct-2026). */
+  avaluoClp: 'fld7QVj2KR8X4yRlo',
   tipoMaterial: 'fldnG1nEod0V1IkKZ',
   anioConstruccion: 'fldM46x4ECE9B0pfM',
 } as const)

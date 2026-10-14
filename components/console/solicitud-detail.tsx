@@ -54,13 +54,11 @@ import {
   ESTADO_CORREO_CLASSES,
   ESTADO_CORREO_LABELS,
   SLA_CLASSES,
-  mockAntecedentesLegales,
   CANALES_ORIGEN,
   ESTADOS_CONSERVACION,
   ESTADOS_CONTACTO,
   ROLES_CONTACTO_VISITA,
   etiquetaCatalogo,
-  mockDatosSii,
   mockEmailAsignacion,
   toneDeEtapa,
   type EstadoCorreo,
@@ -123,6 +121,12 @@ import {
   useAdjuntosSolicitud,
   type EstadoAdjuntos,
 } from "@/lib/use-adjuntos-solicitud"
+import { useSiiLegales, type EstadoSiiLegales } from "@/lib/use-sii-legales"
+import { formatearFecha, formatearFechaHora } from "@/lib/fechas"
+
+const MSG_CARGANDO_SII = "Cargando los datos SII y legales…"
+const MSG_ERROR_SII =
+  "No pudimos cargar los datos SII y legales. Intenta nuevamente en unos segundos."
 
 const historialIcons: Record<
   IconoHistorial,
@@ -241,6 +245,11 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
   // `TX_CoordinacionVisita` vía el endpoint de C2, **no**
   // `TX_Solicitudes.coordinacion_vigente`, que es redundancia del lado tasador.
   const coordinacion = useCoordinacionSolicitud(s.id, ES_RECORD_ID.test(s.id))
+
+  // «Datos SII» y «Antecedentes legales» (PRD R3): TX_Unidades,
+  // TX_DatosTasacion y TX_DocumentosLegales reales. Sustituyen a
+  // `mockDatosSii` / `mockAntecedentesLegales`, que inventaban los valores.
+  const siiLegales = useSiiLegales(s.id, ES_RECORD_ID.test(s.id))
 
   // Timeline de §1.3.3: A_Eventos + A_Cambios reales. Sustituye al mock
   // `HISTORIAL` de `lib/console-data.ts`, que pintaba siempre los mismos tres
@@ -372,18 +381,12 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
       }
     }
 
-    const instante = new Date()
-    const ahora = instante.toLocaleString("es-CL", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-    const iso = instante.toISOString()
+    const iso = new Date().toISOString()
     setTasador(nuevo)
     if (estado === "creada") setEstado("asignada")
-    setFechaAsignacion(ahora)
+    // Valor optimista en ISO; lo que llega de Airtable es reloj de pared. Las dos
+    // formas las formatea `formatearFechaHora` al mostrar.
+    setFechaAsignacion(iso)
     setEstadoCorreo("enviado")
 
     setHistorialExtra((prev) => [
@@ -577,6 +580,7 @@ export function SolicitudDetail({ solicitud }: { solicitud: Solicitud }) {
                 soloLectura={soloLectura}
                 motor={decisionMotor}
                 coordinacion={coordinacion}
+                siiLegales={siiLegales}
                 onVerEmail={() => setEmailOpen(true)}
                 onReenviar={reenviarCorreo}
               />
@@ -747,6 +751,7 @@ function DatosTab({
   soloLectura,
   motor,
   coordinacion,
+  siiLegales,
   onVerEmail,
   onReenviar,
 }: {
@@ -758,12 +763,12 @@ function DatosTab({
   soloLectura: boolean
   motor: EstadoDecisionMotor
   coordinacion: EstadoCoordinacionUI
+  siiLegales: EstadoSiiLegales
   onVerEmail: () => void
   onReenviar: () => void
 }) {
   const esNuevo = s.tipoPropiedadNuevoUsado === "nueva"
-  const sii = mockDatosSii(s)
-  const legales = mockAntecedentesLegales(s)
+  const { sii, legales } = siiLegales.datos
   const tieneTasador = tasador !== SIN_TASADOR && tasador.trim() !== ""
 
   return (
@@ -1060,7 +1065,7 @@ function DatosTab({
           )}
         </DataRow>
         <DataRow label="Fecha y hora de asignación">
-          {fechaAsignacion || "—"}
+          {formatearFechaHora(fechaAsignacion)}
         </DataRow>
         <DataRow label="Estado del correo">
           <span
@@ -1089,6 +1094,12 @@ function DatosTab({
         <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Datos SII
         </h2>
+        {siiLegales.cargando && (
+          <p className="text-sm text-muted-foreground">{MSG_CARGANDO_SII}</p>
+        )}
+        {!siiLegales.cargando && siiLegales.error && (
+          <p className="text-sm text-muted-foreground">{MSG_ERROR_SII}</p>
+        )}
         <div className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
           <DataRow label="Destino principal">{sii.destinoPrincipal}</DataRow>
           <DataRow label="Avalúo fiscal total">{sii.avaluoTotal}</DataRow>
@@ -1099,16 +1110,23 @@ function DatosTab({
             <thead className="bg-muted/50 text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 font-medium">Unidad</th>
-                <th className="px-3 py-2 font-medium">Destino</th>
-                <th className="px-3 py-2 font-medium">Código SII</th>
+                <th className="px-3 py-2 font-medium">Tipo</th>
+                <th className="px-3 py-2 font-medium">Rol SII</th>
                 <th className="px-3 py-2 font-medium text-right">Avalúo fiscal</th>
               </tr>
             </thead>
             <tbody>
+              {sii.unidades.length === 0 && (
+                <tr className="border-t border-border">
+                  <td className="px-3 py-2 text-muted-foreground" colSpan={4}>
+                    Sin unidades registradas.
+                  </td>
+                </tr>
+              )}
               {sii.unidades.map((u) => (
                 <tr key={u.unidadId} className="border-t border-border">
                   <td className="px-3 py-2 text-foreground">{u.ubicacion}</td>
-                  <td className="px-3 py-2 text-muted-foreground">{u.destino}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{u.tipo}</td>
                   <td className="px-3 py-2 text-muted-foreground">{u.codigoSii}</td>
                   <td className="px-3 py-2 text-right tabular-nums text-foreground">
                     {u.avaluoFiscal}
@@ -1129,6 +1147,7 @@ function DatosTab({
         </DataRow>
         <DataRow label="Fecha del permiso">{legales.fechaPermiso}</DataRow>
         <DataRow label="Recepción final">{legales.recepcionFinal}</DataRow>
+        <DataRow label="Fecha de recepción">{legales.fechaRecepcion}</DataRow>
         <DataRow label="Fojas">{legales.fojas}</DataRow>
         <DataRow label="N° inscripción">{legales.numeroInscripcion}</DataRow>
         <DataRow label="Año inscripción">{legales.anioInscripcion}</DataRow>
@@ -1205,10 +1224,10 @@ function DatosTab({
           {s.diasDesdeSolicitud ?? "—"}
         </DataRow>
         <DataRow label="Fecha de visita realizada">
-          {s.fechaVisitaReal ?? "—"}
+          {formatearFecha(s.fechaVisitaReal)}
         </DataRow>
-        <DataRow label="Fecha de entrega">{s.fechaEntrega ?? "—"}</DataRow>
-        <DataRow label="Fecha de cierre">{s.fechaCierre ?? "—"}</DataRow>
+        <DataRow label="Fecha de entrega">{formatearFecha(s.fechaEntrega)}</DataRow>
+        <DataRow label="Fecha de cierre">{formatearFecha(s.fechaCierre)}</DataRow>
         <DataRow label="Pendientes de visador">
           {s.tienePendientesVisador ? "Sí" : "No"}
         </DataRow>

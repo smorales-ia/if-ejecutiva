@@ -1,0 +1,34 @@
+{
+  "tanda": "T-REGLAS-AVALUO-20261014",
+  "tomado": "2026-10-14 (antes de cualquier escritura de la tanda), vía MCP Airtable, base app9G7lLkIV3CpeLa",
+  "autorizacion": "Sergio en chat, 14-oct-2026: aprueba desactivar la regla MetLife, crear TX_Unidades.avaluo_clp y solucionar los hallazgos colaterales",
+  "rollback": "Reescribir cada campo con el valor 'antes' de este archivo. avaluo_clp es campo nuevo: para revertir, borrarlo desde la UI de Airtable (el MCP no borra campos) y devolver uso_campo_destino a 'avaluo_uf'.",
+  "C_ReglasNegocio (tblyCb8cVTDzfeBx0) · campo activa (fldidvedXZEJfq0Xs)": [
+    { "id": "recoZuF6otZ5Bcs2g", "nombre": "Regla_MetLife_Refinanciamiento_Casa", "prioridad": 200, "antes": true, "despues": false, "solicitudes_con_la_regla": ["VP-2026-0039 (cancelada)"] },
+    { "id": "recAJFIbIXV1X93i3", "nombre": "Regla_AGH_Refinanciamiento_Casa", "prioridad": 200, "antes": true, "despues": false, "solicitudes_con_la_regla": ["VP-2026-0044 (cancelada)", "VP-2026-0064 (cancelada)", "VP-2026-0065 (cancelada)"] },
+    { "id": "recGsNl62Hi8VE6nW", "nombre": "Regla_HipotecariaEvoluciona_Refinanciamiento", "prioridad": 200, "antes": true, "despues": false, "solicitudes_con_la_regla": [] },
+    { "id": "reccwJrigkDZMBvmM", "nombre": "Regla_HipotecariaSecurity_Refinanciamiento", "prioridad": 200, "antes": true, "despues": false, "solicitudes_con_la_regla": [] }
+  ],
+  "C_ReglasNegocio · sin cambio (Leasing, no la cubre la v32)": [
+    { "id": "recIEZ7F3FGUF0l44", "nombre": "Regla_AustralLeasing_Habitacional_Casa", "activa": true }
+  ],
+  "M_Clientes (tblpK7AcYBMH93apK) · campo activo (fldwLvfsr1F7Yf3E1)": [
+    { "id": "recimE810cuyWIR9q", "nombre": "METLIFE", "antes": true, "despues": false, "nota": "duplicado sin parámetros ni solicitudes; importado de madre.xlsm" },
+    { "id": "recwxQlPhJTXgig93", "nombre": "MetLife Chile S.A.", "antes": true, "despues": false, "nota": "duplicado sin solicitudes; factor_seguro 0.825 (errata RB-53), factor_garantia 0.8, tasa_cap_rate 0.045" },
+    { "id": "recIg8NtVhptXkEUJ", "nombre": "MetLife", "activo": true, "nota": "registro vigente, no se toca" }
+  ],
+  "D_TipoDocumentoAtributo (tbldI86ieVKpjpL7E)": [
+    {
+      "id": "recyfinCf1PgGYMMN",
+      "codigo": "certificado_avaluo_fiscal__avaluo_total",
+      "antes": { "uso_campo_destino": "avaluo_uf", "unidad_medida": "UF", "ejemplo_atributo": "3223.20" },
+      "despues": { "uso_campo_destino": "avaluo_clp", "unidad_medida": "CLP", "ejemplo_atributo": "339809429" }
+    },
+    {
+      "id": "recS9IRdh9VVFa6LW",
+      "codigo": "consulta_antecedentes_bien_raiz__avaluo_total_clp",
+      "antes": { "unidad_medida": null, "ejemplo_atributo": "339609429" },
+      "despues": { "unidad_medida": "CLP", "ejemplo_atributo": "339809429" }
+    }
+  ]
+}

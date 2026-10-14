@@ -94,7 +94,7 @@ describe('resumenTiempoEtapa · consumido contra ideal/máximo', () => {
 describe('instanteCorto · hora de Santiago, no la del navegador', () => {
   it('convierte el instante UTC al reloj de pared de la oficina', () => {
     // 13:10Z en invierno chileno = 09:10 en Santiago.
-    expect(instanteCorto('2026-08-10T13:10:00.000Z')).toBe('10 ago 09:10')
+    expect(instanteCorto('2026-08-10T13:10:00.000Z')).toBe('10/08/2026 09:10')
   })
 
   it('no inventa nada con entrada nula o basura', () => {
@@ -110,17 +110,17 @@ describe('rangoEtapa · entrada → salida', () => {
       finTs: '2026-08-10T15:40:00.000Z',
       estado: 'completada',
     })
-    expect(rangoEtapa(e)).toBe('10 ago 09:10 → 10 ago 11:40')
+    expect(rangoEtapa(e)).toBe('10/08/2026 09:10 → 10/08/2026 11:40')
   })
 
   it('dice "en curso" en la etapa vigente, sin fabricar una salida', () => {
     const e = etapa({ inicioTs: '2026-08-10T15:40:00.000Z', estado: 'en_curso' })
-    expect(rangoEtapa(e)).toBe('10 ago 11:40 → en curso')
+    expect(rangoEtapa(e)).toBe('10/08/2026 11:40 → en curso')
   })
 
   it('declara la falta de entrada en las filas del backfill (fin sin inicio)', () => {
     const e = etapa({ finTs: '2026-08-10T15:40:00.000Z', estado: 'completada' })
-    expect(rangoEtapa(e)).toBe('sin registro de entrada → 10 ago 11:40')
+    expect(rangoEtapa(e)).toBe('sin registro de entrada → 10/08/2026 11:40')
   })
 
   it('devuelve null cuando no hay ningún timestamp', () => {
@@ -128,17 +128,17 @@ describe('rangoEtapa · entrada → salida', () => {
   })
 })
 
-describe('partesFechaHora · el año sólo cuando aporta', () => {
-  it('omite el año en curso', () => {
+describe('partesFechaHora · dd/mm/yyyy con año siempre («Temas 1»)', () => {
+  it('incluye el año aunque sea el año en curso', () => {
     expect(partesFechaHora('2026-08-11T19:30:00.000Z', AHORA)).toEqual({
-      fecha: '11 de agosto',
+      fecha: '11/08/2026',
       hora: '15:30',
     })
   })
 
-  it('escribe el año cuando el instante es de otro año', () => {
+  it('incluye el año cuando el instante es de otro año', () => {
     expect(partesFechaHora('2025-12-30T19:30:00.000Z', AHORA)?.fecha).toBe(
-      '30 de diciembre de 2025'
+      '30/12/2025'
     )
   })
 })
@@ -171,14 +171,14 @@ describe('mensajeAlertaEtapa · literales de §9.6.1 (E-3)', () => {
   it('emite el literal ámbar palabra por palabra', () => {
     expect(mensajeAlertaEtapa('ambar', vigente, AHORA)).toBe(
       'La etapa 2 · Coordinación de visita (llamado) alcanzó su plazo ideal. ' +
-        'Vence el 11 de agosto a las 15:30.'
+        'Vence el 11/08/2026 a las 15:30.'
     )
   })
 
   it('emite el literal rojo palabra por palabra, con el área responsable', () => {
     expect(mensajeAlertaEtapa('rojo', vigente, AHORA)).toBe(
       'La etapa 2 · Coordinación de visita (llamado) superó su plazo máximo el ' +
-        '11 de agosto a las 15:30. Responsable: Tasador.'
+        '11/08/2026 a las 15:30. Responsable: Tasador.'
     )
   })
 
@@ -186,7 +186,7 @@ describe('mensajeAlertaEtapa · literales de §9.6.1 (E-3)', () => {
     const sinArea = { ...vigente, responsable: null }
     expect(mensajeAlertaEtapa('rojo', sinArea, AHORA)).toBe(
       'La etapa 2 · Coordinación de visita (llamado) superó su plazo máximo el ' +
-        '11 de agosto a las 15:30.'
+        '11/08/2026 a las 15:30.'
     )
   })
 

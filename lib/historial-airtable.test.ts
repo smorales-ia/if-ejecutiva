@@ -86,7 +86,7 @@ describe('fetchCoordinacionParaHistorial', () => {
     // `fecha_respuesta` es la clave de orden del riel: si no viaja como
     // `timestamp`, el ítem se hunde al fondo sin que nada falle.
     expect(item.timestamp).toBe('2026-08-21T17:00:00.000Z')
-    expect(item.titulo).toBe('Visita confirmada para el 25 ago 2026')
+    expect(item.titulo).toBe('Visita confirmada para el 25/08/2026')
     // §6.1 · `autor_clerk_id` no se muestra: es jerga técnica.
     expect(item.autor).toBeUndefined()
   })

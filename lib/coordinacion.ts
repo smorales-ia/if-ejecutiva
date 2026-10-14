@@ -16,7 +16,7 @@
  */
 
 import type { CoordinacionVisita, EstadoCoordinacion } from '@/lib/tasador/tasaciones'
-import { partesEnSantiago, ZONA_VPROPERTY } from '@/lib/sla-habil'
+import { formatearFecha, formatearFechaHora } from '@/lib/fechas'
 
 /* -------------------------------------------------------------------------
  * Contrato de `GET /api/solicitudes/[id]/coordinacion`
@@ -121,38 +121,19 @@ const ETIQUETAS: Record<VarianteCoordinacion, string> = {
   sin_coordinar: 'Sin coordinar',
 }
 
-const FORMATO_FECHA_HORA = new Intl.DateTimeFormat('es-CL', {
-  timeZone: ZONA_VPROPERTY,
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-})
-
-const MESES_CORTOS = [
-  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-] as const
-
 /**
  * `fecha_respuesta` es un `dateTime` ISO: un instante absoluto, que se muestra
  * en el reloj de pared de Santiago y no en la zona del navegador. Misma razón
  * que `lib/sla-cronologia.ts`: la hora en que el tasador llamó tiene que decir
  * lo mismo desde cualquier máquina.
  *
- * `partesEnSantiago` se usa para decidir si el año es ruido —una coordinación
- * casi siempre es de este año— o información —una del año pasado sin el año
- * sería engañosa—.
+ * Formato `dd/mm/yyyy HH:mm` con el año siempre visible (PRD «Temas 1» R4).
  */
-function instanteVisible(iso: string | undefined, ahora: Date = new Date()): string {
+function instanteVisible(iso: string | undefined): string {
   if (!iso) return VACIO
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return VACIO
-
-  const base = FORMATO_FECHA_HORA.format(d)
-  const anio = partesEnSantiago(d).anio
-  return anio === partesEnSantiago(ahora).anio ? base : `${base} · ${anio}`
+  return formatearFechaHora(d)
 }
 
 /**
@@ -173,7 +154,8 @@ function fechaCalendarioVisible(valor: string | undefined): string | null {
   const mes = Number(m[2])
   if (mes < 1 || mes > 12) return null
 
-  return `${Number(m[3])} ${MESES_CORTOS[mes - 1]} ${m[1]}`
+  // `dd/mm/yyyy` partiendo el texto, sin `new Date` (ver arriba).
+  return formatearFecha(`${m[1]}-${m[2]}-${m[3]}`)
 }
 
 function textoVisible(valor: string | undefined): string {
@@ -202,7 +184,7 @@ function textoVisible(valor: string | undefined): string {
  */
 export function resumirCoordinacion(
   datos: CoordinacionSolicitud | null,
-  ahora: Date = new Date()
+  _ahora: Date = new Date()
 ): ResumenCoordinacion {
   const ultimo = datos?.intentos[0] ?? null
   const variante: VarianteCoordinacion = datos?.coordinacionVigente ?? 'sin_coordinar'
@@ -213,7 +195,7 @@ export function resumirCoordinacion(
     tonoClases: CLASES[variante],
     ultimo,
     intentoNumero: ultimo?.intentoNumero ?? null,
-    fechaRespuesta: instanteVisible(ultimo?.fechaRespuesta, ahora),
+    fechaRespuesta: instanteVisible(ultimo?.fechaRespuesta),
     // Las dos ramas no se cruzan: una confirmada no muestra motivo y una
     // rechazada no muestra fecha de visita. El reader ya no los puebla, pero
     // filtrar por variante evita que una fila mixta —de una migración, de una

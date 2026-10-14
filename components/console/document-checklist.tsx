@@ -39,6 +39,7 @@ import { generarThumbnailDataUri } from "@/lib/tasador/thumbnail"
 import type { Adjunto } from "@/lib/adjuntos"
 import type { Unidad } from "@/lib/console-data"
 import type { TipoDocumento } from "@/lib/tipos-documento"
+import { compararTiposDocumento } from "@/lib/orden-tipos-documento"
 import { cn } from "@/lib/utils"
 
 const TIPOS_PERMITIDOS = ["application/pdf", "image/jpeg", "image/png"]
@@ -707,9 +708,10 @@ export function DocumentChecklist({
   }, [adjuntos])
 
   /**
-   * Orden alfabético por nombre del tipo (§1.5.1.1). El catálogo llega en el
-   * orden en que Airtable devuelve las filas, que no es estable ni alfabético;
-   * sin este `sort` el checklist se reordena solo entre sesiones.
+   * Orden de negocio (`D_TipoDocumento.orden`) y luego alfabético por nombre
+   * (PRD «Temas 1» R3). Mismo comparador que el servidor
+   * (`lib/orden-tipos-documento.ts`): el `value` puede llegar en otro orden, y
+   * sin este `sort` el checklist se reordenaría solo entre sesiones.
    */
   const ordenados = React.useMemo(() => {
     return value
@@ -718,7 +720,7 @@ export function DocumentChecklist({
         (fila): fila is { item: DocumentoChecklistItem; meta: TipoDocumento } =>
           fila.meta != null
       )
-      .sort((a, b) => a.meta.nombre.localeCompare(b.meta.nombre, "es"))
+      .sort((a, b) => compararTiposDocumento(a.meta, b.meta))
   }, [value, tipos])
 
   const conOverride = Object.keys(overrides).length

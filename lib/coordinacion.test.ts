@@ -52,7 +52,7 @@ describe('rama confirmada', () => {
 
     expect(r.variante).toBe('confirmada')
     expect(r.etiqueta).toBe('Confirmada')
-    expect(r.fechaVisita).toBe('25 ago 2026')
+    expect(r.fechaVisita).toBe('25/08/2026')
     expect(r.nota).toBe('Propietario disponible en la mañana.')
     expect(r.motivo).toBe('—')
     expect(r.detalle).toBe('—')
@@ -158,21 +158,20 @@ describe('fechas', () => {
       AHORA
     )
 
-    expect(r.fechaVisita).toBe('25 ago 2026')
+    expect(r.fechaVisita).toBe('25/08/2026')
     expect(r.fechaVisita).not.toContain('24')
   })
 
   // `fecha_respuesta` sí es un instante: se muestra en el reloj de Santiago.
-  it('la fecha de respuesta se formatea en America/Santiago y elide el año en curso', () => {
+  // Desde «Temas 1» el año va siempre (dd/mm/yyyy HH:mm).
+  it('la fecha de respuesta se formatea en America/Santiago como dd/mm/yyyy HH:mm', () => {
     const r = resumirCoordinacion(
       datos('confirmada', [intento({ fechaRespuesta: '2026-08-21T17:00:00.000Z' })]),
       AHORA
     )
 
-    // 17:00Z = 13:00 en Santiago (GMT−4), mismo año que `AHORA` → sin año.
-    expect(r.fechaRespuesta).toContain('13:00')
-    expect(r.fechaRespuesta).toContain('21 ago')
-    expect(r.fechaRespuesta).not.toContain('2026')
+    // 17:00Z = 13:00 en Santiago (GMT−4).
+    expect(r.fechaRespuesta).toBe('21/08/2026 13:00')
   })
 })
 
@@ -200,7 +199,7 @@ describe('tituloDeCoordinacion', () => {
   // La rama confirmada nombra el compromiso: cuándo es la visita.
   it('confirmada con fecha la nombra formateada', () => {
     expect(tituloDeCoordinacion(intento({ fechaVisita: '2026-08-25' }))).toBe(
-      'Visita confirmada para el 25 ago 2026'
+      'Visita confirmada para el 25/08/2026'
     )
   })
 
@@ -236,7 +235,7 @@ describe('tituloDeCoordinacion', () => {
   it('a partir del segundo intento el título lo distingue', () => {
     expect(tituloDeCoordinacion(intento({ intentoNumero: 1 }))).not.toContain('intento')
     expect(tituloDeCoordinacion(intento({ intentoNumero: 2, fechaVisita: '2026-08-25' }))).toBe(
-      'Visita confirmada para el 25 ago 2026 (intento 2)'
+      'Visita confirmada para el 25/08/2026 (intento 2)'
     )
   })
 })

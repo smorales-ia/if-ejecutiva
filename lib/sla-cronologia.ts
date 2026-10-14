@@ -26,7 +26,7 @@
  * todas sus letras (`MSG_SIN_CRONOLOGIA`) en vez de mostrar siete verdes.
  */
 
-import { partesEnSantiago, ZONA_VPROPERTY } from './sla-habil'
+import { formatearFecha, formatearFechaHora, formatearHora } from './fechas'
 
 // ---------------------------------------------------------------------------
 // Contrato de `GET /api/solicitudes/[id]/sla` (Tanda C)
@@ -157,25 +157,6 @@ export function resumenTiempoEtapa(etapa: EtapaCronologia): string | null {
 // Formato de instantes
 // ---------------------------------------------------------------------------
 
-const FORMATO_FECHA_CORTA = new Intl.DateTimeFormat('es-CL', {
-  timeZone: ZONA_VPROPERTY,
-  day: 'numeric',
-  month: 'short',
-})
-
-const FORMATO_HORA = new Intl.DateTimeFormat('es-CL', {
-  timeZone: ZONA_VPROPERTY,
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-})
-
-const FORMATO_MES_LARGO = new Intl.DateTimeFormat('es-CL', {
-  timeZone: ZONA_VPROPERTY,
-  day: 'numeric',
-  month: 'long',
-})
-
 /**
  * Todo se formatea en `America/Santiago` explícito, no en la zona del navegador.
  *
@@ -189,34 +170,27 @@ function fecha(iso: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d
 }
 
-/** `"10 ago 09:10"`. Formato de la fila de cronología (§9.6.1). */
+/** `"10/08/2026 09:10"`. Formato de la fila de cronología (PRD «Temas 1» R4). */
 export function instanteCorto(iso: string | null): string | null {
   if (!iso) return null
   const d = fecha(iso)
   if (!d) return null
-  return `${FORMATO_FECHA_CORTA.format(d)} ${FORMATO_HORA.format(d)}`
+  return formatearFechaHora(d)
 }
 
 /**
- * `{ fecha: "11 de agosto", hora: "15:30" }` para los dos literales de alerta.
+ * `{ fecha: "11/08/2026", hora: "15:30" }` para los dos literales de alerta.
  *
- * El año sólo aparece cuando difiere del año en curso. En una alerta de plazo
- * —que casi siempre habla de hoy o de ayer— el año es ruido; en una etapa que
- * viene desbordada desde el año pasado, omitirlo sería engañoso.
+ * Desde «Temas 1» el año va siempre (`dd/mm/yyyy` sin excepciones); `_ahora`
+ * se conserva en la firma para no tocar a los llamadores.
  */
 export function partesFechaHora(
   iso: string,
-  ahora: Date = new Date()
+  _ahora: Date = new Date()
 ): { fecha: string; hora: string } | null {
   const d = fecha(iso)
   if (!d) return null
-  const anioInstante = partesEnSantiago(d).anio
-  const anioActual = partesEnSantiago(ahora).anio
-  const base = FORMATO_MES_LARGO.format(d)
-  return {
-    fecha: anioInstante === anioActual ? base : `${base} de ${anioInstante}`,
-    hora: FORMATO_HORA.format(d),
-  }
+  return { fecha: formatearFecha(d), hora: formatearHora(d) }
 }
 
 /** `"10 ago 09:10 → 10 ago 11:40"` · `"10 ago 11:40 → en curso"` · `null`. */

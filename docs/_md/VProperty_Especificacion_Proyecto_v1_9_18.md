@@ -1,6 +1,6 @@
 > **Versión sincronizada con** `VProperty_Especificacion_Proyecto_v1_9_3.md` §2 · 25-jul-2026 · commit `d4180c0`
 >
-> **v1.9.17** — sucede a `VProperty_Especificacion_Proyecto_v1_9_16.md`, que queda marcado SUPERSEDED.
+> **v1.9.18** — sucede a `VProperty_Especificacion_Proyecto_v1_9_17.md`, que queda marcado SUPERSEDED.
 > El nombre del archivo y la versión del cuerpo coinciden siempre: al bumpear se renombra con `git mv` y se actualizan las referencias del repositorio en el mismo commit.
 > **Fuente única.** Este es el único documento normativo del producto. Contratos de webhook, blueprints conceptuales de escenarios Make, RF, reglas de negocio, requisitos técnicos y decisiones arquitectónicas viven aquí, en la sección que corresponda. No se admiten archivos paralelos de especificación (`docs/_notas/spec_*.md`, `docs/*_v2_*.md` ni equivalentes); `docs/_notas/` queda para notas operativas con fecha.
 > Alcance del cambio y trazabilidad por rol: `docs/_sync_ifTasador_v1/SYNC_LOG.md`
@@ -25,7 +25,25 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
   ------------------- ----------------------------------------------------
   **Documento**       Especificación del Proyecto (Project Specification)
 
-  **Versión**         1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
+  **Versión**         1.9.18 · 14-oct-2026 · «Temas 1» (PRD
+                      `docs/_planes/PRD_T-TEMAS1-ORDEN-FOTOS-DOCS-FECHAS-20261014.md`,
+                      decisiones de Sergio del 14-oct-2026). §1.5.1.1 · el
+                      checklist de documentos deja el orden alfabético y
+                      pasa a un **orden de negocio** dado por el campo
+                      nuevo `D_TipoDocumento.orden` (§4.2.1), con los
+                      vacíos al final en orden alfabético. §2.6 · el
+                      catálogo de fotos se reordena según el recorrido de
+                      la visita, suma seis categorías con mínimo 0
+                      (Sector, Casa, Living, Comedor, Terraza, Quincho),
+                      deja «Living / Comedor» como heredada y agrupa mapa
+                      y referencias en la sección «Fotos o documentos de
+                      las referencias»; el cambio es sólo de pantalla:
+                      claves, recuadros y pies de foto del PDF no cambian.
+                      §10 · entra **RNF-23**, formato único de fecha
+                      `dd/mm/aaaa` en todas las UI. Sucede a 1.9.17, que
+                      queda SUPERSEDED.
+
+                      1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
                       Sección D de comparables espeja el cuadro
                       `[Excel: Portada!B28:AX44]` cuadro-a-cuadro: dos
                       bloques (REF. OFERTAS · REF. C.B.R.), cada uno con
@@ -1684,11 +1702,24 @@ tasador.
 
 La lista se construye leyendo D_TipoDocumento (§4.2.1) filtrado por el
 `tipo_propiedad` de la solicitud —de modo que la Ejecutiva sólo ve los
-tipos aplicables al inmueble que está gestionando— y se presenta
-**ordenada alfabéticamente** por nombre del tipo de documento. El orden
-es alfabético y no por momento de llegada ni por criticidad: es el único
-criterio estable cuando el catálogo crece, y evita que la posición de una
-fila cambie al agregarse tipos nuevos.
+tipos aplicables al inmueble que está gestionando— y se presenta en el
+**orden de negocio** del campo `D_TipoDocumento.orden` (§4.2.1),
+ascendente: primero los documentos que el tasador revisa al empezar
+(foto fuente SII, certificado de avalúo fiscal, certificado de deuda de
+contribuciones, permiso de edificación, recepción definitiva y plano y
+cuadro de superficies) y después el resto. Los tipos sin `orden` van al
+final, en orden alfabético por nombre, y un empate se resuelve también
+por nombre. Así el criterio sigue siendo estable cuando el catálogo
+crece: un tipo nuevo sin `orden` cae al final sin tocar código, y
+cambiar el orden es editar un número en Airtable, sin deploy. Consola y
+tasador usan el mismo comparador.
+
+*Cambio v1.9.18 («Temas 1» · R3).* Hasta v1.9.17 el orden era
+alfabético. Lo reemplaza el orden de negocio porque el alfabético
+empezaba por «Certificado de Avalúo Fiscal», «Deuda de Contribuciones»,
+«Gastos Comunes»… y obligaba a buscar lo esencial. El checklist de la
+consola todavía no filtra por propiedad nueva/usada como pide el párrafo
+anterior: es una divergencia previa, fuera de este cambio.
 
 Cada fila expone el tipo de documento, la entidad emisora y la vigencia
 por defecto. La lógica de marcado se conserva sin cambios: la solicitud
@@ -2565,6 +2596,36 @@ Categorías predefinidas con mínimos ligados a los dormitorios, baños y estaci
 
 Los mínimos de Habitaciones, Baños y Estacionamientos que muestra el diseño (2 · 2 · 1) corresponden a la propiedad de ejemplo. Si esas tres categorías conservan el mínimo dinámico que esta sección declara, o si el diseño los fija, está pendiente de definición (**A-16**).
 
+**Catálogo vigente desde v1.9.18 («Temas 1» · R1/R2).** La tabla anterior queda como registro del diseño v4. Lo que el organizador presenta hoy, en este orden —el del recorrido de la visita— es:
+
+| # | Clave interna | Rótulo en pantalla | Mínimo | Sección |
+|---|---|---|---|---|
+| 1 | `fachada_exterior` | Fachada | 1 | Propiedad |
+| 2 | `sector` | Sector | 0 | Propiedad |
+| 3 | `casa` | Casa | 0 | Propiedad |
+| 4 | `living` | Living | 0 | Propiedad |
+| 5 | `comedor` | Comedor | 0 | Propiedad |
+| 6 | `cocina` | Cocina | 1 | Propiedad |
+| 7 | `banos` | Baños | baños declarados | Propiedad |
+| 8 | `habitaciones` | Dormitorios | dormitorios declarados | Propiedad |
+| 9 | `terraza` | Terraza | 0 | Propiedad |
+| 10 | `quincho` | Quincho | 0 | Propiedad |
+| 11 | `estacionamientos` | Estacionamientos | estacionamientos declarados | Propiedad |
+| — | `living_comedor` | Living / Comedor | 0 | Propiedad · **heredada** |
+| 12 | `mapa_ubicacion` | Mapa ubicaciones propiedad | 1 | Referencias |
+| 13 | `ofertas_comparables` | Fotos de las 3 primeras referencias | 1 | Referencias |
+| 14 | `mapa_referencias` | Mapa de referencias | 0 | Referencias |
+
+Reglas del catálogo vigente:
+
+- **Las claves internas no cambian.** Son lo que se guarda en `TX_Adjuntos.descripcion` y la llave de RF-09 (`ofertas_comparables` → `clave_adjunto = foto_ofertas_comparables`), de las ranuras de imagen del PDF y del borrado en cascada. Sólo cambian el rótulo y la posición.
+- **El cambio es sólo de pantalla** (decisión Q1 de Sergio, 14-oct-2026). Cada categoría guarda aparte el pie de foto que imprime el informe, con los mismos textos de antes («Fachada / Exterior», «Habitaciones», «Mapa de Ubicación», «Ofertas / Comparables»…); los recuadros del PDF y la grilla de 16 fotos no cambian.
+- **Sección «Fotos o documentos de las referencias».** Mapa de ubicación, fotos de las tres primeras referencias y mapa de referencias se agrupan bajo ese encabezado, después de las categorías de la propiedad. Es encabezado de sección y no categoría: RF-TAS-06 sigue prohibiendo una categoría «Documentos».
+- **Mínimo 0 en las seis categorías nuevas** (Q3). «Casa» se ofrece en todo tipo de propiedad, también en departamento (Q4).
+- **«Living / Comedor» queda heredada.** No se ofrece para fotos nuevas —la reemplazan Living y Comedor— pero se muestra, con mínimo 0, en las solicitudes que ya tienen fotos ahí. Las fotos existentes no se migran.
+- **Personalizadas.** Siguen después de las fijas, dentro de la sección de la propiedad. Si el tasador intenta crear una con el nombre de una fija (p. ej. «Quincho»), se le avisa que ya existe.
+- El mínimo de Ofertas / Comparables sigue en 1 en el código frente al 3 de la tabla del diseño v4: es una divergencia previa, fuera de este cambio.
+
 Además del catálogo, el tasador puede crear **categorías personalizadas** escribiendo un nombre y pulsando "Crear categoría". El diseño v4 no pide mínimo para ellas.
 
 **Cambios respecto de la v1.8.2 del spec:**
@@ -2581,7 +2642,7 @@ Guardado en Dropbox por API Route con retry offline (cola local IndexedDB) en `{
 
 | **RF-TAS-14** | **Catálogo de categorías de fotos con mínimos y contadores** |
 |---|---|
-| **Descripción** | El organizador presenta las ocho categorías del catálogo —Ofertas / Comparables, Habitaciones, Baños, Estacionamientos, Mapa de Ubicación, Fachada / Exterior, Cocina y Living / Comedor— cada una con su contador "X/N", su acción "Agregar a {categoría}" y una marca visible mientras el mínimo no se cumple. El header agrega el total en la forma "N fotos · N docs". El tasador puede crear categorías personalizadas indicando un nombre. El carácter fijo o dinámico de los mínimos de Habitaciones, Baños y Estacionamientos está pendiente de definición (**A-16**). |
+| **Descripción** | El organizador presenta las categorías del catálogo vigente de esta sección (v1.9.18: catorce fijas más la heredada «Living / Comedor» cuando tiene fotos), en el orden de la visita y agrupadas en las secciones Propiedad y Referencias, cada una con su contador "X/N", su acción "Agregar a {categoría}" y una marca visible mientras el mínimo no se cumple. El header agrega el total en la forma "N fotos · N docs". El tasador puede crear categorías personalizadas indicando un nombre. El carácter fijo o dinámico de los mínimos de Habitaciones, Baños y Estacionamientos está pendiente de definición (**A-16**). |
 | **Criterio de aceptación** | El contador de cada categoría y el total del header se actualizan en la misma interacción en que se agrega o elimina una foto. Una categoría personalizada aparece en el listado inmediatamente después de crearse y admite fotos sin exigir mínimo. |
 
 ---
@@ -3630,6 +3691,33 @@ Cinco consecuencias de diseño se derivan de este catálogo:
 
 El alta de un tipo nuevo no requiere DDL ni deploy: se agrega la fila en
 D_TipoDocumento y sus atributos en D_TipoDocumentoAtributo (RN-31).
+
+**Campo orden (v1.9.18 · «Temas 1» · R3).** Entero que fija el orden de
+negocio del checklist de §1.5.1.1. Creado vía MCP el 14-oct-2026 con
+aprobación de Sergio (`fldpKEYy5WIQTWEsr`). Los vacíos van al final, en
+orden alfabético por nombre; el empate también se resuelve por nombre.
+
+  ---------------------------------------------------------------------------
+  **Código**                         **Documento**                 **orden**
+  ---------------------------------- ----------------------------- ----------
+  foto_fuente_sii                    Foto fuente SII               10
+
+  certificado_avaluo_fiscal          Certificado de avalúo fiscal  20
+
+  certificado_deuda_tgr              Certificado de deuda de       30
+                                     contribuciones (TGR)
+
+  permiso_edificacion                Permiso de edificación        40
+
+  certificado_recepcion_final        Recepción definitiva          50
+
+  foto_plano_cuadro_superficies      Plano y cuadro de superficies 60
+  ---------------------------------------------------------------------------
+
+Los números van de diez en diez para poder intercalar un tipo sin
+renumerar. El catálogo se cachea cinco minutos por proceso, así que un
+cambio de orden puede tardar ese tiempo en verse. Las ranuras de anexo
+del PDF no usan este campo: tienen su propio orden de impresión.
 
 **Campo tipo_propiedad.** §2.12 lo declara como alta nueva. **No lo es:
 ya existe en la base** (`fldIfdcjsr8KeNRCx`), verificado vía MCP el
@@ -6298,7 +6386,8 @@ Agrupados en seis bloques: rendimiento (RNF-01 a RNF-05), disponibilidad
 (RNF-13 a RNF-15), escalabilidad (RNF-16 a RNF-18) y mantenibilidad
 (RNF-19, RNF-20, RNF-22). Delta v1.3: se añade el prefijo D\_ a la
 convención de naming en RNF-20 (recogiendo el séptimo dominio
-incorporado en v1.2).
+incorporado en v1.2). Delta v1.9.18: entra RNF-23 (formato único de
+fecha en las interfaces).
 
   -------------------------------------------------------------------------
   **RNF-01**        **Tiempo solicitud → entrega**
@@ -6571,6 +6660,29 @@ incorporado en v1.2).
   **Criterio de     Onboarding monitoreado: el nuevo ingeniero ejecuta sin
   aceptación**      acompañamiento las cinco operaciones cotidianas antes
                     del día 60.
+  -------------------------------------------------------------------------
+
+  -------------------------------------------------------------------------
+  **RNF-23**        **Formato único de fecha en las interfaces**
+  ----------------- -------------------------------------------------------
+  **Descripción**   Toda fecha visible o ingresada en las UI Next.js se
+                    presenta como dd/mm/aaaa, y como dd/mm/aaaa hh:mm (24
+                    h, reloj de Santiago) cuando lleva hora, con
+                    independencia del idioma del navegador. Las fechas de
+                    calendario se formatean sin convertir de zona, para
+                    que no se corran un día. Los campos de fecha se
+                    escriben con máscara dd/mm/aaaa y rechazan fechas
+                    imposibles (31/02). El almacenamiento no cambia:
+                    Airtable, Make, payloads, filtros y URL siguen en ISO
+                    (AAAA-MM-DD), y el PDF conserva sus formatos propios.
+                    Las fechas relativas («hace 2 horas») se mantienen
+                    donde ya existían. Añadido en v1.9.18 («Temas 1» · R4
+                    y R5).
+
+  **Criterio de     Un formateador único en lib/fechas.ts; cero llamadas
+  aceptación**      sueltas a toLocaleDateString en las UI. Con el
+                    navegador en inglés se escribe 13/04/2026 y viaja
+                    2026-04-13; 31/02/2026 muestra error y no se guarda.
   -------------------------------------------------------------------------
 
 # **11. Restricciones Técnicas y Regulatorias**

@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { FechaInput } from "@/components/ui/fecha-input"
 import { NewRequestSheet } from "@/components/console/new-request-sheet"
 import {
   PriorityChip,
@@ -359,18 +360,19 @@ export function SolicitudList({
                 Fecha solicitud
               </span>
               <div className="flex items-center gap-2">
-                <input
-                  type="date"
+                {/* PRD «Temas 1» R5 · dd/mm/aaaa en pantalla; la URL sigue en ISO. */}
+                <FechaInput
+                  aria-label="Fecha solicitud desde"
                   value={get("desde")}
-                  onChange={(e) => updateParams({ desde: e.target.value || null })}
-                  className="h-8 w-full rounded-md border border-input bg-card px-2 text-xs outline-none focus-visible:border-ring"
+                  onChange={(v) => updateParams({ desde: v || null })}
+                  className="h-8 rounded-md bg-card px-2 text-xs md:text-xs"
                 />
                 <span className="text-xs text-muted-foreground">–</span>
-                <input
-                  type="date"
+                <FechaInput
+                  aria-label="Fecha solicitud hasta"
                   value={get("hasta")}
-                  onChange={(e) => updateParams({ hasta: e.target.value || null })}
-                  className="h-8 w-full rounded-md border border-input bg-card px-2 text-xs outline-none focus-visible:border-ring"
+                  onChange={(v) => updateParams({ hasta: v || null })}
+                  className="h-8 rounded-md bg-card px-2 text-xs md:text-xs"
                 />
               </div>
             </div>

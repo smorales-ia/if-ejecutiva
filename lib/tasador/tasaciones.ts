@@ -861,19 +861,30 @@ export interface Opcion {
 
 /**
  * Las categorías predefinidas del organizador de fotos: las ocho de
- * RF-TAS-14 · §2.6 más `mapa_referencias` (T-PDF-E3-GENERICOS · plan §4),
- * la categoría fija que alimenta la ranura `refMapa` del informe.
+ * RF-TAS-14 · §2.6, `mapa_referencias` (T-PDF-E3-GENERICOS · plan §4) y las
+ * seis de T-TEMAS1 (`sector`, `casa`, `living`, `comedor`, `terraza`,
+ * `quincho`).
+ *
+ * ⚠ El id es lo que se persiste en `TX_Adjuntos.descripcion` y la llave de
+ * RF-09, de las ranuras del PDF y del borrado en cascada: **nunca se renombra**.
+ * Para cambiar lo que ve el tasador se toca `label`.
  */
 export type CategoriaFotoId =
-  | 'ofertas_comparables'
-  | 'habitaciones'
-  | 'banos'
-  | 'estacionamientos'
-  | 'mapa_ubicacion'
-  | 'mapa_referencias'
   | 'fachada_exterior'
+  | 'sector'
+  | 'casa'
+  | 'living'
+  | 'comedor'
   | 'cocina'
+  | 'banos'
+  | 'habitaciones'
+  | 'terraza'
+  | 'quincho'
+  | 'estacionamientos'
   | 'living_comedor'
+  | 'mapa_ubicacion'
+  | 'ofertas_comparables'
+  | 'mapa_referencias'
 
 /** Contador declarado en la sección B del que cuelga un mínimo dinámico. */
 export type OrigenMinimoFoto = 'dorm' | 'banos' | 'estac'
@@ -887,9 +898,31 @@ export type OrigenMinimoFoto = 'dorm' | 'banos' | 'estac'
  */
 export type LimiteFoto = number | OrigenMinimoFoto | null
 
+/**
+ * Sección del organizador en que se pinta una categoría (T-TEMAS1 · R2). Es
+ * agrupación de pantalla, no categoría: el test de RF-TAS-06 prohíbe la
+ * palabra «documento» en una categoría, y el título de la sección la lleva.
+ */
+export type SeccionFoto = 'propiedad' | 'referencias'
+
 export interface CategoriaFoto {
   id: CategoriaFotoId
+  /** Rótulo en pantalla (organizador, preview, expediente). */
   label: string
+  /** Insignia de la miniatura: rótulo corto propio, no la primera palabra. */
+  labelCorto: string
+  /**
+   * Pie de foto de la grilla del PDF (`lib/informe/imagenes.ts`). Va aparte de
+   * `label` porque el orden y los rótulos de T-TEMAS1 son **sólo de pantalla**
+   * (decisión Q1, 14-oct-2026): cambiar `label` no debe cambiar el informe.
+   */
+  labelInforme: string
+  seccion: SeccionFoto
+  /**
+   * Categoría que ya no se ofrece para fotos nuevas: se muestra sólo si la
+   * solicitud tiene fotos en ella, y nunca exige mínimo.
+   */
+  heredada?: boolean
   min: LimiteFoto
   max: LimiteFoto
 }
@@ -908,18 +941,51 @@ export interface CategoriaFoto {
  * `mapa_referencias` (T-PDF-E3-GENERICOS · plan §4) es fija con mínimo 0:
  * alimenta la ranura `refMapa` del informe cuando existe, sin exigirse en
  * terreno.
+ *
+ * ## Orden (T-TEMAS1 · R1/R2 · 14-oct-2026)
+ *
+ * El del array es el orden en pantalla: primero la propiedad en el recorrido de
+ * la visita, después la sección de referencias. Las seis categorías nuevas
+ * tienen mínimo 0 (Q3) y `casa` aplica también a departamento (Q4).
+ * `living_comedor` queda **heredada**: la reemplazan `living` y `comedor`, pero
+ * hay solicitudes con fotos ahí (VP-2026-0067/0073–0077) que no se migran.
+ *
+ * `labelInforme` conserva los pies de foto que el PDF imprimía antes de
+ * T-TEMAS1; en las categorías nuevas coincide con `label`, que es lo que el PDF
+ * ya imprimía cuando el tasador las creaba como personalizadas.
  */
 export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
-  { id: 'ofertas_comparables', label: 'Ofertas / Comparables', min: 1, max: null },
-  { id: 'habitaciones', label: 'Habitaciones', min: 'dorm', max: null },
-  { id: 'banos', label: 'Baños', min: 'banos', max: null },
-  { id: 'estacionamientos', label: 'Estacionamientos', min: 'estac', max: null },
-  { id: 'mapa_ubicacion', label: 'Mapa de Ubicación', min: 1, max: null },
-  { id: 'mapa_referencias', label: 'Mapa de referencias', min: 0, max: null },
-  { id: 'fachada_exterior', label: 'Fachada / Exterior', min: 1, max: null },
-  { id: 'cocina', label: 'Cocina', min: 1, max: null },
-  { id: 'living_comedor', label: 'Living / Comedor', min: 1, max: null },
+  { id: 'fachada_exterior', label: 'Fachada', labelCorto: 'Fachada', labelInforme: 'Fachada / Exterior', seccion: 'propiedad', min: 1, max: null },
+  { id: 'sector', label: 'Sector', labelCorto: 'Sector', labelInforme: 'Sector', seccion: 'propiedad', min: 0, max: null },
+  { id: 'casa', label: 'Casa', labelCorto: 'Casa', labelInforme: 'Casa', seccion: 'propiedad', min: 0, max: null },
+  { id: 'living', label: 'Living', labelCorto: 'Living', labelInforme: 'Living', seccion: 'propiedad', min: 0, max: null },
+  { id: 'comedor', label: 'Comedor', labelCorto: 'Comedor', labelInforme: 'Comedor', seccion: 'propiedad', min: 0, max: null },
+  { id: 'cocina', label: 'Cocina', labelCorto: 'Cocina', labelInforme: 'Cocina', seccion: 'propiedad', min: 1, max: null },
+  { id: 'banos', label: 'Baños', labelCorto: 'Baños', labelInforme: 'Baños', seccion: 'propiedad', min: 'banos', max: null },
+  { id: 'habitaciones', label: 'Dormitorios', labelCorto: 'Dormitorios', labelInforme: 'Habitaciones', seccion: 'propiedad', min: 'dorm', max: null },
+  { id: 'terraza', label: 'Terraza', labelCorto: 'Terraza', labelInforme: 'Terraza', seccion: 'propiedad', min: 0, max: null },
+  { id: 'quincho', label: 'Quincho', labelCorto: 'Quincho', labelInforme: 'Quincho', seccion: 'propiedad', min: 0, max: null },
+  { id: 'estacionamientos', label: 'Estacionamientos', labelCorto: 'Estac.', labelInforme: 'Estacionamientos', seccion: 'propiedad', min: 'estac', max: null },
+  { id: 'living_comedor', label: 'Living / Comedor', labelCorto: 'Living/Com.', labelInforme: 'Living / Comedor', seccion: 'propiedad', heredada: true, min: 0, max: null },
+  { id: 'mapa_ubicacion', label: 'Mapa ubicaciones propiedad', labelCorto: 'Mapa', labelInforme: 'Mapa de Ubicación', seccion: 'referencias', min: 1, max: null },
+  { id: 'ofertas_comparables', label: 'Fotos de las 3 primeras referencias', labelCorto: 'Referencia', labelInforme: 'Ofertas / Comparables', seccion: 'referencias', min: 1, max: null },
+  { id: 'mapa_referencias', label: 'Mapa de referencias', labelCorto: 'Mapa ref.', labelInforme: 'Mapa de referencias', seccion: 'referencias', min: 0, max: null },
 ] as const)
+
+/** Título de cada sección del organizador, en el orden en que se pintan. */
+export const SECCIONES_FOTO: readonly { id: SeccionFoto; titulo: string }[] = Object.freeze([
+  { id: 'propiedad', titulo: 'Fotos de la propiedad' },
+  { id: 'referencias', titulo: 'Fotos o documentos de las referencias' },
+])
+
+/**
+ * ¿Se muestra la categoría? Todas sí, salvo una heredada sin fotos: así una
+ * solicitud nueva no ofrece «Living / Comedor», y una antigua no pierde de vista
+ * las fotos que ya tiene ahí.
+ */
+export function categoriaFotoVisible(c: CategoriaFoto, cantidad: number): boolean {
+  return !c.heredada || cantidad > 0
+}
 
 /** Recintos que la sección E.3 ofrece como atajo para crear terminaciones. */
 export const RECINTOS_SUGERIDOS: readonly string[] = Object.freeze([

@@ -1,4 +1,5 @@
 import { listRecords } from '@/lib/airtable-client'
+import { compararTiposDocumento } from '@/lib/orden-tipos-documento'
 
 /**
  * Dominio D_ · catálogo paramétrico documental (Tanda 1, 02-ago-2026).
@@ -33,10 +34,10 @@ import { listRecords } from '@/lib/airtable-client'
  *    activos se ofrecen al ejecutivo (soft-delete)". Una fila desactivada no
  *    se borra: deja de ofrecerse. Al 02-ago-2026 las 20 filas están activas,
  *    así que el filtro no descarta nada — existe para el día en que sí.
- * 2. **Se ordena por `nombre`, no por `codigo`.** `D_TipoDocumento` no tiene
- *    campo `orden` (el `orden` de presentación vive en
- *    `D_TipoDocumentoAtributo`, un nivel más abajo). El checklist lo lee una
- *    persona, así que gana el nombre legible sobre el slug.
+ * 2. **Se ordena por `orden` y luego por `nombre`** (PRD «Temas 1» R3,
+ *    14-oct-2026). `D_TipoDocumento.orden` (`fldpKEYy5WIQTWEsr`) fija el orden
+ *    de negocio de los primeros tipos; los que no lo tienen siguen alfabéticos
+ *    por nombre legible, como antes. Ver `lib/orden-tipos-documento.ts`.
  * 3. **`vigencia_dias` vacío significa "sin vencimiento"**, no cero — de ahí
  *    `number | null` y no `number`. Sólo 4 de las 20 filas lo tienen (90, 30,
  *    180, 730). El checklist sólo pinta el badge de vigencia cuando no es null.
@@ -82,6 +83,8 @@ export interface TipoDocumento {
   vigencia_dias: number | null
   tipo_propiedad: CondicionPropiedad | null
   activo: boolean
+  /** `orden` de negocio del checklist; `null` = sin orden (va al final). */
+  orden: number | null
 }
 
 /** Forma cruda de la fila en Airtable. Todo opcional: Airtable omite vacíos. */
@@ -93,6 +96,7 @@ interface FilaTipoDocumento {
   vigencia_dias?: number
   tipo_propiedad?: CondicionPropiedad
   activo?: boolean
+  orden?: number
 }
 
 let cache: { valor: TipoDocumento[]; expira: number } | null = null
@@ -117,6 +121,7 @@ export async function getTiposDocumento(): Promise<TipoDocumento[]> {
       'vigencia_dias',
       'tipo_propiedad',
       'activo',
+      'orden',
     ],
     filterByFormula: '{activo} = TRUE()',
   })
@@ -139,10 +144,11 @@ export async function getTiposDocumento(): Promise<TipoDocumento[]> {
         typeof r.fields.vigencia_dias === 'number' ? r.fields.vigencia_dias : null,
       tipo_propiedad: r.fields.tipo_propiedad ?? null,
       activo: r.fields.activo ?? false,
+      orden: typeof r.fields.orden === 'number' ? r.fields.orden : null,
     })
   }
 
-  tipos.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+  tipos.sort(compararTiposDocumento)
 
   cache = { valor: tipos, expira: ahora + TTL_MS }
   return tipos

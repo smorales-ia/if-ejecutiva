@@ -5,6 +5,7 @@ import { Loader2, Plus, Save, Trash2, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { FechaHoraInput } from "@/components/ui/fecha-input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -44,7 +45,8 @@ const nextId = (p: string) => `${p}-${Date.now()}-${uid++}`
 const dosDigitos = (n: number) => String(n).padStart(2, "0")
 
 /**
- * ISO 8601 → valor de un `<input type="datetime-local">`, en reloj de pared de
+ * ISO 8601 → valor `YYYY-MM-DDTHH:mm` de `FechaHoraInput` (el formato de
+ * `datetime-local`, que el campo reemplazó en PRD «Temas 1» R5), en reloj de pared de
  * **Santiago**.
  *
  * El input trabaja siempre en la zona del navegador, y aunque hoy la Ejecutiva
@@ -369,12 +371,14 @@ export function EditarSolicitudForm({
             en estado `creada`, como todo este formulario (REGLA C), y el
             servidor lo revalida.
             La hora se muestra y se guarda en reloj de Santiago, no en el del
-            navegador — ver `isoAInputSantiago`. */}
+            navegador — ver `isoAInputSantiago`. Desde PRD «Temas 1» R5 se
+            escribe dd/mm/aaaa + hh:mm (24 h) en vez del `datetime-local`
+            nativo, que seguía el idioma del navegador; el valor intermedio
+            `YYYY-MM-DDTHH:mm` es el mismo. */}
         <EditField label="Inicio del SLA (ingreso de la solicitud)">
-          <Input
-            type="datetime-local"
+          <FechaHoraInput
             value={isoAInputSantiago(d.slaE1InicioTs)}
-            onChange={(e) => set("slaE1InicioTs", inputSantiagoAIso(e.target.value))}
+            onChange={(v) => set("slaE1InicioTs", inputSantiagoAIso(v))}
           />
         </EditField>
         {/* V-2 · §1.4 "Origen". Los cuatro viajaban preservados desde

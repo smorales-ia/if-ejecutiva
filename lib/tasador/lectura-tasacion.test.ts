@@ -187,15 +187,15 @@ describe('fechaVisible · el desfase de huso que encontró el seed', () => {
    * tasador a la propiedad un día antes.
    */
   it('un campo date no retrocede un día al formatearse', () => {
-    expect(_fechaVisible('2026-08-18')).toBe('18-08-2026')
+    expect(_fechaVisible('2026-08-18')).toBe('18/08/2026')
   })
 
   it('tampoco retrocede el primero de mes, que es donde el error salta al mes anterior', () => {
-    expect(_fechaVisible('2026-09-01')).toBe('01-09-2026')
+    expect(_fechaVisible('2026-09-01')).toBe('01/09/2026')
   })
 
   it('un dateTime con hora real se muestra en su día', () => {
-    expect(_fechaVisible('2026-08-18T09:30:00.000Z')).toBe('18-08-2026')
+    expect(_fechaVisible('2026-08-18T09:30:00.000Z')).toBe('18/08/2026')
   })
 
   it('sin fecha devuelve el literal de "por agendar", no una fecha inventada', () => {

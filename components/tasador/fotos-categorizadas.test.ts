@@ -52,8 +52,51 @@ const totalHeader = (fotos: FotosPorCategoria, custom: FotoCategoriaCustom[]) =>
   )
 
 describe('evaluarCategorias · las categorías del catálogo', () => {
-  it('rinde un estado por categoría (8 de §2.6 + mapa_referencias)', () => {
-    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(9)
+  it('rinde un estado por categoría visible (15 del catálogo menos la heredada vacía)', () => {
+    expect(evaluarCategorias(vacio(), declarados)).toHaveLength(14)
+  })
+
+  it('T-TEMAS1 · R1 · orden de la visita y después la sección de referencias', () => {
+    expect(evaluarCategorias(vacio(), declarados).map((e) => e.label)).toEqual([
+      'Fachada',
+      'Sector',
+      'Casa',
+      'Living',
+      'Comedor',
+      'Cocina',
+      'Baños',
+      'Dormitorios',
+      'Terraza',
+      'Quincho',
+      'Estacionamientos',
+      'Mapa ubicaciones propiedad',
+      'Fotos de las 3 primeras referencias',
+      'Mapa de referencias',
+    ])
+  })
+
+  it('T-TEMAS1 · R2 · las tres de referencias van juntas y al final', () => {
+    const secciones = evaluarCategorias(vacio(), declarados).map((e) => e.seccion)
+    const primera = secciones.indexOf('referencias')
+    expect(secciones.slice(primera).every((s) => s === 'referencias')).toBe(true)
+    expect(secciones.filter((s) => s === 'referencias')).toHaveLength(3)
+  })
+
+  it('T-TEMAS1 · living_comedor sólo aparece si ya tiene fotos (VP-2026-0067)', () => {
+    expect(evaluarCategorias(vacio(), declarados).some((e) => e.id === 'living_comedor')).toBe(
+      false,
+    )
+    const conFoto = { ...vacio(), living_comedor: [foto(1)] }
+    const heredada = evaluarCategorias(conFoto, declarados).find((e) => e.id === 'living_comedor')!
+    expect(heredada.label).toBe('Living / Comedor')
+    expect(heredada.count).toBe(1)
+    expect(heredada.min).toBe(0)
+  })
+
+  it('la insignia usa el rótulo corto propio, no la primera palabra', () => {
+    const porId = new Map(evaluarCategorias(vacio(), declarados).map((e) => [e.id, e.labelCorto]))
+    expect(porId.get('ofertas_comparables')).toBe('Referencia')
+    expect(porId.get('mapa_ubicacion')).toBe('Mapa')
   })
 
   it('no incluye ninguna categoría "Documentos" (§2.6 la elimina)', () => {

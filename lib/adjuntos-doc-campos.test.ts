@@ -28,13 +28,14 @@ describe('CAMPOS_DERIVADOS · conteos de §28', () => {
     expect(porLabel['Unidades'].patron).toBe('c')
   })
 
-  it('certificado_avaluo_fiscal → DatosTasacion 5 (a) · Unidades 4 (c)', () => {
+  it('certificado_avaluo_fiscal → DatosTasacion 5 (a) · Unidades 5 (c)', () => {
     const t = tablasDerivadasDe('certificado_avaluo_fiscal')
     expect(t).toHaveLength(2)
     const dt = t.find((x) => x.patron === 'a')!
     expect(dt.campos).toHaveLength(5)
     const un = t.find((x) => x.patron === 'c')!
-    expect(un.campos).toHaveLength(4)
+    // avaluo_clp (destino del certificado desde 14-oct-2026) + avaluo_uf legado.
+    expect(un.campos).toHaveLength(5)
   })
 
   it('escritura_compraventa → DocumentosLegales 4 (a), sin Unidades', () => {

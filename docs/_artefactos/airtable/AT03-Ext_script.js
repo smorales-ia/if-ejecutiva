@@ -15,6 +15,12 @@
  * de disparar esta automation) y este script solo enruta por cardinalidad.
  * v1 (13-jul-2026, EAV) queda en el historial de git para referencia.
  *
+ * v4 (14-oct-2026 · T-REGLAS-AVALUO-20261014 · PRD R1): la unidad destino se
+ * resuelve comparando el rol SII NORMALIZADO (sin ceros a la izquierda ni
+ * separadores), no por igualdad exacta de texto. Antes "882-40" (tipeado en el
+ * alta) y "00882-00040" (impreso en el certificado de avalúo) no coincidían y
+ * se creaba una unidad duplicada (VP-2026-0079). Ver rolesEquivalentes().
+ *
  * Trigger de la Automation que contiene este script: "When record updated"
  *   Tabla: TX_Adjuntos · Campo observado: atributos_obtenidos
  *   Input variable configurada en el trigger → pasar el record id como
@@ -472,6 +478,43 @@ function valorDeItemPorCodigo(codigo) {
   return item ? item.valor : undefined
 }
 
+/**
+ * v4 · Partes numéricas de un rol SII sin ceros a la izquierda.
+ *   "882-40" → ["882","40"] · "00882-00040" → ["882","40"]
+ *   "076-00882-040" (TGR, con comuna) → ["76","882","40"]
+ * Devuelve null si el valor no trae dígitos (p.ej. "EN TRAMITE").
+ */
+function partesRol(valor) {
+  const partes = String(valor || '').match(/\d+/g)
+  if (!partes) return null
+  return partes.map((p) => p.replace(/^0+(?=\d)/, ''))
+}
+
+/**
+ * v4 · true si dos roles SII designan el mismo predio aunque estén escritos
+ * distinto. Iguales parte a parte, o bien uno trae el prefijo de comuna (3
+ * partes) y sus dos últimas coinciden con el otro (2 partes). Sin dígitos en
+ * alguno de los dos, cae a igualdad de texto (trim + mayúsculas).
+ */
+function rolesEquivalentes(a, b) {
+  const pa = partesRol(a)
+  const pb = partesRol(b)
+  if (!pa || !pb) {
+    return String(a || '').trim().toUpperCase() === String(b || '').trim().toUpperCase()
+  }
+  const iguales = (x, y) => x.length === y.length && x.every((v, i) => v === y[i])
+  if (iguales(pa, pb)) return true
+  if (pa.length === 3 && pb.length === 2) return iguales(pa.slice(1), pb)
+  if (pb.length === 3 && pa.length === 2) return iguales(pb.slice(1), pa)
+  return false
+}
+
+/** v4 · Comparación de la clave de unidad: normalizada para rol_sii, exacta para el resto. */
+function claveUnidadCoincide(campoClave, valorUnidad, valorExtraido) {
+  if (campoClave === 'rol_sii') return rolesEquivalentes(valorUnidad, valorExtraido)
+  return valorUnidad === String(valorExtraido)
+}
+
 async function resolverUnidad(campoLinkUnidad) {
   if (unidadCache.has(campoLinkUnidad)) return unidadCache.get(campoLinkUnidad)
 
@@ -513,8 +556,10 @@ async function resolverUnidad(campoLinkUnidad) {
     return null
   }
 
-  const match = deLaSolicitud.find(
-    (r) => r.getCellValueAsString(campoClave) === String(valorClave)
+  // v4: rol_sii se compara normalizado ("882-40" ≡ "00882-00040"); el valor ya
+  // guardado en la unidad no se reescribe (escribirDestino solo llena vacíos).
+  const match = deLaSolicitud.find((r) =>
+    claveUnidadCoincide(campoClave, r.getCellValueAsString(campoClave), valorClave)
   )
 
   let unidadId

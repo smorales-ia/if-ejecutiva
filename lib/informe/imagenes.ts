@@ -34,7 +34,7 @@
  * ## Grilla de 16 fotos (`fotos.fotos[]`) — origen único (T-VP0067-IMAGENES §4)
  *
  * Sin cambio: si el bloque 7 canónico trae filas, la grilla se construye
- * DESDE ELLAS (orden asc, caption por label de `CATEGORIAS_FOTO`, fuente =
+ * DESDE ELLAS (orden asc, caption por `labelInforme` de `CATEGORIAS_FOTO`, fuente =
  * thumbnail con caída a URL http(s)); sin filas, grilla vacía honesta.
  */
 
@@ -133,12 +133,16 @@ export interface AnexoResuelto {
 const MAX_FOTOS_GRILLA = 16
 
 /**
- * Caption por categoría: label oficial de `CATEGORIAS_FOTO` cuando la
+ * Caption por categoría: `labelInforme` de `CATEGORIAS_FOTO` cuando la
  * categoría es uno de los ids del catálogo; el nombre custom pasa tal cual.
  * Única fuente de labels (RO-05) — acá no se duplica ningún string de la UI.
+ *
+ * Es `labelInforme` y no `label` desde T-TEMAS1: los rótulos de pantalla
+ * cambiaron («Fachada», «Dormitorios»…) y el PDF debe seguir imprimiendo los
+ * mismos pies de foto (decisión Q1 · 14-oct-2026).
  */
 const LABEL_POR_CATEGORIA: ReadonlyMap<string, string> = new Map(
-  CATEGORIAS_FOTO.map((c) => [c.id, c.label]),
+  CATEGORIAS_FOTO.map((c) => [c.id, c.labelInforme]),
 )
 
 /**

@@ -635,6 +635,7 @@ Los TABLE_IDs deprecados se conservan tachados sólo para trazabilidad históric
 | `activo` | `fldiSXRPd2mqgKOci` | Checkbox |
 | `D_TipoDocumentoAtributo` | `fldNsN343wkTRiEmD` | Link → D_TipoDocumentoAtributo (multipleRecordLinks) |
 | `tipo_propiedad` | `fldIfdcjsr8KeNRCx` | Single select (`nueva` · `usada` · `ambas`) |
+| `orden` | `fldpKEYy5WIQTWEsr` | Number (precisión 0) — **creado 14-oct-2026 vía MCP** con aprobación de Sergio (PRD «Temas 1» R3). Orden de negocio del checklist: `foto_fuente_sii` 10 · `certificado_avaluo_fiscal` 20 · `certificado_deuda_tgr` 30 · `permiso_edificacion` 40 · `certificado_recepcion_final` 50 · `foto_plano_cuadro_superficies` 60; vacío = al final, alfabético (`lib/orden-tipos-documento.ts`) |
 
 **20 filas activas al 2026-08** (`activo = TRUE`), verificado vía MCP el 02-ago-2026.
 La columna `Campos` de la tabla de arriba cuenta campos (8), no filas. El 02-ago-2026
@@ -689,7 +690,8 @@ Tabla transaccional que persiste una fila por unidad física del inmueble. Desti
 | `rol_sii` | `fldC5yUYC2wTTLJBV` | Single line text |
 | `sup_m2` | `fldZLvJKuXuWhRV8P` | Number |
 | `numero_unidad` | `fldJGXS8jGDKZDdWM` | Single line text — alimenta el sufijo `_{numero_unidad}` que desambigua dos unidades del mismo subtipo en el path Dropbox (spec §8.1). ⚠ Es **texto libre y está vacío en la mayoría de las filas reales** (valores observados el 06-ago-2026: `1`, `105`, `411`, `2100`, `D402`), así que `lib/dropbox-path.ts` lo sanea a snake_case y, cuando falta, aplica la cascada de CI-003b: `numero_unidad` → `rol_sii` (`fldC5yUYC2wTTLJBV`) → ordinal dentro del grupo **con warning**. El ordinal es el último recurso porque es posicional: agregar o borrar una unidad hermana corre el de las demás y desalinea paths ya escritos (CI-004) |
-| `avaluo_uf` | `fld3fwTUt4GN8pYXf` | Number |
+| `avaluo_uf` | `fld3fwTUt4GN8pYXf` | Number — legado: RF-09 dejó de escribirlo el 14-oct-2026 (el certificado trae pesos) |
+| `avaluo_clp` | `fld7QVj2KR8X4yRlo` | Number (precisión 0) — **creado 14-oct-2026 vía MCP** con aprobación de Sergio (T-REGLAS-AVALUO-20261014). Avalúo de la unidad en pesos, destino de `certificado_avaluo_fiscal__avaluo_total`. La UF se deriva con `uf_dia_visita` |
 | `orden` | `fld9iRM3hhCNNj4DJ` | Number |
 | `notas` | `fld08OmgUPgIWHyCk` | Long text |
 | `TX_Adjuntos` | `fld9RWDHlpeaUMguI` | Link → TX_Adjuntos |
@@ -1718,7 +1720,7 @@ Este mapa es el insumo del **cascade de borrado** (`lib/adjuntos-cascade.ts`).
 | `foto_fuente_sii` | `TX_Unidades` (link `TX_Unidades.rol_sii`) | una_por_unidad | tipo_material · anio_construccion · sup_m2 · sup_terreno_m2 | **c** |
 | `foto_fuente_sii` | `TX_DocumentosLegales` | una_por_solicitud | numero_inscripcion ← numero_dominio · fojas ← foja_dominio · ano_inscripcion ← anio_dominio | **a** |
 | `certificado_avaluo_fiscal` | `TX_DatosTasacion` | una_por_solicitud | avaluo_exento · contribucion_anual · destino_sii · calidad_sii · material_predominante | **a** |
-| `certificado_avaluo_fiscal` | `TX_Unidades` (link `TX_Unidades.rol_sii`) | una_por_unidad | rol_sii · sup_m2 · anio_construccion · avaluo_uf ← avaluo_total | **c** |
+| `certificado_avaluo_fiscal` | `TX_Unidades` (link `TX_Unidades.rol_sii`) | una_por_unidad | rol_sii · sup_m2 · anio_construccion · avaluo_clp ← avaluo_total (hasta 13-oct-2026: avaluo_uf) | **c** |
 | `escritura_compraventa` | `TX_DocumentosLegales` | una_por_solicitud | permiso_edificacion_numero · permiso_edificacion_fecha · recepcion_final_numero · recepcion_final_fecha | **a** |
 | `permiso_edificacion` | `TX_DocumentosLegales` | una_por_solicitud | permiso_edificacion_numero · permiso_edificacion_fecha | **a** |
 | `consulta_antecedentes_bien_raiz` · `certificado_recepcion_final` · `inscripcion_dominio_cbr` · `certificado_deuda_tgr` · `informe_no_expropiacion_serviu` · `sello_verde_sec` · `plano_cuadro_superficies` | — (sin `uso_tabla_destino`) | — | (atributos declarados, sin destino mapeado) | no-op |

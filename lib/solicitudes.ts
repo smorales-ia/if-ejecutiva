@@ -17,6 +17,7 @@ import {
 // redeclararse: la píldora de la bandeja y las filas del detalle tienen que
 // escribir la misma duración con el mismo formato (RO-05).
 import { duracionCorta } from '@/lib/sla-cronologia'
+import { formatearFecha } from '@/lib/fechas'
 import { desdeSantiago } from '@/lib/sla-habil'
 // CI-070 Fase 1: normalización de género del eje nuevo/usado (paliativo P-5).
 import { normalizarTipoPropiedad } from '@/lib/tasador/tipo-propiedad'
@@ -430,11 +431,9 @@ function parseDate(str: string | undefined): Date | null {
   return null
 }
 
+/** `dd/mm/yyyy` (PRD «Temas 1» R4). Un texto que no es fecha se devuelve tal cual. */
 function formatDisplay(str: string | undefined, fallback = '—'): string {
-  if (!str) return fallback
-  const d = parseDate(str)
-  if (!d) return str
-  return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
+  return formatearFecha(str, fallback)
 }
 
 function computeSlaDias(fechaLimite: string | undefined, semaforo: string | undefined): number {
@@ -814,6 +813,11 @@ export function mapRecord(
     diasDesdeSolicitud: num(f['dias_desde_solicitud']),
     pdfFinalUrl: txt(f['pdf_final_url']),
     tienePendientesVisador: bool(f['tiene_pendientes_visador']),
+    // ⚠ Se mantiene tal como lo entrega Airtable —con `cellFormat: 'string'` es
+    // reloj de pared de Santiago («2026-08-11 14:00»), no ISO; ver
+    // `parseInstante`—: SC-Edicion lo devuelve intacto a Airtable
+    // (`lib/mappers/editar-solicitud.ts:272`). El formato dd/mm/yyyy HH:mm se
+    // aplica sólo al mostrarlo (`formatearFechaHora` reconoce ambas formas).
     fechaAsignacion: txt(f['fecha_asignacion_ts']),
     proyecto: txt(f['proyecto_condominio']),
     estadoConservacion: txt(f['estado_conservacion']),

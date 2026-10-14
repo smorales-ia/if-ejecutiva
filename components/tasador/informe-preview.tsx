@@ -14,8 +14,10 @@ import {
   CheckCircle2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatearFecha } from "@/lib/fechas"
 import {
   CATEGORIAS_FOTO,
+  categoriaFotoVisible,
   marcarPdfListo,
   guardarObservacionRechazo,
   type CategoriaFotoId,
@@ -524,7 +526,7 @@ export function InformePreview({
                 <Dato k="Cliente institucional" v={txt(tasacion.cliente)} />
                 <Dato k="Dirección" v={txt(tasacion.direccion)} />
                 <Dato k="Comuna" v={txt(tasacion.comuna)} />
-                <Dato k="Fecha de visita" v={txt(d.fechaVisitaReal)} />
+                <Dato k="Fecha de visita" v={formatearFecha(d.fechaVisitaReal)} />
               </DataGrid>
             </div>
           </ReportSection>
@@ -580,6 +582,7 @@ export function InformePreview({
                     (CI-067): no aplicar el fallback «—» de txt(). */}
                 <Dato k="Rol SII" v={siiCanonico?.rolSii ?? "Rol SII pendiente"} />
                 <Dato k="Avalúo total" v={numN(siiCanonico?.avaluoTotal ?? null)} />
+                <Dato k="Avalúo fiscal ($)" v={numN(siiCanonico?.avaluoFiscalClp ?? null)} />
                 <Dato k="Avalúo fiscal (UF)" v={numN(siiCanonico?.avaluoFiscalUf ?? null, 2)} />
                 <Dato k="Avalúo exento" v={numN(siiCanonico?.avaluoExento ?? null)} />
                 <Dato k="Contribución anual" v={numN(siiCanonico?.contribucionAnual ?? null)} />
@@ -610,6 +613,7 @@ export function InformePreview({
                         <th className="py-2 pr-3 font-semibold">Material</th>
                         <th className="py-2 pr-3 text-right font-semibold">Año</th>
                         <th className="py-2 pr-3 text-right font-semibold">Sup. (m²)</th>
+                        <th className="py-2 pr-3 text-right font-semibold">Avalúo ($)</th>
                         <th className="py-2 text-right font-semibold">Avalúo (UF)</th>
                       </tr>
                     </thead>
@@ -630,6 +634,9 @@ export function InformePreview({
                           <td className="py-2 pr-3 text-right tabular-nums text-foreground">
                             {numN(u.supM2)}
                           </td>
+                          <td className="py-2 pr-3 text-right tabular-nums text-foreground">
+                            {numN(u.avaluoClp)}
+                          </td>
                           <td className="py-2 text-right tabular-nums text-foreground">
                             {numN(u.avaluoUf, 2)}
                           </td>
@@ -642,6 +649,7 @@ export function InformePreview({
                         <td className="py-2 pr-3 text-right tabular-nums">
                           {nf.format(supTotalUnidades)}
                         </td>
+                        <td className="py-2 pr-3" />
                         <td className="py-2" />
                       </tr>
                     </tbody>
@@ -693,7 +701,9 @@ export function InformePreview({
               <span className="font-semibold">{totalFotos}</span> fotografías
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-              {CATEGORIAS_FOTO.map((c) => (
+              {CATEGORIAS_FOTO.filter((c) =>
+                categoriaFotoVisible(c, d.fotosPredefinidas[c.id]?.length ?? 0),
+              ).map((c) => (
                 <div
                   key={c.id}
                   className="flex items-center justify-between text-xs"

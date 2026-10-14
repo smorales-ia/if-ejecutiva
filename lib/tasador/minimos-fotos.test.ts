@@ -7,6 +7,7 @@ import {
   resolverMinimo,
   type DeclaradosSeccionB,
 } from './minimos-fotos'
+import { CATEGORIAS_FOTO } from './tasaciones'
 
 /**
  * A-16 · los mínimos dinámicos se resuelven **sólo acá** (plan §6.3).
@@ -36,13 +37,19 @@ describe('resolverMinimo · A-16 · mínimos dinámicos', () => {
     expect(resolverMinimo('habitaciones', declarados(5, 2, 1))).toBe(5)
   })
 
-  it('mantiene fijos los cinco mínimos que no dependen de lo declarado', () => {
+  it('mantiene fijos los cuatro mínimos de 1 que no dependen de lo declarado', () => {
     const d = declarados(9, 9, 9)
     expect(resolverMinimo('ofertas_comparables', d)).toBe(1)
     expect(resolverMinimo('mapa_ubicacion', d)).toBe(1)
     expect(resolverMinimo('fachada_exterior', d)).toBe(1)
     expect(resolverMinimo('cocina', d)).toBe(1)
-    expect(resolverMinimo('living_comedor', d)).toBe(1)
+  })
+
+  it('T-TEMAS1 · las seis nuevas y la heredada living_comedor exigen 0 (Q3)', () => {
+    const d = declarados(9, 9, 9)
+    for (const id of ['sector', 'casa', 'living', 'comedor', 'terraza', 'quincho', 'living_comedor'] as const) {
+      expect(resolverMinimo(id, d)).toBe(0)
+    }
   })
 
   it('cero declarado exige cero fotos: no se piden fotos de un baño que no existe', () => {
@@ -71,18 +78,9 @@ describe('esMinimoDinamico', () => {
 })
 
 describe('resolverMaximo · la spec no declara ningún tope', () => {
-  it('devuelve null en las ocho categorías, y null no es cero', () => {
+  it('devuelve null en todas las categorías del catálogo, y null no es cero', () => {
     const d = declarados(2, 2, 1)
-    for (const id of [
-      'ofertas_comparables',
-      'habitaciones',
-      'banos',
-      'estacionamientos',
-      'mapa_ubicacion',
-      'fachada_exterior',
-      'cocina',
-      'living_comedor',
-    ] as const) {
+    for (const { id } of CATEGORIAS_FOTO) {
       expect(resolverMaximo(id, d)).toBeNull()
     }
   })
