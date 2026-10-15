@@ -305,6 +305,15 @@ describe('debeOfrecerRecuperacion', () => {
     expect(caso(borradorEnBlanco(), SIN_SINCRONIZAR)).toBe(false)
   })
 
+  it('15-oct-2026 · un borrador viejo con comprador/notaría/repertorio vacíos no ofrece recuperar', () => {
+    // Las tres claves salieron de `InformeData` (spec §2.8): el servidor ya no
+    // las manda, pero un borrador guardado antes del cambio las trae en ''. Esa
+    // clave de más no es contenido del tasador y no debe encender el banner.
+    const viejo = servidor({ comprador: '', notaria: '', repertorio: '' })
+    expect('comprador' in servidor()).toBe(false)
+    expect(caso(viejo, SIN_SINCRONIZAR)).toBe(false)
+  })
+
   it('.A.4 · una foto sólo local sí lo enciende, y es correcto', () => {
     // Efecto declarado de vaciar `CLAVES_SOLO_BORRADOR` (D-4): las fotos entran
     // en la comparación, así que una que vive sólo en la cola offline cuenta

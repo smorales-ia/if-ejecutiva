@@ -1,0 +1,336 @@
+﻿[
+ {
+  "id": "rec0N9w1ejqQqKYcP",
+  "createdTime": "2026-09-09T21:03:03.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "numero_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "foto_fuente_sii__numero_dominio",
+   "prioridad_destino": 40
+  }
+ },
+ {
+  "id": "rec5X2DwrNhg2aiPq",
+  "createdTime": "2026-09-08T02:05:16.000Z",
+  "fields": {
+   "grupo_destino": "permiso_edificacion",
+   "uso_campo_destino": "permiso_edificacion_fecha",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__fecha_permiso_edificacion",
+   "prioridad_destino": 20,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec6sJ0vyimcdMqlD",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "grupo_destino": "coordenadas",
+   "uso_campo_destino": "long",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "informe_no_expropiacion_serviu__longitud",
+   "prioridad_destino": 20
+  }
+ },
+ {
+  "id": "recBu3kd3RoI1QzEB",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "fojas",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "certificado_dominio_vigente__foja_inscripcion",
+   "prioridad_destino": 10
+  }
+ },
+ {
+  "id": "recCdc2KDtXOP3qKW",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "numero_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "certificado_dominio_vigente__numero_inscripcion",
+   "prioridad_destino": 10
+  }
+ },
+ {
+  "id": "recE2lOP4YMmn5ESq",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "ano_inscripcion",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "inscripcion_dominio_cbr__ano_inscripcion_cbr",
+   "prioridad_destino": 20,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recEj5KnzpLvQkihi",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "grupo_destino": "recepcion_final",
+   "uso_campo_destino": "recepcion_final_fecha",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "certificado_recepcion_final__fecha_recepcion",
+   "prioridad_destino": 10,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recFQMPeD6ow4ikeq",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "codigo": "inscripcion_dominio_cbr__notaria"
+  }
+ },
+ {
+  "id": "recGRRp4Ore6k8m4y",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "numero_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "inscripcion_dominio_cbr__numero_cbr",
+   "prioridad_destino": 20,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recJEpVvzbmTqPERS",
+  "createdTime": "2026-09-09T21:03:03.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "fojas",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "foto_fuente_sii__foja_dominio",
+   "prioridad_destino": 40
+  }
+ },
+ {
+  "id": "recLMXwCxkSfOFcJe",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "codigo": "inscripcion_dominio_cbr__comprador"
+  }
+ },
+ {
+  "id": "recLXURPfI88MLl9q",
+  "createdTime": "2026-09-08T02:05:10.000Z",
+  "fields": {
+   "grupo_destino": "permiso_edificacion",
+   "uso_campo_destino": "permiso_edificacion_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__numero_permiso_edificacion",
+   "prioridad_destino": 20,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recQaSV6QEyWYcMrR",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "coordenadas",
+   "uso_campo_destino": "lat",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "mapa_sii__latitud",
+   "prioridad_destino": 10
+  }
+ },
+ {
+  "id": "recQwUTBnRaYYcvQU",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "coordenadas",
+   "uso_campo_destino": "long",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "mapa_sii__longitud",
+   "prioridad_destino": 10
+  }
+ },
+ {
+  "id": "recRuBorxqnICMUEN",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "ano_inscripcion",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "certificado_dominio_vigente__ano_inscripcion",
+   "prioridad_destino": 10
+  }
+ },
+ {
+  "id": "recUoL1UHzLihqMMK",
+  "createdTime": "2026-09-08T02:05:19.000Z",
+  "fields": {
+   "grupo_destino": "recepcion_final",
+   "uso_campo_destino": "recepcion_final_fecha",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__fecha_recepcion_final",
+   "prioridad_destino": 20,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recVuIHWfVAjD3whc",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "fojas",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "inscripcion_dominio_cbr__foja_cbr",
+   "prioridad_destino": 20,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recWg8kNBQK17CXOv",
+  "createdTime": "2026-09-09T21:03:03.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "ano_inscripcion",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "foto_fuente_sii__anio_dominio",
+   "prioridad_destino": 40
+  }
+ },
+ {
+  "id": "recY8f0sBOO9Jhrxl",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "grupo_destino": "permiso_edificacion",
+   "uso_campo_destino": "permiso_edificacion_fecha",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "permiso_edificacion__fecha_permiso",
+   "prioridad_destino": 10,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recZnyVa8R9sh65iU",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "fojas",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__foja_inscripcion",
+   "prioridad_destino": 30
+  }
+ },
+ {
+  "id": "recaKyCs0JMXgteK0",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "ano_inscripcion",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__ano_inscripcion",
+   "prioridad_destino": 30
+  }
+ },
+ {
+  "id": "recarhGDsmwNrXMbP",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "grupo_destino": "recepcion_final",
+   "uso_campo_destino": "recepcion_final_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "certificado_recepcion_final__numero_recepcion",
+   "prioridad_destino": 10,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recbYuBXQswE2YTyP",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "grupo_destino": "no_expropiacion",
+   "uso_campo_destino": "n_cert_no_expropiacion",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "informe_no_expropiacion_serviu__numero_documento",
+   "prioridad_destino": 10,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recd7fJNVd60319Xn",
+  "createdTime": "2026-10-15T18:11:39.000Z",
+  "fields": {
+   "grupo_destino": "inscripcion_dominio",
+   "uso_campo_destino": "numero_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__numero_inscripcion",
+   "prioridad_destino": 30
+  }
+ },
+ {
+  "id": "recjkRLzMyZeDkXV5",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "grupo_destino": "sello_sec",
+   "uso_campo_destino": "sello_sec_vencimiento",
+   "vigencia_destino": true,
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "sello_verde_sec__fecha_vencimiento",
+   "prioridad_destino": 10,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recwJiTQmYxb9bxVa",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "grupo_destino": "coordenadas",
+   "uso_campo_destino": "lat",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "informe_no_expropiacion_serviu__latitud",
+   "prioridad_destino": 20
+  }
+ },
+ {
+  "id": "recwNHxtLHQ2sYcPY",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "grupo_destino": "sello_sec",
+   "uso_campo_destino": "sello_sec_id",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "sello_verde_sec__numero_sello_sec",
+   "prioridad_destino": 10,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recwptFqK4coAC8IE",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "grupo_destino": "permiso_edificacion",
+   "uso_campo_destino": "permiso_edificacion_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "permiso_edificacion__numero_permiso",
+   "prioridad_destino": 10,
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recxiSvoLUSQGEclB",
+  "createdTime": "2026-09-08T02:05:18.000Z",
+  "fields": {
+   "grupo_destino": "recepcion_final",
+   "uso_campo_destino": "recepcion_final_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__numero_recepcion_final",
+   "prioridad_destino": 20,
+   "obligatorio": true
+  }
+ }
+]

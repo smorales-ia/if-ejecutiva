@@ -1,0 +1,2636 @@
+﻿[
+ {
+  "id": "rec0N9w1ejqQqKYcP",
+  "createdTime": "2026-09-09T21:03:03.000Z",
+  "fields": {
+   "etiqueta_local": "N inscripcion",
+   "orden": 20,
+   "uso_campo_destino": "numero_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "foto_fuente_sii__numero_dominio",
+   "nombre_atributo": "Numero (inscripcion de dominio)",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "5678 (numero de la inscripcion de dominio en el CBR; puede venir en blanco)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "numero_dominio",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "rec0OdwihGohBmEzp",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Direccion",
+   "orden": 3,
+   "codigo": "consulta_antecedentes_bien_raiz__direccion",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "direccion",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec0ceTOtNiI3De6a",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Exento",
+   "orden": 8,
+   "uso_campo_destino": "avaluo_exento",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "certificado_avaluo_fiscal__avaluo_exento",
+   "nombre_atributo": "Avaluo exento",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "ejemplo_atributo": "60030710",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "avaluo_exento",
+   "tipo_dato": "number",
+   "unidad_medida": "CLP"
+  }
+ },
+ {
+  "id": "rec0iFtHuyNH3ufHD",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Ofert. / CBR",
+   "orden": 20,
+   "uso_campo_destino": "tipo_referencia",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__tipo_referencia",
+   "nombre_atributo": "Tipo de referencia (Oferta o CBR)",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "Oferta (normalizar 'Ofert.' -> 'Oferta'; 'CBR' se conserva)",
+   "codigo_atributo": "tipo_referencia",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "rec0rjS8802ru4Bqz",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Bodega",
+   "orden": 12,
+   "codigo": "plano_cuadro_superficies__superficie_bodega_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_bodega_m2"
+  }
+ },
+ {
+  "id": "rec0uWM0k1s3taoxi",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Terraza",
+   "orden": 8,
+   "codigo": "plano_cuadro_superficies__superficie_terraza_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_terraza_m2"
+  }
+ },
+ {
+  "id": "rec0ynQAxHSnHTgxf",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Construida",
+   "orden": 6,
+   "uso_campo_destino": "sup_construccion_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "certificado_recepcion_final__superficie_construida_m2",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 30,
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "superficie_construida_m2"
+  }
+ },
+ {
+  "id": "rec1ImMtIyIPY3HLe",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Contribucion Total",
+   "orden": 15,
+   "codigo": "consulta_antecedentes_bien_raiz__contribucion_total_clp",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "contribucion_total_clp"
+  }
+ },
+ {
+  "id": "rec1PAmoHLfIntspg",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Direccion",
+   "orden": 4,
+   "codigo": "permiso_edificacion__direccion",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "direccion"
+  }
+ },
+ {
+  "id": "rec1oUwCd3KXlYwpW",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Vendedor",
+   "orden": 7,
+   "codigo": "inscripcion_dominio_cbr__vendedor",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "vendedor",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec2kQGk9poj6ay8a",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Monto Deuda",
+   "orden": 5,
+   "codigo": "certificado_deuda_tgr__monto_deuda_clp",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "monto_deuda_clp"
+  }
+ },
+ {
+  "id": "rec3BYUviPqMLsVrQ",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Nombre Propietario",
+   "orden": 6,
+   "codigo": "inscripcion_dominio_cbr__nombre_propietario",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "nombre_propietario",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec3aF8egGjtDtM1M",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Rol SII",
+   "orden": 3,
+   "codigo": "certificado_deuda_tgr__rol_sii",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "rol_sii",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec4RrUXx2y0Fyx06",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Rol SII",
+   "orden": 2,
+   "codigo": "consulta_antecedentes_bien_raiz__rol_sii",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "rol_sii",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec4qG0HJb2PyV5SR",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha de Emision",
+   "orden": 2,
+   "codigo": "informe_no_expropiacion_serviu__fecha_emision",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "codigo_atributo": "fecha_emision",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec5X2DwrNhg2aiPq",
+  "createdTime": "2026-09-08T02:05:16.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha Permiso de Edificación",
+   "orden": 2,
+   "uso_campo_destino": "permiso_edificacion_fecha",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__fecha_permiso_edificacion",
+   "nombre_atributo": "Fecha Permiso de Edificación",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recX5FJFzAzXTXpzF"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "02-09-1996",
+   "codigo_atributo": "fecha_permiso_edificacion",
+   "obligatorio": true,
+   "tipo_dato": "date"
+  }
+ },
+ {
+  "id": "rec5bACYnrs3oky7D",
+  "createdTime": "2026-07-17T19:42:52.000Z",
+  "fields": {
+   "etiqueta_local": "Material Predominante",
+   "orden": 3,
+   "uso_campo_destino": "tipo_material",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "foto_fuente_sii__tipo_material",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "albanileria (dominio: madera, albanileria, hormigon, mixto, perfiles_metalicos)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "tipo_material",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "rec6GMuMlCiA7XTQ7",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Dormitorios",
+   "orden": 5,
+   "codigo": "plano_cuadro_superficies__numero_dormitorios",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "numero_dormitorios",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rec6Jnf60VOTu5A1v",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Primer Piso",
+   "orden": 10,
+   "uso_campo_destino": "sup_primer_piso_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "plano_cuadro_superficies__superficie_primer_piso_m2",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 20,
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_primer_piso_m2"
+  }
+ },
+ {
+  "id": "rec6LrijpYYuUeOEX",
+  "createdTime": "2026-09-09T18:04:46.000Z",
+  "fields": {
+   "etiqueta_local": "G - Galpones",
+   "orden": 17,
+   "uso_campo_destino": "g",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__g",
+   "nombre_atributo": "G - Galpones",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "g",
+   "tipo_dato": "text",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "rec6a4IwOtsZEZEzV",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Tipo de Propiedad",
+   "orden": 15,
+   "codigo": "certificado_avaluo_fiscal__tipo_propiedad",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "tipo_propiedad"
+  }
+ },
+ {
+  "id": "rec6sJ0vyimcdMqlD",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Longitud",
+   "orden": 8,
+   "uso_campo_destino": "long",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "informe_no_expropiacion_serviu__longitud",
+   "nombre_atributo": "Longitud",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "longitud",
+   "tipo_dato": "number"
+  }
+ },
+ {
+  "id": "rec80ZIjphjXQfs2u",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Número (solo CBR)",
+   "orden": 70,
+   "uso_campo_destino": "numero",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__numero",
+   "nombre_atributo": "Número de la inscripción CBR (solo CBR)",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "55521 (parte derecha de '40132-55521'; null si tipo_referencia = Oferta)",
+   "codigo_atributo": "numero",
+   "usado_motor_calculo": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "rec8Y4sVOtZ5TGV65",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Sobretasa",
+   "orden": 8,
+   "codigo": "certificado_deuda_tgr__sobretasa_pct",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "sobretasa_pct"
+  }
+ },
+ {
+  "id": "rec9INmTxmMpdF1KO",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Sup. Terreno",
+   "orden": 90,
+   "uso_campo_destino": "sup_terreno_m2",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__sup_terreno_m2",
+   "nombre_atributo": "Superficie de terreno del comparable",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "5051.00 (leer '5.051,00' como 5051.00; separador decimal chileno)",
+   "codigo_atributo": "sup_terreno_m2",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "rec9TxWVezBWFyHCz",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Rol SII",
+   "orden": 1,
+   "uso_campo_destino": "rol_sii",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "certificado_avaluo_fiscal__rol_sii",
+   "nombre_atributo": "Rol SII",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "8205-549-7",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "rol_sii",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recA3JEcJa4roEWVH",
+  "createdTime": "2026-09-09T18:04:46.000Z",
+  "fields": {
+   "etiqueta_local": "OC - Obras Complementarias",
+   "orden": 16,
+   "uso_campo_destino": "oc",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__oc",
+   "nombre_atributo": "OC - Obras Complementarias",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "oc",
+   "tipo_dato": "text",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recA78eiX8siSzcHk",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Contribucion Total",
+   "orden": 10,
+   "codigo": "certificado_deuda_tgr__contribucion_total_clp",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "contribucion_total_clp",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recA8eJO767abthVO",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Afecto a Expropiacin",
+   "orden": 6,
+   "codigo": "informe_no_expropiacion_serviu__afecto_expropiacion",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "codigo_atributo": "afecto_expropiacion",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recAHCuvhq7LBP252",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Codigo Manzana SII",
+   "orden": 6,
+   "uso_campo_destino": "cod_sii_manzana",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__cod_sii_manzana",
+   "nombre_atributo": "Codigo Manzana SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "cod_sii_manzana",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recAbH5ecboay6nLw",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Terreno",
+   "orden": 13,
+   "codigo": "certificado_avaluo_fiscal__avaluo_terreno_clp",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "avaluo_terreno_clp"
+  }
+ },
+ {
+  "id": "recAsoisiHCMWpim5",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Teléfono (solo Ofert.)",
+   "orden": 50,
+   "uso_campo_destino": "telefono_contacto",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__telefono_contacto",
+   "nombre_atributo": "Teléfono de contacto (solo Ofertas)",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "979998714 (solo si tipo_referencia = Oferta; null si CBR)",
+   "codigo_atributo": "telefono_contacto",
+   "usado_motor_calculo": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recB6YEEEwKPeNW1Q",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Calidad SII",
+   "orden": 10,
+   "uso_campo_destino": "calidad_sii",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__calidad_sii",
+   "nombre_atributo": "Calidad SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "calidad_sii",
+   "usado_motor_calculo": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recBNVQScWGDlceTt",
+  "createdTime": "2026-10-15T01:52:39.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Primer Piso",
+   "orden": 2,
+   "uso_campo_destino": "sup_primer_piso_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "cuadro_superficies__superficie_primer_piso_m2",
+   "nombre_atributo": "Superficie construida primer piso",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 10,
+   "tipo_documento": [
+    "rec4uCCVtUpAz2Yeb"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "249,91 (fila TOTAL PRIMER PISO del cuadro de superficies)",
+   "codigo_atributo": "superficie_primer_piso_m2",
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recBqFyOzUxQkQEGo",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Numero Unidad",
+   "orden": 2,
+   "codigo": "plano_cuadro_superficies__numero_unidad",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "numero_unidad",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recCG0t4zxboYjELA",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Folio",
+   "orden": 1,
+   "codigo": "certificado_avaluo_fiscal__numero_documento",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "numero_documento",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recCVWjNUqzmTR18p",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Total",
+   "orden": 9,
+   "uso_campo_destino": "sup_construccion_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "plano_cuadro_superficies__superficie_construida_m2",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 20,
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_construida_m2",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recCitiZcydKyCXtv",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Direccion",
+   "orden": 4,
+   "codigo": "certificado_recepcion_final__direccion",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "direccion",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recDCqwWhkUdXWVeF",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Arquitecto Responsable",
+   "orden": 7,
+   "codigo": "permiso_edificacion__arquitecto_responsable",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "arquitecto_responsable"
+  }
+ },
+ {
+  "id": "recDyXI1ZNB08Bddr",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Piso",
+   "orden": 3,
+   "codigo": "plano_cuadro_superficies__piso",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "piso",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recE2lOP4YMmn5ESq",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Ano",
+   "orden": 3,
+   "uso_campo_destino": "ano_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "inscripcion_dominio_cbr__ano_inscripcion_cbr",
+   "nombre_atributo": "Año Inscripción CBR",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2020",
+   "codigo_atributo": "ano_inscripcion_cbr",
+   "obligatorio": true,
+   "tipo_dato": "number"
+  }
+ },
+ {
+  "id": "recE3Pv2aHqjU6gU3",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Tipo de Propiedad",
+   "orden": 10,
+   "codigo": "certificado_recepcion_final__tipo_propiedad",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "tipo_propiedad"
+  }
+ },
+ {
+  "id": "recEVYWb1Dj8Adxam",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha Puesta del Sello",
+   "orden": 4,
+   "codigo": "sello_verde_sec__fecha_puesta_sello",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "fecha_puesta_sello",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recEhhptE7RmWJr5M",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Calidad",
+   "orden": 10,
+   "uso_campo_destino": "calidad_sii",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "consulta_antecedentes_bien_raiz__calidad_sii",
+   "nombre_atributo": "Calidad SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "calidad_sii",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recEj5KnzpLvQkihi",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha de Recepcion",
+   "orden": 2,
+   "uso_campo_destino": "recepcion_final_fecha",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "certificado_recepcion_final__fecha_recepcion",
+   "nombre_atributo": "Fecha Recepción Final",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "18-07-2024",
+   "codigo_atributo": "fecha_recepcion",
+   "obligatorio": true,
+   "tipo_dato": "date"
+  }
+ },
+ {
+  "id": "recEs9DfFYzrnxuSn",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Total UF",
+   "orden": 80,
+   "uso_campo_destino": "precio_uf",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__precio_uf",
+   "nombre_atributo": "Precio Total UF del comparable",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "20000 (leer '20.000' como 20000; separador miles chileno)",
+   "codigo_atributo": "precio_uf",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "UF"
+  }
+ },
+ {
+  "id": "recFCjCJEFZUsST97",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Afecto",
+   "orden": 13,
+   "codigo": "consulta_antecedentes_bien_raiz__avaluo_afecto_clp",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "avaluo_afecto_clp"
+  }
+ },
+ {
+  "id": "recFQMPeD6ow4ikeq",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Notaria",
+   "orden": 9,
+   "codigo": "inscripcion_dominio_cbr__notaria",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "notaria",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recFUUXxajs8jCTk7",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Numero Permiso Original",
+   "orden": 8,
+   "codigo": "certificado_recepcion_final__numero_permiso",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "numero_permiso"
+  }
+ },
+ {
+  "id": "recFeo4ThrN5kLEb7",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Tipo de Obra",
+   "orden": 5,
+   "codigo": "permiso_edificacion__tipo_obra",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "tipo_obra"
+  }
+ },
+ {
+  "id": "recFpA2pI17MEmedI",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Afecto",
+   "orden": 7,
+   "codigo": "certificado_deuda_tgr__avaluo_afecto_clp",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "avaluo_afecto_clp",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recG7kKU17RSQEsoL",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna",
+   "orden": 2,
+   "codigo": "certificado_deuda_tgr__comuna",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "comuna",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recGRRp4Ore6k8m4y",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Numero",
+   "orden": 2,
+   "uso_campo_destino": "numero_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "inscripcion_dominio_cbr__numero_cbr",
+   "nombre_atributo": "N° Inscripción CBR",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "4663",
+   "codigo_atributo": "numero_cbr",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recGge6TlFlrpvChH",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Direccion Inmueble",
+   "orden": 5,
+   "codigo": "informe_no_expropiacion_serviu__direccion",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "codigo_atributo": "direccion",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recHLhugxYG6pPtFC",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Direccion",
+   "orden": 7,
+   "codigo": "sello_verde_sec__direccion",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "direccion",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recHzaRLGLOueQWKY",
+  "createdTime": "2026-07-17T19:42:52.000Z",
+  "fields": {
+   "etiqueta_local": "Anio de Construccion",
+   "orden": 4,
+   "uso_campo_destino": "anio_construccion",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "foto_fuente_sii__anio_construccion",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2004 (anio de la linea habitacional principal en el detalle del predio)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "anio_construccion",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number"
+  }
+ },
+ {
+  "id": "recI2PrFvSvpMvM7n",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Numero de Subterraneos",
+   "orden": 12,
+   "codigo": "permiso_edificacion__numero_subterraneos",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "numero_subterraneos"
+  }
+ },
+ {
+  "id": "recI4dgIH1fU4m6X2",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Nombre",
+   "orden": 1,
+   "codigo": "certificado_deuda_tgr__nombre_propietario",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "nombre_propietario",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recI74lf5sc9EtceY",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Registra Deuda",
+   "orden": 4,
+   "codigo": "certificado_deuda_tgr__tiene_deuda",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "tiene_deuda",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recIZe7WgsPLDroMz",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Rol de Avaluo",
+   "orden": 4,
+   "codigo": "informe_no_expropiacion_serviu__rol_sii",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "codigo_atributo": "rol_sii",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recJEpVvzbmTqPERS",
+  "createdTime": "2026-09-09T21:03:03.000Z",
+  "fields": {
+   "etiqueta_local": "Foja",
+   "orden": 19,
+   "uso_campo_destino": "fojas",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "foto_fuente_sii__foja_dominio",
+   "nombre_atributo": "Foja (inscripcion de dominio)",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "1234 (foja de la inscripcion de dominio en el CBR; puede venir en blanco en la foto SII)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "foja_dominio",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recKMsRbCwRcWhcsz",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Exento",
+   "orden": 12,
+   "uso_campo_destino": "avaluo_exento",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__avaluo_exento",
+   "nombre_atributo": "Avaluo Exento",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "avaluo_exento",
+   "tipo_dato": "number",
+   "unidad_medida": "CLP"
+  }
+ },
+ {
+  "id": "recKWvkw9qMJRGZ0o",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "CG - Construcciones Generales",
+   "orden": 14,
+   "uso_campo_destino": "cg",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__cg",
+   "nombre_atributo": "CG - Construcciones Generales",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "cg",
+   "tipo_dato": "text",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recLMXwCxkSfOFcJe",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Comprador",
+   "orden": 8,
+   "codigo": "inscripcion_dominio_cbr__comprador",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "comprador",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recLPtmox0H3YHPSu",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Terreno",
+   "orden": 19,
+   "codigo": "plano_cuadro_superficies__superficie_terreno_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_terreno_m2"
+  }
+ },
+ {
+  "id": "recLXURPfI88MLl9q",
+  "createdTime": "2026-09-08T02:05:10.000Z",
+  "fields": {
+   "etiqueta_local": "N° Permiso de Edificación",
+   "orden": 1,
+   "uso_campo_destino": "permiso_edificacion_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__numero_permiso_edificacion",
+   "nombre_atributo": "N° Permiso de Edificación",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recX5FJFzAzXTXpzF"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "60",
+   "codigo_atributo": "numero_permiso_edificacion",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recLbWfYPzJVOWXP2",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Entidad Certificadora",
+   "orden": 8,
+   "codigo": "sello_verde_sec__entidad_certificacion_sec",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "entidad_certificacion_sec",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recLdXKaZqVw5xbBq",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Ubicacion (Urbano/Rural)",
+   "orden": 8,
+   "uso_campo_destino": "ubicacion_urbano_rural",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__ubicacion_urbano_rural",
+   "nombre_atributo": "Ubicacion (Urbano/Rural)",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "urbano — dominio cerrado; responde EXACTAMENTE 'urbano' o 'rural' en minuscula (nunca 'zona urbana', 'urbana' ni 'U')",
+   "codigo_atributo": "ubicacion_urbano_rural",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recMQUmmXhGO8yRLN",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie a Construir",
+   "orden": 6,
+   "uso_campo_destino": "sup_construccion_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "permiso_edificacion__superficie_construida_m2",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 40,
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "superficie_construida_m2"
+  }
+ },
+ {
+  "id": "recN5QfieTu4jq2bR",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Material",
+   "orden": 9,
+   "codigo": "consulta_antecedentes_bien_raiz__material_estructura",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "material_estructura"
+  }
+ },
+ {
+  "id": "recNdLm3DOhQ26z7b",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha de Emision",
+   "orden": 2,
+   "codigo": "certificado_avaluo_fiscal__fecha_emision",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "fecha_emision",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recObBqQWiPL87dEZ",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Ano de Construccion",
+   "orden": 8,
+   "codigo": "consulta_antecedentes_bien_raiz__ano_construccion",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "ano_construccion"
+  }
+ },
+ {
+  "id": "recP30Vufk6wOT4qG",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Tipo de Agrupamiento",
+   "orden": 10,
+   "codigo": "permiso_edificacion__tipo_agrupamiento",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "tipo_agrupamiento"
+  }
+ },
+ {
+  "id": "recP6giFiThGlkqge",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "UF/m² T.",
+   "orden": 120,
+   "uso_campo_destino": "uf_m2_terreno_f",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__uf_m2_terreno_f",
+   "nombre_atributo": "UF/m² de terreno (valor crudo desde la fuente)",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2.20 (leer '2,20' como 2.20; valor crudo, no calculado)",
+   "codigo_atributo": "uf_m2_terreno_f",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "UF/m2"
+  }
+ },
+ {
+  "id": "recPHiw1oofi0GECg",
+  "createdTime": "2026-09-09T18:04:46.000Z",
+  "fields": {
+   "etiqueta_local": "OCiv - Obras Civiles",
+   "orden": 15,
+   "uso_campo_destino": "ociv",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__ociv",
+   "nombre_atributo": "OCiv - Obras Civiles",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "ociv",
+   "tipo_dato": "text",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recQLXjueLQBRLvG9",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Dirección referencias",
+   "orden": 30,
+   "uso_campo_destino": "direccion",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__direccion",
+   "nombre_atributo": "Dirección de la referencia",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "Las Brisas de Chicureo - Los Boldos",
+   "codigo_atributo": "direccion",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recRW7cZY3rSvKtLt",
+  "createdTime": "2026-10-15T02:13:34.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Servidumbre",
+   "orden": 20,
+   "uso_campo_destino": "servidumbre_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "plano_cuadro_superficies__superficie_servidumbre_m2",
+   "nombre_atributo": "Superficie de servidumbre",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 20,
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "3622,51 (superficie de servidumbre del cuadro del plano)",
+   "codigo_atributo": "superficie_servidumbre_m2",
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recRaxtkfLlHMWNHu",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Propietario",
+   "orden": 8,
+   "codigo": "permiso_edificacion__nombre_propietario",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "nombre_propietario"
+  }
+ },
+ {
+  "id": "recRdNFJqfqHIoINE",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha (formato mes-año, ej. abr-26)",
+   "orden": 10,
+   "uso_campo_destino": "fecha_publicacion",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__fecha_publicacion",
+   "nombre_atributo": "Fecha de publicación / inscripción",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2026-04-01 (leer 'abr-26' como primer día del mes)",
+   "codigo_atributo": "fecha_publicacion",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "date"
+  }
+ },
+ {
+  "id": "recRhDm3vRwgdqvTl",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Contribucion Anual",
+   "orden": 9,
+   "uso_campo_destino": "contribucion_anual",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "certificado_avaluo_fiscal__contribucion_anual",
+   "nombre_atributo": "Contribucion anual",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "ejemplo_atributo": "577896 (viene 288948 semestral x2)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "contribucion_anual",
+   "tipo_dato": "number",
+   "unidad_medida": "CLP"
+  }
+ },
+ {
+  "id": "recRlSM5fscol2sAO",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna",
+   "orden": 6,
+   "codigo": "sello_verde_sec__comuna",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "comuna",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recRzUiwBWK453mAA",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna",
+   "orden": 1,
+   "codigo": "consulta_antecedentes_bien_raiz__comuna",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "comuna",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recS9IRdh9VVFa6LW",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Total",
+   "orden": 6,
+   "uso_campo_destino": "avaluo_total",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "consulta_antecedentes_bien_raiz__avaluo_total_clp",
+   "nombre_atributo": "Avalúo Total (SII)",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "339809429",
+   "codigo_atributo": "avaluo_total_clp",
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "CLP"
+  }
+ },
+ {
+  "id": "recU0LNyYxkuZKH6m",
+  "createdTime": "2026-09-09T18:04:46.000Z",
+  "fields": {
+   "etiqueta_local": "Rol SII",
+   "orden": 18,
+   "uso_campo_destino": "rol_sii",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__rol_sii",
+   "nombre_atributo": "Rol SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "rol_sii",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recUeul2955EmMt52",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Numero de Pisos",
+   "orden": 11,
+   "codigo": "permiso_edificacion__numero_pisos",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "numero_pisos"
+  }
+ },
+ {
+  "id": "recUoL1UHzLihqMMK",
+  "createdTime": "2026-09-08T02:05:19.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha Recepción Final",
+   "orden": 4,
+   "uso_campo_destino": "recepcion_final_fecha",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__fecha_recepcion_final",
+   "nombre_atributo": "Fecha Recepción Final",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recX5FJFzAzXTXpzF"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "28-12-1998",
+   "codigo_atributo": "fecha_recepcion_final",
+   "obligatorio": true,
+   "tipo_dato": "date"
+  }
+ },
+ {
+  "id": "recUqdkmxwWJaxr18",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Material Predominante",
+   "orden": 18,
+   "codigo": "plano_cuadro_superficies__material_estructura",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "material_estructura"
+  }
+ },
+ {
+  "id": "recVuIHWfVAjD3whc",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Foja",
+   "orden": 1,
+   "uso_campo_destino": "fojas",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "inscripcion_dominio_cbr__foja_cbr",
+   "nombre_atributo": "Foja CBR",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "3312",
+   "codigo_atributo": "foja_cbr",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recW3GHYmCMx6w0h4",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Servidumbre",
+   "orden": 12,
+   "uso_campo_destino": "servidumbre_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "inscripcion_dominio_cbr__superficie_servidumbre_m2",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 30,
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "superficie_servidumbre_m2"
+  }
+ },
+ {
+  "id": "recWg8kNBQK17CXOv",
+  "createdTime": "2026-09-09T21:03:03.000Z",
+  "fields": {
+   "etiqueta_local": "Anio inscripcion",
+   "orden": 21,
+   "uso_campo_destino": "ano_inscripcion",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "foto_fuente_sii__anio_dominio",
+   "nombre_atributo": "Anio (inscripcion de dominio)",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2020 (anio de la inscripcion de dominio; puede venir en blanco)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "anio_dominio",
+   "tipo_dato": "number"
+  }
+ },
+ {
+  "id": "recWmZVda5dooLcot",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Numero de Subterraneos",
+   "orden": 15,
+   "codigo": "plano_cuadro_superficies__numero_subterraneos",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "numero_subterraneos"
+  }
+ },
+ {
+  "id": "recY8f0sBOO9Jhrxl",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha Permiso",
+   "orden": 2,
+   "uso_campo_destino": "permiso_edificacion_fecha",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "permiso_edificacion__fecha_permiso",
+   "nombre_atributo": "Fecha Permiso de Edificación",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2020-09-09",
+   "codigo_atributo": "fecha_permiso",
+   "obligatorio": true,
+   "tipo_dato": "date"
+  }
+ },
+ {
+  "id": "recYwrGMxW0PGqbxe",
+  "createdTime": "2026-07-17T19:42:52.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Terreno",
+   "orden": 1,
+   "uso_campo_destino": "sup_terreno_m2",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "foto_fuente_sii__sup_terreno_m2",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "503 (dato del avaluo catastral detallado por rol)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "sup_terreno_m2",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recZ0DPFrciuH4EFQ",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Contribucion (anual)",
+   "orden": 13,
+   "uso_campo_destino": "contribucion_anual",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__contribucion_anual",
+   "nombre_atributo": "Contribucion (anual)",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "contribucion_anual",
+   "tipo_dato": "number",
+   "unidad_medida": "CLP"
+  }
+ },
+ {
+  "id": "recZ0ZmvyFoc0kiAU",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Tipo de Propiedad",
+   "orden": 9,
+   "codigo": "permiso_edificacion__tipo_propiedad",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "tipo_propiedad"
+  }
+ },
+ {
+  "id": "recZnJb0Y3ZblAZJD",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Foja (solo CBR)",
+   "orden": 60,
+   "uso_campo_destino": "foja",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__foja",
+   "nombre_atributo": "Foja de la inscripción CBR (solo CBR)",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "40132 (parte izquierda de '40132-55521'; null si tipo_referencia = Oferta)",
+   "codigo_atributo": "foja",
+   "usado_motor_calculo": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "reca8d0fXzdQGZ67X",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Destino",
+   "orden": 7,
+   "codigo": "certificado_recepcion_final__destino_sii",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "destino_sii"
+  }
+ },
+ {
+  "id": "recaDdzrS30jz7xNY",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Construida",
+   "orden": 2,
+   "uso_campo_destino": "sup_m2",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "certificado_avaluo_fiscal__sup_m2",
+   "nombre_atributo": "Superficie SII",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "137",
+   "codigo_atributo": "sup_m2",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recaJvVGX42BbPSEI",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Destino SII",
+   "orden": 4,
+   "uso_campo_destino": "destino_sii",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "certificado_avaluo_fiscal__destino_sii",
+   "nombre_atributo": "Destino SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "HABITACIONAL",
+   "codigo_atributo": "destino_sii",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recaT7kSM5ZZGlbam",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "ID Inspeccion",
+   "orden": 1,
+   "codigo": "sello_verde_sec__id_inspeccion_sec",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "id_inspeccion_sec",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recarhGDsmwNrXMbP",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Numero Certificado",
+   "orden": 1,
+   "uso_campo_destino": "recepcion_final_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "certificado_recepcion_final__numero_recepcion",
+   "nombre_atributo": "N° Recepción Final",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "210-2024",
+   "codigo_atributo": "numero_recepcion",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recayTaT3uQASYuuU",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna",
+   "orden": 3,
+   "codigo": "certificado_recepcion_final__comuna",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "comuna",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recbDapaAjuIjl0dd",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Codigo Comuna SII",
+   "orden": 5,
+   "uso_campo_destino": "cod_sii_comuna",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__cod_sii_comuna",
+   "nombre_atributo": "Codigo Comuna SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "cod_sii_comuna",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recbYuBXQswE2YTyP",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Numero de Certificado",
+   "orden": 1,
+   "uso_campo_destino": "n_cert_no_expropiacion",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "informe_no_expropiacion_serviu__numero_documento",
+   "nombre_atributo": "N° Certificado No Expropiación",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "3444743",
+   "codigo_atributo": "numero_documento",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recc006dTUR1r31J8",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha de Inscripcion",
+   "orden": 11,
+   "codigo": "inscripcion_dominio_cbr__fecha_inscripcion",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "fecha_inscripcion",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "reccfpdVuFKoq7TMS",
+  "createdTime": "2026-10-15T02:13:34.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Servidumbre",
+   "orden": 3,
+   "uso_campo_destino": "servidumbre_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "cuadro_superficies__superficie_servidumbre_m2",
+   "nombre_atributo": "Superficie de servidumbre",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 10,
+   "tipo_documento": [
+    "rec4uCCVtUpAz2Yeb"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "3622,51 (fila SERVIDUMBRE del cuadro de superficies)",
+   "codigo_atributo": "superficie_servidumbre_m2",
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "reccuRR8P0KPpL9hI",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Terreno",
+   "orden": 11,
+   "codigo": "consulta_antecedentes_bien_raiz__superficie_terreno_m2",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "superficie_terreno_m2"
+  }
+ },
+ {
+  "id": "recd0hLDuWEoSNfw6",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna",
+   "orden": 3,
+   "codigo": "certificado_avaluo_fiscal__comuna",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "comuna",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recdbxfnM7TEAr2pA",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Terreno",
+   "orden": 13,
+   "codigo": "permiso_edificacion__superficie_terreno_m2",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "superficie_terreno_m2"
+  }
+ },
+ {
+  "id": "recdyg4qP6aCA5int",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha Consulta",
+   "orden": 7,
+   "codigo": "consulta_antecedentes_bien_raiz__fecha_consulta",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "fecha_consulta",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "receHRrfM7JdQjC0d",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Orientacion",
+   "orden": 4,
+   "codigo": "plano_cuadro_superficies__orientacion",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "orientacion"
+  }
+ },
+ {
+  "id": "recfmoypAyGMKUgB1",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Destino Predominante",
+   "orden": 9,
+   "uso_campo_destino": "destino_sii",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__destino_sii",
+   "nombre_atributo": "Destino Predominante",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "destino_sii",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recg6wGwR4e2komfN",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Sobretasa",
+   "orden": 14,
+   "codigo": "consulta_antecedentes_bien_raiz__sobretasa_pct",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "sobretasa_pct"
+  }
+ },
+ {
+  "id": "recgxkWlYthj3thde",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Subterraneo",
+   "orden": 11,
+   "codigo": "plano_cuadro_superficies__superficie_subterraneo_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_subterraneo_m2"
+  }
+ },
+ {
+  "id": "rech96pKLYzdnCSZf",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Tipo de Agrupamiento",
+   "orden": 17,
+   "codigo": "plano_cuadro_superficies__tipo_agrupamiento",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "tipo_agrupamiento"
+  }
+ },
+ {
+  "id": "rechOAE8kcdqUHfBS",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Estacionamiento",
+   "orden": 13,
+   "codigo": "plano_cuadro_superficies__superficie_estacionamiento_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_estacionamiento_m2"
+  }
+ },
+ {
+  "id": "rechY8jM87QgbEhl6",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "CBR",
+   "orden": 4,
+   "codigo": "inscripcion_dominio_cbr__nombre_cbr",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "nombre_cbr",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recjGUFJCxK1QQepl",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Ano del Permiso",
+   "orden": 14,
+   "codigo": "permiso_edificacion__ano_construccion",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "ano_construccion"
+  }
+ },
+ {
+  "id": "recjkRLzMyZeDkXV5",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha Vencimiento",
+   "orden": 5,
+   "codigo": "sello_verde_sec__fecha_vencimiento",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "fecha_vencimiento",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "reckCXKExv9eFTtSC",
+  "createdTime": "2026-10-15T01:52:39.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Total",
+   "orden": 1,
+   "uso_campo_destino": "sup_construccion_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "cuadro_superficies__superficie_construida_m2",
+   "nombre_atributo": "Superficie construida total",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 10,
+   "tipo_documento": [
+    "rec4uCCVtUpAz2Yeb"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "249,91 (fila TOTAL FINAL o TOTAL del cuadro de superficies)",
+   "codigo_atributo": "superficie_construida_m2",
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "reckSIrlbyZNbBroj",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Direccion",
+   "orden": 5,
+   "codigo": "certificado_avaluo_fiscal__direccion",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "direccion",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "reckWXDos70gqYUXl",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Codigo Predio SII",
+   "orden": 7,
+   "uso_campo_destino": "cod_sii_predio",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__cod_sii_predio",
+   "nombre_atributo": "Codigo Predio SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "cod_sii_predio",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "reckwOdtBl42cZmAA",
+  "createdTime": "2026-10-15T02:46:14.000Z",
+  "fields": {
+   "etiqueta_local": "Zona",
+   "orden": 1,
+   "uso_campo_destino": "tipo_zona_descripcion",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "certificado_informaciones_previas__zona",
+   "nombre_atributo": "Zona (plan regulador)",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "rec6D1RBPeF7RfE37"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "IPB — sólo el código de zona del plan regulador tal como lo escribe el certificado (ej. 'A1', 'E2a', 'IPB', 'ZH2 (El Melocotón)'); sin la palabra 'Zona' ni la comuna ni la descripción del uso",
+   "codigo_atributo": "zona",
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recl6QuGZJnUZAJVv",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Repertorio",
+   "orden": 10,
+   "codigo": "inscripcion_dominio_cbr__repertorio",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "repertorio"
+  }
+ },
+ {
+  "id": "reclA3QFiknZVQ59f",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Anio de Construccion",
+   "orden": 5,
+   "uso_campo_destino": "anio_construccion",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "certificado_avaluo_fiscal__anio_construccion",
+   "nombre_atributo": "Anio construccion",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2004",
+   "codigo_atributo": "anio_construccion",
+   "usado_motor_calculo": true,
+   "tipo_dato": "number"
+  }
+ },
+ {
+  "id": "reclDdsonNaACTTZj",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Fecha Emision",
+   "orden": 6,
+   "codigo": "certificado_deuda_tgr__fecha_emision",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "fecha_emision",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "reclQSUDBXZyxMgML",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna",
+   "orden": 3,
+   "codigo": "informe_no_expropiacion_serviu__comuna",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "codigo_atributo": "comuna",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recltM8vW00Pperis",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna del CBR",
+   "orden": 5,
+   "codigo": "inscripcion_dominio_cbr__comuna",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "comuna",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recm512yDbbv2qme3",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Material Predominante",
+   "orden": 6,
+   "uso_campo_destino": "material_predominante",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "certificado_avaluo_fiscal__material_predominante",
+   "nombre_atributo": "Material predominante",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "uso_interfaz_visador": true,
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "Perfiles metalicos (CG)",
+   "codigo_atributo": "material_predominante",
+   "usado_motor_calculo": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recmJF4rg8E59aR1t",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "UF/m² C.",
+   "orden": 130,
+   "uso_campo_destino": "uf_m2_construccion_f",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__uf_m2_construccion_f",
+   "nombre_atributo": "UF/m² de construcción (valor crudo desde la fuente)",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "34.05 (leer '34,05' como 34.05; valor crudo, no calculado)",
+   "codigo_atributo": "uf_m2_construccion_f",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "UF/m2"
+  }
+ },
+ {
+  "id": "recmUJrm9NYvwhk60",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Numero de Pisos",
+   "orden": 14,
+   "codigo": "plano_cuadro_superficies__numero_pisos",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "numero_pisos"
+  }
+ },
+ {
+  "id": "recmh0YQ5MokyGAO1",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Color del Sello",
+   "orden": 3,
+   "codigo": "sello_verde_sec__color_sello_sec",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "color_sello_sec",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recmh6HaPavXZPXk0",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Construccion",
+   "orden": 14,
+   "codigo": "certificado_avaluo_fiscal__avaluo_construccion_clp",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "avaluo_construccion_clp"
+  }
+ },
+ {
+  "id": "recndnCD1r87PAUpH",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Ano de Construccion",
+   "orden": 9,
+   "codigo": "certificado_recepcion_final__ano_construccion",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "ano_construccion"
+  }
+ },
+ {
+  "id": "reco3iOiE1nufW45y",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "OO.CC.",
+   "orden": 110,
+   "uso_campo_destino": "oo_cc_uf",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__oo_cc_uf",
+   "nombre_atributo": "Obras complementarias (OO.CC.) del comparable en UF",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "750",
+   "codigo_atributo": "oo_cc_uf",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "UF"
+  }
+ },
+ {
+  "id": "recoPPJVZqHj6Zxh8",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Sup. Constr.",
+   "orden": 100,
+   "uso_campo_destino": "sup_construccion_m2",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__sup_construccion_m2",
+   "nombre_atributo": "Superficie construida del comparable",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "239.00",
+   "codigo_atributo": "sup_construccion_m2",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recpm3lrwApoyvsWK",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Tipo de Propiedad",
+   "orden": 16,
+   "codigo": "plano_cuadro_superficies__tipo_propiedad",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "tipo_propiedad"
+  }
+ },
+ {
+  "id": "recpue1DqrnduAxJJ",
+  "createdTime": "2026-07-23T21:35:47.000Z",
+  "fields": {
+   "etiqueta_local": "Año",
+   "orden": 40,
+   "uso_campo_destino": "anio",
+   "uso_tabla_destino": "TX_Comparables",
+   "codigo": "foto_ofertas_comparables__anio",
+   "nombre_atributo": "Año de construcción del comparable",
+   "uso_cardinalidad_destino": "muchas_por_solicitud",
+   "tipo_documento": [
+    "recxQ6vJqEv7OFXjX"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "2015",
+   "codigo_atributo": "anio",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "año"
+  }
+ },
+ {
+  "id": "recqD1lTOyRw5WlOm",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Banos",
+   "orden": 6,
+   "codigo": "plano_cuadro_superficies__numero_banos",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "numero_banos",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recr2k2bB33mb9RVv",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Cuota Aseo Municipal",
+   "orden": 9,
+   "codigo": "certificado_deuda_tgr__cuota_aseo_municipal_clp",
+   "tipo_documento": [
+    "recl9kd6N4qjfpzQn"
+   ],
+   "codigo_atributo": "cuota_aseo_municipal_clp"
+  }
+ },
+ {
+  "id": "recrGKksUMWaaEWLx",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Nombre Propietario",
+   "orden": 4,
+   "codigo": "consulta_antecedentes_bien_raiz__nombre_propietario",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "nombre_propietario",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recseqGmWh9gJsdeK",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Comuna",
+   "orden": 3,
+   "codigo": "permiso_edificacion__comuna",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "comuna"
+  }
+ },
+ {
+  "id": "recsxGeFoNgg00ZiG",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Rol SII",
+   "orden": 5,
+   "codigo": "certificado_recepcion_final__rol_sii",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "rol_sii",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "rectUQlLCWWGiYdsu",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Calidad SII",
+   "orden": 7,
+   "uso_campo_destino": "calidad_sii",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "certificado_avaluo_fiscal__calidad_sii",
+   "nombre_atributo": "Calidad SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "media superior",
+   "codigo_atributo": "calidad_sii",
+   "usado_motor_calculo": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recttREVvVZKHTcfL",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Construida",
+   "orden": 12,
+   "uso_campo_destino": "sup_construccion_m2",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "consulta_antecedentes_bien_raiz__superficie_construida_m2",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "prioridad_destino": 50,
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "superficie_construida_m2"
+  }
+ },
+ {
+  "id": "recueuUgXmEYMM0ra",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Destino",
+   "orden": 5,
+   "uso_campo_destino": "destino_sii",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "consulta_antecedentes_bien_raiz__destino_sii",
+   "nombre_atributo": "Destino SII",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "destino_sii",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recvUwEDk0CRJde9l",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Proyecto / Edificio",
+   "orden": 1,
+   "codigo": "plano_cuadro_superficies__nombre_edificio",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "nombre_edificio",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recwJiTQmYxb9bxVa",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Latitud",
+   "orden": 7,
+   "uso_campo_destino": "lat",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "informe_no_expropiacion_serviu__latitud",
+   "nombre_atributo": "Latitud",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recpKP7b6xlqAA4Rs"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "latitud",
+   "tipo_dato": "number"
+  }
+ },
+ {
+  "id": "recwNHxtLHQ2sYcPY",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Numero Sello",
+   "orden": 2,
+   "codigo": "sello_verde_sec__numero_sello_sec",
+   "tipo_documento": [
+    "recykG2Gmp4XGf16f"
+   ],
+   "codigo_atributo": "numero_sello_sec",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recwptFqK4coAC8IE",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Numero Permiso",
+   "orden": 1,
+   "uso_campo_destino": "permiso_edificacion_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "permiso_edificacion__numero_permiso",
+   "nombre_atributo": "N° Permiso de Edificación",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "319-2020",
+   "codigo_atributo": "numero_permiso",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recxiSvoLUSQGEclB",
+  "createdTime": "2026-09-08T02:05:18.000Z",
+  "fields": {
+   "etiqueta_local": "N° Recepción Final",
+   "orden": 3,
+   "uso_campo_destino": "recepcion_final_numero",
+   "uso_tabla_destino": "TX_DocumentosLegales",
+   "codigo": "escritura_compraventa__numero_recepcion_final",
+   "nombre_atributo": "N° Recepción Final",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recX5FJFzAzXTXpzF"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "56",
+   "codigo_atributo": "numero_recepcion_final",
+   "obligatorio": true,
+   "tipo_dato": "text"
+  }
+ },
+ {
+  "id": "recy5noEPojcBIZwH",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Terreno",
+   "orden": 12,
+   "codigo": "certificado_avaluo_fiscal__superficie_terreno_m2",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "codigo_atributo": "superficie_terreno_m2"
+  }
+ },
+ {
+  "id": "recyFjbyQPkvxHfsp",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie util",
+   "orden": 7,
+   "codigo": "plano_cuadro_superficies__superficie_util_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_util_m2",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recyQ1xHx5kVNXeoB",
+  "createdTime": "2026-09-09T18:04:45.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Fiscal",
+   "orden": 11,
+   "uso_campo_destino": "avaluo_fiscal_clp",
+   "uso_tabla_destino": "TX_DatosTasacion",
+   "codigo": "foto_fuente_sii__avaluo_fiscal_clp",
+   "nombre_atributo": "Avaluo Fiscal",
+   "uso_cardinalidad_destino": "una_por_solicitud",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "codigo_atributo": "avaluo_fiscal_clp",
+   "usado_motor_calculo": true,
+   "tipo_dato": "number",
+   "unidad_medida": "CLP"
+  }
+ },
+ {
+  "id": "recycv6hnoK9krfxg",
+  "createdTime": "2026-07-17T19:42:52.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Construida",
+   "orden": 2,
+   "uso_campo_destino": "sup_m2",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "foto_fuente_sii__sup_m2",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recZ7UdIYi6aftB6T"
+   ],
+   "uso_interfaz_tasador": true,
+   "ejemplo_atributo": "137 (dato del avaluo catastral detallado por rol)",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "sup_m2",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "m2"
+  }
+ },
+ {
+  "id": "recyfinCf1PgGYMMN",
+  "createdTime": "2026-07-16T22:23:17.000Z",
+  "fields": {
+   "etiqueta_local": "Avaluo Total",
+   "orden": 3,
+   "uso_campo_destino": "avaluo_clp",
+   "uso_campo_link_unidad": "TX_Unidades.rol_sii",
+   "uso_tabla_destino": "TX_Unidades",
+   "codigo": "certificado_avaluo_fiscal__avaluo_total",
+   "nombre_atributo": "Avaluo fiscal total",
+   "uso_cardinalidad_destino": "una_por_unidad",
+   "tipo_documento": [
+    "recMGCcLFI6BxXlnk"
+   ],
+   "ejemplo_atributo": "339809429",
+   "uso_interfaz_ejecutiva": true,
+   "codigo_atributo": "avaluo_total",
+   "usado_motor_calculo": true,
+   "obligatorio": true,
+   "tipo_dato": "number",
+   "unidad_medida": "CLP"
+  }
+ }
+]

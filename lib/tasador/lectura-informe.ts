@@ -80,6 +80,7 @@ import {
   estadoConservacionGuardado,
 } from '@/lib/tasador/defaults-propiedad'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
+import { componerNumeroYFecha } from '@/lib/tasador/legales'
 
 type Fields = Record<string, unknown>
 
@@ -534,8 +535,9 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       fojas: texto(l.fojas),
       numeroInscripcion: texto(l.numero_inscripcion),
       anoInscripcion: numeroONull(l.ano_inscripcion),
-      permisoEdificacion: texto(l.permiso_edificacion_numero),
-      recepcionFinal: texto(l.recepcion_final_numero),
+      // «N°319  09/09/2020», como la planilla (T-LEGALES-CONSOLIDADOS-20261015).
+      permisoEdificacion: componerNumeroYFecha(l.permiso_edificacion_numero, l.permiso_edificacion_fecha),
+      recepcionFinal: componerNumeroYFecha(l.recepcion_final_numero, l.recepcion_final_fecha),
     },
   }
 

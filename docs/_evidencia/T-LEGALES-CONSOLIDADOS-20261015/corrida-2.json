@@ -1,0 +1,67 @@
+{
+ "corrida": "2",
+ "t0": "2026-10-15T18:17:18.335Z",
+ "releer": false,
+ "pre": {
+  "legales": {
+   "fojas": "3312",
+   "numero_inscripcion": "4663",
+   "ano_inscripcion": 2020,
+   "permiso": [
+    "319-2020",
+    "2020-09-09"
+   ],
+   "recepcion": [
+    "210-2024",
+    "2024-07-18"
+   ],
+   "origen_dato": "extraido_rf09"
+  },
+  "datos": {
+   "n_cert_no_expropiacion": "3444743",
+   "lat": -33.23458,
+   "long": -70.675087,
+   "origen_dato": "extraido_rf09"
+  }
+ },
+ "post": {
+  "legales": {
+   "fojas": "3312",
+   "numero_inscripcion": "4663",
+   "ano_inscripcion": 2020,
+   "permiso": [
+    "319-2020",
+    "2020-09-09"
+   ],
+   "recepcion": [
+    "210-2024",
+    "2024-07-18"
+   ],
+   "origen_dato": "extraido_rf09"
+  },
+  "datos": {
+   "n_cert_no_expropiacion": "3444743",
+   "lat": -33.23458,
+   "long": -70.675087,
+   "origen_dato": "extraido_rf09"
+  }
+ },
+ "escritura": {
+  "estado_extraccion": "listo",
+  "atributos_obtenidos": "{\"items\": [{\"codigo_atributo\": \"foja_inscripcion\", \"valor\": \"3312\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"numero_inscripcion\", \"valor\": \"4663\", \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"ano_inscripcion\", \"valor\": 2020, \"confianza\": 1, \"fila\": 1}], \"no_extraidos\": [\"fecha_permiso_edificacion\", \"numero_permiso_edificacion\", \"fecha_recepcion_final\", \"numero_recepcion_final\"]} "
+ },
+ "logs": [
+  {
+   "creado": "2026-10-15T18:17:30.000Z",
+   "titulo": "AT03-Ext · propagación (0 ok · 3 skip · 0 err)",
+   "estado": "✓ OK",
+   "detalle": "adjunto_id=rec2p6QpeesQ0w2SW · tipo_documento=escritura_compraventa · foja_inscripcion: consolidable (prioridad 30) → se decide en la consolidación | numero_inscripcion: consolidable (prioridad 30) → se decide en la consolidación | ano_inscripcion: consolidable (prioridad 30) → se decide en la consolidación | consolidación TX_DocumentosLegales · grupo permiso_edificacion (permiso_edificacion_fecha, permiso_edificacion_numero): sin_cambios — ganador permiso_edificacion_fecha=2020-09-09, permiso_edificacion_numero=319-2020 (permiso_edificacion · prioridad 10 · vigencia 2020-09-09 · adjunto recHHXRgtheOwKPhp · 2 candidato(s)), actual permiso_edificacion_fecha=9/9/2020, permiso_edificacion_numero=319-2020 | consolidación TX_DocumentosLegales · grupo recepcion_final (recepcion_final_fecha, recepcion_final_numero): sin_cambios — ganador recepcion_final_fecha=2024-07-18, recepcion_final_numero=210-2024 (certificado_recepcion_final · prioridad 10 · vigencia 2024-07-18 · adjunto rec0wJpV72OjIXu5D · 2 candidato(s)), actual recepcion_final_fecha=7/18/2024, recepcion_final_numero=210-2024 | consolidación TX_DocumentosLegales · grupo inscripcion_dominio (numero_inscripcion, fojas, ano_inscripcion): sin_cambios — ganador numero_inscripcion=4663, fojas=3312, ano_inscripcion=2020 (escritura_compraventa · prioridad 30 · vigencia 2020 · adjunto rec2p6QpeesQ0w2SW · 2 candidato(s)), actual numero_inscripcion=4663, fojas=3312, ano_inscripcion=2020"
+  },
+  {
+   "creado": "2026-10-15T18:17:52.000Z",
+   "titulo": "AT03-Ext · propagación (0 ok · 3 skip · 0 err)",
+   "estado": "✓ OK",
+   "detalle": "adjunto_id=recyCKnUjft9WilnL · tipo_documento=mapa_sii · rol_predial: no declarado en D_TipoDocumentoAtributo para \"mapa_sii\" — skip | latitud: consolidable (prioridad 10) → se decide en la consolidación | longitud: consolidable (prioridad 10) → se decide en la consolidación | zona: no declarado en D_TipoDocumentoAtributo para \"mapa_sii\" — skip | consolidación TX_DatosTasacion · grupo coordenadas (long, lat): sin_cambios — ganador long=-70.675087, lat=-33.23458 (mapa_sii · prioridad 10 · adjunto recyCKnUjft9WilnL · 2 candidato(s)), actual long=-70.675087, lat=-33.234580"
+  }
+ ]
+}

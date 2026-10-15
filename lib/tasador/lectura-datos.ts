@@ -51,6 +51,7 @@ import {
   estadoConservacionPorDefecto,
 } from './defaults-propiedad'
 import { OPCIONES_CAPTURA, TABLE_IDS } from './field-ids'
+import { selloSecGuardado, selloSecPorDefecto } from './legales'
 import { proponerCuadro } from './propuesta-cuadro'
 
 type Fields = Record<string, unknown>
@@ -440,6 +441,50 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     if (itemsCuadro.length > 0) prellenados.push('items')
   }
 
+  /*
+   * Sección F (spec §2.8.3 · 15-oct-2026): llega con lo que consolidó la lectura
+   * de documentos (AT03-Ext v6). Mientras la fila la escribió la lectura
+   * (`origen_dato = extraido_rf09`), sus campos con valor llevan el badge
+   * «Pre-llenado · editable»; desde que el tasador guarda (`tipeado`), son suyos.
+   */
+  const legalesDeLectura = texto(l.origen_dato) === 'extraido_rf09'
+  const datosDeLectura = texto(d.origen_dato) === 'extraido_rf09'
+  const camposF = {
+    cbrFoja: texto(l.fojas),
+    cbrNumero: texto(l.numero_inscripcion),
+    cbrAnio: texto(l.ano_inscripcion),
+    nPermisoEdificacion: texto(l.permiso_edificacion_numero),
+    fechaPermisoEdif: texto(l.permiso_edificacion_fecha),
+    nRecepcionFinal: texto(l.recepcion_final_numero),
+    fechaRecepcionFinal: texto(l.recepcion_final_fecha),
+    selloSecId: texto(l.sello_sec_id),
+    selloSecVencimiento: texto(l.sello_sec_vencimiento),
+  }
+  const camposFDatos = {
+    nCertificadoNoExpropiacion: texto(d.n_cert_no_expropiacion),
+    coordenadasLat: texto(d.lat),
+    coordenadasLng: texto(d.long),
+  }
+  for (const [clave, valor] of Object.entries(camposF)) {
+    if (legalesDeLectura && valor !== '') prellenados.push(clave as keyof InformeData)
+  }
+  for (const [clave, valor] of Object.entries(camposFDatos)) {
+    if (datosDeLectura && valor !== '') prellenados.push(clave as keyof InformeData)
+  }
+  // Sello SEC: lo guardado gana; si no hay, la sugerencia de `selloSecPorDefecto`.
+  let selloSec = selloSecGuardado(l.sello_sec)
+  if (selloSec === '') {
+    const principal =
+      unidades.find((u) => u.fields.es_principal === true) ??
+      [...unidades].sort((a, b) => Number(a.fields.orden ?? 0) - Number(b.fields.orden ?? 0))[0]
+    selloSec = selloSecPorDefecto({
+      subtipoPrincipal: texto(principal?.fields.subtipo),
+      vencimiento: camposF.selloSecVencimiento,
+      hoy: new Date().toISOString().slice(0, 10),
+    })
+    if (selloSec !== '') prellenados.push('selloSec')
+  }
+
   return {
     codigo,
     datos: {
@@ -510,17 +555,10 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
        * respuesta de la ruta, que debe quedar byte a byte idéntica.
        */
       recintos: [...porRecinto.values()] as unknown as Recinto[],
-      /* --- F --- */
-      cbrFoja: texto(l.fojas),
-      cbrNumero: texto(l.numero_inscripcion),
-      cbrAnio: texto(l.ano_inscripcion),
-      nPermisoEdificacion: texto(l.permiso_edificacion_numero),
-      fechaPermisoEdif: texto(l.permiso_edificacion_fecha),
-      nRecepcionFinal: texto(l.recepcion_final_numero),
-      fechaRecepcionFinal: texto(l.recepcion_final_fecha),
-      nCertificadoNoExpropiacion: texto(d.n_cert_no_expropiacion),
-      coordenadasLat: texto(d.lat),
-      coordenadasLng: texto(d.long),
+      /* --- F (consolidada desde los documentos · spec §2.8.3) --- */
+      ...camposF,
+      ...camposFDatos,
+      selloSec,
       /* --- G --- */
       tasaCapRateOverride: texto(s.tasa_cap_rate_override),
       vidaUtilOverride: texto(s.vida_util_override),

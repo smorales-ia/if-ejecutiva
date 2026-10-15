@@ -71,6 +71,20 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
                       sus superficies, rol, año, material, estado y
                       situación desde la base; el UF/m² queda al
                       tasador (RF-TAS-24). Sin cambios de schema.
+                      §2.8.3 (agregado el 15-oct-2026 · réplica
+                      MET-6283, pedido de Sergio) · la sección F
+                      llega **lista desde los documentos**: grupos que
+                      se escriben juntos desde un solo documento, con
+                      la inscripción / permiso / recepción / sello más
+                      reciente (campos nuevos `grupo_destino` y
+                      `vigencia_destino`; `TX_DocumentosLegales` suma
+                      `origen_dato` y el Sello SEC); se retiran
+                      «Comprador», «Notaría» y «Repertorio» (la
+                      planilla del cliente no los usa); el informe
+                      imprime el permiso y la recepción como
+                      `N°319  09/09/2020`; guardar el formulario deja
+                      `origen_dato = tipeado` también en una fila que
+                      creó la lectura.
                       Sucede a 1.9.17, que queda SUPERSEDED.
 
                       1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
@@ -3053,6 +3067,32 @@ Las superficies de terreno, servidumbre, construida y de primer piso salen de la
 |---|---|
 | **Descripción** | Los valores por defecto de características constructivas y terminaciones se precargan desde la capa de configuración vía API Route, no desde constantes del frontend. Los campos precargados muestran badge "Pre-llenado · editable" y el tasador puede sobrescribirlos. Quedan **especificados valor por valor en §2.8.1**, con su clave de partición decidida —tipo de propiedad × estado de uso, A-27 cerrada— y su domicilio en `C_DefaultsAntecedentes` (`tblOj7nXcjeouPy09`); lo que resta es sembrar la tabla, que es trabajo de schema. **Desde v1.9.15 el requisito no cubre los factores de homogeneización.** Con la sección D en sólo lectura (A-13) no hay campo de factor que el tasador teclee, de modo que no hay nada que precargar: `factor_sup`, `factor_edad` y `factor_distancia` salen del alcance de este RF junto con los coeficientes de la tabla de referencia, y `GET /api/tasaciones/config/defaults` no se construye. **A-18 cierra por disolución** (D-24) sin que la cifra se haya respondido nunca; **A-44** registra que los tres factores ratificados por D-21 no aparecen en el flujo real. |
 | **Criterio de aceptación** | Un cambio en la tabla de configuración se refleja en la próxima carga de Pantalla 5 sin deploy. Ningún valor por defecto vive en el código de IF-03, ni siquiera de forma transitoria: ni los factores, ni los defaults constructivos de §2.8.1, cuyas cifras y catálogos son datos y se cargan como tales. |
+
+### 2.8.3 Sección F · Documentos legales (v1.9.18, 15-oct-2026)
+
+**Campos de la sección F.** Los que pide la planilla del cliente (`1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm`), y nada más:
+
+| Campo | Se guarda en | Lo imprime el informe como |
+|---|---|---|
+| Terna CBR: foja · número · año de la inscripción de dominio | `TX_DocumentosLegales.fojas` · `numero_inscripcion` · `ano_inscripcion` | foja, número y año |
+| Vendedor | — (sin columna; CI-023 §1 · decisión H4) | — |
+| N° y fecha del permiso de edificación | `TX_DocumentosLegales.permiso_edificacion_numero` · `permiso_edificacion_fecha` | `N°319  09/09/2020` |
+| N° y fecha de la recepción final | `TX_DocumentosLegales.recepcion_final_numero` · `recepcion_final_fecha` | `N°210  18/07/2024` |
+| Sello SEC · ID · vencimiento | `TX_DocumentosLegales.sello_sec` · `sello_sec_id` · `sello_sec_vencimiento` | — |
+| Afecto a expropiación · N° de certificado de no expropiación | `TX_DatosTasacion.n_cert_no_expropiacion` (el booleano no tiene columna) | N° de certificado |
+| Coordenadas lat · lng | `TX_DatosTasacion.lat` · `long` | — |
+
+- **Se retiran «Comprador», «Notaría» y «Repertorio»** (pedido de Sergio, 15-oct-2026): la planilla del cliente no los usa y no tenían columna (CI-023 §1, cerrado para los tres). El formulario ya no los pide. La ruta `PATCH /datos` los sigue **aceptando e ignorando** mientras queden pestañas con la versión anterior abiertas, y salen del contrato después de cerrar la réplica de VP-2026-0079. La versión del borrador local no cambia: un borrador guardado antes del cambio se carga igual y esas claves no cuentan como contenido por recuperar.
+- **Formato del informe.** El permiso y la recepción se guardan como los lee el documento o los tipea el tasador —el número en un campo y la fecha en otro— y el informe los compone como la planilla: `N°` + el número + **dos espacios** + la fecha `dd/mm/aaaa`. El sufijo de año del número municipal («319-2020») se omite sólo cuando coincide con el año de la fecha; si no coincide, el número se imprime entero. Formulario, consola y PDF leen el mismo dato guardado.
+- **Lo guardado por el tasador no lo pisa la lectura de documentos.** Al guardar el formulario, las filas de `TX_DatosTasacion` y `TX_DocumentosLegales` quedan con `origen_dato = tipeado`, también cuando la fila ya existía (antes sólo al crearla, y `TX_DocumentosLegales` no tenía el campo): una fila creada por la lectura (`extraido_rf09`) quedaba sin candado y una lectura posterior podía reescribir lo que el tasador guardó (§4.3.4).
+
+**La sección llega lista desde los documentos.** El tasador revisa, corrige o completa; no transcribe. Los valores los consolida la lectura de documentos (AT03-Ext v6) en las mismas columnas que lee el formulario, la consola y el informe, de modo que hay un solo valor por dato. Mientras la fila la escribió la lectura, cada campo con valor muestra el badge «Pre-llenado · editable».
+
+- **Los campos que van juntos salen de un mismo documento.** Foja, número y año de la inscripción; número y fecha del permiso; número y fecha de la recepción; latitud y longitud; ID y vencimiento del sello. Nunca se mezcla la foja de un documento con el año de otro: si el documento ganador no trae un campo del grupo, ese campo queda vacío para el tasador.
+- **Siempre el dato más actualizado.** Gana el documento con la inscripción, el permiso, la recepción o el sello **más reciente** (año o fecha); entre iguales, el de mayor jerarquía —certificado de dominio vigente, copia de inscripción del CBR, escritura de compraventa, foto SII, para la inscripción; el permiso o el certificado de recepción antes que la escritura— y, por último, el subido más reciente. La jerarquía vive en `D_TipoDocumentoAtributo.prioridad_destino` y se ajusta sin tocar código (`docs/schema-airtable.md` §28.4). En VP-2026-0079 la escritura de 2020 vence a la foto SII de 2006.
+- **Idempotente.** Volver a leer el mismo conjunto de documentos no cambia nada; un documento más reciente sí actualiza el grupo mientras el tasador no haya guardado.
+- **Coordenadas** en grados decimales; una lectura fuera de rango (UTM) no compite. El mapa SII es la fuente preferida y el informe de no expropiación, la alternativa.
+- **Sello SEC.** Sin nada guardado, se sugiere `vigente` o `vencido` según el vencimiento leído del sello verde y, si no hay sello y la unidad principal es una casa, «No aplica» (RN-58). Un departamento queda para el tasador.
 
 ---
 

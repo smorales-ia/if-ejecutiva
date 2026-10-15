@@ -35,6 +35,21 @@
  * pisa un valor que escribió la propia lectura (origen_dato=extraido_rf09);
  * nunca uno tipeado ni uno de origen desconocido. Ver §3e.
  *
+ * v6 (15-oct-2026 · T-LEGALES-CONSOLIDADOS-20261015): la consolidación deja de
+ * ser sólo numérica y campo a campo. Dos columnas opcionales nuevas de
+ * D_TipoDocumentoAtributo:
+ *   - `grupo_destino` (texto): los campos de un mismo grupo se escriben JUNTOS
+ *     desde un solo documento ganador — nunca la foja de un documento con el año
+ *     de otro. Sin grupo, cada campo es su propio grupo (lo de v5).
+ *   - `vigencia_destino` (checkbox): marca el atributo que fecha el grupo (año
+ *     de inscripción, fecha del permiso…). Gana el documento con la vigencia más
+ *     reciente; después la prioridad, después el subido más reciente.
+ * Además consolida campos de texto y fecha (no sólo números) y valida
+ * coordenadas por rango. Nace para la sección F del tasador: la inscripción de
+ * dominio vigente (VP-2026-0079: escritura 2020 vs foto SII 2006), el par
+ * permiso, el par recepción, el certificado de no expropiación y lat/long del
+ * mapa SII. Sin esas dos columnas en la base, la corrida es idéntica a v5.
+ *
  * Trigger de la Automation que contiene este script: "When record updated"
  *   Tabla: TX_Adjuntos · Campo observado: atributos_obtenidos
  *   Input variable configurada en el trigger → pasar el record id como
@@ -249,6 +264,9 @@ const tTipoDocAtributo = base.getTable(TABLES.D_TIPO_DOCUMENTO_ATRIBUTO)
 // v5: `prioridad_destino` se pide sólo si existe — selectRecordsAsync lanza ante
 // un campo inexistente, y sin él la corrida debe seguir igual que en v4.
 const hayPrioridadDestino = Boolean(getFieldByName(tTipoDocAtributo, 'prioridad_destino'))
+// v6: mismas reglas para las dos columnas opcionales de grupo.
+const hayGrupoDestino = Boolean(getFieldByName(tTipoDocAtributo, 'grupo_destino'))
+const hayVigenciaDestino = Boolean(getFieldByName(tTipoDocAtributo, 'vigencia_destino'))
 const tdaQuery = await tTipoDocAtributo.selectRecordsAsync({
   fields: [
     'codigo_atributo',
@@ -258,6 +276,8 @@ const tdaQuery = await tTipoDocAtributo.selectRecordsAsync({
     'uso_cardinalidad_destino',
     'uso_campo_link_unidad',
     ...(hayPrioridadDestino ? ['prioridad_destino'] : []),
+    ...(hayGrupoDestino ? ['grupo_destino'] : []),
+    ...(hayVigenciaDestino ? ['vigencia_destino'] : []),
   ],
 })
 const tdaPorCodigoAtributo = new Map() // codigo_atributo -> D_TipoDocumentoAtributo record
@@ -273,7 +293,7 @@ for (const r of tdaQuery.records) {
 // adjunto): la consolidación compara este documento con los demás documentos
 // leídos de la solicitud que alimentan el mismo campo destino.
 const codigoTipoPorId = new Map(tipoDocQuery.records.map((r) => [r.id, r.getCellValueAsString('codigo')]))
-const declaracionesConsolidables = [] // { codigoTipo, codigoAtributo, tabla, campo, prioridad }
+const declaracionesConsolidables = [] // { codigoTipo, codigoAtributo, tabla, campo, prioridad, grupo, vigencia }
 if (hayPrioridadDestino) {
   for (const r of tdaQuery.records) {
     const prioridad = r.getCellValue('prioridad_destino')
@@ -283,9 +303,12 @@ if (hayPrioridadDestino) {
     const codigoAtributo = r.getCellValueAsString('codigo_atributo')
     if (typeof prioridad !== 'number' || !cardinalidadCell || cardinalidadCell.name !== 'una_por_solicitud') continue
     if (!tabla || !campo || !codigoAtributo) continue
+    // v6: sin grupo, el campo es su propio grupo (comportamiento v5).
+    const grupo = (hayGrupoDestino ? (r.getCellValueAsString('grupo_destino') || '').trim() : '') || campo
+    const vigencia = hayVigenciaDestino && r.getCellValue('vigencia_destino') === true
     for (const l of r.getCellValue('tipo_documento') || []) {
       const codigoTipo = codigoTipoPorId.get(l.id)
-      if (codigoTipo) declaracionesConsolidables.push({ codigoTipo, codigoAtributo, tabla, campo, prioridad })
+      if (codigoTipo) declaracionesConsolidables.push({ codigoTipo, codigoAtributo, tabla, campo, prioridad, grupo, vigencia })
     }
   }
 }
@@ -648,9 +671,9 @@ let muchasBucketInvalido = false // anti-merge: un item muchas SIN fila lo activ
 // v5 · Destinos que este tipo de documento alimenta por consolidación. Se
 // recalculan aunque ESTE documento no traiga el valor: el resultado depende del
 // conjunto de documentos, no de cuál disparó la corrida.
-const destinosAConsolidar = new Map() // `${tabla}|${campo}` -> { tabla, campo }
+const destinosAConsolidar = new Map() // `${tabla}|${grupo}` -> { tabla, grupo }
 for (const d of declaracionesConsolidables) {
-  if (d.codigoTipo === claveAdjunto) destinosAConsolidar.set(`${d.tabla}|${d.campo}`, { tabla: d.tabla, campo: d.campo })
+  if (d.codigoTipo === claveAdjunto) destinosAConsolidar.set(`${d.tabla}|${d.grupo}`, { tabla: d.tabla, grupo: d.grupo })
 }
 let corridaCongelada = false // "Request processing is disabled": no más reads ni writes
 
@@ -859,65 +882,180 @@ if (muchasItems.length > 0 && muchasBucketInvalido) {
 }
 
 // ===========================================================================
-// --- 3e. Consolidación por precedencia (v5) ---------------------------------
+// --- 3e. Consolidación por precedencia (v5 · grupos y vigencia v6) ----------
 // ===========================================================================
-// Para cada destino que alimenta este tipo de documento (D_TipoDocumentoAtributo
-// con prioridad_destino), se juntan los valores de TODOS los adjuntos leídos de
-// la solicitud que lo declaran, gana el de menor prioridad y se escribe sólo si
-// cambia. Es lo que da idempotencia (mismo conjunto de documentos ⇒ mismo valor,
-// re-leer no escribe) y un valor único aunque los documentos discrepen.
+// Para cada grupo destino que alimenta este tipo de documento
+// (D_TipoDocumentoAtributo con prioridad_destino; grupo_destino, o el campo solo),
+// se juntan los valores de TODOS los adjuntos leídos de la solicitud que lo
+// declaran, se elige UN documento ganador y sus valores se escriben juntos, sólo
+// si el grupo cambia. Es lo que da idempotencia (mismo conjunto de documentos ⇒
+// mismo valor, re-leer no escribe), un valor único aunque los documentos
+// discrepen, y el dato más actualizado (vigencia más reciente primero).
 
 // <consolidacion-puro> — bloque sin Airtable. lib/tasador/at03-ext-consolidacion.test.ts
 // lo extrae de ESTE archivo y lo ejecuta: el test prueba este código, no una copia.
 
-/** Número > 0 desde el valor leído, o null. Acepta 249.91, "249.91", "249,91", "1.402,35" y sufijo m²/m2. */
-function numeroConsolidable(valor) {
-  if (typeof valor === 'number') return Number.isFinite(valor) && valor > 0 ? valor : null
+/** Número con signo desde el valor leído, o null. Acepta 249.91, "249,91", "1.402,35", "-33,23458" y sufijo m²/m2. */
+function numeroLeido(valor) {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : null
   if (typeof valor !== 'string') return null
   let s = valor.trim().replace(/\s*m(2|²)$/i, '')
+  let signo = 1
+  if (/^[-−]/.test(s)) {
+    signo = -1
+    s = s.slice(1).trim()
+  }
   if (/^\d{1,3}(\.\d{3})+,\d+$/.test(s)) s = s.replace(/\./g, '').replace(',', '.')
   else if (/^\d+,\d+$/.test(s)) s = s.replace(',', '.')
   if (!/^\d+(\.\d+)?$/.test(s)) return null
-  const n = Number(s)
-  return n > 0 ? n : null
+  return signo * Number(s)
+}
+
+/** Número > 0 desde el valor leído, o null (superficies, años). */
+function numeroConsolidable(valor) {
+  const n = numeroLeido(valor)
+  return n !== null && n > 0 ? n : null
+}
+
+/** `2020-09-09`, `09/09/2020`, `9-9-2020` o `09.09.2020` → `2020-09-09`; null si no es una fecha válida. */
+function fechaLeida(valor) {
+  if (typeof valor !== 'string') return null
+  const s = valor.trim()
+  let a, m, d
+  let x = /^(\d{4})-(\d{1,2})-(\d{1,2})(T.*)?$/.exec(s)
+  if (x) [a, m, d] = [x[1], x[2], x[3]]
+  else {
+    x = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(s)
+    if (!x) return null
+    ;[a, m, d] = [x[3], x[2], x[1]]
+  }
+  if (Number(m) < 1 || Number(m) > 12 || Number(d) < 1 || Number(d) > 31) return null
+  return `${a}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+}
+
+/** Tipo de consolidación según el tipo del campo destino, o null si no se consolida (links, selects…). */
+function tipoConsolidacion(tipoCampo) {
+  if (['number', 'currency', 'percent'].includes(tipoCampo)) return 'numero'
+  if (['singleLineText', 'multilineText'].includes(tipoCampo)) return 'texto'
+  if (tipoCampo === 'date') return 'fecha'
+  return null
+}
+
+/** Coordenadas: el campo destino que se llama así sólo acepta valores en rango (UTM o basura no compiten). */
+const RANGO_COORDENADA = { lat: 90, long: 180 }
+
+/**
+ * Valor leído normalizado para el campo destino, o null si no sirve
+ * (vacío, NO REGISTRA, cero, negativo fuera de coordenadas, fecha inválida…).
+ */
+function valorConsolidable(tipo, campo, valor) {
+  if (valor === null || valor === undefined) return null
+  if (typeof valor === 'string' && /^no registra$/i.test(valor.trim())) return null
+  if (tipo === 'numero') {
+    const n = numeroLeido(valor)
+    if (n === null || n === 0) return null
+    const rango = RANGO_COORDENADA[campo]
+    if (rango) return Math.abs(n) <= rango ? n : null
+    return n > 0 ? n : null
+  }
+  if (tipo === 'fecha') return fechaLeida(valor)
+  if (tipo === 'texto') {
+    if (typeof valor === 'number') return Number.isFinite(valor) ? String(valor) : null
+    if (typeof valor !== 'string') return null
+    const s = valor.trim()
+    return s === '' ? null : s
+  }
+  return null
+}
+
+function esVacio(v) {
+  return v === null || v === undefined || (typeof v === 'string' && v.trim() === '') || (Array.isArray(v) && v.length === 0)
+}
+
+/** Clave comparable de vigencia: año → «2020», fecha → «2020-09-09». Mayor = más reciente. */
+function claveVigencia(v) {
+  if (esVacio(v)) return null
+  return typeof v === 'number' ? String(Math.trunc(v)).padStart(4, '0') : String(v)
 }
 
 /**
- * Ganador entre candidatos `{ prioridad, fechaSubida, adjuntoId, valor, … }`:
- * menor prioridad; empate → fecha_subida más reciente; empate → adjuntoId mayor.
- * Es un orden total, así que el resultado no depende del orden de entrada.
- * Devuelve el candidato con `valor` ya numérico, o null si ninguno trae un
- * número válido (NO REGISTRA, vacío, 0 o texto no cuentan).
+ * Ganador de un grupo entre candidatos `{ prioridad, fechaSubida, adjuntoId,
+ * codigoTipo, valores: { campo: valor|null } }` (valores ya normalizados):
+ *   1. el que trae el campo de vigencia, y entre ellos la vigencia más reciente;
+ *   2. el que trae más campos del grupo;
+ *   3. menor prioridad; 4. subido más reciente; 5. adjuntoId mayor.
+ * Orden total ⇒ el resultado no depende del orden de entrada. Un candidato sin
+ * ningún valor no compite. Devuelve el candidato (con `vigencia`) o null.
  */
-function elegirGanador(candidatos) {
+function elegirGanadorGrupo(candidatos, campoVigencia) {
+  const presentes = (c) => Object.values(c.valores || {}).filter((v) => !esVacio(v)).length
   const validos = []
   for (const c of candidatos) {
-    const n = numeroConsolidable(c.valor)
-    if (n !== null && typeof c.prioridad === 'number' && Number.isFinite(c.prioridad)) validos.push({ ...c, valor: n })
+    if (!c || typeof c.prioridad !== 'number' || !Number.isFinite(c.prioridad) || presentes(c) === 0) continue
+    validos.push({ ...c, vigencia: campoVigencia ? claveVigencia(c.valores[campoVigencia]) : null })
   }
   if (validos.length === 0) return null
-  validos.sort(
-    (a, b) =>
+  validos.sort((a, b) => {
+    if ((a.vigencia === null) !== (b.vigencia === null)) return a.vigencia === null ? 1 : -1
+    if (a.vigencia !== b.vigencia) return a.vigencia < b.vigencia ? 1 : -1
+    return (
+      presentes(b) - presentes(a) ||
       a.prioridad - b.prioridad ||
       String(b.fechaSubida || '').localeCompare(String(a.fechaSubida || '')) ||
       String(b.adjuntoId || '').localeCompare(String(a.adjuntoId || ''))
-  )
+    )
+  })
   return validos[0]
 }
 
 /**
- * Qué hacer con el ganador frente a la fila destino:
- *   'skip_tipeado'            la fila la guardó el tasador (candado T-MC-P0)
- *   'escribir'                el campo está vacío, o su valor lo escribió la propia lectura
- *   'sin_cambios'             ya tiene ese valor (±0,005) — idempotencia
- *   'skip_origen_desconocido' tiene otro valor y no consta que lo haya escrito la lectura
+ * v5 · ganador de un solo campo numérico `{ prioridad, …, valor }` — el grupo
+ * de un campo sin vigencia. Devuelve el candidato con `valor` ya numérico o null.
  */
-function decidirConsolidacion(origenDato, valorActual, valorNuevo) {
+function elegirGanador(candidatos) {
+  const g = elegirGanadorGrupo(
+    candidatos.map((c) => ({ ...c, valores: { v: numeroConsolidable(c.valor) } })),
+    null
+  )
+  return g ? { ...g, valor: g.valores.v } : null
+}
+
+/** Igualdad de un campo guardado con el valor nuevo (números con tolerancia de la precisión del campo). */
+function mismoValor(actual, nuevo, tolerancia) {
+  if (esVacio(actual) || esVacio(nuevo)) return esVacio(actual) && esVacio(nuevo)
+  if (typeof nuevo === 'number') {
+    const n = typeof actual === 'number' ? actual : numeroLeido(String(actual))
+    return n !== null && Math.abs(n - nuevo) < tolerancia
+  }
+  return String(actual).trim() === String(nuevo).trim()
+}
+
+/**
+ * Qué hacer con el grupo ganador frente a la fila destino:
+ *   'skip_tipeado'            la fila la guardó el tasador (candado T-MC-P0)
+ *   'sin_cambios'             ya tiene esos valores — idempotencia
+ *   'escribir'                sólo rellena vacíos, o lo que hay lo escribió la propia lectura
+ *   'skip_origen_desconocido' contradice un valor que no consta que haya escrito la lectura
+ * `tolerancias[campo]` por defecto 0,005 (precisión 2).
+ */
+function decidirGrupo(origenDato, actuales, nuevos, tolerancias) {
   const origen = String(origenDato || '').trim().toLowerCase()
   if (origen === 'tipeado') return 'skip_tipeado'
-  if (valorActual === null || valorActual === undefined || String(valorActual).trim() === '') return 'escribir'
-  if (Math.abs(Number(valorActual) - valorNuevo) < 0.005) return 'sin_cambios'
+  const campos = Object.keys(nuevos)
+  const tol = (c) => (tolerancias && typeof tolerancias[c] === 'number' ? tolerancias[c] : 0.005)
+  if (campos.every((c) => mismoValor(actuales[c], nuevos[c], tol(c)))) return 'sin_cambios'
+  if (campos.every((c) => esVacio(actuales[c]) || mismoValor(actuales[c], nuevos[c], tol(c)))) return 'escribir'
   return origen === 'extraido_rf09' ? 'escribir' : 'skip_origen_desconocido'
+}
+
+/** v5 · la misma decisión para un solo campo. */
+function decidirConsolidacion(origenDato, valorActual, valorNuevo) {
+  return decidirGrupo(origenDato, { v: valorActual }, { v: valorNuevo })
+}
+
+/** Tolerancia de igualdad de un campo numérico: media unidad de su precisión (0,005 si no la declara). */
+function toleranciaDePrecision(precision) {
+  return typeof precision === 'number' && precision >= 0 ? 0.5 * Math.pow(10, -precision) : 0.005
 }
 
 /** Ítems de `atributos_obtenidos` (array o `{items:[…]}`); [] si no es JSON válido. */
@@ -932,9 +1070,36 @@ function itemsDeAtributos(raw) {
   }
   return []
 }
-// </consolidacion-puro>
 
-const TIPOS_NUMERICOS = ['number', 'currency', 'percent']
+/**
+ * Candidatos de un grupo: uno por adjunto leído cuyo tipo declara el grupo.
+ * `adjuntos`: `[{ id, clave, fechaSubida, items }]`; `decls`: las declaraciones
+ * del grupo; `tipos[campo]`: 'numero' | 'texto' | 'fecha'.
+ */
+function candidatosDeGrupo(adjuntos, decls, tipos) {
+  const campos = [...new Set(decls.map((d) => d.campo))]
+  const candidatos = []
+  for (const a of adjuntos) {
+    const deEsteTipo = decls.filter((d) => d.codigoTipo === a.clave)
+    if (deEsteTipo.length === 0) continue
+    const valores = {}
+    for (const campo of campos) valores[campo] = null
+    for (const d of deEsteTipo) {
+      const it = (a.items || []).find((x) => x && x.codigo_atributo === d.codigoAtributo)
+      if (!it || valores[d.campo] !== null) continue
+      valores[d.campo] = valorConsolidable(tipos[d.campo], d.campo, it.valor)
+    }
+    candidatos.push({
+      prioridad: Math.min(...deEsteTipo.map((d) => d.prioridad)),
+      fechaSubida: a.fechaSubida,
+      adjuntoId: a.id,
+      codigoTipo: a.clave,
+      valores,
+    })
+  }
+  return candidatos
+}
+// </consolidacion-puro>
 
 if (destinosAConsolidar.size > 0 && corridaCongelada) {
   propError++
@@ -946,52 +1111,50 @@ if (destinosAConsolidar.size > 0 && corridaCongelada) {
     const qAdj = await tAdjuntos.selectRecordsAsync({
       fields: ['solicitud', 'clave_adjunto', 'estado_extraccion', 'atributos_obtenidos', 'fecha_subida'],
     })
-    const adjuntosSolicitud = qAdj.records.filter(
-      (r) =>
-        (r.getCellValue('solicitud') || []).some((l) => l.id === solicitudId) &&
-        (r.id === adjuntoId || r.getCellValueAsString('estado_extraccion') === 'listo')
-    )
+    const adjuntosSolicitud = qAdj.records
+      .filter(
+        (r) =>
+          (r.getCellValue('solicitud') || []).some((l) => l.id === solicitudId) &&
+          (r.id === adjuntoId || r.getCellValueAsString('estado_extraccion') === 'listo')
+      )
+      .map((r) => ({
+        id: r.id,
+        clave: r.getCellValueAsString('clave_adjunto'),
+        fechaSubida: r.getCellValueAsString('fecha_subida'),
+        items: itemsDeAtributos(r.getCellValueAsString('atributos_obtenidos')),
+      }))
 
-    for (const { tabla, campo } of destinosAConsolidar.values()) {
+    for (const { tabla, grupo } of destinosAConsolidar.values()) {
       try {
-        const decls = declaracionesConsolidables.filter((d) => d.tabla === tabla && d.campo === campo)
-        const candidatos = []
-        for (const r of adjuntosSolicitud) {
-          const clave = r.getCellValueAsString('clave_adjunto')
-          const deEsteTipo = decls.filter((d) => d.codigoTipo === clave)
-          if (deEsteTipo.length === 0) continue
-          const items = itemsDeAtributos(r.getCellValueAsString('atributos_obtenidos'))
-          for (const d of deEsteTipo) {
-            const it = items.find((x) => x && x.codigo_atributo === d.codigoAtributo)
-            if (it) {
-              candidatos.push({
-                prioridad: d.prioridad,
-                fechaSubida: r.getCellValueAsString('fecha_subida'),
-                adjuntoId: r.id,
-                codigoTipo: clave,
-                valor: it.valor,
-              })
-            }
-          }
-        }
-
-        const ganador = elegirGanador(candidatos)
-        if (!ganador) {
-          propSkip++
-          propLog.push(`consolidación ${tabla}.${campo}: ningún documento leído trae un número válido — sin cambios`)
-          continue
-        }
+        const decls = declaracionesConsolidables.filter((d) => d.tabla === tabla && d.grupo === grupo)
+        const campos = [...new Set(decls.map((d) => d.campo))]
+        const campoVigencia = (decls.find((d) => d.vigencia) || {}).campo || null
+        const nombreGrupo = campos.length === 1 && grupo === campos[0] ? `${tabla}.${grupo}` : `${tabla} · grupo ${grupo} (${campos.join(', ')})`
 
         const destTable = base.getTable(tabla)
-        const destField = getFieldByName(destTable, campo)
-        if (!destField) {
+        const tipos = {}
+        const tolerancias = {}
+        let invalido = ''
+        for (const campo of campos) {
+          const f = getFieldByName(destTable, campo)
+          const t = f ? tipoConsolidacion(f.type) : null
+          if (!f) invalido = `el campo destino ${campo} no existe`
+          else if (!t) invalido = `${campo} es ${f.type}: sólo se consolidan números, textos y fechas`
+          if (invalido) break
+          tipos[campo] = t
+          tolerancias[campo] = toleranciaDePrecision(f.options && f.options.precision)
+        }
+        if (invalido) {
           propError++
-          propLog.push(`consolidación ${tabla}.${campo}: el campo destino no existe — skip`)
+          propLog.push(`consolidación ${nombreGrupo}: ${invalido} — skip`)
           continue
         }
-        if (!TIPOS_NUMERICOS.includes(destField.type)) {
-          propError++
-          propLog.push(`consolidación ${tabla}.${campo}: sólo se consolidan campos numéricos (es ${destField.type}) — skip`)
+
+        const candidatos = candidatosDeGrupo(adjuntosSolicitud, decls, tipos)
+        const ganador = elegirGanadorGrupo(candidatos, campoVigencia)
+        if (!ganador) {
+          propSkip++
+          propLog.push(`consolidación ${nombreGrupo}: ningún documento leído trae un valor válido — sin cambios`)
           continue
         }
 
@@ -999,22 +1162,28 @@ if (destinosAConsolidar.size > 0 && corridaCongelada) {
         const fila = await resolverFila1a1(destTable, tabla)
         const destRow = await destTable.selectRecordAsync(fila.id)
         const origen = getFieldByName(destTable, 'origen_dato') ? destRow.getCellValueAsString('origen_dato') : ''
-        const decision = decidirConsolidacion(origen, destRow.getCellValue(campo), ganador.valor)
-        const traza = `${ganador.valor} (${ganador.codigoTipo} · prioridad ${ganador.prioridad} · adjunto ${ganador.adjuntoId} · ${candidatos.length} candidato(s))`
+        const actuales = {}
+        for (const campo of campos) actuales[campo] = destRow.getCellValue(campo)
+        const decision = decidirGrupo(origen, actuales, ganador.valores, tolerancias)
+        const valoresTxt = campos.map((c) => `${c}=${ganador.valores[c] === null ? '∅' : ganador.valores[c]}`).join(', ')
+        const traza = `${valoresTxt} (${ganador.codigoTipo} · prioridad ${ganador.prioridad}${ganador.vigencia ? ` · vigencia ${ganador.vigencia}` : ''} · adjunto ${ganador.adjuntoId} · ${candidatos.length} candidato(s))`
 
         if (decision === 'escribir') {
-          await destTable.updateRecordAsync(destRow.id, { [campo]: ganador.valor, ...camposOrigenLectura(destTable, tabla) })
+          const update = {}
+          for (const campo of campos) update[campo] = ganador.valores[campo]
+          await destTable.updateRecordAsync(destRow.id, { ...update, ...camposOrigenLectura(destTable, tabla) })
           propOk++
-          propLog.push(`consolidado ${tabla}.${campo} = ${traza}`)
-          console.log(`AT03-Ext: consolidado ${tabla}.${campo} = ${traza}.`)
+          propLog.push(`consolidado ${nombreGrupo}: ${traza}`)
+          console.log(`AT03-Ext: consolidado ${nombreGrupo}: ${traza}.`)
         } else {
+          const actualTxt = campos.map((c) => `${c}=${destRow.getCellValueAsString(c) || '∅'}`).join(', ')
           propSkip++
-          propLog.push(`consolidación ${tabla}.${campo}: ${decision} — ganador ${traza}, actual "${destRow.getCellValueAsString(campo)}"`)
+          propLog.push(`consolidación ${nombreGrupo}: ${decision} — ganador ${traza}, actual ${actualTxt}`)
         }
       } catch (e) {
         propError++
-        propLog.push(`consolidación ${tabla}.${campo} falló — ${e.message}`)
-        console.warn(`AT03-Ext: consolidación ${tabla}.${campo} falló: ${e.message}`)
+        propLog.push(`consolidación ${tabla} · grupo ${grupo} falló — ${e.message}`)
+        console.warn(`AT03-Ext: consolidación ${tabla} · grupo ${grupo} falló: ${e.message}`)
         if (String(e.message).includes('Request processing is disabled')) break
       }
     }

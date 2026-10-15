@@ -278,6 +278,83 @@ describe('con el guard en verde la ruta sí trabaja', () => {
   })
 })
 
+describe('candado origen_dato al guardar (T-LEGALES-CONSOLIDADOS-20261015)', () => {
+  it('una fila creada por la lectura de documentos queda `tipeado` al guardar el formulario', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+    listRecords.mockImplementation(async (tabla: string) =>
+      tabla === TABLE_IDS.datosTasacion
+        ? [{ id: 'recDATOS00000001', createdTime: '', fields: { origen_dato: 'extraido_rf09', sup_construccion_m2: 249.91 } }]
+        : [],
+    )
+
+    const res = await llamarPatch({ supConstruida: '249.91', nCertificadoNoExpropiacion: '3444743' })
+
+    expect(res.status).toBe(200)
+    const llamada = updateRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.datosTasacion)
+    expect(llamada?.[1]).toBe('recDATOS00000001')
+    expect(llamada?.[2]).toMatchObject({ origen_dato: 'tipeado', n_cert_no_expropiacion: '3444743' })
+  })
+
+  it('el candado no se audita como un cambio del tasador', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+    listRecords.mockImplementation(async (tabla: string) =>
+      tabla === TABLE_IDS.datosTasacion
+        ? [{ id: 'recDATOS00000001', createdTime: '', fields: { origen_dato: 'extraido_rf09' } }]
+        : [],
+    )
+
+    await llamarPatch({ supTerreno: '500' })
+
+    const auditado = JSON.stringify(auditar.mock.calls)
+    expect(auditado).not.toContain('origen_dato')
+  })
+})
+
+describe('sección F · Sello SEC y candado de TX_DocumentosLegales (15-oct-2026)', () => {
+  it('guarda el Sello SEC y deja la fila `tipeado`; vacíos de select y fecha van como null', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+    listRecords.mockImplementation(async (tabla: string) =>
+      tabla === TABLE_IDS.documentosLegales
+        ? [{ id: 'recLEGAL00000001', createdTime: '', fields: { origen_dato: 'extraido_rf09', fojas: '3312' } }]
+        : [],
+    )
+
+    const res = await llamarPatch({ cbrFoja: '3312', selloSec: 'no_aplica', selloSecId: '', selloSecVencimiento: '' })
+
+    expect(res.status).toBe(200)
+    const llamada = updateRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.documentosLegales)
+    expect(llamada?.[1]).toBe('recLEGAL00000001')
+    expect(llamada?.[2]).toEqual({
+      fojas: '3312',
+      sello_sec: 'no_aplica',
+      sello_sec_id: '',
+      sello_sec_vencimiento: null,
+      origen_dato: 'tipeado',
+    })
+  })
+
+  it('el Sello SEC ya no se reporta como no persistido', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    const res = await llamarPatch({ selloSec: 'vigente', selloSecVencimiento: '2027-03-01' })
+
+    expect(JSON.stringify(await res.json())).not.toContain('selloSec')
+  })
+})
+
+describe('sección F · comprador, notaría y repertorio retirados (15-oct-2026)', () => {
+  it('un PATCH de un bundle viejo que todavía los manda responde 200 y no los escribe', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    const res = await llamarPatch({ cbrFoja: '3312', comprador: 'X', notaria: 'N', repertorio: 'R' })
+
+    expect(res.status).toBe(200)
+    const escrito = JSON.stringify([...createRecord.mock.calls, ...updateRecord.mock.calls])
+    expect(escrito).toContain('3312')
+    expect(escrito).not.toMatch(/comprador|notaria|repertorio/)
+  })
+})
+
 describe('sección B · estado de conservación y calidad de construcción (14-oct-2026)', () => {
   /** Los `fields` con que el PATCH creó la fila de `TX_DatosTasacion`. */
   function camposCreadosEnDatos(): Record<string, unknown> {

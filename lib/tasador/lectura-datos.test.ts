@@ -519,3 +519,71 @@ describe('sección C · cuadro de valoración propuesto (spec §2.8.2)', () => {
     expect(prellenados).not.toContain('items')
   })
 })
+
+describe('proyección sección F · documentos legales desde la lectura (spec §2.8.3 · 15-oct-2026)', () => {
+  /** VP-2026-0079 tras consolidar: escritura 2020, permiso, recepción, SERVIU y mapa SII. */
+  const LEGALES_0079 = {
+    fojas: '3312',
+    numero_inscripcion: '4663',
+    ano_inscripcion: 2020,
+    permiso_edificacion_numero: '319-2020',
+    permiso_edificacion_fecha: '2020-09-09',
+    recepcion_final_numero: '210-2024',
+    recepcion_final_fecha: '2024-07-18',
+  }
+  const DATOS_0079 = { n_cert_no_expropiacion: '3444743', lat: -33.23458, long: -70.675087 }
+
+  function airtableF(legales: Record<string, unknown>, datos: Record<string, unknown>, subtipo = 'Casa') {
+    listRecords.mockImplementation(async (tableId: string) => {
+      if (tableId === TABLE_IDS.documentosLegales) return [fila('recLegal00000001', legales)]
+      if (tableId === TABLE_IDS.datosTasacion) return [fila('recDatos00000001', datos)]
+      if (tableId === TABLE_IDS.unidades) return [fila('recUnidad0000001', { subtipo, es_principal: true, orden: 1 })]
+      return []
+    })
+  }
+
+  it('lo escrito por la lectura llega con valor y con badge; el Sello SEC de una casa, «No aplica»', async () => {
+    airtableF({ ...LEGALES_0079, origen_dato: 'extraido_rf09' }, { ...DATOS_0079, origen_dato: 'extraido_rf09' })
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect([datos.cbrFoja, datos.cbrNumero, datos.cbrAnio]).toEqual(['3312', '4663', '2020'])
+    expect([datos.nPermisoEdificacion, datos.fechaPermisoEdif]).toEqual(['319-2020', '2020-09-09'])
+    expect([datos.nRecepcionFinal, datos.fechaRecepcionFinal]).toEqual(['210-2024', '2024-07-18'])
+    expect([datos.nCertificadoNoExpropiacion, datos.coordenadasLat, datos.coordenadasLng]).toEqual([
+      '3444743',
+      '-33.23458',
+      '-70.675087',
+    ])
+    expect(datos.selloSec).toBe('no_aplica')
+    expect(prellenados).toEqual(
+      expect.arrayContaining(['cbrFoja', 'cbrAnio', 'nPermisoEdificacion', 'coordenadasLat', 'nCertificadoNoExpropiacion', 'selloSec']),
+    )
+    // Campos vacíos no se marcan: no hay nada que revisar.
+    expect(prellenados).not.toContain('selloSecId')
+  })
+
+  it('desde que el tasador guarda (tipeado), los valores son suyos: sin badge', async () => {
+    airtableF(
+      { ...LEGALES_0079, origen_dato: 'tipeado', sello_sec: 'vigente' },
+      { ...DATOS_0079, origen_dato: 'tipeado' },
+    )
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.cbrFoja).toBe('3312')
+    expect(datos.selloSec).toBe('vigente')
+    for (const clave of ['cbrFoja', 'nPermisoEdificacion', 'coordenadasLat', 'selloSec'] as const) {
+      expect(prellenados).not.toContain(clave)
+    }
+  })
+
+  it('un departamento sin sello leído no recibe sugerencia de Sello SEC', async () => {
+    airtableF({ origen_dato: 'extraido_rf09' }, {}, 'Departamento')
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.selloSec).toBe('')
+    expect(prellenados).not.toContain('selloSec')
+  })
+})

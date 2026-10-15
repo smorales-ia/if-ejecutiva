@@ -893,9 +893,9 @@ Ninguno existe en `TX_DatosTasacion`, `TX_DocumentosLegales`, `TX_ItemsCuadroVal
 | E | `Ampliacion.nPe` | `TX_Ampliaciones` tiene 6 campos y ninguno recibe el n° de permiso. |
 | C | `ItemValoracion.origenSuperficie` | ⚠ **añadido el 18-ago.** `TX_ItemsCuadroValoracion` no tiene columna de origen de la superficie. El dominio `origen_superficie` existe **en `TX_Unidades`** (`fldbDPpHhkuWjOTvQ`), otra tabla y otro nivel de granularidad. P1-TAS ya lo había anotado en §2.bis.2 del snapshot y no se cruzó con esta tabla hasta hoy. `origen_dato` (`tasador · claude · cliente`) **no** sirve: es la procedencia de la fila, no la del dato de superficie. |
 | F | `vendedor` | Existen `vendedor_*` en `TX_Solicitudes`, pero son el vendedor de la **operación**, no el de la escritura. No se reutilizan sin decisión de negocio. |
-| F | `comprador` | |
-| F | `notaria` | `TX_DocumentosLegales.tipo_documento` tiene la opción `Notaria`, pero no hay campo para el nombre. |
-| F | `repertorio` | |
+| F | ~~`comprador`~~ | ✅ **CERRADO el 15-oct-2026: retirado del formulario** (spec §2.8). La planilla del cliente (MET-6283) no lo usa. Queda aceptado e ignorado en `datosPatchSchema` / `CAMPOS_SIN_DESTINO` para pestañas con el bundle viejo; sale de los dos después de cerrar la réplica de VP-2026-0079. |
+| F | ~~`notaria`~~ | ✅ **CERRADO el 15-oct-2026**, ídem `comprador`. |
+| F | ~~`repertorio`~~ | ✅ **CERRADO el 15-oct-2026**, ídem `comprador`. |
 | F | `selloSec` · `selloSecId` · `selloSecVencimiento` | Los tres. `VProperty_Origen_Datos_Informe_v1.1.md:349` los da por existentes en `TX_DatosTasacion`. |
 | F | `afectoExpropiacion` | Existe `n_cert_no_expropiacion` (el número del certificado), no el booleano. |
 | H | `valorReferenciaClp` | **Es el denominador del cap rate** (`informe-preview.tsx:141`). Sin él, el cap rate de la sección H no se puede recomputar server-side. |

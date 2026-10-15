@@ -42,7 +42,9 @@
  *
  * Consecuencia a tener presente al leer `noPersistidos`: se calcula sobre el
  * cuerpo **ya parseado**, de modo que las claves que zod descartó nunca
- * aparecen ahí. Sólo salen los 23 de `CAMPOS_SIN_DESTINO` (**CI-023**).
+ * aparecen ahí. Sólo salen los 20 de `CAMPOS_SIN_DESTINO` (**CI-023**) —en la
+ * práctica 17: `comprador`, `notaria` y `repertorio` dejaron el formulario el
+ * 15-oct-2026 y sólo los manda una pestaña con el bundle viejo—.
  *
  * ## Lo que este hook NO hace
  *

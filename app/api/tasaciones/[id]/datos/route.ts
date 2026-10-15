@@ -326,6 +326,12 @@ function camposDocLegales(b: DatosPatch): Fields {
   poner('permiso_edificacion_fecha', b.fechaPermisoEdif)
   poner('recepcion_final_numero', b.nRecepcionFinal)
   poner('recepcion_final_fecha', b.fechaRecepcionFinal)
+  // Sello verde SEC (spec §2.8.3 · 15-oct-2026). Un select o una fecha vacíos se
+  // limpian con null: Airtable rechaza '' en esos tipos.
+  const vacioANull = (v: string | undefined) => (v === undefined ? undefined : v === '' ? null : v)
+  poner('sello_sec', vacioANull(b.selloSec))
+  poner('sello_sec_id', b.selloSecId)
+  poner('sello_sec_vencimiento', vacioANull(b.selloSecVencimiento))
 
   return f
 }
@@ -358,7 +364,14 @@ export async function PATCH(
       const fila = existentes[0]
 
       if (fila) {
-        await updateRecord(TABLE_IDS.datosTasacion, fila.id, camposDatos)
+        // El candado va también al actualizar (T-LEGALES-CONSOLIDADOS-20261015):
+        // si la fila la creó la lectura de documentos (`extraido_rf09`), guardar
+        // el formulario tiene que dejarla `tipeado` para que AT03-Ext no pise lo
+        // que el tasador guardó. Antes sólo se marcaba al crear la fila.
+        await updateRecord(TABLE_IDS.datosTasacion, fila.id, {
+          ...camposDatos,
+          origen_dato: OPCIONES_CAPTURA.origenDatoTasacion,
+        })
         cambios.push(
           ...derivarCambios(fila.id, fila.fields, camposDatos, {
             registroNombre: codigo,
@@ -405,11 +418,17 @@ export async function PATCH(
       const existentes = await filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo)
       const fila = existentes[0]
 
+      // Mismo candado que TX_DatosTasacion: lo guardado por el tasador no lo
+      // pisa la lectura de documentos (AT03-Ext v6 · spec §2.8.3).
       if (fila) {
-        await updateRecord(TABLE_IDS.documentosLegales, fila.id, camposLeg)
+        await updateRecord(TABLE_IDS.documentosLegales, fila.id, {
+          ...camposLeg,
+          origen_dato: OPCIONES_CAPTURA.origenDatoTasacion,
+        })
       } else {
         await createRecord(TABLE_IDS.documentosLegales, {
           ...camposLeg,
+          origen_dato: OPCIONES_CAPTURA.origenDatoTasacion,
           solicitud: [id],
           clave_doc_legal: `${codigo}-legal`,
           nombre: `Antecedentes legales · ${codigo}`,

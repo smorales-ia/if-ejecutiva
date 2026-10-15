@@ -1,0 +1,19 @@
+﻿[
+ {
+  "id": "rec4zGgDXFD4Ry7oH",
+  "createdTime": "2026-10-14T18:45:15.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "319-2020",
+   "permiso_edificacion_fecha": "2020-09-09",
+   "ano_inscripcion": 2006,
+   "origen_dato": "extraido_rf09",
+   "numero_inscripcion": "21565",
+   "solicitud": [
+    "rec6XubOR92X6gnOH"
+   ],
+   "recepcion_final_numero": "210-2024",
+   "recepcion_final_fecha": "2024-07-18",
+   "fojas": "13291"
+  }
+ }
+]

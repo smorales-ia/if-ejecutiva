@@ -814,9 +814,9 @@ export interface InformeData {
   cbrNumero: string
   cbrAnio: string
   vendedor: string
-  comprador: string
-  notaria: string
-  repertorio: string
+  /* `comprador`, `notaria` y `repertorio` se retiraron el 15-oct-2026 (spec
+     §2.8): la planilla del cliente no los usa y no tenían columna. Un borrador
+     local viejo que los traiga se carga igual y la ruta los ignora. */
   nPermisoEdificacion: string
   fechaPermisoEdif: string
   nRecepcionFinal: string
@@ -1504,9 +1504,6 @@ export function resolverInforme(tasacion: Tasacion): InformeData {
     cbrNumero: '',
     cbrAnio: '',
     vendedor: tasacion.vendedor?.nombre ?? '',
-    comprador: '',
-    notaria: '',
-    repertorio: '',
     nPermisoEdificacion: '',
     fechaPermisoEdif: '',
     nRecepcionFinal: '',

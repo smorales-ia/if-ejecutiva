@@ -135,8 +135,12 @@ export const coordinacionSchema = z.discriminatedUnion('resultado', [
  *
  * ## Lo que este schema deliberadamente **no** rechaza
  *
- * Acepta los 23 identificadores de `CAMPOS_SIN_DESTINO`. Rechazarlos rompería
- * el autoguardado del formulario, que manda el `InformeData` entero. La ruta
+ * Acepta los 20 identificadores de `CAMPOS_SIN_DESTINO` (23 hasta el
+ * 15-oct-2026, cuando el Sello SEC ganó columna) —tres de ellos, `comprador`,
+ * `notaria` y `repertorio`, obsoletos desde esa fecha: el formulario ya no los
+ * manda, sólo una pestaña abierta con el bundle viejo—.
+ * Rechazarlos rompería el autoguardado del formulario, que manda el
+ * `InformeData` entero. La ruta
  * los descarta y los devuelve en `noPersistidos[]`, para que la UI pueda
  * decir qué no se guardó. Es la diferencia entre ignorar en silencio y
  * declarar: lo primero es el fallo que CI-023 documenta, lo segundo es esto.
@@ -281,14 +285,29 @@ export const datosPatchSchema = z
     nCertificadoNoExpropiacion: z.string().trim().optional(),
     coordenadasLat: numeroDeInput,
     coordenadasLng: numeroDeInput,
-    /** ⚠ Los ocho sin columna destino — CI-023 §1. */
+    /** ⚠ Sin columna destino — CI-023 §1 (con los tres obsoletos y `afectoExpropiacion`, cinco). */
     vendedor: z.string().trim().optional(),
+    /**
+     * @deprecated 15-oct-2026 (spec §2.8): el formulario ya no los pide. Se
+     * aceptan e ignoran para pestañas abiertas con el bundle viejo; se quitan del
+     * schema después de cerrar la réplica de VP-2026-0079. Nunca pasar el schema
+     * a `.strict()`: rechazaría esos guardados.
+     */
     comprador: z.string().trim().optional(),
+    /** @deprecated 15-oct-2026 — ver `comprador`. */
     notaria: z.string().trim().optional(),
+    /** @deprecated 15-oct-2026 — ver `comprador`. */
     repertorio: z.string().trim().optional(),
+    /**
+     * Sello verde SEC → `TX_DocumentosLegales.sello_sec` · `sello_sec_id` ·
+     * `sello_sec_vencimiento` (15-oct-2026). El vencimiento es texto y no
+     * `fechaIso`: casi siempre va vacío (casas · RN-58) y `''` no debe rebotar el
+     * guardado; la ruta lo limpia con null.
+     */
     selloSec: z.string().trim().optional(),
     selloSecId: z.string().trim().optional(),
     selloSecVencimiento: z.string().trim().optional(),
+    /** ⚠ Sin columna destino — CI-023 §1. */
     afectoExpropiacion: z.boolean().optional(),
 
     /* --- G · Overrides (CU-007) --- */
@@ -327,6 +346,14 @@ export type DatosPatch = z.infer<typeof datosPatchSchema>
  * columna, pero es fórmula) y `comodidades` (sin tabla destino desde P1-TAS):
  * **23**.
  *
+ * **15-oct-2026 (spec §2.8.3): la lista baja a 20.** Los tres del Sello SEC
+ * (`selloSec` · `selloSecId` · `selloSecVencimiento`) ganaron columna en
+ * `TX_DocumentosLegales` y salieron. Y de esos 20 el formulario manda **17**:
+ * `comprador`, `notaria` y `repertorio` dejaron la sección F. Siguen en la lista
+ * mientras sigan en el schema —una pestaña con el bundle viejo los manda y la
+ * respuesta los declara en `noPersistidos[]`— y salen de los dos en el mismo
+ * cambio, después de cerrar la réplica de VP-2026-0079.
+ *
  * ⚠ Si esta lista y la ficha vuelven a discrepar, contar **identificadores**,
  * no filas de tabla: la fila `selloSec` de CI-023 agrupa tres en una línea, y
  * ése fue el origen del conteo equivocado que la ficha arrastró.
@@ -359,12 +386,12 @@ export const CAMPOS_SIN_DESTINO: readonly string[] = Object.freeze([
   'comodidades',
   // Sección F
   'vendedor',
+  // Obsoletos desde el 15-oct-2026: el formulario ya no los manda (spec §2.8).
   'comprador',
   'notaria',
   'repertorio',
-  'selloSec',
-  'selloSecId',
-  'selloSecVencimiento',
+  // `selloSec` · `selloSecId` · `selloSecVencimiento` salieron el 15-oct-2026:
+  // persisten en `TX_DocumentosLegales.sello_sec*` (spec §2.8.3).
   'afectoExpropiacion',
   // Sección H
   'valorReferenciaClp',

@@ -1,0 +1,19 @@
+2026-10-15T18:11:38.885Z
+campo creado: D_TipoDocumentoAtributo.grupo_destino fld6p4Z5BnyLSSWNs
+campo creado: D_TipoDocumentoAtributo.vigencia_destino fldAFqudzyzKMznkw
+campo creado: TX_DocumentosLegales.origen_dato fld5mAZN49bvySRLp
+campo creado: TX_DocumentosLegales.sello_sec fldZrsONdkFFUCjtl
+campo creado: TX_DocumentosLegales.sello_sec_id flddsOMv5trcJEjsR
+campo creado: TX_DocumentosLegales.sello_sec_vencimiento fldukk7H8yZEaAe1e
+filas actualizadas: recJEpVvzbmTqPERS, rec0N9w1ejqQqKYcP, recWg8kNBQK17CXOv, recVuIHWfVAjD3whc, recGRRp4Ore6k8m4y, recE2lOP4YMmn5ESq, recwptFqK4coAC8IE, recY8f0sBOO9Jhrxl, recLXURPfI88MLl9q, rec5X2DwrNhg2aiPq
+filas actualizadas: recarhGDsmwNrXMbP, recEj5KnzpLvQkihi, recxiSvoLUSQGEclB, recUoL1UHzLihqMMK, recbYuBXQswE2YTyP, recwJiTQmYxb9bxVa, rec6sJ0vyimcdMqlD, recwNHxtLHQ2sYcPY, recjkRLzMyZeDkXV5, recFQMPeD6ow4ikeq
+filas actualizadas: recLMXwCxkSfOFcJe
+fila creada: recZnyVa8R9sh65iU escritura_compraventa__foja_inscripcion
+fila creada: recd7fJNVd60319Xn escritura_compraventa__numero_inscripcion
+fila creada: recaKyCs0JMXgteK0 escritura_compraventa__ano_inscripcion
+fila creada: recBu3kd3RoI1QzEB certificado_dominio_vigente__foja_inscripcion
+fila creada: recCdc2KDtXOP3qKW certificado_dominio_vigente__numero_inscripcion
+fila creada: recRuBorxqnICMUEN certificado_dominio_vigente__ano_inscripcion
+fila creada: recQaSV6QEyWYcMrR mapa_sii__latitud
+fila creada: recQwUTBnRaYYcvQU mapa_sii__longitud
+backfill: TX_DocumentosLegales rec4zGgDXFD4Ry7oH (VP-2026-0079) origen_dato = extraido_rf09

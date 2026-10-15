@@ -146,6 +146,23 @@ describe('migrarEnvoltorio', () => {
     expect(migrarEnvoltorio(crudo)?.sincronizadoTs).toBe('2026-08-20T10:05:00.000Z')
   })
 
+  it('15-oct-2026 · conserva un v2 con claves que ya no están en InformeData', () => {
+    // `comprador`, `notaria` y `repertorio` salieron de la sección F (spec §2.8)
+    // sin subir VERSION_BORRADOR, a propósito: subirla descartaría el borrador
+    // en curso. Un sobre v2 que las trae se lee entero, sin perder nada.
+    const crudo = JSON.stringify({
+      version: 2,
+      guardadoTs: '2026-10-15T10:00:00.000Z',
+      sincronizadoTs: null,
+      datos: { ...ochoSecciones(), comprador: 'X', notaria: '', repertorio: '' },
+    })
+
+    const env = migrarEnvoltorio(crudo)
+    expect(env?.version).toBe(VERSION_BORRADOR)
+    expect(env?.datos.cbrFoja).toBe('1234')
+    expect((env?.datos as unknown as Record<string, unknown>).comprador).toBe('X')
+  })
+
   it('devuelve null ante JSON corrupto', () => {
     expect(migrarEnvoltorio('{"version":2,')).toBeNull()
   })

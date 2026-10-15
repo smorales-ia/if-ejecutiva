@@ -524,7 +524,7 @@ export function TasacionForm({
             open={openSections.F}
             onOpenChange={setOpen("F")}
           >
-            <SeccionDocumentos form={form} set={set} />
+            <SeccionDocumentos form={form} set={set} prellenados={prellenados} />
           </Section>
 
           {/* G. Overrides */}

@@ -929,6 +929,10 @@ La tabla ya existía con link `solicitud` → `TX_Solicitudes` (`fldJ60CFZfJsHwT
 | `ano_inscripcion` | `fld585iijZF3oA5Rd` | number(0) |
 | `lineas_edificacion` | `fldDce5e75VuGCddC` | multilineText |
 | `certificado_numero` | `fldvOcIJ0WDKFWiLF` | singleLineText |
+| `origen_dato` *(15-oct-2026 · §28.4)* | `fld5mAZN49bvySRLp` | singleSelect `tipeado · extraido_rf09` |
+| `sello_sec` *(15-oct-2026 · §28.4)* | `fldZrsONdkFFUCjtl` | singleSelect `vigente · vencido · no_aplica` |
+| `sello_sec_id` *(15-oct-2026 · §28.4)* | `flddsOMv5trcJEjsR` | singleLineText |
+| `sello_sec_vencimiento` *(15-oct-2026 · §28.4)* | `fldukk7H8yZEaAe1e` | date (local) |
 
 ### 21.4 Resolución de los 5 conflictos (panel aprobado · 24-jul-2026)
 
@@ -1837,6 +1841,62 @@ calzan con la sección B.
 - `TX_DatosTasacion.sup_construida_piso1` (`fldzY9k38HePg7YKa`, homónimo de primer piso que alimenta
   `sup_construida_total` → `dfl2`) **no se sincroniza**: tiene dato en 1 de 28 filas y moverlo cambia el
   DFL2 de otras solicitudes. Pendiente aparte.
+
+### 28.4 Sección F consolidada por grupos con vigencia (AT03-Ext v6 · 15-oct-2026)
+
+> ✅ **APLICADO el 15-oct-2026** con aprobación de Sergio en el chat de la sesión que escribió, por REST
+> (`docs/_evidencia/T-LEGALES-CONSOLIDADOS-20261015/aplicar.mjs`, `apply-log.txt`, respaldos `backup-*-pre.json`,
+> verificación `verificacion-*-post.json`). ⚠ Requiere **AT03-Ext v6** pegada en la automation: con la v5
+> los campos de texto/fecha consolidables se omiten («sólo numéricos») hasta el paste.
+>
+> FIELD_IDs: `D_TipoDocumentoAtributo.grupo_destino` `fld6p4Z5BnyLSSWNs` · `.vigencia_destino`
+> `fldAFqudzyzKMznkw` · `TX_DocumentosLegales.origen_dato` `fld5mAZN49bvySRLp` · `.sello_sec`
+> `fldZrsONdkFFUCjtl` · `.sello_sec_id` `flddsOMv5trcJEjsR` · `.sello_sec_vencimiento` `fldukk7H8yZEaAe1e`.
+> Filas nuevas: `escritura_compraventa__{foja,numero,ano}_inscripcion` `recZnyVa8R9sh65iU` ·
+> `recd7fJNVd60319Xn` · `recaKyCs0JMXgteK0`; `certificado_dominio_vigente__…` `recBu3kd3RoI1QzEB` ·
+> `recCdc2KDtXOP3qKW` · `recRuBorxqnICMUEN`; `mapa_sii__latitud` `recQaSV6QEyWYcMrR` · `__longitud`
+> `recQwUTBnRaYYcvQU`.
+
+Pedido de Sergio (réplica MET-6283 · VP-2026-0079): la sección F del tasador llega lista con lo que traen
+los documentos. En 0079 la foto SII fijó la inscripción antigua (13291/21565/2006) y la escritura «Fojas
+3312» quedó en `error` porque su tipo no pedía la inscripción.
+
+**Columnas nuevas.**
+
+| Tabla | Campo | Tipo | Uso |
+|---|---|---|---|
+| `D_TipoDocumentoAtributo` | `grupo_destino` | singleLineText | los atributos del mismo grupo se escriben juntos desde UN documento |
+| `D_TipoDocumentoAtributo` | `vigencia_destino` | checkbox | el atributo que fecha el grupo; gana la vigencia más reciente |
+| `TX_DocumentosLegales` | `origen_dato` | singleSelect `tipeado · extraido_rf09` | candado: lo guardado por el tasador no lo pisa la lectura |
+| `TX_DocumentosLegales` | `sello_sec` | singleSelect `vigente · vencido · no_aplica` | Sello SEC (RN-58) |
+| `TX_DocumentosLegales` | `sello_sec_id` · `sello_sec_vencimiento` | singleLineText · date | ID y vencimiento del sello |
+
+**Grupos** (orden del ganador: vigencia más reciente → más campos presentes → `prioridad_destino` →
+subido más reciente → adjuntoId):
+
+| Grupo | Destino | Vigencia | Documentos · prioridad |
+|---|---|---|---|
+| `inscripcion_dominio` | `TX_DocumentosLegales.fojas` · `numero_inscripcion` · `ano_inscripcion` | año | certificado_dominio_vigente 10 (**filas nuevas**) · inscripcion_dominio_cbr 20 · escritura_compraventa 30 (**filas nuevas**) · foto_fuente_sii 40 |
+| `permiso_edificacion` | `…permiso_edificacion_numero` · `_fecha` | fecha | permiso_edificacion 10 · escritura_compraventa 20 |
+| `recepcion_final` | `…recepcion_final_numero` · `_fecha` | fecha | certificado_recepcion_final 10 · escritura_compraventa 20 |
+| `no_expropiacion` | `TX_DatosTasacion.n_cert_no_expropiacion` | — | informe_no_expropiacion_serviu 10 |
+| `coordenadas` | `TX_DatosTasacion.lat` · `long` (sólo en rango ±90/±180) | — | mapa_sii 10 (**filas nuevas**) · informe_no_expropiacion_serviu 20 |
+| `sello_sec` | `TX_DocumentosLegales.sello_sec_id` · `sello_sec_vencimiento` | fecha de vencimiento | sello_verde_sec 10 |
+
+Además `obligatorio = false` en `inscripcion_dominio_cbr__notaria` y `__comprador` (el formulario ya no
+los pide · spec §2.8.3).
+
+- **Backfill de `TX_DocumentosLegales.origen_dato`:** sólo VP-2026-0079 (`rec4zGgDXFD4Ry7oH`) queda
+  `extraido_rf09`: sus valores coinciden uno a uno con lo leído. Las otras 8 filas traen textos tipeados o
+  de semilla («N°19 // 23-01-2014», «S/I») y `A_Cambios` no registra guardados: quedan sin origen y la
+  v6 sólo rellena sus vacíos, nunca las contradice.
+- **El PATCH `/datos` escribe `origen_dato = tipeado`** en `TX_DocumentosLegales` (alta y actualización) y,
+  desde esta tanda, también al actualizar `TX_DatosTasacion` (antes sólo al crear la fila).
+- **Cascade de borrado: sin cambios (diferido).** Borrar un documento del grupo limpia sus campos (Q1,
+  §28.2) y la siguiente lectura de cualquier documento del grupo los vuelve a consolidar. Sacar los grupos
+  del cascade, como las superficies (§28.3), queda como tanda propia; mientras tanto el espejo
+  `lib/adjuntos-doc-campos.ts` no incluye los destinos nuevos (escritura y certificado de dominio vigente →
+  terna, mapa SII → coordenadas, sello verde → sello).
 
 ## 29. IF-03 · `TX_DatosTasacion` — estado de conservación y calidad con la lista de la planilla (14-oct-2026)
 

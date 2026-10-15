@@ -393,7 +393,8 @@ describe('construirInforme · bloque 8 (observaciones + legales · P9-TAS.B)', (
           fojas: '1234',
           numero_inscripcion: '567',
           ano_inscripcion: 2019,
-          permiso_edificacion_numero: 'PE-88',
+          permiso_edificacion_numero: '319-2020',
+          permiso_edificacion_fecha: '2020-09-09',
           recepcion_final_numero: 'RF-90',
         }),
       ],
@@ -401,11 +402,12 @@ describe('construirInforme · bloque 8 (observaciones + legales · P9-TAS.B)', (
 
     const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
 
+    // Permiso y recepción como los imprime la planilla de MET-6283: «N°319  09/09/2020».
     expect(informe.observaciones.antecedentesLegales).toEqual({
       fojas: '1234',
       numeroInscripcion: '567',
       anoInscripcion: 2019,
-      permisoEdificacion: 'PE-88',
+      permisoEdificacion: 'N°319  09/09/2020',
       recepcionFinal: 'RF-90',
     })
     expect(bloquePorId(informe.bloques, 'observaciones').datos).toBe(

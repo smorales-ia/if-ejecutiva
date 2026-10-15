@@ -1,0 +1,126 @@
+﻿[
+ {
+  "id": "rec4zGgDXFD4Ry7oH",
+  "createdTime": "2026-10-14T18:45:15.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "319-2020",
+   "permiso_edificacion_fecha": "2020-09-09",
+   "ano_inscripcion": 2006,
+   "numero_inscripcion": "21565",
+   "solicitud": [
+    "rec6XubOR92X6gnOH"
+   ],
+   "recepcion_final_numero": "210-2024",
+   "recepcion_final_fecha": "2024-07-18",
+   "fojas": "13291"
+  }
+ },
+ {
+  "id": "rec7t4cD2zjuJKpXq",
+  "createdTime": "2026-09-22T16:43:06.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "N°319  09/09/2020",
+   "permiso_edificacion_fecha": "2020-09-09",
+   "ano_inscripcion": 2006,
+   "numero_inscripcion": "21565",
+   "solicitud": [
+    "recmMzeu3eWGxyXsf"
+   ],
+   "recepcion_final_numero": "N°210  18/07/2024",
+   "recepcion_final_fecha": "2024-07-18",
+   "fojas": "13291"
+  }
+ },
+ {
+  "id": "recDKdtr5Luz7BGsf",
+  "createdTime": "2026-09-10T22:06:49.000Z",
+  "fields": {
+   "solicitud": [
+    "rec75VXoWvRImjd0f"
+   ]
+  }
+ },
+ {
+  "id": "recEmWhcmDG6Y6M2H",
+  "createdTime": "2026-10-05T18:13:32.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "N° 508 22-08-2025",
+   "permiso_edificacion_fecha": "2025-08-22",
+   "solicitud": [
+    "recoZcwmgCBVKQMxF"
+   ],
+   "recepcion_final_numero": "N° 27 13-01-2026",
+   "recepcion_final_fecha": "2026-01-13",
+   "clave_doc_legal": "VP-2026-0077|LEGAL"
+  }
+ },
+ {
+  "id": "recLgZ8sPhZgIqAT8",
+  "createdTime": "2026-10-05T18:05:42.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "N°19 // 23-01-2014",
+   "permiso_edificacion_fecha": "2014-01-23",
+   "solicitud": [
+    "rectnGOaHvEioXZw3"
+   ],
+   "recepcion_final_numero": "N°02 // 20-01-2015",
+   "recepcion_final_fecha": "2015-01-20",
+   "clave_doc_legal": "VP-2026-0076|LEGAL"
+  }
+ },
+ {
+  "id": "recOu7A1tqp75ULcU",
+  "createdTime": "2026-08-30T13:46:53.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "PE-2020-001",
+   "ano_inscripcion": 2020,
+   "numero_inscripcion": "5678",
+   "lineas_edificacion": "SEED CI-066 VP-2026-0005",
+   "solicitud": [
+    "recPx0yiK9k4oPG4V"
+   ],
+   "recepcion_final_numero": "RF-2020-001",
+   "fojas": "1234"
+  }
+ },
+ {
+  "id": "recRekMg1gE4mshln",
+  "createdTime": "2026-10-05T17:36:34.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "N°65 // 28-04-2014",
+   "permiso_edificacion_fecha": "2014-04-28",
+   "solicitud": [
+    "recconVQfAc8LSGJf"
+   ],
+   "recepcion_final_numero": "N°03 // 26-02-2018",
+   "recepcion_final_fecha": "2018-02-26",
+   "clave_doc_legal": "VP-2026-0074|LEGAL"
+  }
+ },
+ {
+  "id": "recdD5VI2edYcRZUB",
+  "createdTime": "2026-10-05T18:05:31.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "S/I",
+   "solicitud": [
+    "recE1LwwH2xbcCHti"
+   ],
+   "recepcion_final_numero": "Año 1994",
+   "clave_doc_legal": "VP-2026-0075|LEGAL"
+  }
+ },
+ {
+  "id": "recfTxfMhCNmxmJKM",
+  "createdTime": "2026-10-05T14:28:05.000Z",
+  "fields": {
+   "permiso_edificacion_numero": "N°60 // 02-09-1996",
+   "permiso_edificacion_fecha": "1996-09-02",
+   "solicitud": [
+    "reczuns8NHdI45Owp"
+   ],
+   "recepcion_final_numero": "N°56 // 28-12-1998",
+   "recepcion_final_fecha": "1998-12-28",
+   "clave_doc_legal": "VP-2026-0073|LEGAL"
+  }
+ }
+]
