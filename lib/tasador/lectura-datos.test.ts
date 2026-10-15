@@ -27,7 +27,6 @@ vi.mock('@/lib/airtable-client', async (importOriginal) => {
 
 import {
   aComparable,
-  calidadSiiANumero,
   comparablesDeSolicitud,
   materialSiiAPredominante,
   proyectarDatosCaptura,
@@ -239,18 +238,6 @@ describe('proyección sección H · candado del cap rate', () => {
 })
 
 describe('P16-TAS · mapeos SII de sección B', () => {
-  it('calidad_sii "media inferior" → 2 (case-insensitive, trim)', () => {
-    expect(calidadSiiANumero('media inferior')).toBe(2)
-    expect(calidadSiiANumero('  Media Inferior ')).toBe(2)
-    expect(calidadSiiANumero('superior')).toBe(4)
-    expect(calidadSiiANumero('muy superior')).toBe(5)
-  })
-
-  it('calidad_sii fuera de dominio o vacía → 0', () => {
-    expect(calidadSiiANumero('excelentísima')).toBe(0)
-    expect(calidadSiiANumero('')).toBe(0)
-  })
-
   it('tipo_material "albanileria" → "Albañilería" (case-insensitive)', () => {
     expect(materialSiiAPredominante('albanileria')).toBe('Albañilería')
     expect(materialSiiAPredominante('HORMIGON')).toBe('Hormigón')
@@ -278,7 +265,7 @@ describe('P16-TAS · fallback de sección B a fuentes SII', () => {
     })
   }
 
-  it('con genéricos vacíos, rellena B desde cg/calidad_sii/TX_Unidades', async () => {
+  it('con genéricos vacíos, rellena B desde cg/TX_Unidades', async () => {
     airtableConDatosYUnidades(
       { cg: 37, calidad_sii: 'media inferior' },
       [fila('recU00000000001', { sup_terreno_m2: 162, anio_construccion: 1972, tipo_material: 'albanileria' })],
@@ -290,7 +277,8 @@ describe('P16-TAS · fallback de sección B a fuentes SII', () => {
     expect(datos.supTerreno).toBe('162')
     expect(datos.anioConstruccion).toBe('1972')
     expect(datos.materialPredominante).toBe('Albañilería')
-    expect(datos.calidadConstruccion).toBe(2)
+    // calidad_sii ya no se traduce: la planilla no la deriva del SII (H19 = BUENA).
+    expect(datos.calidadConstruccion).toBe('BUENA')
   })
 
   it('cuando la columna genérica trae dato, gana el genérico (el tasador editó)', async () => {
@@ -300,7 +288,7 @@ describe('P16-TAS · fallback de sección B a fuentes SII', () => {
         sup_terreno_m2: 500,
         anio_construccion: 2010,
         material_predominante: 'Hormigón',
-        calidad_construccion: 4,
+        calidad_construccion: 'CORRIENTE',
         // fuentes SII presentes pero NO deben usarse
         cg: 37,
         calidad_sii: 'media inferior',
@@ -314,7 +302,80 @@ describe('P16-TAS · fallback de sección B a fuentes SII', () => {
     expect(datos.supTerreno).toBe('500')
     expect(datos.anioConstruccion).toBe('2010')
     expect(datos.materialPredominante).toBe('Hormigón')
-    expect(datos.calidadConstruccion).toBe(4)
+    expect(datos.calidadConstruccion).toBe('CORRIENTE')
+  })
+})
+
+describe('sección B · estado de conservación y calidad con defaults de la planilla', () => {
+  /**
+   * 14-oct-2026. El formulario abre con los valores de la planilla del cliente
+   * —`[Excel: Antecedentes!Z15 · H19]`— cuando la columna está vacía, y los
+   * declara en `prellenados` para el badge. Lo guardado gana siempre.
+   */
+  function airtableConDatos(datos: Record<string, unknown>) {
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.datosTasacion ? [fila('recDatos00000001', datos)] : []
+    )
+  }
+
+  it('sin captura previa en usada: BUENO y BUENA, ambos pre-llenados', async () => {
+    airtableConDatos({})
+
+    const { datos, prellenados } = await proyectarDatosCaptura({
+      codigo_solicitud: CODIGO,
+      tipo_propiedad_nuevo_usado: 'usada',
+    })
+
+    expect(datos.estadoConservacion).toBe('BUENO')
+    expect(datos.calidadConstruccion).toBe('BUENA')
+    expect(prellenados).toEqual(['estadoConservacion', 'calidadConstruccion'])
+  })
+
+  it('en nueva el estado cae a NUEVO - S/USO; la calidad sigue en BUENA', async () => {
+    airtableConDatos({})
+
+    const { datos } = await proyectarDatosCaptura({
+      codigo_solicitud: CODIGO,
+      tipo_propiedad_nuevo_usado: 'nueva',
+    })
+
+    expect(datos.estadoConservacion).toBe('NUEVO - S/USO')
+    expect(datos.calidadConstruccion).toBe('BUENA')
+  })
+
+  it('sin fila de datos ni estado de uso declarado: BUENO (no declarado → usada)', async () => {
+    const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.estadoConservacion).toBe('BUENO')
+    expect(datos.calidadConstruccion).toBe('BUENA')
+  })
+
+  it('lo guardado gana y no se marca como pre-llenado', async () => {
+    airtableConDatos({ estado_conservacion: 'NORMAL', calidad_construccion: 'SUPERIOR' })
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.estadoConservacion).toBe('NORMAL')
+    expect(datos.calidadConstruccion).toBe('SUPERIOR')
+    expect(prellenados).toEqual([])
+  })
+
+  it('el «Bueno» del catálogo anterior se lee con la grafía de la planilla', async () => {
+    airtableConDatos({ estado_conservacion: 'Bueno' })
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.estadoConservacion).toBe('BUENO')
+    expect(prellenados).not.toContain('estadoConservacion')
+  })
+
+  it('una estrella numérica heredada no se muestra: cae al default BUENA', async () => {
+    airtableConDatos({ calidad_construccion: 4 })
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.calidadConstruccion).toBe('BUENA')
+    expect(prellenados).toContain('calidadConstruccion')
   })
 })
 
@@ -347,16 +408,18 @@ describe('P17-TAS · fixes de lectura (DFL2, tipo de zona, fecha planificada)', 
     expect((await proyectarDatosCaptura({ codigo_solicitud: CODIGO })).datos.dfl2).toBe(false)
   })
 
-  it('item 2a · tipo_zona_descripcion vacío → cae a ubicacion_urbano_rural', async () => {
+  /* §2.8.1 (14-oct-2026) retira el fallback del item 2a: el campo es el código
+     de zona del plan regulador y «urbano» no lo es. */
+  it('tipo de zona · tipo_zona_descripcion vacío → vacío, sin caer a ubicacion_urbano_rural', async () => {
     airtableCon({ datos: { ubicacion_urbano_rural: 'urbano' } })
     const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
-    expect(datos.tipoZona).toBe('urbano')
+    expect(datos.tipoZona).toBe('')
   })
 
-  it('item 2a · tipo_zona_descripcion con dato gana sobre ubicacion_urbano_rural', async () => {
-    airtableCon({ datos: { tipo_zona_descripcion: 'Zona típica', ubicacion_urbano_rural: 'urbano' } })
+  it('tipo de zona · devuelve el código guardado tal cual', async () => {
+    airtableCon({ datos: { tipo_zona_descripcion: 'IPB', ubicacion_urbano_rural: 'urbano' } })
     const { datos } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
-    expect(datos.tipoZona).toBe('Zona típica')
+    expect(datos.tipoZona).toBe('IPB')
   })
 
   it('item 3 · fecha_visita_programada vacía → cae a la coordinación confirmada', async () => {
@@ -412,5 +475,47 @@ describe('P17-TAS · fixes de lectura (DFL2, tipo de zona, fecha planificada)', 
       fecha_visita_programada: '2026-08-30',
     })
     expect(datos.fechaPlanificadaVisita).toBe('2026-08-30')
+  })
+})
+
+describe('sección C · cuadro de valoración propuesto (spec §2.8.2)', () => {
+  /** VP-2026-0079 tal como estaba en Airtable el 14-oct-2026 (réplica MET-6283). */
+  function airtableVp0079(items: ReturnType<typeof fila>[] = []) {
+    listRecords.mockImplementation(async (tableId: string) => {
+      if (tableId === TABLE_IDS.datosTasacion) {
+        return [fila('recr34Am4gXsVyQrI', { sup_construccion_m2: 249.91, sup_primer_piso_m2: 249.91, servidumbre_m2: 3622.51 })]
+      }
+      if (tableId === TABLE_IDS.unidades) {
+        return [fila('receXRGWbpYBg26xl', {
+          subtipo: 'Casa', rol_sii: '882-40', sup_m2: 249.91, sup_terreno_m2: 5024.86, anio_construccion: 2024,
+          tipo_material: 'albanileria', origen_superficie: 'plano', orden: 1, con_rol_o_uso_y_goce: 'con_rol',
+        })]
+      }
+      if (tableId === TABLE_IDS.documentosLegales) return [fila('rec4zGgDXFD4Ry7oH', { recepcion_final_numero: '210-2024' })]
+      if (tableId === TABLE_IDS.itemsCuadroValoracion) return items
+      return []
+    })
+  }
+
+  it('sin filas guardadas propone Terreno, Servidumbre y Piso 1 y lo declara pre-llenado', async () => {
+    airtableVp0079()
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO, tipo_propiedad_nuevo_usado: 'usada' })
+
+    expect(datos.items?.map((i) => [i.descripcion, i.tipo, i.superficieM2, i.rolSii, i.ufM2Unitario])).toEqual([
+      ['Terreno', 'Terreno', '1402.35', '882-40', ''],
+      ['Servidumbre', 'Terreno', '3622.51', '882-40', ''],
+      ['Piso 1', 'Edificacion', '249.91', '882-40', ''],
+    ])
+    expect(prellenados).toContain('items')
+  })
+
+  it('con filas guardadas no propone nada: muestra las del tasador y no las marca', async () => {
+    airtableVp0079([fila('recItem000000001', { descripcion: 'Terreno', tipo_item: 'Terreno', sup_m2: 1402.35, uf_m2_unitario: 8 })])
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.items?.map((i) => [i.id, i.ufM2Unitario])).toEqual([['recItem000000001', '8']])
+    expect(prellenados).not.toContain('items')
   })
 })

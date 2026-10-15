@@ -215,7 +215,15 @@ export const datosPatchSchema = z
     estadoConservacion: z.string().trim().optional(),
     agrupacionPropiedad: z.string().trim().optional(),
     materialPredominante: z.string().trim().optional(),
-    calidadConstruccion: numeroDeInput,
+    /**
+     * Literal de `OPCIONES.calidadConstruccion` (texto desde el 14-oct-2026).
+     * Un número es una estrella de un borrador local anterior al cambio: se
+     * acepta y **no se persiste**, para que el autoguardado no rebote por él.
+     */
+    calidadConstruccion: z
+      .union([z.string(), z.number()])
+      .optional()
+      .transform((v) => (typeof v === 'string' ? v.trim() : undefined)),
     pisosPropiedad: numeroDeInput,
     orientacion: z.array(z.string()).optional(),
     numAscensores: numeroDeInput,

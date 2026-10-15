@@ -178,6 +178,29 @@ export function combinarConBorrador(
 }
 
 /**
+ * Lo que deja «Recuperar»: el borrador entero, salvo un cuadro de valoración
+ * vacío frente a uno **pre-llenado** por el servidor (spec §2.8.2).
+ *
+ * El borrador que siembra `fotos-screen` —o uno escrito antes de que existiera
+ * la propuesta— trae `items: []`. Recuperarlo tal cual borraría el cuadro
+ * propuesto, y la sección C volvería a «Sin ítems» justo cuando el tasador
+ * eligió conservar lo suyo. Un `[]` no es algo que el tasador haya escrito:
+ * `borradorAportaContenido` tampoco lo cuenta como contenido. Si el borrador
+ * sí trae ítems, ganan los del tasador.
+ */
+export function recuperarBorrador(
+  informeInicial: InformeData,
+  borrador: InformeData,
+  prellenados: readonly (keyof InformeData)[],
+): InformeData {
+  const cuadroPropuesto = prellenados.includes("items") && informeInicial.items.length > 0
+  if (cuadroPropuesto && (borrador.items ?? []).length === 0) {
+    return { ...borrador, items: informeInicial.items }
+  }
+  return borrador
+}
+
+/**
  * ¿El borrador trae, **en las secciones A–H**, algo distinto de lo hidratado?
  *
  * Las claves del reparto se omiten a propósito: siempre difieren —el servidor

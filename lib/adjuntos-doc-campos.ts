@@ -99,6 +99,19 @@ export interface TablaDerivada {
  * la política Q1 de Héctor (limpiar todo lo que el tipo pudo poblar), consistente
  * con cómo ya se comportan los campos SII compartidos por `foto_fuente_sii` y
  * `certificado_avaluo_fiscal`.
+ *
+ * ⚠ **Excepción deliberada — campos consolidados** (AT03-Ext v5 ·
+ * T-SUPERFICIES-CONSOLIDADAS-20261014). `TX_DatosTasacion.sup_construccion_m2`,
+ * `sup_primer_piso_m2` y `servidumbre_m2` los declaran con `prioridad_destino`
+ * varios tipos (`cuadro_superficies`, `foto_plano_cuadro_superficies`,
+ * `certificado_recepcion_final`, `permiso_edificacion`,
+ * `consulta_antecedentes_bien_raiz`, `inscripcion_dominio_cbr`) y **no están
+ * en este mapa a propósito**: su
+ * valor es el resultado de todos los documentos leídos, no de uno. Limpiarlos al
+ * borrar uno borraría la cifra que los demás siguen respaldando y —como este
+ * cascade no mira `origen_dato`— también la corrección del tasador. Lo que queda
+ * pendiente: si se borra el documento ganador, su cifra se mantiene hasta la
+ * próxima lectura de cualquier documento de la solicitud, que recalcula.
  */
 export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
   foto_fuente_sii: [
@@ -284,6 +297,23 @@ export const CAMPOS_DERIVADOS: Record<string, TablaDerivada[]> = {
       ],
     },
   ],
+
+  // Certificado de Informaciones Previas (DOM) → código de zona del plan
+  // regulador (spec §2.8.1 · atributo `certificado_informaciones_previas__zona`,
+  // reckwOdtBl42cZmAA, 14-oct-2026). Se limpia también el Link `zonificacion`:
+  // lo resuelve el PATCH /datos desde el mismo código, y dejarlo vivo sin código
+  // rompería la regla de que los dos no se contradicen.
+  certificado_informaciones_previas: [
+    {
+      tabla: TABLE_IDS.datosTasacion,
+      tablaLabel: 'Datos de tasación',
+      patron: 'a',
+      campos: [
+        { fieldId: FIELD_IDS_DATOS_TASACION.tipoZonaDescripcion, label: 'Tipo de zona' },
+        { fieldId: FIELD_IDS_DATOS_TASACION.zonificacion, label: 'Zona del catálogo (Link)' },
+      ],
+    },
+  ],
 }
 
 /**
@@ -312,6 +342,9 @@ export function grupoCamposLimpiables(
 
 /* ---------------------------------------------------------------------------
  * Changelog
+ * - v1.4 (14-oct-2026): alta de `certificado_informaciones_previas` → limpia
+ *   `tipo_zona_descripcion` y el Link `zonificacion` en TX_DatosTasacion (patrón a ·
+ *   spec §2.8.1). CASCADE_REGISTRY: +1.
  * - v1.3 (17-sep-2026): alta de tres tipos-fuente H2/H3/H4 (TANDA H1-H4 · Met_6283).
  *   `consulta_antecedentes_bien_raiz` → 3 campos SII en TX_DatosTasacion
  *   (`avaluo_total`·`destino_sii`·`calidad_sii`, patrón a; comparte destino/calidad

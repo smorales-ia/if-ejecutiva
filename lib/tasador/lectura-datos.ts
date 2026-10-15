@@ -38,12 +38,20 @@ import { type AirtableRecord, listRecords } from '@/lib/airtable-client'
 import type {
   Comparable,
   InformeData,
+  ItemValoracion,
   NivelHabitaciones,
   NivelId,
   Recinto,
 } from '@/lib/tasador/tasaciones'
 import { autorizarSolicitud, type SolicitudFields } from './auth-guard'
+import {
+  CALIDAD_CONSTRUCCION_POR_DEFECTO,
+  calidadConstruccionGuardada,
+  estadoConservacionGuardado,
+  estadoConservacionPorDefecto,
+} from './defaults-propiedad'
 import { OPCIONES_CAPTURA, TABLE_IDS } from './field-ids'
+import { proponerCuadro } from './propuesta-cuadro'
 
 type Fields = Record<string, unknown>
 
@@ -213,6 +221,12 @@ export interface DatosCaptura {
   codigo: string
   datos: Partial<InformeData>
   derivados: DerivadosCaptura
+  /**
+   * Claves de `datos` cuyo valor es un **default del sistema** y no algo que el
+   * tasador guardó: alimentan el badge «Pre-llenado · editable» (§5.1). Lo
+   * declara quien construye el valor, no quien lo muestra (P7-TAS.A.3-bis).
+   */
+  prellenados: (keyof InformeData)[]
 }
 
 /**
@@ -241,31 +255,13 @@ export function materialSiiAPredominante(valor: string): string {
   return mapeado
 }
 
-/**
- * Mapa `TX_DatosTasacion.calidad_sii` (texto SII) → escala 1..5 de
- * `calidad_construccion` (P16-TAS). Fuera de dominio: `0` (vacío, igual que el
- * default actual) y se loguea.
+/*
+ * `calidadSiiANumero` (P16-TAS) se retiró el 14-oct-2026: traducía
+ * `calidad_sii` a las estrellas 1–5, que ya no existen. La planilla del cliente
+ * no deriva la calidad constructiva del SII —`[Excel: Antecedentes!H19]` es
+ * siempre `BUENA`—, así que el vacío cae al default de `defaults-propiedad.ts`.
+ * `calidad_sii` sigue llegando al informe por su cuenta («Calidad SII»).
  */
-const CALIDAD_SII_A_NUMERO: Record<string, number> = {
-  'muy inferior': 1,
-  inferior: 2,
-  'media inferior': 2,
-  media: 3,
-  'media superior': 4,
-  superior: 4,
-  'muy superior': 5,
-}
-
-export function calidadSiiANumero(valor: string): number {
-  const clave = valor.trim().toLowerCase()
-  if (clave === '') return 0
-  const mapeado = CALIDAD_SII_A_NUMERO[clave]
-  if (mapeado === undefined) {
-    console.warn(`[P16-TAS] calidad_sii sin mapeo a calidad_construccion: ${JSON.stringify(valor)}`)
-    return 0
-  }
-  return mapeado
-}
 
 /**
  * Proyecta la captura de terreno a partir de la solicitud ya autorizada.
@@ -347,10 +343,10 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
   /*
    * Fallback de sección B a fuentes SII (P16-TAS · Opción A · read-layer).
    *
-   * El pipeline RF-09/SII escribe columnas SII-específicas (`cg`, `calidad_sii`)
-   * y `TX_Unidades`, pero el formulario de captura bindea a las columnas
+   * El pipeline RF-09/SII escribe columnas SII-específicas (`cg`) y
+   * `TX_Unidades`, pero el formulario de captura bindea a las columnas
    * GENÉRICAS de `TX_DatosTasacion` (`sup_construccion_m2`, `material_predominante`,
-   * `calidad_construccion`, `anio_construccion`, `sup_terreno_m2`) que el pipeline
+   * `anio_construccion`, `sup_terreno_m2`) que el pipeline
    * no llena. Sin re-modelar ni tocar el pipeline (R7), la captura toma la fuente
    * SII SÓLO cuando la columna genérica está vacía. La columna genérica siempre
    * gana si trae dato (el tasador ya editó).
@@ -375,9 +371,74 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     texto(d.material_predominante),
     materialSiiAPredominante(primeraUnidadConDato('tipo_material')),
   )
-  const calidadGenerica = texto(d.calidad_construccion)
-  const calidadConstruccion =
-    calidadGenerica !== '' ? Number(calidadGenerica) : calidadSiiANumero(texto(d.calidad_sii))
+
+  /*
+   * Estado de conservación y calidad de construcción: lo guardado gana; si la
+   * columna está vacía, el default de la planilla del cliente, resuelto acá y
+   * declarado en `prellenados` para el badge (spec §2.8.1 · 14-oct-2026).
+   */
+  const prellenados: (keyof InformeData)[] = []
+  let estadoConservacion = estadoConservacionGuardado(d.estado_conservacion)
+  if (estadoConservacion === '') {
+    estadoConservacion = estadoConservacionPorDefecto(s.tipo_propiedad_nuevo_usado)
+    prellenados.push('estadoConservacion')
+  }
+  let calidadConstruccion = calidadConstruccionGuardada(d.calidad_construccion)
+  if (calidadConstruccion === '') {
+    calidadConstruccion = CALIDAD_CONSTRUCCION_POR_DEFECTO
+    prellenados.push('calidadConstruccion')
+  }
+
+  /*
+   * Sección C: lo guardado gana; sin filas en `TX_ItemsCuadroValoracion`, el
+   * cuadro propuesto desde las superficies ya consolidadas de la sección B y
+   * las unidades (spec §2.8.2 · 14-oct-2026). Es determinista, así que abrir
+   * de nuevo la pantalla no duplica nada; deja de proponerse al primer guardado.
+   */
+  let itemsCuadro: ItemValoracion[] = items.map((i) => ({
+    id: i.id,
+    descripcion: texto(i.fields.descripcion),
+    subtipo: texto(i.fields.subtipo),
+    rolSii: texto(i.fields.rol_sii),
+    anioItem: texto(i.fields.anno_construccion),
+    tipo: texto(i.fields.tipo_item),
+    situacionMunicipal: texto(i.fields.situacion_municipal),
+    estado: texto(i.fields.flag_estado),
+    aportaGarantia: Boolean(i.fields.aporta_a_garantia),
+    superficieM2: texto(i.fields.sup_m2),
+    ufM2Unitario: texto(i.fields.uf_m2_unitario),
+    factorAplicado: texto(i.fields.factor_aplicado),
+    materialItem: texto(i.fields.material),
+    origenSuperficie: '',
+  }))
+  if (itemsCuadro.length === 0) {
+    itemsCuadro = proponerCuadro({
+      supTerreno,
+      servidumbreM2: texto(d.servidumbre_m2),
+      supConstruida,
+      supPrimerPiso: texto(d.sup_primer_piso_m2),
+      pisos: texto(d.pisos),
+      anioConstruccion,
+      materialPredominante,
+      estadoConservacion,
+      recepcionFinalNumero: texto(l.recepcion_final_numero),
+      unidades: [...unidades]
+        .sort((a, b) => Number(a.fields.orden ?? 0) - Number(b.fields.orden ?? 0))
+        .map((u) => ({
+          subtipo: texto(u.fields.subtipo),
+          rolSii: texto(u.fields.rol_sii),
+          supM2: texto(u.fields.sup_m2),
+          anioConstruccion: texto(u.fields.anio_construccion),
+          tipoMaterial: texto(u.fields.tipo_material),
+          origenSuperficie: texto(u.fields.origen_superficie),
+          numeroUnidad: texto(u.fields.numero_unidad),
+          detalleItem: texto(u.fields.detalle_item),
+          conRolOUsoYGoce: texto(u.fields.con_rol_o_uso_y_goce),
+          esPrincipal: u.fields.es_principal === true,
+        })),
+    })
+    if (itemsCuadro.length > 0) prellenados.push('items')
+  }
 
   return {
     codigo,
@@ -394,7 +455,7 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       supConstruida,
       supPrimerPiso: texto(d.sup_primer_piso_m2),
       anioConstruccion,
-      estadoConservacion: texto(d.estado_conservacion),
+      estadoConservacion,
       agrupacionPropiedad: texto(d.agrupacion_propiedad),
       materialPredominante,
       calidadConstruccion,
@@ -409,31 +470,18 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       rolesBodegas: texto(d.roles_bodegas),
       servidumbreM2: texto(d.servidumbre_m2),
       velocidadVenta: texto(d.velocidad_venta_estimada),
-      /* Tipo de zona (P17-TAS · item 2a): el formulario lee texto libre de
-         `tipo_zona_descripcion`; si está vacío, cae al urbano/rural que el SII
-         escribe en `ubicacion_urbano_rural`. */
-      tipoZona: primerNoVacio(texto(d.tipo_zona_descripcion), texto(d.ubicacion_urbano_rural)),
+      /* Tipo de zona: el **código** de zona del plan regulador («IPB») que
+         guarda `tipo_zona_descripcion` (spec §2.8.1 · 14-oct-2026). Ya no cae a
+         `ubicacion_urbano_rural` (P17-TAS · item 2a): «urbano» no es una zona
+         y el PDF lo habría impreso como «urbano(Colina)». La pantalla recorta
+         la comuna de las filas viejas con `codigoDeZona`. */
+      tipoZona: texto(d.tipo_zona_descripcion),
       /* DFL2 (P17-TAS · item 1): `TX_DatosTasacion.dfl2` es fórmula ('SI'/'NO');
          el switch es boolean. Se cablea acá. El PATCH no reescribe la fórmula
          (no está en `camposDatosTasacion`). */
       dfl2: texto(d.dfl2) === 'SI',
-      /* --- C --- */
-      items: items.map((i) => ({
-        id: i.id,
-        descripcion: texto(i.fields.descripcion),
-        subtipo: texto(i.fields.subtipo),
-        rolSii: texto(i.fields.rol_sii),
-        anioItem: texto(i.fields.anno_construccion),
-        tipo: texto(i.fields.tipo_item),
-        situacionMunicipal: texto(i.fields.situacion_municipal),
-        estado: texto(i.fields.flag_estado),
-        aportaGarantia: Boolean(i.fields.aporta_a_garantia),
-        superficieM2: texto(i.fields.sup_m2),
-        ufM2Unitario: texto(i.fields.uf_m2_unitario),
-        factorAplicado: texto(i.fields.factor_aplicado),
-        materialItem: texto(i.fields.material),
-        origenSuperficie: '',
-      })),
+      /* --- C (guardado, o propuesto si no hay filas) --- */
+      items: itemsCuadro,
       /*
        * --- D ---
        * Sección de **sólo lectura** desde A-13: la pantalla no captura
@@ -489,6 +537,7 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       supConstruidaTotal: texto(d.sup_construida_total),
       ingresoLiquidoAnual: texto(d.ingreso_liquido_anual),
     },
+    prellenados,
   }
 }
 

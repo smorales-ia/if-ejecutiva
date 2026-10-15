@@ -1,0 +1,20 @@
+{
+ "t0": "2026-10-15T02:15:12.467Z",
+ "pre": {
+  "sup_construccion_m2": 249.91,
+  "sup_primer_piso_m2": 249.91,
+  "servidumbre_m2": 3622.51,
+  "origen_dato": "extraido_rf09"
+ },
+ "post": {
+  "sup_construccion_m2": 249.91,
+  "sup_primer_piso_m2": 249.91,
+  "servidumbre_m2": 3622.51,
+  "origen_dato": "extraido_rf09"
+ },
+ "log": {
+  "creado": "2026-10-15T02:15:22.000Z",
+  "titulo": "AT03-Ext · propagación (0 ok · 5 skip · 0 err)",
+  "detalle": "adjunto_id=recCjcimhqQMFrQjM · tipo_documento=cuadro_superficies · superficie_primer_piso_m2: consolidable (prioridad 10) → se decide en la consolidación | superficie_construida_m2: consolidable (prioridad 10) → se decide en la consolidación | superficie_terreno_m2: no declarado en D_TipoDocumentoAtributo para \"cuadro_superficies\" — skip | superficie_servidumbre_m2: consolidable (prioridad 10) → se decide en la consolidación | superficie_util_m2: no declarado en D_TipoDocumentoAtributo para \"cuadro_superficies\" — skip | consolidación TX_DatosTasacion.sup_primer_piso_m2: sin_cambios — ganador 249.91 (cuadro_superficies · prioridad 10 · adjunto recCjcimhqQMFrQjM · 1 candidato(s)), actual \"249.91\" | consolidación TX_DatosTasacion.servidumbre_m2: sin_cambios — ganador 3622.51 (cuadro_superficies · prioridad 10 · adjunto recCjcimhqQMFrQjM · 1 candidato(s)), actual \"3622.51\" | consolidación TX_DatosTasacion.sup_construccion_m2: sin_cambios — ganador 249.91 (cuadro_superficies · prioridad 10 · adjunto recCjcimhqQMFrQjM · 3 candidato(s)), actual \"249.91\""
+ }
+}

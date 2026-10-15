@@ -33,6 +33,7 @@ import {
   combinarConBorrador,
   debeOfrecerRecuperacion,
   difiereEnSecciones,
+  recuperarBorrador,
   soloClavesDeBorrador,
 } from './recuperacion-borrador'
 import { VERSION_BORRADOR, type MetaBorrador } from './tasador-store'
@@ -361,5 +362,34 @@ describe('borradorAportaContenido', () => {
     // documento, que es justamente el ruido que el reparto evita.
     const conDocs = servidor({ documentosCargados: { escritura: [1] } })
     expect(borradorAportaContenido(servidor(), conDocs)).toBe(false)
+  })
+})
+
+/* -------------------------------------------------------------------------
+ * recuperarBorrador · cuadro de valoración pre-llenado (spec §2.8.2)
+ * ---------------------------------------------------------------------- */
+
+describe('recuperarBorrador', () => {
+  const propuesto = servidor({ items: [{ id: 'it-prop-1', descripcion: 'Terreno', superficieM2: '1402.35' }] })
+
+  it('un borrador con items: [] conserva el cuadro pre-llenado y trae lo demás del borrador', () => {
+    const borrador = borradorEnBlanco({ supConstruida: '249.91' })
+    const r = recuperarBorrador(propuesto, borrador, ['items'])
+    expect(r.items).toEqual(propuesto.items)
+    expect(r.supConstruida).toBe('249.91')
+  })
+
+  it('si el borrador trae ítems, ganan los del tasador', () => {
+    const borrador = borradorEnBlanco({ items: [{ id: 'it-new-1', descripcion: 'Piscina' }] })
+    expect(recuperarBorrador(propuesto, borrador, ['items']).items).toEqual(borrador.items)
+  })
+
+  it('con un cuadro guardado (no pre-llenado) el borrador se recupera tal cual', () => {
+    const borrador = borradorEnBlanco()
+    expect(recuperarBorrador(servidor(), borrador, [])).toBe(borrador)
+  })
+
+  it('un items: [] del borrador no cuenta como contenido: no ofrece pisar el cuadro propuesto', () => {
+    expect(borradorAportaContenido(propuesto, borradorEnBlanco())).toBe(false)
   })
 })

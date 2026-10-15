@@ -413,6 +413,27 @@ describe('construirInformeContexto · golden VP-2026-0066', () => {
     expect(c.tasacionVsPct).toBeCloseTo(-2.9826, 3)
   })
 
+  it('zona: guarda «IPB» e imprime «IPB(Colina)» como Impresion!X15 (§2.8.1)', async () => {
+    const conZona = fila(DATOS_0066.id, { ...DATOS_0066.fields, tipo_zona_descripcion: 'IPB' })
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.datosTasacion ? [conZona] : (TABLAS_0066[tableId] ?? []),
+    )
+
+    const { propiedad } = await contexto0066()
+    expect(propiedad.comuna).toBe('Colina')
+    expect(propiedad.tipoZonaDescripcion).toBe('IPB(Colina)')
+  })
+
+  it('zona tecleada con la comuna antes de §2.8.1 no la duplica: «IPB (Colina)» → «IPB(Colina)»', async () => {
+    const vieja = fila(DATOS_0066.id, { ...DATOS_0066.fields, tipo_zona_descripcion: 'IPB (Colina)' })
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.datosTasacion ? [vieja] : (TABLAS_0066[tableId] ?? []),
+    )
+
+    const { propiedad } = await contexto0066()
+    expect(propiedad.tipoZonaDescripcion).toBe('IPB(Colina)')
+  })
+
   it('columna US$ de terminales: CLP ÷ dólar del día (890,33 · XLSM BO71)', async () => {
     const { terminales } = await contexto0066()
     expect(terminales.usdDia).toBeCloseTo(890.33, 2)

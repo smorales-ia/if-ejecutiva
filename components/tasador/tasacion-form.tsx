@@ -22,6 +22,7 @@ import { leyendaGuardado, useGuardado } from "@/lib/tasador/use-guardado"
 import {
   combinarConBorrador,
   debeOfrecerRecuperacion,
+  recuperarBorrador,
   soloClavesDeBorrador,
 } from "@/lib/tasador/recuperacion-borrador"
 import { BannerRecuperacion } from "@/components/tasador/banner-recuperacion"
@@ -35,6 +36,7 @@ import {
 } from "@/components/ui/tooltip"
 import { Section, TextField, FormModoConsultaContext } from "@/components/tasador/form-sections/fields"
 import { SeccionPropiedad, type SetForm } from "@/components/tasador/form-sections/seccion-propiedad"
+import type { ZonaCatalogo } from "@/lib/tasador/zona"
 import { SeccionValoracion } from "@/components/tasador/form-sections/seccion-valoracion"
 import {
   SeccionComparables,
@@ -63,6 +65,8 @@ type Faltante = { label: string; seccion: Seccion; detalle?: string }
 export function TasacionForm({
   tasacion,
   informeInicial,
+  prellenados = [],
+  zonas = [],
 }: {
   tasacion: Tasacion
   /**
@@ -72,6 +76,10 @@ export function TasacionForm({
    * traiga los datos del tasador, sin carrera entre hidratación y tecleo.
    */
   informeInicial: InformeData
+  /** Claves de `informeInicial` que son default del servidor, no dato guardado. */
+  prellenados?: readonly (keyof InformeData)[]
+  /** Zonas de `M_Zonificacion` para la comuna de la solicitud (§2.8.1). */
+  zonas?: readonly ZonaCatalogo[]
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -126,10 +134,11 @@ export function TasacionForm({
      apagado: no hay nada que guardar y escribir pisaría el borrador real. */
   const guardado = useGuardado(tasacion.id, form, { activo: !consulta })
 
-  const recuperarBorrador = useCallback(() => {
-    if (borradorInicial) setForm(borradorInicial)
+  const recuperar = useCallback(() => {
+    // Un `items: []` del borrador no vacía el cuadro pre-llenado (spec §2.8.2).
+    if (borradorInicial) setForm(recuperarBorrador(informeInicial, borradorInicial, prellenados))
     setOfrecerRecuperacion(false)
-  }, [borradorInicial])
+  }, [borradorInicial, informeInicial, prellenados])
 
   /**
    * Descarta las secciones A–H y vuelve a lo hidratado, **resembrando lo que
@@ -346,7 +355,7 @@ export function TasacionForm({
         {/* Borrador local sin enviar (P7-TAS.A.3) */}
         {ofrecerRecuperacion && (
           <BannerRecuperacion
-            onRecuperar={recuperarBorrador}
+            onRecuperar={recuperar}
             onDescartar={descartarBorrador}
           />
         )}
@@ -460,7 +469,14 @@ export function TasacionForm({
             open={openSections.B}
             onOpenChange={setOpen("B")}
           >
-            <SeccionPropiedad form={form} set={set} tipo={tasacion.tipo} />
+            <SeccionPropiedad
+              form={form}
+              set={set}
+              tipo={tasacion.tipo}
+              prellenados={prellenados}
+              comuna={tasacion.comuna}
+              zonas={zonas}
+            />
           </Section>
 
           {/* C. Cuadro de valoración */}
@@ -476,7 +492,11 @@ export function TasacionForm({
               </span>
             }
           >
-            <SeccionValoracion form={form} set={set} />
+            <SeccionValoracion
+              form={form}
+              set={set}
+              prellenado={prellenados.includes("items")}
+            />
           </Section>
 
           {/* D. Comparables */}

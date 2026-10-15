@@ -14,7 +14,7 @@
 | Informe | https://if-ejecutiva-production.up.railway.app/tasaciones/rec6XubOR92X6gnOH/informe |
 | Archivos | `docs/_artefactos/carbone/assets_met6283/` y `docs/_referencias/Met_6283/` |
 
-## Estado al cerrar (14-oct-2026, ~20:30)
+## Estado al cerrar (15-oct-2026, ~01:00)
 
 | Etapa | Estado |
 |---|---|
@@ -22,23 +22,47 @@
 | 2 · Asignar tasador | ✅ (13-oct) · regla del motor corregida a `REGLA_REFI_CASA_V32` |
 | 3 · Coordinar visita | ✅ confirmada · visita 13/04/2026 |
 | 4 · 13 documentos | ✅ 13/13 en el checklist |
-| 5 · 21 fotos | ✅ 21 fotos (detalle abajo) |
+| 5 · 21 fotos | ✅ 21 fotos; F21 (cuadro de comparables) en «Datos de Comparables» |
 | 6 · Lectura | ✅ «Datos listos» · 7 comparables leídos y correctos |
-| 7 · Formulario A–H | 🟡 **en curso** · A hecha (sólo en el borrador local), B sin empezar |
+| 7 · Formulario A–H | 🔴 **hay que rehacerla** · A y B se cargaron completas el 14-oct, pero el borrador local se reescribió vacío el 15-oct 00:28 (otra sesión abrió el mismo formulario en el navegador para probar). Sólo quedan las superficies, que ya vienen del servidor |
 | 8 · Calcular | ⏳ |
 | 9 · Informe y PDF | ⏳ |
 
-**Qué está en el servidor y qué no.** Documentos, fotos, comparables y coordinación están en
-Airtable. El formulario (Etapa 7) se guarda **sólo en el navegador** (`localStorage`
-`vp.tasador.informe.rec6XubOR92X6gnOH`) hasta presionar «Calcular Tasación». Al volver, si la
-pantalla muestra «Tienes cambios guardados en este dispositivo que aún no se enviaron», presionar
-**Recuperar** (nunca «Descartar»). Si el borrador no está, basta reescribir la fecha real de visita.
+**Qué está en el servidor y qué no.** Documentos, fotos, comparables, coordinación y (desde el
+15-oct) superficies y servidumbre consolidadas están en Airtable. El resto del formulario (Etapa 7)
+se guarda **sólo en el navegador** (`localStorage` `vp.tasador.informe.rec6XubOR92X6gnOH`) hasta
+presionar «Calcular Tasación», y ya se perdió dos veces. **Regla: la Etapa 7 se hace de una sola
+vez, de la sección A hasta «Calcular Tasación», sin cerrar ni recargar, y sin que ninguna otra
+sesión abra este formulario mientras tanto.** Si aparece «Tienes cambios guardados en este
+dispositivo…», **Recuperar** (nunca «Descartar»).
+
+## Antes de retomar: deploy pendiente (15-oct)
+
+Quedaron sin commit, verificados en conjunto (`tsc` limpio · 1233 tests · `next build` limpio),
+cuatro mejoras que cambian la Etapa 7:
+
+| Mejora | Qué cambia en el formulario |
+|---|---|
+| Superficies desde documentos (AT03-Ext v5, ya pegado en Airtable) | Sup. construida, Sup. primer piso y Servidumbre llegan solas: 249.91 · 249.91 · 3622.51 |
+| Estado y calidad con listas del Excel | «Estado conservación» y «Calidad de construcción» son listas, por defecto **BUENO** y **BUENA**; sin estrellas |
+| Zona del plano regulador | «Tipo de zona» ofrece las 41 zonas de Colina y permite escribir «IPB»; el informe imprime «IPB(Colina)» |
+| Cuadro de valoración precargado | La sección C llega con 3 ítems (Terreno 1402.35 · Servidumbre 3622.51 · Piso 1 249.91); el tasador pone UF/m² (8 · 0 · 34), el factor 0.96 del Piso 1 y agrega los ítems 4–6 |
+
+✅ **Cambio de Airtable aplicado el 15-oct-2026** (schema-airtable.md §29) — ya se puede desplegar.
+Era: `TX_DatosTasacion.calidad_construccion` (`fldfZDyTviOWosDUj`) pasar de número a selección
+única (DEFICIENTE · INFERIOR · REGULAR · CORRIENTE · BUENA · SUPERIOR, a mano en la UI de Airtable),
+las 3 filas con `4` (`rec8IZCGuxOJrLK4K`, `recBbQpuKWkraBddM`, `recgocyqE9BJzoHc4`) a BUENA, y agregar
+NORMAL, MALO y DEFICIENTE a `estado_conservacion`.
 
 ## Cómo retomar
 
-1. Abrir el formulario (URL arriba) con la cuenta del tasador. Si aparece el aviso, **Recuperar**.
-2. Comprobar en la sección A que «Fecha real de visita» diga `13/04/2026`; si no, escribir `13042026`.
-3. Seguir con la sección B (abajo). Pedirle a Claude que verifique cada sección antes de pasar a la siguiente.
+1. Confirmar que el deploy de las 4 mejoras está en producción (y el cambio de Airtable hecho).
+2. Abrir el formulario con la cuenta del tasador (`nutricionsaludketo@gmail.com`). Si la sesión
+   expiró, iniciar sesión en el navegador de Claude. Pedirle a Claude que lea el borrador y lo que
+   ya trae el servidor.
+3. Rehacer la Etapa 7 completa de una vez, en este orden: A → B → F → G → H → E → C → revisar →
+   «Calcular Tasación». Claude verifica cada sección leyendo el borrador antes de seguir. Con las
+   mejoras, en B ya vienen superficies, servidumbre, estado y calidad; revisar que digan lo esperado.
 
 ## Etapa 7 · valores que faltan (de la guía, ya ajustados)
 
@@ -52,13 +76,13 @@ Los campos numéricos del tasador van con **punto decimal** (`249.91`). Las fech
 | Campo | Valor | Ya trae |
 |---|---|---|
 | Sup. terreno | 5024.86 | ✓ |
-| Sup. construida * | 249.91 | |
-| Sup. primer piso | 249.91 | |
+| Sup. construida * | 249.91 | ✓ desde el Cuadro de superficie (15-oct) |
+| Sup. primer piso | 249.91 | ✓ desde el Cuadro de superficie (15-oct) |
 | Año construcción * | 2024 | ✓ |
-| Estado conservación * | Bueno | |
+| Estado conservación * | BUENO (lista) | por defecto tras el deploy |
 | Agrupación * | Condominio | |
 | Material predominante * | Albañilería | ✓ |
-| Calidad de construcción | 4 estrellas (Buena) | |
+| Calidad de construcción | BUENA (lista, sin estrellas) | por defecto tras el deploy |
 | N° pisos | 1 | |
 | Subterráneos | 0 | |
 | Nombre edificio | (vacío) | |
@@ -71,12 +95,15 @@ Los campos numéricos del tasador van con **punto decimal** (`249.91`). Las fech
 | Baño de servicio | 1 | |
 | Estacionamientos | 0 | |
 | Roles SII estac. / Bodegas / Roles bodegas | (vacío) / 0 / (vacío) | |
-| Servidumbre (m²) | 3622.51 | |
+| Servidumbre (m²) | 3622.51 | ✓ desde el Cuadro de superficie (15-oct) |
 | DFL2 | apagado | |
 | Velocidad de venta | 8 a 10 meses | |
-| Tipo de zona | **IPB(Colina)** | trae «rural»: reemplazar |
+| Tipo de zona | **IPB** (escribirla en la lista de zonas de Colina; el informe imprime «IPB(Colina)») | sin el deploy: escribir `IPB(Colina)` y borrar «rural» |
 
-**C · Cuadro de valoración** — «Agregar ítem» hasta 6. Total esperado **UF 20.125,86**.
+**C · Cuadro de valoración** — tras el deploy llegan precargados los ítems 1–3 (superficies, rol,
+situación, origen, factor 1); completar UF/m² (8 · 0 · 34), el factor **0.96** del Piso 1, el año
+2024 de Servidumbre si se quiere igual al original, y agregar los ítems 4–6. Total esperado
+**UF 20.125,86**.
 
 | Campo | 1 | 2 | 3 | 4 | 5 | 6 |
 |---|---|---|---|---|---|---|

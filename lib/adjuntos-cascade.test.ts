@@ -36,7 +36,7 @@ import {
   purgarDerivadosCapturados,
   type DerivadoCascade,
 } from '@/lib/adjuntos-cascade'
-import { TABLE_IDS } from '@/lib/tasador/field-ids'
+import { FIELD_IDS_DATOS_TASACION, TABLE_IDS } from '@/lib/tasador/field-ids'
 import { CAMPOS_DERIVADOS } from '@/lib/adjuntos-doc-campos'
 
 const ADJUNTO = 'recADJ00000000001'
@@ -101,14 +101,15 @@ describe('CASCADE_REGISTRY', () => {
     })
   })
 
-  it('incluye las 11 entradas de campos (a/c) derivadas del mapa §28', () => {
+  it('incluye las 12 entradas de campos (a/c) derivadas del mapa §28', () => {
     const campos = CASCADE_REGISTRY.filter((e) => e.patron !== 'b')
     // foto_fuente_sii(3) + certificado_avaluo_fiscal(2) + escritura_compraventa(1)
     //   + permiso_edificacion(1) + certificado_recepcion_final(1)
     //   + consulta_antecedentes_bien_raiz(1) + informe_no_expropiacion_serviu(1)
     //   + inscripcion_dominio_cbr(1)  [TANDA H1-H4]
-    expect(campos).toHaveLength(11)
-    expect(CASCADE_REGISTRY).toHaveLength(12)
+    //   + certificado_informaciones_previas(1)  [§2.8.1 · 14-oct-2026]
+    expect(campos).toHaveLength(12)
+    expect(CASCADE_REGISTRY).toHaveLength(13)
   })
 })
 
@@ -269,6 +270,18 @@ describe('capturarDerivadosDeAdjunto · patrones a/c por tipo de documento', () 
     const dt = capturados.find((c) => c.tabla === TABLE_IDS.datosTasacion)!
     expect((dt as Extract<DerivadoCascade, { op: 'limpiar' }>).campos).toHaveLength(3)
     expect(capturados.some((c) => c.tabla === TABLE_IDS.documentosLegales)).toBe(false)
+  })
+
+  it('certificado_informaciones_previas (§2.8.1) → DatosTasacion (zona + Link zonificacion)', async () => {
+    conClave('certificado_informaciones_previas')
+    listRecordsPorTabla({ [TABLE_IDS.datosTasacion]: [{ id: 'recDT1' }] })
+
+    const capturados = await capturarDerivadosDeAdjunto(ADJUNTO, CTX)
+    const dt = capturados.find((c) => c.tabla === TABLE_IDS.datosTasacion)!
+    expect((dt as Extract<DerivadoCascade, { op: 'limpiar' }>).campos).toEqual([
+      FIELD_IDS_DATOS_TASACION.tipoZonaDescripcion,
+      FIELD_IDS_DATOS_TASACION.zonificacion,
+    ])
   })
 
   it('tipo cableado sin destino (certificado_deuda_tgr · H1) → no captura nada', async () => {

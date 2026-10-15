@@ -103,7 +103,9 @@ import {
   proyectarDatosCaptura,
   TIPO_RECINTO,
 } from '@/lib/tasador/lectura-datos'
+import { nombreDeComuna } from '@/lib/tasador/lectura-tasacion'
 import { desdeExcepcion, desdeGuard, error, ok } from '@/lib/tasador/respuestas'
+import { resolverZona } from '@/lib/tasador/zonificacion'
 import {
   CAMPOS_SIN_DESTINO,
   type DatosPatch,
@@ -257,7 +259,8 @@ function camposDatosTasacion(b: DatosPatch): Fields {
   poner('roles_bodegas', b.rolesBodegas)
   poner('servidumbre_m2', b.servidumbreM2)
   poner('velocidad_venta_estimada', b.velocidadVenta)
-  poner('tipo_zona_descripcion', b.tipoZona)
+  // `tipo_zona_descripcion` y el Link `zonificacion` van aparte: dependen de la
+  // comuna de la solicitud y del catálogo. Ver `camposZona`.
   poner('n_cert_no_expropiacion', b.nCertificadoNoExpropiacion)
   poner('lat', b.coordenadasLat)
   poner('long', b.coordenadasLng)
@@ -265,6 +268,25 @@ function camposDatosTasacion(b: DatosPatch): Fields {
   poner('arriendo_mensual', b.arriendoBrutoClp)
   poner('gasto_anual', b.gastoAnualClp)
 
+  return f
+}
+
+/**
+ * Zona del plan regulador (spec §2.8.1 · 14-oct-2026): el tasador manda el
+ * código («IPB»); se guarda el código normalizado en `tipo_zona_descripcion` y
+ * el Link `zonificacion` a la fila de `M_Zonificacion` de la comuna de la
+ * solicitud, o vacío si el código no está en el catálogo. La comuna **no** se
+ * guarda acá: el PDF la agrega al imprimir (`componerZona`).
+ *
+ * Sin `tipoZona` en el payload no se consulta nada.
+ */
+async function camposZona(b: DatosPatch, solicitud: Fields): Promise<Fields> {
+  if (b.tipoZona === undefined) return {}
+  const comuna = await nombreDeComuna(solicitud.comuna)
+  const { codigo, zonificacionId } = await resolverZona(b.tipoZona, comuna)
+  const f: Fields = { tipo_zona_descripcion: codigo }
+  // `undefined` = el catálogo no se pudo leer: el Link no se toca.
+  if (zonificacionId !== undefined) f.zonificacion = zonificacionId ? [zonificacionId] : []
   return f
 }
 
@@ -327,7 +349,10 @@ export async function PATCH(
 
   try {
     /* --- TX_DatosTasacion · upsert ------------------------------------- */
-    const camposDatos = camposDatosTasacion(b)
+    const camposDatos = {
+      ...camposDatosTasacion(b),
+      ...(await camposZona(b, guard.fields as Fields)),
+    }
     if (Object.keys(camposDatos).length > 0) {
       const existentes = await filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo)
       const fila = existentes[0]

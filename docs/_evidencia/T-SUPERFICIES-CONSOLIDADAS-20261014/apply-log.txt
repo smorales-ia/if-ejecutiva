@@ -1,0 +1,4 @@
+campo creado: prioridad_destino fldZQerXw4OlV49gE
+filas actualizadas: recCVWjNUqzmTR18p, rec6Jnf60VOTu5A1v, rec0ynQAxHSnHTgxf, recMQUmmXhGO8yRLN, recttREVvVZKHTcfL
+filas creadas: reckCXKExv9eFTtSC cuadro_superficies__superficie_construida_m2, recBNVQScWGDlceTt cuadro_superficies__superficie_primer_piso_m2fila actualizada: recW3GHYmCMx6w0h4 inscripcion_dominio_cbr Â· superficie_servidumbre_m2 â†’ servidumbre_m2 Â· 30
+filas creadas: reccfpdVuFKoq7TMS cuadro_superficies__superficie_servidumbre_m2, recRW7cZY3rSvKtLt plano_cuadro_superficies__superficie_servidumbre_m2

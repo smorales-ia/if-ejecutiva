@@ -75,6 +75,10 @@ import {
   type AnexoResuelto,
 } from '@/lib/informe/imagenes'
 import { autorizarSolicitud, type ResultadoGuard } from '@/lib/tasador/auth-guard'
+import {
+  calidadConstruccionGuardada,
+  estadoConservacionGuardado,
+} from '@/lib/tasador/defaults-propiedad'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 
 type Fields = Record<string, unknown>
@@ -578,8 +582,8 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
         supConstruidaTotal: numeroONull(d.sup_construida_total),
         anioConstruccion: numeroONull(d.anio_construccion),
         materialPredominante: texto(d.material_predominante),
-        calidadConstruccion: numeroONull(d.calidad_construccion),
-        estadoConservacion: texto(d.estado_conservacion),
+        calidadConstruccion: calidadConstruccionGuardada(d.calidad_construccion),
+        estadoConservacion: estadoConservacionGuardado(d.estado_conservacion),
         agrupacion: texto(d.agrupacion_propiedad),
         dormitorios: numeroONull(d.dormitorios),
         banos: numeroONull(d.banos),

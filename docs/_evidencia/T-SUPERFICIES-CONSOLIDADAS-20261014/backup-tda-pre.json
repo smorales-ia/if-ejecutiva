@@ -1,0 +1,68 @@
+[
+ {
+  "id": "rec0ynQAxHSnHTgxf",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Construida",
+   "orden": 6,
+   "codigo": "certificado_recepcion_final__superficie_construida_m2",
+   "tipo_documento": [
+    "rec8dQ3tS2Qpd2paE"
+   ],
+   "codigo_atributo": "superficie_construida_m2"
+  }
+ },
+ {
+  "id": "rec6Jnf60VOTu5A1v",
+  "createdTime": "2026-07-01T14:31:17.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Primer Piso",
+   "orden": 10,
+   "codigo": "plano_cuadro_superficies__superficie_primer_piso_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_primer_piso_m2"
+  }
+ },
+ {
+  "id": "recCVWjNUqzmTR18p",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Total",
+   "orden": 9,
+   "codigo": "plano_cuadro_superficies__superficie_construida_m2",
+   "tipo_documento": [
+    "recI956uiWb8FX47M"
+   ],
+   "codigo_atributo": "superficie_construida_m2",
+   "obligatorio": true
+  }
+ },
+ {
+  "id": "recMQUmmXhGO8yRLN",
+  "createdTime": "2026-07-01T01:33:54.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie a Construir",
+   "orden": 6,
+   "codigo": "permiso_edificacion__superficie_construida_m2",
+   "tipo_documento": [
+    "recibSR1tfKZKcnOA"
+   ],
+   "codigo_atributo": "superficie_construida_m2"
+  }
+ },
+ {
+  "id": "recttREVvVZKHTcfL",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Construida",
+   "orden": 12,
+   "codigo": "consulta_antecedentes_bien_raiz__superficie_construida_m2",
+   "tipo_documento": [
+    "recvGwhwO8gdnSFQE"
+   ],
+   "codigo_atributo": "superficie_construida_m2"
+  }
+ }
+]

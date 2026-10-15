@@ -40,8 +40,38 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
                       las referencias»; el cambio es sólo de pantalla:
                       claves, recuadros y pies de foto del PDF no cambian.
                       §10 · entra **RNF-23**, formato único de fecha
-                      `dd/mm/aaaa` en todas las UI. Sucede a 1.9.17, que
-                      queda SUPERSEDED.
+                      `dd/mm/aaaa` en todas las UI. §4.3.4 (agregado el
+                      mismo 14-oct-2026, decisión de Sergio ·
+                      T-SUPERFICIES-CONSOLIDADAS-20261014) · la superficie
+                      construida, la de primer piso y la servidumbre se
+                      obtienen de todo
+                      documento del checklist que las traiga, por
+                      **consolidación con precedencia** (campo nuevo
+                      `D_TipoDocumentoAtributo.prioridad_destino`), con un
+                      solo valor almacenado e idempotencia. §2.8 · §2.8.1
+                      (agregado el mismo 14-oct-2026, decisión de Sergio ·
+                      réplica MET-6283) · «Estado conservación» y «Calidad
+                      de construcción» de la sección B se capturan con
+                      listas desplegables con los valores de la planilla
+                      del cliente y llegan pre-llenadas (`BUENO` /
+                      `BUENA`); **se retiran las estrellas** y
+                      `calidad_construccion` pasa de número a texto.
+                      §2.8.1 (agregado el mismo 14-oct-2026 · réplica
+                      MET-6283) · «Tipo de zona» de la sección B se
+                      elige de una lista con las zonas de la comuna
+                      (`M_Zonificacion`) o se escribe otra; se guarda
+                      el **código** y el Link `zonificacion`, y el PDF
+                      imprime `CODIGO(Comuna)` como la planilla. Sin
+                      cambios de schema.
+                      §2.8.2 (agregado el mismo 14-oct-2026 · réplica
+                      MET-6283, pedido de Sergio) · la sección C
+                      «Cuadro de valoración» llega **pre-llenada** cuando
+                      la solicitud no tiene ítems guardados: filas de
+                      terreno, servidumbre, edificación y unidades con
+                      sus superficies, rol, año, material, estado y
+                      situación desde la base; el UF/m² queda al
+                      tasador (RF-TAS-24). Sin cambios de schema.
+                      Sucede a 1.9.17, que queda SUPERSEDED.
 
                       1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
                       Sección D de comparables espeja el cuadro
@@ -2878,6 +2908,32 @@ El quinto atributo de cada recinto, **material o marca**, no es capturable: se *
 
 **Anexo de estado de conservación.** Treinta y ocho filas de inspección, todas pre-llenadas con la misma terna `Bueno / Ninguno / Funcionando` `[Excel: Estado Conservación!A7:W46]`, sobre los catálogos `Bueno · Normal · Regular · Deficiente · Malo`, `Ninguno · Leve · Mediano · Grave · Total` y `Funcionando · Media Función · No Operativo`. La materialidad de cada fila no se captura: se hereda de los elementos fundamentales y de los elementos "otros" ya declarados arriba.
 
+**Estado de conservación y calidad de construcción del inmueble (sección B · v1.9.18, 14-oct-2026).** Los dos campos de la sección B que la plantilla resuelve en la hoja de antecedentes tampoco se despachan en blanco, y **no se capturan con estrellas**: el tasador elige de una lista desplegable con los valores exactos de la planilla, y el valor elegido es el que se guarda, el que muestra la vista previa y el que imprime el PDF.
+
+  -------------------------------------------------------------------------------------------
+  **Campo**                 **Default**                   **Catálogo**
+  ------------------------- ----------------------------- -----------------------------------
+  Estado de conservación    `BUENO` en propiedad usada;   `NUEVO - S/USO · BUENO · NORMAL ·
+                            `NUEVO - S/USO` en nueva      MALO · DEFICIENTE`
+                            `[Excel: Antecedentes!Z15]`   `[Excel: Antecedentes!Z15]`
+
+  Calidad de construcción   `BUENA`, sin ramificar        `DEFICIENTE · INFERIOR · REGULAR ·
+                            `[Excel: Antecedentes!H19]`   CORRIENTE · BUENA · SUPERIOR`
+                                                          `[Excel: Antecedentes!H19]`
+  -------------------------------------------------------------------------------------------
+
+El default se resuelve server-side al abrir la Pantalla 5, sólo cuando `TX_DatosTasacion` no trae valor; un estado de uso no declarado se trata como usada. Lleva el badge "Pre-llenado · editable" hasta que el tasador lo cambia, y es un valor real: viaja en el guardado como cualquier otro. Las celdas son las que la Portada imprime como «Estado de conservación» y «Calidad constructiva» `[Excel: Impresion!AY172 · L176]`. La calidad **no se deriva de `calidad_sii`**: la planilla no lo hace, y la calidad SII sigue saliendo en el informe por su cuenta. Destinos: `TX_DatosTasacion.estado_conservacion` (`fldhX4EAdJzJ32slY`, singleSelect) y `TX_DatosTasacion.calidad_construccion` (`fldfZDyTviOWosDUj`), que **pasa de número (estrellas 1–5) a texto** con el catálogo de arriba; el motor AT03 ya lo leía como texto para el lookup de UF/m² nuevo (default `BUENA`). Estos dos catálogos viven hoy en el código de IF-03 (`OPCIONES`) y no en `C_DefaultsAntecedentes`, a diferencia de RF-TAS-08: llevarlos a esa tabla es trabajo de schema pendiente.
+
+**Zona de la propiedad (sección B · v1.9.18, 14-oct-2026).** La planilla separa el dato de su impresión: el tasador escribe sólo el código de zona del plan regulador `[Excel: Portada!AA21]` —con una lista desplegable de las zonas de la comuna, el nombre `ZoneVal` sobre la hoja `Zonificacion`— y la hoja de impresión le agrega la comuna `[Excel: Impresion!X15 = AA21 & "(" & comuna & ")"]`, de modo que MET-6283 imprime «IPB(Colina)». IF-03 lo replica así:
+
+- **Captura.** El campo «Tipo de zona» ofrece las zonas de la comuna de la solicitud leídas de `M_Zonificacion` y **admite escribir otra**, porque el catálogo está incompleto (Colina no trae `IPB`, la zona de MET-6283). El tasador no escribe la comuna; el campo muestra debajo lo que se imprimirá. Si la comuna no tiene zonas cargadas, el campo queda como texto libre.
+- **Qué zonas son de la comuna.** Las filas de `M_Zonificacion` cuyo Link `comuna` apunta a la comuna de la solicitud, y de respaldo las que no tienen Link pero cuya clave de la planilla `clave_zona` `[Excel: Zonificacion!AE = B & C]` es el nombre de la comuna seguido del código. El Link se puebla por nombre (saneo T-SANEO-ZONIFICACION-20261014) y cubre las claves que no calzan letra a letra con `M_Comunas` (`Coihaique` por Coyhaique, `Llaillay` por Llay-Llay, sin tilde o con espacio duro). Las **localidades** que la planilla trata como comunas (Ventanas, Maitencillo y Horcón, que copian las zonas de Puchuncaví; Dichato, Malloco, Alto Jahuel, Linderos, Champa, Ensenada, Monte) quedan **sin** Link: enlazadas, la comuna ofrecería cada código repetido y el Link de la tasación caería en una copia elegida por el orden de la tabla. Tampoco llevan Link `Limari` ni `Cachapoal`, que son provincias, ni `Lagunillas`, que es ambigua. `activo` no filtra el catálogo.
+- **Guardado.** `TX_DatosTasacion.tipo_zona_descripcion` guarda el **código** («IPB», «A1»), con la grafía del catálogo cuando está en él. El servidor —no la pantalla— resuelve con el mismo código el Link `TX_DatosTasacion.zonificacion` a la fila del catálogo de esa comuna, o lo deja vacío si el código no está; así los dos campos no pueden contradecirse. Un texto que trae la comuna al final («IPB (Colina)», como se tecleaba antes) se guarda sin ella. Si el catálogo no se puede leer, se guarda el código y el Link no se toca.
+- **Impresión.** El informe compone `CODIGO(Comuna)`, sin espacio, con la comuna vigente de la solicitud: si la Ejecutiva corrige la comuna, el informe la sigue sin que el tasador vuelva a guardar. Una fila guardada antes de este cambio con la comuna tecleada («IPB (Colina)») no la duplica: se imprime «IPB(Colina)».
+- **Sin fallback a urbano/rural.** El campo ya no se pre-llena con `ubicacion_urbano_rural` del SII (P17-TAS · item 2a): «urbano» no es una zona y se habría impreso «urbano(Colina)».
+- **Lo que no arrastra todavía.** Con la zona, la planilla lee de la hoja `Zonificacion` la altura de edificación, la distancia a medianeros y el sistema de agrupamiento `[Excel: Antecedentes!Z11:Z13]`, con `OGUC` cuando la zona no está —que es el caso de MET-6283—. `M_Zonificacion` no sirve hoy para eso: la altura se migró como número y perdió los textos («12 pisos»), la distancia a medianeros no se migró, y densidad, demanda y tendencia valen lo mismo en casi todas las filas. Llevar esos atributos al informe por el Link es una tanda posterior, después de sanear la tabla. Los atributos de sector (densidad, demanda, tendencia, mercado) siguen capturándose aparte, como en la planilla `[Excel: Portada!F22:F25]`.
+- **Fuente documental (aprobada y aplicada el 14-oct-2026).** La zona la declara el Certificado de Informaciones Previas de la DOM (`D_TipoDocumento.certificado_informaciones_previas`). Su atributo `certificado_informaciones_previas__zona` lleva el código a `TX_DatosTasacion.tipo_zona_descripcion`, así que RF-09 lo precarga al leer el certificado. Nunca pisa una fila que el tasador ya guardó, y el tasador confirma o corrige la zona en el mismo campo. Si se borra el certificado, se limpian la zona y su Link.
+
 **Un default que no es regla.** La orientación de la construcción figura en la plantilla como constante literal `NOROESTE` `[Excel: Antecedentes!Z17]`, sin ramificar por ningún interruptor, a diferencia de todos los demás campos de su bloque. Es con toda probabilidad un residuo de la última propiedad tasada sobre la plantilla y no un valor característico. **No se implementa como default**: el campo se presenta vacío, con su catálogo de ocho rumbos `[Excel: Antecedentes!CD1:CD8]` disponible.
 
   -------------------------------------------------------------------------
@@ -2909,6 +2965,63 @@ El quinto atributo de cada recinto, **material o marca**, no es capturable: se *
                     propiedad, estado de uso) sin fila cargada presenta los
                     campos **vacíos**: no hereda de ninguna otra
                     combinación ni cae a un conjunto por defecto.
+  -------------------------------------------------------------------------
+
+### 2.8.2 Cuadro de valoración pre-llenado (sección C · v1.9.18, 14-oct-2026)
+
+El cuadro de valoración de la planilla `[Excel: Portada!B50:BI62]` tiene dos clases de datos que conviene no confundir. Unos **describen la propiedad** —qué bienes hay, con qué rol, cuántos metros, de qué año, de qué material, en qué situación municipal— y ya están en la base cuando el tasador abre la Pantalla 5: los trajeron el alta y la lectura de documentos. Otros **son la valoración**: el UF/m² de cada fila `[Excel: Portada!AT]` y el factor D.F. cuando no es 1 `[Excel: Portada!AX]`. Esos son constantes que el tasador teclea con su criterio, sin tabla ni regla que los produzca (confirmado por Héctor y Óscar el 18-sep-2026 · `docs/_analisis/AUDITORIA_XLSM_MET6283_OCC_TERRENO.md`). La sección C llega con la primera clase hecha y deja la segunda, explícitamente, al tasador.
+
+**Cuándo.** Al abrir la Pantalla 5, el servidor —no la pantalla— arma el cuadro **sólo si la solicitud no tiene filas en `TX_ItemsCuadroValoracion`**. Lo guardado gana siempre; el primer guardado del tasador escribe las filas y desde ahí la propuesta no vuelve a armarse. La propuesta es determinista: abrir la pantalla otra vez entrega el mismo cuadro, con los mismos identificadores, sin duplicar nada. Un borrador local con el cuadro vacío —el que siembra la pantalla de fotos, o uno anterior a esta versión— **no lo vacía** al presionar «Recuperar»; si el borrador trae ítems, ganan los del tasador.
+
+**Qué filas y de dónde.**
+
+  -----------------------------------------------------------------------------------------------
+  **Fila**                    **Cuándo**                          **Superficie**
+  --------------------------- ----------------------------------- -------------------------------
+  Terreno (`Terreno`)         la unidad principal es una casa y   superficie de terreno menos la
+                              la sección B trae superficie de     servidumbre
+                              terreno
+
+  Servidumbre (`Terreno`)     además hay servidumbre menor que    servidumbre
+                              el terreno
+
+  Edificación (`Edificacion`) una por unidad casa, departamento,  la principal: la construida de la
+                              local o edificación de              sección B; en una casa con primer
+                              `TX_Unidades`                       piso menor que el total, «Piso 1»
+                                                                  y «Piso 2» (o «Pisos superiores»)
+
+  Bodega · estacionamiento de una por unidad con ese subtipo      la de la unidad
+  uso y goce · piscina ·
+  OO.CC. · terraza
+  -----------------------------------------------------------------------------------------------
+
+Las superficies de terreno, servidumbre, construida y de primer piso salen de la sección B **ya consolidada** (§4.3.4), nunca de los adjuntos: es el mismo número contra el que la sección C compara en su aviso de coherencia, y una unidad de subtipo `Terreno` o `Servidumbre` no agrega filas por eso. El rol SII, el año, el material y el origen de superficie son los de la unidad; el estado es el de conservación de la sección B cuando es la misma palabra del catálogo del ítem (`BUENO` → `Bueno`; los demás quedan vacíos); la situación municipal es `Regularizado` cuando la solicitud tiene recepción final, y vacía si no; la terraza no aporta a garantía (RN-09). El factor D.F. viene en `1`, el valor por defecto de la planilla `[Excel: Portada!AX51:AX53]` (A-35).
+
+**Lo que la sección C le pide al tasador.** Un aviso informativo declara que el cuadro viene pre-llenado, nombra los ítems a los que les falta el UF/m² —sin él valen 0— y recuerda ajustar el factor D.F. de la edificación según su depreciación. Las **obras complementarias** que ninguna fuente declara (en MET-6283: piscina, «quincho, terrazas, bodega», «cierros, pavimento exterior») las agrega el tasador: las comodidades de E.5 no se persisten (CI-023) y no hay documento que las traiga.
+
+**Caso MET-6283 (VP-2026-0079).** La propuesta trae Terreno 1.402,35 m², Servidumbre 3.622,51 m² y Piso 1 249,91 m² (2024 · Bueno · Albañilería), las tres con rol 882-40, `Regularizado` y origen plano. El tasador completa los UF/m² 8 · 0 · 34, el factor 0,96 del Piso 1 y agrega las tres obras complementarias (350 · 250 · 150 UF por unidad) para llegar a UF 20.125,86. Diferencias con el original que no cambian el valor: el año queda vacío en las dos filas de terreno (el original trae 2024 sólo en la de servidumbre) y el rol se escribe sin el prefijo «N°».
+
+**Pendiente (requiere aprobación de schema).** El `1` del factor vive hoy en el código de IF-03 (`lib/tasador/propuesta-cuadro.ts`), como los defaults de estado y calidad de §2.8.1; llevarlo a `C_DefaultsAntecedentes` exige ampliar sus dominios `bloque` y `atributo`. Para que también la valoración llegue hecha, la vía coherente con A-13 es leer una foto del cuadro de valoración de la planilla, igual que la de comparables: es un tipo de documento nuevo con sus atributos y un escritor de filas en `TX_ItemsCuadroValoracion`, con su propia aprobación.
+
+  -------------------------------------------------------------------------
+  **RF-TAS-24**     **Cuadro de valoración pre-llenado**
+  ----------------- -------------------------------------------------------
+  **Descripción**   Cuando la solicitud no tiene ítems guardados, la
+                    sección C se presenta con las filas que la base ya
+                    conoce —terreno, servidumbre, edificación por unidad y
+                    demás unidades— con su superficie, rol, año, material,
+                    estado, situación municipal y factor D.F. por defecto,
+                    resueltas server-side según §2.8.2. El UF/m² de cada
+                    fila queda vacío y la sección nombra los ítems que lo
+                    necesitan.
+
+  **Criterio de     VP-2026-0079 sin ítems guardados abre con Terreno
+  aceptación**      1.402,35 · Servidumbre 3.622,51 · Piso 1 249,91.
+                    Recargar la pantalla entrega el mismo cuadro sin
+                    duplicar filas. Con ítems guardados no se propone
+                    nada. «Recuperar» un borrador con el cuadro vacío
+                    conserva el pre-llenado. Ningún UF/m² llega
+                    pre-llenado.
   -------------------------------------------------------------------------
 
 | **RF-12** | **Mínimo de comparables antes de calcular** *(preservado del spec · sujeto redefinido en v1.9.15 por el cierre de A-13)* |
@@ -3860,6 +3973,69 @@ hereda a todos los recintos y sí describe la condición física (RN-49).
 Los valores habitado y desocupado, que aparecían en versiones
 preliminares del levantamiento, se descartan: no figuran en ninguna
 fuente.
+
+### **4.3.4 Consolidación por precedencia · superficie construida y de primer piso (v1.9.18 · 14-oct-2026)**
+
+Cuando varios tipos de documento traen el mismo dato de la solicitud,
+«el primero que llega gana» deja un resultado que depende del orden de
+lectura. Caso que lo destapó (VP-2026-0079, réplica MET-6283): el
+cuadro de superficies y el permiso dicen 249,91 m²; la lectura de la
+recepción final dio 249,31 m².
+
+**Regla.** Un atributo de `D_TipoDocumentoAtributo` con
+`prioridad_destino` (entero, menor gana) y cardinalidad
+`una_por_solicitud` se resuelve por consolidación: en cada lectura,
+AT03-Ext reúne los valores de **todos** los documentos leídos de la
+solicitud cuyo tipo declara el mismo campo destino, elige el de menor
+prioridad (empate: el documento subido más reciente) y lo escribe sólo
+si difiere del valor guardado. No cuentan los valores vacíos, «NO
+REGISTRA», cero ni texto no numérico.
+
+**Superficies (decisión de Sergio, 14-oct-2026).**
+
+| Prioridad | Tipo de documento | Sup. construida → `TX_DatosTasacion.sup_construccion_m2` | Sup. primer piso → `TX_DatosTasacion.sup_primer_piso_m2` |
+|---|---|---|---|
+| 10 | `cuadro_superficies` | ✓ | ✓ |
+| 20 | `foto_plano_cuadro_superficies` | ✓ | ✓ |
+| 30 | `certificado_recepcion_final` | ✓ | — |
+| 40 | `permiso_edificacion` | ✓ | — |
+| 50 | `consulta_antecedentes_bien_raiz` | ✓ | — |
+
+**Servidumbre (ampliación del mismo 14-oct-2026).** `superficie_servidumbre_m2`
+→ `TX_DatosTasacion.servidumbre_m2`: `cuadro_superficies` 10 ·
+`foto_plano_cuadro_superficies` 20 · `inscripcion_dominio_cbr` 30. La
+columna homónima `sup_servidumbre` no participa. Los ítems «Terreno» y
+«Servidumbre» del cuadro de valoración (sección C) siguen siendo del
+tasador; la sección C muestra un aviso ámbar no bloqueante cuando la
+superficie del ítem de servidumbre difiere de `servidumbre_m2`, o la de
+los ítems de terreno difiere de la superficie de terreno menos la
+servidumbre (MET-6283: 5.024,86 − 3.622,51 = 1.402,35).
+
+El orden se cambia editando los números en Airtable, sin tocar código.
+
+**Un solo valor almacenado.** `TX_DatosTasacion.sup_construccion_m2` y
+`sup_primer_piso_m2` son la fuente única: el formulario del tasador
+(sección B), el motor, el PDF y la consola de la Ejecutiva leen ese
+mismo valor. `TX_Solicitudes.sup_construccion_m2` queda sólo como
+respaldo de solicitudes antiguas. La superficie SII por rol (`sup_m2`
+de `foto_fuente_sii` y `certificado_avaluo_fiscal`) sigue en
+`TX_Unidades` y no participa: es otro dato y puede diferir
+legítimamente.
+
+**Idempotencia.** El resultado es función del conjunto de documentos
+leídos: volver a leer o resubir el mismo documento no cambia el valor
+ni escribe nada.
+
+**El tasador manda.** Una vez que el tasador guarda su formulario
+(`origen_dato = tipeado`), la lectura no vuelve a escribir esa fila.
+Tampoco se pisa un valor distinto cuyo origen no conste; sólo se
+corrige uno que escribió la propia lectura (`origen_dato =
+extraido_rf09`).
+
+**Borrado de documentos.** Estos campos quedan fuera del borrado en
+cascada de adjuntos: su valor lo respaldan varios documentos. Si se
+borra el documento ganador, su cifra se mantiene hasta la próxima
+lectura de un documento de la solicitud, que recalcula.
 
 ## **4.4 Set B · Datos para las interfaces del negocio**
 

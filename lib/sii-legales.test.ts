@@ -6,7 +6,23 @@ import {
   construirSiiLegales,
   formatoFecha,
   formatoPesos,
+  superficieConstruidaVigente,
 } from '@/lib/sii-legales'
+
+describe('superficie construida de la consola · fuente única (T-SUPERFICIES-CONSOLIDADAS)', () => {
+  it('lee TX_DatosTasacion.sup_construccion_m2 y gana sobre la columna antigua de la solicitud', () => {
+    const { sii } = construirSiiLegales([], { sup_construccion_m2: 249.91 }, null)
+    expect(sii.supConstruccionM2).toBe(249.91)
+    expect(superficieConstruidaVigente(sii, 120)).toBe(249.91)
+  })
+
+  it('sin dato en TX_DatosTasacion cae a la columna antigua; cero cuenta como vacío', () => {
+    expect(superficieConstruidaVigente(SII_LEGALES_VACIO.sii, 47.61)).toBe(47.61)
+    expect(superficieConstruidaVigente(SII_LEGALES_VACIO.sii, 0)).toBeNull()
+    expect(superficieConstruidaVigente(SII_LEGALES_VACIO.sii, undefined)).toBeNull()
+    expect(construirSiiLegales([], { sup_construccion_m2: 0 }, null).sii.supConstruccionM2).toBeNull()
+  })
+})
 
 describe('construirSiiLegales · sin datos no se inventa nada (PRD R3)', () => {
   it('sin filas todo queda en «—» y sin unidades', () => {

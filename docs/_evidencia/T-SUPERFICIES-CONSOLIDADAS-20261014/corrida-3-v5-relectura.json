@@ -1,0 +1,28 @@
+{
+ "t0": "2026-10-15T02:14:02.203Z",
+ "estadoFinal": "listo",
+ "atributos": "{\"items\": [{\"codigo_atributo\": \"superficie_primer_piso_m2\", \"valor\": 249.91, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"superficie_construida_m2\", \"valor\": 249.91, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"superficie_terreno_m2\", \"valor\": 5024.86, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"superficie_servidumbre_m2\", \"valor\": 3622.51, \"confianza\": 1, \"fila\": 1}, {\"codigo_atributo\": \"superficie_util_m2\", \"valor\": 1402.35, \"confianza\": 1, \"fila\": 1}], \"no_extraidos\": [\"superficie_bodega_m2\", \"superficie_terraza_m2\", \"numero_dormitorios\", \"numero_unidad\", \"piso\", \"material_estructura\", \"numero_subterraneos\", \"orientacion\", \"superficie_subterraneo_m2\", \"tipo_agrupamiento\", \"superficie_estacionamiento_m2\", \"numero_pisos\", \"tipo_propiedad\", \"numero_banos\", \"nombre_edificio\"]}",
+ "dt": {
+  "sup_construccion_m2": 249.91,
+  "sup_primer_piso_m2": 249.91,
+  "servidumbre_m2": 3622.51,
+  "origen_dato": "extraido_rf09"
+ },
+ "logs": [
+  {
+   "creado": "2026-10-15T02:14:12.000Z",
+   "titulo": "AT-RF09-Trigger · webhook disparado",
+   "detalle": "adjunto_id=recCjcimhqQMFrQjM · tipo_documento=cuadro_superficies · intentos_carga=1 · HTTP 200"
+  },
+  {
+   "creado": "2026-10-15T02:14:29.000Z",
+   "titulo": "AT03-Ext · propagación (1 ok · 4 skip · 0 err)",
+   "detalle": "adjunto_id=recCjcimhqQMFrQjM · tipo_documento=cuadro_superficies · superficie_primer_piso_m2: consolidable (prioridad 10) → se decide en la consolidación | superficie_construida_m2: consolidable (prioridad 10) → se decide en la consolidación | superficie_terreno_m2: no declarado en D_TipoDocumentoAtributo para \"cuadro_superficies\" — skip | superficie_servidumbre_m2: consolidable (prioridad 10) → se decide en la consolidación | superficie_util_m2: no declarado en D_TipoDocumentoAtributo para \"cuadro_superficies\" — skip | consolidación TX_DatosTasacion.sup_primer_piso_m2: sin_cambios — ganador 249.91 (cuadro_superficies · prioridad 10 · adjunto recCjcimhqQMFrQjM · 1 candidato(s)), actual \"249.91\" | consolidado TX_DatosTasacion.servidumbre_m2 = 3622.51 (cuadro_superficies · prioridad 10 · adjunto recCjcimhqQMFrQjM · 1 candidato(s)) | consolidación TX_DatosTasacion.sup_construccion_m2: sin_cambios — ganador 249.91 (cuadro_superficies · prioridad 10 · adjunto recCjcimhqQMFrQjM · 3 candidato(s)), actual \"249.91\""
+  },
+  {
+   "creado": "2026-10-15T02:14:21.000Z",
+   "titulo": "RF-09 extraccion exitosa - rec6XubOR92X6gnOH",
+   "detalle": "Adjunto recCjcimhqQMFrQjM, tipo_documento cuadro_superficies. 5 atributo(s) extraido(s), 15 no extraido(s). Enrutamiento por cardinalidad delegado a AT03-Ext."
+  }
+ ]
+}

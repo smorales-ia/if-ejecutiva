@@ -58,6 +58,12 @@ export const TABLE_IDS = Object.freeze({
    * TABLE_ID documentado en `docs/schema-airtable.md` §1.
    */
   preciosUf: 'tblWPRuIYfzdlveHM',
+  /**
+   * `M_Zonificacion` — zonas del plan regulador por comuna, migradas de la hoja
+   * `Zonificacion` de la planilla. **Sólo lectura** desde el repo: alimenta la
+   * lista de «Tipo de zona» de la sección B (`lib/tasador/zonificacion.ts`).
+   */
+  zonificacion: 'tbltr5VN2NGuTtbc1',
 } as const)
 
 /* -------------------------------------------------------------------------
@@ -332,8 +338,16 @@ export const FIELD_IDS_DATOS_TASACION = Object.freeze({
   /** ⚠ homónimo: convive con `sup_servidumbre` (`fldwiF0X5Tx2gIbyf`). */
   servidumbreM2: 'fldqh74NpAK3ELh0O',
   velocidadVentaEstimada: 'fld1eyMr1XT04YgyH',
-  /** El campo libre. El Link a `M_Zonificacion` es `zonificacion`; ver P7-TAS. */
+  /**
+   * Código de zona del plan regulador («IPB», «A1») — sin la comuna, que el PDF
+   * agrega al imprimir (spec §2.8.1 · 14-oct-2026 · `lib/tasador/zona.ts`).
+   */
   tipoZonaDescripcion: 'fldbrYbbvJThBaGwC',
+  /**
+   * Link → `M_Zonificacion`. Lo resuelve el servidor desde (comuna, código) al
+   * guardar; vacío cuando el código no está en el catálogo de la comuna.
+   */
+  zonificacion: 'fldGoLWV8CEfXZmWT',
 
   /* --- Bloque SII (§20.6 · FASE2-lectura-sii, Opción A · cierra CI-025) ---
      Creados el 09-sep-2026 en TX_DatosTasacion para inventariar el documento

@@ -1,8 +1,10 @@
 "use client"
 
-import { Plus, Trash2, Info } from "lucide-react"
+import { Plus, Trash2, Info, AlertTriangle } from "lucide-react"
 import type { InformeData, ItemValoracion } from "@/lib/tasador/tasaciones"
 import { OPCIONES } from "@/lib/tasador/tasaciones"
+import { avisosCoherenciaTerreno } from "@/lib/tasador/coherencia-superficies"
+import { FACTOR_DF_PLANILLA, itemsSinUfM2 } from "@/lib/tasador/propuesta-cuadro"
 import { Button } from "@/components/ui/button"
 import {
   Tooltip,
@@ -12,22 +14,26 @@ import {
 import { TextField, SelectField, SwitchField } from "./fields"
 import type { SetForm } from "./seccion-propiedad"
 
+/** Literal exacto del singleSelect `subtipo` (ver `OPCIONES.subtipoItem`). */
+const SUBTIPO_TERRAZA = "Terraza"
+
 let itemUid = 0
+/** Ítem en blanco con valores del dominio real de los selects (antes traía slugs del v0 que no existían). */
 function nuevoItem(): ItemValoracion {
   return {
     id: `it-new-${++itemUid}`,
     descripcion: "",
-    subtipo: "edificacion",
+    subtipo: "Edificacion",
     rolSii: "",
     anioItem: "",
-    tipo: "ha-muni",
-    situacionMunicipal: "regularizado",
-    estado: "bueno",
+    tipo: "Edificacion",
+    situacionMunicipal: "Regularizado",
+    estado: "Bueno",
     aportaGarantia: true,
-    origenSuperficie: "plano-municipal",
+    origenSuperficie: "plano",
     superficieM2: "",
     ufM2Unitario: "",
-    factorAplicado: "",
+    factorAplicado: FACTOR_DF_PLANILLA,
     materialItem: "",
   }
 }
@@ -35,9 +41,12 @@ function nuevoItem(): ItemValoracion {
 export function SeccionValoracion({
   form,
   set,
+  prellenado = false,
 }: {
   form: InformeData
   set: SetForm
+  /** El servidor propuso el cuadro: no había filas guardadas (spec §2.8.2). */
+  prellenado?: boolean
 }) {
   const items = form.items
 
@@ -48,13 +57,24 @@ export function SeccionValoracion({
         if (it.id !== id) return it
         const next = { ...it, ...patch }
         // RN-09: terraza no aporta a garantía
-        if (next.subtipo === "terraza") next.aportaGarantia = false
+        if (next.subtipo === SUBTIPO_TERRAZA) next.aportaGarantia = false
         return next
       }),
     )
 
+  // Lo que el tasador debe completar: sin UF/m² el ítem vale 0.
+  const sinUfM2 = itemsSinUfM2(items)
+
   const removeItem = (id: string) =>
     set("items", items.filter((it) => it.id !== id))
+
+  // Aviso ámbar, no bloqueante: los ítems de terreno no calzan con la sección B
+  // (terreno y servidumbre llegan solos desde los documentos · spec §4.3.4).
+  const avisosTerreno = avisosCoherenciaTerreno({
+    supTerreno: form.supTerreno,
+    servidumbreM2: form.servidumbreM2,
+    items,
+  })
 
   return (
     <div className="flex flex-col gap-3">
@@ -64,8 +84,28 @@ export function SeccionValoracion({
         </p>
       )}
 
+      {prellenado && items.length > 0 && (
+        <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-brand" />
+          <div className="flex flex-col gap-1 text-sm text-foreground">
+            <p>
+              Cuadro pre-llenado con las superficies y las unidades de la
+              propiedad. Revísalo y agrega las obras complementarias que
+              veas en terreno.
+            </p>
+            {sinUfM2.length > 0 && (
+              <p>Falta el UF/m² de: {sinUfM2.join(" · ")}.</p>
+            )}
+            <p className="text-muted-foreground">
+              El factor D.F. viene en 1, el valor por defecto de la planilla:
+              ajústalo en la edificación según su depreciación.
+            </p>
+          </div>
+        </div>
+      )}
+
       {items.map((it, idx) => {
-        const esTerraza = it.subtipo === "terraza"
+        const esTerraza = it.subtipo === SUBTIPO_TERRAZA
         return (
           <div key={it.id} className="rounded-lg border border-border p-3">
             <div className="mb-3 flex items-center justify-between">
@@ -127,7 +167,7 @@ export function SeccionValoracion({
                   label="Estado"
                   value={it.estado}
                   onChange={(v) => updateItem(it.id, { estado: v })}
-                  opciones={OPCIONES.estadoConservacion}
+                  opciones={OPCIONES.estadoItem}
                 />
               </div>
               <SelectField
@@ -197,6 +237,20 @@ export function SeccionValoracion({
           </div>
         )
       })}
+
+      {avisosTerreno.length > 0 && (
+        <div
+          role="status"
+          className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#D97706]" />
+          <div className="flex flex-col gap-1 text-sm text-amber-800">
+            {avisosTerreno.map((aviso) => (
+              <p key={aviso}>{aviso}</p>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Button
         type="button"

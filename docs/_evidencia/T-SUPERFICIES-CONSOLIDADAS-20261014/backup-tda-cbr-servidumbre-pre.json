@@ -1,0 +1,15 @@
+[
+ {
+  "id": "recW3GHYmCMx6w0h4",
+  "createdTime": "2026-07-01T01:35:38.000Z",
+  "fields": {
+   "etiqueta_local": "Superficie Servidumbre",
+   "orden": 12,
+   "codigo": "inscripcion_dominio_cbr__superficie_servidumbre_m2",
+   "tipo_documento": [
+    "recsLnkTWhbMgyX4d"
+   ],
+   "codigo_atributo": "superficie_servidumbre_m2"
+  }
+ }
+]

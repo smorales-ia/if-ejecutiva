@@ -1,0 +1,1031 @@
+{
+ "tbltr5VN2NGuTtbc1": {
+  "id": "tbltr5VN2NGuTtbc1",
+  "name": "M_Zonificacion",
+  "primaryFieldId": "fldQhH4QlonBnzeNd",
+  "fields": [
+   {
+    "type": "singleLineText",
+    "id": "fldQhH4QlonBnzeNd",
+    "name": "clave_natural"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fldHhVcyJVZ0Lm6xD",
+    "name": "zona"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selxzLf7WBgDTuWOZ",
+       "name": "Urbano",
+       "color": "grayLight2"
+      },
+      {
+       "id": "seln6yUEm3iIeCzGx",
+       "name": "Rural",
+       "color": "grayLight2"
+      },
+      {
+       "id": "seljOKYkO6w647867",
+       "name": "Mixto",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selvTZShVOAMiEtAa",
+       "name": "tipo_zona",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selwBdiSglSxGmUqO",
+       "name": "Urbana",
+       "color": "cyanLight2"
+      }
+     ]
+    },
+    "id": "fld7DNiO0ScMTazRU",
+    "name": "tipo_zona"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selESc4QyJYgRmKfm",
+       "name": "Alta",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selwBunzo021sUTY7",
+       "name": "Media",
+       "color": "grayLight2"
+      },
+      {
+       "id": "seljLW6mAyzrJuykJ",
+       "name": "Baja",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selUcMEe7QkuXuScn",
+       "name": "demanda",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldz8snFuAJVfrP2U",
+    "name": "demanda"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "sel7x8uyHRKq9TZ9O",
+       "name": "Creciente",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selJXDGS3jwVPp93R",
+       "name": "Estable",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selOrNDapTbPnycBc",
+       "name": "Decreciente",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selh1ayHoIaQVByrs",
+       "name": "tendencia",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldGKA2McCGyNkRAA",
+    "name": "tendencia"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selJE1gU0TQyYXA0v",
+       "name": "Alta",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel3ECJXVuECAfMjE",
+       "name": "Media",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selmiXlpG3jHTbYvw",
+       "name": "Baja",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selKTxO5tNnWUCljK",
+       "name": "densidad",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fld3UqwDgYHr0coK8",
+    "name": "densidad"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selfRr7Ceufx8w8lm",
+       "name": "ABC1",
+       "color": "grayLight2"
+      },
+      {
+       "id": "seliggdjn3T3MEEm0",
+       "name": "C2",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel93yeVHS6jf6eNJ",
+       "name": "C3",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selDh55f4CvtI10w6",
+       "name": "D",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel1AjPmQBZAgE5UM",
+       "name": "E",
+       "color": "grayLight2"
+      },
+      {
+       "id": "seluKFhrAsteH2vH3",
+       "name": "mercado",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selHrI69xGqqyqCSU",
+       "name": "Estrato Medio",
+       "color": "cyanLight2"
+      },
+      {
+       "id": "selKEhqKil5l8xajr",
+       "name": "Estrato Medio Alto",
+       "color": "tealLight2"
+      }
+     ]
+    },
+    "id": "fldRwxzHXnYrENfQZ",
+    "name": "nivel_socioeconomico"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selR4CmWJQQ3qnF7S",
+       "name": "Pavimento",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel0eufqZ59pga2CW",
+       "name": "Asfalto",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selKUjDgxGK08L1At",
+       "name": "Tierra",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selMUEUQAZuexRp38",
+       "name": "Sin acceso",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selunhTsPmJAxQFNg",
+       "name": "calzada",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldtGh8vu2cUrIVqu",
+    "name": "calzada"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selFyNWdYNQr4MQRz",
+       "name": "Alto",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selt8FxhC4A8b8yrN",
+       "name": "Medio",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selqoDksdMbZFicEP",
+       "name": "Bajo",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selqMqaJ3DwHbpaYt",
+       "name": "Nulo",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selIf3V7WllAQiqZY",
+       "name": "calzada",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldQHZV0biXvi8hwZ",
+    "name": "transporte_publico"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "seld2iDuyiCeiGJ0l",
+       "name": "Alto",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selamg6PxywSlCkBt",
+       "name": "Medio",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel1ZCcX4vXvqqr5n",
+       "name": "Bajo",
+       "color": "grayLight2"
+      },
+      {
+       "id": "seljkFYV7JPeIsHvG",
+       "name": "Nulo",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selYeZpIVdg9ZBbel",
+       "name": "acera",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldOGyBeMIcwAP21m",
+    "name": "comercio"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selJLolwJtVBawR6Y",
+       "name": "Alto",
+       "color": "grayLight2"
+      },
+      {
+       "id": "seleER54r5M90n9Ox",
+       "name": "Medio",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selMCSF2F7V8pYPVk",
+       "name": "Bajo",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selJV4gnQPUwKQD5t",
+       "name": "Nulo",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel8CNxaFUsuaa00p",
+       "name": "solera",
+       "color": "blueLight2"
+      },
+      {
+       "id": "sel7VtplzXAP5TMmi",
+       "name": "Si",
+       "color": "cyanLight2"
+      }
+     ]
+    },
+    "id": "fld411iJNr8OLl4aq",
+    "name": "areas_verdes"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fldHCLpEuuh4Zhhzj",
+    "name": "prc_sector"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fldkEgqPUY7ifjUvg",
+    "name": "coef_ocupacion_suelo_max"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fldTlTEac4AuZNszF",
+    "name": "origen_xlsm_celda"
+   },
+   {
+    "type": "checkbox",
+    "options": {
+     "icon": "check",
+     "color": "greenBright"
+    },
+    "id": "fld4TkgjRhaeeni6Q",
+    "name": "activo"
+   },
+   {
+    "type": "multilineText",
+    "id": "fldK0yDVQiRxHe7yN",
+    "name": "notas"
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tblyggAfQfq682XHK",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fldSqAdxE5SXL6zon"
+    },
+    "id": "fldNcL5XUGoF7e7sM",
+    "name": "comuna"
+   },
+   {
+    "type": "formula",
+    "options": {
+     "isValid": true,
+     "formula": "{fldNcL5XUGoF7e7sM} & {fld5zijruQYSaDFRF}",
+     "referencedFieldIds": [
+      "fldNcL5XUGoF7e7sM",
+      "fld5zijruQYSaDFRF"
+     ],
+     "result": {
+      "type": "singleLineText"
+     }
+    },
+    "id": "fldI0gX7bxSdlSSr4",
+    "name": "zona_compuesta"
+   },
+   {
+    "type": "autoNumber",
+    "id": "fldZA8aA8sSi5mSBR",
+    "name": "zonificacion_id"
+   },
+   {
+    "type": "formula",
+    "options": {
+     "isValid": true,
+     "formula": "IF({fld7DNiO0ScMTazRU}=\"Urbano\",TRUE(),FALSE())",
+     "referencedFieldIds": [
+      "fld7DNiO0ScMTazRU"
+     ],
+     "result": {
+      "type": "number",
+      "options": {
+       "precision": 0
+      }
+     }
+    },
+    "id": "fld5ZVDk4iQQtKtsi",
+    "name": "alcantarillado"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fld5zijruQYSaDFRF",
+    "name": "clave_zona"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fld0deCb3cHMGWPgE",
+    "name": "nombre_zona"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fldoHqEc7mx2FB3pD",
+    "name": "mercado"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selIFmYPE0puyFRg2",
+       "name": "mixto",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selpMsL70f6oHktM0",
+       "name": "uniforme",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selxMwSiIZdxw2btI",
+       "name": "acera",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldt8ICHgEtUliWkt",
+    "name": "acera"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selhjyvyQ4YMCcIXQ",
+       "name": "Si",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selBolO1oQnXDatOS",
+       "name": "No",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel0XKvtaK3DvW6E0",
+       "name": "solera",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fld6lfHnspgl6MBup",
+    "name": "solera"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "sel4XASGnfWZmTzZD",
+       "name": "Si",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selvBhr2pzgpE2eTM",
+       "name": "No",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selCToJUYdA6J6xcO",
+       "name": "antejardin",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldkKdnuBRGWhLqhQ",
+    "name": "antejardin"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selLHRaR7o0l2LSjD",
+       "name": "Si",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selonVeow5vCDINHI",
+       "name": "No",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selEMahkV79fIgqR9",
+       "name": "electricidad",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fld19XOCMHQMMqG8x",
+    "name": "electricidad"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selrbV8Q051INW3PN",
+       "name": "Si",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel0NLEysZk7M0xfD",
+       "name": "No",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selKdJgPR7kPZdwfo",
+       "name": "agua",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldPKod9YXOtyfKAr",
+    "name": "agua"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selj9idzNOlx2KmY0",
+       "name": "Si",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel0ozCdw5IrWWfnl",
+       "name": "No",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel1awWOFBtbFQQHV",
+       "name": "gas",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldqNpKJdFk55UcIE",
+    "name": "gas"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fldVUwXbSukhAmUst",
+    "name": "proy_uso"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 1
+    },
+    "id": "fldOGkOAtqhzBvnAy",
+    "name": "frente_min"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 0
+    },
+    "id": "fldDvRnZtmixUkHmw",
+    "name": "sup_pred_min"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fld4696ToM0jNwt0D",
+    "name": "porc_ocup"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fldTs1sYlWvlwU5ns",
+    "name": "coef_const"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 0
+    },
+    "id": "fld6PhzEJnwN3TctM",
+    "name": "altura"
+   },
+   {
+    "type": "singleLineText",
+    "id": "flddjHV098Vws99Lk",
+    "name": "sistema_agrupamiento"
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tblMoK3mFuwN8Yr1A",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fldGoLWV8CEfXZmWT"
+    },
+    "id": "fldkOAyWhqx2jC8Cr",
+    "name": "TX_DatosTasacion"
+   },
+   {
+    "type": "lastModifiedTime",
+    "options": {
+     "isValid": true,
+     "referencedFieldIds": [],
+     "result": {
+      "type": "dateTime",
+      "options": {
+       "dateFormat": {
+        "name": "local",
+        "format": "l"
+       },
+       "timeFormat": {
+        "name": "12hour",
+        "format": "h:mma"
+       },
+       "timeZone": "client"
+      }
+     }
+    },
+    "id": "fldMeQDhJhpPkfqUr",
+    "name": "ultima_modificacion"
+   }
+  ],
+  "views": [
+   {
+    "id": "viwoWE7ka2iBBn9U6",
+    "name": "Grid view",
+    "type": "grid"
+   }
+  ]
+ },
+ "tblyggAfQfq682XHK": {
+  "id": "tblyggAfQfq682XHK",
+  "name": "M_Comunas",
+  "description": "Catalogo geografico de comunas chilenas con valores UF/m2 de referencia. Dominio M_ (Maestros). Resuelve RB-4 (valor terreno) y RB-5 (valor edificacion).",
+  "primaryFieldId": "fldL4pAwlFtUlBzlc",
+  "fields": [
+   {
+    "type": "singleLineText",
+    "id": "fldL4pAwlFtUlBzlc",
+    "name": "nombre",
+    "description": "Nombre oficial de la comuna"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selb5akafO4tPMQob",
+       "name": "RM",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selc66ZtA8JvzjI5F",
+       "name": "I",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selx1yimTT8oQ1Sba",
+       "name": "II",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selgQFLpzhurrCR4x",
+       "name": "III",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selERCdRamLv8Ej3G",
+       "name": "IV",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selmn65JnDwXc4RPn",
+       "name": "V",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel3YQ8oez7n6t36K",
+       "name": "VI",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sellPYBzaxXyVdVAP",
+       "name": "VII",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selXeeUMlkjh0Dkjy",
+       "name": "VIII",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selpLMyaT0iRntbwi",
+       "name": "IX",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selU2qR92nVEM8Hra",
+       "name": "X",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selLCYOsFBD49cZ36",
+       "name": "XI",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selWE6Qj8VXY2pqsT",
+       "name": "XII",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selBoW13LB8tmkJ6s",
+       "name": "XIV",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel4vFxjliG4DROUm",
+       "name": "XV",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selipIp36k0tfZYu8",
+       "name": "XVI",
+       "color": "grayLight2"
+      },
+      {
+       "id": "sel3jeSuxQ7c3uge2",
+       "name": "Metropolitana de Santiago",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selDSu7rYozpKy9JG",
+       "name": "region",
+       "color": "blueLight2"
+      },
+      {
+       "id": "sello5WxADh7jPerR",
+       "name": "Metropolitana",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selIrnlcgvb6dqMtB",
+       "name": "Valparaíso",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selO13rEMtqXZ8oxx",
+       "name": "O'Higgins",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldeukUmwAn2ZkieW",
+    "name": "region",
+    "description": "Region administrativa de Chile"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fldzFxvK6oploDabj",
+    "name": "provincia",
+    "description": "Provincia administrativa"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "flduana0GWGaFYQLm",
+    "name": "uf_m2_terreno",
+    "description": "UF/m2 para terreno desnudo. Usado por RB-4 (valor terreno)."
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fldgefePOB6DDKFei",
+    "name": "uf_m2_construccion",
+    "description": "UF/m2 para construccion terminada. Base previa al lookup en C_PreciosUnitarios (RB-5)."
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fldex1YUZAbGTrDlt",
+    "name": "uf_m2_promedio_residencial",
+    "description": "Referencia para validar valoraciones residenciales."
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fldRDsZF2TBdRuri5",
+    "name": "uf_m2_promedio_comercial",
+    "description": "Referencia para uso comercial."
+   },
+   {
+    "type": "date",
+    "options": {
+     "dateFormat": {
+      "name": "iso",
+      "format": "YYYY-MM-DD"
+     }
+    },
+    "id": "fldpNULyXsSDqsy0b",
+    "name": "fecha_ultimo_estudio",
+    "description": "Cuando se actualizo el promedio UF/m2."
+   },
+   {
+    "type": "checkbox",
+    "options": {
+     "icon": "check",
+     "color": "greenBright"
+    },
+    "id": "fldsTPWoSPbqDvGWX",
+    "name": "activo",
+    "description": "Solo activas aparecen en formularios. Vista filtrada Comunas activas."
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tblEi5jp18c1j00bQ",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fldg8ftPbF22fFjMi"
+    },
+    "id": "fldMyRxsU9ye4burz",
+    "name": "M_Tasadores"
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tbltr5VN2NGuTtbc1",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fldNcL5XUGoF7e7sM"
+    },
+    "id": "fldSqAdxE5SXL6zon",
+    "name": "M_Zonificacion"
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tbllbTuhb0waWIbRo",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fld8gAxR25anrRFrw"
+    },
+    "id": "fldo7HRUWB3NKJZ0x",
+    "name": "TX_Comparables"
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tblyCb8cVTDzfeBx0",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fld7qVA2nVAf6xqMI"
+    },
+    "id": "fld4VIM7WWkuMLRnf",
+    "name": "C_ReglasNegocio"
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tblTKYct1bCRtpZ33",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fld7lhSKMkVwQqOLr"
+    },
+    "id": "fldbzr5vCm74sIaRX",
+    "name": "H_Comparables_Historico"
+   },
+   {
+    "type": "autoNumber",
+    "id": "fldqRHBRjAvJ3ELWm",
+    "name": "comuna_id"
+   },
+   {
+    "type": "singleLineText",
+    "id": "fldnmR95YqoK0tURP",
+    "name": "codigo_postal"
+   },
+   {
+    "type": "singleSelect",
+    "options": {
+     "choices": [
+      {
+       "id": "selT783H2OmIlHn3G",
+       "name": "Urbana",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selK9vxjvIpF2iy9r",
+       "name": "Rural",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selWABp4MKjKFtTBA",
+       "name": "Mixta",
+       "color": "grayLight2"
+      },
+      {
+       "id": "selVlNBZcCel9zzpi",
+       "name": "tipo_zona_predominante",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selIkI91eGCPbhs3Q",
+       "name": "Habitacional",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selt29H1ecpR26hCS",
+       "name": "Residencial mixto",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selerTNOFOyODXBUE",
+       "name": "Residencial alto",
+       "color": "blueLight2"
+      },
+      {
+       "id": "selEDYKTTevCg7Xzx",
+       "name": "Residencial premium",
+       "color": "blueLight2"
+      }
+     ]
+    },
+    "id": "fldFlG6tJOqsD7cPL",
+    "name": "tipo_zona_predominante"
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fld2ZT1diC3o0E8Jy",
+    "name": "rango_min_uf_m2 "
+   },
+   {
+    "type": "number",
+    "options": {
+     "precision": 2
+    },
+    "id": "fldYY8z79TMFFLXkm",
+    "name": "rango_max_uf_m2"
+   },
+   {
+    "type": "multipleRecordLinks",
+    "options": {
+     "linkedTableId": "tblaHTyMHYfmy7Fg6",
+     "isReversed": false,
+     "prefersSingleRecordLink": false,
+     "inverseLinkFieldId": "fldJTjjzCPBHMOWZv"
+    },
+    "id": "fldoK9nXXWeLikaOP",
+    "name": "TX_Solicitudes"
+   },
+   {
+    "type": "lastModifiedTime",
+    "options": {
+     "isValid": true,
+     "referencedFieldIds": [],
+     "result": {
+      "type": "dateTime",
+      "options": {
+       "dateFormat": {
+        "name": "local",
+        "format": "l"
+       },
+       "timeFormat": {
+        "name": "12hour",
+        "format": "h:mma"
+       },
+       "timeZone": "client"
+      }
+     }
+    },
+    "id": "fldVErGgcvDrqFDul",
+    "name": "ultima_modificacion"
+   }
+  ],
+  "views": [
+   {
+    "id": "viwVpEUr2qIerYhUz",
+    "name": "Grid view",
+    "type": "grid"
+   },
+   {
+    "id": "viwbIeFflNmr7sFuV",
+    "name": "Grid 2",
+    "type": "grid"
+   }
+  ]
+ }
+}

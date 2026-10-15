@@ -1,0 +1,20 @@
+{
+ "corrida": "1",
+ "disparo": "2026-10-15T02:04:05.711Z",
+ "pre": {
+  "sup_construccion_m2": null,
+  "sup_primer_piso_m2": null,
+  "origen_dato": "extraido_rf09"
+ },
+ "post": {
+  "sup_construccion_m2": 249.91,
+  "sup_primer_piso_m2": 249.91,
+  "origen_dato": "extraido_rf09"
+ },
+ "log": {
+  "creado": "2026-10-15T02:04:25.000Z",
+  "titulo": "AT03-Ext · propagación (2 ok · 2 skip · 0 err)",
+  "estado": "✓ OK",
+  "detalle": "adjunto_id=recCjcimhqQMFrQjM · tipo_documento=cuadro_superficies · superficie_primer_piso_m2 → TX_DatosTasacion.sup_primer_piso_m2 = \"249.91\" | superficie_construida_m2 → TX_DatosTasacion.sup_construccion_m2 = \"249.91\" | superficie_util_m2: no declarado en D_TipoDocumentoAtributo para \"cuadro_superficies\" — skip | superficie_terreno_m2: no declarado en D_TipoDocumentoAtributo para \"cuadro_superficies\" — skip"
+ }
+}

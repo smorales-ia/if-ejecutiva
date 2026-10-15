@@ -122,6 +122,7 @@ import {
   type EstadoAdjuntos,
 } from "@/lib/use-adjuntos-solicitud"
 import { useSiiLegales, type EstadoSiiLegales } from "@/lib/use-sii-legales"
+import { superficieConstruidaVigente } from "@/lib/sii-legales"
 import { formatearFecha, formatearFechaHora } from "@/lib/fechas"
 
 const MSG_CARGANDO_SII = "Cargando los datos SII y legales…"
@@ -769,6 +770,9 @@ function DatosTab({
 }) {
   const esNuevo = s.tipoPropiedadNuevoUsado === "nueva"
   const { sii, legales } = siiLegales.datos
+  // Misma superficie que ve el tasador (TX_DatosTasacion); la columna de la
+  // solicitud queda sólo como respaldo de solicitudes antiguas.
+  const supConstruida = superficieConstruidaVigente(sii, s.supConstruccionM2)
   const tieneTasador = tasador !== SIN_TASADOR && tasador.trim() !== ""
 
   return (
@@ -860,9 +864,7 @@ function DatosTab({
           {s.supTerrenoM2 != null ? `${s.supTerrenoM2.toLocaleString("es-CL")} m²` : "—"}
         </DataRow>
         <DataRow label="Superficie construida">
-          {s.supConstruccionM2 != null
-            ? `${s.supConstruccionM2.toLocaleString("es-CL")} m²`
-            : "—"}
+          {supConstruida != null ? `${supConstruida.toLocaleString("es-CL")} m²` : "—"}
         </DataRow>
         <DataRow label="Año de construcción">{s.anioConstruccion ?? "—"}</DataRow>
         <DataRow label="Valor comercial">

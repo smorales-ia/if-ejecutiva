@@ -1,0 +1,4465 @@
+[
+ {
+  "id": "rec02pefeXyS7RiqT",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "El Quisco",
+   "ultima_modificacion": "2026-06-08T16:40:50.000Z",
+   "comuna_id": 88,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0BCOBUiMm5BDhj",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lago Verde",
+   "ultima_modificacion": "2026-06-08T16:42:30.000Z",
+   "comuna_id": 132,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0EfI37YO9KvMdf",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Freirina",
+   "ultima_modificacion": "2026-06-08T16:41:08.000Z",
+   "comuna_id": 95,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0P339UJ9tywDLy",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Angol",
+   "ultima_modificacion": "2026-06-08T16:37:47.000Z",
+   "comuna_id": 10,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0WeaD8JBjsBi6W",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Florida",
+   "ultima_modificacion": "2026-06-08T16:41:03.000Z",
+   "comuna_id": 93,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0Wung4r5DYKBm1",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Illapel",
+   "ultima_modificacion": "2026-06-08T16:41:49.000Z",
+   "comuna_id": 113,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0bS6ZWcVwvms7V",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Copiapó",
+   "ultima_modificacion": "2026-06-08T16:40:07.000Z",
+   "comuna_id": 69,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0ldoaUQtYwCy2Q",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Curarrehue",
+   "ultima_modificacion": "2026-06-08T16:40:28.000Z",
+   "comuna_id": 79,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0srvbAKKLXkdgf",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Placilla",
+   "ultima_modificacion": "2026-06-08T16:46:18.000Z",
+   "comuna_id": 227,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec0zuV1SwEWVRHvs",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Coquimbo",
+   "ultima_modificacion": "2026-06-08T16:40:09.000Z",
+   "comuna_id": 70,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec11d57KmLSGk0dH",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chile Chico",
+   "ultima_modificacion": "2026-06-08T16:39:08.000Z",
+   "comuna_id": 44,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec1Mb0x1A022QLaI",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Dalcahue",
+   "ultima_modificacion": "2026-06-08T16:40:36.000Z",
+   "comuna_id": 82,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec1PZzDTnivemXdQ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "La Serena",
+   "ultima_modificacion": "2026-06-08T16:42:24.000Z",
+   "comuna_id": 129,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec1RAAG22qqoTekX",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Máfil",
+   "ultima_modificacion": "2026-06-08T16:43:44.000Z",
+   "comuna_id": 165,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec1VWK7Lgb0u1iMh",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Palmilla",
+   "ultima_modificacion": "2026-06-08T16:45:18.000Z",
+   "comuna_id": 203,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec1ijVrEuGIagwi0",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quilleco",
+   "ultima_modificacion": "2026-06-08T16:47:20.000Z",
+   "comuna_id": 254,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec1jtHJBrV1sXc3F",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Independencia",
+   "M_Tasadores": [
+    "recJ5U1MADuuvHSD5",
+    "recLlEp6N0L8AGmIX"
+   ],
+   "uf_m2_promedio_comercial": 75,
+   "ultima_modificacion": "2026-06-09T21:18:52.000Z",
+   "rango_max_uf_m2": 72,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 52,
+   "uf_m2_construccion": 52,
+   "comuna_id": 114,
+   "activo": true,
+   "uf_m2_terreno": 21,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec1lwxGWn7HomAjX",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "La Pintana",
+   "M_Tasadores": [
+    "rec9eME3hYWc90lOW",
+    "rec8iNQ6e8D7RoJDi"
+   ],
+   "uf_m2_promedio_comercial": 42,
+   "ultima_modificacion": "2026-06-09T21:19:53.000Z",
+   "rango_max_uf_m2": 45,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 30,
+   "uf_m2_construccion": 30,
+   "comuna_id": 127,
+   "activo": true,
+   "uf_m2_terreno": 12,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec1ysML7okC2m1QN",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Combarbalá",
+   "ultima_modificacion": "2026-06-08T16:39:52.000Z",
+   "comuna_id": 63,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec27D72ujJMB7P0A",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Primavera",
+   "ultima_modificacion": "2026-06-08T16:46:27.000Z",
+   "comuna_id": 231,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec2EXq7CJAlcO0t7",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Maipú",
+   "M_Tasadores": [
+    "recn0ERG9np4KgT8L",
+    "recNsvNGzdwfoTXH2",
+    "recZWnQEni9RMGRO3",
+    "recpYZ1KtvTMJTkQ0",
+    "recTYgQtZJGDnftIS",
+    "rec8MsXmoMI49u46n",
+    "recAmBbFFDGyb6CLE"
+   ],
+   "uf_m2_promedio_comercial": 65,
+   "ultima_modificacion": "2026-06-09T21:22:36.000Z",
+   "rango_max_uf_m2": 65,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 45,
+   "uf_m2_construccion": 45,
+   "comuna_id": 166,
+   "activo": true,
+   "uf_m2_terreno": 18,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec2TRvqo1GrpGw3W",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quillón",
+   "ultima_modificacion": "2026-06-08T16:47:22.000Z",
+   "comuna_id": 255,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec2l2eBm4L7XtAna",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Mostazal",
+   "ultima_modificacion": "2026-06-08T16:44:16.000Z",
+   "comuna_id": 179,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec30BeXoWushsA1q",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Maullín",
+   "ultima_modificacion": "2026-06-08T16:44:03.000Z",
+   "comuna_id": 173,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec3W3ZCM8nk8zGRD",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "El Carmen",
+   "ultima_modificacion": "2026-06-08T16:40:45.000Z",
+   "comuna_id": 86,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec3gt46P9BkJRMQq",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quinta de Tilcoco",
+   "ultima_modificacion": "2026-06-08T16:47:31.000Z",
+   "comuna_id": 259,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec3zDGdikfFM5BIj",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pucón",
+   "ultima_modificacion": "2026-06-08T16:46:34.000Z",
+   "comuna_id": 234,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec4CLiIfSue924RA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "tipo_zona_predominante",
+   "nombre": "﻿nombre",
+   "uf_m2_promedio_comercial": 2,
+   "region": "region",
+   "uf_m2_construccion": 2,
+   "codigo_postal": "codigo_postal",
+   "comuna_id": 2,
+   "uf_m2_terreno": 2,
+   "provincia": "provincia"
+  }
+ },
+ {
+  "id": "rec4EZupkmHi5UrJV",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Puerto Varas",
+   "ultima_modificacion": "2026-06-08T16:46:47.000Z",
+   "comuna_id": 239,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec4JGrdbOOTWpZ3L",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Quilicura",
+   "M_Tasadores": [
+    "recJ5U1MADuuvHSD5",
+    "recpOMpC5yynAKSdI",
+    "recRw2Zf84HkdZaFZ",
+    "recUqGOTZ8MOIGrlQ",
+    "recjMdfEZzCaojOR4",
+    "rec5WJyEf2NWdwcGS",
+    "recSR3RxY6rsLb8k7"
+   ],
+   "uf_m2_promedio_comercial": 58,
+   "ultima_modificacion": "2026-10-05T18:05:11.000Z",
+   "rango_max_uf_m2": 60,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 40,
+   "uf_m2_construccion": 40,
+   "TX_Comparables": [
+    "rec6IFtDrpDJnxOfX",
+    "rec3vhDEkE5TkjsEC",
+    "rec0tDKpZxU0zFgM7",
+    "recb001aVKOtA93K2",
+    "recqyxR37UeGSCIhv",
+    "recmqVwD7ef2nkoGL",
+    "recdx2u3trPamXsru"
+   ],
+   "TX_Solicitudes": [
+    "recPx0yiK9k4oPG4V",
+    "recE1LwwH2xbcCHti"
+   ],
+   "comuna_id": 253,
+   "activo": true,
+   "uf_m2_terreno": 15,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec4TK5tGhmznY3qk",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Renaico",
+   "ultima_modificacion": "2026-06-08T16:47:50.000Z",
+   "comuna_id": 267,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec4kCSpB6DrrPe50",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Los Muermos",
+   "ultima_modificacion": "2026-06-08T16:43:30.000Z",
+   "comuna_id": 158,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec4pE8rgbgPHJTmy",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Putre",
+   "ultima_modificacion": "2026-06-08T16:47:04.000Z",
+   "comuna_id": 247,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec4rgB7Xn3swM53n",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Vicente",
+   "ultima_modificacion": "2026-06-08T16:49:17.000Z",
+   "comuna_id": 306,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec51k868iw7q13fd",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Talca",
+   "ultima_modificacion": "2026-06-08T16:49:37.000Z",
+   "comuna_id": 315,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec54dnOrh6wQDViW",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lota",
+   "ultima_modificacion": "2026-06-08T16:43:36.000Z",
+   "comuna_id": 161,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec5ds4SYhtVwgz0Y",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quintero",
+   "ultima_modificacion": "2026-06-08T16:47:35.000Z",
+   "comuna_id": 261,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec5fzaNSDkfaxWCE",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Caldera",
+   "ultima_modificacion": "2026-06-08T16:38:20.000Z",
+   "comuna_id": 24,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec5j7axg1LsOofDd",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Juan Fernández",
+   "ultima_modificacion": "2026-06-08T16:42:00.000Z",
+   "comuna_id": 118,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec5lg4a95F1dKUOU",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial alto",
+   "nombre": "Peñalolén",
+   "M_Tasadores": [
+    "reciJfeETMO1RAHoF",
+    "recLVXvkjClLjrboD",
+    "recfzZpWsUS9IIsCH",
+    "recR7m3Yog6JZjjch",
+    "rec9EJTq5bpYcmH6P"
+   ],
+   "uf_m2_promedio_comercial": 88,
+   "ultima_modificacion": "2026-06-09T21:26:24.000Z",
+   "rango_max_uf_m2": 88,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 65,
+   "uf_m2_construccion": 65,
+   "comuna_id": 216,
+   "activo": true,
+   "uf_m2_terreno": 25,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec5wRddS31X6LE3c",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Ercilla",
+   "ultima_modificacion": "2026-06-08T16:40:58.000Z",
+   "comuna_id": 91,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec681td0pd6O8uzE",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lautaro",
+   "ultima_modificacion": "2026-06-08T16:42:47.000Z",
+   "comuna_id": 139,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec6cKCOVpjEDQoZk",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Fresia",
+   "ultima_modificacion": "2026-06-08T16:41:10.000Z",
+   "comuna_id": 96,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec6fV4WyLIwC15JE",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "San Miguel",
+   "M_Tasadores": [
+    "recpeNXwwRn5HEuWe",
+    "reci3rrFmkkig2u3C",
+    "rec8MsXmoMI49u46n"
+   ],
+   "uf_m2_promedio_comercial": 78,
+   "ultima_modificacion": "2026-10-13T03:24:33.000Z",
+   "rango_max_uf_m2": 75,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 55,
+   "uf_m2_construccion": 55,
+   "TX_Comparables": [
+    "rec3JUiG4K1VnfOsd",
+    "recYwQL7Lu4Hjj7Nt",
+    "recbo019k3nnD7EhZ",
+    "recBrhd1NXA6JhN8l",
+    "recTYBtFOoCmWk69B",
+    "recjb5drK9ehFCi9o",
+    "recZmphyZA65gKxXW"
+   ],
+   "TX_Solicitudes": [
+    "recxqDCp0mIYd7jr5",
+    "reczuns8NHdI45Owp",
+    "rect0rqJCDT8Gcz5h"
+   ],
+   "comuna_id": 297,
+   "activo": true,
+   "uf_m2_terreno": 22,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec6hcov14Px3MrEY",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Tomé",
+   "ultima_modificacion": "2026-06-08T16:50:02.000Z",
+   "comuna_id": 327,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec6pnYXQrW339Dkx",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Pedro Aguirre Cerda",
+   "M_Tasadores": [
+    "recpeNXwwRn5HEuWe",
+    "reci3rrFmkkig2u3C",
+    "recAmBbFFDGyb6CLE"
+   ],
+   "uf_m2_promedio_comercial": 55,
+   "ultima_modificacion": "2026-06-09T21:25:46.000Z",
+   "rango_max_uf_m2": 55,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 40,
+   "uf_m2_construccion": 40,
+   "comuna_id": 209,
+   "activo": true,
+   "uf_m2_terreno": 15,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec6wkOM94HRVNnkE",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cabo de Hornos",
+   "ultima_modificacion": "2026-06-08T16:38:10.000Z",
+   "comuna_id": 20,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec769lZYHs3EJVWg",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Natales",
+   "ultima_modificacion": "2026-06-08T16:44:25.000Z",
+   "comuna_id": 183,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec78YnxDn5DkBJcJ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Calle Larga",
+   "ultima_modificacion": "2026-06-08T16:38:25.000Z",
+   "comuna_id": 26,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec790c3MZIJUiSAF",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "La Ligua",
+   "ultima_modificacion": "2026-06-08T16:42:17.000Z",
+   "comuna_id": 126,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec7CoBaugh9oKTi0",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Recoleta",
+   "M_Tasadores": [
+    "recLlEp6N0L8AGmIX",
+    "recLsfgHePQkyTO7N"
+   ],
+   "uf_m2_promedio_comercial": 70,
+   "ultima_modificacion": "2026-06-09T21:30:26.000Z",
+   "rango_max_uf_m2": 68,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 48,
+   "uf_m2_construccion": 48,
+   "comuna_id": 266,
+   "activo": true,
+   "uf_m2_terreno": 19,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec7Mdr9QHCvqPzYa",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Futaleufú",
+   "ultima_modificacion": "2026-06-08T16:41:15.000Z",
+   "comuna_id": 98,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec7QDDq6yx0F7j0U",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Tierra Amarilla",
+   "ultima_modificacion": "2026-06-08T16:49:49.000Z",
+   "comuna_id": 321,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec7cvYyPG2YFjIS4",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial alto",
+   "nombre": "La Reina",
+   "M_Tasadores": [
+    "recWS3bvVKS86dyjr",
+    "reciJfeETMO1RAHoF",
+    "recLVXvkjClLjrboD",
+    "recR7m3Yog6JZjjch",
+    "recaV2K29sByO89sA",
+    "rec9EJTq5bpYcmH6P"
+   ],
+   "uf_m2_promedio_comercial": 105,
+   "ultima_modificacion": "2026-06-09T21:19:56.000Z",
+   "rango_max_uf_m2": 100,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 75,
+   "uf_m2_construccion": 75,
+   "comuna_id": 128,
+   "activo": true,
+   "uf_m2_terreno": 30,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec7nZAQNfLQLHeKd",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Ñiquén",
+   "ultima_modificacion": "2026-06-08T16:44:39.000Z",
+   "comuna_id": 189,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec8G1yhmBn982P16",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Longaví",
+   "ultima_modificacion": "2026-06-08T16:43:18.000Z",
+   "comuna_id": 152,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec8ZPYA1nMsG9vyY",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Tocopilla",
+   "ultima_modificacion": "2026-06-08T16:49:57.000Z",
+   "comuna_id": 325,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec8qcwWGT7IntsMF",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Renca",
+   "M_Tasadores": [
+    "recJ5U1MADuuvHSD5",
+    "recjMdfEZzCaojOR4"
+   ],
+   "uf_m2_promedio_comercial": 50,
+   "ultima_modificacion": "2026-06-09T21:30:33.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 36,
+   "uf_m2_construccion": 36,
+   "comuna_id": 268,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "rec8tddWzLpSAfj8D",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quellón",
+   "ultima_modificacion": "2026-06-08T16:47:12.000Z",
+   "comuna_id": 250,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec92iH6HQaUZwK8n",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Papudo",
+   "ultima_modificacion": "2026-06-08T16:45:26.000Z",
+   "comuna_id": 206,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec96mXe1hLv9UcWP",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Villa Alemana",
+   "M_Tasadores": [
+    "rec7xBN86kGsTIxqm"
+   ],
+   "uf_m2_promedio_comercial": 55,
+   "ultima_modificacion": "2026-06-09T21:35:20.000Z",
+   "rango_max_uf_m2": 58,
+   "region": "Valparaíso",
+   "uf_m2_promedio_residencial": 40,
+   "uf_m2_construccion": 40,
+   "comuna_id": 341,
+   "activo": true,
+   "uf_m2_terreno": 15,
+   "provincia": "Valparaíso"
+  }
+ },
+ {
+  "id": "rec9EPcBZqQDBE5Z3",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Perquenco",
+   "ultima_modificacion": "2026-06-08T16:45:56.000Z",
+   "comuna_id": 218,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec9J7pOts3dnm7eh",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Corral",
+   "ultima_modificacion": "2026-06-08T16:40:13.000Z",
+   "comuna_id": 72,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec9VGdQCWu6kQd2D",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Los Sauces",
+   "ultima_modificacion": "2026-06-08T16:43:32.000Z",
+   "comuna_id": 159,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec9aanKf9IBRTgOL",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Coinco",
+   "ultima_modificacion": "2026-06-08T16:39:40.000Z",
+   "comuna_id": 57,
+   "activo": true
+  }
+ },
+ {
+  "id": "rec9lfU7yv7M4hXF3",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "La Estrella",
+   "ultima_modificacion": "2026-06-08T16:42:08.000Z",
+   "comuna_id": 122,
+   "activo": true
+  }
+ },
+ {
+  "id": "recA0qcSxFBW4Tjmq",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Hijuelas",
+   "ultima_modificacion": "2026-06-08T16:41:31.000Z",
+   "comuna_id": 105,
+   "activo": true
+  }
+ },
+ {
+  "id": "recAB8FsY8rrR3CP3",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Andacollo",
+   "ultima_modificacion": "2026-06-08T16:37:44.000Z",
+   "comuna_id": 9,
+   "activo": true
+  }
+ },
+ {
+  "id": "recAMaHYhALZNCz4i",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Las Cabras",
+   "ultima_modificacion": "2026-06-08T16:42:42.000Z",
+   "comuna_id": 137,
+   "activo": true
+  }
+ },
+ {
+  "id": "recAOWEbdgIlBx6zZ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Catemu",
+   "ultima_modificacion": "2026-06-08T16:38:47.000Z",
+   "comuna_id": 35,
+   "activo": true
+  }
+ },
+ {
+  "id": "recATAf1ebOyPjyOG",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Mulchén",
+   "ultima_modificacion": "2026-06-08T16:44:18.000Z",
+   "comuna_id": 180,
+   "activo": true
+  }
+ },
+ {
+  "id": "recAUBLPU0vOViI0S",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Licantén",
+   "ultima_modificacion": "2026-06-08T16:42:52.000Z",
+   "comuna_id": 141,
+   "activo": true
+  }
+ },
+ {
+  "id": "recAmBO23Xlewf6qp",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Ovalle",
+   "ultima_modificacion": "2026-06-08T16:44:58.000Z",
+   "comuna_id": 196,
+   "activo": true
+  }
+ },
+ {
+  "id": "recAxUlRtsv8jut6p",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Vichuquén",
+   "ultima_modificacion": "2026-06-08T16:50:22.000Z",
+   "comuna_id": 336,
+   "activo": true
+  }
+ },
+ {
+  "id": "recB503eOefQ0fU3A",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Ancud",
+   "ultima_modificacion": "2026-06-08T16:37:42.000Z",
+   "comuna_id": 8,
+   "activo": true
+  }
+ },
+ {
+  "id": "recBrcGLFhOfqgZso",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Peumo",
+   "ultima_modificacion": "2026-06-08T16:46:01.000Z",
+   "comuna_id": 220,
+   "activo": true
+  }
+ },
+ {
+  "id": "recC4PDSzr3Ot93Cd",
+  "createdTime": "2026-06-08T16:56:14.000Z",
+  "fields": {
+   "nombre": "Viña",
+   "M_Tasadores": [
+    "recWVwviNMqgXRYOT"
+   ],
+   "ultima_modificacion": "2026-06-08T16:56:14.000Z",
+   "comuna_id": 353
+  }
+ },
+ {
+  "id": "recC83X4YrXxMnTXl",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Padre Las Casas",
+   "ultima_modificacion": "2026-06-08T16:45:04.000Z",
+   "comuna_id": 198,
+   "activo": true
+  }
+ },
+ {
+  "id": "recC9EWWbk2tjSBJA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Coyhaique",
+   "ultima_modificacion": "2026-06-08T16:40:15.000Z",
+   "comuna_id": 73,
+   "activo": true
+  }
+ },
+ {
+  "id": "recCCxb7t2jY3wIaw",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Canela",
+   "ultima_modificacion": "2026-06-08T16:38:31.000Z",
+   "comuna_id": 29,
+   "activo": true
+  }
+ },
+ {
+  "id": "recCECiPqaOL7KOIS",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Isla de Maipo",
+   "ultima_modificacion": "2026-06-08T16:41:56.000Z",
+   "comuna_id": 116,
+   "activo": true
+  }
+ },
+ {
+  "id": "recCr6GnNNHRJ3Dr4",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Pedro de La Paz",
+   "ultima_modificacion": "2026-06-08T16:49:09.000Z",
+   "comuna_id": 302,
+   "activo": true
+  }
+ },
+ {
+  "id": "recCuCRPyWgr5peKg",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Alto Biobío",
+   "ultima_modificacion": "2026-06-08T16:37:34.000Z",
+   "comuna_id": 5,
+   "activo": true
+  }
+ },
+ {
+  "id": "recD9iPAHP0xdm0KZ",
+  "createdTime": "2026-06-08T16:55:04.000Z",
+  "fields": {
+   "nombre": "Chacabuco",
+   "M_Tasadores": [
+    "rec8Z086J9P5ya3Hu",
+    "recDYrxnGrwnCDgjr",
+    "reckI2sMv8zLnD87f",
+    "recSR3RxY6rsLb8k7"
+   ],
+   "ultima_modificacion": "2026-06-09T02:58:43.000Z",
+   "comuna_id": 350
+  }
+ },
+ {
+  "id": "recDDC5jTs59JI3Zu",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chillán Viejo",
+   "ultima_modificacion": "2026-06-08T16:39:13.000Z",
+   "comuna_id": 46,
+   "activo": true
+  }
+ },
+ {
+  "id": "recDRg3psoUPPe1rT",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lanco",
+   "ultima_modificacion": "2026-06-08T16:42:40.000Z",
+   "comuna_id": 136,
+   "activo": true
+  }
+ },
+ {
+  "id": "recDTxutLgGLYAEzj",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Pudahuel",
+   "M_Tasadores": [
+    "recn0ERG9np4KgT8L",
+    "rec6aiNxHShcExwDv",
+    "recjMdfEZzCaojOR4",
+    "recZWnQEni9RMGRO3",
+    "rec8MsXmoMI49u46n"
+   ],
+   "uf_m2_promedio_comercial": 55,
+   "ultima_modificacion": "2026-06-09T21:28:05.000Z",
+   "rango_max_uf_m2": 55,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 38,
+   "uf_m2_construccion": 38,
+   "comuna_id": 235,
+   "activo": true,
+   "uf_m2_terreno": 16,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recDfRjrzUqmOjQgr",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Mejillones",
+   "ultima_modificacion": "2026-06-08T16:44:05.000Z",
+   "comuna_id": 174,
+   "activo": true
+  }
+ },
+ {
+  "id": "recE8WiUozqccRvIA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pelarco",
+   "ultima_modificacion": "2026-06-08T16:45:36.000Z",
+   "comuna_id": 210,
+   "activo": true
+  }
+ },
+ {
+  "id": "recEMk8GuCfjwac9c",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "El Tabo",
+   "ultima_modificacion": "2026-06-08T16:40:52.000Z",
+   "comuna_id": 89,
+   "activo": true
+  }
+ },
+ {
+  "id": "recEOQtBd9m8QEU4I",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial alto",
+   "nombre": "Macul",
+   "M_Tasadores": [
+    "reciJfeETMO1RAHoF",
+    "recfzZpWsUS9IIsCH",
+    "recKdJAkpdSb5pRub",
+    "recR7m3Yog6JZjjch",
+    "recfyz017duG82gtk"
+   ],
+   "uf_m2_promedio_comercial": 82,
+   "ultima_modificacion": "2026-06-09T21:22:29.000Z",
+   "rango_max_uf_m2": 82,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 60,
+   "uf_m2_construccion": 60,
+   "comuna_id": 164,
+   "activo": true,
+   "uf_m2_terreno": 24,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recEctkpLbPaUkBEP",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Malloa",
+   "ultima_modificacion": "2026-06-08T16:43:49.000Z",
+   "comuna_id": 167,
+   "activo": true
+  }
+ },
+ {
+  "id": "recEhzM4httOV3sEt",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cobquecura",
+   "ultima_modificacion": "2026-06-08T16:39:25.000Z",
+   "comuna_id": 51,
+   "activo": true
+  }
+ },
+ {
+  "id": "recEwJs0sJN7AfGpL",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Limache",
+   "M_Tasadores": [
+    "rec7xBN86kGsTIxqm"
+   ],
+   "uf_m2_promedio_comercial": 50,
+   "ultima_modificacion": "2026-06-09T21:21:00.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Valparaíso",
+   "uf_m2_promedio_residencial": 35,
+   "uf_m2_construccion": 35,
+   "comuna_id": 142,
+   "activo": true,
+   "uf_m2_terreno": 13
+  }
+ },
+ {
+  "id": "recFKLiuhaGslgtwc",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quinchao",
+   "ultima_modificacion": "2026-06-08T16:47:29.000Z",
+   "comuna_id": 258,
+   "activo": true
+  }
+ },
+ {
+  "id": "recFmHWCdMOUSnPzv",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Alto Hospicio",
+   "ultima_modificacion": "2026-06-08T16:37:40.000Z",
+   "comuna_id": 7,
+   "activo": true
+  }
+ },
+ {
+  "id": "recFtnNT08aHWrsUw",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Nogales",
+   "ultima_modificacion": "2026-06-08T16:44:34.000Z",
+   "comuna_id": 187,
+   "activo": true
+  }
+ },
+ {
+  "id": "recG5iR1NS7jhOzBN",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Antofagasta",
+   "ultima_modificacion": "2026-06-08T16:37:51.000Z",
+   "comuna_id": 12,
+   "activo": true
+  }
+ },
+ {
+  "id": "recGAdYp9D5aw4BhI",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Constitución",
+   "ultima_modificacion": "2026-06-08T16:40:01.000Z",
+   "comuna_id": 67,
+   "activo": true
+  }
+ },
+ {
+  "id": "recGJL6xuiWRcTpXZ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial alto",
+   "nombre": "Viña del Mar",
+   "M_Tasadores": [
+    "rec9UrUNVHUMOcx2y",
+    "recISyO1xVtkCtvPC"
+   ],
+   "uf_m2_promedio_comercial": 92,
+   "ultima_modificacion": "2026-07-11T16:52:11.000Z",
+   "rango_max_uf_m2": 92,
+   "region": "Valparaíso",
+   "uf_m2_promedio_residencial": 65,
+   "uf_m2_construccion": 65,
+   "TX_Solicitudes": [
+    "recH0MNSojVMl8VHV",
+    "recwOChmg4Cnk9JMG",
+    "rec6rom8NXByRsCwN",
+    "recno9uLIZfsHXDFP",
+    "rec5ktsyekyC1vGjb",
+    "recpQYXm50mSgoeOy"
+   ],
+   "comuna_id": 343,
+   "activo": true,
+   "uf_m2_terreno": 25,
+   "provincia": "Valparaíso"
+  }
+ },
+ {
+  "id": "recGMlHaVZumzOEWx",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Santo Domingo",
+   "ultima_modificacion": "2026-06-08T16:49:31.000Z",
+   "comuna_id": 312,
+   "activo": true
+  }
+ },
+ {
+  "id": "recGOs4tvnk6MFO9Z",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cabrero",
+   "ultima_modificacion": "2026-06-08T16:38:13.000Z",
+   "comuna_id": 21,
+   "activo": true
+  }
+ },
+ {
+  "id": "recGQVTePSSrH0eKB",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Habitacional",
+   "nombre": "Providencia",
+   "M_Tasadores": [
+    "rec7Pwbf7vPAIm8lO",
+    "recb9l63DELXntDAs",
+    "recpT3JR7UkW1mXgl",
+    "recMDjIuG4SC8cOuz",
+    "rec82Il9Ciy4X610h",
+    "recKdJAkpdSb5pRub",
+    "rec0GC0P7zxiNy9s8",
+    "recaV2K29sByO89sA",
+    "rec1oj0qhsAFqgdiz"
+   ],
+   "uf_m2_promedio_comercial": 50,
+   "ultima_modificacion": "2026-07-10T02:52:54.000Z",
+   "rango_max_uf_m2": 130,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 40,
+   "uf_m2_construccion": 38,
+   "TX_Solicitudes": [
+    "recnuyVVLpA7L7i68",
+    "recbg9KL66iZXGa5c",
+    "recD3rCtZwHjmPpoo"
+   ],
+   "comuna_id": 232,
+   "activo": true,
+   "uf_m2_terreno": 50,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recGTnOf895rsT0Z2",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial alto",
+   "nombre": "Concón",
+   "M_Tasadores": [
+    "rec9UrUNVHUMOcx2y",
+    "recWVwviNMqgXRYOT"
+   ],
+   "uf_m2_promedio_comercial": 95,
+   "ultima_modificacion": "2026-06-09T21:15:13.000Z",
+   "rango_max_uf_m2": 100,
+   "region": "Valparaíso",
+   "uf_m2_promedio_residencial": 70,
+   "uf_m2_construccion": 70,
+   "comuna_id": 66,
+   "activo": true,
+   "uf_m2_terreno": 26,
+   "provincia": "Valparaíso"
+  }
+ },
+ {
+  "id": "recGj3XvjqqCrDEm9",
+  "createdTime": "2026-06-08T16:56:14.000Z",
+  "fields": {
+   "nombre": "Reñaca",
+   "M_Tasadores": [
+    "recWVwviNMqgXRYOT"
+   ],
+   "ultima_modificacion": "2026-06-08T16:56:14.000Z",
+   "comuna_id": 354
+  }
+ },
+ {
+  "id": "recH1sp5FSilaEvmc",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pelluhue",
+   "ultima_modificacion": "2026-06-08T16:45:39.000Z",
+   "comuna_id": 211,
+   "activo": true
+  }
+ },
+ {
+  "id": "recH8HV7bS6wHdTL7",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Portezuelo",
+   "ultima_modificacion": "2026-06-08T16:46:20.000Z",
+   "comuna_id": 228,
+   "activo": true
+  }
+ },
+ {
+  "id": "recHPTpuya4HQALLt",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Colchane",
+   "ultima_modificacion": "2026-06-08T16:39:45.000Z",
+   "comuna_id": 59,
+   "activo": true
+  }
+ },
+ {
+  "id": "recHWYuKxZ2kBi04i",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Calama",
+   "ultima_modificacion": "2026-06-08T16:38:15.000Z",
+   "comuna_id": 22,
+   "activo": true
+  }
+ },
+ {
+  "id": "recHdOcT9j3RvZzSY",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Melipilla",
+   "uf_m2_promedio_comercial": 42,
+   "ultima_modificacion": "2026-06-09T21:23:10.000Z",
+   "rango_max_uf_m2": 44,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 30,
+   "uf_m2_construccion": 30,
+   "comuna_id": 176,
+   "activo": true,
+   "uf_m2_terreno": 11,
+   "provincia": "Melipilla"
+  }
+ },
+ {
+  "id": "recHi1CR43KzSTte6",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "La Granja",
+   "M_Tasadores": [
+    "rec9eME3hYWc90lOW"
+   ],
+   "uf_m2_promedio_comercial": 48,
+   "ultima_modificacion": "2026-06-09T21:19:40.000Z",
+   "rango_max_uf_m2": 50,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 35,
+   "uf_m2_construccion": 35,
+   "comuna_id": 124,
+   "activo": true,
+   "uf_m2_terreno": 13,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recHn9kAUTWSp7sjh",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Vicuña",
+   "ultima_modificacion": "2026-06-08T16:50:26.000Z",
+   "comuna_id": 338,
+   "activo": true
+  }
+ },
+ {
+  "id": "recHrJPRD56by3Z5b",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Guaitecas",
+   "ultima_modificacion": "2026-06-08T16:41:29.000Z",
+   "comuna_id": 104,
+   "activo": true
+  }
+ },
+ {
+  "id": "recI5Rt6AUOyfWSrp",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Curanilahue",
+   "ultima_modificacion": "2026-06-08T16:40:26.000Z",
+   "comuna_id": 78,
+   "activo": true
+  }
+ },
+ {
+  "id": "recI6A1mPMYsrgLLn",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Purranque",
+   "ultima_modificacion": "2026-06-08T16:47:00.000Z",
+   "comuna_id": 245,
+   "activo": true
+  }
+ },
+ {
+  "id": "recI8nanGG69utwdJ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Purén",
+   "ultima_modificacion": "2026-06-08T16:46:58.000Z",
+   "comuna_id": 244,
+   "activo": true
+  }
+ },
+ {
+  "id": "recIHTj4e6vkH977o",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Estación Central",
+   "M_Tasadores": [
+    "recn0ERG9np4KgT8L",
+    "recNsvNGzdwfoTXH2",
+    "recZWnQEni9RMGRO3",
+    "rec8MsXmoMI49u46n",
+    "recAmBbFFDGyb6CLE"
+   ],
+   "uf_m2_promedio_comercial": 75,
+   "ultima_modificacion": "2026-10-05T18:05:31.000Z",
+   "rango_max_uf_m2": 80,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 50,
+   "uf_m2_construccion": 50,
+   "TX_Comparables": [
+    "recKbS4MYQ7z724KV",
+    "recDp9MvBbgqXgJbE",
+    "recVp1Hccaz5kwGxq",
+    "recFm2eA8y3cTdqUT",
+    "recflMXDheReI30Mt",
+    "recUt0opg6lZu7dQo",
+    "recod770PxbSehwez",
+    "recB1OA11h6urKpT5",
+    "rec2NPtul20Ns8DTQ",
+    "recnGWfzHKLNCH2aK",
+    "recCEahO0QbT5X5ag",
+    "recVCZFtKgVGsEeOF",
+    "rec4OKkvz4VhN2Djr",
+    "recwhL8hkAx7y2KLt"
+   ],
+   "TX_Solicitudes": [
+    "rec19zYDt8muMQ9G4",
+    "reclC1CE5VHLTisKD",
+    "recconVQfAc8LSGJf",
+    "rectnGOaHvEioXZw3"
+   ],
+   "comuna_id": 92,
+   "activo": true,
+   "uf_m2_terreno": 20,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recJ63GjHdjob4YxK",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Timaukel",
+   "ultima_modificacion": "2026-06-08T16:49:53.000Z",
+   "comuna_id": 323,
+   "activo": true
+  }
+ },
+ {
+  "id": "recJNkanyjhupAQdS",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cauquenes",
+   "ultima_modificacion": "2026-06-08T16:38:50.000Z",
+   "comuna_id": 36,
+   "activo": true
+  }
+ },
+ {
+  "id": "recJaDsQZEnIIsWon",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Puerto Montt",
+   "ultima_modificacion": "2026-06-08T16:46:42.000Z",
+   "comuna_id": 237,
+   "activo": true
+  }
+ },
+ {
+  "id": "recJjWWvQ0MNhdatK",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lumaco",
+   "ultima_modificacion": "2026-06-08T16:43:38.000Z",
+   "comuna_id": 162,
+   "activo": true
+  }
+ },
+ {
+  "id": "recJxsBlrU4GCf4HL",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Treguaco",
+   "ultima_modificacion": "2026-06-08T16:50:10.000Z",
+   "comuna_id": 331,
+   "activo": true
+  }
+ },
+ {
+  "id": "recJzexWNmxzG47kG",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Penco",
+   "ultima_modificacion": "2026-06-08T16:45:46.000Z",
+   "comuna_id": 214,
+   "activo": true
+  }
+ },
+ {
+  "id": "recK0heSEM4g9niO6",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Antártica",
+   "ultima_modificacion": "2026-06-08T16:37:49.000Z",
+   "comuna_id": 11,
+   "activo": true
+  }
+ },
+ {
+  "id": "recK5ZwMzVQkIlT7L",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Empedrado",
+   "ultima_modificacion": "2026-06-08T16:40:55.000Z",
+   "comuna_id": 90,
+   "activo": true
+  }
+ },
+ {
+  "id": "recKT9mUJkeq3YuBu",
+  "createdTime": "2026-05-31T21:24:28.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Colina",
+   "M_Tasadores": [
+    "recSR3RxY6rsLb8k7",
+    "recLGGIvprcbmEeUm",
+    "recRw2Zf84HkdZaFZ",
+    "recUqGOTZ8MOIGrlQ",
+    "rec5WJyEf2NWdwcGS",
+    "reckI2sMv8zLnD87f",
+    "recLsW9ViM5k59jYN"
+   ],
+   "uf_m2_promedio_comercial": 58,
+   "M_Zonificacion": [
+    "recCHWxedHHxWddwO"
+   ],
+   "ultima_modificacion": "2026-10-13T21:08:44.000Z",
+   "rango_max_uf_m2": 100,
+   "H_Comparables_Historico": [
+    "recykMvKaG5B929qQ"
+   ],
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 42,
+   "uf_m2_construccion": 42,
+   "TX_Comparables": [
+    "recg7rLatFWkoykp4",
+    "recXeVPlrUpZxX4PS",
+    "recV8MJbrYjJKIOK0",
+    "rec8QNPiGe1yOc0DX",
+    "recVrtaEieivmteCc",
+    "recchEQfUYBw4w3oH",
+    "recE9pcYTeVvMYayT",
+    "recMRWzkFaFdnod9l",
+    "recDvzniH7zYWtNaE",
+    "rec2qexojUrF8oHAT",
+    "recbpYJq6KIRe1sHz",
+    "rec3PMydralqZI8NS",
+    "recSrfcQcEES1YmzS",
+    "rec9nTVVik0WtBTZ2",
+    "recYujqVRXnGGY4TK",
+    "recTxjan2ov6M3TMJ",
+    "recLu1a238v0sSLub",
+    "recHjwDgE8D38vOX3",
+    "rec80zmEOVhILCtqm",
+    "rec8IkLBboqiubme7",
+    "recGwGYEaZGzBjLKj"
+   ],
+   "TX_Solicitudes": [
+    "recni55rcRpiqtNjE",
+    "recga8JAig4wiyFwb",
+    "recNiwM4s1ibr3sbO",
+    "recmMzeu3eWGxyXsf",
+    "rec6XubOR92X6gnOH"
+   ],
+   "comuna_id": 1,
+   "activo": true,
+   "uf_m2_terreno": 17,
+   "provincia": "Chacabuco"
+  }
+ },
+ {
+  "id": "recKTBg4Q4Vc9r8KJ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Bulnes",
+   "ultima_modificacion": "2026-06-08T16:38:05.000Z",
+   "comuna_id": 18,
+   "activo": true
+  }
+ },
+ {
+  "id": "recL1oLsYqleZktvs",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Mariquina",
+   "ultima_modificacion": "2026-06-08T16:43:58.000Z",
+   "comuna_id": 171,
+   "activo": true
+  }
+ },
+ {
+  "id": "recLIn0UdwlffG81r",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Pedro",
+   "ultima_modificacion": "2026-06-08T16:49:04.000Z",
+   "comuna_id": 300,
+   "activo": true
+  }
+ },
+ {
+  "id": "recLLReZ4IKOEDLr4",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lonquimay",
+   "ultima_modificacion": "2026-06-08T16:43:20.000Z",
+   "comuna_id": 153,
+   "activo": true
+  }
+ },
+ {
+  "id": "recLfnvYQmXXSL5Tb",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Gregorio",
+   "ultima_modificacion": "2026-06-08T16:48:45.000Z",
+   "comuna_id": 291,
+   "activo": true
+  }
+ },
+ {
+  "id": "recLiUpWbTCisDYOI",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Esteban",
+   "ultima_modificacion": "2026-06-08T16:48:36.000Z",
+   "comuna_id": 287,
+   "activo": true
+  }
+ },
+ {
+  "id": "recM1rERgF5Kc8HEJ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Huechuraba",
+   "M_Tasadores": [
+    "recpOMpC5yynAKSdI",
+    "recSR3RxY6rsLb8k7"
+   ],
+   "uf_m2_promedio_comercial": 78,
+   "ultima_modificacion": "2026-06-09T21:18:42.000Z",
+   "rango_max_uf_m2": 78,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 55,
+   "uf_m2_construccion": 55,
+   "comuna_id": 112,
+   "activo": true,
+   "uf_m2_terreno": 22,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recM7u6WYhmnpHQGA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "San Ramón",
+   "uf_m2_promedio_comercial": 45,
+   "ultima_modificacion": "2026-06-09T21:32:54.000Z",
+   "rango_max_uf_m2": 48,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 33,
+   "uf_m2_construccion": 33,
+   "comuna_id": 304,
+   "activo": true,
+   "uf_m2_terreno": 13,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recM8BRZBP9wlUwBb",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Los Lagos",
+   "ultima_modificacion": "2026-06-08T16:43:28.000Z",
+   "comuna_id": 157,
+   "activo": true
+  }
+ },
+ {
+  "id": "recM9o25d2GMPHkLP",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "San Fernando",
+   "M_Tasadores": [
+    "recaPHkBh5hI3jGpa"
+   ],
+   "uf_m2_promedio_comercial": 45,
+   "ultima_modificacion": "2026-06-09T21:31:55.000Z",
+   "rango_max_uf_m2": 48,
+   "region": "O'Higgins",
+   "uf_m2_promedio_residencial": 32,
+   "uf_m2_construccion": 32,
+   "comuna_id": 290,
+   "activo": true,
+   "uf_m2_terreno": 12,
+   "provincia": "Cachapoal"
+  }
+ },
+ {
+  "id": "recMHbsqXO9VBSbPA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Paillaco",
+   "ultima_modificacion": "2026-06-08T16:45:09.000Z",
+   "comuna_id": 200,
+   "activo": true
+  }
+ },
+ {
+  "id": "recMPa25Rhryjte8G",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cañete",
+   "ultima_modificacion": "2026-06-08T16:38:34.000Z",
+   "comuna_id": 30,
+   "activo": true
+  }
+ },
+ {
+  "id": "recMRhO6hKXvkcWHB",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Curicó",
+   "ultima_modificacion": "2026-06-08T16:40:33.000Z",
+   "comuna_id": 81,
+   "activo": true
+  }
+ },
+ {
+  "id": "recMVCJq5DY8W8uaG",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Yungay",
+   "ultima_modificacion": "2026-06-08T16:50:45.000Z",
+   "comuna_id": 347,
+   "activo": true
+  }
+ },
+ {
+  "id": "recMZKpm2Q8eB7yNw",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Fabián",
+   "ultima_modificacion": "2026-06-08T16:48:38.000Z",
+   "comuna_id": 288,
+   "activo": true
+  }
+ },
+ {
+  "id": "recMw6Xmo3DwfaY6A",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Laja",
+   "ultima_modificacion": "2026-06-08T16:42:35.000Z",
+   "comuna_id": 134,
+   "activo": true
+  }
+ },
+ {
+  "id": "recN6q8ActZS98fBP",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Marchihue",
+   "ultima_modificacion": "2026-06-08T16:43:51.000Z",
+   "comuna_id": 168,
+   "activo": true
+  }
+ },
+ {
+  "id": "recNEyu4T0dBpKlfV",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Olmué",
+   "ultima_modificacion": "2026-06-08T16:44:53.000Z",
+   "comuna_id": 194,
+   "activo": true
+  }
+ },
+ {
+  "id": "recNGUqwOZvr92fBn",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Cerro Navia",
+   "M_Tasadores": [
+    "rec6aiNxHShcExwDv"
+   ],
+   "uf_m2_promedio_comercial": 48,
+   "ultima_modificacion": "2026-06-09T21:13:31.000Z",
+   "rango_max_uf_m2": 50,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 35,
+   "uf_m2_construccion": 35,
+   "comuna_id": 38,
+   "activo": true,
+   "uf_m2_terreno": 13,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recNHiXtJENFaVScJ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Valparaíso",
+   "M_Tasadores": [
+    "rec9UrUNVHUMOcx2y",
+    "recISyO1xVtkCtvPC"
+   ],
+   "uf_m2_promedio_comercial": 72,
+   "ultima_modificacion": "2026-08-11T15:11:52.000Z",
+   "rango_max_uf_m2": 72,
+   "region": "Valparaíso",
+   "uf_m2_promedio_residencial": 50,
+   "uf_m2_construccion": 50,
+   "TX_Solicitudes": [
+    "recYcijo7kb1NDjqM",
+    "recjPkLir5FNaQZWy"
+   ],
+   "comuna_id": 335,
+   "activo": true,
+   "uf_m2_terreno": 18,
+   "provincia": "Valparaíso"
+  }
+ },
+ {
+  "id": "recNOzlg0MAZRn9zO",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Conchalí",
+   "M_Tasadores": [
+    "recJ5U1MADuuvHSD5",
+    "recpOMpC5yynAKSdI"
+   ],
+   "uf_m2_promedio_comercial": 52,
+   "ultima_modificacion": "2026-06-09T21:15:10.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 38,
+   "uf_m2_construccion": 38,
+   "comuna_id": 65,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recNSLqJzDxUXtWFA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lago Ranco",
+   "ultima_modificacion": "2026-06-08T16:42:28.000Z",
+   "comuna_id": 131,
+   "activo": true
+  }
+ },
+ {
+  "id": "recNgsqC5V7Ayeg3M",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Colina",
+   "ultima_modificacion": "2026-07-24T15:11:47.000Z",
+   "comuna_id": 60
+  }
+ },
+ {
+  "id": "recOMJQZRs3mR6W9R",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Lo Prado",
+   "M_Tasadores": [
+    "rec6aiNxHShcExwDv",
+    "recpYZ1KtvTMJTkQ0",
+    "recAmBbFFDGyb6CLE"
+   ],
+   "uf_m2_promedio_comercial": 52,
+   "ultima_modificacion": "2026-06-09T21:21:29.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 38,
+   "uf_m2_construccion": 38,
+   "comuna_id": 149,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recOVc085pbSldTml",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lo Espejo",
+   "ultima_modificacion": "2026-06-08T16:43:08.000Z",
+   "comuna_id": 148,
+   "activo": true
+  }
+ },
+ {
+  "id": "recPZ19RuiBFVPMSJ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Pirque",
+   "M_Tasadores": [
+    "rec8evf1ueQNf2d0b"
+   ],
+   "uf_m2_promedio_comercial": 58,
+   "ultima_modificacion": "2026-06-09T21:27:16.000Z",
+   "rango_max_uf_m2": 62,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 42,
+   "uf_m2_construccion": 42,
+   "comuna_id": 225,
+   "activo": true,
+   "uf_m2_terreno": 18,
+   "provincia": "Cordillera"
+  }
+ },
+ {
+  "id": "recPeeWYBZf4Dfcx9",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "La Higuera",
+   "ultima_modificacion": "2026-06-08T16:42:15.000Z",
+   "comuna_id": 125,
+   "activo": true
+  }
+ },
+ {
+  "id": "recQPM3UtaMX0UQyc",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chaitén",
+   "ultima_modificacion": "2026-06-08T16:38:57.000Z",
+   "comuna_id": 39,
+   "activo": true
+  }
+ },
+ {
+  "id": "recQWW4pzAPvAPlRC",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "María Pinto",
+   "ultima_modificacion": "2026-06-08T16:43:56.000Z",
+   "comuna_id": 170,
+   "activo": true
+  }
+ },
+ {
+  "id": "recQg0KwI6FnGqQBm",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Sagrada Familia",
+   "ultima_modificacion": "2026-06-08T16:48:22.000Z",
+   "comuna_id": 281,
+   "activo": true
+  }
+ },
+ {
+  "id": "recQjHFC1LySloyhc",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pencahue",
+   "ultima_modificacion": "2026-06-08T16:45:44.000Z",
+   "comuna_id": 213,
+   "activo": true
+  }
+ },
+ {
+  "id": "recQtg7g2WAbNrDik",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Clemente",
+   "ultima_modificacion": "2026-06-08T16:48:33.000Z",
+   "comuna_id": 286,
+   "activo": true
+  }
+ },
+ {
+  "id": "recQxnPQ9BZHyn5fq",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cisnes",
+   "ultima_modificacion": "2026-06-08T16:39:22.000Z",
+   "comuna_id": 50,
+   "activo": true
+  }
+ },
+ {
+  "id": "recR4s93LoCh3EVW3",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Romeral",
+   "ultima_modificacion": "2026-06-08T16:48:18.000Z",
+   "comuna_id": 279,
+   "activo": true
+  }
+ },
+ {
+  "id": "recRERikVEb3ck6LS",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Linares",
+   "ultima_modificacion": "2026-06-08T16:42:56.000Z",
+   "comuna_id": 143,
+   "activo": true
+  }
+ },
+ {
+  "id": "recS4xWsmHF3A1mJI",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Coihueco",
+   "ultima_modificacion": "2026-06-08T16:39:37.000Z",
+   "comuna_id": 56,
+   "activo": true
+  }
+ },
+ {
+  "id": "recSD6IeGS5xIMyXg",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chimbarongo",
+   "ultima_modificacion": "2026-06-08T16:39:15.000Z",
+   "comuna_id": 47,
+   "activo": true
+  }
+ },
+ {
+  "id": "recSf8JLueacVJN0t",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Cerrillos",
+   "M_Tasadores": [
+    "recn0ERG9np4KgT8L",
+    "recNsvNGzdwfoTXH2",
+    "recpYZ1KtvTMJTkQ0",
+    "recTYgQtZJGDnftIS",
+    "rec8MsXmoMI49u46n",
+    "recAmBbFFDGyb6CLE"
+   ],
+   "uf_m2_promedio_comercial": 58,
+   "ultima_modificacion": "2026-06-09T21:13:27.000Z",
+   "rango_max_uf_m2": 58,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 40,
+   "uf_m2_construccion": 40,
+   "comuna_id": 37,
+   "activo": true,
+   "uf_m2_terreno": 16,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recSp5e3S0K4SLmeH",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Negrete",
+   "ultima_modificacion": "2026-06-08T16:44:30.000Z",
+   "comuna_id": 185,
+   "activo": true
+  }
+ },
+ {
+  "id": "recSw50ekCa6gYq1f",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Felipe",
+   "ultima_modificacion": "2026-06-08T16:48:40.000Z",
+   "comuna_id": 289,
+   "activo": true
+  }
+ },
+ {
+  "id": "recSz9v538aBk6lAq",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Río Claro",
+   "ultima_modificacion": "2026-06-08T16:48:07.000Z",
+   "comuna_id": 274,
+   "activo": true
+  }
+ },
+ {
+  "id": "recT0FCiJIkhnd8NM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Litueche",
+   "ultima_modificacion": "2026-06-08T16:42:59.000Z",
+   "comuna_id": 144,
+   "activo": true
+  }
+ },
+ {
+  "id": "recT0MaHPvvCMAH8O",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Tirúa",
+   "ultima_modificacion": "2026-06-08T16:49:56.000Z",
+   "comuna_id": 324,
+   "activo": true
+  }
+ },
+ {
+  "id": "recT8MgB1ecxWOqKh",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "San Joaquín",
+   "M_Tasadores": [
+    "recpeNXwwRn5HEuWe"
+   ],
+   "uf_m2_promedio_comercial": 72,
+   "ultima_modificacion": "2026-06-09T21:32:12.000Z",
+   "rango_max_uf_m2": 70,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 50,
+   "uf_m2_construccion": 50,
+   "comuna_id": 294,
+   "activo": true,
+   "uf_m2_terreno": 20,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recTL7U3XS3GekrZU",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Arica",
+   "ultima_modificacion": "2026-06-08T16:37:58.000Z",
+   "comuna_id": 15,
+   "activo": true
+  }
+ },
+ {
+  "id": "recTWD9ctOfofgr73",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Puerto Octay",
+   "ultima_modificacion": "2026-06-08T16:46:44.000Z",
+   "comuna_id": 238,
+   "activo": true
+  }
+ },
+ {
+  "id": "recTg33SjwyOGiAlB",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Hualañé",
+   "ultima_modificacion": "2026-06-08T16:41:36.000Z",
+   "comuna_id": 107,
+   "activo": true
+  }
+ },
+ {
+  "id": "recTgOLFgRdL9vFjh",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Yumbel",
+   "ultima_modificacion": "2026-06-08T16:50:43.000Z",
+   "comuna_id": 346,
+   "activo": true
+  }
+ },
+ {
+  "id": "recULSZ7pRSycuqcS",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Teodoro Schmidt",
+   "ultima_modificacion": "2026-06-08T16:49:47.000Z",
+   "comuna_id": 320,
+   "activo": true
+  }
+ },
+ {
+  "id": "recUXF8umbDQq9FaA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Frutillar",
+   "ultima_modificacion": "2026-06-08T16:41:13.000Z",
+   "comuna_id": 97,
+   "activo": true
+  }
+ },
+ {
+  "id": "recUut4i0CKdd8hVc",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial premium",
+   "nombre": "Lo Barnechea",
+   "M_Tasadores": [
+    "recWS3bvVKS86dyjr",
+    "recLGGIvprcbmEeUm",
+    "recN1BARE3jGg8CKr",
+    "recSzPc8K1Ydo61Uj",
+    "recLmv7FIg8qoOivG"
+   ],
+   "uf_m2_promedio_comercial": 180,
+   "ultima_modificacion": "2026-06-09T21:21:18.000Z",
+   "rango_max_uf_m2": 175,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 125,
+   "uf_m2_construccion": 125,
+   "comuna_id": 147,
+   "activo": true,
+   "uf_m2_terreno": 45,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recV1X3HggAzXWv27",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Los Andes",
+   "ultima_modificacion": "2026-06-08T16:43:25.000Z",
+   "comuna_id": 155,
+   "activo": true
+  }
+ },
+ {
+  "id": "recVChwmdmZGNzTLK",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Hualpén",
+   "ultima_modificacion": "2026-06-08T16:41:38.000Z",
+   "comuna_id": 108,
+   "activo": true
+  }
+ },
+ {
+  "id": "recVOFEwzNFhYbaJu",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Doñihue",
+   "ultima_modificacion": "2026-06-08T16:40:40.000Z",
+   "comuna_id": 84,
+   "activo": true
+  }
+ },
+ {
+  "id": "recVRGqNK6dfHHvah",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Ignacio",
+   "ultima_modificacion": "2026-06-08T16:48:47.000Z",
+   "comuna_id": 292,
+   "activo": true
+  }
+ },
+ {
+  "id": "recVSrjLWEZpP9dEd",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial premium",
+   "nombre": "Vitacura",
+   "M_Tasadores": [
+    "recWS3bvVKS86dyjr",
+    "recPMUzU5VcgiMzYp",
+    "rec6y2yqMq5vUtFGp",
+    "rec82Il9Ciy4X610h",
+    "recSzPc8K1Ydo61Uj",
+    "rectPHou7daOwAp21"
+   ],
+   "uf_m2_promedio_comercial": 220,
+   "ultima_modificacion": "2026-06-09T21:35:31.000Z",
+   "rango_max_uf_m2": 200,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 145,
+   "uf_m2_construccion": 145,
+   "comuna_id": 344,
+   "activo": true,
+   "uf_m2_terreno": 60,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recVTh9RFjbJLE0iS",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Río Negro",
+   "ultima_modificacion": "2026-06-08T16:48:13.000Z",
+   "comuna_id": 277,
+   "activo": true
+  }
+ },
+ {
+  "id": "recVVkxihBFOVL0uG",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Vallenar",
+   "ultima_modificacion": "2026-06-08T16:50:17.000Z",
+   "comuna_id": 334,
+   "activo": true
+  }
+ },
+ {
+  "id": "recVqdAyRmow9yT6a",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Punta Arenas",
+   "ultima_modificacion": "2026-06-08T16:46:54.000Z",
+   "comuna_id": 242,
+   "activo": true
+  }
+ },
+ {
+  "id": "recVvEeCpxMbmtME7",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Nueva Imperial",
+   "ultima_modificacion": "2026-06-08T16:44:36.000Z",
+   "comuna_id": 188,
+   "activo": true
+  }
+ },
+ {
+  "id": "recW0Mna0uPd9dgKQ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Toltén",
+   "ultima_modificacion": "2026-06-08T16:50:00.000Z",
+   "comuna_id": 326,
+   "activo": true
+  }
+ },
+ {
+  "id": "recWFvHjlmb4c4QsN",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Maule",
+   "ultima_modificacion": "2026-06-08T16:44:00.000Z",
+   "comuna_id": 172,
+   "activo": true
+  }
+ },
+ {
+  "id": "recWkRpYupVqsqF3U",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Santa Juana",
+   "ultima_modificacion": "2026-06-08T16:49:24.000Z",
+   "comuna_id": 309,
+   "activo": true
+  }
+ },
+ {
+  "id": "recWlTbqlIXtOgvnI",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pichilemu",
+   "ultima_modificacion": "2026-06-08T16:46:08.000Z",
+   "comuna_id": 223,
+   "activo": true
+  }
+ },
+ {
+  "id": "recWor622DLtmyaY5",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Hualqui",
+   "ultima_modificacion": "2026-06-08T16:41:40.000Z",
+   "comuna_id": 109,
+   "activo": true
+  }
+ },
+ {
+  "id": "recX1OpI66nVAjbPy",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Ñuñoa",
+   "M_Tasadores": [
+    "recb9l63DELXntDAs",
+    "recLVXvkjClLjrboD",
+    "recMDjIuG4SC8cOuz",
+    "recKdJAkpdSb5pRub",
+    "recaV2K29sByO89sA",
+    "rec1oj0qhsAFqgdiz",
+    "recngc8WFp27C3e5g"
+   ],
+   "uf_m2_promedio_comercial": 55,
+   "ultima_modificacion": "2026-08-14T17:27:01.000Z",
+   "rango_max_uf_m2": 58,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 40,
+   "uf_m2_construccion": 40,
+   "TX_Solicitudes": [
+    "recuntRy8ZH1hzsqV",
+    "reczWyNuc2Mu9EPWl",
+    "recU4PknUhFgyQQhr"
+   ],
+   "comuna_id": 190,
+   "activo": true,
+   "uf_m2_terreno": 14
+  }
+ },
+ {
+  "id": "recX7u1xqjPNhUxMg",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Hualaihué",
+   "ultima_modificacion": "2026-06-08T16:41:33.000Z",
+   "comuna_id": 106,
+   "activo": true
+  }
+ },
+ {
+  "id": "recXNMmsfFMD7aPXN",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Rafael",
+   "ultima_modificacion": "2026-06-08T16:49:11.000Z",
+   "comuna_id": 303,
+   "activo": true
+  }
+ },
+ {
+  "id": "recXPeDK3mIVK35vY",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Alhué",
+   "ultima_modificacion": "2026-06-08T16:37:32.000Z",
+   "comuna_id": 4,
+   "activo": true
+  }
+ },
+ {
+  "id": "recXZKLIe9RedfCQ0",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "La Florida",
+   "M_Tasadores": [
+    "rec8evf1ueQNf2d0b",
+    "rechhIiVMXSVevTIZ",
+    "recfzZpWsUS9IIsCH",
+    "recfyz017duG82gtk",
+    "rec8MsXmoMI49u46n"
+   ],
+   "uf_m2_promedio_comercial": 80,
+   "ultima_modificacion": "2026-10-05T18:13:18.000Z",
+   "rango_max_uf_m2": 95,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 58,
+   "uf_m2_construccion": 58,
+   "TX_Comparables": [
+    "recnIDnTUfhiLeopC",
+    "recyDfElI5LIDUCL6",
+    "recqgHipi4ugWdcyk",
+    "recV9eAZPKRMcjcd6",
+    "rec8Kv8JWZb9JaXCM",
+    "recc9F4ihZUxCYOXd",
+    "recA894oQr6lJkCzQ"
+   ],
+   "TX_Solicitudes": [
+    "reci06q1kySVg43KG",
+    "recRjyT3kg0vYGcEH",
+    "recLRlZg1gSSE4WrM",
+    "reczcw7nC2UM9kfYV",
+    "recJigoQcsGH9Xuem",
+    "recoZcwmgCBVKQMxF"
+   ],
+   "comuna_id": 123,
+   "activo": true,
+   "uf_m2_terreno": 22,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recXcJFduHKSLjWrj",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Til Til",
+   "M_Tasadores": [
+    "recSR3RxY6rsLb8k7",
+    "rec8Z086J9P5ya3Hu",
+    "recDYrxnGrwnCDgjr",
+    "recLsW9ViM5k59jYN"
+   ],
+   "uf_m2_promedio_comercial": 40,
+   "ultima_modificacion": "2026-06-09T21:33:59.000Z",
+   "rango_max_uf_m2": 42,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 28,
+   "uf_m2_construccion": 28,
+   "comuna_id": 322,
+   "activo": true,
+   "uf_m2_terreno": 11,
+   "provincia": "Chacabuco"
+  }
+ },
+ {
+  "id": "recYJKb8Hh5sfx4xk",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "El Monte",
+   "ultima_modificacion": "2026-06-08T16:40:48.000Z",
+   "comuna_id": 87,
+   "activo": true
+  }
+ },
+ {
+  "id": "recYbznM5unFPvpDX",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Freire",
+   "ultima_modificacion": "2026-06-08T16:41:05.000Z",
+   "comuna_id": 94,
+   "activo": true
+  }
+ },
+ {
+  "id": "recZ6FJCs4twmClwG",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Alto del Carmen",
+   "ultima_modificacion": "2026-06-08T16:37:37.000Z",
+   "comuna_id": 6,
+   "activo": true
+  }
+ },
+ {
+  "id": "recZChT8pZyLfqCJ9",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Río Ibáñez",
+   "ultima_modificacion": "2026-06-08T16:48:11.000Z",
+   "comuna_id": 276,
+   "activo": true
+  }
+ },
+ {
+  "id": "reca2WfRVzHoUIgX5",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "La Cisterna",
+   "uf_m2_promedio_comercial": 60,
+   "ultima_modificacion": "2026-06-09T21:19:17.000Z",
+   "rango_max_uf_m2": 62,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 44,
+   "uf_m2_construccion": 44,
+   "comuna_id": 120,
+   "activo": true,
+   "uf_m2_terreno": 17,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "reca8ZZKWR7QHIYzr",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Coronel",
+   "ultima_modificacion": "2026-06-08T16:40:11.000Z",
+   "comuna_id": 71,
+   "activo": true
+  }
+ },
+ {
+  "id": "reca8yDCOWRbePM0z",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "La Unión",
+   "ultima_modificacion": "2026-06-08T16:42:26.000Z",
+   "comuna_id": 130,
+   "activo": true
+  }
+ },
+ {
+  "id": "recaCvw9Rb2W44hLs",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pica",
+   "ultima_modificacion": "2026-06-08T16:46:03.000Z",
+   "comuna_id": 221,
+   "activo": true
+  }
+ },
+ {
+  "id": "recaD7dxOEd61WPLT",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Peralillo",
+   "ultima_modificacion": "2026-06-08T16:45:54.000Z",
+   "comuna_id": 217,
+   "activo": true
+  }
+ },
+ {
+  "id": "recaOrkh7aEP3mEou",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Quilpué",
+   "M_Tasadores": [
+    "rec9UrUNVHUMOcx2y",
+    "rec7xBN86kGsTIxqm"
+   ],
+   "uf_m2_promedio_comercial": 58,
+   "ultima_modificacion": "2026-07-13T02:25:13.000Z",
+   "rango_max_uf_m2": 60,
+   "region": "Valparaíso",
+   "uf_m2_promedio_residencial": 42,
+   "uf_m2_construccion": 42,
+   "TX_Solicitudes": [
+    "recYaVgMChc8QJVRG",
+    "recJm4yZuZPMOBSLT"
+   ],
+   "comuna_id": 257,
+   "activo": true,
+   "uf_m2_terreno": 16,
+   "provincia": "Valparaíso"
+  }
+ },
+ {
+  "id": "recanG0pb81jaXAwg",
+  "createdTime": "2026-09-23T19:17:05.000Z",
+  "fields": {
+   "nombre": "SANDBOX_TAUDITCLOSE_Comuna_Sin_Precios",
+   "ultima_modificacion": "2026-09-23T19:17:05.000Z",
+   "comuna_id": 356
+  }
+ },
+ {
+  "id": "recanGDy4VUdwEhE4",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Puyehue",
+   "ultima_modificacion": "2026-06-08T16:47:07.000Z",
+   "comuna_id": 248,
+   "activo": true
+  }
+ },
+ {
+  "id": "recanoUToEGF4Om26",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Río Hurtado",
+   "ultima_modificacion": "2026-06-08T16:48:09.000Z",
+   "comuna_id": 275,
+   "activo": true
+  }
+ },
+ {
+  "id": "recaohjzwTLsLSUsQ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chépica",
+   "ultima_modificacion": "2026-06-08T16:39:04.000Z",
+   "comuna_id": 42,
+   "activo": true
+  }
+ },
+ {
+  "id": "recav3a0HY2lRPsFM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Taltal",
+   "ultima_modificacion": "2026-06-08T16:49:41.000Z",
+   "comuna_id": 317,
+   "activo": true
+  }
+ },
+ {
+  "id": "recavdZ28uTSqsYda",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Requínoa",
+   "ultima_modificacion": "2026-06-08T16:47:58.000Z",
+   "comuna_id": 270,
+   "activo": true
+  }
+ },
+ {
+  "id": "recawqODwqUg9onXD",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Huara",
+   "ultima_modificacion": "2026-06-08T16:41:43.000Z",
+   "comuna_id": 110,
+   "activo": true
+  }
+ },
+ {
+  "id": "recayXELB4SZZGjBw",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quillota",
+   "ultima_modificacion": "2026-06-08T16:47:24.000Z",
+   "comuna_id": 256,
+   "activo": true
+  }
+ },
+ {
+  "id": "recb113bTxIoznys3",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Ninhue",
+   "ultima_modificacion": "2026-06-08T16:44:32.000Z",
+   "comuna_id": 186,
+   "activo": true
+  }
+ },
+ {
+  "id": "recb4WAcFovdbQa77",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Colbún",
+   "ultima_modificacion": "2026-06-08T16:39:43.000Z",
+   "comuna_id": 58,
+   "activo": true
+  }
+ },
+ {
+  "id": "recbLpe7rtw8FdDlr",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial alto",
+   "nombre": "Santiago",
+   "M_Tasadores": [
+    "recb9l63DELXntDAs",
+    "recLlEp6N0L8AGmIX",
+    "recMDjIuG4SC8cOuz",
+    "recLsfgHePQkyTO7N",
+    "rec0GC0P7zxiNy9s8",
+    "rec1oj0qhsAFqgdiz",
+    "recngc8WFp27C3e5g"
+   ],
+   "uf_m2_promedio_comercial": 95,
+   "ultima_modificacion": "2026-08-17T22:36:20.000Z",
+   "rango_max_uf_m2": 95,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 68,
+   "uf_m2_construccion": 68,
+   "TX_Solicitudes": [
+    "rec75VXoWvRImjd0f"
+   ],
+   "comuna_id": 311,
+   "activo": true,
+   "uf_m2_terreno": 28,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recbOUPHTu5IYGhUx",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pinto",
+   "ultima_modificacion": "2026-06-08T16:46:10.000Z",
+   "comuna_id": 224,
+   "activo": true
+  }
+ },
+ {
+  "id": "recbSWhzS92AQjLHz",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Gorbea",
+   "ultima_modificacion": "2026-06-08T16:41:24.000Z",
+   "comuna_id": 102,
+   "activo": true
+  }
+ },
+ {
+  "id": "recbh0zHyovd7Y5UC",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Pedro de Atacama",
+   "ultima_modificacion": "2026-06-08T16:49:06.000Z",
+   "comuna_id": 301,
+   "activo": true
+  }
+ },
+ {
+  "id": "recbtwGtgLiBPuT7z",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Traiguén",
+   "ultima_modificacion": "2026-06-08T16:50:08.000Z",
+   "comuna_id": 330,
+   "activo": true
+  }
+ },
+ {
+  "id": "reccKrsgBvjNAT2X2",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Isla de Pascua",
+   "ultima_modificacion": "2026-06-08T16:41:58.000Z",
+   "comuna_id": 117,
+   "activo": true
+  }
+ },
+ {
+  "id": "reccLyJs2PCcWtTzH",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Pablo",
+   "ultima_modificacion": "2026-06-08T16:49:02.000Z",
+   "comuna_id": 299,
+   "activo": true
+  }
+ },
+ {
+  "id": "recciD0aP0d27Ifrf",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "María Elena",
+   "ultima_modificacion": "2026-06-08T16:43:53.000Z",
+   "comuna_id": 169,
+   "activo": true
+  }
+ },
+ {
+  "id": "recckThfQG4UBr5wM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Coelemu",
+   "ultima_modificacion": "2026-06-08T16:39:35.000Z",
+   "comuna_id": 55,
+   "activo": true
+  }
+ },
+ {
+  "id": "reccowQB7h5kyMMgZ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Peñaflor",
+   "uf_m2_promedio_comercial": 46,
+   "ultima_modificacion": "2026-06-09T21:26:19.000Z",
+   "rango_max_uf_m2": 48,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 34,
+   "uf_m2_construccion": 34,
+   "comuna_id": 215,
+   "activo": true,
+   "uf_m2_terreno": 13,
+   "provincia": "Talagante"
+  }
+ },
+ {
+  "id": "recdAi6aDUy8EJYvp",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Victoria",
+   "ultima_modificacion": "2026-06-08T16:50:24.000Z",
+   "comuna_id": 337,
+   "activo": true
+  }
+ },
+ {
+  "id": "rece45MVUaKg7OoKk",
+  "createdTime": "2026-06-08T16:56:12.000Z",
+  "fields": {
+   "nombre": "La Dehesa",
+   "M_Tasadores": [
+    "recN1BARE3jGg8CKr"
+   ],
+   "ultima_modificacion": "2026-06-08T16:56:12.000Z",
+   "comuna_id": 351
+  }
+ },
+ {
+  "id": "rece9wLXaU8589PbQ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Rosendo",
+   "ultima_modificacion": "2026-06-08T16:49:15.000Z",
+   "comuna_id": 305,
+   "activo": true
+  }
+ },
+ {
+  "id": "receKFgxlZrpWleSM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Queilén",
+   "ultima_modificacion": "2026-06-08T16:47:09.000Z",
+   "comuna_id": 249,
+   "activo": true
+  }
+ },
+ {
+  "id": "receP3LhyAO8UqZxn",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Contulmo",
+   "ultima_modificacion": "2026-06-08T16:40:04.000Z",
+   "comuna_id": 68,
+   "activo": true
+  }
+ },
+ {
+  "id": "recejBIZUOI1NQepO",
+  "createdTime": "2026-06-06T01:46:52.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Habitacional",
+   "nombre": "Nunoa",
+   "M_Tasadores": [
+    "rec7Pwbf7vPAIm8lO"
+   ],
+   "uf_m2_promedio_comercial": 38,
+   "ultima_modificacion": "2026-06-09T21:36:01.000Z",
+   "rango_max_uf_m2": 105,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 32,
+   "uf_m2_construccion": 30,
+   "comuna_id": 349,
+   "activo": true,
+   "uf_m2_terreno": 38,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recekGGqdFhYMDyJR",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Tortel",
+   "ultima_modificacion": "2026-06-08T16:50:06.000Z",
+   "comuna_id": 329,
+   "activo": true
+  }
+ },
+ {
+  "id": "recewo4uiVSTdEv3m",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pumanque",
+   "ultima_modificacion": "2026-06-08T16:46:50.000Z",
+   "comuna_id": 240,
+   "activo": true
+  }
+ },
+ {
+  "id": "receymIMXaQA4wwsY",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pichidegua",
+   "ultima_modificacion": "2026-06-08T16:46:06.000Z",
+   "comuna_id": 222,
+   "activo": true
+  }
+ },
+ {
+  "id": "recf3P5N4msDqoiIM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Río Bueno",
+   "ultima_modificacion": "2026-06-08T16:48:05.000Z",
+   "comuna_id": 273,
+   "activo": true
+  }
+ },
+ {
+  "id": "recfH6vRg7tlMQZga",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Ránquil",
+   "ultima_modificacion": "2026-06-08T16:47:43.000Z",
+   "comuna_id": 264,
+   "activo": true
+  }
+ },
+ {
+  "id": "recfJxiRgM1qDHiQK",
+  "createdTime": "2026-09-23T19:04:59.000Z",
+  "fields": {
+   "nombre": "SANDBOX_SinPrecios_T-AUDIT-CLOSE",
+   "ultima_modificacion": "2026-09-23T19:04:59.000Z",
+   "comuna_id": 355
+  }
+ },
+ {
+  "id": "recfdQA7HnXN6RVLl",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Vilcún",
+   "ultima_modificacion": "2026-06-08T16:50:28.000Z",
+   "comuna_id": 339,
+   "activo": true
+  }
+ },
+ {
+  "id": "recfmeSjp47BHLQrC",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Llay-Llay",
+   "ultima_modificacion": "2026-06-08T16:43:03.000Z",
+   "comuna_id": 146,
+   "activo": true
+  }
+ },
+ {
+  "id": "recfsbDU3YtMOrEmK",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Melipeuco",
+   "ultima_modificacion": "2026-06-08T16:44:07.000Z",
+   "comuna_id": 175,
+   "activo": true
+  }
+ },
+ {
+  "id": "recg0dogL5zrgsx83",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Los Álamos",
+   "ultima_modificacion": "2026-06-08T16:43:23.000Z",
+   "comuna_id": 154,
+   "activo": true
+  }
+ },
+ {
+  "id": "recgFbeUjmctxhk5j",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Olivar",
+   "ultima_modificacion": "2026-06-08T16:44:47.000Z",
+   "comuna_id": 192,
+   "activo": true
+  }
+ },
+ {
+  "id": "recgZdERwG1P8ccxe",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Puente Alto",
+   "M_Tasadores": [
+    "rec8evf1ueQNf2d0b",
+    "rec9eME3hYWc90lOW",
+    "rechhIiVMXSVevTIZ",
+    "recfyz017duG82gtk",
+    "rec8iNQ6e8D7RoJDi"
+   ],
+   "uf_m2_promedio_comercial": 55,
+   "ultima_modificacion": "2026-06-09T21:28:09.000Z",
+   "rango_max_uf_m2": 58,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 40,
+   "uf_m2_construccion": 40,
+   "comuna_id": 236,
+   "activo": true,
+   "uf_m2_terreno": 15,
+   "provincia": "Cordillera"
+  }
+ },
+ {
+  "id": "recghawmM5KKY2hsE",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Navidad",
+   "ultima_modificacion": "2026-06-08T16:44:27.000Z",
+   "comuna_id": 184,
+   "activo": true
+  }
+ },
+ {
+  "id": "recgyaetpp69kNS9m",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chiguayante",
+   "ultima_modificacion": "2026-06-08T16:39:06.000Z",
+   "comuna_id": 43,
+   "activo": true
+  }
+ },
+ {
+  "id": "rech0M8610VaXYHeG",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chillán",
+   "ultima_modificacion": "2026-06-08T16:39:11.000Z",
+   "comuna_id": 45,
+   "activo": true
+  }
+ },
+ {
+  "id": "rech37NxCV0BfLMXz",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cholchol",
+   "ultima_modificacion": "2026-06-08T16:39:18.000Z",
+   "comuna_id": 48,
+   "activo": true
+  }
+ },
+ {
+  "id": "rechKv2iAuSdlDPmg",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Coltauco",
+   "ultima_modificacion": "2026-06-08T16:39:50.000Z",
+   "comuna_id": 62,
+   "activo": true
+  }
+ },
+ {
+  "id": "rechR09IgYBD5Bkm5",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quemchi",
+   "ultima_modificacion": "2026-06-08T16:47:14.000Z",
+   "comuna_id": 251,
+   "activo": true
+  }
+ },
+ {
+  "id": "reci39OVZrPEL3Iae",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Panquehue",
+   "ultima_modificacion": "2026-06-08T16:45:24.000Z",
+   "comuna_id": 205,
+   "activo": true
+  }
+ },
+ {
+  "id": "reci5DBPIakq7mpfs",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Petorca",
+   "ultima_modificacion": "2026-06-08T16:45:59.000Z",
+   "comuna_id": 219,
+   "activo": true
+  }
+ },
+ {
+  "id": "reciCkCPlGtV87aZK",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Laguna Blanca",
+   "ultima_modificacion": "2026-06-08T16:42:33.000Z",
+   "comuna_id": 133,
+   "activo": true
+  }
+ },
+ {
+  "id": "reciTVbn0fcyyjLcV",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Retiro",
+   "ultima_modificacion": "2026-06-08T16:48:00.000Z",
+   "comuna_id": 271,
+   "activo": true
+  }
+ },
+ {
+  "id": "reciXWRzG2TmQ817D",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Buin",
+   "M_Tasadores": [
+    "recrIJk1p8GfJBROv",
+    "recTV4BmIWy7HaOtq"
+   ],
+   "uf_m2_promedio_comercial": 45,
+   "ultima_modificacion": "2026-06-09T21:12:11.000Z",
+   "rango_max_uf_m2": 48,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 33,
+   "uf_m2_construccion": 33,
+   "comuna_id": 17,
+   "activo": true,
+   "uf_m2_terreno": 13,
+   "provincia": "Maipo"
+  }
+ },
+ {
+  "id": "reciXghBk7FubDPi6",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Curacautín",
+   "ultima_modificacion": "2026-06-08T16:40:19.000Z",
+   "comuna_id": 75,
+   "activo": true
+  }
+ },
+ {
+  "id": "reciZN712zCXrvH6Y",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "San Antonio",
+   "uf_m2_promedio_comercial": 50,
+   "ultima_modificacion": "2026-06-09T21:31:23.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Valparaíso",
+   "uf_m2_promedio_residencial": 35,
+   "uf_m2_construccion": 35,
+   "comuna_id": 283,
+   "activo": true,
+   "uf_m2_terreno": 13,
+   "provincia": "Valparaíso"
+  }
+ },
+ {
+  "id": "recibI0YuYw5e0d4h",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Villa Alegre",
+   "ultima_modificacion": "2026-06-08T16:50:30.000Z",
+   "comuna_id": 340,
+   "activo": true
+  }
+ },
+ {
+  "id": "recifaHqtP6j4dZ6d",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Habitacional",
+   "nombre": "Las Condes",
+   "M_Tasadores": [
+    "rec7Pwbf7vPAIm8lO",
+    "recWS3bvVKS86dyjr",
+    "recpT3JR7UkW1mXgl",
+    "recPMUzU5VcgiMzYp",
+    "rec6y2yqMq5vUtFGp",
+    "rec82Il9Ciy4X610h",
+    "recSzPc8K1Ydo61Uj",
+    "rectPHou7daOwAp21"
+   ],
+   "uf_m2_promedio_comercial": 55,
+   "ultima_modificacion": "2026-08-19T15:58:33.000Z",
+   "rango_max_uf_m2": 180,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 42.5,
+   "uf_m2_construccion": 40,
+   "TX_Comparables": [
+    "rec7Lk9p6VVPECv6C",
+    "recIW61Ors8qZ3RrY",
+    "rec3zfX2LSK0bgL5N",
+    "recxUX4R6MLpVKkUt",
+    "recRJoMEdd5ErMUHF"
+   ],
+   "TX_Solicitudes": [
+    "reclzOOmRHH5LLa8x",
+    "recd7tJVAqoPvBLf5",
+    "recPSdQR1jqK3QiPU",
+    "recWrgVM0iLA9FBTG",
+    "recHeANrcSL2w0wnH",
+    "recBqKrJqgGw9wj7k",
+    "recXC2NvItjnJy1kK",
+    "recnS28rQxzqPrlh5",
+    "recPN3ExYyivi6uhR",
+    "recgKuhMFV4PHuLEM",
+    "recidZZ0H9CSEIrsg",
+    "recIEvKCbe7J8TDaB",
+    "recQgfhUPirXCnSR8",
+    "recy5MD3qCuYhPevr",
+    "recvtkiqSUPzTKEQ0",
+    "rec9qf3DchOY5Lk2N",
+    "recrx1YQYJuecthqd",
+    "recdBwN9OimaCcL9T"
+   ],
+   "comuna_id": 138,
+   "activo": true,
+   "uf_m2_terreno": 55,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recioHGINR9WhCssB",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Salamanca",
+   "ultima_modificacion": "2026-06-08T16:48:24.000Z",
+   "comuna_id": 282,
+   "activo": true
+  }
+ },
+ {
+  "id": "recix7fYoda9APos4",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Los Vilos",
+   "ultima_modificacion": "2026-06-08T16:43:34.000Z",
+   "comuna_id": 160,
+   "activo": true
+  }
+ },
+ {
+  "id": "recixpw81KBG9rvl7",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Codegua",
+   "ultima_modificacion": "2026-06-08T16:39:33.000Z",
+   "comuna_id": 54,
+   "activo": true
+  }
+ },
+ {
+  "id": "recjA4ihH4XLih9YT",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pitrufquén",
+   "ultima_modificacion": "2026-06-08T16:46:15.000Z",
+   "comuna_id": 226,
+   "activo": true
+  }
+ },
+ {
+  "id": "recjLaAjnvAXCIVds",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cabildo",
+   "ultima_modificacion": "2026-06-08T16:38:08.000Z",
+   "comuna_id": 19,
+   "activo": true
+  }
+ },
+ {
+  "id": "recjLpiNZYE5cGDrd",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lebu",
+   "ultima_modificacion": "2026-06-08T16:42:49.000Z",
+   "comuna_id": 140,
+   "activo": true
+  }
+ },
+ {
+  "id": "recjh6VsWCSkWJ1fa",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "La Cruz",
+   "ultima_modificacion": "2026-06-08T16:42:06.000Z",
+   "comuna_id": 121,
+   "activo": true
+  }
+ },
+ {
+  "id": "recjv9RfXe95Gg1IB",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cartagena",
+   "ultima_modificacion": "2026-06-08T16:38:39.000Z",
+   "comuna_id": 32,
+   "activo": true
+  }
+ },
+ {
+  "id": "recjvCKdbLjnwxc2O",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Nacimiento",
+   "ultima_modificacion": "2026-06-08T16:44:20.000Z",
+   "comuna_id": 181,
+   "activo": true
+  }
+ },
+ {
+  "id": "reck6nOK8dXxVdaHc",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Punitaqui",
+   "ultima_modificacion": "2026-06-08T16:46:52.000Z",
+   "comuna_id": 241,
+   "activo": true
+  }
+ },
+ {
+  "id": "reck7vAztnoMkpSZr",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Diego de Almagro",
+   "ultima_modificacion": "2026-06-08T16:40:38.000Z",
+   "comuna_id": 83,
+   "activo": true
+  }
+ },
+ {
+  "id": "reckhQyd6ITm7F2YM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Juan de la Costa",
+   "ultima_modificacion": "2026-06-08T16:48:55.000Z",
+   "comuna_id": 296,
+   "activo": true
+  }
+ },
+ {
+  "id": "reckoAHej54N0s78i",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Paihuano",
+   "ultima_modificacion": "2026-06-08T16:45:06.000Z",
+   "comuna_id": 199,
+   "activo": true
+  }
+ },
+ {
+  "id": "reckrB1qHaLDCFNxA",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Molina",
+   "ultima_modificacion": "2026-06-08T16:44:12.000Z",
+   "comuna_id": 177,
+   "activo": true
+  }
+ },
+ {
+  "id": "reclKYvpU8KoBKhXu",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Santa Bárbara",
+   "ultima_modificacion": "2026-06-08T16:49:20.000Z",
+   "comuna_id": 307,
+   "activo": true
+  }
+ },
+ {
+  "id": "reclLFjGbZBmsGmus",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chanco",
+   "ultima_modificacion": "2026-06-08T16:38:59.000Z",
+   "comuna_id": 40,
+   "activo": true
+  }
+ },
+ {
+  "id": "reclMkfZSLIB7JF8F",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Teno",
+   "ultima_modificacion": "2026-06-08T16:49:45.000Z",
+   "comuna_id": 319,
+   "activo": true
+  }
+ },
+ {
+  "id": "reclo50u1jWycAZDb",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Machalí",
+   "M_Tasadores": [
+    "recHxsmMpa2ngEcZF",
+    "recfKSTNNuJ9BCN10"
+   ],
+   "uf_m2_promedio_comercial": 60,
+   "ultima_modificacion": "2026-06-09T21:22:26.000Z",
+   "rango_max_uf_m2": 62,
+   "region": "O'Higgins",
+   "uf_m2_promedio_residencial": 42,
+   "uf_m2_construccion": 42,
+   "comuna_id": 163,
+   "activo": true,
+   "uf_m2_terreno": 16,
+   "provincia": "Cachapoal"
+  }
+ },
+ {
+  "id": "recm5S0BDw7Pa0Dho",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Camarones",
+   "ultima_modificacion": "2026-06-08T16:38:27.000Z",
+   "comuna_id": 27,
+   "activo": true
+  }
+ },
+ {
+  "id": "recmcY5apWOFITE9C",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Carahue",
+   "ultima_modificacion": "2026-06-08T16:38:36.000Z",
+   "comuna_id": 31,
+   "activo": true
+  }
+ },
+ {
+  "id": "recmovnb0O7qXWxaq",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Palena",
+   "ultima_modificacion": "2026-06-08T16:45:15.000Z",
+   "comuna_id": 202,
+   "activo": true
+  }
+ },
+ {
+  "id": "recmyVHVMqMf7U24Z",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Padre Hurtado",
+   "uf_m2_promedio_comercial": 50,
+   "ultima_modificacion": "2026-06-09T21:24:44.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 37,
+   "uf_m2_construccion": 37,
+   "comuna_id": 197,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Talagante"
+  }
+ },
+ {
+  "id": "recnIyGHZatyw80TN",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Torres del Paine",
+   "ultima_modificacion": "2026-06-08T16:50:04.000Z",
+   "comuna_id": 328,
+   "activo": true
+  }
+ },
+ {
+  "id": "recnLoDnFoGRJdFYp",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Rinconada",
+   "ultima_modificacion": "2026-06-08T16:48:02.000Z",
+   "comuna_id": 272,
+   "activo": true
+  }
+ },
+ {
+  "id": "recoBvqgQOZNC4Csk",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "O'Higgins",
+   "ultima_modificacion": "2026-06-08T16:44:44.000Z",
+   "comuna_id": 191,
+   "activo": true
+  }
+ },
+ {
+  "id": "recoD8DnQ0PbFiyY6",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pozo Almonte",
+   "ultima_modificacion": "2026-06-08T16:46:24.000Z",
+   "comuna_id": 230,
+   "activo": true
+  }
+ },
+ {
+  "id": "recoR9ijiFgdnUHEX",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Javier",
+   "ultima_modificacion": "2026-06-08T16:48:49.000Z",
+   "comuna_id": 293,
+   "activo": true
+  }
+ },
+ {
+  "id": "recoWOxS3br3zUmOS",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "La Calera",
+   "ultima_modificacion": "2026-06-08T16:42:02.000Z",
+   "comuna_id": 119,
+   "activo": true
+  }
+ },
+ {
+  "id": "recojtBWrxxSWlPTV",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Saavedra",
+   "ultima_modificacion": "2026-06-08T16:48:20.000Z",
+   "comuna_id": 280,
+   "activo": true
+  }
+ },
+ {
+  "id": "recor9bHuh6ZwDaH0",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chañaral",
+   "ultima_modificacion": "2026-06-08T16:39:02.000Z",
+   "comuna_id": 41,
+   "activo": true
+  }
+ },
+ {
+  "id": "recp2SCDt5Z24atbW",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Curepto",
+   "ultima_modificacion": "2026-06-08T16:40:31.000Z",
+   "comuna_id": 80,
+   "activo": true
+  }
+ },
+ {
+  "id": "recpBLIKBji6TyIJb",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Calbuco",
+   "ultima_modificacion": "2026-06-08T16:38:17.000Z",
+   "comuna_id": 23,
+   "activo": true
+  }
+ },
+ {
+  "id": "recpFCFgLNCP9ohKu",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Tucapel",
+   "ultima_modificacion": "2026-06-08T16:50:12.000Z",
+   "comuna_id": 332,
+   "activo": true
+  }
+ },
+ {
+  "id": "recpHnVsx96A5KsHp",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Puqueldón",
+   "ultima_modificacion": "2026-06-08T16:46:56.000Z",
+   "comuna_id": 243,
+   "activo": true
+  }
+ },
+ {
+  "id": "recpWtZAvPBKGqXKj",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Huasco",
+   "ultima_modificacion": "2026-06-08T16:41:45.000Z",
+   "comuna_id": 111,
+   "activo": true
+  }
+ },
+ {
+  "id": "recpe3JmqQQvPhKKO",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cunco",
+   "ultima_modificacion": "2026-06-08T16:40:17.000Z",
+   "comuna_id": 74,
+   "activo": true
+  }
+ },
+ {
+  "id": "recpzAPDhvPkjzWdg",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Castro",
+   "ultima_modificacion": "2026-06-08T16:38:44.000Z",
+   "comuna_id": 34,
+   "activo": true
+  }
+ },
+ {
+  "id": "recq5MNRSL3pa5Rao",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Calera de Tango",
+   "M_Tasadores": [
+    "recrIJk1p8GfJBROv",
+    "rec2ju2fC5db15IIt"
+   ],
+   "uf_m2_promedio_comercial": 52,
+   "ultima_modificacion": "2026-06-09T21:12:42.000Z",
+   "rango_max_uf_m2": 56,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 38,
+   "uf_m2_construccion": 38,
+   "comuna_id": 25,
+   "activo": true,
+   "uf_m2_terreno": 17,
+   "provincia": "Maipo"
+  }
+ },
+ {
+  "id": "recqDBoG1YvIurXsp",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Aysén",
+   "ultima_modificacion": "2026-06-08T16:38:00.000Z",
+   "comuna_id": 16,
+   "activo": true
+  }
+ },
+ {
+  "id": "recqM6kkp0lRCSCGa",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Santa Cruz",
+   "uf_m2_promedio_comercial": 42,
+   "ultima_modificacion": "2026-06-09T21:33:10.000Z",
+   "rango_max_uf_m2": 44,
+   "region": "O'Higgins",
+   "uf_m2_promedio_residencial": 30,
+   "uf_m2_construccion": 30,
+   "comuna_id": 308,
+   "activo": true,
+   "uf_m2_terreno": 12,
+   "provincia": "Cachapoal"
+  }
+ },
+ {
+  "id": "recqZYQ6EKyqrJrBT",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Nicolás",
+   "ultima_modificacion": "2026-06-08T16:49:00.000Z",
+   "comuna_id": 298,
+   "activo": true
+  }
+ },
+ {
+  "id": "recqeLqNfbfkewdfj",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Arauco",
+   "ultima_modificacion": "2026-06-08T16:37:56.000Z",
+   "comuna_id": 14,
+   "activo": true
+  }
+ },
+ {
+  "id": "recqzWLmFlYnsiJ5A",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Río Verde",
+   "ultima_modificacion": "2026-06-08T16:48:16.000Z",
+   "comuna_id": 278,
+   "activo": true
+  }
+ },
+ {
+  "id": "recr7d6keNqdMvnJw",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "San Bernardo",
+   "M_Tasadores": [
+    "rec8evf1ueQNf2d0b",
+    "rechhIiVMXSVevTIZ",
+    "rec2ju2fC5db15IIt",
+    "recTV4BmIWy7HaOtq"
+   ],
+   "uf_m2_promedio_comercial": 50,
+   "ultima_modificacion": "2026-06-09T21:31:27.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 36,
+   "uf_m2_construccion": 36,
+   "comuna_id": 284,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Maipo"
+  }
+ },
+ {
+  "id": "recr9SQLhjWTilLGc",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Talagante",
+   "uf_m2_promedio_comercial": 48,
+   "ultima_modificacion": "2026-06-09T21:33:29.000Z",
+   "rango_max_uf_m2": 50,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 35,
+   "uf_m2_construccion": 35,
+   "comuna_id": 314,
+   "activo": true,
+   "uf_m2_terreno": 13,
+   "provincia": "Talagante"
+  }
+ },
+ {
+  "id": "recrDsjCErbJZG48f",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Nancagua",
+   "ultima_modificacion": "2026-06-08T16:44:23.000Z",
+   "comuna_id": 182,
+   "activo": true
+  }
+ },
+ {
+  "id": "recrnqfdpA9WoqkdP",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Lampa",
+   "M_Tasadores": [
+    "recSR3RxY6rsLb8k7",
+    "rec8Z086J9P5ya3Hu",
+    "recUqGOTZ8MOIGrlQ",
+    "recDYrxnGrwnCDgjr",
+    "rec5WJyEf2NWdwcGS",
+    "recLsW9ViM5k59jYN"
+   ],
+   "uf_m2_promedio_comercial": 48,
+   "ultima_modificacion": "2026-06-09T21:20:30.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 35,
+   "uf_m2_construccion": 35,
+   "comuna_id": 135,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Chacabuco"
+  }
+ },
+ {
+  "id": "recrp4VzBfRrSVH2n",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San José de Maipo",
+   "ultima_modificacion": "2026-06-08T16:48:53.000Z",
+   "comuna_id": 295,
+   "activo": true
+  }
+ },
+ {
+  "id": "recrtW83AQtDLAbzj",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Quinta Normal",
+   "M_Tasadores": [
+    "recAmBbFFDGyb6CLE"
+   ],
+   "uf_m2_promedio_comercial": 60,
+   "ultima_modificacion": "2026-06-09T21:30:03.000Z",
+   "rango_max_uf_m2": 60,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 42,
+   "uf_m2_construccion": 42,
+   "comuna_id": 260,
+   "activo": true,
+   "uf_m2_terreno": 17,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recsD7b5yYltTeG34",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Galvarino",
+   "ultima_modificacion": "2026-06-08T16:41:19.000Z",
+   "comuna_id": 100,
+   "activo": true
+  }
+ },
+ {
+  "id": "recsS8vVnUFlyQo9N",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Panguipulli",
+   "ultima_modificacion": "2026-06-08T16:45:21.000Z",
+   "comuna_id": 204,
+   "activo": true
+  }
+ },
+ {
+  "id": "recsfR9JcSHMcpIKz",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "El Bosque",
+   "uf_m2_promedio_comercial": 50,
+   "ultima_modificacion": "2026-06-09T21:16:29.000Z",
+   "rango_max_uf_m2": 52,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 36,
+   "uf_m2_construccion": 36,
+   "comuna_id": 85,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Santiago"
+  }
+ },
+ {
+  "id": "recsksc3YkiGJ9jbb",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Rauco",
+   "ultima_modificacion": "2026-06-08T16:47:45.000Z",
+   "comuna_id": 265,
+   "activo": true
+  }
+ },
+ {
+  "id": "recsn9ObKwIohAJh2",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Rancagua",
+   "M_Tasadores": [
+    "recHxsmMpa2ngEcZF",
+    "recaPHkBh5hI3jGpa",
+    "recfKSTNNuJ9BCN10"
+   ],
+   "uf_m2_promedio_comercial": 55,
+   "ultima_modificacion": "2026-06-09T21:30:15.000Z",
+   "rango_max_uf_m2": 56,
+   "region": "O'Higgins",
+   "uf_m2_promedio_residencial": 38,
+   "uf_m2_construccion": 38,
+   "comuna_id": 263,
+   "activo": true,
+   "uf_m2_terreno": 14,
+   "provincia": "Cachapoal"
+  }
+ },
+ {
+  "id": "rect0bBYTrFsEJ7zL",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Futrono",
+   "ultima_modificacion": "2026-06-08T16:41:17.000Z",
+   "comuna_id": 99,
+   "activo": true
+  }
+ },
+ {
+  "id": "rect79vfmRFTVR3Xs",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Zapallar",
+   "ultima_modificacion": "2026-06-08T16:50:47.000Z",
+   "comuna_id": 348,
+   "activo": true
+  }
+ },
+ {
+  "id": "rectRWa2GOL0uAtyX",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quilaco",
+   "ultima_modificacion": "2026-06-08T16:47:16.000Z",
+   "comuna_id": 252,
+   "activo": true
+  }
+ },
+ {
+  "id": "rectV0MVhZ65FTu4h",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Ollagüe",
+   "ultima_modificacion": "2026-06-08T16:44:50.000Z",
+   "comuna_id": 193,
+   "activo": true
+  }
+ },
+ {
+  "id": "rectgwZAKko9wFSAM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Antuco",
+   "ultima_modificacion": "2026-06-08T16:37:54.000Z",
+   "comuna_id": 13,
+   "activo": true
+  }
+ },
+ {
+  "id": "recti81Jj2zsOYx71",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Paine",
+   "M_Tasadores": [
+    "recrIJk1p8GfJBROv",
+    "recTV4BmIWy7HaOtq"
+   ],
+   "uf_m2_promedio_comercial": 42,
+   "ultima_modificacion": "2026-06-09T21:25:03.000Z",
+   "rango_max_uf_m2": 45,
+   "region": "Metropolitana de Santiago",
+   "uf_m2_promedio_residencial": 30,
+   "uf_m2_construccion": 30,
+   "comuna_id": 201,
+   "activo": true,
+   "uf_m2_terreno": 12,
+   "provincia": "Maipo"
+  }
+ },
+ {
+  "id": "recttl2qr0znay3C6",
+  "createdTime": "2026-06-08T16:56:12.000Z",
+  "fields": {
+   "nombre": "Chicureo",
+   "M_Tasadores": [
+    "recN1BARE3jGg8CKr",
+    "recLmv7FIg8qoOivG"
+   ],
+   "ultima_modificacion": "2026-06-08T16:56:53.000Z",
+   "comuna_id": 352
+  }
+ },
+ {
+  "id": "recuWmYBphDt0fzqt",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Monte Patria",
+   "ultima_modificacion": "2026-06-08T16:44:14.000Z",
+   "comuna_id": 178,
+   "activo": true
+  }
+ },
+ {
+  "id": "recuqVoUGf479Q0DZ",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Graneros",
+   "M_Tasadores": [
+    "recHxsmMpa2ngEcZF"
+   ],
+   "uf_m2_promedio_comercial": 40,
+   "ultima_modificacion": "2026-06-09T21:17:51.000Z",
+   "rango_max_uf_m2": 42,
+   "region": "O'Higgins",
+   "uf_m2_promedio_residencial": 28,
+   "uf_m2_construccion": 28,
+   "comuna_id": 103,
+   "activo": true,
+   "uf_m2_terreno": 11
+  }
+ },
+ {
+  "id": "recv98BPPszpLqLzk",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Chonchi",
+   "ultima_modificacion": "2026-06-08T16:39:20.000Z",
+   "comuna_id": 49,
+   "activo": true
+  }
+ },
+ {
+  "id": "recvMe5GxPj3sefA7",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Temuco",
+   "ultima_modificacion": "2026-06-08T16:49:43.000Z",
+   "comuna_id": 318,
+   "activo": true
+  }
+ },
+ {
+  "id": "recvMmOlkbKpO2Dxg",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Iquique",
+   "ultima_modificacion": "2026-06-08T16:41:53.000Z",
+   "comuna_id": 115,
+   "activo": true
+  }
+ },
+ {
+  "id": "recvZr08P29ytLnQq",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cochrane",
+   "ultima_modificacion": "2026-06-08T16:39:30.000Z",
+   "comuna_id": 53,
+   "activo": true
+  }
+ },
+ {
+  "id": "recvtBcKfgr1z6Pnx",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "General Lagos",
+   "ultima_modificacion": "2026-06-08T16:41:21.000Z",
+   "comuna_id": 101,
+   "activo": true
+  }
+ },
+ {
+  "id": "recwDdL8eU1VD500h",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Villarrica",
+   "ultima_modificacion": "2026-06-08T16:50:34.000Z",
+   "comuna_id": 342,
+   "activo": true
+  }
+ },
+ {
+  "id": "recwFmxCx7Syx6QkI",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Osorno",
+   "ultima_modificacion": "2026-06-08T16:44:56.000Z",
+   "comuna_id": 195,
+   "activo": true
+  }
+ },
+ {
+  "id": "recwKRVDBXxHwkui4",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Camiña",
+   "ultima_modificacion": "2026-06-08T16:38:29.000Z",
+   "comuna_id": 28,
+   "activo": true
+  }
+ },
+ {
+  "id": "recwUoLbQaXJ2kg9F",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Curacaví",
+   "ultima_modificacion": "2026-06-08T16:40:21.000Z",
+   "comuna_id": 76,
+   "activo": true
+  }
+ },
+ {
+  "id": "recwWcLwC0DpQMsTy",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Valdivia",
+   "ultima_modificacion": "2026-06-08T16:50:15.000Z",
+   "comuna_id": 333,
+   "activo": true
+  }
+ },
+ {
+  "id": "recx1J2oSW5dUXgEE",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Casablanca",
+   "ultima_modificacion": "2026-06-08T16:38:42.000Z",
+   "comuna_id": 33,
+   "activo": true
+  }
+ },
+ {
+  "id": "recx5hm4BXn1DoC7i",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Quirihue",
+   "ultima_modificacion": "2026-06-08T16:47:37.000Z",
+   "comuna_id": 262,
+   "activo": true
+  }
+ },
+ {
+  "id": "recx7NFwAknc6qpuh",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Algarrobo",
+   "ultima_modificacion": "2026-07-05T23:04:29.000Z",
+   "comuna_id": 3,
+   "activo": true
+  }
+ },
+ {
+  "id": "recx7Ntvjz3MdLayT",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Puchuncaví",
+   "ultima_modificacion": "2026-06-08T16:46:32.000Z",
+   "comuna_id": 233,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxFlQiu5Expefyx",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "tipo_zona_predominante": "Residencial mixto",
+   "nombre": "Rengo",
+   "M_Tasadores": [
+    "recaPHkBh5hI3jGpa"
+   ],
+   "uf_m2_promedio_comercial": 40,
+   "ultima_modificacion": "2026-06-09T21:30:37.000Z",
+   "rango_max_uf_m2": 42,
+   "region": "O'Higgins",
+   "uf_m2_promedio_residencial": 28,
+   "uf_m2_construccion": 28,
+   "comuna_id": 269,
+   "activo": true,
+   "uf_m2_terreno": 11,
+   "provincia": "Cachapoal"
+  }
+ },
+ {
+  "id": "recxJXscNFhJIK6Sw",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Cochamó",
+   "ultima_modificacion": "2026-06-08T16:39:27.000Z",
+   "comuna_id": 52,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxU6lRrutmMhtEk",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Yerbas Buenas",
+   "ultima_modificacion": "2026-06-08T16:50:41.000Z",
+   "comuna_id": 345,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxXd80KvO4cIJg9",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Santa María",
+   "ultima_modificacion": "2026-06-08T16:49:26.000Z",
+   "comuna_id": 310,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxfBaBY8mro43MD",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Lolol",
+   "ultima_modificacion": "2026-06-08T16:43:13.000Z",
+   "comuna_id": 150,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxilF3pUVkO39pY",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Talcahuano",
+   "ultima_modificacion": "2026-06-08T16:49:39.000Z",
+   "comuna_id": 316,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxmCAJlitWZhz6D",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Parral",
+   "ultima_modificacion": "2026-06-08T16:45:31.000Z",
+   "comuna_id": 208,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxqRwduGhkF8pD2",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Collipulli",
+   "ultima_modificacion": "2026-06-08T16:39:48.000Z",
+   "comuna_id": 61,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxqkIlVhH6pi4wM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "San Carlos",
+   "ultima_modificacion": "2026-06-08T16:48:30.000Z",
+   "comuna_id": 285,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxrYOL9V6iR4LAV",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Concepción",
+   "ultima_modificacion": "2026-06-08T16:39:55.000Z",
+   "comuna_id": 64,
+   "activo": true
+  }
+ },
+ {
+  "id": "recxujV2ESrn7KxMM",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Pemuco",
+   "ultima_modificacion": "2026-06-08T16:45:42.000Z",
+   "comuna_id": 212,
+   "activo": true
+  }
+ },
+ {
+  "id": "recy1VI0E47IuS8lO",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Putaendo",
+   "ultima_modificacion": "2026-06-08T16:47:02.000Z",
+   "comuna_id": 246,
+   "activo": true
+  }
+ },
+ {
+  "id": "recyGcd8WWBEFPU4j",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Sierra Gorda",
+   "ultima_modificacion": "2026-06-08T16:49:33.000Z",
+   "comuna_id": 313,
+   "activo": true
+  }
+ },
+ {
+  "id": "recyMZtY3ducoJADE",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Loncoche",
+   "ultima_modificacion": "2026-06-08T16:43:16.000Z",
+   "comuna_id": 151,
+   "activo": true
+  }
+ },
+ {
+  "id": "recysuNikcSTWwTFd",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Porvenir",
+   "ultima_modificacion": "2026-06-08T16:46:22.000Z",
+   "comuna_id": 229,
+   "activo": true
+  }
+ },
+ {
+  "id": "recyvXy4rgkHrYqxV",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Llanquihue",
+   "ultima_modificacion": "2026-06-08T16:43:01.000Z",
+   "comuna_id": 145,
+   "activo": true
+  }
+ },
+ {
+  "id": "recz23KBQhgX493P2",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Los Ángeles",
+   "ultima_modificacion": "2026-06-08T16:43:26.000Z",
+   "comuna_id": 156,
+   "activo": true
+  }
+ },
+ {
+  "id": "reczbbsbFKJS5gOdP",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Curaco de Vélez",
+   "ultima_modificacion": "2026-06-08T16:40:24.000Z",
+   "comuna_id": 77,
+   "activo": true
+  }
+ },
+ {
+  "id": "recziSsPDpkuPePb0",
+  "createdTime": "2026-06-04T03:29:33.000Z",
+  "fields": {
+   "nombre": "Paredones",
+   "ultima_modificacion": "2026-06-08T16:45:28.000Z",
+   "comuna_id": 207,
+   "activo": true
+  }
+ }
+]

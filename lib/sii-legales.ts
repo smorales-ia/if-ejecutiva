@@ -34,6 +34,13 @@ export interface DatosSii {
   unidades: DatosSiiUnidad[]
   avaluoTotal: string
   contribucionAnual: string
+  /**
+   * `TX_DatosTasacion.sup_construccion_m2`: la fuente única de la superficie
+   * construida (T-SUPERFICIES-CONSOLIDADAS-20261014). La llena la lectura de
+   * documentos (AT03-Ext v5) y la corrige el tasador; formulario, motor y PDF
+   * leen la misma. `null` sin dato.
+   */
+  supConstruccionM2: number | null
 }
 
 export interface AntecedentesLegales {
@@ -68,6 +75,7 @@ export interface FilaDatosSii {
   avaluo_fiscal_clp?: unknown
   avaluo_total?: unknown
   avaluo_no_registra?: unknown
+  sup_construccion_m2?: unknown
 }
 
 /** Fila cruda de `TX_DocumentosLegales` (1:1 por solicitud). */
@@ -91,6 +99,26 @@ function numero(v: unknown): number | null {
   if (v === null || v === undefined || v === "") return null
   const n = typeof v === "number" ? v : Number(v)
   return Number.isFinite(n) ? n : null
+}
+
+/** Número > 0, o `null` (cero cuenta como «sin dato»: así lo deja el alta antigua). */
+function positivo(v: unknown): number | null {
+  const n = numero(v)
+  return n !== null && n > 0 ? n : null
+}
+
+/**
+ * Superficie construida que muestra la consola: la de `TX_DatosTasacion` (fuente
+ * única, la misma del formulario del tasador, el motor y el PDF) y, si aún no
+ * hay, la columna antigua `TX_Solicitudes.sup_construccion_m2` —que ya no tiene
+ * escritor y sólo trae dato en solicitudes viejas—.
+ */
+export function superficieConstruidaVigente(
+  sii: Pick<DatosSii, "supConstruccionM2">,
+  legadoSolicitud: number | null | undefined,
+): number | null {
+  if (sii.supConstruccionM2 !== null) return sii.supConstruccionM2
+  return legadoSolicitud != null && legadoSolicitud > 0 ? legadoSolicitud : null
 }
 
 /** Pesos chilenos sin decimales: `$339.809.429`. Cero o vacío → «—». */
@@ -158,6 +186,7 @@ export function construirSiiLegales(
       })),
       avaluoTotal,
       contribucionAnual: formatoPesos(datos?.contribucion_anual),
+      supConstruccionM2: positivo(datos?.sup_construccion_m2),
     },
     legales: {
       permisoEdificacion: texto(legales?.permiso_edificacion_numero),

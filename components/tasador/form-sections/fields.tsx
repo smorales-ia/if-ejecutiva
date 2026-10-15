@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useId, useState } from "react"
-import { ChevronDown, Star } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { FechaInput } from "@/components/ui/fecha-input"
@@ -123,8 +123,8 @@ function useFieldId(prefix: string) {
 /**
  * Badge neutro "Pre-llenado · editable" (§5.1).
  *
- * **Privado a propósito** (P7-TAS.A.3-bis). Sólo lo renderiza `TextField`, y
- * sólo cuando su prop `prellenado` lo declara. Exportarlo invita a pintarlo
+ * **Privado a propósito** (P7-TAS.A.3-bis). Sólo lo renderizan `TextField` y
+ * `SelectField`, y sólo cuando su prop `prellenado` lo declara. Exportarlo invita a pintarlo
  * suelto, que es saltarse el contrato de abajo: el badge afirma el **origen**
  * del valor, y esa afirmación la hace quien construye el valor, no quien lo
  * muestra.
@@ -246,26 +246,45 @@ export function SelectField({
   onChange,
   opciones,
   placeholder = "Seleccionar…",
+  prellenado = false,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   opciones: readonly Opcion[]
   placeholder?: string
+  /**
+   * Mismo contrato que en `TextField`: el valor es un default del sistema y lo
+   * declara quien lo construye (hoy `DatosCaptura.prellenados`). Se apaga al
+   * primer cambio del tasador y en modo consulta.
+   */
+  prellenado?: boolean
 }) {
   const id = useFieldId("s")
+  const consulta = useContext(FormModoConsultaContext)
+  const [editado, setEditado] = useState(false)
+  const mostrarPrellenado = prellenado && !editado && !consulta
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-sm font-medium">
-        {label}
-      </Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={id} className="text-sm font-medium">
+          {label}
+        </Label>
+        {mostrarPrellenado && <PrellenadoBadge />}
+      </div>
       {/*
         `@base-ui` tipa el handler como `(value: string | null, …) => void`: el
         `null` es su forma de decir «se deseleccionó». Los consumidores de este
         campo trabajan con `string`, así que la conversión se hace una vez acá y
         no en cada uno de los ~40 `SelectField` del formulario.
       */}
-      <Select value={value} onValueChange={(v) => onChange(v ?? "")}>
+      <Select
+        value={value}
+        onValueChange={(v) => {
+          setEditado(true)
+          onChange(v ?? "")
+        }}
+      >
         <SelectTrigger id={id} className="min-h-12 w-full text-base">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
@@ -305,41 +324,6 @@ export function SwitchField({
         {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
       </div>
       <Switch id={id} checked={checked} onCheckedChange={onChange} disabled={disabled} />
-    </div>
-  )
-}
-
-/* ---------- Rating de estrellas 1–5 ---------- */
-export function StarsField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string
-  value: number
-  onChange: (v: number) => void
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-sm font-medium">{label}</Label>
-      <div className="flex gap-1.5">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            aria-label={`${n} de 5`}
-            onClick={() => onChange(n)}
-            className="flex h-11 w-11 items-center justify-center rounded-lg border border-border transition-colors hover:bg-muted"
-          >
-            <Star
-              className={cn(
-                "h-6 w-6",
-                n <= value ? "fill-accent-orange text-accent-orange" : "text-border",
-              )}
-            />
-          </button>
-        ))}
-      </div>
     </div>
   )
 }

@@ -129,7 +129,9 @@ export interface PropiedadInforme {
   supConstruidaTotal: number | null
   anioConstruccion: number | null
   materialPredominante: string
-  calidadConstruccion: number | null
+  /** Literal de la planilla (`BUENA`…); `''` si no hay. Hasta el 14-oct-2026, estrellas 1–5. */
+  calidadConstruccion: string
+  /** Literal de la planilla (`BUENO`…); `''` si no hay. */
   estadoConservacion: string
   agrupacion: string
   /** singleSelect — persiste sólo la primera opción (CI-023 §5). */

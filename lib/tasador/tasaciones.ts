@@ -759,7 +759,11 @@ export interface InformeData {
   estadoConservacion: string
   agrupacionPropiedad: string
   materialPredominante: string
-  calidadConstruccion: number
+  /**
+   * Literal de la planilla del cliente (`OPCIONES.calidadConstruccion`), no
+   * estrellas. Hasta el 14-oct-2026 era un `number` 0–5.
+   */
+  calidadConstruccion: string
   piso: string
   pisosPropiedad: string
   subterraneos: string
@@ -1058,7 +1062,8 @@ export const RECINTOS_SUGERIDOS: readonly string[] = Object.freeze([
  * | Catálogo | Campo real | Tabla |
  * |---|---|---|
  * | `agrupacion` | `agrupacion_propiedad` (`fld8ZGFpcrCuvc8gQ`) | `TX_DatosTasacion` |
- * | `estadoConservacion` | `estado_conservacion` (`fldhX4EAdJzJ32slY`) | `TX_DatosTasacion` |
+ * | `estadoConservacionInmueble` | `estado_conservacion` (`fldhX4EAdJzJ32slY`) | `TX_DatosTasacion` |
+ * | `calidadConstruccion` | `calidad_construccion` (`fldfZDyTviOWosDUj`) | `TX_DatosTasacion` |
  * | `material` | `material_predominante` (`fldtJbujGC89f5lFZ`) | `TX_DatosTasacion` |
  * | `velocidadVenta` | `velocidad_venta_estimada` (`fld1eyMr1XT04YgyH`) | `TX_DatosTasacion` |
  * | `orientaciones` | `orientacion` (`fldiuCRWaoknLq9Kz`) | `TX_DatosTasacion` |
@@ -1079,10 +1084,10 @@ export const RECINTOS_SUGERIDOS: readonly string[] = Object.freeze([
  *   linkea a `M_Zonificacion` (`tipo_zona`: `Urbano · Rural · Mixto · Urbana`).
  *   Un catálogo hardcodeado acá sería incorrecto de raíz, no sólo incompleto:
  *   hay que **leer la tabla**. Existe además `tipo_zona_descripcion`
- *   (`fldbrYbbvJThBaGwC`, singleLineText) para el texto libre. **P7-TAS decide**
- *   cuál de los dos usa; si necesita el catálogo, va por una ruta que lo sirva.
- *   Retirarlo rompe `seccion-propiedad.tsx:225` **a propósito**: es preferible
- *   un error de compilación a un select que escribe en un Link.
+ *   (`fldbrYbbvJThBaGwC`, singleLineText) para el texto libre. **Resuelto el
+ *   14-oct-2026 (spec §2.8.1):** el formulario usa los dos —`tipoZona` es el
+ *   código de zona, la lista sale de `M_Zonificacion` por comuna
+ *   (`lib/tasador/zonificacion.ts`) y el servidor resuelve el Link al guardar—.
  * - **`origenSuperficie`** — no existe en `TX_ItemsCuadroValoracion`; vive en
  *   `TX_Unidades` (`fldbDPpHhkuWjOTvQ`). Se conserva **con el dominio real de
  *   esa tabla**, porque el ítem tiene Link `unidad` y lo natural es que lo
@@ -1096,6 +1101,50 @@ export const RECINTOS_SUGERIDOS: readonly string[] = Object.freeze([
  * para Airtable y ensuciaría más — por eso el `v` no se deriva, se fija.
  */
 export const OPCIONES = Object.freeze({
+  /**
+   * Estado de conservación **del inmueble** (sección B), con los valores de la
+   * planilla del cliente: data validation de `[Excel: Antecedentes!Z15]` del
+   * libro de MET-6283, la celda que la Portada imprime como «Estado de
+   * conservación» `[Excel: Impresion!AY172 · AZ13]`. `v` y `l` coinciden a
+   * propósito: el valor que se ve es el que se guarda y el que sale en el PDF,
+   * como en el Excel (y sin divergencia de RO-08 en el trigger cerrado).
+   *
+   * Destino: `TX_DatosTasacion.estado_conservacion` (`fldhX4EAdJzJ32slY`). El
+   * default lo resuelve el servidor (`lib/tasador/defaults-propiedad.ts`).
+   */
+  estadoConservacionInmueble: Object.freeze([
+    { v: 'NUEVO - S/USO', l: 'NUEVO - S/USO' },
+    { v: 'BUENO', l: 'BUENO' },
+    { v: 'NORMAL', l: 'NORMAL' },
+    { v: 'MALO', l: 'MALO' },
+    { v: 'DEFICIENTE', l: 'DEFICIENTE' },
+  ]) as readonly Opcion[],
+
+  /**
+   * Calidad de construcción (sección B), con los valores de la planilla del
+   * cliente: data validation de `[Excel: Antecedentes!H19]` («Calidad
+   * constructiva»), que la Portada imprime en `[Excel: Impresion!L176]`. Reemplaza
+   * a las estrellas 1–5 (14-oct-2026). Mismo criterio `v = l` que arriba.
+   *
+   * Destino: `TX_DatosTasacion.calidad_construccion` (`fldfZDyTviOWosDUj`). El
+   * motor AT03 ya lo lee como texto (`calidad` del lookup UF/m² nuevo, default
+   * `'BUENA'`), así que el literal le sirve tal cual.
+   */
+  calidadConstruccion: Object.freeze([
+    { v: 'DEFICIENTE', l: 'DEFICIENTE' },
+    { v: 'INFERIOR', l: 'INFERIOR' },
+    { v: 'REGULAR', l: 'REGULAR' },
+    { v: 'CORRIENTE', l: 'CORRIENTE' },
+    { v: 'BUENA', l: 'BUENA' },
+    { v: 'SUPERIOR', l: 'SUPERIOR' },
+  ]) as readonly Opcion[],
+
+  /**
+   * ⚠ Ya **no** es el catálogo del inmueble (ver `estadoConservacionInmueble`).
+   * Lo sigue usando el `Estado` de los recintos de la E, que tiene dominio propio
+   * en la planilla; alinearlo es otra tanda. El de los ítems de la sección C usa
+   * `estadoItem`, el dominio real de `flag_estado` (14-oct-2026).
+   */
   estadoConservacion: Object.freeze([
     { v: 'Bueno', l: 'Bueno' },
     { v: 'Muy Bueno', l: 'Muy bueno' },
@@ -1399,7 +1448,7 @@ export function resolverInforme(tasacion: Tasacion): InformeData {
     estadoConservacion: '',
     agrupacionPropiedad: '',
     materialPredominante: '',
-    calidadConstruccion: 0,
+    calidadConstruccion: '',
     piso: '',
     pisosPropiedad: '',
     subterraneos: '',

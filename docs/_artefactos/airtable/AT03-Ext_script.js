@@ -21,6 +21,20 @@
  * alta) y "00882-00040" (impreso en el certificado de avalúo) no coincidían y
  * se creaba una unidad duplicada (VP-2026-0079). Ver rolesEquivalentes().
  *
+ * v5 (14-oct-2026 · T-SUPERFICIES-CONSOLIDADAS-20261014): consolidación por
+ * precedencia. Un atributo de D_TipoDocumentoAtributo con `prioridad_destino`
+ * (number, menor gana) y cardinalidad una_por_solicitud ya no se escribe con
+ * «el primero que llega gana»: al final de cada corrida se recorren TODOS los
+ * adjuntos leídos de la solicitud cuyo tipo declara el mismo destino, se elige
+ * el valor del de menor prioridad (empate → el subido más reciente) y se
+ * escribe sólo si difiere del actual. Mismo conjunto de documentos ⇒ mismo
+ * valor; volver a leer no escribe nada. Nace para sup_construccion_m2 y
+ * sup_primer_piso_m2 de TX_DatosTasacion (cuadro de superficies, plano,
+ * recepción final, permiso, antecedentes), donde los documentos pueden traer
+ * cifras distintas (VP-2026-0079: recepción 249.31 vs cuadro 249.91). Sólo
+ * pisa un valor que escribió la propia lectura (origen_dato=extraido_rf09);
+ * nunca uno tipeado ni uno de origen desconocido. Ver §3e.
+ *
  * Trigger de la Automation que contiene este script: "When record updated"
  *   Tabla: TX_Adjuntos · Campo observado: atributos_obtenidos
  *   Input variable configurada en el trigger → pasar el record id como
@@ -232,6 +246,9 @@ if (!tipoDocRecord) {
 // directo en cada fila. Una sola query, filtrada por tipo_documento.
 
 const tTipoDocAtributo = base.getTable(TABLES.D_TIPO_DOCUMENTO_ATRIBUTO)
+// v5: `prioridad_destino` se pide sólo si existe — selectRecordsAsync lanza ante
+// un campo inexistente, y sin él la corrida debe seguir igual que en v4.
+const hayPrioridadDestino = Boolean(getFieldByName(tTipoDocAtributo, 'prioridad_destino'))
 const tdaQuery = await tTipoDocAtributo.selectRecordsAsync({
   fields: [
     'codigo_atributo',
@@ -240,6 +257,7 @@ const tdaQuery = await tTipoDocAtributo.selectRecordsAsync({
     'uso_campo_destino',
     'uso_cardinalidad_destino',
     'uso_campo_link_unidad',
+    ...(hayPrioridadDestino ? ['prioridad_destino'] : []),
   ],
 })
 const tdaPorCodigoAtributo = new Map() // codigo_atributo -> D_TipoDocumentoAtributo record
@@ -249,6 +267,33 @@ for (const r of tdaQuery.records) {
   if (!perteneceAEsteTipo) continue
   const codigoAtributo = r.getCellValueAsString('codigo_atributo')
   if (codigoAtributo) tdaPorCodigoAtributo.set(codigoAtributo, r)
+}
+
+// v5 · Declaraciones consolidables de TODOS los tipos (no sólo el de este
+// adjunto): la consolidación compara este documento con los demás documentos
+// leídos de la solicitud que alimentan el mismo campo destino.
+const codigoTipoPorId = new Map(tipoDocQuery.records.map((r) => [r.id, r.getCellValueAsString('codigo')]))
+const declaracionesConsolidables = [] // { codigoTipo, codigoAtributo, tabla, campo, prioridad }
+if (hayPrioridadDestino) {
+  for (const r of tdaQuery.records) {
+    const prioridad = r.getCellValue('prioridad_destino')
+    const cardinalidadCell = r.getCellValue('uso_cardinalidad_destino')
+    const tabla = (r.getCellValueAsString('uso_tabla_destino') || '').trim()
+    const campo = (r.getCellValueAsString('uso_campo_destino') || '').trim()
+    const codigoAtributo = r.getCellValueAsString('codigo_atributo')
+    if (typeof prioridad !== 'number' || !cardinalidadCell || cardinalidadCell.name !== 'una_por_solicitud') continue
+    if (!tabla || !campo || !codigoAtributo) continue
+    for (const l of r.getCellValue('tipo_documento') || []) {
+      const codigoTipo = codigoTipoPorId.get(l.id)
+      if (codigoTipo) declaracionesConsolidables.push({ codigoTipo, codigoAtributo, tabla, campo, prioridad })
+    }
+  }
+}
+/** true si la fila TDA de este tipo se resuelve por consolidación (§3e), no en el loop. */
+function esConsolidable(filaTda) {
+  if (!hayPrioridadDestino) return false
+  const cardinalidadCell = filaTda.getCellValue('uso_cardinalidad_destino')
+  return typeof filaTda.getCellValue('prioridad_destino') === 'number' && Boolean(cardinalidadCell) && cardinalidadCell.name === 'una_por_solicitud'
 }
 
 // ===========================================================================
@@ -326,6 +371,27 @@ function coercionar(field, valor) {
   }
 }
 
+/**
+ * Auditoría: si el destino tiene campo `origen_dato`, devuelve `{origen_dato}`
+ * = "extraido_rf09" para sumarlo al update; si no, `{}`.
+ * Si es un select, aplica la misma regla de formato objeto {id} y la misma
+ * precaución: un valor mal formado o una opción faltante hace fallar EL
+ * UPDATE COMPLETO (no solo ese campo) y Airtable culpa al primer campo del
+ * batch en el mensaje de error. Ante duda, se omite la auditoría antes que
+ * perder el dato principal.
+ */
+function camposOrigenLectura(destTable, tablaDestinoNombre) {
+  const origenField = getFieldByName(destTable, 'origen_dato')
+  if (!origenField) return {}
+  if (origenField.type === 'singleSelect' || origenField.type === 'multipleSelects') {
+    const o = valorParaSelect(origenField, 'extraido_rf09')
+    if (o.ok) return { origen_dato: o.value }
+    propLog.push(`(aviso: ${tablaDestinoNombre}.origen_dato — ${o.motivo}; se omite la auditoría)`)
+    return {}
+  }
+  return { origen_dato: 'extraido_rf09' }
+}
+
 /** Escribe `campoDestino` = `valor` en `destRow` de `destTable`, respetando
  *  conflicto (solo si vacío) y auditoría (origen_dato si existe). */
 async function escribirDestino(destTable, tablaDestinoNombre, destRow, campoDestino, item) {
@@ -393,25 +459,7 @@ async function escribirDestino(destTable, tablaDestinoNombre, destRow, campoDest
     updateFields[campoDestino] = c.value
   }
 
-  // Auditoría: si el destino tiene campo `origen_dato`, escribirlo también.
-  // Si es un select, aplica la misma regla de formato objeto {id} y la misma
-  // precaución: un valor mal formado o una opción faltante hace fallar EL
-  // UPDATE COMPLETO (no solo ese campo) y Airtable culpa al primer campo del
-  // batch en el mensaje de error. Ante duda, se omite la auditoría antes que
-  // perder el dato principal.
-  const origenField = getFieldByName(destTable, 'origen_dato')
-  if (origenField) {
-    if (origenField.type === 'singleSelect' || origenField.type === 'multipleSelects') {
-      const o = valorParaSelect(origenField, 'extraido_rf09')
-      if (o.ok) {
-        updateFields.origen_dato = o.value
-      } else {
-        propLog.push(`(aviso: ${tablaDestinoNombre}.origen_dato — ${o.motivo}; se omite la auditoría)`)
-      }
-    } else {
-      updateFields.origen_dato = 'extraido_rf09'
-    }
-  }
+  Object.assign(updateFields, camposOrigenLectura(destTable, tablaDestinoNombre))
 
   try {
     await destTable.updateRecordAsync(destRow.id, updateFields)
@@ -597,6 +645,15 @@ async function resolverUnidad(campoLinkUnidad) {
 const muchasItems = [] // { tablaDestino, campoDestino, item, fila }
 let muchasBucketInvalido = false // anti-merge: un item muchas SIN fila lo activa
 
+// v5 · Destinos que este tipo de documento alimenta por consolidación. Se
+// recalculan aunque ESTE documento no traiga el valor: el resultado depende del
+// conjunto de documentos, no de cuál disparó la corrida.
+const destinosAConsolidar = new Map() // `${tabla}|${campo}` -> { tabla, campo }
+for (const d of declaracionesConsolidables) {
+  if (d.codigoTipo === claveAdjunto) destinosAConsolidar.set(`${d.tabla}|${d.campo}`, { tabla: d.tabla, campo: d.campo })
+}
+let corridaCongelada = false // "Request processing is disabled": no más reads ni writes
+
 // --- 3c. Loop principal ------------------------------------------------------
 // TODO el cuerpo del loop va dentro de un try/catch porque Airtable Scripts, al
 // rechazar un valor en updateRecordAsync, deshabilita TODAS las siguientes
@@ -626,6 +683,12 @@ for (const item of conValor) {
       // propagación adicional, el valor ya vive en TX_Adjuntos.atributos_obtenidos.
       propLog.push(`${item.codigo_atributo}: sin destino declarado o PENDIENTE_VALIDACION — solo atributos_obtenidos`)
       propSkip++
+      continue
+    }
+
+    if (esConsolidable(fila)) {
+      // v5: no se escribe aquí — §3e elige entre todos los documentos de la solicitud.
+      propLog.push(`${item.codigo_atributo}: consolidable (prioridad ${fila.getCellValue('prioridad_destino')}) → se decide en la consolidación`)
       continue
     }
 
@@ -677,6 +740,7 @@ for (const item of conValor) {
     if (String(e.message).includes('Request processing is disabled')) {
       propLog.push('(Airtable congeló la corrida por un update anterior rechazado; se omite el resto de items)')
       console.warn('AT03-Ext: Airtable congeló la corrida — se omite el resto de items.')
+      corridaCongelada = true
       break
     }
   }
@@ -788,8 +852,176 @@ if (muchasItems.length > 0 && muchasBucketInvalido) {
         propLog.push('(Airtable congeló la corrida durante muchas_por_solicitud; se omite el resto de comparables)')
         console.warn('AT03-Ext: Airtable congeló la corrida — se omite el resto de comparables.')
         cortado = true
+        corridaCongelada = true
       }
     }
+  }
+}
+
+// ===========================================================================
+// --- 3e. Consolidación por precedencia (v5) ---------------------------------
+// ===========================================================================
+// Para cada destino que alimenta este tipo de documento (D_TipoDocumentoAtributo
+// con prioridad_destino), se juntan los valores de TODOS los adjuntos leídos de
+// la solicitud que lo declaran, gana el de menor prioridad y se escribe sólo si
+// cambia. Es lo que da idempotencia (mismo conjunto de documentos ⇒ mismo valor,
+// re-leer no escribe) y un valor único aunque los documentos discrepen.
+
+// <consolidacion-puro> — bloque sin Airtable. lib/tasador/at03-ext-consolidacion.test.ts
+// lo extrae de ESTE archivo y lo ejecuta: el test prueba este código, no una copia.
+
+/** Número > 0 desde el valor leído, o null. Acepta 249.91, "249.91", "249,91", "1.402,35" y sufijo m²/m2. */
+function numeroConsolidable(valor) {
+  if (typeof valor === 'number') return Number.isFinite(valor) && valor > 0 ? valor : null
+  if (typeof valor !== 'string') return null
+  let s = valor.trim().replace(/\s*m(2|²)$/i, '')
+  if (/^\d{1,3}(\.\d{3})+,\d+$/.test(s)) s = s.replace(/\./g, '').replace(',', '.')
+  else if (/^\d+,\d+$/.test(s)) s = s.replace(',', '.')
+  if (!/^\d+(\.\d+)?$/.test(s)) return null
+  const n = Number(s)
+  return n > 0 ? n : null
+}
+
+/**
+ * Ganador entre candidatos `{ prioridad, fechaSubida, adjuntoId, valor, … }`:
+ * menor prioridad; empate → fecha_subida más reciente; empate → adjuntoId mayor.
+ * Es un orden total, así que el resultado no depende del orden de entrada.
+ * Devuelve el candidato con `valor` ya numérico, o null si ninguno trae un
+ * número válido (NO REGISTRA, vacío, 0 o texto no cuentan).
+ */
+function elegirGanador(candidatos) {
+  const validos = []
+  for (const c of candidatos) {
+    const n = numeroConsolidable(c.valor)
+    if (n !== null && typeof c.prioridad === 'number' && Number.isFinite(c.prioridad)) validos.push({ ...c, valor: n })
+  }
+  if (validos.length === 0) return null
+  validos.sort(
+    (a, b) =>
+      a.prioridad - b.prioridad ||
+      String(b.fechaSubida || '').localeCompare(String(a.fechaSubida || '')) ||
+      String(b.adjuntoId || '').localeCompare(String(a.adjuntoId || ''))
+  )
+  return validos[0]
+}
+
+/**
+ * Qué hacer con el ganador frente a la fila destino:
+ *   'skip_tipeado'            la fila la guardó el tasador (candado T-MC-P0)
+ *   'escribir'                el campo está vacío, o su valor lo escribió la propia lectura
+ *   'sin_cambios'             ya tiene ese valor (±0,005) — idempotencia
+ *   'skip_origen_desconocido' tiene otro valor y no consta que lo haya escrito la lectura
+ */
+function decidirConsolidacion(origenDato, valorActual, valorNuevo) {
+  const origen = String(origenDato || '').trim().toLowerCase()
+  if (origen === 'tipeado') return 'skip_tipeado'
+  if (valorActual === null || valorActual === undefined || String(valorActual).trim() === '') return 'escribir'
+  if (Math.abs(Number(valorActual) - valorNuevo) < 0.005) return 'sin_cambios'
+  return origen === 'extraido_rf09' ? 'escribir' : 'skip_origen_desconocido'
+}
+
+/** Ítems de `atributos_obtenidos` (array o `{items:[…]}`); [] si no es JSON válido. */
+function itemsDeAtributos(raw) {
+  if (!raw) return []
+  try {
+    const j = JSON.parse(raw)
+    if (Array.isArray(j)) return j
+    if (j && Array.isArray(j.items)) return j.items
+  } catch (e) {
+    /* JSON inválido: ese documento no aporta candidatos */
+  }
+  return []
+}
+// </consolidacion-puro>
+
+const TIPOS_NUMERICOS = ['number', 'currency', 'percent']
+
+if (destinosAConsolidar.size > 0 && corridaCongelada) {
+  propError++
+  propLog.push('consolidación omitida: Airtable congeló la corrida antes de llegar a ella')
+} else if (destinosAConsolidar.size > 0) {
+  try {
+    // Adjuntos de la solicitud ya leídos. El que disparó la corrida entra
+    // siempre (su estado_extraccion ya pasó el guard de mismatch de §0).
+    const qAdj = await tAdjuntos.selectRecordsAsync({
+      fields: ['solicitud', 'clave_adjunto', 'estado_extraccion', 'atributos_obtenidos', 'fecha_subida'],
+    })
+    const adjuntosSolicitud = qAdj.records.filter(
+      (r) =>
+        (r.getCellValue('solicitud') || []).some((l) => l.id === solicitudId) &&
+        (r.id === adjuntoId || r.getCellValueAsString('estado_extraccion') === 'listo')
+    )
+
+    for (const { tabla, campo } of destinosAConsolidar.values()) {
+      try {
+        const decls = declaracionesConsolidables.filter((d) => d.tabla === tabla && d.campo === campo)
+        const candidatos = []
+        for (const r of adjuntosSolicitud) {
+          const clave = r.getCellValueAsString('clave_adjunto')
+          const deEsteTipo = decls.filter((d) => d.codigoTipo === clave)
+          if (deEsteTipo.length === 0) continue
+          const items = itemsDeAtributos(r.getCellValueAsString('atributos_obtenidos'))
+          for (const d of deEsteTipo) {
+            const it = items.find((x) => x && x.codigo_atributo === d.codigoAtributo)
+            if (it) {
+              candidatos.push({
+                prioridad: d.prioridad,
+                fechaSubida: r.getCellValueAsString('fecha_subida'),
+                adjuntoId: r.id,
+                codigoTipo: clave,
+                valor: it.valor,
+              })
+            }
+          }
+        }
+
+        const ganador = elegirGanador(candidatos)
+        if (!ganador) {
+          propSkip++
+          propLog.push(`consolidación ${tabla}.${campo}: ningún documento leído trae un número válido — sin cambios`)
+          continue
+        }
+
+        const destTable = base.getTable(tabla)
+        const destField = getFieldByName(destTable, campo)
+        if (!destField) {
+          propError++
+          propLog.push(`consolidación ${tabla}.${campo}: el campo destino no existe — skip`)
+          continue
+        }
+        if (!TIPOS_NUMERICOS.includes(destField.type)) {
+          propError++
+          propLog.push(`consolidación ${tabla}.${campo}: sólo se consolidan campos numéricos (es ${destField.type}) — skip`)
+          continue
+        }
+
+        // Record fresco: el de la caché de §3a puede ser anterior a escrituras de esta corrida.
+        const fila = await resolverFila1a1(destTable, tabla)
+        const destRow = await destTable.selectRecordAsync(fila.id)
+        const origen = getFieldByName(destTable, 'origen_dato') ? destRow.getCellValueAsString('origen_dato') : ''
+        const decision = decidirConsolidacion(origen, destRow.getCellValue(campo), ganador.valor)
+        const traza = `${ganador.valor} (${ganador.codigoTipo} · prioridad ${ganador.prioridad} · adjunto ${ganador.adjuntoId} · ${candidatos.length} candidato(s))`
+
+        if (decision === 'escribir') {
+          await destTable.updateRecordAsync(destRow.id, { [campo]: ganador.valor, ...camposOrigenLectura(destTable, tabla) })
+          propOk++
+          propLog.push(`consolidado ${tabla}.${campo} = ${traza}`)
+          console.log(`AT03-Ext: consolidado ${tabla}.${campo} = ${traza}.`)
+        } else {
+          propSkip++
+          propLog.push(`consolidación ${tabla}.${campo}: ${decision} — ganador ${traza}, actual "${destRow.getCellValueAsString(campo)}"`)
+        }
+      } catch (e) {
+        propError++
+        propLog.push(`consolidación ${tabla}.${campo} falló — ${e.message}`)
+        console.warn(`AT03-Ext: consolidación ${tabla}.${campo} falló: ${e.message}`)
+        if (String(e.message).includes('Request processing is disabled')) break
+      }
+    }
+  } catch (e) {
+    propError++
+    propLog.push(`consolidación: no se pudieron leer los adjuntos de la solicitud — ${e.message}`)
+    console.warn(`AT03-Ext: consolidación sin adjuntos: ${e.message}`)
   }
 }
 

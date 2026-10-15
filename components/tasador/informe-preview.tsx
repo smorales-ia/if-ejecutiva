@@ -566,7 +566,7 @@ export function InformePreview({
               <Dato k="Sup. primer piso" v={`${num(d.supPrimerPiso)} m²`} />
               <Dato k="Año construcción" v={txt(d.anioConstruccion)} />
               <Dato k="Materialidad" v={txt(d.materialPredominante)} />
-              <Dato k="Calidad construcción" v={d.calidadConstruccion ? `${d.calidadConstruccion}/5` : "—"} />
+              <Dato k="Calidad construcción" v={txt(d.calidadConstruccion)} />
               <Dato k="Estado conservación" v={txt(d.estadoConservacion)} />
               <Dato k="Dormitorios" v={txt(d.dormitorios)} />
               <Dato k="Baños" v={txt(d.banos)} />

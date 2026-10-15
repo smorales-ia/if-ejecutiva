@@ -1,0 +1,24 @@
+{
+ "records": [
+  {
+   "id": "reckwOdtBl42cZmAA",
+   "createdTime": "2026-10-15T02:46:14.000Z",
+   "fields": {
+    "etiqueta_local": "Zona",
+    "orden": 1,
+    "uso_campo_destino": "tipo_zona_descripcion",
+    "uso_tabla_destino": "TX_DatosTasacion",
+    "codigo": "certificado_informaciones_previas__zona",
+    "nombre_atributo": "Zona (plan regulador)",
+    "uso_cardinalidad_destino": "una_por_solicitud",
+    "tipo_documento": [
+     "rec6D1RBPeF7RfE37"
+    ],
+    "uso_interfaz_tasador": true,
+    "ejemplo_atributo": "IPB — sólo el código de zona del plan regulador tal como lo escribe el certificado (ej. 'A1', 'E2a', 'IPB', 'ZH2 (El Melocotón)'); sin la palabra 'Zona' ni la comuna ni la descripción del uso",
+    "codigo_atributo": "zona",
+    "tipo_dato": "text"
+   }
+  }
+ ]
+}

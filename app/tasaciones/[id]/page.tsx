@@ -4,6 +4,8 @@ import { leerTasacion } from "@/lib/tasador/lectura-tasacion"
 import { leerDatosCaptura } from "@/lib/tasador/lectura-datos"
 import { leerFotosCaptura, repartoDeCaptura } from "@/lib/tasador/lectura-fotos"
 import { resolverInforme } from "@/lib/tasador/tasaciones"
+import { codigoDeZona } from "@/lib/tasador/zona"
+import { zonasDeComunaSinFallar } from "@/lib/tasador/zonificacion"
 import { TasacionForm } from "@/components/tasador/tasacion-form"
 
 export default async function TasacionDetailPage({
@@ -48,9 +50,24 @@ export default async function TasacionDetailPage({
     ...repartoDeCaptura(fotos),
   }
 
+  /**
+   * Zonas del plan regulador de la comuna para «Tipo de zona» (spec §2.8.1).
+   * Va después del `Promise.all` porque necesita la comuna; tiene caché de
+   * 5 min y no lanza: sin catálogo el tasador igual escribe la zona a mano.
+   * El código guardado se normaliza contra el catálogo y pierde el
+   * «(Comuna)» que traían las filas tecleadas antes de esta tanda.
+   */
+  const zonas = await zonasDeComunaSinFallar(tasacion.comuna)
+  informeInicial.tipoZona = codigoDeZona(informeInicial.tipoZona, tasacion.comuna, zonas)
+
   return (
     <Suspense fallback={null}>
-      <TasacionForm tasacion={tasacion} informeInicial={informeInicial} />
+      <TasacionForm
+        tasacion={tasacion}
+        informeInicial={informeInicial}
+        prellenados={guardados?.prellenados ?? []}
+        zonas={zonas}
+      />
     </Suspense>
   )
 }

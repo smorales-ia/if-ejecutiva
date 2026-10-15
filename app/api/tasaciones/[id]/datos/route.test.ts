@@ -75,7 +75,10 @@ vi.mock('@/lib/tasador/auditoria', async (importOriginal) => {
 })
 
 import { GET, PATCH } from './route'
+import { TABLE_IDS } from '@/lib/tasador/field-ids'
+import { _resetCacheComunas } from '@/lib/tasador/lectura-tasacion'
 import { MENSAJES } from '@/lib/tasador/mensajes'
+import { _resetCacheZonificacion } from '@/lib/tasador/zonificacion'
 
 const ID = 'recAAAAAAAAAAAAAA'
 const ID_INVALIDO = 'no-es-un-record-id'
@@ -272,5 +275,118 @@ describe('con el guard en verde la ruta sí trabaja', () => {
     expect(res.status).toBe(200)
     // Sin fila previa de TX_DatosTasacion, el upsert crea.
     expect(createRecord).toHaveBeenCalled()
+  })
+})
+
+describe('sección B · estado de conservación y calidad de construcción (14-oct-2026)', () => {
+  /** Los `fields` con que el PATCH creó la fila de `TX_DatosTasacion`. */
+  function camposCreadosEnDatos(): Record<string, unknown> {
+    const llamada = createRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.datosTasacion)
+    return (llamada?.[1] ?? {}) as Record<string, unknown>
+  }
+
+  it('el GET abre con los defaults de la planilla: BUENO y BUENA', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    const res = await llamarGet()
+    const cuerpo = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(JSON.stringify(cuerpo)).toContain('"estadoConservacion":"BUENO"')
+    expect(JSON.stringify(cuerpo)).toContain('"calidadConstruccion":"BUENA"')
+  })
+
+  it('el PATCH guarda los literales tal cual en TX_DatosTasacion', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    const res = await llamarPatch({ estadoConservacion: 'BUENO', calidadConstruccion: 'BUENA' })
+
+    expect(res.status).toBe(200)
+    expect(camposCreadosEnDatos()).toMatchObject({
+      estado_conservacion: 'BUENO',
+      calidad_construccion: 'BUENA',
+    })
+  })
+
+  it('una estrella numérica de un borrador viejo no rebota ni se escribe', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    const res = await llamarPatch({ supTerreno: '500', calidadConstruccion: 4 })
+
+    expect(res.status).toBe(200)
+    expect('calidad_construccion' in camposCreadosEnDatos()).toBe(false)
+  })
+})
+
+describe('sección B · zona del plan regulador (§2.8.1 · 14-oct-2026)', () => {
+  const TABLA_COMUNAS = 'tblyggAfQfq682XHK'
+  const COLINA = 'recColina0000001'
+
+  function camposCreadosEnDatos(): Record<string, unknown> {
+    const llamada = createRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.datosTasacion)
+    return (llamada?.[1] ?? {}) as Record<string, unknown>
+  }
+
+  /** Solicitud de Colina; M_Zonificacion de Colina con A1 y E2a. */
+  function airtableColina() {
+    autorizarSolicitud.mockResolvedValue({
+      ...guardOk(),
+      fields: { ...guardOk().fields, comuna: [COLINA] },
+    })
+    listRecords.mockImplementation(async (tabla: string) => {
+      if (tabla === TABLA_COMUNAS) return [{ id: COLINA, createdTime: '', fields: { nombre: 'Colina' } }]
+      if (tabla === TABLE_IDS.zonificacion) {
+        return [
+          { id: 'recZonaA1000001', createdTime: '', fields: { zona: 'A1' } },
+          { id: 'recZonaE2a00001', createdTime: '', fields: { zona: 'E2a' } },
+        ]
+      }
+      return []
+    })
+  }
+
+  beforeEach(() => {
+    _resetCacheComunas()
+    _resetCacheZonificacion()
+  })
+
+  it('zona de la lista → guarda el código y el Link a M_Zonificacion', async () => {
+    airtableColina()
+
+    const res = await llamarPatch({ tipoZona: 'e2a' })
+
+    expect(res.status).toBe(200)
+    expect(camposCreadosEnDatos()).toMatchObject({
+      tipo_zona_descripcion: 'E2a',
+      zonificacion: ['recZonaE2a00001'],
+    })
+  })
+
+  it('zona escrita a mano que no está en la lista → código tal cual y Link vacío', async () => {
+    airtableColina()
+
+    await llamarPatch({ tipoZona: 'IPB' })
+
+    expect(camposCreadosEnDatos()).toMatchObject({ tipo_zona_descripcion: 'IPB', zonificacion: [] })
+  })
+
+  it('no guarda la comuna aunque venga tecleada: «IPB (Colina)» → «IPB»', async () => {
+    airtableColina()
+
+    await llamarPatch({ tipoZona: 'IPB (Colina)' })
+
+    expect(camposCreadosEnDatos()).toMatchObject({ tipo_zona_descripcion: 'IPB' })
+  })
+
+  it('sin tipoZona en el payload no consulta comunas ni zonas, ni toca los dos campos', async () => {
+    airtableColina()
+
+    await llamarPatch({ supTerreno: '500' })
+
+    const tablas = listRecords.mock.calls.map(([tabla]) => tabla)
+    expect(tablas).not.toContain(TABLA_COMUNAS)
+    expect(tablas).not.toContain(TABLE_IDS.zonificacion)
+    expect('tipo_zona_descripcion' in camposCreadosEnDatos()).toBe(false)
+    expect('zonificacion' in camposCreadosEnDatos()).toBe(false)
   })
 })

@@ -32,7 +32,7 @@
 | `M_TiposInforme` | `tblOcsdiwxQLfD178` | |
 | `M_Comunas` | `tblyggAfQfq682XHK` | |
 | `M_Productos` | `tbll6D4KQ5aDdjjaj` | |
-| `M_Zonificacion` | `tbltr5VN2NGuTtbc1` | No usada en IF-02 |
+| `M_Zonificacion` | `tbltr5VN2NGuTtbc1` | No usada en IF-02. IF-03 la lee para «Tipo de zona» (§30) |
 
 ### Dominio C_ · Configuración
 
@@ -672,6 +672,7 @@ Fuente única desde v1.6 (blueprint v8.2). Ya no es una relación N:M — cada f
 | `ejemplo_atributo` | `fldga8TLbuYBCfjxo` | Single line text |
 | `uso_cardinalidad_destino` | `fldWQZyPiU2f47RHm` | Single select (`una_por_solicitud · una_por_unidad · muchas_por_solicitud · PENDIENTE_VALIDACION`) |
 | `uso_campo_link_unidad` | `fldJHASJBN6nYwupU` | Single line text |
+| `prioridad_destino` | `fldZQerXw4OlV49gE` | Number (precisión 0) — **creado 14-oct-2026 vía REST** (MCP sin autenticar en la sesión · RO-30) con aprobación de Sergio (T-SUPERFICIES-CONSOLIDADAS-20261014). Con valor y cardinalidad `una_por_solicitud`, AT03-Ext v5 decide el destino entre **todos** los documentos leídos de la solicitud que lo declaran: gana el menor número; empate → el adjunto subido más reciente. Vacío = comportamiento v4 («el primero que llega», sólo si el destino está vacío). Ver §28.3 |
 
 ⚠ **Divergencia con la Especificación v1.8.2 §4**: el campo `uso_interfaz_negocio` que describe la Especificación **no existe** en la base real — coexisten 3 flags separados (`uso_interfaz_ejecutiva`, `uso_interfaz_tasador`, `uso_interfaz_visador`). Cualquier filtro que replique la semántica de "uso_interfaz_negocio" (Set B) debe usar el OR de los tres. Tampoco existe `version` (Number, snapshot de reproducibilidad — documentado en Capa Datos v2.6.3 pero no creado en Airtable real; ni `patron_validacion` ni un campo `catalogo_cerrado` dedicado — el `tipo_dato='catalogo'` no tiene contraparte real de opciones cerradas más allá del propio `singleSelect` de `tipo_dato`.
 
@@ -1723,7 +1724,8 @@ Este mapa es el insumo del **cascade de borrado** (`lib/adjuntos-cascade.ts`).
 | `certificado_avaluo_fiscal` | `TX_Unidades` (link `TX_Unidades.rol_sii`) | una_por_unidad | rol_sii · sup_m2 · anio_construccion · avaluo_clp ← avaluo_total (hasta 13-oct-2026: avaluo_uf) | **c** |
 | `escritura_compraventa` | `TX_DocumentosLegales` | una_por_solicitud | permiso_edificacion_numero · permiso_edificacion_fecha · recepcion_final_numero · recepcion_final_fecha | **a** |
 | `permiso_edificacion` | `TX_DocumentosLegales` | una_por_solicitud | permiso_edificacion_numero · permiso_edificacion_fecha | **a** |
-| `consulta_antecedentes_bien_raiz` · `certificado_recepcion_final` · `inscripcion_dominio_cbr` · `certificado_deuda_tgr` · `informe_no_expropiacion_serviu` · `sello_verde_sec` · `plano_cuadro_superficies` | — (sin `uso_tabla_destino`) | — | (atributos declarados, sin destino mapeado) | no-op |
+| `cuadro_superficies` · `foto_plano_cuadro_superficies` · `certificado_recepcion_final` · `permiso_edificacion` · `consulta_antecedentes_bien_raiz` | `TX_DatosTasacion` | una_por_solicitud **con `prioridad_destino`** (14-oct-2026) | sup_construccion_m2 ← superficie_construida_m2 (los 5) · sup_primer_piso_m2 ← superficie_primer_piso_m2 (cuadro y plano) · servidumbre_m2 ← superficie_servidumbre_m2 (cuadro, plano e `inscripcion_dominio_cbr`) | **ninguno** — consolidado, fuera del cascade a propósito (§28.3) |
+| `consulta_antecedentes_bien_raiz` · `certificado_recepcion_final` · `inscripcion_dominio_cbr` · `certificado_deuda_tgr` · `informe_no_expropiacion_serviu` · `sello_verde_sec` · `plano_cuadro_superficies` | — (sin `uso_tabla_destino`) | — | (el resto de sus atributos: declarados, sin destino mapeado) | no-op |
 
 > **`permiso_edificacion` (11-sep-2026 · IF-03).** Documento canónico del par permiso
 > (Origen v1.6 §2.1). De sus 14 atributos catalogados sólo `numero_permiso` y `fecha_permiso`
@@ -1781,3 +1783,234 @@ FIELD_IDs verificados vía meta API el 10-sep-2026 y agregados al curado de `lib
 > **`D_TipoDocumentoAtributo` sigue siendo la fuente canónica.** `lib/adjuntos-doc-campos.ts` es su
 > espejo curado. Si `AT03-Ext` cambia qué campos poblar, este mapa y la tabla de §28 se actualizan en
 > el mismo commit: un campo de más limpia dato que el documento no pobló; uno de menos deja un huérfano.
+
+### 28.3 Superficies consolidadas por precedencia (AT03-Ext v5 · 14-oct-2026)
+
+Pedido de Sergio (réplica MET-6283 · VP-2026-0079): «Sup. construida» y «Sup. primer piso» se
+obtienen solas de **todo** documento del checklist que las traiga, con idempotencia y el mismo valor
+en todos lados. Hasta esta fecha ningún atributo `superficie_construida_m2` /
+`superficie_primer_piso_m2` tenía destino, y `cuadro_superficies` no tenía filas en esta tabla.
+
+**Fuente almacenada única:** `TX_DatosTasacion.sup_construccion_m2` (`fldYC1GUSW6xWVscq`) y
+`.sup_primer_piso_m2` (`fldxPUVCFD7F8vC4t`). Formulario del tasador (sección B), motor (DAG `:1098`),
+PDF (ensamblador) y, desde esta tanda, la consola («Superficie construida» · `superficieConstruidaVigente`
+en `lib/sii-legales.ts`) leen de ahí. `TX_Solicitudes.sup_construccion_m2` (`fldTC8tuQ30t4uzVc`) queda
+como respaldo de solicitudes antiguas: no tiene escritor.
+
+| Fila `D_TipoDocumentoAtributo` | tipo | atributo → destino | `prioridad_destino` |
+|---|---|---|---|
+| `reckCXKExv9eFTtSC` (**nueva**) | `cuadro_superficies` | superficie_construida_m2 → sup_construccion_m2 | 10 |
+| `recBNVQScWGDlceTt` (**nueva**) | `cuadro_superficies` | superficie_primer_piso_m2 → sup_primer_piso_m2 | 10 |
+| `recCVWjNUqzmTR18p` | `foto_plano_cuadro_superficies` | superficie_construida_m2 → sup_construccion_m2 | 20 |
+| `rec6Jnf60VOTu5A1v` | `foto_plano_cuadro_superficies` | superficie_primer_piso_m2 → sup_primer_piso_m2 | 20 |
+| `rec0ynQAxHSnHTgxf` | `certificado_recepcion_final` | superficie_construida_m2 → sup_construccion_m2 | 30 |
+| `recMQUmmXhGO8yRLN` | `permiso_edificacion` | superficie_construida_m2 → sup_construccion_m2 | 40 |
+| `recttREVvVZKHTcfL` | `consulta_antecedentes_bien_raiz` | superficie_construida_m2 → sup_construccion_m2 | 50 |
+| `reccfpdVuFKoq7TMS` (**nueva**, ampliación servidumbre) | `cuadro_superficies` | superficie_servidumbre_m2 → servidumbre_m2 (`fldqh74NpAK3ELh0O`) | 10 |
+| `recRW7cZY3rSvKtLt` (**nueva**, ampliación servidumbre) | `foto_plano_cuadro_superficies` | superficie_servidumbre_m2 → servidumbre_m2 | 20 |
+| `recW3GHYmCMx6w0h4` (ampliación servidumbre) | `inscripcion_dominio_cbr` | superficie_servidumbre_m2 → servidumbre_m2 | 30 |
+
+La columna homónima `TX_DatosTasacion.sup_servidumbre` (`fldwiF0X5Tx2gIbyf`) no tiene lector ni
+escritor en el código y no participa. Los ítems «Terreno»/«Servidumbre» de `TX_ItemsCuadroValoracion`
+siguen siendo del tasador: `lib/tasador/coherencia-superficies.ts` sólo avisa (ámbar, sección C) si no
+calzan con la sección B.
+
+- **Precedencia** (aprobada por Sergio): cuadro > plano > recepción final > permiso > antecedentes. Se
+  cambia editando los números en Airtable, sin tocar código. En VP-2026-0079 la recepción final leyó
+  249.31 y el cuadro 249.91: gana 249.91.
+- **Idempotencia:** cada corrida recalcula el ganador sobre todos los adjuntos `listo` de la solicitud y
+  escribe sólo si difiere (±0,005). Mismo conjunto de documentos ⇒ mismo valor; volver a leer = 0 escrituras.
+- **No pisar al tasador:** con `origen_dato=tipeado` en la fila no se escribe nada (candado T-MC-P0). Un
+  valor distinto sin `origen_dato` (filas antiguas) tampoco se pisa; sólo se corrige uno que escribió la
+  propia lectura (`extraido_rf09`).
+- **SII fuera:** el `sup_m2` de `foto_fuente_sii` / `certificado_avaluo_fiscal` sigue yendo a
+  `TX_Unidades.sup_m2` (superficie por rol, puede diferir legítimamente). `TX_Unidades.sup_m2` es un
+  dato por unidad del alta y no se toca.
+- **Fuera del cascade de borrado, a propósito.** Diverge de la política Q1 de Héctor (§28.2): el valor
+  consolidado lo respaldan varios documentos, y el cascade no mira `origen_dato`. Borrar el documento
+  ganador deja su cifra hasta la próxima lectura de cualquier documento de la solicitud.
+- **SC-RF09 busca los atributos por subcadena** (`FIND("{{tipo}}", ARRAYJOIN({tipo_documento}))`): por
+  eso `cuadro_superficies` se leía con los 19 atributos de `foto_plano_cuadro_superficies` aun sin filas
+  propias. Con las dos filas nuevas, el prompt del cuadro trae `superficie_construida_m2` y
+  `superficie_primer_piso_m2` dos veces. Inocuo (AT03-Ext toma el primer ítem); la búsqueda exacta queda
+  como pendiente de SC-RF09.
+- `TX_DatosTasacion.sup_construida_piso1` (`fldzY9k38HePg7YKa`, homónimo de primer piso que alimenta
+  `sup_construida_total` → `dfl2`) **no se sincroniza**: tiene dato en 1 de 28 filas y moverlo cambia el
+  DFL2 de otras solicitudes. Pendiente aparte.
+
+## 29. IF-03 · `TX_DatosTasacion` — estado de conservación y calidad con la lista de la planilla (14-oct-2026)
+
+> ✅ **APLICADO el 15-oct-2026** con aprobación de Sergio, desde la interfaz de Airtable (la API no
+> cambia tipos de campo) y verificado con el MCP: `calidad_construccion` (`fldfZDyTviOWosDUj`, mismo
+> FIELD_ID) es `singleSelect` con `BUENA · DEFICIENTE · INFERIOR · REGULAR · CORRIENTE · SUPERIOR`;
+> las 3 filas con `4` quedaron en `BUENA` (se renombró la opción convertida); `estado_conservacion`
+> ganó `NORMAL · MALO · DEFICIENTE`; la descripción del campo se actualizó. Ninguna fórmula de la
+> tabla referenciaba `calidad_construccion`. Desde aquí el código de la sección B ya puede desplegarse.
+
+Decisión de Sergio (réplica MET-6283, spec §2.8.1): los dos campos se eligen de una lista con los
+valores de la planilla del cliente, vienen pre-llenados y no se capturan con estrellas. Listas leídas
+de las data validations del libro `docs/_referencias/1951-MET 6283-Los Eucaliptus 2100-Colina.xlsm`
+(lectura con openpyxl, sin macros).
+
+| Campo | FIELD_ID | Hoy (meta API 14-oct-2026) | Cambio propuesto |
+|---|---|---|---|
+| `estado_conservacion` | `fldhX4EAdJzJ32slY` | singleSelect: `Bueno · Regular · Malo · Muy malo · BUENO · NUEVO - S/USO · Muy Bueno` | **Agregar** las opciones `NORMAL`, `MALO`, `DEFICIENTE` (`[Excel: Antecedentes!Z15]`). No se borra ninguna: las filas viejas con `Bueno` se leen como `BUENO` |
+| `calidad_construccion` | `fldfZDyTviOWosDUj` | `number` (precisión 0) · estrellas 1–5 | **Cambiar tipo a singleSelect** con `DEFICIENTE · INFERIOR · REGULAR · CORRIENTE · BUENA · SUPERIOR` (`[Excel: Antecedentes!H19]`). Mismo FIELD_ID |
+
+**Datos existentes** (28 filas leídas el 14-oct-2026): `calidad_construccion` tiene dato en **3**
+(`rec8IZCGuxOJrLK4K`, `recBbQpuKWkraBddM`, `recgocyqE9BJzoHc4`), las tres con `4`. Al convertir el
+tipo en la UI de Airtable, `4` queda como opción `"4"`; se pasan a `BUENA` (la guía de la réplica
+equiparaba «4 estrellas» a «Buena») y se borra la opción `"4"`. Mientras tanto, la lectura trata un
+número como vacío y ofrece el default `BUENA`. `estado_conservacion` no requiere migración: hoy sólo
+trae `Bueno`, `BUENO` y `NUEVO - S/USO`.
+
+**El cambio de tipo es manual** (la Web API de Airtable no cambia el tipo de un campo). Agregar las
+tres opciones también se hace en la UI; `typecast: true` del `PATCH` las crearía solas al primer
+guardado, pero no se deja que el schema cambie por un efecto lateral.
+
+**Motor.** AT03 ya lee `calidad_construccion` como texto (`calidad` del lookup `lookupUFm2Nuevo`,
+default `'BUENA'`, comparación sin mayúsculas). Con estrellas, la clave salía `…-4` y el lookup sin
+cuadro no encontraba fila; con el literal funciona. ⚠ El `coef_estado` de AT03 sólo reconoce `muy
+bueno · bueno · regular · malo`: `NORMAL`, `DEFICIENTE` y `NUEVO - S/USO` caen a `1.0`. No cambia en
+esta tanda (regla de negocio del motor); queda anotado.
+
+## 30. IF-03 · «Tipo de zona» desde `M_Zonificacion` (14-oct-2026)
+
+**Sin cambios de schema.** Usa dos campos que ya existían en `TX_DatosTasacion` (spec §2.8.1 ·
+«Zona de la propiedad»):
+
+| Campo | FIELD_ID | Tipo | Qué guarda desde el 14-oct-2026 | Escritor |
+|---|---|---|---|---|
+| `tipo_zona_descripcion` | `fldbrYbbvJThBaGwC` | singleLineText | El **código** de zona, sin la comuna («IPB», «A1») — `[Excel: Portada!AA21]` | `PATCH /api/tasaciones/[id]/datos` |
+| `zonificacion` | `fldGoLWV8CEfXZmWT` | multipleRecordLinks → `M_Zonificacion` (inverso `fldkOAyWhqx2jC8Cr`) | La fila del catálogo de la comuna cuyo `zona` es ese código; vacío si el código no está | `PATCH /datos` (lo resuelve el servidor, no la UI) |
+
+El PDF imprime `CODIGO(Comuna)` (`lib/informe/ensamblador.ts` → `componerZona`), como
+`[Excel: Impresion!X15]`. Antes de esta tanda el tasador tecleaba el texto completo y el Link no
+tenía escritor (0/28 filas con dato).
+
+**Lectura del catálogo** (`lib/tasador/zonificacion.ts`): `filterByFormula`
+`OR(LOWER(ARRAYJOIN({comuna})) = LOWER("<comuna>"), LOWER({clave_zona}) = LOWER("<comuna>" & {zona}))`,
+caché de 5 min por comuna. El Link manda; `clave_zona` es el respaldo para filas sin Link. Con el
+Link vacío la fórmula devuelve lo mismo que la anterior (medido por REST el 14-oct-2026: Colina 41,
+Estación Central 10, San José de Maipo 56, Puchuncaví 15), así que el código puede desplegarse antes
+o después del saneo.
+
+**Estado de `M_Zonificacion` (REST, 14-oct-2026 · 1.636 filas)** — motivo de ese filtro:
+
+- El Link `comuna` (`fldNcL5XUGoF7e7sM`) está **vacío en 1.635 filas**; la única con dato es
+  `Colina-Rural` (`recCHWxedHHxWddwO`, cargada a mano, sin `zona`). La fórmula `zona_compuesta`
+  (`{comuna} & {clave_zona}`) depende de ese Link, así que hoy repite `clave_zona`.
+- `clave_zona = <nombre de comuna> & zona` se cumple en **1.543 filas** (159 prefijos). Otras 91 usan
+  un prefijo que no es un nombre de `M_Comunas` (`Coihaique`, `Maitencillo`, `Ventanas`, `Horcon`,
+  `Llaillay`, `Pedro Aguirre Cerda`, `Maria Pinto`…): esas comunas salen sin lista y el tasador
+  escribe la zona.
+- `activo` está en `false` en las 1.636 filas: **no** se filtra por él.
+- Hay una fila que es el encabezado del CSV importado (`clave_natural = "﻿clave_zona"`) y 3
+  claves `comuna|zona` repetidas (la lista las deduplica).
+- `densidad · demanda · tendencia · proy_uso` valen `Media · Media · Estable · Estacionario` en
+  1.633 filas: son relleno de la migración, no datos de la zona. `altura` es `number` y perdió los
+  textos de la hoja («12 pisos», «Según Rasante»). Por eso **el informe no arrastra todavía** los
+  atributos de la zona (ver spec §2.8.1).
+- `M_Comunas` tiene **dos** filas `Colina` (`recKT9mUJkeq3YuBu` y `recNgsqC5V7Ayeg3M`). El filtro es
+  por nombre, así que no afecta a la lista.
+- Colina tiene 41 zonas (`A1…A13b`, `AC`, `B1a…B5`, `C1`, `C2`, `E1…E4`, `R1…R7`); **no tiene
+  `IPB`**, que es la zona de MET-6283. `IPB` sólo existe para Estación Central.
+
+### 30.1 Saneo de `M_Zonificacion` (T-SANEO-ZONIFICACION-20261014)
+
+Plan, respaldo y scripts en `docs/_evidencia/T-SANEO-ZONIFICACION-20261014/` (`PLAN.md`,
+`M_Zonificacion-antes.json`, `M_Comunas-antes.json`, `plan-escrituras.json`, `scripts/`).
+Clasificación por prefijo (`clave_zona` menos `zona`; termina en `zona` en todas las filas con zona):
+
+| Grupo | Filas | Qué es | Link `comuna` propuesto |
+|---|---:|---|---|
+| A | 1.554 | Prefijo = nombre de `M_Comunas` (143 comunas): 1.543 idénticos, `Calera de tango` (mayúsculas), `Maria Pinto` (tilde) y 9 `Pedro Aguirre Cerda` con espacio duro U+00A0 | Sí, por nombre; Colina a `recKT9mUJkeq3YuBu` |
+| B | 25 | `Coihaique` → Coyhaique (16) · `Llaillay` → Llay-Llay (9) | Sí |
+| C | 52 | Localidades: Ventanas 15 · Maitencillo 15 · Horcon 14 + Horcón 1 (copias de las 15 zonas de Puchuncaví, salvo `Horcón Z1` con altura 7) · Dichato · Malloco · Alto Jahuel · Linderos · Champa · Ensenada · Monte | **No** (spec §2.8.1) |
+| D | 3 | `Limari`, `Cachapoal` (provincias) · `Lagunillas` (ambigua) | No |
+| — | 2 | Encabezado del CSV `recMlkFlMhbG6yWVy` · `Colina-Rural` `recCHWxedHHxWddwO` | No se tocan |
+
+Propuesta completa en `PLAN.md` §4: Link en A + B (1.579 filas), `activo = true` en A + B + C + D
+(1.634 filas), sin borrados. La Colina duplicada `recNgsqC5V7Ayeg3M` ya tiene `M_Comunas.activo`
+vacío (false).
+
+**Estado de la escritura: APLICADA el 15-oct-2026** (00:02–00:06, Sergio corrió
+`scripts/aplicar.py <carpeta> --link-grupos AB --activo true`; 164 lotes, `aplicar-log.json`).
+Verificado por REST contra `plan-escrituras.json` (`scripts/verificar.py` → `M_Zonificacion-despues.json`):
+1.579 filas A + B con el Link esperado, 0 errores; grupos C y D y el encabezado sin Link;
+`Colina-Rural` igual; `activo = true` en 1.634 filas (A + B + C + D) y `false` en el encabezado y en
+`Colina-Rural`; ningún otro campo cambió. Con el filtro de arriba (`scripts/todas.py`, todas las
+comunas) sólo cambian Coyhaique (0 → 16), Llay-Llay (0 → 9), Pedro Aguirre Cerda (0 → 9) y María
+Pinto (0 → 1); el resto queda igual (Colina 41, Estación Central 10, San José de Maipo 56,
+Puchuncaví 15, Ñuñoa 19).
+
+Desde ahora el Link `comuna` ya **no** está vacío: lo de arriba sobre las 1.635 filas sin Link describe
+el estado previo al saneo.
+
+**Duplicados (15-oct-2026):** `M_Tasadores.zonas_cobertura` de Juan Perez Gonzalez
+(`rec7Pwbf7vPAIm8lO`, `TAS-001`, tasador de prueba) pasó de `Nunoa` (`recejBIZUOI1NQepO`) a `Ñuñoa`
+(`recX1OpI66nVAjbPy`), aprobado por Sergio en el chat (`cobertura-juan-perez.json`). Con eso quedan sin
+ningún Link la fila-encabezado `recMlkFlMhbG6yWVy`, la Colina duplicada `recNgsqC5V7Ayeg3M` y `Nunoa`
+(`scripts/huerfanos.py`), y **se borraron** el 15-oct-2026 a pedido de Sergio en el chat
+(`borrado-duplicados.json`; respaldo completo en `duplicados-antes.json`, restaurables desde la
+papelera de la base). Verificado (`scripts/post_borrado.py`): `M_Zonificacion` 1.635 filas,
+`M_Comunas` 354 filas **sin nombres repetidos**, ninguna referencia a los ids borrados en
+`M_Zonificacion`, `M_Comunas` ni `M_Tasadores`; Colina sigue con 41 zonas y Ñuñoa con 19. Los UF/m² de `Nunoa` no se fusionan: ninguna solicitud la
+usaba, valen los de `Ñuñoa`.
+
+**Efectos laterales anotados:** `zona_compuesta` (`{comuna} & {clave_zona}`, sin consumidores) pasará
+a repetir la comuna («ColinaColinaA1»). Las 3
+`clave_zona` repetidas son `Cerro NaviaEI` y `Las CondesE-Aa+cm` (atributos distintos; la lista toma
+la que Airtable devuelva primero) y `CarahueOGUC` (idénticas).
+
+**`D_TipoDocumento.certificado_informaciones_previas`** (`rec6D1RBPeF7RfE37`, DOM) es el documento
+que declara la zona. Hasta el 14-oct-2026 no tenía atributos. **Aplicado el 14-oct-2026 con
+aprobación de Sergio** (REST, RO-30; respuesta en
+`docs/_evidencia/T-TIPO-ZONA-20261014/atributo-cip-creado.json`):
+
+| Campo | Valor |
+|---|---|
+| recordId | `reckwOdtBl42cZmAA` |
+| `codigo` · `codigo_atributo` | `certificado_informaciones_previas__zona` · `zona` |
+| `nombre_atributo` · `etiqueta_local` | `Zona (plan regulador)` · `Zona` |
+| `tipo_dato` · `orden` | `text` · 1 |
+| destino | `TX_DatosTasacion.tipo_zona_descripcion` · `una_por_solicitud` |
+| `uso_interfaz_tasador` | ✓ |
+| `ejemplo_atributo` | pide sólo el código («A1», «E2a», «IPB», «ZH2 (El Melocotón)»), sin «Zona», sin comuna ni descripción del uso |
+
+AT03-Ext escribe el código sólo mientras la fila de `TX_DatosTasacion` no esté `tipeado` (candado
+T-MC-P0); el Link `zonificacion` lo resuelve el siguiente guardado del tasador. El espejo de borrado
+`lib/adjuntos-doc-campos.ts` (v1.4) limpia los dos campos si se borra el certificado. Los
+certificados ya leídos antes de esta fecha no traen la zona hasta que se vuelvan a leer.
+
+## 31. IF-03 · Cuadro de valoración pre-llenado (sección C · 14-oct-2026)
+
+**Sin cambios de schema.** Spec §2.8.2 · RF-TAS-24. Cuando `TX_ItemsCuadroValoracion`
+(`tblCxnMtOETK2ulD0`) no tiene filas de la solicitud, `lib/tasador/lectura-datos.ts` arma la
+propuesta con `lib/tasador/propuesta-cuadro.ts` y la entrega como `items` + `prellenados: ['items']`.
+**No escribe nada**: las filas nacen con el guardado del tasador (`PATCH /datos`, sync por
+`clave_natural`, como siempre).
+
+| Dato del ítem (campo destino al guardar) | Lee de |
+|---|---|
+| `sup_m2` de «Terreno» / «Servidumbre» | `TX_DatosTasacion.sup_terreno_m2` (o `TX_Unidades.sup_terreno_m2`) − `servidumbre_m2` / `servidumbre_m2` (§28.3) |
+| `sup_m2` de la edificación principal | `TX_DatosTasacion.sup_construccion_m2` · `sup_primer_piso_m2` (§28.3); respaldo `TX_Unidades.sup_m2` |
+| filas y `sup_m2` de las demás unidades | `TX_Unidades` (`subtipo`, `sup_m2`, `orden`, `es_principal`, `con_rol_o_uso_y_goce`, `numero_unidad`, `detalle_item`) |
+| `rol_sii` · `anno_construccion` · `material` | `TX_Unidades.rol_sii` · `anio_construccion` · `tipo_material` (`albanileria→Albanileria`, `hormigon→Hormigon armado`, `perfiles_metalicos→Acero`, …) |
+| `flag_estado` | `TX_DatosTasacion.estado_conservacion` cuando es la misma palabra de `Bueno · Regular · Malo` |
+| `situacion_municipal` | `Regularizado` si `TX_DocumentosLegales.recepcion_final_numero` tiene dato |
+| `factor_aplicado` | `1` (default de la planilla, en código · pendiente de llevar a `C_DefaultsAntecedentes`) |
+| `uf_m2_unitario` | **nada**: lo completa el tasador |
+
+`origenSuperficie` se muestra desde `TX_Unidades.origen_superficie` pero sigue sin columna en
+`TX_ItemsCuadroValoracion` (CI-023 §1): no se persiste.
+
+**Dominio del `Estado` del ítem.** La sección C ofrecía el catálogo del inmueble (`Muy Bueno`,
+`NUEVO - S/USO`…), que `flag_estado` (`fldMsoEuBe5IN5y1S`: `Bueno · Regular · Malo`) no admite.
+Desde esta tanda usa `OPCIONES.estadoItem`. `nuevoItem()` dejó de traer slugs del v0
+(`edificacion`, `ha-muni`, `plano-municipal`) que no existían en ningún select.
+
+**Observado, no tocado.** Las fórmulas de la tabla (`es_bien_no_garantia`) leen
+`estado_conservacion` (`fldSEXp1n6hjJKWlf`, `B · R · M`) y `garantia` (`A · D`), que IF-03 no
+escribe: escribe `flag_estado` y `aporta_a_garantia`. Un ítem en estado `Malo` o marcado «no aporta
+a garantía» desde la sección C hoy no llega a `es_bien_no_garantia`.

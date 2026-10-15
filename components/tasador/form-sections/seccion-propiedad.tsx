@@ -2,13 +2,15 @@
 
 import type { InformeData } from "@/lib/tasador/tasaciones"
 import { OPCIONES } from "@/lib/tasador/tasaciones"
+import { opcionesConValorVigente } from "@/lib/tasador/defaults-propiedad"
+import type { ZonaCatalogo } from "@/lib/tasador/zona"
 import {
   TextField,
   SelectField,
   SwitchField,
-  StarsField,
   MultiChipField,
 } from "./fields"
+import { ZonaField } from "./zona-field"
 
 export type SetForm = <K extends keyof InformeData>(
   key: K,
@@ -19,10 +21,19 @@ export function SeccionPropiedad({
   form,
   set,
   tipo,
+  prellenados = [],
+  comuna = "",
+  zonas = [],
 }: {
   form: InformeData
   set: SetForm
   tipo: string
+  /** Claves cuyo valor es un default del servidor (`DatosCaptura.prellenados`). */
+  prellenados?: readonly (keyof InformeData)[]
+  /** Comuna de la solicitud: el informe la agrega al código de zona. */
+  comuna?: string
+  /** Zonas de `M_Zonificacion` de esa comuna (§2.8.1). */
+  zonas?: readonly ZonaCatalogo[]
 }) {
   const esCasa = tipo.toLowerCase().includes("casa")
   const esDepto = tipo.toLowerCase().includes("depto") || tipo.toLowerCase().includes("departamento")
@@ -68,11 +79,16 @@ export function SeccionPropiedad({
           value={form.anioConstruccion}
           onChange={(v) => set("anioConstruccion", v)}
         />
+        {/* Lista y default de la planilla del cliente [Excel: Antecedentes!Z15]. */}
         <SelectField
           label="Estado conservación"
           value={form.estadoConservacion}
           onChange={(v) => set("estadoConservacion", v)}
-          opciones={OPCIONES.estadoConservacion}
+          opciones={opcionesConValorVigente(
+            OPCIONES.estadoConservacionInmueble,
+            form.estadoConservacion,
+          )}
+          prellenado={prellenados.includes("estadoConservacion")}
         />
       </div>
 
@@ -91,10 +107,17 @@ export function SeccionPropiedad({
         />
       </div>
 
-      <StarsField
+      {/* Lista y default de la planilla del cliente [Excel: Antecedentes!H19].
+          Reemplaza a las estrellas 1–5 (14-oct-2026). */}
+      <SelectField
         label="Calidad de construcción"
         value={form.calidadConstruccion}
         onChange={(v) => set("calidadConstruccion", v)}
+        opciones={opcionesConValorVigente(
+          OPCIONES.calidadConstruccion,
+          form.calidadConstruccion,
+        )}
+        prellenado={prellenados.includes("calidadConstruccion")}
       />
 
       <div className="grid grid-cols-3 gap-3">
@@ -220,22 +243,16 @@ export function SeccionPropiedad({
         opciones={OPCIONES.velocidadVenta}
       />
       {/*
-        Campo de texto, no select. P1-TAS **retiró `OPCIONES.tipoZona` a
-        propósito** —dejando este archivo roto— porque el catálogo del v0 estaba
-        mal planteado de raíz: `TX_DatosTasacion` no tiene un `singleSelect` de
-        zona, tiene un Link a `M_Zonificacion` y, aparte, un
-        `tipo_zona_descripcion` de texto libre. Un select hardcodeado habría
-        escrito valores inventados en un Link.
-
-        Se cablea contra el texto libre porque es lo que
-        `PATCH /api/tasaciones/[id]/datos` persiste hoy (`tipo_zona_descripcion`,
-        `fldbrYbbvJThBaGwC`). **P7-TAS decide** si la sección pasa al Link y, en
-        ese caso, sirve el catálogo por una ruta.
+        Lista de las zonas de la comuna leída de `M_Zonificacion`, que admite
+        escribir otra [Excel: Portada!AA21 · ZoneVal]. Se guarda el código en
+        `tipo_zona_descripcion` y el servidor resuelve el Link `zonificacion`;
+        el PDF imprime «CODIGO(Comuna)» [Excel: Impresion!X15]. Spec §2.8.1.
       */}
-      <TextField
-        label="Tipo de zona"
+      <ZonaField
         value={form.tipoZona}
         onChange={(v) => set("tipoZona", v)}
+        comuna={comuna}
+        zonas={zonas}
       />
     </div>
   )

@@ -105,6 +105,21 @@ async function mapaComunas(): Promise<Map<string, string>> {
   return valor
 }
 
+/**
+ * Nombre de la comuna de un Link `comuna` crudo (array de recordIds), o `''` si
+ * no se puede resolver. Lo usa el `PATCH` de `/datos` para la zona (§2.8.1).
+ */
+export async function nombreDeComuna(valor: unknown): Promise<string> {
+  const id = Array.isArray(valor) && typeof valor[0] === 'string' ? valor[0] : ''
+  if (id === '') return ''
+  try {
+    return (await mapaComunas()).get(id) ?? ''
+  } catch (err) {
+    console.error('[lectura-tasacion] no se pudo leer M_Comunas', err)
+    return ''
+  }
+}
+
 /** Invalida la caché de comunas. Sólo para tests. */
 export function _resetCacheComunas(): void {
   cacheComunas = null

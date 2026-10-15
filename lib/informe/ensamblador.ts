@@ -59,9 +59,14 @@
 
 import { getRecord, listRecords } from '@/lib/airtable-client'
 import { autorizarSolicitud, type ResultadoGuard } from '@/lib/tasador/auth-guard'
+import {
+  calidadConstruccionGuardada,
+  estadoConservacionGuardado,
+} from '@/lib/tasador/defaults-propiedad'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
 import { construirInforme, leerTerminales, type Bloque } from '@/lib/tasador/lectura-informe'
+import { codigoDeZona, componerZona } from '@/lib/tasador/zona'
 import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
 import { resolverImagenes, type AnexoResuelto } from './imagenes'
 import { aplicarOverridesLocales } from './overrides'
@@ -606,8 +611,9 @@ export async function construirInformeContexto(
       supConstruidaTotal: numeroONull(d.sup_construida_total),
       anioConstruccion: numeroONull(d.anio_construccion),
       materialPredominante: texto(d.material_predominante),
-      calidadConstruccion: numeroONull(d.calidad_construccion),
-      estadoConservacion: texto(d.estado_conservacion),
+      // Literales de la planilla (`OPCIONES`), ya no estrellas — 14-oct-2026.
+      calidadConstruccion: calidadConstruccionGuardada(d.calidad_construccion),
+      estadoConservacion: estadoConservacionGuardado(d.estado_conservacion),
       agrupacion: texto(d.agrupacion_propiedad),
       orientacion: texto(d.orientacion),
       pisos: numeroONull(d.pisos),
@@ -617,7 +623,16 @@ export async function construirInformeContexto(
       bodegas: numeroONull(d.bodegas),
       dfl2: texto(d.dfl2),
       velocidadVentaEstimada: texto(d.velocidad_venta_estimada),
-      tipoZonaDescripcion: texto(d.tipo_zona_descripcion),
+      // `CODIGO(Comuna)` como `[Excel: Impresion!X15]`: se guarda sólo el código
+      // y la comuna se agrega acá (spec §2.8.1 · 14-oct-2026). `codigoDeZona`
+      // quita antes un «(Comuna)» tecleado en filas viejas, para no imprimir
+      // «IPB(Colina)(Colina)». Sin el catálogo a mano, eso también acorta los
+      // pocos códigos que terminan en su propia comuna (`ZAP (San José de
+      // Maipo)` → `ZAP(San José de Maipo)`), que es el costo aceptado.
+      tipoZonaDescripcion: componerZona(
+        codigoDeZona(texto(d.tipo_zona_descripcion), comunaNombre),
+        comunaNombre,
+      ),
       vidaUtil: numeroONull(s.vida_util_override),
     },
     sii: informe.datosSii,
