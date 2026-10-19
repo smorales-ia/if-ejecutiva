@@ -322,7 +322,9 @@ export const ELEMENTOS_E = [
   { id: 'cubierta', label: 'Cubierta', grupo: 'fundamental', opciones: CUBIERTAS },
   { id: 'revestimientoExterior', label: 'Revestimiento exterior', grupo: 'fundamental', opciones: REVESTIMIENTOS_EXTERIORES },
   { id: 'cierrosExteriores', label: 'Cierros exteriores', grupo: 'fundamental', opciones: null },
-  { id: 'obrasComplementarias', label: 'Obras complementarias', grupo: 'fundamental', opciones: OBRAS_COMPLEMENTARIAS },
+  // Texto libre: la planilla junta varias con «+» y les agrega detalle
+  // (MET-6283: «TERRAZA DESCUBIERTA+QUINCHO+PISCINA+BODEGA»), que una lista no admite.
+  { id: 'obrasComplementarias', label: 'Obras complementarias', grupo: 'fundamental', opciones: null },
   { id: 'construccionAnexo', label: 'Construcción anexo', grupo: 'fundamental', opciones: null },
   { id: 'aireAcondicionado', label: 'Aire acondicionado', grupo: 'otro', opciones: AIRES_ACONDICIONADOS },
   { id: 'calefaccion', label: 'Calefacción', grupo: 'otro', opciones: CALEFACCIONES },

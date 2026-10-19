@@ -15,6 +15,7 @@ import {
   ESTADOS_CONSERVACION,
   ESTADOS_ELEMENTO,
   NIVELES_E,
+  OBRAS_COMPLEMENTARIAS,
   PAVIMENTOS,
   RECINTOS_E,
   REVESTIMIENTOS_MUROS,
@@ -254,6 +255,11 @@ export function SeccionAntecedentesE({
                         value={v.materialidad}
                         onChange={(m) => onChange(cambiarMaterialidad(e, x.id, m, ctx))}
                         prellenado={prellenada && v.materialidad !== ""}
+                        hint={
+                          x.id === "obrasComplementarias"
+                            ? `Varias se separan con «+». Ej.: TERRAZA+QUINCHO+PISCINA. Habituales: ${OBRAS_COMPLEMENTARIAS.join(", ")}.`
+                            : undefined
+                        }
                       />
                     )}
                     <div className="grid grid-cols-2 gap-3">
