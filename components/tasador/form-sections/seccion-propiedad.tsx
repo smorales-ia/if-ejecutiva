@@ -58,6 +58,7 @@ export function SeccionPropiedad({
         <TextField
           label="Sup. construida (m²)"
           type="number"
+          campoId="supConstruida"
           value={form.supConstruida}
           onChange={(v) => set("supConstruida", v)}
         />
@@ -76,12 +77,14 @@ export function SeccionPropiedad({
         <TextField
           label="Año construcción"
           type="number" entero
+          campoId="anioConstruccion"
           value={form.anioConstruccion}
           onChange={(v) => set("anioConstruccion", v)}
         />
         {/* Lista y default de la planilla del cliente [Excel: Antecedentes!Z15]. */}
         <SelectField
           label="Estado conservación"
+          campoId="estadoConservacion"
           value={form.estadoConservacion}
           onChange={(v) => set("estadoConservacion", v)}
           opciones={opcionesConValorVigente(
@@ -95,12 +98,14 @@ export function SeccionPropiedad({
       <div className="grid grid-cols-2 gap-3">
         <SelectField
           label="Agrupación"
+          campoId="agrupacionPropiedad"
           value={form.agrupacionPropiedad}
           onChange={(v) => set("agrupacionPropiedad", v)}
           opciones={OPCIONES.agrupacion}
         />
         <SelectField
           label="Material predominante"
+          campoId="materialPredominante"
           value={form.materialPredominante}
           onChange={(v) => set("materialPredominante", v)}
           opciones={OPCIONES.material}

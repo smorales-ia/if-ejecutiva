@@ -79,6 +79,7 @@ export function SeccionOverrides({
         </Label>
         <Textarea
           id="motivo-override"
+          data-campo="motivoOverride"
           rows={3}
           value={form.motivoOverride}
           onChange={(e) => set("motivoOverride", e.target.value)}

@@ -61,7 +61,13 @@ type Seccion = "A" | "B" | "C" | "D" | "F" | "G" | "H"
  * D, donde el tasador **no puede** agregar el dato que falta (A-13) y hay que
  * decirle cuál es la acción que sí tiene.
  */
-type Faltante = { label: string; seccion: Seccion; detalle?: string }
+type Faltante = {
+  label: string
+  seccion: Seccion
+  detalle?: string
+  /** `data-campo` de la casilla a completar; sin él se va a la sección. */
+  campo?: string
+}
 
 export function TasacionForm({
   tasacion,
@@ -227,18 +233,18 @@ export function TasacionForm({
     const m: Faltante[] = []
     // A. Visita
     if (!form.fechaVisitaReal.trim())
-      m.push({ label: "Fecha real de visita", seccion: "A" })
+      m.push({ label: "Fecha real de visita", seccion: "A", campo: "fechaVisitaReal" })
     // B. Datos de la propiedad
     if (!form.supConstruida.trim())
-      m.push({ label: "Superficie construida", seccion: "B" })
+      m.push({ label: "Superficie construida", seccion: "B", campo: "supConstruida" })
     if (!form.anioConstruccion.trim())
-      m.push({ label: "Año de construcción", seccion: "B" })
+      m.push({ label: "Año de construcción", seccion: "B", campo: "anioConstruccion" })
     if (!form.estadoConservacion.trim())
-      m.push({ label: "Estado de conservación", seccion: "B" })
+      m.push({ label: "Estado de conservación", seccion: "B", campo: "estadoConservacion" })
     if (!form.agrupacionPropiedad.trim())
-      m.push({ label: "Agrupación de la propiedad", seccion: "B" })
+      m.push({ label: "Agrupación de la propiedad", seccion: "B", campo: "agrupacionPropiedad" })
     if (!form.materialPredominante.trim())
-      m.push({ label: "Material predominante", seccion: "B" })
+      m.push({ label: "Material predominante", seccion: "B", campo: "materialPredominante" })
     // C. Cuadro de valoración: al menos 1 ítem completo
     const itemOk = form.items.some(
       (i) => i.descripcion.trim() && i.subtipo.trim() && i.superficieM2.trim(),
@@ -262,18 +268,26 @@ export function TasacionForm({
       })
     // F. Documentos legales
     if (!form.cbrFoja.trim() || !form.cbrNumero.trim() || !form.cbrAnio.trim())
-      m.push({ label: "CBR: foja, número y año", seccion: "F" })
+      m.push({
+        label: "CBR: foja, número y año",
+        seccion: "F",
+        campo: !form.cbrFoja.trim() ? "cbrFoja" : !form.cbrNumero.trim() ? "cbrNumero" : "cbrAnio",
+      })
     if (!form.coordenadasLat.trim() || !form.coordenadasLng.trim())
-      m.push({ label: "Coordenadas (lat / lng)", seccion: "F" })
+      m.push({
+        label: "Coordenadas (lat / lng)",
+        seccion: "F",
+        campo: !form.coordenadasLat.trim() ? "coordenadasLat" : "coordenadasLng",
+      })
     // Override activo debe tener motivo válido
     if (hayOverride(form) && !overridesValidos(form))
-      m.push({ label: "Motivo del override (mín. 20 caracteres)", seccion: "G" })
+      m.push({ label: "Motivo del override (mín. 20 caracteres)", seccion: "G", campo: "motivoOverride" })
     // H. Rentabilidad — obligatoria sólo cuando el tipo_informe la exige (H4 · C3)
     if (rentaObligatoria) {
       if (!form.arriendoBrutoClp.trim())
-        m.push({ label: "Arriendo bruto mensual", seccion: "H" })
+        m.push({ label: "Arriendo bruto mensual", seccion: "H", campo: "arriendoBrutoClp" })
       if (!form.gastoAnualClp.trim())
-        m.push({ label: "Gasto anual", seccion: "H" })
+        m.push({ label: "Gasto anual", seccion: "H", campo: "gastoAnualClp" })
     }
     return m
   }, [form, rentaObligatoria])
@@ -287,14 +301,20 @@ export function TasacionForm({
     return Math.round((cubiertos / TOTAL) * 100)
   }, [faltantes.length, rentaObligatoria])
 
-  // Scroll suave + foco en el primer campo faltante (§5.5).
-  const scrollAFaltante = () => {
-    const first = faltantes.find((f) => f.detalle) ?? faltantes[0]
-    if (!first) return
-    setOpenSections((prev) => ({ ...prev, [first.seccion]: true }))
+  /**
+   * Abre la sección del faltante, lleva la pantalla a su casilla y le da el
+   * foco (§5.5). La casilla se busca por `data-campo`; si el faltante no tiene
+   * una (ítem de C, comparables de D), por el primer campo marcado de la
+   * sección, y si tampoco, se muestra la sección.
+   */
+  const irAFaltante = (f: Faltante) => {
+    setOpenSections((prev) => ({ ...prev, [f.seccion]: true }))
     setTimeout(() => {
-      const sec = document.getElementById(`seccion-${first.seccion}`)
-      const campo = sec?.querySelector<HTMLElement>('[data-faltante="true"]')
+      const sec = document.getElementById(`seccion-${f.seccion}`)
+      const campo =
+        (f.campo ? document.querySelector<HTMLElement>(`[data-campo="${f.campo}"]`) : null) ??
+        sec?.querySelector<HTMLElement>('[data-faltante="true"]') ??
+        null
       const target = campo ?? sec
       target?.scrollIntoView({ behavior: "smooth", block: "center" })
       if (campo) {
@@ -312,9 +332,9 @@ export function TasacionForm({
     if (consulta || bloqueadoCalculo || calculando) return
     if (!puedeCalcular) {
       toast.error(`Faltan ${faltantes.length} datos para calcular`, {
-        description: faltantes.map((f) => `• ${f.label}`).join("\n"),
+        description: faltantes.map((f) => `• ${rotuloFaltante(f)}`).join("\n"),
       })
-      scrollAFaltante()
+      irAFaltante(faltantes.find((f) => f.detalle) ?? faltantes[0])
       return
     }
 
@@ -398,7 +418,7 @@ export function TasacionForm({
         )}
       </header>
 
-      <main className="px-4 pb-44 pt-4">
+      <main className="px-4 pb-64 pt-4">
         <div className="rounded-xl bg-background p-4">
           <p className="text-base font-medium text-foreground">
             {d.comuna.valor} · {d.tipo.valor}
@@ -424,22 +444,25 @@ export function TasacionForm({
         {!consulta && (
           <div
             className={cn(
-              "mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium",
+              "mt-3 flex flex-col gap-1.5 rounded-lg px-3 py-2 text-sm font-medium",
               puedeCalcular
                 ? "bg-emerald-50 text-success"
                 : "bg-amber-50 text-warning",
             )}
           >
             {puedeCalcular ? (
-              <>
+              <span className="flex items-center gap-2">
                 <CircleCheck className="h-4 w-4 shrink-0" />
                 Todos los datos listos
-              </>
+              </span>
             ) : (
               <>
-                <TriangleAlert className="h-4 w-4 shrink-0" />
-                Faltan {faltantes.length}{" "}
-                {faltantes.length === 1 ? "dato obligatorio" : "datos obligatorios"}
+                <span className="flex items-center gap-2">
+                  <TriangleAlert className="h-4 w-4 shrink-0" />
+                  Faltan {faltantes.length}{" "}
+                  {faltantes.length === 1 ? "dato obligatorio" : "datos obligatorios"}
+                </span>
+                <ListaFaltantes faltantes={faltantes} onIr={irAFaltante} />
               </>
             )}
           </div>
@@ -481,6 +504,7 @@ export function TasacionForm({
               <TextField
                 label="Fecha real de visita"
                 type="date"
+                campoId="fechaVisitaReal"
                 value={form.fechaVisitaReal}
                 onChange={(v) => {
                   setRealHeredada(false)
@@ -613,6 +637,7 @@ export function TasacionForm({
                 <TextField
                   label="Arriendo bruto mensual (CLP)"
                   type="number" entero
+                  campoId="arriendoBrutoClp"
                   value={form.arriendoBrutoClp}
                   onChange={(v) => set("arriendoBrutoClp", v)}
                   disabled={consulta}
@@ -620,6 +645,7 @@ export function TasacionForm({
                 <TextField
                   label="Gasto anual (CLP)"
                   type="number" entero
+                  campoId="gastoAnualClp"
                   value={form.gastoAnualClp}
                   onChange={(v) => set("gastoAnualClp", v)}
                   disabled={consulta}
@@ -633,15 +659,14 @@ export function TasacionForm({
 
       <footer className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-2xl border-t border-border bg-background shadow-lg">
         {!consulta && !bloqueadoCalculo && !puedeCalcular && (
-          <div className="flex items-center gap-2 bg-[#FEF3C7] px-4 py-2.5 text-sm font-medium text-amber-800">
-            <TriangleAlert className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <div className="flex items-start gap-2 bg-[#FEF3C7] px-4 py-2.5 text-sm font-medium text-amber-800">
+            <TriangleAlert className="mt-1 h-4 w-4 shrink-0" aria-hidden="true" />
             {/*
-              * Mismo criterio que el tooltip: gana el faltante que sabe explicar
-              * su propia corrección. Sin `detalle` en ninguno, cae al primero en
-              * orden de sección, que es lo que §8.1 pide del pie.
+              * Todos los faltantes con nombre, «letra-dato», y cada uno lleva a
+              * su casilla (19-oct-2026, pedido de Sergio). Antes mostraba el
+              * primero y «+N más». El `detalle` de D sigue en el `title`.
               */}
-            {faltantes.find((f) => f.detalle)?.detalle ?? faltantes[0]?.label}
-            {faltantes.length > 1 ? ` · +${faltantes.length - 1} más` : ""}
+            <ListaFaltantes faltantes={faltantes} onIr={irAFaltante} />
           </div>
         )}
         <div className="flex items-center gap-3 px-4 pb-3 pt-3">
@@ -675,6 +700,34 @@ export function TasacionForm({
         </p>
       </footer>
     </div>
+  )
+}
+
+/** «B-Agrupación de la propiedad»: letra de la sección y nombre del dato. */
+function rotuloFaltante(f: Faltante): string {
+  return `${f.seccion}-${f.label}`
+}
+
+/**
+ * Los datos obligatorios que faltan, cada uno como enlace a su casilla. Con
+ * muchos, la lista se desplaza dentro de su caja para no tapar el formulario.
+ */
+function ListaFaltantes({ faltantes, onIr }: { faltantes: Faltante[]; onIr: (f: Faltante) => void }) {
+  return (
+    <ul className="flex max-h-24 flex-wrap gap-x-3 gap-y-1 overflow-y-auto" aria-label="Datos obligatorios que faltan">
+      {faltantes.map((f) => (
+        <li key={`${f.seccion}-${f.label}`}>
+          <button
+            type="button"
+            onClick={() => onIr(f)}
+            title={f.detalle}
+            className="text-left underline decoration-dotted underline-offset-2 hover:decoration-solid"
+          >
+            {rotuloFaltante(f)}
+          </button>
+        </li>
+      ))}
+    </ul>
   )
 }
 

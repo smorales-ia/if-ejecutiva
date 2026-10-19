@@ -151,10 +151,16 @@ export function TextField({
   prellenado = false,
   entero = false,
   negativo = false,
+  campoId,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
+  /**
+   * Clave del dato (`data-campo`): la lista de faltantes del pie lleva el foco
+   * a esta casilla al pinchar su nombre (19-oct-2026).
+   */
+  campoId?: string
   /**
    * `number` **no** renderiza `<input type="number">` (19-oct-2026): sus flechas
    * y la rueda del mouse cambiaban el valor sin querer. Es texto que sólo admite
@@ -218,6 +224,7 @@ export function TextField({
           value={value}
           disabled={deshabilitado}
           data-faltante={vacioRequerido ? "true" : undefined}
+          data-campo={campoId}
           onChange={(v) => {
             setEditado(true)
             onChange(v)
@@ -239,6 +246,7 @@ export function TextField({
           placeholder={placeholder}
           disabled={deshabilitado}
           data-faltante={vacioRequerido ? "true" : undefined}
+          data-campo={campoId}
           onChange={(e) => {
             setEditado(true)
             onChange(
@@ -266,12 +274,15 @@ export function SelectField({
   opciones,
   placeholder = "Seleccionar…",
   prellenado = false,
+  campoId,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
   opciones: readonly Opcion[]
   placeholder?: string
+  /** Clave del dato (`data-campo`), mismo contrato que en `TextField`. */
+  campoId?: string
   /**
    * Mismo contrato que en `TextField`: el valor es un default del sistema y lo
    * declara quien lo construye (hoy `DatosCaptura.prellenados`). Se apaga al
@@ -304,7 +315,7 @@ export function SelectField({
           onChange(v ?? "")
         }}
       >
-        <SelectTrigger id={id} className="min-h-12 w-full text-base">
+        <SelectTrigger id={id} data-campo={campoId} className="min-h-12 w-full text-base">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>

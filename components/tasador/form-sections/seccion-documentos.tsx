@@ -43,9 +43,9 @@ export function SeccionDocumentos({
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <TextField label="CBR Foja" value={form.cbrFoja} onChange={(v) => set("cbrFoja", v)} prellenado={p("cbrFoja")} />
-        <TextField label="CBR Número" value={form.cbrNumero} onChange={(v) => set("cbrNumero", v)} prellenado={p("cbrNumero")} />
-        <TextField label="CBR Año" type="number" entero value={form.cbrAnio} onChange={(v) => set("cbrAnio", v)} prellenado={p("cbrAnio")} />
+        <TextField label="CBR Foja" campoId="cbrFoja" value={form.cbrFoja} onChange={(v) => set("cbrFoja", v)} prellenado={p("cbrFoja")} />
+        <TextField label="CBR Número" campoId="cbrNumero" value={form.cbrNumero} onChange={(v) => set("cbrNumero", v)} prellenado={p("cbrNumero")} />
+        <TextField label="CBR Año" type="number" entero campoId="cbrAnio" value={form.cbrAnio} onChange={(v) => set("cbrAnio", v)} prellenado={p("cbrAnio")} />
       </div>
 
       {/* Comprador, Notaría y Repertorio se retiraron el 15-oct-2026: la planilla
@@ -115,6 +115,7 @@ export function SeccionDocumentos({
           label="Coordenadas Lat"
           type="number"
           negativo
+          campoId="coordenadasLat"
           value={form.coordenadasLat}
           onChange={(v) => set("coordenadasLat", v)}
           prellenado={p("coordenadasLat")}
@@ -123,6 +124,7 @@ export function SeccionDocumentos({
           label="Coordenadas Lng"
           type="number"
           negativo
+          campoId="coordenadasLng"
           value={form.coordenadasLng}
           onChange={(v) => set("coordenadasLng", v)}
           prellenado={p("coordenadasLng")}
