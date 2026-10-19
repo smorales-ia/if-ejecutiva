@@ -15,13 +15,18 @@
 
 import { listRecords } from '@/lib/airtable-client'
 import {
+  type AmpliacionE,
+  aplicarEvidencias,
   type AtributoDefault,
   type CamposBParaE,
   completarSeccionE,
   contextoE,
   type DefaultsTabla,
+  type EvidenciasE,
   type SeccionE,
+  seccionEPorDefecto,
 } from './antecedentes-e'
+import type { ItemValoracion } from './tasaciones'
 import { TABLE_IDS } from './field-ids'
 
 const TTL_MS = 5 * 60 * 1000
@@ -83,14 +88,60 @@ export async function leerDefaultsAntecedentes(tipoPropiedad: string, nueva: boo
  */
 export async function hidratarSeccionE(
   tasacion: { tipo: string; tipoPropiedad: string },
-  informe: CamposBParaE,
+  informe: CamposBParaE & InformeParaEvidencias,
   guardada: SeccionE | undefined,
+  extras?: { textos: readonly string[]; materiales: readonly string[] },
 ): Promise<{ seccionE: SeccionE; prellenada: boolean }> {
   const nueva = tasacion.tipoPropiedad === 'nueva'
-  const tabla = guardada ? {} : await leerDefaultsAntecedentesSinFallar(tasacion.tipo, nueva)
+  const ctx = contextoE({ tipo: tasacion.tipo, nueva }, informe)
+  if (guardada) return { seccionE: completarSeccionE(guardada, ctx, {}), prellenada: false }
+
+  const tabla = await leerDefaultsAntecedentesSinFallar(tasacion.tipo, nueva)
   return {
-    seccionE: completarSeccionE(guardada, contextoE({ tipo: tasacion.tipo, nueva }, informe), tabla),
-    prellenada: !guardada,
+    seccionE: aplicarEvidencias(seccionEPorDefecto(ctx, tabla), evidenciasDe(informe, extras), ctx),
+    prellenada: true,
+  }
+}
+
+/** Lo que `evidenciasDe` lee del formulario ya hidratado. */
+export interface InformeParaEvidencias {
+  dormitorios: string
+  banos: string
+  mediosBanos: string
+  banoServicio: string
+  items: readonly Pick<ItemValoracion, 'descripcion' | 'subtipo' | 'tipo' | 'situacionMunicipal' | 'superficieM2'>[]
+}
+
+/**
+ * Evidencias para completar la sección E (`aplicarEvidencias`), **sólo datos**
+ * (pedido de Sergio, 19-oct-2026: nada de fotos): los ítems de la sección C
+ * (guardados o propuestos desde `TX_Unidades`), los atributos de documentos y
+ * unidades que trae `extras`, y los conteos de la sección B. Las ampliaciones
+ * salen de los ítems cuya descripción dice «ampliación».
+ */
+export function evidenciasDe(
+  informe: InformeParaEvidencias,
+  extras?: { textos: readonly string[]; materiales: readonly string[] },
+): EvidenciasE {
+  const items = informe.items.flatMap((it) => [it.descripcion, it.subtipo, it.tipo])
+  const ampliaciones: AmpliacionE[] = informe.items
+    .filter((it) => /ampliaci/i.test(it.descripcion ?? ''))
+    .slice(0, 3)
+    .map((it) => ({
+      regulado: it.situacionMunicipal === 'Regularizado' ? 'SI' : it.situacionMunicipal ? 'NO' : '',
+      pe: '',
+      rif: '',
+      regulacion: it.situacionMunicipal && it.situacionMunicipal !== 'Regularizado' ? it.situacionMunicipal : '',
+      m2: it.superficieM2 ?? '',
+    }))
+  return {
+    textos: [...(extras?.textos ?? []), ...items].filter((t): t is string => Boolean(t)),
+    materiales: extras?.materiales ?? [],
+    dormitorios: informe.dormitorios,
+    banos: informe.banos,
+    mediosBanos: informe.mediosBanos,
+    banoServicio: informe.banoServicio,
+    ampliaciones,
   }
 }
 

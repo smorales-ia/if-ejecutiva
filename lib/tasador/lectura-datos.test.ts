@@ -393,6 +393,60 @@ describe('sección B · estado de conservación y calidad con defaults de la pla
   })
 })
 
+describe('sección B · pisos, dormitorios y baños desde los documentos (19-oct-2026)', () => {
+  const ADJUNTOS = [
+    fila('recAdj000000001', {
+      clave_adjunto: 'foto_plano_cuadro_superficies',
+      atributos_obtenidos: JSON.stringify({
+        items: [
+          { codigo_atributo: 'numero_dormitorios', valor: '4' },
+          { codigo_atributo: 'numero_banos', valor: '4' },
+          { codigo_atributo: 'superficie_terraza_m2', valor: 'NO REGISTRA' },
+        ],
+      }),
+    }),
+    fila('recAdj000000002', {
+      clave_adjunto: 'permiso_edificacion',
+      atributos_obtenidos: JSON.stringify({ items: [{ codigo_atributo: 'numero_pisos', valor: '1' }] }),
+    }),
+    fila('recAdj000000003', {
+      clave_adjunto: 'foto_ofertas_comparables',
+      atributos_obtenidos: JSON.stringify({ items: [{ codigo_atributo: 'numero_pisos', valor: '3' }] }),
+    }),
+  ]
+
+  function airtableCon(datos: Record<string, unknown>) {
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.adjuntos
+        ? ADJUNTOS
+        : tableId === TABLE_IDS.datosTasacion
+          ? [fila('recDatos00000001', datos)]
+          : []
+    )
+  }
+
+  it('sin valor guardado toma el plano y el permiso, pre-llenados', async () => {
+    airtableCon({})
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.dormitorios).toBe('4')
+    expect(datos.banos).toBe('4')
+    expect(datos.pisosPropiedad).toBe('1') // no el «3» de un comparable
+    expect(prellenados).toEqual(expect.arrayContaining(['dormitorios', 'banos', 'pisosPropiedad']))
+  })
+
+  it('lo guardado gana y no se marca', async () => {
+    airtableCon({ dormitorios: 5, banos: 2, pisos: 2 })
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.dormitorios).toBe('5')
+    expect(datos.pisosPropiedad).toBe('2')
+    expect(prellenados).not.toContain('dormitorios')
+  })
+})
+
 describe('sección A · fecha real heredada de la planificada (RF-TAS-17 · 19-oct-2026)', () => {
   it('sin fecha real guardada muestra la planificada, pre-llenada', async () => {
     const { datos, prellenados } = await proyectarDatosCaptura({

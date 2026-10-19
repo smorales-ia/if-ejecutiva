@@ -11,6 +11,10 @@ import {
   totalesHabitaciones,
   type ContextoE,
   type DefaultsTabla,
+  type EvidenciasE,
+  type SeccionE,
+  aplicarEvidencias,
+  estructuraDesdeMaterial,
 } from './antecedentes-e'
 
 /**
@@ -240,6 +244,100 @@ describe('completarSeccionE', () => {
 
   it('sin nada guardado devuelve los defaults', () => {
     expect(completarSeccionE(undefined, MET6283, TABLA_CASA_USADO)).toEqual(casa())
+  })
+})
+
+describe('precarga con los datos de la solicitud (aplicarEvidencias)', () => {
+  const SIN_EVIDENCIA: EvidenciasE = {
+    textos: [],
+    materiales: [],
+    dormitorios: '',
+    banos: '',
+    mediosBanos: '',
+    banoServicio: '',
+    ampliaciones: [],
+  }
+
+  it('MET-6283: estructura del SII, habitaciones de la sección B y comodidades sin blancos', () => {
+    const e = aplicarEvidencias(
+      casa(),
+      {
+        ...SIN_EVIDENCIA,
+        // TX_Unidades «Casa N°2100» y el material de la sección B.
+        textos: ['Casa', 'Casa N°2100', 'Terreno', 'Servidumbre', 'Piso 1', 'Edificacion'],
+        materiales: ['albanileria', 'Albañilería'],
+        // Plano: 4 dormitorios y 4 baños (3 + ½); baño de servicio de la sección B.
+        dormitorios: '4',
+        banos: '4',
+        mediosBanos: '1',
+        banoServicio: '1',
+      },
+      MET6283,
+    )
+
+    expect(e.elementos.estructuraSoportante.materialidad).toBe('ALBAÑILERIA LADRILLO')
+    expect(e.habitaciones.n1.cantidades).toEqual({
+      comedor: 1,
+      living: 1,
+      cocina: 1,
+      dormSimple: 4,
+      banos: 3,
+      medioBano: 1,
+      banoServicio: 1,
+    })
+    expect(Object.values(e.comodidades).every((v) => v === 'SI' || v === 'NO')).toBe(true)
+    expect(e.comodidades.mueblesCocina).toBe('SI')
+    expect(e.comodidades.piscina).toBe('NO')
+    expect(e.elementos.obrasComplementarias.materialidad).toBe('')
+  })
+
+  it('los ítems del cuadro C declaran obras complementarias y comodidades', () => {
+    const e = aplicarEvidencias(
+      casa({ ...MET6283, bodegas: '1' }),
+      { ...SIN_EVIDENCIA, textos: ['Piscina', 'Terraza', 'Quincho', 'Estac U/Goce'] },
+      { ...MET6283, bodegas: '1' },
+    )
+
+    expect(e.elementos.obrasComplementarias).toEqual({
+      materialidad: 'TERRAZA+QUINCHO+PISCINA',
+      calidad: 'BUENA',
+      estado: 'BUENA',
+    })
+    expect(e.comodidades).toMatchObject({ piscina: 'SI', estacionamiento: 'SI', bodega: 'SI', sauna: 'NO' })
+  })
+
+  it('una ampliación declarada ocupa la primera fila libre y suma AMPLIACIÓN a las obras', () => {
+    const amp = { regulado: 'NO' as const, pe: '', rif: '', regulacion: 'S/Reg Regularizable', m2: '18.5' }
+    const e = aplicarEvidencias(casa(), { ...SIN_EVIDENCIA, ampliaciones: [amp] }, MET6283)
+
+    expect(e.ampliaciones[0]).toEqual(amp)
+    expect(e.elementos.obrasComplementarias.materialidad).toBe('AMPLIACIÓN')
+  })
+
+  it('la comodidad Calefacción declarada arrastra el elemento (AR38)', () => {
+    const e = aplicarEvidencias(casa(), { ...SIN_EVIDENCIA, textos: ['Calefacción central'] }, MET6283)
+    expect(e.comodidades.calefaccion).toBe('SI')
+    expect(e.elementos.calefaccion.materialidad).toBe('LOSA RADIANTE')
+  })
+
+  it('no pisa habitaciones ya cargadas ni comodidades ya decididas', () => {
+    const base = casa()
+    const cargada: SeccionE = {
+      ...base,
+      comodidades: { ...base.comodidades, piscina: 'SI' },
+      habitaciones: { ...base.habitaciones, n2: { ...base.habitaciones.n2, cantidades: { suite: 1 } } },
+    }
+    const e = aplicarEvidencias(cargada, { ...SIN_EVIDENCIA, dormitorios: '3' }, MET6283)
+
+    expect(e.comodidades.piscina).toBe('SI')
+    expect(e.habitaciones.n1.cantidades).toEqual({})
+  })
+
+  it('estructuraDesdeMaterial reconoce las formas habituales', () => {
+    expect(estructuraDesdeMaterial('ALBAÑILERÍA LADRILLO')).toBe('ALBAÑILERIA LADRILLO')
+    expect(estructuraDesdeMaterial('hormigon')).toBe('HORMIGON ARMADO')
+    expect(estructuraDesdeMaterial('Albañilería de bloques')).toBe('ALBAÑILERIA BLOQUES')
+    expect(estructuraDesdeMaterial('Mixto')).toBe('')
   })
 })
 

@@ -54,7 +54,9 @@ export default async function FotosPage({
     ...repartoDeCaptura(fotos),
   }
   // La misma sección E que arma el formulario: esta pantalla siembra el borrador.
-  informeInicial.seccionE = (await hidratarSeccionE(tasacion, informeInicial, guardados?.datos.seccionE)).seccionE
+  informeInicial.seccionE = (
+    await hidratarSeccionE(tasacion, informeInicial, guardados?.datos.seccionE, guardados?.evidenciasE)
+  ).seccionE
 
   return <FotosScreen tasacion={tasacion} informeInicial={informeInicial} />
 }

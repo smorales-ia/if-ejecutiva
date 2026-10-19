@@ -3013,6 +3013,14 @@ El default se resuelve server-side al abrir la Pantalla 5, sólo cuando `TX_Dato
   - la superficie por nivel `[BK30:BK33]`.
 
   **Desvío deliberado del criterio de aceptación:** estas dependencias se recalculan **en vivo en la pantalla** cuando el tasador cambia el dato del que dependen. El conjunto inicial llega resuelto del servidor, pero la regla también corre en el cliente, porque la hoja la aplica al editar. Un cambio en la sección B solo mueve las celdas que todavía tienen el valor de la fórmula: lo que el tasador cambió a mano no se toca.
+- **Completa con los datos de la solicitud** (19-oct-2026, pedido de Sergio: la sección E llega **entera**, sólo con datos, sin usar fotos). Cuando no hay sección E guardada, el servidor completa los defaults con lo que la base ya sabe (`aplicarEvidencias` · `hidratarSeccionE`):
+  - **Estructura soportante:** el primer material reconocible, en este orden: documentos (`material_estructura`), `TX_Unidades.tipo_material` y material predominante de la sección B. Se lleva al literal del catálogo de la hoja.
+  - **Habitaciones:** si no hay ninguna cargada, en el 1 nivel de una vivienda van comedor, living y cocina (1 cada uno), más dormitorios, baños, ½ baños y baño de servicio de la sección B. La suite y el resto quedan en 0, porque ningún dato los distingue.
+  - **Obras complementarias:** las que nombren los ítems de la sección C, las unidades SII o el atributo `oc` de los documentos, unidas con «+» como en la planilla.
+  - **Comodidades:** SI cuando un dato o un elemento las declara; NO en el resto, para que ninguna quede en blanco.
+  - **Ampliaciones:** los ítems de la sección C que dicen «ampliación».
+
+  Además, la sección B toma pisos, dormitorios y baños de los documentos (permiso de edificación, plano) cuando están vacíos, pre-llenados, con el mismo respaldo de lectura que §2.8.1, sin reescribir la base. Lo guardado por el tasador gana siempre.
 - **Guardado:** la sección E se guarda entera en `TX_DatosTasacion.seccion_e_json`, con un solo escritor, idempotente. De ese mismo JSON se derivan `TX_HabitacionesPorNivel`, `TX_Ampliaciones` y `TX_TerminacionesPorRecinto`. El informe toma del JSON las características constructivas, las comodidades y las terminaciones en formato ancho.
 - **Dos rarezas de la planilla que se conservan tal cual:**
   - En propiedad usada, el estado de obras complementarias, aire acondicionado y calefacción sale «BUENA», que no está en la lista de estados.

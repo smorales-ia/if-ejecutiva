@@ -67,7 +67,7 @@ export default async function TasacionDetailPage({
    * tipo × estado de uso (RF-TAS-23) y las fórmulas evaluadas sobre la sección
    * B ya hidratada. Sin tabla, abre sólo con las fórmulas.
    */
-  const e = await hidratarSeccionE(tasacion, informeInicial, guardados?.datos.seccionE)
+  const e = await hidratarSeccionE(tasacion, informeInicial, guardados?.datos.seccionE, guardados?.evidenciasE)
   informeInicial.seccionE = e.seccionE
   const prellenados = [...(guardados?.prellenados ?? []), ...(e.prellenada ? (["seccionE"] as const) : [])]
 

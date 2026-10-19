@@ -77,6 +77,62 @@ export async function filasDeSolicitud<T extends Fields>(
   })
 }
 
+/**
+ * Atributos que la lectura de documentos obtuvo y que la sección E (y su
+ * contexto en la sección B) aprovecha, como `codigo_atributo` → valores no
+ * vacíos (uno por documento que lo trajo). Lee sólo `clave_adjunto` y
+ * `atributos_obtenidos`: las fotos traen miniaturas pesadas que acá sobran.
+ * La foto del cuadro de comparables se omite: sus atributos son de otras
+ * propiedades. Un fallo de lectura devuelve el mapa vacío.
+ */
+const ATRIBUTOS_PARA_E = new Set([
+  'numero_pisos',
+  'numero_dormitorios',
+  'numero_banos',
+  'material_estructura',
+  'material_predominante',
+  'tipo_material',
+  'oc',
+])
+
+async function atributosDeDocumentos(codigo: string): Promise<Map<string, string[]>> {
+  const mapa = new Map<string, string[]>()
+  if (!codigo) return mapa
+  try {
+    const filas = await listRecords<{ clave_adjunto?: string; atributos_obtenidos?: string }>(TABLE_IDS.adjuntos, {
+      filterByFormula: `AND({solicitud}="${codigo.replace(/"/g, '\\"')}",{atributos_obtenidos}!="")`,
+      fields: ['clave_adjunto', 'atributos_obtenidos'],
+    })
+    for (const { fields: f } of filas) {
+      if (f.clave_adjunto === 'foto_ofertas_comparables' || !f.atributos_obtenidos) continue
+      let items: { codigo_atributo?: string; valor?: unknown }[] = []
+      try {
+        items = (JSON.parse(f.atributos_obtenidos) as { items?: typeof items }).items ?? []
+      } catch {
+        continue
+      }
+      for (const it of items) {
+        const codigoAtributo = (it.codigo_atributo ?? '').trim()
+        const valor = it.valor === null || it.valor === undefined ? '' : String(it.valor).trim()
+        if (!ATRIBUTOS_PARA_E.has(codigoAtributo) || valor === '' || /^no registra$/i.test(valor)) continue
+        mapa.set(codigoAtributo, [...(mapa.get(codigoAtributo) ?? []), valor])
+      }
+    }
+  } catch (err) {
+    console.error('[lectura-datos] no se pudieron leer los atributos de los documentos', err)
+  }
+  return mapa
+}
+
+/** Primer valor entero positivo de un atributo («4», «4.0»), o `''`. */
+function enteroDe(valores: readonly string[] | undefined): string {
+  for (const v of valores ?? []) {
+    const n = Number(v.replace(',', '.'))
+    if (Number.isFinite(n) && n > 0) return String(Math.trunc(n))
+  }
+  return ''
+}
+
 /* -------------------------------------------------------------------------
  * Sección D · comparables (RF-12 · A-13)
  * ---------------------------------------------------------------------- */
@@ -231,6 +287,12 @@ export interface DatosCaptura {
    * declara quien construye el valor, no quien lo muestra (P7-TAS.A.3-bis).
    */
   prellenados: (keyof InformeData)[]
+  /**
+   * Lo que la sección E toma de documentos y `TX_Unidades` para completarse
+   * (19-oct-2026): textos que nombran obras o comodidades y materiales de la
+   * estructura en orden de precedencia. Lo consume `hidratarSeccionE`.
+   */
+  evidenciasE?: { textos: string[]; materiales: string[] }
 }
 
 /**
@@ -301,6 +363,7 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     comparables,
     unidades,
     coordinaciones,
+    atributosDocs,
   ] = await Promise.all([
     filasDeSolicitud<Fields>(TABLE_IDS.datosTasacion, codigo),
     filasDeSolicitud<Fields>(TABLE_IDS.documentosLegales, codigo),
@@ -311,6 +374,7 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     comparablesDeSolicitud(codigo),
     filasDeSolicitud<Fields>(TABLE_IDS.unidades, codigo),
     filasDeSolicitud<Fields>(TABLE_IDS.coordinacionVisita, codigo),
+    atributosDeDocumentos(codigo),
   ])
 
   const d = datos[0]?.fields ?? {}
@@ -519,6 +583,37 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     prellenados.push('fechaVisitaReal')
   }
 
+  /*
+   * Pisos, dormitorios y baños (sección B · 19-oct-2026): lo guardado gana; si
+   * está vacío, lo que trajo la lectura de documentos (permiso de edificación,
+   * plano), pre-llenado. Mismo patrón de respaldo de lectura que P16-TAS: no
+   * reescribe la base. La sección E los usa para entrepisos y habitaciones.
+   */
+  const conRespaldo = (clave: keyof InformeData, guardado: string, atributo: string) => {
+    if (guardado !== '') return guardado
+    const deDocumento = enteroDe(atributosDocs.get(atributo))
+    if (deDocumento !== '') prellenados.push(clave)
+    return deDocumento
+  }
+  const pisosPropiedad = conRespaldo('pisosPropiedad', texto(d.pisos), 'numero_pisos')
+  const dormitorios = conRespaldo('dormitorios', texto(d.dormitorios), 'numero_dormitorios')
+  const banos = conRespaldo('banos', texto(d.banos), 'numero_banos')
+
+  /* Lo que la sección E toma de documentos y unidades (`hidratarSeccionE`). */
+  const evidenciasE = {
+    textos: [
+      ...(atributosDocs.get('oc') ?? []),
+      ...unidades.flatMap((u) => [texto(u.fields.subtipo), texto(u.fields.numero_unidad), texto(u.fields.detalle_item)]),
+    ].filter((t) => t !== ''),
+    materiales: [
+      ...(atributosDocs.get('material_estructura') ?? []),
+      ...(atributosDocs.get('material_predominante') ?? []),
+      ...(atributosDocs.get('tipo_material') ?? []),
+      primeraUnidadConDato('tipo_material'),
+      materialPredominante,
+    ].filter((t) => t !== ''),
+  }
+
   /* Velocidad de venta (sección B · 19-oct-2026, pedido de Sergio): sin valor
      guardado, parte de «8 a 10 meses», pre-llenada y editable. */
   let velocidadVenta = texto(d.velocidad_venta_estimada)
@@ -543,11 +638,11 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       agrupacionPropiedad: texto(d.agrupacion_propiedad),
       materialPredominante,
       calidadConstruccion,
-      pisosPropiedad: texto(d.pisos),
+      pisosPropiedad,
       orientacion: d.orientacion ? [String(d.orientacion)] : [],
       numAscensores: texto(d.num_ascensores),
-      dormitorios: texto(d.dormitorios),
-      banos: texto(d.banos),
+      dormitorios,
+      banos,
       estacionamientos: texto(d.estacionamientos),
       rolesEstacionamientos: texto(d.roles_estacionamientos),
       bodegas: texto(d.bodegas),
@@ -618,6 +713,7 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       ingresoLiquidoAnual: texto(d.ingreso_liquido_anual),
     },
     prellenados,
+    evidenciasE,
   }
 }
 

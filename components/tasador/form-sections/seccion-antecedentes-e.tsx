@@ -144,7 +144,7 @@ export function SeccionAntecedentesE({
       {prellenada && (
         <div className="flex items-start gap-2 rounded-lg bg-blue-50 px-3 py-2.5 text-sm text-brand">
           <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-          <span>Llega lista con los valores habituales del informe. Revisa y corrige lo que no calce con la propiedad.</span>
+          <span>Llega completa con los datos de la solicitud y los valores habituales del informe. Revisa y corrige lo que no calce con la propiedad.</span>
         </div>
       )}
 

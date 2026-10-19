@@ -837,6 +837,179 @@ export function reaplicarContexto(e: SeccionE, antes: ContextoE, ahora: Contexto
   return sig
 }
 
+/* -------------------------------------------------------------------------
+ * Precarga con lo que la base ya sabe (19-oct-2026, pedido de Sergio)
+ * ---------------------------------------------------------------------- */
+
+/**
+ * Datos de la solicitud que completan la sección E por encima de los defaults
+ * de la hoja. Los arma el servidor (`hidratarSeccionE`) **sólo con datos**: la
+ * sección B, los ítems de la sección C, los atributos que la lectura de
+ * documentos obtuvo y `TX_Unidades`. Las fotos no se usan.
+ */
+export interface EvidenciasE {
+  /**
+   * Textos que nombran obras complementarias o comodidades: descripción, subtipo
+   * y tipo de los ítems de la sección C, el atributo `oc` del SII y el subtipo
+   * de las unidades.
+   */
+  textos: readonly string[]
+  /** Material de la estructura, en orden de precedencia (documento, SII, sección B). */
+  materiales: readonly string[]
+  /** Sección B (con el respaldo del plano cuando B está vacía). */
+  dormitorios: string
+  banos: string
+  mediosBanos: string
+  banoServicio: string
+  /** Ampliaciones declaradas en otra parte (ítems de la sección C). */
+  ampliaciones: readonly AmpliacionE[]
+}
+
+/** Sin tildes, mayúsculas, espacios simples: para comparar textos libres. */
+function plano(t: string): string {
+  return t
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * Lleva un material escrito de cualquier forma («albanileria», «Albañilería»,
+ * «HORMIGÓN ARMADO») al literal de la lista de estructura de la hoja
+ * (`BZ45:BZ80`), o `''` si no se reconoce.
+ */
+export function estructuraDesdeMaterial(texto: string): string {
+  const t = plano(texto)
+  if (t === '') return ''
+  const exacto = ESTRUCTURAS.find((x) => plano(x) === t)
+  if (exacto) return exacto
+  if (t.includes('ALBA')) {
+    if (t.includes('BLOQUE')) return 'ALBAÑILERIA BLOQUES'
+    if (t.includes('PIEDRA')) return 'ALBAÑILERIA PIEDRA'
+    return 'ALBAÑILERIA LADRILLO'
+  }
+  if (t.includes('HORMIG')) return 'HORMIGON ARMADO'
+  if (t.includes('ADOBE')) return 'ADOBE  O ADOBILLO'
+  if (t.includes('MADERA')) return 'MADERA'
+  if (t.includes('ACERO') || t.includes('METAL')) return 'ACERO'
+  return ''
+}
+
+/** Palabras que, en un texto de evidencia, declaran una obra complementaria de `CK45:CK50`. */
+const OBRA_POR_PALABRA: readonly [RegExp, (typeof OBRAS_COMPLEMENTARIAS)[number]][] = [
+  [/TERRAZA/, 'TERRAZA'],
+  [/QUINCHO/, 'QUINCHO'],
+  [/PISCINA/, 'PISCINA'],
+  [/JACUZZI/, 'JACUZZI'],
+  [/ESTAC.*TECHAD|TECHAD.*ESTAC/, 'ESTACIONAMIENTO TECHADO'],
+]
+
+/** Palabras que declaran una comodidad de `B21:AL24`. */
+const COMODIDAD_POR_PALABRA: readonly [RegExp, ComodidadE][] = [
+  [/MUEBLES? DE COCINA/, 'mueblesCocina'],
+  [/COMEDOR DE DIARIO/, 'comedorDiario'],
+  [/PATIO DE SERVICIO/, 'patioServicio'],
+  [/ESTAC/, 'estacionamiento'],
+  [/PISCINA/, 'piscina'],
+  [/GIMNASIO/, 'gimnasio'],
+  [/SAUNA/, 'sauna'],
+  [/BODEGA/, 'bodega'],
+  [/JARDIN/, 'jardinConformado'],
+  [/CALEFACC/, 'calefaccion'],
+  [/ALARMA/, 'alarma'],
+  [/REJA|PROTECCION/, 'proteccionesRejas'],
+  [/ASPIRACION/, 'aspiracionCentral'],
+  [/CLIMATIZ|AIRE ACOND/, 'climatizacion'],
+  [/PURIFICADOR/, 'purificadorAire'],
+  [/CORRIENTES? DEBILES/, 'corrientesDebiles'],
+]
+
+const esVivienda = (c: ContextoE) => esCasa(c) || esDepto(c)
+
+/**
+ * Completa la sección E por defecto con lo que la base ya sabe, para que el
+ * tasador la reciba **entera** y sólo revise:
+ *
+ * - **Estructura soportante**: el primer material reconocible (documento,
+ *   SII, sección B) llevado al catálogo de la hoja.
+ * - **Obras complementarias**: las que nombren las evidencias, unidas con «+»
+ *   como en la planilla (MET-6283: «TERRAZA DESCUBIERTA+QUINCHO+PISCINA+BODEGA»),
+ *   más las que ya traía el default (piscina en departamento).
+ * - **Comodidades**: SI cuando una evidencia o un elemento las declara (muebles
+ *   de cocina con materialidad, aire o calefacción presentes, estacionamientos
+ *   o bodegas en la sección B); **NO** en el resto, para que ninguna quede en
+ *   blanco. La comodidad Calefacción arrastra el elemento como en `AR38`.
+ * - **Habitaciones**: si no hay ninguna cargada, en el 1 nivel de una vivienda:
+ *   comedor, living y cocina (1 c/u), dormitorios simples, baños, ½ baños y
+ *   baño de servicio según la sección B. La suite y el resto quedan en 0: no hay
+ *   dato que los distinga.
+ * - **Ampliaciones**: las que declaren otras secciones, en las filas libres.
+ */
+export function aplicarEvidencias(e: SeccionE, ev: EvidenciasE, c: ContextoE): SeccionE {
+  let sig = e
+  const textos = ev.textos.map(plano).filter(Boolean)
+  const nombra = (re: RegExp) => textos.some((t) => re.test(t))
+
+  // Estructura soportante.
+  const estructura = ev.materiales.map(estructuraDesdeMaterial).find((m) => m !== '')
+  if (estructura) sig = cambiarMaterialidad(sig, 'estructuraSoportante', estructura, c)
+
+  // Ampliaciones declaradas en otra parte.
+  if (ev.ampliaciones.length > 0) {
+    const libres = sig.ampliaciones.map((a) => !a.regulado && !a.pe && !a.rif && !a.regulacion && !a.m2)
+    const pendientes = [...ev.ampliaciones]
+    sig = {
+      ...sig,
+      ampliaciones: sig.ampliaciones.map((a, i) => (libres[i] && pendientes.length > 0 ? pendientes.shift()! : a)),
+    }
+  }
+
+  // Obras complementarias.
+  const previas = sig.elementos.obrasComplementarias.materialidad
+    .split('+')
+    .map((x) => x.trim())
+    .filter(Boolean)
+  const obras = new Set(previas)
+  for (const [re, obra] of OBRA_POR_PALABRA) if (nombra(re)) obras.add(obra)
+  if (sig.ampliaciones.some((a) => a.m2 || a.pe || a.rif)) obras.add('AMPLIACIÓN')
+  if (obras.size > previas.length) {
+    sig = cambiarMaterialidad(sig, 'obrasComplementarias', [...obras].join('+'), c)
+  }
+
+  // Comodidades: SI con evidencia, NO en el resto.
+  const si = new Set<ComodidadE>()
+  for (const [re, id] of COMODIDAD_POR_PALABRA) if (nombra(re)) si.add(id)
+  if (sig.elementos.mueblesCocina.materialidad.trim()) si.add('mueblesCocina')
+  if (presente('aireAcondicionado', sig.elementos.aireAcondicionado.materialidad)) si.add('climatizacion')
+  if (presente('calefaccion', sig.elementos.calefaccion.materialidad)) si.add('calefaccion')
+  if (numero(c.estacionamientos) > 0) si.add('estacionamiento')
+  if (numero(c.bodegas) > 0) si.add('bodega')
+  for (const { id } of COMODIDADES_E) {
+    if (sig.comodidades[id] !== '') continue
+    const valor: SiNo = si.has(id) ? 'SI' : 'NO'
+    sig = id === 'calefaccion' ? cambiarComodidad(sig, id, valor, c) : { ...sig, comodidades: { ...sig.comodidades, [id]: valor } }
+  }
+
+  // Habitaciones del 1 nivel en una vivienda sin nada cargado.
+  const vacias = NIVELES_E.every(({ id }) => Object.values(sig.habitaciones[id].cantidades).every((n) => !n))
+  if (vacias && esVivienda(c)) {
+    const medios = numero(ev.mediosBanos)
+    const cantidades: Partial<Record<TipoHabitacion, number>> = { comedor: 1, living: 1, cocina: 1 }
+    const poner = (tipo: TipoHabitacion, n: number) => {
+      if (n > 0) cantidades[tipo] = Math.trunc(n)
+    }
+    poner('dormSimple', numero(ev.dormitorios))
+    poner('banos', Math.max(0, numero(ev.banos) - medios))
+    poner('medioBano', medios)
+    poner('banoServicio', numero(ev.banoServicio))
+    sig = { ...sig, habitaciones: { ...sig.habitaciones, n1: { ...sig.habitaciones.n1, cantidades } } }
+  }
+
+  return sig
+}
+
 /* --- Totales de la hoja (`L34:BK34`) --- */
 
 export function totalesHabitaciones(e: SeccionE) {
