@@ -44,8 +44,10 @@ export async function POST(
   const guard = await autorizarSolicitud(id)
   if (!guard.ok) return desdeGuard(guard)
 
-  // Capa 3 — validación. El cuerpo va vacío; un cuerpo con basura se rechaza.
-  const cuerpo = await parsearCuerpo(request, calcularSchema)
+  // Capa 3 — validación. El cuerpo va vacío (o `{}`); un cuerpo con basura se
+  // rechaza. Vacío de verdad también vale: así llegaba desde la pantalla y la
+  // ruta lo rebotaba con «Revisa los datos…» (19-oct-2026, réplica MET-6283).
+  const cuerpo = await parsearCuerpo(request, calcularSchema, { vacioEsObjeto: true })
   if (!cuerpo.ok) return error(cuerpo.mensaje, 400)
 
   const estadoActual = guard.fields.estado

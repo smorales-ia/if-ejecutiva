@@ -1653,7 +1653,7 @@ export async function devolverCoordinacion(
 export async function marcarVisitada(id: string): Promise<void> {
   await llamarApi<{ id: string; estado: string }>(
     `/api/tasaciones/${id}/calcular`,
-    { method: 'POST' },
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' },
   )
 }
 

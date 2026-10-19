@@ -115,6 +115,8 @@ export function useEstadoTasador(id: string, activo = true): EstadoTasador {
     const res = await fetch(`/api/tasaciones/${id}/calcular`, {
       method: "POST",
       credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
     })
 
     if (!res.ok) {

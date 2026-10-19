@@ -452,11 +452,24 @@ export type ResultadoParseo<T> =
  */
 export async function parsearCuerpo<T extends z.ZodTypeAny>(
   request: Request,
-  schema: T
+  schema: T,
+  opciones?: {
+    /**
+     * Un cuerpo vacío cuenta como `{}` (19-oct-2026). Para rutas que no llevan
+     * datos (`/calcular`): un `fetch` con `method: 'POST'` y sin `body` llega
+     * vacío, y `request.json()` lo rechazaba con «Revisa los datos…».
+     */
+    vacioEsObjeto?: boolean
+  }
 ): Promise<ResultadoParseo<z.infer<T>>> {
   let crudo: unknown
   try {
-    crudo = await request.json()
+    if (opciones?.vacioEsObjeto && typeof request.text === 'function') {
+      const texto = await request.text()
+      crudo = texto.trim() === '' ? {} : JSON.parse(texto)
+    } else {
+      crudo = await request.json()
+    }
   } catch {
     return { ok: false, mensaje: MENSAJES.datosInvalidos, campos: [] }
   }

@@ -86,6 +86,29 @@ describe('happy path', () => {
   })
 })
 
+describe('cuerpo vacío (réplica MET-6283 · 19-oct-2026)', () => {
+  /** Un `Request` real: el `fetch` de la pantalla con `method: 'POST'` y sin `body`. */
+  const llamarConTexto = (texto: string) =>
+    POST(
+      new Request('http://localhost/api/tasaciones/x/calcular', { method: 'POST', body: texto || undefined }) as never,
+      { params: Promise.resolve({ id: ID }) }
+    )
+
+  it('un POST sin cuerpo calcula (antes rebotaba con «Revisa los datos…»)', async () => {
+    const res = await llamarConTexto('')
+
+    expect(res.status).toBe(200)
+    expect(updateRecord).toHaveBeenCalledTimes(1)
+  })
+
+  it('un cuerpo con basura sigue rechazándose sin escribir', async () => {
+    const res = await llamarConTexto('{"x":1}')
+
+    expect(res.status).toBe(400)
+    expect(updateRecord).not.toHaveBeenCalled()
+  })
+})
+
 describe('el 409 de RF-TAS-07', () => {
   it('rechaza con 409 y sin escribir si la solicitud ya está visitada', async () => {
     autorizarSolicitud.mockResolvedValue(
