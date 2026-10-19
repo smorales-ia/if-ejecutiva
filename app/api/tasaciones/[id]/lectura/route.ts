@@ -28,6 +28,7 @@ import {
 } from '@/lib/tasador/avance-lectura'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { desdeExcepcion, desdeGuard, ok } from '@/lib/tasador/respuestas'
+import { TIPO_DOCUMENTO_POR_CATEGORIA_FOTO } from '@/lib/tasador/tipo-documento-foto'
 import { getAtributosPorTipo, getTiposDocumento } from '@/lib/tipos-documento'
 
 export const dynamic = 'force-dynamic'
@@ -43,7 +44,29 @@ interface AdjuntoFields {
   // que deja RF-09. Sólo se usa para saber qué `codigo_atributo` sí se obtuvo;
   // vacío en un fallo total. **No se expone** al cliente (regla T-C).
   atributos_obtenidos?: string
+  // `tipo_adjunto` lo fija `PATCH /fotos` en `foto_interior` para toda foto del
+  // organizador; el prefijo `foto` es el criterio del registro fotográfico.
+  tipo_adjunto?: string
   solicitud?: string[]
+}
+
+/** Claves de `D_TipoDocumento` que una foto de la visita lleva para ser leída. */
+const CLAVES_FOTO_CON_LECTURA: ReadonlySet<string> = new Set(
+  Object.values(TIPO_DOCUMENTO_POR_CATEGORIA_FOTO)
+)
+
+/**
+ * ¿Es una foto de registro (fachada, dormitorio, referencias…) sin nada que leer?
+ *
+ * Esta pantalla informa qué pasó con los **documentos**; las fotos de la
+ * propiedad no aportan datos y listarlas por nombre de archivo sólo mete ruido
+ * (pedido de Sergio, 19-oct-2026). Sale del detalle **y** del conteo, para que
+ * «N de M archivos procesados» cuente lo mismo que la lista. La foto del cuadro
+ * de comparables sí se lee (`foto_ofertas_comparables`) y se queda.
+ */
+function esFotoSinLectura(fields: AdjuntoFields): boolean {
+  if (!(fields.tipo_adjunto ?? '').startsWith('foto')) return false
+  return !CLAVES_FOTO_CON_LECTURA.has((fields.clave_adjunto ?? '').trim())
 }
 
 /** `codigo_atributo` presentes en `items[]` de `atributos_obtenidos`. */
@@ -218,10 +241,17 @@ export async function GET(
       })
     }
 
-    const adjuntos = await listRecords<AdjuntoFields>(TABLE_IDS.adjuntos, {
+    const filas = await listRecords<AdjuntoFields>(TABLE_IDS.adjuntos, {
       filterByFormula: `{solicitud}="${codigo.replace(/"/g, '\\"')}"`,
-      fields: ['nombre_archivo', 'estado_extraccion', 'clave_adjunto', 'atributos_obtenidos'],
+      fields: [
+        'nombre_archivo',
+        'estado_extraccion',
+        'clave_adjunto',
+        'atributos_obtenidos',
+        'tipo_adjunto',
+      ],
     })
+    const adjuntos = filas.filter((f) => !esFotoSinLectura(f.fields))
 
     // Un adjunto sin `estado_extraccion` cuenta como `idle`: el pipeline lo
     // escribe al crear la fila, y su ausencia significa «todavía no lo tocó».

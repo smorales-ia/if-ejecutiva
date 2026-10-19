@@ -479,6 +479,56 @@ describe('nombres_datos_faltantes', () => {
   })
 })
 
+describe('fotos de la visita', () => {
+  const PERMISO = {
+    id: 'recDOC',
+    createdTime: '',
+    fields: { nombre_archivo: 'permiso.pdf', estado_extraccion: 'listo', clave_adjunto: 'permiso_edificacion' },
+  }
+  const FOTO_DORMITORIO = {
+    id: 'recFOTO1',
+    createdTime: '',
+    fields: { nombre_archivo: 'h5_03_dormitorio_a.jpg', estado_extraccion: 'skipped', tipo_adjunto: 'foto_interior' },
+  }
+  const FOTO_CUADRO = {
+    id: 'recFOTO2',
+    createdTime: '',
+    fields: {
+      nombre_archivo: 'cuadro.jpg',
+      estado_extraccion: 'extrayendo',
+      tipo_adjunto: 'foto_interior',
+      clave_adjunto: 'foto_ofertas_comparables',
+    },
+  }
+
+  it('una foto de registro no aparece en el detalle ni en el conteo', async () => {
+    listRecords.mockResolvedValue([PERMISO, FOTO_DORMITORIO])
+
+    const { cuerpo } = await llamar()
+    const ids = (cuerpo.data.adjuntos as unknown as { id: string }[]).map((a) => a.id)
+
+    expect(ids).toEqual(['recDOC'])
+    expect(cuerpo.data.total).toBe(1 as never)
+  })
+
+  it('la foto del cuadro de comparables se lee, así que se queda y cuenta', async () => {
+    listRecords.mockResolvedValue([PERMISO, FOTO_DORMITORIO, FOTO_CUADRO])
+
+    const { cuerpo } = await llamar()
+    const ids = (cuerpo.data.adjuntos as unknown as { id: string }[]).map((a) => a.id)
+
+    expect(ids).toEqual(['recDOC', 'recFOTO2'])
+    expect(cuerpo.data.total).toBe(2 as never)
+    expect(cuerpo.data.completo).toBe(false as never)
+  })
+
+  it('pide `tipo_adjunto` a Airtable', async () => {
+    await llamar()
+    const [, params] = listRecords.mock.calls[0]
+    expect(params.fields).toContain('tipo_adjunto')
+  })
+})
+
 describe('R7 · la ruta sólo observa', () => {
   it('no escribe nada en Airtable', async () => {
     listRecords.mockResolvedValue(adjuntos('idle', 'extrayendo'))
