@@ -36,7 +36,7 @@ import type { AnexoResuelto } from "@/lib/informe/imagenes"
 import { combinarConBorrador } from "@/lib/tasador/recuperacion-borrador"
 import { useEstadoTasador } from "@/lib/tasador/use-estado-tasador"
 import { numeroDe } from "@/lib/tasador/comparables"
-import { filaTasacionUfM2 } from "@/lib/informe/fila-tasacion"
+import { ufM2ConstruccionTasacion } from "@/lib/informe/fila-tasacion"
 import { SeccionComparables } from "@/components/tasador/form-sections/seccion-comparables"
 import { ExpedienteSheet } from "@/components/tasador/expediente-sheet"
 import { Button } from "@/components/ui/button"
@@ -363,18 +363,35 @@ export function InformePreview({
    * El cómputo cliente (`netoAnual` / `valorReferenciaClp`) se retiró por completo.
    */
   const valorUf = valorCanonico?.valorUf ?? null
+  /* La tasa llega como fracción (0,045, la que el PDF imprime con `mul(100)`);
+     un valor mayor que 1 ya viene en puntos porcentuales (override tecleado). */
   const capRate =
-    valorCanonico?.capRate != null ? valorCanonico.capRate.toFixed(2) : null
+    valorCanonico?.capRate != null
+      ? (valorCanonico.capRate > 1 ? valorCanonico.capRate : valorCanonico.capRate * 100).toLocaleString(
+          "es-CL",
+          { maximumFractionDigits: 2 },
+        )
+      : null
   const esOverrideValor = valorCanonico?.esOverride ?? false
 
   /*
-   * Fila TASACIÓN del bloque 6 (F-2 · P1-8): UF/m² C. del sujeto = valor
-   * canónico / sup. construida capturada. Misma aritmética que el ensamblador
-   * (`filaTasacionUfM2` · RO-05). Sin valor canónico o sin superficie → null y
-   * la fila sigue en «—». El % vs promedio lo forma `SeccionComparables` contra
-   * el promedio simple de cada bloque (CI-057 no se toca).
+   * Fila TASACIÓN del bloque 6 (F-2 · P1-8): UF/m² C. del sujeto = UF de los
+   * ítems de edificación del cuadro ÷ su superficie, como la planilla y el PDF
+   * (`ufM2ConstruccionTasacion` · RO-05); sin ítems de edificación, valor
+   * canónico ÷ sup. construida. Sin datos → null y la fila sigue en «—». El %
+   * vs promedio lo forma `SeccionComparables` contra el promedio simple de cada
+   * bloque (CI-057 no se toca).
    */
-  const ufM2Tasacion = filaTasacionUfM2(valorUf, numeroDe(d.supConstruida))
+  const ufM2Tasacion = ufM2ConstruccionTasacion(
+    d.items.map((i) => {
+      const sup = numeroDe(i.superficieM2)
+      const uf = numeroDe(i.ufM2Unitario)
+      const factor = numeroDe(i.factorAplicado) ?? 1
+      return { tipo: i.tipo, supM2: sup, ufTotal: sup !== null && uf !== null ? sup * uf * factor : null }
+    }),
+    valorUf,
+    numeroDe(d.supConstruida),
+  )
 
   /* Bloque 4 · unidades + avalúo SII — canónico (P9-TAS.B). Reemplaza el origen
    * cliente `tasacion.unidades`, que sólo traía la grilla sin el avalúo. */

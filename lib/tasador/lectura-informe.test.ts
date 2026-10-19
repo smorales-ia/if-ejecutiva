@@ -102,6 +102,63 @@ describe('construirInforme · estructura de los 8 bloques', () => {
   })
 })
 
+describe('réplica MET-6283 · cap rate del motor y anexo reutilizado como foto (19-oct-2026)', () => {
+  it('sin cap rate guardado, toma el que el motor usó para la renta perpetua', async () => {
+    airtableCon({
+      [TABLE_IDS.calculos]: [
+        fila('recC1', {
+          variable_output: 'renta_perpetua_clp',
+          resultado: 806666666.67,
+          inputs_json: JSON.stringify({ tasa_cap_rate_efectivo: 0.045, override_tasa_cap_rate: 0 }),
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.valorDestacado.capRate).toBe(0.045)
+  })
+
+  it('el cap rate guardado gana sobre el del motor', async () => {
+    airtableCon({
+      [TABLE_IDS.datosTasacion]: [fila('recD1', { tasa_cap_rate: 0.05 })],
+      [TABLE_IDS.calculos]: [
+        fila('recC1', { variable_output: 'renta_perpetua_clp', inputs_json: '{"tasa_cap_rate_efectivo":0.045}' }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.valorDestacado.capRate).toBe(0.05)
+  })
+
+  it('un documento recategorizado como foto (mismo archivo) sigue llenando su anexo', async () => {
+    airtableCon({
+      [TABLE_IDS.adjuntos]: [
+        fila('recA1', {
+          tipo_adjunto: 'foto_interior',
+          descripcion: 'Planificación',
+          clave_adjunto: 'foto_plano_cuadro_superficies',
+          nombre_archivo: 'plano.jpg',
+          thumbnail_url: 'data:image/jpeg;base64,PLANO',
+        }),
+        fila('recA2', {
+          tipo_adjunto: 'foto_interior',
+          descripcion: 'fachada_exterior',
+          nombre_archivo: 'fachada.jpg',
+          thumbnail_url: 'data:image/jpeg;base64,FACHADA',
+        }),
+      ],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+    const plano = informe.anexosRanuras.find((a) => a.ranura === 'anexo1Plano')
+
+    expect(plano?.thumbnailUrl).toBe('data:image/jpeg;base64,PLANO')
+    expect(informe.anexosRanuras.filter((a) => a.thumbnailUrl).length).toBe(1)
+  })
+})
+
 describe('construirInforme · cap rate del bloque 2 (CI-063)', () => {
   it('toma el cap rate almacenado en TX_DatosTasacion.tasa_cap_rate', async () => {
     airtableConDatos({ tasa_cap_rate: 4.75 })
@@ -361,6 +418,26 @@ describe('construirInforme · bloque 4 (SII/avalúo · P9-TAS.B)', () => {
       expect(informe.datosSii.rolSii).toBe(esperado)
     },
   )
+
+  it('rol de bloque: sin rol en la solicitud, el de la unidad principal (réplica MET-6283)', async () => {
+    airtableCon({
+      [TABLE_IDS.unidades]: [fila('recU1', { numero_unidad: 'Casa N°2100', rol_sii: '882-40', es_principal: true })],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.datosSii.rolSii).toBe('882-40')
+  })
+
+  it('avalúo total: sin avaluo_total consolidado, el avalúo fiscal', async () => {
+    airtableCon({
+      [TABLE_IDS.datosTasacion]: [fila('recD1', { avaluo_fiscal_clp: 339809429 })],
+    })
+
+    const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
+
+    expect(informe.datosSii.avaluoTotal).toBe(339809429)
+  })
 
   it('rol por unidad: aplica el mismo sentinel que el rol de bloque', async () => {
     airtableCon({

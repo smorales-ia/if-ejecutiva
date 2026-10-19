@@ -74,8 +74,8 @@ import {
 } from '@/lib/tasador/persistencia-e'
 import { construirInforme, leerTerminales, type Bloque } from '@/lib/tasador/lectura-informe'
 import { codigoDeZona, componerZona } from '@/lib/tasador/zona'
-import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
-import { resolverImagenes, type AnexoResuelto } from './imagenes'
+import { filaTasacionVsPct, promedioSinCeros, ufM2ConstruccionTasacion } from './fila-tasacion'
+import { esDocumentoDeAnexo, resolverImagenes, type AnexoResuelto } from './imagenes'
 import { aplicarOverridesLocales } from './overrides'
 import type {
   BloqueComparablesInforme,
@@ -430,10 +430,6 @@ export async function construirInformeContexto(
     return seleccion.reduce((s, i) => s + (i.ufTotalItem ?? 0), 0)
   }
   const terrenoUf = sumaUf((i) => esTipo(i, 'Terreno'))
-  const edificacionUf = sumaUf((i) => esTipo(i, 'Edificacion'))
-  const supEdificacion = itemsCuadro
-    .filter((i) => esTipo(i, 'Edificacion'))
-    .reduce((s, i) => s + (i.supM2 ?? 0), 0)
   const ooccUf = sumaUf((i) => esTipo(i, 'Piscina', 'OO.CC.'))
 
   const tasacionFila: ColumnasComparables = {
@@ -443,10 +439,11 @@ export async function construirInformeContexto(
     oocc: ooccUf,
     ufM2Terreno:
       terrenoUf !== null && supTerrenoM2 ? terrenoUf / supTerrenoM2 : null,
-    ufM2Construccion:
-      edificacionUf !== null && supEdificacion > 0
-        ? edificacionUf / supEdificacion
-        : filaTasacionUfM2(valorComercialUf, supConstruccionM2),
+    ufM2Construccion: ufM2ConstruccionTasacion(
+      itemsCuadro.map((i) => ({ tipo: i.tipoItem, supM2: i.supM2, ufTotal: i.ufTotalItem })),
+      valorComercialUf,
+      supConstruccionM2,
+    ),
   }
 
   /* Bloques ofertas / CBR: promedio POR COLUMNA sobre su bloque, valores > 0
@@ -506,7 +503,7 @@ export async function construirInformeContexto(
   )
   const anexos = {
     documentos: adjuntos
-      .filter((a) => !texto(a.fields.tipo_adjunto).startsWith('foto'))
+      .filter((a) => esDocumentoDeAnexo(texto(a.fields.tipo_adjunto), texto(a.fields.clave_adjunto)))
       .map((a) => ({
         id: a.id,
         nombre: texto(a.fields.nombre_archivo),

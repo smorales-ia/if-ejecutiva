@@ -102,6 +102,20 @@ export const RANURAS_ANEXO: readonly {
   { ranura: 'anexo2Tgr', codigo: 'certificado_deuda_tgr', label: 'Certificado de deuda TGR' },
 ])
 
+const CODIGOS_ANEXO: ReadonlySet<string> = new Set(RANURAS_ANEXO.map((r) => r.codigo))
+
+/**
+ * ¿Esta fila de `TX_Adjuntos` es documento de anexo? Lo es si no es foto, **o**
+ * si su `clave_adjunto` es el código de una ranura de anexo aunque también esté
+ * categorizada como foto: cuando el tasador sube como foto el mismo archivo de
+ * un documento, `SC-Adjuntos-Upload` reutiliza la fila por hash y la
+ * recategoriza como foto, y el anexo quedaba vacío (réplica MET-6283: el plano
+ * reutilizado por la foto «Planificación», 19-oct-2026).
+ */
+export function esDocumentoDeAnexo(tipoAdjunto: string, claveAdjunto: string): boolean {
+  return !tipoAdjunto.startsWith('foto') || CODIGOS_ANEXO.has(claveAdjunto.trim())
+}
+
 /**
  * Un adjunto documental (no-foto) de `TX_Adjuntos`, reducido a lo que el
  * resolutor necesita: su código de tipo y su fuente renderizable.

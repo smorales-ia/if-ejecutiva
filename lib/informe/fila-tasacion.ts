@@ -37,6 +37,36 @@ export function filaTasacionUfM2(
   return valorUf / supConstruccionM2
 }
 
+/** Un ítem del cuadro de valoración reducido a lo que la fila TASACIÓN necesita. */
+export interface ItemParaFilaTasacion {
+  /** `tipo_item` («Edificacion», «Terreno», «OO.CC.»…). */
+  tipo: string
+  supM2: number | null
+  /** UF del ítem (sup × UF/m² × factor). */
+  ufTotal: number | null
+}
+
+/**
+ * UF/m² de construcción de la fila TASACIÓN, como la planilla (`Portada!AX35`):
+ * UF de los ítems de edificación ÷ su superficie (= UF/m² nuevo × factor de
+ * depreciación). Sin ítems de edificación cae al puente valor total ÷ sup.
+ * construida (`filaTasacionUfM2`). Única regla para el PDF (ensamblador) y la
+ * vista previa: hasta el 19-oct-2026 la vista previa usaba sólo el puente e
+ * imprimía 80,53 donde el PDF y el original dicen 32,64 (MET-6283).
+ */
+export function ufM2ConstruccionTasacion(
+  items: readonly ItemParaFilaTasacion[],
+  valorUf: number | null,
+  supConstruccionM2: number | null,
+): number | null {
+  const edificacion = items.filter((i) => i.tipo.trim().toLowerCase() === 'edificacion')
+  const sup = edificacion.reduce((s, i) => s + (i.supM2 ?? 0), 0)
+  if (edificacion.length > 0 && sup > 0) {
+    return edificacion.reduce((s, i) => s + (i.ufTotal ?? 0), 0) / sup
+  }
+  return filaTasacionUfM2(valorUf, supConstruccionM2)
+}
+
 /**
  * `TASACION V/S PROMEDIO DE LA MUESTRA` en puntos porcentuales:
  * `(tasacionUfM2 / promedioUfM2 − 1) × 100`.

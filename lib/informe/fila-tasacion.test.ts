@@ -7,7 +7,23 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
+import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros, ufM2ConstruccionTasacion } from './fila-tasacion'
+
+describe('ufM2ConstruccionTasacion · como Portada!AX35', () => {
+  it('MET-6283: UF de la edificación ÷ su superficie = 32,64 (no el total ÷ sup.)', () => {
+    const items = [
+      { tipo: 'Terreno', supM2: 1402.35, ufTotal: 11218.8 },
+      { tipo: 'Terreno', supM2: 3622.51, ufTotal: 0 },
+      { tipo: 'Edificacion', supM2: 249.91, ufTotal: 249.91 * 34 * 0.96 },
+      { tipo: 'Piscina', supM2: 1, ufTotal: 350 },
+    ]
+    expect(ufM2ConstruccionTasacion(items, 20125.86, 249.91)).toBeCloseTo(32.64, 2)
+  })
+
+  it('sin ítems de edificación cae al puente valor ÷ sup. construida', () => {
+    expect(ufM2ConstruccionTasacion([], 20125.86, 249.91)).toBeCloseTo(80.53, 2)
+  })
+})
 
 describe('filaTasacionUfM2', () => {
   it('divide valor de tasación por superficie construida (golden 0066)', () => {

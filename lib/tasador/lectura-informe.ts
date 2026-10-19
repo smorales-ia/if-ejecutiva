@@ -71,6 +71,7 @@
 import { getRecord, listRecords } from '@/lib/airtable-client'
 import {
   fuenteRenderizable,
+  esDocumentoDeAnexo,
   resolverAnexos,
   type AnexoResuelto,
 } from '@/lib/informe/imagenes'
@@ -248,20 +249,40 @@ async function filasDeSolicitud<T extends Fields>(tableId: string, codigo: strin
  * se filtra por `solicitud_codigo`, el campo de texto que el motor escribe en
  * cada fila.
  */
-export async function leerTerminales(
-  codigo: string
-): Promise<(variable: string) => number | null> {
+export type LectorTerminales = ((variable: string) => number | null) & {
+  /**
+   * Un insumo con el que el motor calculó esa terminal (`inputs_json` de la
+   * fila), p. ej. `insumo('renta_perpetua_clp', 'tasa_cap_rate_efectivo')`.
+   * `null` si la fila o la clave no están o no son número.
+   */
+  insumo: (variable: string, clave: string) => number | null
+}
+
+export async function leerTerminales(codigo: string): Promise<LectorTerminales> {
   const filas = codigo
     ? await listRecords<Fields>(TABLE_IDS.calculos, {
         filterByFormula: `{solicitud_codigo}="${codigo.replace(/"/g, '\\"')}"`,
       })
     : []
   const terminal = new Map<string, number | null>()
+  const insumos = new Map<string, unknown>()
   for (const f of filas) {
     const variable = texto(f.fields.variable_output)
-    if (variable) terminal.set(variable, numeroONull(f.fields.resultado))
+    if (!variable) continue
+    terminal.set(variable, numeroONull(f.fields.resultado))
+    insumos.set(variable, f.fields.inputs_json)
   }
-  return (variable) => terminal.get(variable) ?? null
+  const lector = ((variable: string) => terminal.get(variable) ?? null) as LectorTerminales
+  lector.insumo = (variable, clave) => {
+    const crudo = insumos.get(variable)
+    if (typeof crudo !== 'string' || crudo.trim() === '') return null
+    try {
+      return numeroONull((JSON.parse(crudo) as Record<string, unknown>)[clave])
+    } catch {
+      return null
+    }
+  }
+  return lector
 }
 
 /** `null` para ausente. **Nunca** `0`: ver la degradación del valor destacado. */
@@ -378,12 +399,20 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
      TX_Calculos). La consulta es perezosa —solo cuando la solicitud no trae
      valor— y `|| null` mantiene la regla del bloque: 0 es dato ausente, no
      «0 UF». */
+  let terminales: LectorTerminales | null = null
+  const leer = async () => (terminales ??= await leerTerminales(codigo))
   const valorSolicitud =
     numeroONull(s.valor_final_override) ?? numeroONull(s.valor_comercial_uf)
   const valorUf =
-    valorSolicitud ?? ((await leerTerminales(codigo))('valor_comercial_uf') || null)
+    valorSolicitud ?? ((await leer())('valor_comercial_uf') || null)
+  /* Cap rate: el override o el de la captura; si ninguno está guardado, el que
+     el motor usó para la renta perpetua (`tasa_cap_rate_efectivo` en su
+     `inputs_json`). Sin esto el informe imprimía la renta calculada al 4,5 % y
+     la tasa vacía (19-oct-2026 · réplica MET-6283). */
   const capRate =
-    numeroONull(s.tasa_cap_rate_override) ?? numeroONull(d.tasa_cap_rate)
+    numeroONull(s.tasa_cap_rate_override) ??
+    numeroONull(d.tasa_cap_rate) ??
+    ((await leer()).insumo('renta_perpetua_clp', 'tasa_cap_rate_efectivo') || null)
   const valorDestacado: ValorDestacado = {
     valorUf,
     capRate,
@@ -468,7 +497,7 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
      vía el ensamblador): un solo origen, cero reglas duplicadas. */
   const anexosRanuras = resolverAnexos(
     adjuntos
-      .filter((a) => !texto(a.fields.tipo_adjunto).startsWith('foto'))
+      .filter((a) => esDocumentoDeAnexo(texto(a.fields.tipo_adjunto), texto(a.fields.clave_adjunto)))
       .map((a) => ({
         codigo: texto(a.fields.clave_adjunto),
         nombre: texto(a.fields.nombre_archivo),
@@ -494,9 +523,22 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
     clp !== null && ufDia !== null && ufDia > 0 ? clp / ufDia : null
   const avaluoFiscalClp = numeroONull(d.avaluo_fiscal_clp)
 
+  /*
+   * Rol del bloque: el de la solicitud; si la solicitud no lo trae, el de la
+   * unidad principal de `TX_Unidades` (19-oct-2026 · réplica MET-6283: la
+   * solicitud venía sin rol y el informe imprimía «Rol SII pendiente» con la
+   * unidad 882-40 cargada). Mismo dato, una sola fuente cuando falta la otra.
+   */
+  const unidadPrincipal =
+    unidades.find((u) => u.fields.es_principal === true) ??
+    unidades.find((u) => texto(u.fields.rol_sii).trim() !== '')
+  const rolBloque = texto(s.rol_sii).trim() || texto(unidadPrincipal?.fields.rol_sii)
+
   const datosSii: DatosSii = {
-    rolSii: rolSiiConSentinel(texto(s.rol_sii)),
-    avaluoTotal: numeroONull(d.avaluo_total),
+    rolSii: rolSiiConSentinel(rolBloque),
+    // Sin `avaluo_total` consolidado, el avalúo fiscal (el SII los informa
+    // iguales para una propiedad de un rol: MET-6283 339.809.429 en ambos).
+    avaluoTotal: numeroONull(d.avaluo_total) ?? avaluoFiscalClp,
     avaluoFiscalClp,
     avaluoFiscalUf: aUf(avaluoFiscalClp),
     avaluoExento: numeroONull(d.avaluo_exento),
