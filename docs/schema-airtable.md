@@ -1558,6 +1558,23 @@ al leer el schema.
 
 ---
 
+## `TX_DatosTasacion.seccion_e_json` · sección E del tasador (IF-03 · APLICADO 19-oct-2026)
+
+Campo nuevo creado el 19-oct-2026 vía meta API (decisión de Sergio: «Campo JSON único»).
+
+| Campo | FIELD_ID | Tipo | Notas |
+|---|---|---|---|
+| `seccion_e_json` | `fldV7tQurz3mnxBpO` | multilineText | Sección E completa con la forma de la hoja «Antecedentes» (`SeccionE` en `lib/tasador/antecedentes-e.ts`): comodidades, ampliaciones, habitaciones por nivel, elementos (materialidad · calidad · estado) y terminaciones. Un solo escritor: `PATCH /api/tasaciones/[id]/datos`, que lo normaliza (`normalizarSeccionE`) y de él deriva `TX_HabitacionesPorNivel`, `TX_Ampliaciones` y `TX_TerminacionesPorRecinto`. Lo leen la pantalla (`lectura-datos.ts`) y el informe (`ensamblador.ts`). |
+
+`TX_HabitacionesPorNivel.tipo_recinto` desde la sección E: Comedor, Living, Sala (estar), Hall,
+Suite, D.Simple, D.Servicio, Cocina, Estudio (escritorio: el singleSelect no tiene «Escritorio»),
+Bano, 1/2 Baño, B.Servicio, Lavadero (loggia), Otro. Todas son opciones existentes (meta API
+19-oct-2026).
+
+**Lector de `C_DefaultsAntecedentes` (19-oct-2026):** `lib/tasador/defaults-antecedentes.ts`
+filtra `AND({activo},{estado_uso}=…,LOWER(ARRAYJOIN({tipo_propiedad}))=LOWER(…))`; verificado
+contra la base: Casa·usado 51 filas, Departamento·nuevo 55, Oficina·usado 0.
+
 ## `C_DefaultsAntecedentes` · defaults de la hoja de antecedentes (IF-03)
 
 **TABLE_ID: `tblOj7nXcjeouPy09`** · creada el 22-ago-2026 en la tanda **P0.5-TAS** ·

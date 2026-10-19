@@ -42,7 +42,8 @@ import {
   SeccionComparables,
   ComparablesBadge,
 } from "@/components/tasador/form-sections/seccion-comparables"
-import { SeccionEdificacion } from "@/components/tasador/form-sections/seccion-edificacion"
+import { SeccionAntecedentesE } from "@/components/tasador/form-sections/seccion-antecedentes-e"
+import { CLAVES_B_PARA_E, contextoE, reaplicarContexto } from "@/lib/tasador/antecedentes-e"
 import { SeccionDocumentos } from "@/components/tasador/form-sections/seccion-documentos"
 import {
   SeccionOverrides,
@@ -175,9 +176,33 @@ export function TasacionForm({
       : { A: true, B: false, C: false, D: false, F: false, G: false, H: false },
   )
 
-  const set: SetForm = useCallback((key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }))
-  }, [])
+  /** Lo que las fórmulas de la sección E leen de la solicitud. */
+  const solicitudE = useMemo(
+    () => ({ tipo: tasacion.tipo, nueva: tasacion.tipoPropiedad === "nueva" }),
+    [tasacion.tipo, tasacion.tipoPropiedad],
+  )
+
+  /**
+   * Un cambio en la sección B que la hoja lee (estado de conservación, pisos,
+   * superficies, estacionamientos, bodegas) recalcula las celdas de E que
+   * todavía tienen el valor de la fórmula (`reaplicarContexto`).
+   */
+  const set: SetForm = useCallback(
+    (key, value) => {
+      setForm((prev) => {
+        const next = { ...prev, [key]: value }
+        if ((CLAVES_B_PARA_E as readonly string[]).includes(key as string)) {
+          next.seccionE = reaplicarContexto(
+            prev.seccionE,
+            contextoE(solicitudE, prev),
+            contextoE(solicitudE, next),
+          )
+        }
+        return next
+      })
+    },
+    [solicitudE],
+  )
 
   const totalFotos = useMemo(() => {
     const pre = Object.values(form.fotosPredefinidas).reduce(
@@ -532,9 +557,14 @@ export function TasacionForm({
             <SeccionComparables form={form} />
           </Section>
 
-          {/* E. Edificación */}
-          <Section letra="E" titulo="Niveles · Terminaciones · Comodidades">
-            <SeccionEdificacion form={form} set={set} />
+          {/* E. Antecedentes · hoja «Antecedentes» de la planilla (19-oct-2026) */}
+          <Section letra="E" titulo="Recintos y características constructivas">
+            <SeccionAntecedentesE
+              value={form.seccionE}
+              onChange={(e) => set("seccionE", e)}
+              ctx={contextoE(solicitudE, form)}
+              prellenada={prellenados.includes("seccionE")}
+            />
           </Section>
 
           {/* F. Documentos legales */}

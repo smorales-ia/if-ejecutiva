@@ -180,7 +180,8 @@ export function combinarConBorrador(
 /**
  * Lo que deja «Recuperar»: el borrador entero, salvo un cuadro de valoración
  * vacío frente a uno **pre-llenado** por el servidor (spec §2.8.2), y una fecha
- * real de visita vacía frente a la heredada de la planificada (RF-TAS-17).
+ * real de visita vacía frente a la heredada de la planificada (RF-TAS-17), y
+ * un borrador sin `seccionE` (anterior al 19-oct-2026) frente a la del servidor.
  *
  * El borrador que siembra `fotos-screen` —o uno escrito antes de que existiera
  * la propuesta— trae `items: []`. Recuperarlo tal cual borraría el cuadro
@@ -203,6 +204,10 @@ export function recuperarBorrador(
   // un borrador escrito antes de la precarga la trae vacía.
   if (prellenados.includes("fechaVisitaReal") && !(borrador.fechaVisitaReal ?? "").trim()) {
     salida = { ...salida, fechaVisitaReal: informeInicial.fechaVisitaReal }
+  }
+  // Un borrador anterior a la sección E de la hoja (19-oct-2026) no la trae.
+  if (!borrador.seccionE && informeInicial.seccionE) {
+    salida = { ...salida, seccionE: informeInicial.seccionE }
   }
   return salida
 }

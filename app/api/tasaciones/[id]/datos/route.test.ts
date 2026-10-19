@@ -76,6 +76,7 @@ vi.mock('@/lib/tasador/auditoria', async (importOriginal) => {
 
 import { GET, PATCH } from './route'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
+import { seccionEPorDefecto } from '@/lib/tasador/antecedentes-e'
 import { _resetCacheComunas } from '@/lib/tasador/lectura-tasacion'
 import { MENSAJES } from '@/lib/tasador/mensajes'
 import { _resetCacheZonificacion } from '@/lib/tasador/zonificacion'
@@ -275,6 +276,64 @@ describe('con el guard en verde la ruta sí trabaja', () => {
     expect(res.status).toBe(200)
     // Sin fila previa de TX_DatosTasacion, el upsert crea.
     expect(createRecord).toHaveBeenCalled()
+  })
+})
+
+describe('sección E · hoja «Antecedentes» en seccion_e_json (19-oct-2026)', () => {
+  function seccionE() {
+    const base = seccionEPorDefecto(
+      {
+        tipoPropiedad: 'Casa',
+        nueva: false,
+        estadoConservacion: 'BUENO',
+        pisos: '1',
+        supConstruida: '249.91',
+        supPrimerPiso: '249.91',
+        estacionamientos: '0',
+        bodegas: '0',
+      },
+      { estar: { pavimento: 'ENMADERADO' } },
+    )
+    return {
+      ...base,
+      habitaciones: { ...base.habitaciones, n1: { ...base.habitaciones.n1, cantidades: { suite: 1, dormSimple: 3 } } },
+    }
+  }
+
+  it('guarda el JSON, deriva las hijas desde él e ignora las claves E anteriores', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    const res = await llamarPatch({
+      seccionE: seccionE(),
+      niveles: { n1: { living: 5 } },
+      comodidades: { piscina: true },
+      estructuraSoportante: 'texto viejo',
+    })
+
+    expect(res.status).toBe(200)
+    const datos = createRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.datosTasacion)
+    const json = JSON.parse(String(datos?.[1].seccion_e_json))
+    expect(json.terminaciones.estar).toMatchObject({ pavimento: 'ENMADERADO', material: 'MADERA' })
+
+    const habitaciones = createRecord.mock.calls
+      .filter(([tabla]) => tabla === TABLE_IDS.habitacionesPorNivel)
+      .map(([, f]) => f.tipo_recinto)
+    expect(habitaciones.sort()).toEqual(['D.Simple', 'Suite'])
+
+    const terminaciones = createRecord.mock.calls.filter(([tabla]) => tabla === TABLE_IDS.terminacionesPorRecinto)
+    expect(terminaciones.map(([, f]) => f.descripcion)).toEqual(['ENMADERADO'])
+
+    const cuerpo = (await res.json()) as { data: { noPersistidos: string[] } }
+    expect(cuerpo.data.noPersistidos).toEqual([])
+  })
+
+  it('sin seccionE, un bundle viejo sigue guardando con la forma anterior', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    await llamarPatch({ niveles: { n1: { living: 2 } } })
+
+    const habitaciones = createRecord.mock.calls.filter(([tabla]) => tabla === TABLE_IDS.habitacionesPorNivel)
+    expect(habitaciones.map(([, f]) => f.tipo_recinto)).toEqual(['Living'])
   })
 })
 

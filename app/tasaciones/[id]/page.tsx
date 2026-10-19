@@ -5,6 +5,7 @@ import { leerDatosCaptura } from "@/lib/tasador/lectura-datos"
 import { leerFotosCaptura, repartoDeCaptura } from "@/lib/tasador/lectura-fotos"
 import { resolverInforme } from "@/lib/tasador/tasaciones"
 import { codigoDeZona } from "@/lib/tasador/zona"
+import { hidratarSeccionE } from "@/lib/tasador/defaults-antecedentes"
 import { zonasDeComunaSinFallar } from "@/lib/tasador/zonificacion"
 import { TasacionForm } from "@/components/tasador/tasacion-form"
 
@@ -60,12 +61,22 @@ export default async function TasacionDetailPage({
   const zonas = await zonasDeComunaSinFallar(tasacion.comuna)
   informeInicial.tipoZona = codigoDeZona(informeInicial.tipoZona, tasacion.comuna, zonas)
 
+  /**
+   * Sección E (19-oct-2026 · hoja «Antecedentes»): la guardada gana; si no hay,
+   * la de la hoja con los valores fijos de `C_DefaultsAntecedentes` para este
+   * tipo × estado de uso (RF-TAS-23) y las fórmulas evaluadas sobre la sección
+   * B ya hidratada. Sin tabla, abre sólo con las fórmulas.
+   */
+  const e = await hidratarSeccionE(tasacion, informeInicial, guardados?.datos.seccionE)
+  informeInicial.seccionE = e.seccionE
+  const prellenados = [...(guardados?.prellenados ?? []), ...(e.prellenada ? (["seccionE"] as const) : [])]
+
   return (
     <Suspense fallback={null}>
       <TasacionForm
         tasacion={tasacion}
         informeInicial={informeInicial}
-        prellenados={guardados?.prellenados ?? []}
+        prellenados={prellenados}
         zonas={zonas}
       />
     </Suspense>

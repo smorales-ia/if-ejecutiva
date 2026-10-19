@@ -204,6 +204,39 @@ export const nivelHabitacionesSchema = z.object({
   loggia: numeroDeInput,
 })
 
+/**
+ * Sección E con la forma de la hoja «Antecedentes» (`SeccionE`, 19-oct-2026).
+ * Las claves de los registros se aceptan libres y la ruta las depura con
+ * `normalizarSeccionE` antes de guardar el JSON.
+ */
+const textoE = z.string().trim().max(300)
+const siNoE = z.enum(['', 'SI', 'NO'])
+export const seccionESchema = z.object({
+  comodidades: z.record(z.string(), siNoE),
+  ampliaciones: z
+    .array(z.object({ regulado: siNoE, pe: textoE, rif: textoE, regulacion: textoE, m2: textoE }))
+    .max(3),
+  habitaciones: z.record(
+    z.string(),
+    z.object({
+      cantidades: z.record(z.string(), z.number().int().min(0).max(999)),
+      superficieM2: textoE,
+    }),
+  ),
+  elementos: z.record(z.string(), z.object({ materialidad: textoE, calidad: textoE, estado: textoE })),
+  terminaciones: z.record(
+    z.string(),
+    z.object({
+      pavimento: textoE,
+      material: textoE,
+      muros: textoE,
+      cielo: textoE,
+      iluminacion: textoE,
+      estado: textoE,
+    }),
+  ),
+})
+
 export const datosPatchSchema = z
   .object({
     /* --- A · Visita · Regla T-B: dos fechas que nunca se colapsan --- */
@@ -253,7 +286,13 @@ export const datosPatchSchema = z
     /* --- C · Cuadro de valoración --- */
     items: z.array(itemValoracionSchema).optional(),
 
-    /* --- E · Niveles · Terminaciones · Comodidades --- */
+    /* --- E · Antecedentes (19-oct-2026) ---
+       Con `seccionE` presente, la ruta guarda `seccion_e_json`, deriva de ahí
+       las tablas hijas e ignora las claves E de abajo, que quedan para
+       pestañas con el bundle anterior. */
+    seccionE: seccionESchema.optional(),
+
+    /* --- E · forma anterior (sólo bundles viejos) --- */
     ampliaciones: z.array(ampliacionSchema).optional(),
     niveles: z.record(z.string(), nivelHabitacionesSchema).optional(),
     recintos: z.array(recintoSchema).optional(),

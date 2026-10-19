@@ -54,6 +54,8 @@ import {
 import { OPCIONES_CAPTURA, TABLE_IDS } from './field-ids'
 import { selloSecGuardado, selloSecPorDefecto } from './legales'
 import { proponerCuadro } from './propuesta-cuadro'
+import type { SeccionE } from './antecedentes-e'
+import { normalizarSeccionE } from './persistencia-e'
 
 type Fields = Record<string, unknown>
 
@@ -264,6 +266,20 @@ export function materialSiiAPredominante(valor: string): string {
  * siempre `BUENA`—, así que el vacío cae al default de `defaults-propiedad.ts`.
  * `calidad_sii` sigue llegando al informe por su cuenta («Calidad SII»).
  */
+
+/**
+ * `TX_DatosTasacion.seccion_e_json` → `{ seccionE }`, o `{}` si no hay JSON o
+ * no se puede leer (se loguea: un JSON roto no debe tumbar el formulario).
+ */
+function seccionEGuardada(valor: unknown): { seccionE?: SeccionE } {
+  if (typeof valor !== 'string' || valor.trim() === '') return {}
+  try {
+    return { seccionE: normalizarSeccionE(JSON.parse(valor) as Partial<SeccionE>) }
+  } catch (err) {
+    console.error('[lectura-datos] seccion_e_json ilegible', err)
+    return {}
+  }
+}
 
 /**
  * Proyecta la captura de terreno a partir de la solicitud ya autorizada.
@@ -592,6 +608,9 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       /* --- H --- */
       arriendoBrutoClp: texto(d.arriendo_mensual),
       gastoAnualClp: texto(d.gasto_anual),
+      /* --- E guardada (19-oct-2026). Sin JSON no se emite la clave: la página
+         arma la sección con los defaults de la hoja (`completarSeccionE`). --- */
+      ...seccionEGuardada(d.seccion_e_json),
     },
     derivados: {
       dfl2: texto(d.dfl2),

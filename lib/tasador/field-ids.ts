@@ -64,6 +64,12 @@ export const TABLE_IDS = Object.freeze({
    * lista de «Tipo de zona» de la sección B (`lib/tasador/zonificacion.ts`).
    */
   zonificacion: 'tbltr5VN2NGuTtbc1',
+  /**
+   * `C_DefaultsAntecedentes` — valores fijos de la sección E por tipo de
+   * propiedad × estado de uso (RF-TAS-23). **Sólo lectura** desde el repo;
+   * la lee `lib/tasador/defaults-antecedentes.ts`. Schema en `docs/schema-airtable.md`.
+   */
+  defaultsAntecedentes: 'tblOj7nXcjeouPy09',
 } as const)
 
 /* -------------------------------------------------------------------------

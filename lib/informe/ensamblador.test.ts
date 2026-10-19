@@ -434,6 +434,41 @@ describe('construirInformeContexto · golden VP-2026-0066', () => {
     expect(propiedad.tipoZonaDescripcion).toBe('IPB(Colina)')
   })
 
+  it('sección E guardada (seccion_e_json): constructivas, comodidades y terminaciones de la hoja', async () => {
+    const seccionE = {
+      comodidades: { piscina: 'SI', jardinConformado: 'SI', aspiracionCentral: 'NO' },
+      elementos: {
+        estructuraSoportante: { materialidad: 'ALBAÑILERIA LADRILLO', calidad: 'BUENA', estado: 'BUENO' },
+        aireAcondicionado: { materialidad: 'RADIADOR MURAL', calidad: 'BUENA', estado: 'BUENA' },
+      },
+      terminaciones: {
+        estar: { pavimento: 'ENMADERADO', material: 'TIPO PISO DE INGENIERÍA', muros: 'ESMALTE', cielo: 'ENLUCIDO / PINTURA', iluminacion: 'BUENA', estado: 'BUENO' },
+      },
+    }
+    const conE = fila(DATOS_0066.id, { ...DATOS_0066.fields, seccion_e_json: JSON.stringify(seccionE) })
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.datosTasacion ? [conE] : (TABLAS_0066[tableId] ?? []),
+    )
+
+    const { cualitativa, recintos, huecos } = await contexto0066()
+
+    expect(cualitativa.constructivas).toMatchObject({
+      estructura: 'ALBAÑILERIA LADRILLO',
+      estructuraCalidad: 'BUENA',
+      aireAcondicionado: 'RADIADOR MURAL',
+    })
+    expect(cualitativa.comodidades).toMatchObject({ piscina: 'SI', jardin: 'SI', aspiracion: 'NO', sauna: '' })
+    expect(recintos.terminacionesPorRecinto[0]).toMatchObject({
+      nombre: 'Estar',
+      categoria: 'ENMADERADO',
+      descripcion: 'TIPO PISO DE INGENIERÍA',
+      revMuros: 'ESMALTE',
+      calidad: 'BUENO',
+    })
+    expect(huecos.some((h) => h.ruta === 'cualitativa.constructivas')).toBe(false)
+    expect(huecos.some((h) => h.ruta === 'cualitativa.comodidades')).toBe(false)
+  })
+
   it('columna US$ de terminales: CLP ÷ dólar del día (890,33 · XLSM BO71)', async () => {
     const { terminales } = await contexto0066()
     expect(terminales.usdDia).toBeCloseTo(890.33, 2)

@@ -51,6 +51,7 @@
  */
 
 import type { ContactoVisita, SlaEtapaSolicitud } from '../console-data'
+import { contextoE, seccionEPorDefecto, type SeccionE } from './antecedentes-e'
 
 /* -------------------------------------------------------------------------
  * Estado y semáforo
@@ -790,7 +791,17 @@ export interface InformeData {
   /* --- D · Comparables --- */
   comparables: Comparable[]
 
-  /* --- E · Niveles · Terminaciones · Comodidades --- */
+  /**
+   * --- E · Antecedentes (19-oct-2026) ---
+   * La sección E con la forma de la hoja «Antecedentes» de la planilla
+   * (`lib/tasador/antecedentes-e.ts`). Es lo que la pantalla edita y lo que se
+   * guarda (`TX_DatosTasacion.seccion_e_json`). Las claves E de abajo son la
+   * forma anterior: siguen en el tipo para borradores y bundles viejos, pero la
+   * pantalla ya no las muestra y la ruta las ignora cuando llega `seccionE`.
+   */
+  seccionE: SeccionE
+
+  /* --- E · forma anterior (sólo borradores y bundles viejos) --- */
   ampliaciones: Ampliacion[]
   niveles: Record<NivelId, NivelHabitaciones>
   recintos: Recinto[]
@@ -1476,7 +1487,24 @@ export function resolverInforme(tasacion: Tasacion): InformeData {
     /* D · Comparables */
     comparables: [],
 
-    /* E · Niveles · Terminaciones · Comodidades */
+    /* E · Antecedentes: sólo las fórmulas de la hoja, sin valores fijos. La
+       página la reemplaza por la guardada o por la de `C_DefaultsAntecedentes`. */
+    seccionE: seccionEPorDefecto(
+      contextoE(
+        { tipo: tasacion.tipo, nueva: tasacion.tipoPropiedad === 'nueva' },
+        {
+          estadoConservacion: '',
+          pisosPropiedad: '',
+          supConstruida: '',
+          supPrimerPiso: '',
+          estacionamientos: '',
+          bodegas: '',
+        },
+      ),
+      {},
+    ),
+
+    /* E · forma anterior */
     ampliaciones: [],
     niveles: {
       subterraneo: nivelVacio(),

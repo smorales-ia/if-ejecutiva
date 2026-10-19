@@ -3,6 +3,7 @@ import { leerTasacion } from "@/lib/tasador/lectura-tasacion"
 import { leerDatosCaptura } from "@/lib/tasador/lectura-datos"
 import { leerFotosCaptura, repartoDeCaptura } from "@/lib/tasador/lectura-fotos"
 import { resolverInforme } from "@/lib/tasador/tasaciones"
+import { hidratarSeccionE } from "@/lib/tasador/defaults-antecedentes"
 import { FotosScreen } from "@/components/tasador/fotos-screen"
 
 export default async function FotosPage({
@@ -52,6 +53,8 @@ export default async function FotosPage({
     ...(guardados?.datos ?? {}),
     ...repartoDeCaptura(fotos),
   }
+  // La misma sección E que arma el formulario: esta pantalla siembra el borrador.
+  informeInicial.seccionE = (await hidratarSeccionE(tasacion, informeInicial, guardados?.datos.seccionE)).seccionE
 
   return <FotosScreen tasacion={tasacion} informeInicial={informeInicial} />
 }

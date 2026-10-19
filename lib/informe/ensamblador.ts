@@ -65,6 +65,13 @@ import {
 } from '@/lib/tasador/defaults-propiedad'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
+import type { SeccionE } from '@/lib/tasador/antecedentes-e'
+import {
+  comodidadesInforme,
+  constructivasInforme,
+  normalizarSeccionE,
+  terminacionesInforme,
+} from '@/lib/tasador/persistencia-e'
 import { construirInforme, leerTerminales, type Bloque } from '@/lib/tasador/lectura-informe'
 import { codigoDeZona, componerZona } from '@/lib/tasador/zona'
 import { filaTasacionUfM2, filaTasacionVsPct, promedioSinCeros } from './fila-tasacion'
@@ -107,6 +114,22 @@ function numeroONull(valor: unknown): number | null {
 
 function texto(valor: unknown): string {
   return valor === null || valor === undefined ? '' : String(valor)
+}
+
+/**
+ * `TX_DatosTasacion.seccion_e_json` (19-oct-2026) ya normalizado, o `null` si
+ * no hay o no se puede leer. Con él existe escritor para constructivas y
+ * comodidades, y sus dos huecos P1-1 se retiran **para ese caso**; sin él (una
+ * solicitud capturada antes) siguen declarados.
+ */
+function seccionEDelInforme(valor: unknown): SeccionE | null {
+  if (typeof valor !== 'string' || valor.trim() === '') return null
+  try {
+    return normalizarSeccionE(JSON.parse(valor) as Partial<SeccionE>)
+  } catch (err) {
+    console.error('[ensamblador] seccion_e_json ilegible', err)
+    return null
+  }
 }
 
 /**
@@ -512,6 +535,8 @@ export async function construirInformeContexto(
     'Lavadero': 'Lavadero',
     'Otros': 'Otro',
     'Otro': 'Otro',
+    // El singleSelect no tiene «Escritorio»: la sección E lo guarda como `Estudio`.
+    'Estudio': 'Escritorio',
   }
   const TIPOS_MATRIZ = [
     'Comedor', 'Living', 'Sala', 'Hall', 'Suite', 'D.Simple', 'D.Servicio',
@@ -540,20 +565,28 @@ export async function construirInformeContexto(
       ? habitacionesNormalizadas.reduce((s, h) => s + (h.cantidad ?? 0), 0)
       : null
 
-  /* --- Cualitativa: todo null hoy (P1-1/P1-2) ------------------------ */
+  /* --- Sección E guardada (19-oct-2026 · seccion_e_json) ------------- */
+  /* Con el JSON, constructivas, comodidades y terminaciones salen de la hoja
+     «Antecedentes» capturada; sin él, quedan como antes (null y la tabla). */
+  const seccionE = seccionEDelInforme(d.seccion_e_json)
+
+  /* --- Cualitativa: P1-1/P1-2 salvo lo que trae la sección E ---------- */
   const cualitativa: CualitativaInforme = {
     normativa: null,
     sector: null,
     geometriaTerreno: null,
     emplazamiento: null,
-    constructivas: null,
+    constructivas: seccionE ? constructivasInforme(seccionE) : null,
     servicios: null,
-    comodidades: null,
+    comodidades: seccionE ? comodidadesInforme(seccionE) : null,
     detallePropiedad: null,
   }
 
   /* --- Huecos: estructurales + los dependientes del caso ------------- */
-  const huecos: Hueco[] = [...HUECOS_ESTRUCTURALES]
+  const huecos: Hueco[] = HUECOS_ESTRUCTURALES.filter(
+    (h) =>
+      !seccionE || (h.ruta !== 'cualitativa.constructivas' && h.ruta !== 'cualitativa.comodidades'),
+  )
   if (imagenes.firma === null) {
     /* El mecanismo existe (M_Tasadores.firma_url · T-PDF-E3-GENERICOS); si
        falta, es un dato de perfil sin cargar — hueco por-caso, no estructural. */
@@ -693,16 +726,18 @@ export async function construirInformeContexto(
       })),
       habitacionesPorNivel,
       totalRecintos,
-      terminacionesPorRecinto: terminaciones.map((r) => ({
-        id: r.id,
-        nombre: texto(r.fields.nombre),
-        categoria: texto(r.fields.categoria),
-        descripcion: texto(r.fields.descripcion),
-        calidad: texto(r.fields.calidad),
-        revMuros: texto(r.fields.rev_muros),
-        cielo: texto(r.fields.cielo),
-        iluminacion: texto(r.fields.iluminacion),
-      })),
+      terminacionesPorRecinto: seccionE
+        ? terminacionesInforme(seccionE)
+        : terminaciones.map((r) => ({
+            id: r.id,
+            nombre: texto(r.fields.nombre),
+            categoria: texto(r.fields.categoria),
+            descripcion: texto(r.fields.descripcion),
+            calidad: texto(r.fields.calidad),
+            revMuros: texto(r.fields.rev_muros),
+            cielo: texto(r.fields.cielo),
+            iluminacion: texto(r.fields.iluminacion),
+          })),
     },
     fotos,
     anexos,

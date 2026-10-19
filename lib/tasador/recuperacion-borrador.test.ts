@@ -410,6 +410,13 @@ describe('recuperarBorrador', () => {
     expect(r.supConstruida).toBe('249.91')
   })
 
+  it('un borrador anterior a la sección E de la hoja conserva la del servidor', () => {
+    const seccionE = { elementos: { cubierta: { materialidad: 'PLANCHA METALICA' } } }
+    const r = recuperarBorrador(servidor({ seccionE }), borradorEnBlanco({ supConstruida: '249.91' }), [])
+    expect(r.seccionE).toBe(seccionE)
+    expect(r.supConstruida).toBe('249.91')
+  })
+
   it('si el borrador trae fecha real, gana la del tasador', () => {
     const heredada = servidor({ fechaVisitaReal: '2026-04-13' })
     const borrador = borradorEnBlanco({ fechaVisitaReal: '2026-04-15' })

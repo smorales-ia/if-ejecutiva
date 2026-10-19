@@ -104,6 +104,13 @@ import {
   TIPO_RECINTO,
 } from '@/lib/tasador/lectura-datos'
 import { nombreDeComuna } from '@/lib/tasador/lectura-tasacion'
+import {
+  type FilaDerivada,
+  filasAmpliaciones,
+  filasHabitaciones,
+  filasTerminaciones,
+  normalizarSeccionE,
+} from '@/lib/tasador/persistencia-e'
 import { desdeExcepcion, desdeGuard, error, ok } from '@/lib/tasador/respuestas'
 import { resolverZona } from '@/lib/tasador/zonificacion'
 import {
@@ -183,6 +190,17 @@ async function sincronizarHijas(
 /* -------------------------------------------------------------------------
  * Mapeos de dominio
  * ---------------------------------------------------------------------- */
+
+/** Claves E de la forma anterior que `CAMPOS_SIN_DESTINO` reporta. */
+const CAMPOS_E_FORMA_ANTERIOR: ReadonlySet<string> = new Set([
+  'estructuraSoportante',
+  'divisionesInteriores',
+  'entrepisos',
+  'cubierta',
+  'revestimientoExterior',
+  'cierrosExteriores',
+  'comodidades',
+])
 
 /** Sufijo de clave estable: sin acentos, sin espacios, apto para un texto corto. */
 function slug(valor: string): string {
@@ -267,6 +285,8 @@ function camposDatosTasacion(b: DatosPatch): Fields {
   // ⚠ NO `arriendo_bruto_clp` / `gasto_anual_clp`. CI-023 §4.
   poner('arriendo_mensual', b.arriendoBrutoClp)
   poner('gasto_anual', b.gastoAnualClp)
+  // Sección E completa (19-oct-2026): un solo campo, con la forma de la hoja.
+  poner('seccion_e_json', b.seccionE ? JSON.stringify(normalizarSeccionE(b.seccionE)) : undefined)
 
   return f
 }
@@ -353,6 +373,17 @@ export async function PATCH(
   const tocadas: string[] = []
   const cambios: CambioAuditado[] = []
 
+  /**
+   * Sección E con la forma de la hoja (19-oct-2026). Cuando viene, manda: las
+   * tres tablas hijas se derivan de ella y las claves E de la forma anterior
+   * (`ampliaciones`, `niveles`, `recintos` y los escalares) se ignoran.
+   */
+  const e = b.seccionE ? normalizarSeccionE(b.seccionE) : undefined
+  const conSolicitud = (f: FilaDerivada): FilaDeseada => ({
+    clave: f.clave,
+    fields: { solicitud: [id], ...f.fields },
+  })
+
   try {
     /* --- TX_DatosTasacion · upsert ------------------------------------- */
     const camposDatos = {
@@ -372,13 +403,27 @@ export async function PATCH(
           ...camposDatos,
           origen_dato: OPCIONES_CAPTURA.origenDatoTasacion,
         })
+        // El JSON de la sección E no se audita campo a campo (son kilobytes):
+        // se deja una línea de resumen cuando cambia.
+        const { seccion_e_json: jsonE, ...auditables } = camposDatos as Fields
         cambios.push(
-          ...derivarCambios(fila.id, fila.fields, camposDatos, {
+          ...derivarCambios(fila.id, fila.fields, auditables, {
             registroNombre: codigo,
             razon: 'Captura de visita desde IF-03 (RF-TAS-17)',
             tablaOrigen: TABLA_ORIGEN.datosTasacion,
           })
         )
+        if (jsonE !== undefined && jsonE !== fila.fields.seccion_e_json) {
+          cambios.push({
+            registroId: fila.id,
+            registroNombre: codigo,
+            campo: 'seccion_e_json',
+            valorAnterior: fila.fields.seccion_e_json ? 'sección E guardada' : '',
+            valorNuevo: 'sección E actualizada',
+            razon: 'Sección E desde IF-03 (spec §2.8 · hoja Antecedentes)',
+            tablaOrigen: TABLA_ORIGEN.datosTasacion,
+          })
+        }
       } else {
         const creada = await createRecord<Fields>(TABLE_IDS.datosTasacion, {
           ...camposDatos,
@@ -498,21 +543,24 @@ export async function PATCH(
       tocadas.push('TX_ItemsCuadroValoracion')
     }
 
-    /* --- E.1 · TX_Ampliaciones ----------------------------------------- */
-    if (b.ampliaciones) {
+    /* --- E · TX_Ampliaciones ------------------------------------------- */
+    const deseadasAmpliaciones: FilaDeseada[] | undefined = e
+      ? filasAmpliaciones(e, codigo).map(conSolicitud)
+      : b.ampliaciones?.map((a, i) => ({
+          clave: `${codigo}-amp-${i + 1}`,
+          fields: {
+            solicitud: [id],
+            nombre: a.destino || `Ampliación ${i + 1}`,
+            descripcion: a.destino ?? '',
+            sup_m2: a.m2,
+            // ⚠ la columna es `number` (el año) y el v0 manda texto de fecha:
+            // se extraen los 4 dígitos del año, o se omite si no los hay.
+            anno_regularizacion: /(\d{4})/.exec(a.fechaRecepcion ?? '')?.[1],
+          },
+        }))
+    if (deseadasAmpliaciones) {
       const existentes = await filasDeSolicitud<Fields>(TABLE_IDS.ampliaciones, codigo)
-      const deseadas: FilaDeseada[] = b.ampliaciones.map((a, i) => ({
-        clave: `${codigo}-amp-${i + 1}`,
-        fields: {
-          solicitud: [id],
-          nombre: a.destino || `Ampliación ${i + 1}`,
-          descripcion: a.destino ?? '',
-          sup_m2: a.m2,
-          // ⚠ la columna es `number` (el año) y el v0 manda texto de fecha:
-          // se extraen los 4 dígitos del año, o se omite si no los hay.
-          anno_regularizacion: /(\d{4})/.exec(a.fechaRecepcion ?? '')?.[1],
-        },
-      }))
+      const deseadas = deseadasAmpliaciones
 
       const r = await sincronizarHijas(
         TABLE_IDS.ampliaciones,
@@ -532,15 +580,15 @@ export async function PATCH(
       tocadas.push('TX_Ampliaciones')
     }
 
-    /* --- E.2 · TX_HabitacionesPorNivel --------------------------------- */
-    if (b.niveles) {
+    /* --- E · TX_HabitacionesPorNivel ----------------------------------- */
+    if (e || b.niveles) {
       const existentes = await filasDeSolicitud<Fields>(
         TABLE_IDS.habitacionesPorNivel,
         codigo
       )
-      const deseadas: FilaDeseada[] = []
+      const deseadas: FilaDeseada[] = e ? filasHabitaciones(e, codigo).map(conSolicitud) : []
 
-      for (const [idNivel, casillas] of Object.entries(b.niveles)) {
+      for (const [idNivel, casillas] of Object.entries(e ? {} : (b.niveles ?? {}))) {
         const valorNivel = OPCIONES_CAPTURA.nivel[idNivel as keyof typeof OPCIONES_CAPTURA.nivel]
         if (!valorNivel || !casillas) continue
 
@@ -581,15 +629,15 @@ export async function PATCH(
       tocadas.push('TX_HabitacionesPorNivel')
     }
 
-    /* --- E.3 · TX_TerminacionesPorRecinto ------------------------------ */
-    if (b.recintos) {
+    /* --- E · TX_TerminacionesPorRecinto -------------------------------- */
+    if (e || b.recintos) {
       const existentes = await filasDeSolicitud<Fields>(
         TABLE_IDS.terminacionesPorRecinto,
         codigo
       )
-      const deseadas: FilaDeseada[] = []
+      const deseadas: FilaDeseada[] = e ? filasTerminaciones(e, codigo).map(conSolicitud) : []
 
-      for (const recinto of b.recintos) {
+      for (const recinto of e ? [] : (b.recintos ?? [])) {
         const nombre = recinto.nombre?.trim()
         if (!nombre) continue
 
@@ -635,7 +683,11 @@ export async function PATCH(
 
     /* --- Lo que no se guardó ------------------------------------------- */
     const enviados = new Set(Object.keys(b))
-    const noPersistidos = CAMPOS_SIN_DESTINO.filter((c) => enviados.has(c))
+    // Con `seccionE`, las claves E de la forma anterior no son datos perdidos:
+    // la sección E entera quedó en `seccion_e_json`.
+    const noPersistidos = CAMPOS_SIN_DESTINO.filter(
+      (c) => enviados.has(c) && !(e && CAMPOS_E_FORMA_ANTERIOR.has(c))
+    )
 
     return ok({
       id,

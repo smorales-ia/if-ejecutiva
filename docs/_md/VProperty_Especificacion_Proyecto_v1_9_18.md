@@ -97,6 +97,13 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
                       (sin flechas ni rueda del mouse, que cambiaban el
                       valor sin querer), incluidos los contadores de
                       habitaciones de la sección E.
+                      §2.8.1 · RF-TAS-23 (19-oct-2026, decisiones de
+                      Sergio) · la sección E replica la hoja
+                      «Antecedentes» de la planilla, pre-llenada con
+                      `C_DefaultsAntecedentes` más las fórmulas de la
+                      hoja, con sus dependencias en vivo; se guarda en el
+                      campo nuevo `TX_DatosTasacion.seccion_e_json` y de
+                      ahí salen las tablas hijas y el informe.
                       Sucede a 1.9.17, que queda SUPERSEDED.
 
                       1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
@@ -2992,6 +2999,24 @@ El default se resuelve server-side al abrir la Pantalla 5, sólo cuando `TX_Dato
                     campos **vacíos**: no hereda de ninguna otra
                     combinación ni cae a un conjunto por defecto.
   -------------------------------------------------------------------------
+
+**Implementación de la sección E (19-oct-2026 · decisiones de Sergio).** La sección E replica la hoja «Antecedentes» de la planilla `[Excel: Antecedentes!B20:BP50]` en su orden: comodidades (16 SI/NO), ampliaciones (3 filas: regulada, P.E., RIF, regulación, m²), habitaciones por nivel (14 tipos × subterráneo y niveles 1 a 3, con la superficie de cada nivel y los totales de la hoja), características constructivas principales (8 elementos fundamentales y 8 «otros», cada uno con materialidad, calidad y estado) y terminaciones (estar, dormitorios, espacios de circulación, cocina y baños, con pavimento, material/marca/origen, muros, cielo, iluminación y estado). Los catálogos son los de las listas desplegables de la hoja, con sus literales exactos.
+
+- **Valores fijos** desde `C_DefaultsAntecedentes` por tipo × estado de uso, como pide este RF.
+- **Fórmulas de la hoja** en `lib/tasador/antecedentes-e.ts`, que comparten servidor y pantalla:
+  - el estado que copia el estado de conservación de la sección B `[Z15]`;
+  - entrepisos según los pisos `[H39]`;
+  - calefacción según la comodidad `[AR38]`;
+  - el material/marca según el tipo de pavimento `[W46:W50]`;
+  - la calidad y el estado de los elementos opcionales, que aparecen o se vacían con su materialidad `[Y43:AF44 · BE37:BL38]`;
+  - estacionamiento y bodega desde los OO.CC. en departamento `[H24 · P24]`;
+  - la superficie por nivel `[BK30:BK33]`.
+
+  **Desvío deliberado del criterio de aceptación:** estas dependencias se recalculan **en vivo en la pantalla** cuando el tasador cambia el dato del que dependen. El conjunto inicial llega resuelto del servidor, pero la regla también corre en el cliente, porque la hoja la aplica al editar. Un cambio en la sección B solo mueve las celdas que todavía tienen el valor de la fórmula: lo que el tasador cambió a mano no se toca.
+- **Guardado:** la sección E se guarda entera en `TX_DatosTasacion.seccion_e_json`, con un solo escritor, idempotente. De ese mismo JSON se derivan `TX_HabitacionesPorNivel`, `TX_Ampliaciones` y `TX_TerminacionesPorRecinto`. El informe toma del JSON las características constructivas, las comodidades y las terminaciones en formato ancho.
+- **Dos rarezas de la planilla que se conservan tal cual:**
+  - En propiedad usada, el estado de obras complementarias, aire acondicionado y calefacción sale «BUENA», que no está en la lista de estados.
+  - Para un pavimento sin equivalencia (METALICO, SIN TERMINACION), el material/marca queda «SIN TERMINACION» en estar y «TIPO LAMINADO» en los otros recintos.
 
 ### 2.8.2 Cuadro de valoración pre-llenado (sección C · v1.9.18, 14-oct-2026)
 
