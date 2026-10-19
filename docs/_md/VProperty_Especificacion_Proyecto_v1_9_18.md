@@ -85,6 +85,11 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
                       `N°319  09/09/2020`; guardar el formulario deja
                       `origen_dato = tipeado` también en una fila que
                       creó la lectura.
+                      RF-TAS-17 (ajustado el 19-oct-2026 · réplica
+                      MET-6283, pedido de Sergio) · sin fecha real
+                      guardada, la sección A la muestra con la
+                      planificada, pre-llenada y editable; se guarda en
+                      `fecha_visita` al calcular. Sin cambios de schema.
                       Sucede a 1.9.17, que queda SUPERSEDED.
 
                       1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
@@ -2763,7 +2768,7 @@ Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formul
 **Reglas de captura:**
 
 - Separación estricta fotos ↔ datos: la pantalla de datos no recibe fotos; sólo campos estructurados.
-- **Fecha real de visita.** La sección A distingue dos fechas que hasta v1.9.8 el documento trataba como una sola: la **planificada**, que llega pre-llenada desde la coordinación (§2.3) con el badge "Pre-llenado · editable", y la **real**, que el tasador registra en terreno y es **obligatoria**. Las visitas se reprograman en terreno con frecuencia, y el informe debe declarar cuándo ocurrió la visita, no cuándo se pensó hacerla.
+- **Fecha real de visita.** La sección A distingue dos fechas que hasta v1.9.8 el documento trataba como una sola: la **planificada**, que llega pre-llenada desde la coordinación (§2.3) con el badge "Pre-llenado · editable", y la **real**, que el tasador registra en terreno y es **obligatoria**. Las visitas se reprograman en terreno con frecuencia, y el informe debe declarar cuándo ocurrió la visita, no cuándo se pensó hacerla. Desde el 19-oct-2026, mientras no haya una real guardada, el campo parte de la planificada (pre-llenado y editable) y el tasador la confirma o la corrige (RF-TAS-17).
 - Campos obligatorios para el motor marcados con asterisco (*); su ausencia bloquea "Calcular Tasación".
 - Al presionar "Calcular Tasación" con datos faltantes, el sistema muestra una alerta enumerada (destructiva) que lista exactamente qué falta y lleva al primer campo faltante. La misma validación y el mismo salto aplican a cualquier acción que abra el informe.
 - **Autosave y cálculo por composición** (no hay AlertDialog dual): el autosave localStorage cada 30 s cumple la función de "solo guardar" sin cambio de estado, y "Calcular Tasación" cumple la función de "guardar y calcular".
@@ -3050,8 +3055,8 @@ Las superficies de terreno, servidumbre, construida y de primer piso salen de la
 
 | **RF-TAS-17** | **Fecha real de visita obligatoria frente a la planificada** |
 |---|---|
-| **Descripción** | La sección A distingue "Fecha planificada de visita", precargada desde la coordinación (§2.3) con badge "Pre-llenado · editable", de "Fecha real de visita", que el tasador registra en terreno y es obligatoria para calcular. Ambas se persisten por separado y el informe declara la real. |
-| **Criterio de aceptación** | Una solicitud cuya visita se reprogramó en terreno conserva las dos fechas distintas y el informe muestra la real. La ausencia de fecha real cuenta entre los obligatorios faltantes y bloquea "Calcular Tasación". |
+| **Descripción** | La sección A distingue "Fecha planificada de visita", precargada desde la coordinación (§2.3) con badge "Pre-llenado · editable", de "Fecha real de visita", que el tasador registra en terreno y es obligatoria para calcular. Ambas se persisten por separado y el informe declara la real. *Ajuste del 19-oct-2026 (pedido de Sergio · réplica MET-6283):* mientras el tasador no haya guardado una fecha real, el campo muestra la planificada como punto de partida, con el mismo badge "Pre-llenado · editable", y la acompaña si el tasador corrige la planificada sin haber tocado la real. El tasador la confirma o la cambia. Al guardar ("Calcular Tasación") se guarda en `fecha_visita` la fecha real que tenga el campo, sea la que el tasador ingresó o la heredada de la planificada; desde entonces es una fecha real guardada y el formulario la muestra sin badge. |
+| **Criterio de aceptación** | Una solicitud cuya visita se reprogramó en terreno conserva las dos fechas distintas y el informe muestra la real. Sin fecha real guardada, el formulario abre con la planificada en la real, marcada como pre-llenada; una fecha real ya guardada se muestra tal cual y sin badge. La ausencia de fecha real —sin guardada ni planificada que heredar— cuenta entre los obligatorios faltantes y bloquea "Calcular Tasación". |
 
 | **RF-TAS-18** | **Validación de obligatorios del motor con salto al primer faltante** |
 |---|---|

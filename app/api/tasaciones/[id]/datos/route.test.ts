@@ -278,6 +278,25 @@ describe('con el guard en verde la ruta sí trabaja', () => {
   })
 })
 
+describe('sección A · las dos fechas de visita (RF-TAS-17 · 19-oct-2026)', () => {
+  it('la fecha real que trae el formulario se guarda en fecha_visita, aunque sea la heredada', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    // La heredada llega igual a la planificada: se guarda tal cual, sin colapsar campos.
+    const res = await llamarPatch({
+      fechaPlanificadaVisita: '2026-04-13',
+      fechaVisitaReal: '2026-04-13',
+    })
+
+    expect(res.status).toBe(200)
+    const llamada = updateRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.solicitudes)
+    expect(llamada?.[2]).toMatchObject({
+      fecha_visita_programada: '2026-04-13',
+      fecha_visita: '2026-04-13',
+    })
+  })
+})
+
 describe('candado origen_dato al guardar (T-LEGALES-CONSOLIDADOS-20261015)', () => {
   it('una fila creada por la lectura de documentos queda `tipeado` al guardar el formulario', async () => {
     autorizarSolicitud.mockResolvedValue(guardOk())

@@ -119,6 +119,11 @@ export function TasacionForm({
   )
   const [calculando, setCalculando] = useState(false)
 
+  /** La fecha real es todavía la planificada heredada y el tasador no la tocó. */
+  const [realHeredada, setRealHeredada] = useState(() =>
+    prellenados.includes("fechaVisitaReal"),
+  )
+
   /** ¿Hay trabajo local sin enviar que valga la pena ofrecer? */
   const [ofrecerRecuperacion, setOfrecerRecuperacion] = useState(
     () =>
@@ -431,7 +436,18 @@ export function TasacionForm({
                 label="Fecha planificada de visita"
                 type="date"
                 value={form.fechaPlanificadaVisita}
-                onChange={(v) => set("fechaPlanificadaVisita", v)}
+                onChange={(v) =>
+                  /* Mientras la real siga siendo la heredada (el tasador no la
+                     cambió), acompaña a la planificada (RF-TAS-17 · 19-oct-2026). */
+                  setForm((prev) => ({
+                    ...prev,
+                    fechaPlanificadaVisita: v,
+                    fechaVisitaReal:
+                      realHeredada && prev.fechaVisitaReal === prev.fechaPlanificadaVisita
+                        ? v
+                        : prev.fechaVisitaReal,
+                  }))
+                }
                 /* Único default real del formulario (Regla T-B): la pone la
                    Ejecutiva en la coordinación y el tasador la ajusta. */
                 prellenado
@@ -441,7 +457,12 @@ export function TasacionForm({
                 label="Fecha real de visita"
                 type="date"
                 value={form.fechaVisitaReal}
-                onChange={(v) => set("fechaVisitaReal", v)}
+                onChange={(v) => {
+                  setRealHeredada(false)
+                  set("fechaVisitaReal", v)
+                }}
+                /* Sin fecha real guardada, parte de la planificada (RF-TAS-17). */
+                prellenado={prellenados.includes("fechaVisitaReal")}
                 requerido
                 disabled={consulta}
               />

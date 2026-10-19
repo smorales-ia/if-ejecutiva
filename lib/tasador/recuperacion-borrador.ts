@@ -179,7 +179,8 @@ export function combinarConBorrador(
 
 /**
  * Lo que deja «Recuperar»: el borrador entero, salvo un cuadro de valoración
- * vacío frente a uno **pre-llenado** por el servidor (spec §2.8.2).
+ * vacío frente a uno **pre-llenado** por el servidor (spec §2.8.2), y una fecha
+ * real de visita vacía frente a la heredada de la planificada (RF-TAS-17).
  *
  * El borrador que siembra `fotos-screen` —o uno escrito antes de que existiera
  * la propuesta— trae `items: []`. Recuperarlo tal cual borraría el cuadro
@@ -193,11 +194,17 @@ export function recuperarBorrador(
   borrador: InformeData,
   prellenados: readonly (keyof InformeData)[],
 ): InformeData {
+  let salida = borrador
   const cuadroPropuesto = prellenados.includes("items") && informeInicial.items.length > 0
   if (cuadroPropuesto && (borrador.items ?? []).length === 0) {
-    return { ...borrador, items: informeInicial.items }
+    salida = { ...salida, items: informeInicial.items }
   }
-  return borrador
+  // Ídem la fecha real heredada de la planificada (RF-TAS-17 · 19-oct-2026):
+  // un borrador escrito antes de la precarga la trae vacía.
+  if (prellenados.includes("fechaVisitaReal") && !(borrador.fechaVisitaReal ?? "").trim()) {
+    salida = { ...salida, fechaVisitaReal: informeInicial.fechaVisitaReal }
+  }
+  return salida
 }
 
 /**

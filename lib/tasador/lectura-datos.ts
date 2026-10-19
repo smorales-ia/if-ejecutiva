@@ -485,15 +485,29 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     if (selloSec !== '') prellenados.push('selloSec')
   }
 
+  /*
+   * Sección A (19-oct-2026, pedido de Sergio · RF-TAS-17): mientras el tasador
+   * no haya guardado la fecha real, se le muestra la planificada como punto de
+   * partida, con el badge «Pre-llenado · editable». Las dos siguen siendo
+   * campos distintos (`fecha_visita_programada` · `fecha_visita`): lo que se
+   * guarde en la real es lo que el tasador confirmó al calcular.
+   */
+  const fechaPlanificadaVisita = primerNoVacio(
+    texto(s.fecha_visita_programada),
+    fechaVisitaCoordinada,
+  )
+  let fechaVisitaReal = texto(s.fecha_visita)
+  if (fechaVisitaReal === '' && fechaPlanificadaVisita !== '') {
+    fechaVisitaReal = fechaPlanificadaVisita
+    prellenados.push('fechaVisitaReal')
+  }
+
   return {
     codigo,
     datos: {
       /* --- A --- */
-      fechaPlanificadaVisita: primerNoVacio(
-        texto(s.fecha_visita_programada),
-        fechaVisitaCoordinada,
-      ),
-      fechaVisitaReal: texto(s.fecha_visita),
+      fechaPlanificadaVisita,
+      fechaVisitaReal,
       observacionesTasador: texto(d.observaciones_tasador),
       /* --- B (con fallback SII · P16-TAS) --- */
       supTerreno,

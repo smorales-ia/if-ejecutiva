@@ -379,6 +379,37 @@ describe('sección B · estado de conservación y calidad con defaults de la pla
   })
 })
 
+describe('sección A · fecha real heredada de la planificada (RF-TAS-17 · 19-oct-2026)', () => {
+  it('sin fecha real guardada muestra la planificada, pre-llenada', async () => {
+    const { datos, prellenados } = await proyectarDatosCaptura({
+      codigo_solicitud: CODIGO,
+      fecha_visita_programada: '2026-04-13',
+    })
+
+    expect(datos.fechaPlanificadaVisita).toBe('2026-04-13')
+    expect(datos.fechaVisitaReal).toBe('2026-04-13')
+    expect(prellenados).toContain('fechaVisitaReal')
+  })
+
+  it('la fecha real guardada gana y no se marca como pre-llenada', async () => {
+    const { datos, prellenados } = await proyectarDatosCaptura({
+      codigo_solicitud: CODIGO,
+      fecha_visita_programada: '2026-04-13',
+      fecha_visita: '2026-04-15',
+    })
+
+    expect(datos.fechaVisitaReal).toBe('2026-04-15')
+    expect(prellenados).not.toContain('fechaVisitaReal')
+  })
+
+  it('sin planificada ni real queda vacía y sigue faltando', async () => {
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.fechaVisitaReal).toBe('')
+    expect(prellenados).not.toContain('fechaVisitaReal')
+  })
+})
+
 describe('P17-TAS · fixes de lectura (DFL2, tipo de zona, fecha planificada)', () => {
   /** Mock por tabla: datos → TX_DatosTasacion; coordinaciones → TX_CoordinacionVisita. */
   function airtableCon({

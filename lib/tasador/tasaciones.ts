@@ -1429,9 +1429,10 @@ export function normalizarFotosBorrador(datos: InformeData): InformeData {
  * duplicaría en dos formas que después divergen.
  *
  * ⚠ **Regla T-B.** `fechaPlanificadaVisita` se hereda; `fechaVisitaReal` nace
- * vacía **siempre**. Copiar una en otra es exactamente el colapso de campos que
- * la regla prohíbe: la planificada la puso la Ejecutiva, la real la registra el
- * tasador en terreno, y confundirlas falsea el cumplimiento de la visita.
+ * vacía acá. Desde el 19-oct-2026 (RF-TAS-17) la proyección del servidor
+ * (`lectura-datos.ts`) la precarga con la planificada, en ISO y con badge,
+ * mientras no haya una guardada; no se hace acá porque `tasacion.visita` viene
+ * formateada para pantalla. Las dos se siguen guardando en campos distintos.
  */
 export function resolverInforme(tasacion: Tasacion): InformeData {
   return {

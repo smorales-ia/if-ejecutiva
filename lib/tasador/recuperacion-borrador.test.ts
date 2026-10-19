@@ -401,4 +401,18 @@ describe('recuperarBorrador', () => {
   it('un items: [] del borrador no cuenta como contenido: no ofrece pisar el cuadro propuesto', () => {
     expect(borradorAportaContenido(propuesto, borradorEnBlanco())).toBe(false)
   })
+
+  it('una fecha real vacía en el borrador conserva la heredada de la planificada', () => {
+    const heredada = servidor({ fechaVisitaReal: '2026-04-13' })
+    const borrador = borradorEnBlanco({ supConstruida: '249.91' })
+    const r = recuperarBorrador(heredada, borrador, ['fechaVisitaReal'])
+    expect(r.fechaVisitaReal).toBe('2026-04-13')
+    expect(r.supConstruida).toBe('249.91')
+  })
+
+  it('si el borrador trae fecha real, gana la del tasador', () => {
+    const heredada = servidor({ fechaVisitaReal: '2026-04-13' })
+    const borrador = borradorEnBlanco({ fechaVisitaReal: '2026-04-15' })
+    expect(recuperarBorrador(heredada, borrador, ['fechaVisitaReal']).fechaVisitaReal).toBe('2026-04-15')
+  })
 })
