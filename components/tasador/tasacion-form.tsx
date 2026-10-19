@@ -582,14 +582,14 @@ export function TasacionForm({
               <div className="flex flex-col gap-3">
                 <TextField
                   label="Arriendo bruto mensual (CLP)"
-                  type="number"
+                  type="number" entero
                   value={form.arriendoBrutoClp}
                   onChange={(v) => set("arriendoBrutoClp", v)}
                   disabled={consulta}
                 />
                 <TextField
                   label="Gasto anual (CLP)"
-                  type="number"
+                  type="number" entero
                   value={form.gastoAnualClp}
                   onChange={(v) => set("gastoAnualClp", v)}
                   disabled={consulta}

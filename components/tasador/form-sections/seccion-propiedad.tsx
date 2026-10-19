@@ -75,7 +75,7 @@ export function SeccionPropiedad({
       <div className="grid grid-cols-2 gap-3">
         <TextField
           label="Año construcción"
-          type="number"
+          type="number" entero
           value={form.anioConstruccion}
           onChange={(v) => set("anioConstruccion", v)}
         />
@@ -124,20 +124,20 @@ export function SeccionPropiedad({
         {esDepto && (
           <TextField
             label="Piso"
-            type="number"
+            type="number" entero
             value={form.piso}
             onChange={(v) => set("piso", v)}
           />
         )}
         <TextField
           label="N° pisos"
-          type="number"
+          type="number" entero
           value={form.pisosPropiedad}
           onChange={(v) => set("pisosPropiedad", v)}
         />
         <TextField
           label="Subterráneos"
-          type="number"
+          type="number" entero
           value={form.subterraneos}
           onChange={(v) => set("subterraneos", v)}
         />
@@ -165,7 +165,7 @@ export function SeccionPropiedad({
 
       <TextField
         label="N° de ascensores"
-        type="number"
+        type="number" entero
         value={form.numAscensores}
         onChange={(v) => set("numAscensores", v)}
       />
@@ -173,25 +173,25 @@ export function SeccionPropiedad({
       <div className="grid grid-cols-2 gap-3">
         <TextField
           label="Dormitorios"
-          type="number"
+          type="number" entero
           value={form.dormitorios}
           onChange={(v) => set("dormitorios", v)}
         />
         <TextField
           label="Baños"
-          type="number"
+          type="number" entero
           value={form.banos}
           onChange={(v) => set("banos", v)}
         />
         <TextField
           label="Medios baños"
-          type="number"
+          type="number" entero
           value={form.mediosBanos}
           onChange={(v) => set("mediosBanos", v)}
         />
         <TextField
           label="Baño de servicio"
-          type="number"
+          type="number" entero
           value={form.banoServicio}
           onChange={(v) => set("banoServicio", v)}
         />
@@ -199,7 +199,7 @@ export function SeccionPropiedad({
 
       <TextField
         label="Estacionamientos"
-        type="number"
+        type="number" entero
         value={form.estacionamientos}
         onChange={(v) => set("estacionamientos", v)}
       />
@@ -212,7 +212,7 @@ export function SeccionPropiedad({
 
       <TextField
         label="Bodegas"
-        type="number"
+        type="number" entero
         value={form.bodegas}
         onChange={(v) => set("bodegas", v)}
       />
@@ -241,6 +241,7 @@ export function SeccionPropiedad({
         value={form.velocidadVenta}
         onChange={(v) => set("velocidadVenta", v)}
         opciones={OPCIONES.velocidadVenta}
+        prellenado={prellenados.includes("velocidadVenta")}
       />
       {/*
         Lista de las zonas de la comuna leída de `M_Zonificacion`, que admite

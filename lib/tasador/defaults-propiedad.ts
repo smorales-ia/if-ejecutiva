@@ -31,6 +31,9 @@ import { normalizarTipoPropiedad } from './tipo-propiedad'
 /** `[Excel: Antecedentes!H19]` — la planilla no ramifica: siempre `BUENA`. */
 export const CALIDAD_CONSTRUCCION_POR_DEFECTO = 'BUENA'
 
+/** Velocidad de venta estimada sin valor guardado (pedido de Sergio, 19-oct-2026). */
+export const VELOCIDAD_VENTA_POR_DEFECTO = '8 a 10 meses'
+
 /** `[Excel: Antecedentes!Z15]` — `BUENO` en usada, `NUEVO - S/USO` en nueva. */
 export function estadoConservacionPorDefecto(nuevoUsado: unknown): string {
   return normalizarTipoPropiedad(nuevoUsado) === 'nueva' ? 'NUEVO - S/USO' : 'BUENO'

@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { FechaInput } from "@/components/ui/fecha-input"
+import { normalizarNumeroTecleado } from "@/lib/tasador/numero-tecleado"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -148,11 +149,22 @@ export function TextField({
   requerido = false,
   disabled = false,
   prellenado = false,
+  entero = false,
+  negativo = false,
 }: {
   label: string
   value: string
   onChange: (v: string) => void
+  /**
+   * `number` **no** renderiza `<input type="number">` (19-oct-2026): sus flechas
+   * y la rueda del mouse cambiaban el valor sin querer. Es texto que sólo admite
+   * un número, normalizado por `normalizarNumeroTecleado`.
+   */
   type?: "text" | "number" | "date"
+  /** Con `type="number"`: sin decimales; los puntos de miles se descartan. */
+  entero?: boolean
+  /** Con `type="number"`: admite un signo menos inicial (coordenadas). */
+  negativo?: boolean
   placeholder?: string
   hint?: string
   requerido?: boolean
@@ -218,15 +230,22 @@ export function TextField({
       ) : (
         <Input
           id={id}
-          type={type}
-          inputMode={type === "number" ? "decimal" : undefined}
+          type="text"
+          inputMode={
+            type !== "number" || negativo ? undefined : entero ? "numeric" : "decimal"
+          }
+          autoComplete={type === "number" ? "off" : undefined}
           value={value}
           placeholder={placeholder}
           disabled={deshabilitado}
           data-faltante={vacioRequerido ? "true" : undefined}
           onChange={(e) => {
             setEditado(true)
-            onChange(e.target.value)
+            onChange(
+              type === "number"
+                ? normalizarNumeroTecleado(e.target.value, { entero, negativo })
+                : e.target.value,
+            )
           }}
           className={cn(
             "min-h-12 text-base",

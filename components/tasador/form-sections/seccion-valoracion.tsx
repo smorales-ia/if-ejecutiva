@@ -146,6 +146,7 @@ export function SeccionValoracion({
                 <TextField
                   label="Año"
                   type="number"
+                  entero
                   value={it.anioItem}
                   onChange={(v) => updateItem(it.id, { anioItem: v })}
                 />

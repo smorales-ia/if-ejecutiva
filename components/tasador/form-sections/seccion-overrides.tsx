@@ -49,7 +49,7 @@ export function SeccionOverrides({
         />
         <TextField
           label="Vida útil override (años)"
-          type="number"
+          type="number" entero
           value={form.vidaUtilOverride}
           onChange={(v) => set("vidaUtilOverride", v)}
         />

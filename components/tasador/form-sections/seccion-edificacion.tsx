@@ -1,6 +1,6 @@
 "use client"
 
-import { Plus, Trash2, Minus } from "lucide-react"
+import { Plus, Trash2 } from "lucide-react"
 import type {
   InformeData,
   Ampliacion,
@@ -10,7 +10,9 @@ import type {
   Comodidades,
 } from "@/lib/tasador/tasaciones"
 import { OPCIONES, RECINTOS_SUGERIDOS } from "@/lib/tasador/tasaciones"
+import { normalizarNumeroTecleado } from "@/lib/tasador/numero-tecleado"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { SubSection, TextField, SelectField, SwitchField, MultiChipField } from "./fields"
@@ -65,32 +67,23 @@ function Counter({
   value: number
   onChange: (v: number) => void
 }) {
+  /* Se escribe el número (19-oct-2026): los botones −/+ se retiraron igual que
+     las flechas de los campos numéricos. Vacío cuenta como 0. */
   return (
-    <div className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-1.5">
+    <label className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-1.5">
       <span className="text-sm text-foreground">{label}</span>
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          aria-label={`Disminuir ${label}`}
-          onClick={() => onChange(Math.max(0, value - 1))}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-border text-foreground disabled:opacity-40"
-          disabled={value <= 0}
-        >
-          <Minus className="h-4 w-4" />
-        </button>
-        <span className="w-6 text-center text-sm font-semibold tabular-nums">
-          {value}
-        </span>
-        <button
-          type="button"
-          aria-label={`Aumentar ${label}`}
-          onClick={() => onChange(value + 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-md border border-brand text-brand"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
+      <Input
+        type="text"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="0"
+        value={value > 0 ? String(value) : ""}
+        onChange={(e) =>
+          onChange(Number(normalizarNumeroTecleado(e.target.value, { entero: true })) || 0)
+        }
+        className="h-9 w-16 text-center text-base tabular-nums"
+      />
+    </label>
   )
 }
 

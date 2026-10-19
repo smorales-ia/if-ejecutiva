@@ -49,6 +49,7 @@ import {
   calidadConstruccionGuardada,
   estadoConservacionGuardado,
   estadoConservacionPorDefecto,
+  VELOCIDAD_VENTA_POR_DEFECTO,
 } from './defaults-propiedad'
 import { OPCIONES_CAPTURA, TABLE_IDS } from './field-ids'
 import { selloSecGuardado, selloSecPorDefecto } from './legales'
@@ -502,6 +503,14 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     prellenados.push('fechaVisitaReal')
   }
 
+  /* Velocidad de venta (sección B · 19-oct-2026, pedido de Sergio): sin valor
+     guardado, parte de «8 a 10 meses», pre-llenada y editable. */
+  let velocidadVenta = texto(d.velocidad_venta_estimada)
+  if (velocidadVenta === '') {
+    velocidadVenta = VELOCIDAD_VENTA_POR_DEFECTO
+    prellenados.push('velocidadVenta')
+  }
+
   return {
     codigo,
     datos: {
@@ -528,7 +537,7 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       bodegas: texto(d.bodegas),
       rolesBodegas: texto(d.roles_bodegas),
       servidumbreM2: texto(d.servidumbre_m2),
-      velocidadVenta: texto(d.velocidad_venta_estimada),
+      velocidadVenta,
       /* Tipo de zona: el **código** de zona del plan regulador («IPB») que
          guarda `tipo_zona_descripcion` (spec §2.8.1 · 14-oct-2026). Ya no cae a
          `ubicacion_urbano_rural` (P17-TAS · item 2a): «urbano» no es una zona

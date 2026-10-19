@@ -328,7 +328,7 @@ describe('sección B · estado de conservación y calidad con defaults de la pla
 
     expect(datos.estadoConservacion).toBe('BUENO')
     expect(datos.calidadConstruccion).toBe('BUENA')
-    expect(prellenados).toEqual(['estadoConservacion', 'calidadConstruccion'])
+    expect(prellenados).toEqual(['estadoConservacion', 'calidadConstruccion', 'velocidadVenta'])
   })
 
   it('en nueva el estado cae a NUEVO - S/USO; la calidad sigue en BUENA', async () => {
@@ -351,13 +351,27 @@ describe('sección B · estado de conservación y calidad con defaults de la pla
   })
 
   it('lo guardado gana y no se marca como pre-llenado', async () => {
-    airtableConDatos({ estado_conservacion: 'NORMAL', calidad_construccion: 'SUPERIOR' })
+    airtableConDatos({
+      estado_conservacion: 'NORMAL',
+      calidad_construccion: 'SUPERIOR',
+      velocidad_venta_estimada: '4 a 6 meses',
+    })
 
     const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
 
     expect(datos.estadoConservacion).toBe('NORMAL')
     expect(datos.calidadConstruccion).toBe('SUPERIOR')
+    expect(datos.velocidadVenta).toBe('4 a 6 meses')
     expect(prellenados).toEqual([])
+  })
+
+  it('sin velocidad de venta guardada parte de «8 a 10 meses», pre-llenada', async () => {
+    airtableConDatos({})
+
+    const { datos, prellenados } = await proyectarDatosCaptura({ codigo_solicitud: CODIGO })
+
+    expect(datos.velocidadVenta).toBe('8 a 10 meses')
+    expect(prellenados).toContain('velocidadVenta')
   })
 
   it('el «Bueno» del catálogo anterior se lee con la grafía de la planilla', async () => {

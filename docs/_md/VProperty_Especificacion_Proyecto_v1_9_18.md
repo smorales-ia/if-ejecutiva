@@ -90,6 +90,13 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
                       guardada, la sección A la muestra con la
                       planificada, pre-llenada y editable; se guarda en
                       `fecha_visita` al calcular. Sin cambios de schema.
+                      §2.8 (19-oct-2026, pedido de Sergio) · «Velocidad
+                      de venta estimada» llega pre-llenada con «8 a 10
+                      meses» si no hay valor guardado; los campos
+                      numéricos del formulario del tasador se escriben
+                      (sin flechas ni rueda del mouse, que cambiaban el
+                      valor sin querer), incluidos los contadores de
+                      habitaciones de la sección E.
                       Sucede a 1.9.17, que queda SUPERSEDED.
 
                       1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
