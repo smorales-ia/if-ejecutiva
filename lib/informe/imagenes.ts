@@ -152,7 +152,63 @@ const MAX_FOTOS_GRILLA = 16
  * de la propiedad. Como su sección va arriba en la pantalla, si entrara a la
  * grilla ocuparía la primera posición cuando el tasador la sube primero.
  */
-const FUERA_DE_GRILLA: ReadonlySet<string> = new Set(['datos_comparables'])
+const FUERA_DE_GRILLA: ReadonlySet<string> = new Set([
+  'datos_comparables',
+  /* El mapa de referencias y las fotos de las 3 referencias tienen sus ranuras
+     en la Hoja 2 (`refMapa` · `ref1..3`); el original MET-6283 no las repite en
+     las Hojas 4 y 5, y en la grilla desplazaban fotos de la propiedad fuera de
+     las 16 posiciones (réplica 23-oct-2026: se perdía «Planificación»). */
+  'mapa_referencias',
+  'ofertas_comparables',
+])
+
+/**
+ * La misma imagen con bytes distintos. Carbone inserta una sola vez cada imagen
+ * repetida y le aplica el tamaño de una de sus casillas: la fachada y el mapa
+ * de la Hoja 1 (también en la grilla) salían con el alto de las fotos (167 pt
+ * en vez de 119 y 113) y empujaban la firma a otra página (réplica MET-6283,
+ * 23-oct-2026). Un comentario dentro del JPEG/PNG la hace única sin alterarla;
+ * una URL http(s) recibe un fragmento, que no viaja al servidor.
+ */
+export function imagenUnica(url: string | null, marca: string): string | null {
+  if (url === null) return null
+  const m = /^data:(image\/(?:jpeg|jpg|png));base64,([\s\S]*)$/.exec(url)
+  if (!m) return /^https?:\/\//.test(url) ? `${url.split('#')[0]}#${marca}` : url
+  let bin: string
+  try {
+    bin = atob(m[2])
+  } catch {
+    return url
+  }
+  const texto = `vp:${marca}`
+  if (m[1] === 'image/png') {
+    const fin = bin.lastIndexOf('IEND') - 4
+    if (fin < 8) return url
+    const cuerpo = `Comment\0${texto}`
+    const tipoYCuerpo = `tEXt${cuerpo}`
+    const bloque = u32(cuerpo.length) + tipoYCuerpo + u32(crc32(tipoYCuerpo))
+    return `data:${m[1]};base64,${btoa(bin.slice(0, fin) + bloque + bin.slice(fin))}`
+  }
+  if (!bin.startsWith('\xFF\xD8')) return url
+  const largo = texto.length + 2
+  const com = '\xFF\xFE' + String.fromCharCode(largo >> 8, largo & 0xff) + texto
+  return `data:${m[1]};base64,${btoa(bin.slice(0, 2) + com + bin.slice(2))}`
+}
+
+/** Entero de 32 bits big-endian como cadena binaria. */
+function u32(n: number): string {
+  return String.fromCharCode((n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff)
+}
+
+/** CRC-32 (el de PNG) de una cadena binaria. */
+function crc32(s: string): number {
+  let c = 0xffffffff
+  for (let i = 0; i < s.length; i++) {
+    c ^= s.charCodeAt(i)
+    for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xedb88320 : c >>> 1
+  }
+  return (c ^ 0xffffffff) >>> 0
+}
 
 /**
  * Caption por categoría: `labelInforme` de `CATEGORIAS_FOTO` cuando la
@@ -305,12 +361,15 @@ export function resolverImagenes(
 
   /* Ranuras documentales: proyección directa de la resolución compartida. */
   const anexoPorRanura = Object.fromEntries(
-    anexos.map((a) => [a.ranura, a.thumbnailUrl]),
+    anexos.map((a) => [a.ranura, imagenUnica(a.thumbnailUrl, a.ranura)]),
   ) as Record<RanuraAnexoId, string | null | undefined>
 
+  /* `imagenUnica`: la fachada y el mapa de ubicación también van en la grilla
+     (y un plano puede ser foto y anexo); sin variante, Carbone los insertaría
+     con el tamaño de otra casilla. */
   const imagenes: ImagenesInforme = {
-    mapaUbicacion: fotoRanura('mapaUbicacion'),
-    fachada: fotoRanura('fachada'),
+    mapaUbicacion: imagenUnica(fotoRanura('mapaUbicacion'), 'mapaUbicacion'),
+    fachada: imagenUnica(fotoRanura('fachada'), 'fachada'),
     firma: fuenteRenderizable(firmaUrl) ? firmaUrl : null,
     refMapa: fotoRanura('refMapa'),
     ref1: fotoRanura('ref1'),

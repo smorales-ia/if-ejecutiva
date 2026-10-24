@@ -77,6 +77,7 @@ vi.mock('@/lib/tasador/auditoria', async (importOriginal) => {
 import { GET, PATCH } from './route'
 import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { seccionEPorDefecto } from '@/lib/tasador/antecedentes-e'
+import { contextoI, seccionIPorDefecto } from '@/lib/tasador/antecedentes-i'
 import { _resetCacheComunas } from '@/lib/tasador/lectura-tasacion'
 import { MENSAJES } from '@/lib/tasador/mensajes'
 import { _resetCacheZonificacion } from '@/lib/tasador/zonificacion'
@@ -334,6 +335,57 @@ describe('sección E · hoja «Antecedentes» en seccion_e_json (19-oct-2026)', 
 
     const habitaciones = createRecord.mock.calls.filter(([tabla]) => tabla === TABLE_IDS.habitacionesPorNivel)
     expect(habitaciones.map(([, f]) => f.tipo_recinto)).toEqual(['Living'])
+  })
+})
+
+describe('sección I · Hoja N°3 en antecedentes_json (23-oct-2026)', () => {
+  const seccionI = () =>
+    seccionIPorDefecto(
+      contextoI(
+        { tipo: 'Casa', nueva: false, destinoSii: 'Habitacional', ubicacionUrbanoRural: 'rural' },
+        { agrupacionPropiedad: 'Condominio', anioConstruccion: '2024', orientacion: ['N'] },
+      ),
+      { fuente_informacion: { valor: 'DOM, Plano Catastro' } },
+    )
+
+  it('guarda el JSON depurado con los subterráneos de B y las síntesis en sus columnas', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+    const i = seccionI()
+
+    const res = await llamarPatch({
+      seccionI: { ...i, sector: { ...i.sector, demanda: 'Medio', inventada: 'x' } },
+      subterraneos: '0',
+      afectoExpropiacion: false,
+      sintesisPropiedad: 'El bien es una vivienda.',
+      descripcionSector: 'El sector es de carácter habitacional.',
+    })
+
+    expect(res.status).toBe(200)
+    const datos = createRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.datosTasacion)?.[1]
+    const json = JSON.parse(String(datos?.antecedentes_json))
+    expect(json.sector.demanda).toBe('Medio')
+    expect(json.sector).not.toHaveProperty('inventada')
+    expect(json.detalle.fuenteInformacion).toBe('DOM, Plano Catastro')
+    expect(json.datosB).toEqual({ subterraneos: '0' })
+    expect(datos).toMatchObject({
+      sintesis_descriptiva: 'El bien es una vivienda.',
+      descripcion_sector: 'El sector es de carácter habitacional.',
+    })
+
+    // Con la sección I, subterráneos y «afecto a expropiación» ya no se pierden.
+    const cuerpo = (await res.json()) as { data: { noPersistidos: string[] } }
+    expect(cuerpo.data.noPersistidos).toEqual([])
+  })
+
+  it('sin seccionI, los subterráneos siguen declarados como no persistidos', async () => {
+    autorizarSolicitud.mockResolvedValue(guardOk())
+
+    const res = await llamarPatch({ supTerreno: '500', subterraneos: '1' })
+
+    const cuerpo = (await res.json()) as { data: { noPersistidos: string[] } }
+    expect(cuerpo.data.noPersistidos).toEqual(['subterraneos'])
+    const datos = createRecord.mock.calls.find(([tabla]) => tabla === TABLE_IDS.datosTasacion)?.[1]
+    expect(datos).not.toHaveProperty('antecedentes_json')
   })
 })
 

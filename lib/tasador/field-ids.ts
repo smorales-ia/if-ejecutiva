@@ -354,6 +354,15 @@ export const FIELD_IDS_DATOS_TASACION = Object.freeze({
    * guardar; vacío cuando el código no está en el catálogo de la comuna.
    */
   zonificacion: 'fldGoLWV8CEfXZmWT',
+  /**
+   * Sección I «Sector, terreno y normativa» como JSON (`SeccionI` + `datosB`),
+   * un solo escritor: `PATCH /datos`. Creado el 23-oct-2026 con aprobación de
+   * Sergio (`lib/tasador/antecedentes-i.ts`).
+   */
+  antecedentesJson: 'fldxunaM6CDWtc3Wm',
+  /** Síntesis de la propiedad y del sector: las escribe la sección I y, a futuro, RF-32. */
+  sintesisDescriptiva: 'fldCfipeATICMiimq',
+  descripcionSector: 'fldBSpioukujGCcHS',
 
   /* --- Bloque SII (§20.6 · FASE2-lectura-sii, Opción A · cierra CI-025) ---
      Creados el 09-sep-2026 en TX_DatosTasacion para inventariar el documento

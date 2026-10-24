@@ -52,6 +52,7 @@
 
 import type { ContactoVisita, SlaEtapaSolicitud } from '../console-data'
 import { contextoE, seccionEPorDefecto, type SeccionE } from './antecedentes-e'
+import { contextoI, seccionIPorDefecto, type SeccionI } from './antecedentes-i'
 
 /* -------------------------------------------------------------------------
  * Estado y semáforo
@@ -840,6 +841,17 @@ export interface InformeData {
   coordenadasLat: string
   coordenadasLng: string
 
+  /**
+   * --- I · Sector, terreno y normativa (23-oct-2026) ---
+   * Hoja N°3 y detalle de la Hoja 1 (`lib/tasador/antecedentes-i.ts`). Se
+   * guarda en `TX_DatosTasacion.antecedentes_json`.
+   */
+  seccionI: SeccionI
+  /** Síntesis de la propiedad → `TX_DatosTasacion.sintesis_descriptiva` (RF-32 la redactará). */
+  sintesisPropiedad: string
+  /** Descripción del sector → `TX_DatosTasacion.descripcion_sector`. */
+  descripcionSector: string
+
   /* --- G · Overrides (CU-007) --- */
   tasaCapRateOverride: string
   vidaUtilOverride: string
@@ -997,7 +1009,9 @@ export interface CategoriaFoto {
  *
  * `labelInforme` conserva los pies de foto que el PDF imprimía antes de
  * T-TEMAS1; en las categorías nuevas coincide con `label`, que es lo que el PDF
- * ya imprimía cuando el tasador las creaba como personalizadas.
+ * ya imprimía cuando el tasador las creaba como personalizadas. Desde el
+ * 23-oct-2026 el mapa y la fachada imprimen «Ubicación» y «Fachada», los pies
+ * del informe original MET-6283 (Hoja N°4).
  *
  * ## `datos_comparables` · el cuadro que lee RF-09
  *
@@ -1011,10 +1025,10 @@ export interface CategoriaFoto {
  */
 export const CATEGORIAS_FOTO: readonly CategoriaFoto[] = Object.freeze([
   { id: 'datos_comparables', label: 'Datos de Comparables', labelCorto: 'Comparables', labelInforme: 'Datos de Comparables', seccion: 'referencias', min: 1, max: null },
-  { id: 'mapa_ubicacion', label: 'Mapa ubicaciones propiedad', labelCorto: 'Mapa', labelInforme: 'Mapa de Ubicación', seccion: 'referencias', min: 1, max: null },
+  { id: 'mapa_ubicacion', label: 'Mapa ubicaciones propiedad', labelCorto: 'Mapa', labelInforme: 'Ubicación', seccion: 'referencias', min: 1, max: null },
   { id: 'ofertas_comparables', label: 'Fotos de las 3 primeras referencias', labelCorto: 'Referencia', labelInforme: 'Ofertas / Comparables', seccion: 'referencias', min: 1, max: null },
   { id: 'mapa_referencias', label: 'Mapa de referencias', labelCorto: 'Mapa ref.', labelInforme: 'Mapa de referencias', seccion: 'referencias', min: 0, max: null },
-  { id: 'fachada_exterior', label: 'Fachada', labelCorto: 'Fachada', labelInforme: 'Fachada / Exterior', seccion: 'propiedad', min: 1, max: null },
+  { id: 'fachada_exterior', label: 'Fachada', labelCorto: 'Fachada', labelInforme: 'Fachada', seccion: 'propiedad', min: 1, max: null },
   { id: 'sector', label: 'Sector', labelCorto: 'Sector', labelInforme: 'Sector', seccion: 'propiedad', min: 0, max: null },
   { id: 'dormitorio', label: 'Dormitorio', labelCorto: 'Dormitorio', labelInforme: 'Dormitorio', seccion: 'propiedad', min: 0, max: null },
   { id: 'bano', label: 'Baño', labelCorto: 'Baño', labelInforme: 'Baño', seccion: 'propiedad', min: 0, max: null },
@@ -1544,6 +1558,19 @@ export function resolverInforme(tasacion: Tasacion): InformeData {
     nCertificadoNoExpropiacion: '',
     coordenadasLat: '',
     coordenadasLng: '',
+
+    /* I · Sector, terreno y normativa: sólo las fórmulas, sin valores fijos ni
+       datos del SII. La página la reemplaza por la guardada o por la hidratada
+       (`hidratarAntecedentes`). */
+    seccionI: seccionIPorDefecto(
+      contextoI(
+        { tipo: tasacion.tipo, nueva: tasacion.tipoPropiedad === 'nueva', destinoSii: '', ubicacionUrbanoRural: '' },
+        { agrupacionPropiedad: '', anioConstruccion: '', orientacion: [] },
+      ),
+      {},
+    ),
+    sintesisPropiedad: '',
+    descripcionSector: '',
 
     /* G · Overrides */
     tasaCapRateOverride: '',

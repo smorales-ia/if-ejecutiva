@@ -55,6 +55,7 @@ import { OPCIONES_CAPTURA, TABLE_IDS } from './field-ids'
 import { selloSecGuardado, selloSecPorDefecto } from './legales'
 import { proponerCuadro } from './propuesta-cuadro'
 import type { SeccionE } from './antecedentes-e'
+import { normalizarSeccionI, type SeccionI } from './antecedentes-i'
 import { normalizarSeccionE } from './persistencia-e'
 
 type Fields = Record<string, unknown>
@@ -293,6 +294,12 @@ export interface DatosCaptura {
    * estructura en orden de precedencia. Lo consume `hidratarSeccionE`.
    */
   evidenciasE?: { textos: string[]; materiales: string[] }
+  /**
+   * Datos del SII que leen las fórmulas de la sección I (23-oct-2026): el
+   * destino (uso más probable) y la ubicación urbano/rural (tipo de zona del
+   * sector). Lo consume `hidratarAntecedentes`.
+   */
+  contextoI?: { destinoSii: string; ubicacionUrbanoRural: string }
 }
 
 /**
@@ -339,6 +346,27 @@ function seccionEGuardada(valor: unknown): { seccionE?: SeccionE } {
     return { seccionE: normalizarSeccionE(JSON.parse(valor) as Partial<SeccionE>) }
   } catch (err) {
     console.error('[lectura-datos] seccion_e_json ilegible', err)
+    return {}
+  }
+}
+
+/**
+ * `TX_DatosTasacion.antecedentes_json` (23-oct-2026) → `{ seccionI,
+ * subterraneos }`, o `{}` si no hay JSON o no se puede leer. Los subterráneos
+ * de la sección B viajan dentro del mismo JSON (`datosB`), porque no tienen
+ * columna propia.
+ */
+function seccionIGuardada(valor: unknown): { seccionI?: SeccionI; subterraneos?: string } {
+  if (typeof valor !== 'string' || valor.trim() === '') return {}
+  try {
+    const json = JSON.parse(valor) as { datosB?: { subterraneos?: unknown } }
+    const subterraneos = json.datosB?.subterraneos
+    return {
+      seccionI: normalizarSeccionI(json),
+      ...(typeof subterraneos === 'string' && subterraneos !== '' ? { subterraneos } : {}),
+    }
+  } catch (err) {
+    console.error('[lectura-datos] antecedentes_json ilegible', err)
     return {}
   }
 }
@@ -477,7 +505,12 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
    * las unidades (spec §2.8.2 · 14-oct-2026). Es determinista, así que abrir
    * de nuevo la pantalla no duplica nada; deja de proponerse al primer guardado.
    */
-  let itemsCuadro: ItemValoracion[] = items.map((i) => ({
+  // En el orden del cuadro (`orden`), que es el que el informe imprime: al
+  // guardar, la ruta renumera `orden` según la posición en el formulario, así
+  // que leerlos en el orden de Airtable lo desarmaba (réplica MET-6283, 23-oct-2026).
+  let itemsCuadro: ItemValoracion[] = [...items]
+    .sort((a, b) => Number(a.fields.orden ?? 0) - Number(b.fields.orden ?? 0))
+    .map((i) => ({
     id: i.id,
     descripcion: texto(i.fields.descripcion),
     subtipo: texto(i.fields.subtipo),
@@ -706,6 +739,12 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
       /* --- E guardada (19-oct-2026). Sin JSON no se emite la clave: la página
          arma la sección con los defaults de la hoja (`completarSeccionE`). --- */
       ...seccionEGuardada(d.seccion_e_json),
+      /* --- I guardada (23-oct-2026). Sin JSON no se emite la clave: la página
+         la arma con los defaults (`hidratarAntecedentes`). Las síntesis vacías
+         tampoco: ahí va el borrador armado con los datos. --- */
+      ...seccionIGuardada(d.antecedentes_json),
+      ...(texto(d.sintesis_descriptiva) ? { sintesisPropiedad: texto(d.sintesis_descriptiva) } : {}),
+      ...(texto(d.descripcion_sector) ? { descripcionSector: texto(d.descripcion_sector) } : {}),
     },
     derivados: {
       dfl2: texto(d.dfl2),
@@ -714,6 +753,10 @@ export async function proyectarDatosCaptura(fields: SolicitudFields): Promise<Da
     },
     prellenados,
     evidenciasE,
+    contextoI: {
+      destinoSii: texto(d.destino_sii),
+      ubicacionUrbanoRural: texto(d.ubicacion_urbano_rural),
+    },
   }
 }
 

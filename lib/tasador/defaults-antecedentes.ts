@@ -26,7 +26,17 @@ import {
   type SeccionE,
   seccionEPorDefecto,
 } from './antecedentes-e'
-import type { ItemValoracion } from './tasaciones'
+import {
+  borradorDescripcionSector,
+  borradorSintesisPropiedad,
+  type CamposBParaI,
+  completarSeccionI,
+  contextoI,
+  datosSintesisPropiedad,
+  type SeccionI,
+  seccionIPorDefecto,
+} from './antecedentes-i'
+import type { InformeData, ItemValoracion } from './tasaciones'
 import { TABLE_IDS } from './field-ids'
 
 const TTL_MS = 5 * 60 * 1000
@@ -143,6 +153,87 @@ export function evidenciasDe(
     banoServicio: informe.banoServicio,
     ampliaciones,
   }
+}
+
+/**
+ * La sección I con la que abre una pantalla del tasador (23-oct-2026): la
+ * guardada gana (completada con las fórmulas en lo que le falte); si no hay,
+ * la de la planilla con los valores fijos de `C_DefaultsAntecedentes` (bloques
+ * de la sección I, misma caché que E) y las fórmulas sobre la sección B y el
+ * SII.
+ */
+export async function hidratarSeccionI(
+  tasacion: { tipo: string; tipoPropiedad: string },
+  informe: CamposBParaI,
+  guardada: SeccionI | undefined,
+  sii: { destinoSii: string; ubicacionUrbanoRural: string } | undefined,
+): Promise<{ seccionI: SeccionI; prellenada: boolean }> {
+  const nueva = tasacion.tipoPropiedad === 'nueva'
+  const ctx = contextoI(
+    { tipo: tasacion.tipo, nueva, destinoSii: sii?.destinoSii ?? '', ubicacionUrbanoRural: sii?.ubicacionUrbanoRural ?? '' },
+    informe,
+  )
+  if (guardada) return { seccionI: completarSeccionI(guardada, ctx, {}), prellenada: false }
+  const tabla = await leerDefaultsAntecedentesSinFallar(tasacion.tipo, nueva)
+  return { seccionI: seccionIPorDefecto(ctx, tabla), prellenada: true }
+}
+
+/** Lo que `hidratarAntecedentes` necesita del formulario ya hidratado. */
+export type InformeParaAntecedentes = CamposBParaE &
+  InformeParaEvidencias &
+  CamposBParaI &
+  Pick<InformeData, 'supTerreno' | 'supPrimerPiso' | 'pisosPropiedad' | 'condominioNombre'>
+
+/**
+ * Hidratación de las secciones E e I y de las dos síntesis, **una sola para las
+ * dos páginas** que arman `informeInicial` (formulario y fotos): la de fotos
+ * siembra el borrador local, y si las dos no coincidieran el formulario
+ * ofrecería un «Recuperar» falso.
+ *
+ * Las síntesis sin texto guardado parten de un borrador armado sólo con los
+ * datos del formulario (`borradorSintesisPropiedad`), pre-llenado y editable;
+ * cuando exista RF-32, Claude escribirá esas mismas columnas.
+ */
+export async function hidratarAntecedentes(
+  tasacion: { tipo: string; tipoPropiedad: string; direccion?: string; proyecto?: string },
+  informe: InformeParaAntecedentes,
+  guardados:
+    | {
+        datos: Partial<InformeData>
+        evidenciasE?: { textos: readonly string[]; materiales: readonly string[] }
+        contextoI?: { destinoSii: string; ubicacionUrbanoRural: string }
+      }
+    | null
+    | undefined,
+): Promise<{
+  seccionE: SeccionE
+  seccionI: SeccionI
+  sintesisPropiedad: string
+  descripcionSector: string
+  prellenados: (keyof InformeData)[]
+}> {
+  const [e, i] = await Promise.all([
+    hidratarSeccionE(tasacion, informe, guardados?.datos.seccionE, guardados?.evidenciasE),
+    hidratarSeccionI(tasacion, informe, guardados?.datos.seccionI, guardados?.contextoI),
+  ])
+  const prellenados: (keyof InformeData)[] = []
+  if (e.prellenada) prellenados.push('seccionE')
+  if (i.prellenada) prellenados.push('seccionI')
+
+  let sintesisPropiedad = guardados?.datos.sintesisPropiedad ?? ''
+  if (sintesisPropiedad.trim() === '') {
+    sintesisPropiedad = borradorSintesisPropiedad(
+      datosSintesisPropiedad(tasacion, informe, e.seccionE),
+    )
+    if (sintesisPropiedad !== '') prellenados.push('sintesisPropiedad')
+  }
+  let descripcionSector = guardados?.datos.descripcionSector ?? ''
+  if (descripcionSector.trim() === '') {
+    descripcionSector = borradorDescripcionSector(i.seccionI.sector)
+    if (descripcionSector !== '') prellenados.push('descripcionSector')
+  }
+
+  return { seccionE: e.seccionE, seccionI: i.seccionI, sintesisPropiedad, descripcionSector, prellenados }
 }
 
 /** `leerDefaultsAntecedentes` que no lanza: sin tabla, la sección E abre sin valores fijos. */

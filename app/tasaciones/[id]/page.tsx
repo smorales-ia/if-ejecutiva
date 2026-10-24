@@ -5,7 +5,7 @@ import { leerDatosCaptura } from "@/lib/tasador/lectura-datos"
 import { leerFotosCaptura, repartoDeCaptura } from "@/lib/tasador/lectura-fotos"
 import { resolverInforme } from "@/lib/tasador/tasaciones"
 import { codigoDeZona } from "@/lib/tasador/zona"
-import { hidratarSeccionE } from "@/lib/tasador/defaults-antecedentes"
+import { hidratarAntecedentes } from "@/lib/tasador/defaults-antecedentes"
 import { zonasDeComunaSinFallar } from "@/lib/tasador/zonificacion"
 import { TasacionForm } from "@/components/tasador/tasacion-form"
 
@@ -62,14 +62,17 @@ export default async function TasacionDetailPage({
   informeInicial.tipoZona = codigoDeZona(informeInicial.tipoZona, tasacion.comuna, zonas)
 
   /**
-   * Sección E (19-oct-2026 · hoja «Antecedentes»): la guardada gana; si no hay,
-   * la de la hoja con los valores fijos de `C_DefaultsAntecedentes` para este
-   * tipo × estado de uso (RF-TAS-23) y las fórmulas evaluadas sobre la sección
-   * B ya hidratada. Sin tabla, abre sólo con las fórmulas.
+   * Secciones E e I y síntesis (19 y 23-oct-2026): lo guardado gana; si no hay,
+   * los valores fijos de `C_DefaultsAntecedentes` para este tipo × estado de uso
+   * (RF-TAS-23) y las fórmulas de la planilla evaluadas sobre la sección B ya
+   * hidratada y el SII. Las síntesis vacías parten de un borrador con los datos.
    */
-  const e = await hidratarSeccionE(tasacion, informeInicial, guardados?.datos.seccionE, guardados?.evidenciasE)
-  informeInicial.seccionE = e.seccionE
-  const prellenados = [...(guardados?.prellenados ?? []), ...(e.prellenada ? (["seccionE"] as const) : [])]
+  const a = await hidratarAntecedentes(tasacion, informeInicial, guardados)
+  informeInicial.seccionE = a.seccionE
+  informeInicial.seccionI = a.seccionI
+  informeInicial.sintesisPropiedad = a.sintesisPropiedad
+  informeInicial.descripcionSector = a.descripcionSector
+  const prellenados = [...(guardados?.prellenados ?? []), ...a.prellenados]
 
   return (
     <Suspense fallback={null}>
@@ -78,6 +81,7 @@ export default async function TasacionDetailPage({
         informeInicial={informeInicial}
         prellenados={prellenados}
         zonas={zonas}
+        siiI={guardados?.contextoI}
       />
     </Suspense>
   )

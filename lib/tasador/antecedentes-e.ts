@@ -468,6 +468,8 @@ export type AtributoDefault =
   | 'revestimiento_muros'
   | 'cielo'
   | 'iluminacion'
+  /** Un solo valor por campo: los bloques de la sección I (`antecedentes-i.ts`, 23-oct-2026). */
+  | 'valor'
 
 /** Filas de `C_DefaultsAntecedentes` para un tipo × estado de uso: `campo_destino` → atributo → valor. */
 export type DefaultsTabla = Partial<Record<string, Partial<Record<AtributoDefault, string>>>>

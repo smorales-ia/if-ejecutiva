@@ -38,9 +38,11 @@ const FIJA_POR_ROTULO: ReadonlyMap<string, CategoriaFotoId> = new Map(
   CATEGORIAS_FOTO.filter(
     // Sólo fijas activas de la propiedad cuyo pie de PDF es su rótulo (Sector,
     // Dormitorio, Baño): así juntar no cambia nada fuera de la pantalla. Quedan
-    // fuera «Fachada» (pie «Fachada / Exterior» y ranura propia del PDF) y las de
-    // referencias (una personalizada «Datos de Comparables» no dispara RF-09).
-    (c) => !c.heredada && c.seccion === 'propiedad' && c.labelInforme === c.label,
+    // fuera «Fachada» (ranura propia del PDF; desde el 23-oct-2026 su pie también
+    // es «Fachada», así que se excluye por id) y las de referencias (una
+    // personalizada «Datos de Comparables» no dispara RF-09).
+    (c) =>
+      !c.heredada && c.seccion === 'propiedad' && c.labelInforme === c.label && c.id !== 'fachada_exterior',
   ).map((c) => [normalizar(c.label), c.id]),
 )
 

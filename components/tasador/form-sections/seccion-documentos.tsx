@@ -3,7 +3,7 @@
 import { Sparkles } from "lucide-react"
 import type { InformeData } from "@/lib/tasador/tasaciones"
 import { OPCIONES } from "@/lib/tasador/tasaciones"
-import { TextField, SelectField, SwitchField } from "./fields"
+import { TextField, SelectField } from "./fields"
 import type { SetForm } from "./seccion-propiedad"
 
 export function SeccionDocumentos({
@@ -102,7 +102,8 @@ export function SeccionDocumentos({
         prellenado={p("selloSecVencimiento")}
       />
 
-      <SwitchField label="Afecto a expropiación" checked={form.afectoExpropiacion} onChange={(v) => set("afectoExpropiacion", v)} />
+      {/* «Afecto a expropiación» pasó a la sección I el 23-oct-2026 (I.1, junto a
+          la fuente de información): este switch no tenía dónde guardarse (CI-023). */}
       <TextField
         label="N° certificado no expropiación"
         value={form.nCertificadoNoExpropiacion}

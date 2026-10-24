@@ -473,6 +473,7 @@ describe('construirInforme · bloque 8 (observaciones + legales · P9-TAS.B)', (
           permiso_edificacion_numero: '319-2020',
           permiso_edificacion_fecha: '2020-09-09',
           recepcion_final_numero: 'RF-90',
+          sello_sec: 'no_aplica',
         }),
       ],
     })
@@ -480,12 +481,14 @@ describe('construirInforme · bloque 8 (observaciones + legales · P9-TAS.B)', (
     const informe = await construirInforme(ID, { codigo_solicitud: CODIGO })
 
     // Permiso y recepción como los imprime la planilla de MET-6283: «N°319  09/09/2020».
+    // El sello SEC viaja crudo; la Hoja 1 lo rotula (sección I · 23-oct-2026).
     expect(informe.observaciones.antecedentesLegales).toEqual({
       fojas: '1234',
       numeroInscripcion: '567',
       anoInscripcion: 2019,
       permisoEdificacion: 'N°319  09/09/2020',
       recepcionFinal: 'RF-90',
+      selloSec: 'no_aplica',
     })
     expect(bloquePorId(informe.bloques, 'observaciones').datos).toBe(
       informe.observaciones,

@@ -113,6 +113,10 @@ export interface PartesInforme {
  */
 export interface PropiedadInforme {
   direccion: string
+  /** Sólo la calle (lo anterior a la primera coma de `direccion`) — «Dirección» de la Hoja 1. */
+  calle: string
+  /** Rol principal como lo imprime la planilla («N°882-40») — «Rol» de la Hoja 1. */
+  rolImpreso: string
   /** Nombre de la comuna (Link resuelto contra `M_Comunas`). */
   comuna: string | null
   region: string
@@ -165,6 +169,59 @@ export interface ItemCuadroInforme {
   ufTotalItem: number | null
   aportaAGarantia: boolean
   situacionMunicipal: string
+  /* Columnas impresas como la planilla (`Portada!B51:BV58` · 23-oct-2026). Las
+     reglas viven en `lib/informe/cuadro-valoracion.ts`. */
+  /** Columna «N°»: correlativo dentro de su tipo (`F51 = COUNTIF`). */
+  numeroEnTipo: number
+  /** Columna «Item» con el rótulo de la planilla («Edificación», «OO.CC»). */
+  tipoImpreso: string
+  /** Rol del ítem como la planilla («N°882-40»); `''` sin rol. */
+  rolSii: string
+  /** `anno_construccion` del ítem. */
+  anio: number | null
+  /** Columna «Tipo»: código de material («AL», «HA»…); `''` sin material. */
+  codigoMaterial: string
+  /** Columna «Estado»: `B · R · M` desde `flag_estado`; `''` sin estado. */
+  codigoEstado: string
+  /** Columna «Grntía.»: `N/D` (aporta) o `D` (se descuenta). */
+  garantia: string
+  /** Columna «Origen Super.», heredada de la unidad del mismo rol («Plano Muni.»). */
+  origenSuperficie: string
+  /** Columna «UF/m²»: UF/m² nuevo × D.F. (`BD51`). */
+  ufM2: number | null
+  /** Columna «Valor Seguros UF»: `valor_seguro_item_uf × factor_seguro` (`BO51`). */
+  valorSeguroUf: number | null
+  /** Columna «Valor Liquidación UF»: UF del ítem × factor de liquidación del motor (`BV51`). */
+  valorLiquidacionUf: number | null
+}
+
+/**
+ * Un renglón de totales del cuadro (`Portada!B59:BV61`). Lo que la planilla
+ * deja vacío en ese renglón viaja `null`.
+ */
+export interface TotalCuadroInforme {
+  /** Cantidad de ítems del grupo (columna «Grntía.» del renglón). */
+  cantidad: number
+  /** Sólo edificación: el menor año del cuadro (`T59 = MIN`). */
+  anio: number | null
+  supM2: number | null
+  /** Edificación: Σ(sup × UF/m² nuevo) ÷ Σ sup · obras: Σ UF ÷ Σ sup. */
+  ufM2Nuevo: number | null
+  /** Sólo edificación: UF/m² ÷ UF/m² nuevo (`AX59`). */
+  factor: number | null
+  /** Edificación y terreno: Σ UF ÷ Σ sup (`BD59` · `BD61`). */
+  ufM2: number | null
+  ufTotal: number | null
+  seguroUf: number | null
+  liquidacionUf: number | null
+}
+
+/** TOTAL EDIFICACION · TOTAL OBRAS COMPLEMENTARIAS · TOTAL TERRENO. */
+export interface TotalesCuadroInforme {
+  edificacion: TotalCuadroInforme
+  /** Todo lo que no es edificación ni terreno (incluye piscina · `AN60`). */
+  obrasComplementarias: TotalCuadroInforme
+  terreno: TotalCuadroInforme
 }
 
 /** Cuadro de valoración completo (E-87..98). */
@@ -172,6 +229,8 @@ export interface CuadroInforme {
   items: ItemCuadroInforme[]
   /** Suma de `ufTotalItem`. `null` sin ítems (nunca un 0 inventado). */
   totalUf: number | null
+  /** Renglones de totales por grupo (`lib/informe/cuadro-valoracion.ts`). */
+  totales: TotalesCuadroInforme
 }
 
 /**

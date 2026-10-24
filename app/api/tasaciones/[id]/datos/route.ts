@@ -111,6 +111,7 @@ import {
   filasTerminaciones,
   normalizarSeccionE,
 } from '@/lib/tasador/persistencia-e'
+import { normalizarSeccionI } from '@/lib/tasador/antecedentes-i'
 import { desdeExcepcion, desdeGuard, error, ok } from '@/lib/tasador/respuestas'
 import { resolverZona } from '@/lib/tasador/zonificacion'
 import {
@@ -287,9 +288,23 @@ function camposDatosTasacion(b: DatosPatch): Fields {
   poner('gasto_anual', b.gastoAnualClp)
   // Sección E completa (19-oct-2026): un solo campo, con la forma de la hoja.
   poner('seccion_e_json', b.seccionE ? JSON.stringify(normalizarSeccionE(b.seccionE)) : undefined)
+  // Sección I (23-oct-2026): un solo campo. Lleva además los subterráneos de la
+  // sección B, que no tenían columna (CI-023) y la Hoja 1 imprime.
+  poner(
+    'antecedentes_json',
+    b.seccionI
+      ? JSON.stringify({ ...normalizarSeccionI(b.seccionI), datosB: { subterraneos: b.subterraneos ?? '' } })
+      : undefined,
+  )
+  // Síntesis: las columnas que el puente SC-Textos / RF-32 escribirá.
+  poner('sintesis_descriptiva', b.sintesisPropiedad)
+  poner('descripcion_sector', b.descripcionSector)
 
   return f
 }
+
+/** Claves de `CAMPOS_SIN_DESTINO` que la sección I guarda cuando viene (23-oct-2026). */
+const CAMPOS_GUARDADOS_POR_I: ReadonlySet<string> = new Set(['subterraneos', 'afectoExpropiacion'])
 
 /**
  * Zona del plan regulador (spec §2.8.1 · 14-oct-2026): el tasador manda el
@@ -403,9 +418,9 @@ export async function PATCH(
           ...camposDatos,
           origen_dato: OPCIONES_CAPTURA.origenDatoTasacion,
         })
-        // El JSON de la sección E no se audita campo a campo (son kilobytes):
-        // se deja una línea de resumen cuando cambia.
-        const { seccion_e_json: jsonE, ...auditables } = camposDatos as Fields
+        // Los JSON de las secciones E e I no se auditan campo a campo (son
+        // kilobytes): se deja una línea de resumen cuando cambian.
+        const { seccion_e_json: jsonE, antecedentes_json: jsonI, ...auditables } = camposDatos as Fields
         cambios.push(
           ...derivarCambios(fila.id, fila.fields, auditables, {
             registroNombre: codigo,
@@ -421,6 +436,17 @@ export async function PATCH(
             valorAnterior: fila.fields.seccion_e_json ? 'sección E guardada' : '',
             valorNuevo: 'sección E actualizada',
             razon: 'Sección E desde IF-03 (spec §2.8 · hoja Antecedentes)',
+            tablaOrigen: TABLA_ORIGEN.datosTasacion,
+          })
+        }
+        if (jsonI !== undefined && jsonI !== fila.fields.antecedentes_json) {
+          cambios.push({
+            registroId: fila.id,
+            registroNombre: codigo,
+            campo: 'antecedentes_json',
+            valorAnterior: fila.fields.antecedentes_json ? 'sección I guardada' : '',
+            valorNuevo: 'sección I actualizada',
+            razon: 'Sección I desde IF-03 (spec §2.8 · Hoja N°3)',
             tablaOrigen: TABLA_ORIGEN.datosTasacion,
           })
         }
@@ -685,8 +711,13 @@ export async function PATCH(
     const enviados = new Set(Object.keys(b))
     // Con `seccionE`, las claves E de la forma anterior no son datos perdidos:
     // la sección E entera quedó en `seccion_e_json`.
+    // Con `seccionI`, los subterráneos y «afecto a expropiación» quedan en
+    // `antecedentes_json`.
     const noPersistidos = CAMPOS_SIN_DESTINO.filter(
-      (c) => enviados.has(c) && !(e && CAMPOS_E_FORMA_ANTERIOR.has(c))
+      (c) =>
+        enviados.has(c) &&
+        !(e && CAMPOS_E_FORMA_ANTERIOR.has(c)) &&
+        !(b.seccionI && CAMPOS_GUARDADOS_POR_I.has(c))
     )
 
     return ok({

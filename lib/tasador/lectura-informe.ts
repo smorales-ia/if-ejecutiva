@@ -131,6 +131,9 @@ export interface UnidadSii {
   orden: number | null
   material: string
   anioConstruccion: number | null
+  /** `TX_Unidades.origen_superficie` (slug: `plano`, `medicion_tasador`…). El
+   *  cuadro de valoración del informe lo hereda por rol (columna «Origen Super.»). */
+  origenSuperficie: string
 }
 
 /**
@@ -182,6 +185,8 @@ export interface AntecedentesLegales {
   anoInscripcion: number | null
   permisoEdificacion: string
   recepcionFinal: string
+  /** `TX_DocumentosLegales.sello_sec` (`vigente` · `vencido` · `no_aplica`), o `''`. */
+  selloSec: string
 }
 
 /**
@@ -564,6 +569,7 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       orden: numeroONull(u.fields.orden),
       material: texto(u.fields.tipo_material),
       anioConstruccion: numeroONull(u.fields.anio_construccion),
+      origenSuperficie: texto(u.fields.origen_superficie),
     })),
   }
 
@@ -580,6 +586,8 @@ export async function construirInforme(id: string, s: Fields): Promise<InformeCa
       // «N°319  09/09/2020», como la planilla (T-LEGALES-CONSOLIDADOS-20261015).
       permisoEdificacion: componerNumeroYFecha(l.permiso_edificacion_numero, l.permiso_edificacion_fecha),
       recepcionFinal: componerNumeroYFecha(l.recepcion_final_numero, l.recepcion_final_fecha),
+      // La Hoja 1 lo imprime en «Sello SEC» (sección I · 23-oct-2026).
+      selloSec: texto(l.sello_sec),
     },
   }
 

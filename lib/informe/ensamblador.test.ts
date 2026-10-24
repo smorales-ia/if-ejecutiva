@@ -132,7 +132,19 @@ const DATOS_0066 = fila('recfgslxbCJN5oAoD', {
  * (`nombre_item` · `uf_m2_unitario` · fórmula `valor_uf`); `descripcion`,
  * `uf_m2_aplicado` y `uf_total_item` vienen vacíos — el candado del fallback
  * del ensamblador. Σ valor_uf = 20.125,8624.
+ *
+ * `valor_seguro_item_uf` (fórmula de la tabla: `valor_uf`, salvo 0 en terreno
+ * y estacionamientos) se agregó el 23-oct-2026 con el valor que la fórmula da
+ * para cada fila; la transcripción del 25-sep no la traía.
  */
+const SEGURO_ITEM_0066: Record<string, number> = {
+  reciUBbOFzcqe7RCP: 0,
+  recvxRGbICF8lbE7E: 0,
+  rec1Qtn0qyVbQYhxI: 8157.0624,
+  recupc729ooXrweGl: 350,
+  recuQEMmCOId9Jfbp: 250,
+  rec1s7d6ET147j7hM: 150,
+}
 const ITEMS_0066 = [
   fila('reciUBbOFzcqe7RCP', {
     solicitud: [ID],
@@ -206,7 +218,7 @@ const ITEMS_0066 = [
     situacion_municipal: 'Regularizado',
     valoracion_por: 'unidad',
   }),
-]
+].map((r) => fila(r.id, { ...r.fields, valor_seguro_item_uf: SEGURO_ITEM_0066[r.id] }))
 
 /** `TX_Calculos` — las 13 filas del motor AT03_v11.1.1_v32b0 (23-sep). */
 const CALCULOS_0066 = (
@@ -246,7 +258,8 @@ const UF_0066 = fila('recbnHFtlFHQnyEM9', {
 
 /** Maestros: recordId → fila con `nombre` (primary field en los seis). */
 const MAESTROS_0066: Record<string, ReturnType<typeof fila>> = {
-  recIg8NtVhptXkEUJ: fila('recIg8NtVhptXkEUJ', { nombre: 'MetLife' }),
+  // factor_seguro: el valor real de M_Clientes (REST 23-oct-2026); lo lee el motor y el seguro por fila.
+  recIg8NtVhptXkEUJ: fila('recIg8NtVhptXkEUJ', { nombre: 'MetLife', factor_seguro: 1 }),
   recKT9mUJkeq3YuBu: fila('recKT9mUJkeq3YuBu', { nombre: 'Colina' }),
   recTJcV3BIvdcG4em: fila('recTJcV3BIvdcG4em', { nombre: 'Sergio (nutricionsaludketo)' }),
   recreojxTjoAWOEHa: fila('recreojxTjoAWOEHa', { nombre: 'Refinanciamiento' }),
@@ -353,6 +366,107 @@ describe('construirInformeContexto · golden VP-2026-0066', () => {
     // 0066 no tiene comparables: sin promedio no hay desviación — null honesto.
     expect(contexto.comparablesInforme.tasacionVsPct).toBeNull()
     expect(contexto.comparablesInforme.ofertas.promedio.ufM2Construccion).toBeNull()
+  })
+
+  it('cuadro por fila: UF/m², seguro y liquidación como Portada!BD/BO/BV (MET-6283)', async () => {
+    const { cuadro, terminales } = await contexto0066()
+    const [terreno, servidumbre, edif, piscina, quincho, cierros] = cuadro.items
+
+    // N° correlativo dentro del tipo (Portada!F51 = COUNTIF), no 1..6.
+    expect(cuadro.items.map((i) => i.numeroEnTipo)).toEqual([1, 2, 1, 1, 1, 2])
+    expect(cuadro.items.map((i) => i.tipoImpreso)).toEqual([
+      'Terreno', 'Terreno', 'Edificación', 'Piscina', 'OO.CC', 'OO.CC',
+    ])
+    // UF/m² = UF/m² nuevo × D.F.: 34 × 0,96 = 32,64.
+    expect(edif.ufM2).toBeCloseTo(32.64, 6)
+    expect(terreno.ufM2).toBe(8)
+    expect(servidumbre.ufM2).toBe(0)
+    // Seguro: 0 en terreno; igual al comercial en edificación y obras (factor MetLife 1).
+    expect(cuadro.items.map((i) => i.valorSeguroUf)).toEqual([0, 0, 8157.0624, 350, 250, 150])
+    // Liquidación: comercial × 0,825 (razón de los terminales del motor).
+    expect(terreno.valorLiquidacionUf).toBeCloseTo(9255.51, 2)
+    expect(edif.valorLiquidacionUf).toBeCloseTo(6729.57648, 5)
+    expect(piscina.valorLiquidacionUf).toBeCloseTo(288.75, 6)
+    expect(quincho.valorLiquidacionUf).toBeCloseTo(206.25, 6)
+    expect(cierros.valorLiquidacionUf).toBeCloseTo(123.75, 6)
+
+    // Las columnas suman los terminales que ya imprime VALOR COMERCIAL NORMAL.
+    const suma = (k: 'valorSeguroUf' | 'valorLiquidacionUf') =>
+      cuadro.items.reduce((s, i) => s + (i[k] ?? 0), 0)
+    expect(suma('valorSeguroUf')).toBeCloseTo(terminales.seguroIncendioUf!, 6)
+    expect(suma('valorLiquidacionUf')).toBeCloseTo(terminales.valorLiquidacionUf!, 6)
+  })
+
+  it('cuadro: renglones TOTAL EDIFICACION / OBRAS COMPLEMENTARIAS / TERRENO (Portada!59-61)', async () => {
+    const { totales } = (await contexto0066()).cuadro
+
+    expect(totales.edificacion).toMatchObject({ cantidad: 1, supM2: 249.91 })
+    expect(totales.edificacion.ufM2Nuevo).toBeCloseTo(34, 6)
+    expect(totales.edificacion.factor).toBeCloseTo(0.96, 6)
+    expect(totales.edificacion.ufM2).toBeCloseTo(32.64, 6)
+    expect(totales.edificacion.ufTotal).toBeCloseTo(8157.0624, 6)
+    expect(totales.edificacion.seguroUf).toBeCloseTo(8157.0624, 6)
+    expect(totales.edificacion.liquidacionUf).toBeCloseTo(6729.57648, 5)
+
+    // Obras complementarias = todo lo que no es edificación ni terreno: piscina incluida.
+    expect(totales.obrasComplementarias).toMatchObject({ cantidad: 3, supM2: 3, ufM2Nuevo: 250, ufTotal: 750, seguroUf: 750 })
+    expect(totales.obrasComplementarias.liquidacionUf).toBeCloseTo(618.75, 6)
+
+    expect(totales.terreno).toMatchObject({ cantidad: 2, ufTotal: 11218.8, seguroUf: 0, ufM2Nuevo: null, factor: null })
+    expect(totales.terreno.supM2).toBeCloseTo(5024.86, 6)
+    expect(totales.terreno.ufM2).toBeCloseTo(2.2327, 4)
+    expect(totales.terreno.liquidacionUf).toBeCloseTo(9255.51, 2)
+  })
+
+  it('cuadro: rol, año, tipo, estado, garantía y origen de cada fila (réplica VP-2026-0079)', async () => {
+    // Columnas descriptivas como las tiene 0079 en la base (REST 23-oct-2026):
+    // rol en terreno, servidumbre y edificación; año sólo en servidumbre y
+    // edificación; la unidad 882-40 viene de plano municipal.
+    const extra: Record<string, Record<string, unknown>> = {
+      reciUBbOFzcqe7RCP: { rol_sii: '882-40', aporta_a_garantia: true },
+      recvxRGbICF8lbE7E: { rol_sii: '882-40', anno_construccion: 2024, aporta_a_garantia: true },
+      rec1Qtn0qyVbQYhxI: { rol_sii: '882-40', anno_construccion: 2024, material: 'Albanileria', flag_estado: 'Bueno', aporta_a_garantia: true },
+      recupc729ooXrweGl: { aporta_a_garantia: true },
+      recuQEMmCOId9Jfbp: { aporta_a_garantia: false },
+      rec1s7d6ET147j7hM: {},
+    }
+    const items = ITEMS_0066.map((r) => fila(r.id, { ...r.fields, ...extra[r.id] }))
+    const unidades = [
+      fila('recUnidad882', { solicitud: [ID], rol_sii: '00882-00040', subtipo: 'Casa', origen_superficie: 'plano', es_principal: true }),
+    ]
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.itemsCuadroValoracion
+        ? items
+        : tableId === TABLE_IDS.unidades
+          ? unidades
+          : (TABLAS_0066[tableId] ?? []),
+    )
+
+    const { cuadro } = await contexto0066()
+    const col = <K extends keyof (typeof cuadro.items)[number]>(k: K) => cuadro.items.map((i) => i[k])
+
+    expect(col('rolSii')).toEqual(['N°882-40', 'N°882-40', 'N°882-40', '', '', ''])
+    expect(col('anio')).toEqual([null, 2024, 2024, null, null, null])
+    expect(col('codigoMaterial')).toEqual(['', '', 'AL', '', '', ''])
+    expect(col('codigoEstado')).toEqual(['', '', 'B', '', '', ''])
+    expect(col('garantia')).toEqual(['N/D', 'N/D', 'N/D', 'N/D', 'D', 'D'])
+    // El origen se hereda de la unidad del mismo rol (00882-00040 = 882-40); sin rol, vacío.
+    expect(col('origenSuperficie')).toEqual(['Plano Muni.', 'Plano Muni.', 'Plano Muni.', '', '', ''])
+    // TOTAL EDIFICACION imprime el menor año del cuadro (T59 = MIN).
+    expect(cuadro.totales.edificacion.anio).toBe(2024)
+  })
+
+  it('cuadro: sin factor_seguro del cliente, el seguro por fila queda null (no supone 1,0)', async () => {
+    getRecord.mockImplementation(async (_tableId: string, recordId: string) =>
+      recordId === 'recIg8NtVhptXkEUJ'
+        ? fila('recIg8NtVhptXkEUJ', { nombre: 'MetLife' })
+        : (MAESTROS_0066[recordId] ?? null),
+    )
+    const { cuadro, clienteInforme } = await contexto0066()
+    expect(clienteInforme.nombre).toBe('MetLife')
+    expect(cuadro.items.every((i) => i.valorSeguroUf === null)).toBe(true)
+    expect(cuadro.totales.edificacion.seguroUf).toBeNull()
+    expect(cuadro.totales.terreno.seguroUf).toBeNull()
   })
 
   it('CI-057: promedios POR BLOQUE y V/S contra el XLSM MET-6283 (−3% / +36%)', async () => {
@@ -467,6 +581,45 @@ describe('construirInformeContexto · golden VP-2026-0066', () => {
     })
     expect(huecos.some((h) => h.ruta === 'cualitativa.constructivas')).toBe(false)
     expect(huecos.some((h) => h.ruta === 'cualitativa.comodidades')).toBe(false)
+  })
+
+  it('sección I guardada (antecedentes_json): Hoja N°3, detalle de la Hoja 1 y texto de expropiación', async () => {
+    const seccionI = {
+      detalle: { sitioLote: 'A 40', mansarda: 'No', afectoExpropiacion: 'NO', fuenteInformacion: 'DOM, Plano Catastro' },
+      normativa: { supPredialMinimo: 'PRMS', alturaEdificacion: 'OGUC', ley6071: 'NO', ley19537: 'SI', usoMasProbable: 'HABITACIONAL' },
+      sector: { demanda: 'Medio', abc1: 'SI', homogeneidad: 'No Homogéneo', aguaPotable: 'Matriz Pública', redElectrica: 'Red Subterránea', gas: 'Red Pública', arteriaPrincipal: 'Caletera Oriente Gral San Martín' },
+      usoTerrenos: { casas: '10', deptos: '0', condominios: '45', equipComercial: '1', industrial: '0', comercial: '1', sitiosEriazos: '35' },
+      terreno: { forma: 'REGULAR', pendiente: 'PLANO', orientacion: 'NORTE', frente: '29.95', contrafrente: '29.95', deslindeNorte: '50', deslindeSur: '50' },
+      emplazamiento: { tipoAgrupamiento: 'CONDOMINIO', tipoAdosamiento: 'AISLADA', orientacionConstruccion: 'NORTE' },
+      instalaciones: { alcantarillado: 'Colector', otros: '' },
+      datosB: { subterraneos: '' },
+    }
+    const conI = fila(DATOS_0066.id, {
+      ...DATOS_0066.fields,
+      tipo_zona_descripcion: 'IPB',
+      antecedentes_json: JSON.stringify(seccionI),
+      sintesis_descriptiva: 'El bien es una vivienda.',
+    })
+    listRecords.mockImplementation(async (tableId: string) =>
+      tableId === TABLE_IDS.datosTasacion ? [conI] : (TABLAS_0066[tableId] ?? []),
+    )
+
+    const { cualitativa, textosIA, huecos } = await contexto0066()
+
+    expect(cualitativa.normativa).toMatchObject({ supPredialMinimo: 'PRMS', ley19537: 'SI' })
+    expect(cualitativa.sector).toMatchObject({ abc1: 'SI/No Homogéneo', pctCondominios: 45, pctOtros: 8 })
+    expect(cualitativa.geometriaTerreno).toMatchObject({ frente: '29,95', forma: 'REGULAR' })
+    expect(cualitativa.servicios).toMatchObject({ alcantarillado: 'Colector', electricidad: 'Red Subterránea' })
+    expect(cualitativa.detallePropiedad).toMatchObject({ zona: 'IPB(Colina)', sitioLote: 'A 40', subterraneos: '' })
+    expect(textosIA.textoExpropiacion).toBe(
+      'De acuerdo al DOM, Plano Catastro de la Municipalidad de Colina la propiedad NO cuenta con expropiación.',
+    )
+    expect(textosIA.sintesisPropiedad).toBe('El bien es una vivienda.')
+    for (const ruta of ['cualitativa.normativa', 'cualitativa.sector', 'cualitativa.detallePropiedad', 'textosIA.textoExpropiacion', 'textosIA.sintesisPropiedad']) {
+      expect(huecos.some((h) => h.ruta === ruta), ruta).toBe(false)
+    }
+    // La descripción del sector sigue vacía en este caso: su hueco queda.
+    expect(huecos.some((h) => h.ruta === 'textosIA.descripcionSector')).toBe(true)
   })
 
   it('columna US$ de terminales: CLP ÷ dólar del día (890,33 · XLSM BO71)', async () => {

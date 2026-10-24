@@ -209,6 +209,16 @@ export function recuperarBorrador(
   if (!borrador.seccionE && informeInicial.seccionE) {
     salida = { ...salida, seccionE: informeInicial.seccionE }
   }
+  // Ídem la sección I (23-oct-2026), y las síntesis pre-llenadas frente a un
+  // borrador que las trae vacías.
+  if (!borrador.seccionI && informeInicial.seccionI) {
+    salida = { ...salida, seccionI: informeInicial.seccionI }
+  }
+  for (const clave of ["sintesisPropiedad", "descripcionSector"] as const) {
+    if (prellenados.includes(clave) && !(borrador[clave] ?? "").trim()) {
+      salida = { ...salida, [clave]: informeInicial[clave] }
+    }
+  }
   return salida
 }
 

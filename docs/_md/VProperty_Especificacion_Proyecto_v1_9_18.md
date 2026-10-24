@@ -104,6 +104,18 @@ Fase 2 · Análisis y Diseño · Documento maestro de requisitos
                       hoja, con sus dependencias en vivo; se guarda en el
                       campo nuevo `TX_DatosTasacion.seccion_e_json` y de
                       ahí salen las tablas hijas y el informe.
+                      §2.8.4 (23-oct-2026, decisiones de Sergio) · sección
+                      I «Sector, terreno y normativa»: replica lo que la
+                      planilla captura para la Hoja N°3 y el detalle de
+                      la Hoja 1 (exigencias, propiedad acogida, plan
+                      regulador, sector, uso de terrenos, terreno,
+                      emplazamiento, instalaciones, expropiación), con
+                      fijos en `C_DefaultsAntecedentes` y fórmulas en
+                      código; se guarda en el campo nuevo
+                      `TX_DatosTasacion.antecedentes_json`. Las síntesis
+                      de la propiedad y del sector pasan a una casilla
+                      editable con borrador armado con los datos,
+                      mientras RF-32 no exista.
                       Sucede a 1.9.17, que queda SUPERSEDED.
 
                       1.9.17 · 07-sep-2026 · §2.8 · P13-TAS ·
@@ -2777,6 +2789,12 @@ Formulario multi-sección con autosave localStorage cada 30 s (patrón P3 Formul
 
   H · Rentabilidad (opcional)              Cap rate y datos de renta; no
                                            bloquea el cálculo
+
+  I · Sector, terreno y normativa          Hoja N°3 y detalle de la Hoja 1:
+  (23-oct-2026 · §2.8.4)                   exigencias, plan regulador,
+                                           sector, terreno, emplazamiento,
+                                           instalaciones, expropiación y
+                                           síntesis; no bloquea el cálculo
   ---------------------------------------------------------------------------
 
 **Reglas de captura:**
@@ -2967,7 +2985,7 @@ El default se resuelve server-side al abrir la Pantalla 5, sólo cuando `TX_Dato
 - **Lo que no arrastra todavía.** Con la zona, la planilla lee de la hoja `Zonificacion` la altura de edificación, la distancia a medianeros y el sistema de agrupamiento `[Excel: Antecedentes!Z11:Z13]`, con `OGUC` cuando la zona no está —que es el caso de MET-6283—. `M_Zonificacion` no sirve hoy para eso: la altura se migró como número y perdió los textos («12 pisos»), la distancia a medianeros no se migró, y densidad, demanda y tendencia valen lo mismo en casi todas las filas. Llevar esos atributos al informe por el Link es una tanda posterior, después de sanear la tabla. Los atributos de sector (densidad, demanda, tendencia, mercado) siguen capturándose aparte, como en la planilla `[Excel: Portada!F22:F25]`.
 - **Fuente documental (aprobada y aplicada el 14-oct-2026).** La zona la declara el Certificado de Informaciones Previas de la DOM (`D_TipoDocumento.certificado_informaciones_previas`). Su atributo `certificado_informaciones_previas__zona` lleva el código a `TX_DatosTasacion.tipo_zona_descripcion`, así que RF-09 lo precarga al leer el certificado. Nunca pisa una fila que el tasador ya guardó, y el tasador confirma o corrige la zona en el mismo campo. Si se borra el certificado, se limpian la zona y su Link.
 
-**Un default que no es regla.** La orientación de la construcción figura en la plantilla como constante literal `NOROESTE` `[Excel: Antecedentes!Z17]`, sin ramificar por ningún interruptor, a diferencia de todos los demás campos de su bloque. Es con toda probabilidad un residuo de la última propiedad tasada sobre la plantilla y no un valor característico. **No se implementa como default**: el campo se presenta vacío, con su catálogo de ocho rumbos `[Excel: Antecedentes!CD1:CD8]` disponible.
+**Un default que no es regla.** La orientación de la construcción figura en la plantilla como constante literal `NOROESTE` `[Excel: Antecedentes!Z17]`, sin ramificar por ningún interruptor, a diferencia de todos los demás campos de su bloque. Es con toda probabilidad un residuo de la última propiedad tasada sobre la plantilla y no un valor característico. **No se implementa como default**: el campo se presenta vacío, con su catálogo de ocho rumbos `[Excel: Antecedentes!CD1:CD8]` disponible. *(23-oct-2026, §2.8.4: la sección I la pre-llena con la orientación que el tasador ya declaró en la sección B, que es un dato de la solicitud, no la constante; sin orientación en B sigue vacía.)*
 
   -------------------------------------------------------------------------
   **RF-TAS-23**     **Pre-llenado de la hoja de antecedentes**
@@ -3138,6 +3156,25 @@ Las superficies de terreno, servidumbre, construida y de primer piso salen de la
 - **Idempotente.** Volver a leer el mismo conjunto de documentos no cambia nada; un documento más reciente sí actualiza el grupo mientras el tasador no haya guardado.
 - **Coordenadas** en grados decimales; una lectura fuera de rango (UTM) no compite. El mapa SII es la fuente preferida y el informe de no expropiación, la alternativa.
 - **Sello SEC.** Sin nada guardado, se sugiere `vigente` o `vencido` según el vencimiento leído del sello verde y, si no hay sello y la unidad principal es una casa, «No aplica» (RN-58). Un departamento queda para el tasador.
+- **«Afecto a expropiación» sale de F** (23-oct-2026): el switch no tenía dónde guardarse (CI-023) y pasa a la sección I, junto a la fuente de información que arma el texto de expropiación (§2.8.4). El N° de certificado de no expropiación sigue en F.
+
+### 2.8.4 Sección I · Sector, terreno y normativa (v1.9.18, 23-oct-2026)
+
+Pedido de Sergio en la réplica de MET-6283: la Hoja N°3 del informe y el detalle de la Hoja 1 salían en blanco porque nadie capturaba sus datos (huecos P1-1 y P1-2). La plantilla Carbone v5 ya trae las etiquetas. La sección I replica lo que la planilla del cliente captura para esas hojas, en la hoja «Antecedentes» `[Excel: Antecedentes!R6:BI24]` y en la «Portada» `[Excel: Portada!B21:BL29 · BR6 · BK7]`, con los catálogos de sus listas desplegables y sus literales exactos:
+
+- **I.1 Detalle y expropiación:** sitio/lote `[BR6]`, mansarda `[BK7]` (en casa, «No»: la app no registra superficie de mansarda), afecto a expropiación `[BK24]` y fuente de información `[BL25]`. El texto de expropiación es la fórmula de la planilla `[Portada!BB29]` y no se captura: «De acuerdo al {fuente}{, se adjunta en anexo, si la fuente es el certificado} de la Municipalidad de {comuna} la propiedad {afecto} cuenta con expropiación.». La pantalla lo muestra tal como se imprimirá.
+- **I.2 Exigencias municipales** `[Antecedentes!Z7:Z13]`: las siete parten en `OGUC`, que es lo que la planilla imprime cuando la zona no está en su hoja `Zonificacion`. `M_Zonificacion` todavía no sirve para leerlas (§2.8.1, «lo que no arrastra todavía»); el tasador escribe lo que diga el certificado de informaciones previas.
+- **I.3 Propiedad acogida y plan regulador** `[AH7:BI10]`: el DFL-2 es el de la sección B (fórmula de Airtable). Ley 6071 `[AT8]` = SI si es departamento o condominio de antes de 1995 (sin año, NO); Ley 19537 `[AT10]` es su contraria y la sigue al cambiarla; uso más probable = destino SII `[Portada!BK3]`.
+- **I.4 Sector** `[Portada!F22:AE26 · Antecedentes!BD19]`: tipo de zona desde la ubicación urbano/rural del SII y gas según el tipo de propiedad `[AE25]` (casa → Licuado, departamento → Red Pública). El resto lo carga el tasador, como en la planilla.
+- **I.5 Uso de terrenos** `[Portada!AK22:AZ26]`: porcentajes; «Otros» se calcula como 100 − la suma `[AX26]` y no se imprime si no hay ninguno cargado.
+- **I.6 Terreno** `[Antecedentes!AO21:BG24]`: forma, pendiente, orientación, frente, contrafrente y deslindes. La superficie es la de la sección B.
+- **I.7 Emplazamiento** `[H15:Z19]`: tipo de agrupamiento = agrupación de la sección B en mayúsculas `[H15]`; calidad constructiva y estado de conservación son los de la sección B; orientación de la construcción, la de la sección B (ver la nota de §2.8.1).
+- **I.8 Instalaciones** `[AH15:AN19]`: alcantarillado y otros; agua potable, electricidad y gas son los del sector `[AN16:AN18 = Portada!AE24 · AE23 · AE25]`.
+- **I.9 Síntesis de la propiedad y del sector** `[Portada!D12 · D18]`: mientras RF-32 no exista, son una casilla editable. Sin texto guardado parten de un borrador armado **sólo con los datos del formulario** (sección B, sección E, sector, dirección), sin cifras que no estén cargadas, con el badge «Pre-llenado · editable»; «Rehacer borrador» lo vuelve a armar con los datos actuales. Se guardan en `sintesis_descriptiva` y `descripcion_sector`, las mismas columnas que escribirá RF-32.
+
+**Valores fijos y fórmulas.** Como la sección E (RF-TAS-08), los valores fijos viven en `C_DefaultsAntecedentes` (bloques `emplazamiento`, `plan_regulador`, `instalaciones` y `detalle`, atributo `valor`, sembrados el 23-oct-2026 para Casa y Departamento × nuevo y usado) y las fórmulas en `lib/tasador/antecedentes-i.ts`. Una combinación sin filas deja los fijos vacíos. Las fórmulas corren también en la pantalla: un cambio de agrupación, año u orientación en la sección B mueve sólo las celdas de I que todavía tienen el valor de la fórmula.
+
+**Guardado.** La sección se guarda entera en `TX_DatosTasacion.antecedentes_json` (`fldxunaM6CDWtc3Wm`), con un solo escritor (`PATCH /datos`), normalizada; lleva además los subterráneos de la sección B, que no tenían columna. El informe la proyecta a `cualitativa.normativa · sector · geometriaTerreno · emplazamiento · servicios · detallePropiedad` y a `textosIA.textoExpropiacion`, y con ella guardada retira esos huecos. El detalle de la Hoja 1 toma el número de casa de la dirección de la solicitud, la zona compuesta `CODIGO(Comuna)`, el sello SEC de la sección F y si hay ampliaciones en la sección E. La sección no bloquea el cálculo.
 
 ---
 

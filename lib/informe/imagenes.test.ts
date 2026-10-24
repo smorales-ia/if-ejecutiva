@@ -24,6 +24,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { CATEGORIAS_FOTO } from '@/lib/tasador/tasaciones'
 import {
+  imagenUnica,
   RANURAS_ANEXO,
   resolverAnexos,
   resolverImagenes,
@@ -139,11 +140,13 @@ describe('resolverImagenes · grilla desde fotos reales (origen único §4)', ()
 
   it('T-TEMAS1 · los pies de foto del PDF no cambian con los rótulos de pantalla', () => {
     // Literales que imprimía el informe antes del 14-oct-2026. Si uno cambia,
-    // cambió el PDF, que la decisión Q1 dejó fuera de alcance.
+    // cambió el PDF, que la decisión Q1 dejó fuera de alcance. Excepción
+    // deliberada (23-oct-2026, réplica MET-6283): el mapa y la fachada imprimen
+    // «Ubicación» y «Fachada», los pies del informe original.
     const previos: Record<string, string> = {
-      fachada_exterior: 'Fachada / Exterior',
+      fachada_exterior: 'Fachada',
       habitaciones: 'Habitaciones',
-      mapa_ubicacion: 'Mapa de Ubicación',
+      mapa_ubicacion: 'Ubicación',
       ofertas_comparables: 'Ofertas / Comparables',
       mapa_referencias: 'Mapa de referencias',
       living_comedor: 'Living / Comedor',
@@ -312,8 +315,10 @@ describe('resolverAnexos · mapeo código→ranura (constante compartida)', () =
         doc('certificado_avaluo_fiscal', 'https://ejemplo.cl/avaluo.jpg'),
       ],
     )
+    // Un data-URI ilegible pasa tal cual; una URL lleva el fragmento de su ranura
+    // (`imagenUnica`, 23-oct-2026), que no viaja al servidor.
     expect(imagenes.anexo1Plano).toBe('data:image/jpeg;base64,PLANO')
-    expect(imagenes.anexo2RolAvaluo).toBe('https://ejemplo.cl/avaluo.jpg')
+    expect(imagenes.anexo2RolAvaluo).toBe('https://ejemplo.cl/avaluo.jpg#anexo2RolAvaluo')
     expect(imagenes.anexo1Esquema).toBeNull()
     expect(imagenes.anexo2Permiso).toBeNull()
   })
@@ -350,5 +355,36 @@ describe('resolverImagenes · vacío honesto (plan §4)', () => {
     const { imagenes } = resolverImagenes(CODIGO, canonicas([]), vacios, null)
     const anexoKeys: (keyof ImagenesInforme)[] = RANURAS_ANEXO.map((r) => r.ranura)
     for (const k of anexoKeys) expect(imagenes[k]).toBeNull()
+  })
+})
+
+describe('imagenUnica · Carbone no reutiliza una imagen repetida con otro tamaño (23-oct-2026)', () => {
+  // JPEG mínimo (SOI + EOI) y PNG de 1×1 válidos.
+  const jpeg = 'data:image/jpeg;base64,' + btoa('\xFF\xD8\xFF\xD9')
+  const png =
+    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+
+  it('el JPEG lleva un comentario con la marca tras el SOI y sigue siendo JPEG', () => {
+    const u = imagenUnica(jpeg, 'fachada')!
+    const bin = atob(u.split(',')[1])
+    expect(u).not.toBe(jpeg)
+    expect(bin.startsWith('\xFF\xD8\xFF\xFE')).toBe(true)
+    expect(bin).toContain('vp:fachada')
+    expect(bin.endsWith('\xFF\xD9')).toBe(true)
+  })
+
+  it('el PNG lleva un bloque tEXt antes de IEND; dos marcas dan dos imágenes distintas', () => {
+    const a = imagenUnica(png, 'mapaUbicacion')!
+    const b = imagenUnica(png, 'otra')!
+    expect(a).not.toBe(b)
+    const bin = atob(a.split(',')[1])
+    expect(bin.indexOf('tEXt')).toBeLessThan(bin.indexOf('IEND'))
+    expect(bin.endsWith('IEND\xAEB`\x82')).toBe(true)
+  })
+
+  it('una URL lleva el fragmento; null y lo ilegible pasan tal cual', () => {
+    expect(imagenUnica('https://x.cl/a.jpg', 'ref1')).toBe('https://x.cl/a.jpg#ref1')
+    expect(imagenUnica(null, 'ref1')).toBeNull()
+    expect(imagenUnica('data:image/jpeg;base64,PLANO', 'x')).toBe('data:image/jpeg;base64,PLANO')
   })
 })

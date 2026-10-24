@@ -55,6 +55,13 @@
  * US$ de terminales es `CLP ÷ usdDia` (XLSM `BO71`). Todo lo demás se lee,
  * no se computa. La aritmética vive en `lib/informe/fila-tasacion.ts`
  * (RO-05: una sola fuente por número — la comparte el preview del tasador).
+ *
+ * Columnas por fila y totales del cuadro de valoración (23-oct-2026 · réplica
+ * MET-6283): UF/m² = UF/m² nuevo × D.F.; seguro = `valor_seguro_item_uf` ×
+ * `M_Clientes.factor_seguro` (la cuenta de `F_SeguroIncendioUF`, por fila);
+ * liquidación = UF del ítem × (`valor_liquidacion_uf ÷ valor_comercial_uf` de
+ * `TX_Calculos`); y los renglones TOTAL EDIFICACION / OBRAS COMPLEMENTARIAS /
+ * TERRENO como `Portada!B59:BV61`. Reglas en `lib/informe/cuadro-valoracion.ts`.
  */
 
 import { getRecord, listRecords } from '@/lib/airtable-client'
@@ -67,6 +74,12 @@ import { TABLE_IDS } from '@/lib/tasador/field-ids'
 import { filasDeSolicitud } from '@/lib/tasador/lectura-datos'
 import type { SeccionE } from '@/lib/tasador/antecedentes-e'
 import {
+  casaNumeroDeDireccion,
+  cualitativaDeSeccionI,
+  normalizarSeccionI,
+  type SeccionI,
+} from '@/lib/tasador/antecedentes-i'
+import {
   comodidadesInforme,
   constructivasInforme,
   normalizarSeccionE,
@@ -74,6 +87,21 @@ import {
 } from '@/lib/tasador/persistencia-e'
 import { construirInforme, leerTerminales, type Bloque } from '@/lib/tasador/lectura-informe'
 import { codigoDeZona, componerZona } from '@/lib/tasador/zona'
+import {
+  codigoEstadoPlanilla,
+  codigoMaterialPlanilla,
+  factorLiquidacion,
+  garantiaPlanilla,
+  normalizarRol,
+  numerosPorTipo,
+  origenSuperficiePlanilla,
+  rolImpreso,
+  tipoItemImpreso,
+  totalesCuadro,
+  ufM2Valorado,
+  valorLiquidacionItem,
+  valorSeguroItem,
+} from './cuadro-valoracion'
 import { filaTasacionVsPct, promedioSinCeros, ufM2ConstruccionTasacion } from './fila-tasacion'
 import { esDocumentoDeAnexo, resolverImagenes, type AnexoResuelto } from './imagenes'
 import { aplicarOverridesLocales } from './overrides'
@@ -133,6 +161,42 @@ function seccionEDelInforme(valor: unknown): SeccionE | null {
 }
 
 /**
+ * `TX_DatosTasacion.antecedentes_json` (23-oct-2026) ya normalizado, con los
+ * subterráneos de la sección B que viajan en `datosB`, o `null` si no hay o no
+ * se puede leer. Con él existe escritor para la Hoja N°3 (normativa, sector,
+ * terreno, emplazamiento, servicios), el detalle de la Hoja 1 y el texto de
+ * expropiación, y sus huecos se retiran **para ese caso**.
+ */
+function seccionIDelInforme(valor: unknown): { seccionI: SeccionI; subterraneos: string } | null {
+  if (typeof valor !== 'string' || valor.trim() === '') return null
+  try {
+    const json = JSON.parse(valor) as { datosB?: { subterraneos?: unknown } }
+    return { seccionI: normalizarSeccionI(json), subterraneos: texto(json.datosB?.subterraneos) }
+  } catch (err) {
+    console.error('[ensamblador] antecedentes_json ilegible', err)
+    return null
+  }
+}
+
+/** Rótulo impreso del Sello SEC (`TX_DocumentosLegales.sello_sec`), como la lista de la planilla. */
+const SELLO_SEC_IMPRESO: Record<string, string> = {
+  vigente: 'Vigente',
+  vencido: 'Vencido',
+  no_aplica: 'No Aplica',
+}
+
+/** Rutas de hueco que la sección I cierra cuando está guardada. */
+const RUTAS_CERRADAS_POR_I: ReadonlySet<string> = new Set([
+  'cualitativa.normativa',
+  'cualitativa.sector',
+  'cualitativa.geometriaTerreno',
+  'cualitativa.emplazamiento',
+  'cualitativa.servicios',
+  'cualitativa.detallePropiedad',
+  'textosIA.textoExpropiacion',
+])
+
+/**
  * Resuelve el nombre de un Link (`multipleRecordLinks` → primer record ID)
  * contra su maestro. Degrada a `null` ante link vacío, registro inexistente,
  * `nombre` vacío o fallo de red: el nombre de un maestro nunca es motivo para
@@ -148,6 +212,30 @@ async function nombreDeLink(tableId: string, link: unknown): Promise<string | nu
   } catch (err) {
     console.error('[ensamblador] maestro irresoluble', tableId, id, err)
     return null
+  }
+}
+
+/**
+ * El cliente del Link: su `nombre` (como `nombreDeLink`) y el `factor_seguro`
+ * que lee el motor AT03 de `M_Clientes` — el seguro por fila del cuadro usa el
+ * mismo factor. Una sola lectura del maestro; degrada a `null` igual que
+ * `nombreDeLink`.
+ */
+async function clienteDeLink(
+  link: unknown,
+): Promise<{ nombre: string | null; factorSeguro: number | null }> {
+  const id = Array.isArray(link) ? link[0] : null
+  if (typeof id !== 'string' || !id) return { nombre: null, factorSeguro: null }
+  try {
+    const registro = await getRecord<{ nombre?: string; factor_seguro?: number }>(MAESTROS.clientes, id)
+    const nombre = registro?.fields.nombre
+    return {
+      nombre: typeof nombre === 'string' && nombre.trim() !== '' ? nombre : null,
+      factorSeguro: numeroONull(registro?.fields.factor_seguro),
+    }
+  } catch (err) {
+    console.error('[ensamblador] maestro irresoluble', MAESTROS.clientes, id, err)
+    return { nombre: null, factorSeguro: null }
   }
 }
 
@@ -353,15 +441,16 @@ export async function construirInformeContexto(
         : Promise.resolve([]),
     ])
 
-  const [clienteNombre, comunaNombre, tasadorNombre, visadorNombre, objetivoNombre, tipoPropiedadNombre] =
+  const [cliente, comunaNombre, tasadorNombre, visadorNombre, objetivoNombre, tipoPropiedadNombre] =
     await Promise.all([
-      nombreDeLink(MAESTROS.clientes, s.cliente),
+      clienteDeLink(s.cliente),
       nombreDeLink(MAESTROS.comunas, s.comuna),
       nombreDeLink(MAESTROS.tasadores, s.tasador),
       nombreDeLink(MAESTROS.visadores, s.visador),
       nombreDeLink(MAESTROS.tiposInforme, s.tipo_informe),
       nombreDeLink(MAESTROS.tiposPropiedad, s.tipo_propiedad),
     ])
+  const clienteNombre = cliente.nombre
 
   const d = datos[0]?.fields ?? {}
   const uf = filasUf[0]?.fields ?? {}
@@ -379,26 +468,54 @@ export async function construirInformeContexto(
     arriendoClp !== null && ufDiaValor ? arriendoClp / ufDiaValor : null
 
   /* --- Cuadro: pareja vieja con caída a la nueva (ver docblock) ------ */
-  const itemsCuadro = items
-    .map((i) => {
-      const f = i.fields
-      return {
-        id: i.id,
-        orden: numeroONull(f.orden) ?? numeroONull(f.item_id),
-        descripcion: texto(f.descripcion) || texto(f.nombre_item),
-        tipoItem: texto(f.tipo_item),
-        supM2: numeroONull(f.sup_m2),
-        ufM2Aplicado: numeroONull(f.uf_m2_aplicado) ?? numeroONull(f.uf_m2_unitario),
-        factorAplicado: numeroONull(f.factor_aplicado),
-        ufTotalItem: numeroONull(f.uf_total_item) ?? numeroONull(f.valor_uf),
-        aportaAGarantia: Boolean(f.aporta_a_garantia),
-        situacionMunicipal: texto(f.situacion_municipal),
-      }
-    })
+  /* Factor de liquidación del motor y origen de superficie de cada unidad
+     (por rol): insumos de las columnas por fila (`cuadro-valoracion.ts`). */
+  const factorLiq = factorLiquidacion(t('valor_liquidacion_uf'), t('valor_comercial_uf'))
+  const origenPorRol = new Map(
+    informe.datosSii.porUnidad
+      .filter((u) => u.origenSuperficie !== '')
+      .map((u) => [normalizarRol(u.rolSii), u.origenSuperficie] as const),
+  )
+  const itemsOrdenados = items
+    .map((i) => ({ i, orden: numeroONull(i.fields.orden) ?? numeroONull(i.fields.item_id) }))
     /* La plantilla imprime por índice [i=0..5]: el orden del array ES el del
        informe (Terreno, Servidumbre, Piso 1, Piscina, Quincho, Cierros —
        `orden`/`item_id` ascendente; Airtable no garantiza orden de listado). */
     .sort((a, b) => (a.orden ?? Number.MAX_SAFE_INTEGER) - (b.orden ?? Number.MAX_SAFE_INTEGER))
+  const numeros = numerosPorTipo(itemsOrdenados.map(({ i }) => texto(i.fields.tipo_item)))
+  const itemsCuadro: ItemCuadroInforme[] = itemsOrdenados.map(({ i, orden }, n) => {
+    const f = i.fields
+    const tipoItem = texto(f.tipo_item)
+    const ufM2Aplicado = numeroONull(f.uf_m2_aplicado) ?? numeroONull(f.uf_m2_unitario)
+    const factorAplicado = numeroONull(f.factor_aplicado)
+    const ufTotalItem = numeroONull(f.uf_total_item) ?? numeroONull(f.valor_uf)
+    const aportaAGarantia = Boolean(f.aporta_a_garantia)
+    const rol = texto(f.rol_sii)
+    return {
+      id: i.id,
+      orden,
+      descripcion: texto(f.descripcion) || texto(f.nombre_item),
+      tipoItem,
+      supM2: numeroONull(f.sup_m2),
+      ufM2Aplicado,
+      factorAplicado,
+      ufTotalItem,
+      aportaAGarantia,
+      situacionMunicipal: texto(f.situacion_municipal),
+      numeroEnTipo: numeros[n],
+      tipoImpreso: tipoItemImpreso(tipoItem),
+      rolSii: rolImpreso(rol),
+      anio: numeroONull(f.anno_construccion),
+      codigoMaterial: codigoMaterialPlanilla(texto(f.material)),
+      codigoEstado: codigoEstadoPlanilla(texto(f.flag_estado)),
+      garantia: garantiaPlanilla(aportaAGarantia),
+      origenSuperficie:
+        rol.trim() === '' ? '' : origenSuperficiePlanilla(origenPorRol.get(normalizarRol(rol)) ?? ''),
+      ufM2: ufM2Valorado(ufM2Aplicado, factorAplicado),
+      valorSeguroUf: valorSeguroItem(numeroONull(f.valor_seguro_item_uf), cliente.factorSeguro),
+      valorLiquidacionUf: valorLiquidacionItem(ufTotalItem, factorLiq),
+    }
+  })
   const totalUf =
     itemsCuadro.length > 0
       ? itemsCuadro.reduce((suma, i) => suma + (i.ufTotalItem ?? 0), 0)
@@ -554,7 +671,9 @@ export async function construirInformeContexto(
     ...nivelesPresentes.flatMap((nivel) =>
       TIPOS_MATRIZ.filter(
         (tp) => !habitacionesNormalizadas.some((h) => h.nivel === nivel && h.tipoRecinto === tp),
-      ).map((tp) => ({ id: `relleno-${nivel}-${tp}`, nivel, tipoRecinto: tp, cantidad: 0 })),
+      /* Sin cantidad (null): la planilla deja la celda en blanco, no «0»
+         (Hoja N°3 de MET-6283: escritorio y otros vacíos). */
+      ).map((tp) => ({ id: `relleno-${nivel}-${tp}`, nivel, tipoRecinto: tp, cantidad: null })),
     ),
   ]
   const totalRecintos =
@@ -567,22 +686,52 @@ export async function construirInformeContexto(
      «Antecedentes» capturada; sin él, quedan como antes (null y la tabla). */
   const seccionE = seccionEDelInforme(d.seccion_e_json)
 
-  /* --- Cualitativa: P1-1/P1-2 salvo lo que trae la sección E ---------- */
+  /* --- Sección I guardada (23-oct-2026 · antecedentes_json) ---------- */
+  /* Hoja N°3 (normativa, sector, terreno, emplazamiento, servicios), detalle
+     de la Hoja 1 y texto de expropiación. Lo que imprime de otras secciones
+     (calidad, estado, DFL-2, zona, sello SEC…) se toma de su fuente, no se
+     duplica en el JSON. */
+  const guardadaI = seccionIDelInforme(d.antecedentes_json)
+  const zonaImpresa = componerZona(codigoDeZona(texto(d.tipo_zona_descripcion), comunaNombre), comunaNombre)
+  const hayAmpliacion = seccionE
+    ? seccionE.ampliaciones.some((a) => a.regulado || a.pe || a.rif || a.regulacion || a.m2)
+    : ampliaciones.length > 0
+  const cualitativaI = guardadaI
+    ? cualitativaDeSeccionI(guardadaI.seccionI, {
+        comuna: comunaNombre ?? '',
+        calidadConstructiva: calidadConstruccionGuardada(d.calidad_construccion),
+        estadoConservacion: estadoConservacionGuardado(d.estado_conservacion),
+        dfl2: texto(d.dfl2),
+        subterraneos: guardadaI.subterraneos,
+        zona: zonaImpresa,
+        casaNumero: casaNumeroDeDireccion(texto(s.direccion)),
+        ampliacion: hayAmpliacion ? 'Sí' : 'No',
+        selloSec: SELLO_SEC_IMPRESO[informe.observaciones.antecedentesLegales.selloSec] ?? '',
+      })
+    : null
+
+  /* --- Cualitativa: P1-1/P1-2 salvo lo que traen las secciones E e I --- */
   const cualitativa: CualitativaInforme = {
-    normativa: null,
-    sector: null,
-    geometriaTerreno: null,
-    emplazamiento: null,
+    normativa: cualitativaI?.normativa ?? null,
+    sector: cualitativaI?.sector ?? null,
+    geometriaTerreno: cualitativaI?.geometriaTerreno ?? null,
+    emplazamiento: cualitativaI?.emplazamiento ?? null,
     constructivas: seccionE ? constructivasInforme(seccionE) : null,
-    servicios: null,
+    servicios: cualitativaI?.servicios ?? null,
     comodidades: seccionE ? comodidadesInforme(seccionE) : null,
-    detallePropiedad: null,
+    detallePropiedad: cualitativaI?.detallePropiedad ?? null,
   }
+
+  const sintesisPropiedad = texto(d.sintesis_descriptiva) || null
+  const descripcionSector = texto(d.descripcion_sector) || null
 
   /* --- Huecos: estructurales + los dependientes del caso ------------- */
   const huecos: Hueco[] = HUECOS_ESTRUCTURALES.filter(
     (h) =>
-      !seccionE || (h.ruta !== 'cualitativa.constructivas' && h.ruta !== 'cualitativa.comodidades'),
+      (!seccionE || (h.ruta !== 'cualitativa.constructivas' && h.ruta !== 'cualitativa.comodidades')) &&
+      (!guardadaI || !RUTAS_CERRADAS_POR_I.has(h.ruta)) &&
+      !(h.ruta === 'textosIA.sintesisPropiedad' && sintesisPropiedad) &&
+      !(h.ruta === 'textosIA.descripcionSector' && descripcionSector),
   )
   if (imagenes.firma === null) {
     /* El mecanismo existe (M_Tasadores.firma_url · T-PDF-E3-GENERICOS); si
@@ -629,6 +778,11 @@ export async function construirInformeContexto(
     },
     propiedad: {
       direccion: texto(s.direccion),
+      // Hoja 1: «Dirección» lleva sólo la calle; casa y condominio van en sus
+      // propias casillas (Portada!AU4 · AU5 · AU6 de MET-6283).
+      calle: texto(s.direccion).split(',')[0].trim(),
+      // Hoja 1: «Rol» como la planilla («N°882-40»); `sii.rolSii` queda crudo.
+      rolImpreso: rolImpreso(texto(informe.datosSii.rolSii)),
       comuna: comunaNombre,
       region: texto(s.region),
       tipoPropiedad: tipoPropiedadNombre,
@@ -659,14 +813,11 @@ export async function construirInformeContexto(
       // «IPB(Colina)(Colina)». Sin el catálogo a mano, eso también acorta los
       // pocos códigos que terminan en su propia comuna (`ZAP (San José de
       // Maipo)` → `ZAP(San José de Maipo)`), que es el costo aceptado.
-      tipoZonaDescripcion: componerZona(
-        codigoDeZona(texto(d.tipo_zona_descripcion), comunaNombre),
-        comunaNombre,
-      ),
+      tipoZonaDescripcion: zonaImpresa,
       vidaUtil: numeroONull(s.vida_util_override),
     },
     sii: informe.datosSii,
-    cuadro: { items: itemsCuadro, totalUf },
+    cuadro: { items: itemsCuadro, totalUf, totales: totalesCuadro(itemsCuadro) },
     terminales: {
       valorComercialUf,
       valorComercialClp: t('valor_comercial_clp'),
@@ -706,12 +857,13 @@ export async function construirInformeContexto(
       arriendoUfMes: arriendoUfMes,
     },
     textosIA: {
-      /* Puente SC-Textos (T-PDF-IMPRENTA-20260927): el escenario escribe estas
-         dos columnas de TX_DatosTasacion. `textoExpropiacion` sigue sin columna
-         (P1-1); su hueco estructural queda declarado. */
-      sintesisPropiedad: texto(d.sintesis_descriptiva) || null,
-      descripcionSector: texto(d.descripcion_sector) || null,
-      textoExpropiacion: null,
+      /* Las dos columnas de TX_DatosTasacion las escribe la sección I del
+         tasador (23-oct-2026) y, cuando exista, RF-32 / SC-Textos. El texto de
+         expropiación es la fórmula de la planilla sobre la sección I
+         (`Portada!BB29`); sin sección I guardada su hueco sigue declarado. */
+      sintesisPropiedad,
+      descripcionSector,
+      textoExpropiacion: cualitativaI?.textoExpropiacion || null,
     },
     cualitativa,
     recintos: {

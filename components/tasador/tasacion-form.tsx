@@ -44,6 +44,15 @@ import {
 } from "@/components/tasador/form-sections/seccion-comparables"
 import { SeccionAntecedentesE } from "@/components/tasador/form-sections/seccion-antecedentes-e"
 import { CLAVES_B_PARA_E, contextoE, reaplicarContexto } from "@/lib/tasador/antecedentes-e"
+import { SeccionAntecedentesI } from "@/components/tasador/form-sections/seccion-antecedentes-i"
+import {
+  CLAVES_B_PARA_I,
+  borradorDescripcionSector,
+  borradorSintesisPropiedad,
+  contextoI,
+  datosSintesisPropiedad,
+  reaplicarContextoI,
+} from "@/lib/tasador/antecedentes-i"
 import { SeccionDocumentos } from "@/components/tasador/form-sections/seccion-documentos"
 import {
   SeccionOverrides,
@@ -74,6 +83,7 @@ export function TasacionForm({
   informeInicial,
   prellenados = [],
   zonas = [],
+  siiI,
 }: {
   tasacion: Tasacion
   /**
@@ -87,6 +97,8 @@ export function TasacionForm({
   prellenados?: readonly (keyof InformeData)[]
   /** Zonas de `M_Zonificacion` para la comuna de la solicitud (§2.8.1). */
   zonas?: readonly ZonaCatalogo[]
+  /** Destino y urbano/rural del SII, que leen las fórmulas de la sección I. */
+  siiI?: { destinoSii: string; ubicacionUrbanoRural: string }
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -193,6 +205,16 @@ export function TasacionForm({
    * superficies, estacionamientos, bodegas) recalcula las celdas de E que
    * todavía tienen el valor de la fórmula (`reaplicarContexto`).
    */
+  /** Lo que las fórmulas de la sección I leen de la solicitud y del SII. */
+  const solicitudI = useMemo(
+    () => ({
+      ...solicitudE,
+      destinoSii: siiI?.destinoSii ?? "",
+      ubicacionUrbanoRural: siiI?.ubicacionUrbanoRural ?? "",
+    }),
+    [solicitudE, siiI?.destinoSii, siiI?.ubicacionUrbanoRural],
+  )
+
   const set: SetForm = useCallback(
     (key, value) => {
       setForm((prev) => {
@@ -204,10 +226,18 @@ export function TasacionForm({
             contextoE(solicitudE, next),
           )
         }
+        // Ídem la sección I (23-oct-2026): agrupación, año y orientación.
+        if ((CLAVES_B_PARA_I as readonly string[]).includes(key as string)) {
+          next.seccionI = reaplicarContextoI(
+            prev.seccionI,
+            contextoI(solicitudI, prev),
+            contextoI(solicitudI, next),
+          )
+        }
         return next
       })
     },
-    [solicitudE],
+    [solicitudE, solicitudI],
   )
 
   const totalFotos = useMemo(() => {
@@ -653,6 +683,33 @@ export function TasacionForm({
               </div>
             </Section>
           )}
+
+          {/* I. Sector, terreno y normativa · Hoja N°3 del informe (23-oct-2026) */}
+          <Section letra="I" titulo="Sector, terreno y normativa" id="seccion-I">
+            <SeccionAntecedentesI
+              value={form.seccionI}
+              onChange={(i) => set("seccionI", i)}
+              prellenada={prellenados.includes("seccionI")}
+              comuna={tasacion.comuna}
+              espejo={{
+                calidadConstructiva: form.calidadConstruccion,
+                estadoConservacion: form.estadoConservacion,
+                supTerreno: form.supTerreno,
+                dfl2: form.dfl2,
+              }}
+              sintesisPropiedad={form.sintesisPropiedad}
+              descripcionSector={form.descripcionSector}
+              onSintesis={(clave, v) => set(clave, v)}
+              sintesisPrellenada={{
+                propiedad: prellenados.includes("sintesisPropiedad"),
+                sector: prellenados.includes("descripcionSector"),
+              }}
+              rehacerSintesisPropiedad={() =>
+                borradorSintesisPropiedad(datosSintesisPropiedad(tasacion, form, form.seccionE))
+              }
+              rehacerDescripcionSector={() => borradorDescripcionSector(form.seccionI.sector)}
+            />
+          </Section>
         </fieldset>
         </FormModoConsultaContext.Provider>
       </main>

@@ -237,6 +237,22 @@ export const seccionESchema = z.object({
   ),
 })
 
+/**
+ * Sección I «Sector, terreno y normativa» (`SeccionI`, 23-oct-2026): bloques de
+ * texto libre. La ruta la depura con `normalizarSeccionI` antes de guardar
+ * `antecedentes_json`, así que una clave de más no ensucia el campo.
+ */
+const bloqueI = z.record(z.string(), z.string().trim().max(300))
+export const seccionISchema = z.object({
+  detalle: bloqueI,
+  normativa: bloqueI,
+  sector: bloqueI,
+  usoTerrenos: bloqueI,
+  terreno: bloqueI,
+  emplazamiento: bloqueI,
+  instalaciones: bloqueI,
+})
+
 export const datosPatchSchema = z
   .object({
     /* --- A · Visita · Regla T-B: dos fechas que nunca se colapsan --- */
@@ -346,8 +362,19 @@ export const datosPatchSchema = z
     selloSec: z.string().trim().optional(),
     selloSecId: z.string().trim().optional(),
     selloSecVencimiento: z.string().trim().optional(),
-    /** ⚠ Sin columna destino — CI-023 §1. */
+    /**
+     * ⚠ Sin columna destino — CI-023 §1. Desde el 23-oct-2026 «afecto a
+     * expropiación» se captura en la sección I (`seccionI.detalle`); el switch
+     * de F se retiró y esta clave queda para bundles viejos.
+     */
     afectoExpropiacion: z.boolean().optional(),
+
+    /* --- I · Sector, terreno y normativa (23-oct-2026) ---
+       `seccionI` → `antecedentes_json`; las síntesis → `sintesis_descriptiva` y
+       `descripcion_sector`, las columnas que RF-32 escribirá. */
+    seccionI: seccionISchema.optional(),
+    sintesisPropiedad: z.string().trim().max(5000).optional(),
+    descripcionSector: z.string().trim().max(5000).optional(),
 
     /* --- G · Overrides (CU-007) --- */
     tasaCapRateOverride: numeroDeInput,

@@ -1575,6 +1575,45 @@ Bano, 1/2 Baño, B.Servicio, Lavadero (loggia), Otro. Todas son opciones existen
 filtra `AND({activo},{estado_uso}=…,LOWER(ARRAYJOIN({tipo_propiedad}))=LOWER(…))`; verificado
 contra la base: Casa·usado 51 filas, Departamento·nuevo 55, Oficina·usado 0.
 
+## `TX_DatosTasacion.antecedentes_json` · sección I del tasador (IF-03 · APLICADO 23-oct-2026)
+
+Campo nuevo creado el 23-oct-2026 vía meta API, con aprobación de Sergio en el chat («Campo JSON
+nuevo»). Cierra los huecos P1-1/P1-2 de la Hoja N°3 y del detalle de la Hoja 1 del informe.
+
+| Campo | FIELD_ID | Tipo | Notas |
+|---|---|---|---|
+| `antecedentes_json` | `fldxunaM6CDWtc3Wm` | multilineText | Sección I «Sector, terreno y normativa» (`SeccionI` en `lib/tasador/antecedentes-i.ts`): `detalle` (sitio/lote, mansarda, afecto a expropiación, fuente de información), `normativa` (exigencias municipales, leyes 6071/9135/19537, plan regulador), `sector`, `usoTerrenos` (%), `terreno`, `emplazamiento` e `instalaciones`, más `datosB.subterraneos` (de la sección B, que no tenía columna · CI-023). Un solo escritor: `PATCH /api/tasaciones/[id]/datos`, que lo normaliza (`normalizarSeccionI`). Lo leen la pantalla (`lectura-datos.ts`) y el informe (`ensamblador.ts` → `cualitativa.*` y `textosIA.textoExpropiacion`). |
+
+Las síntesis van a las columnas que ya existían y que RF-32 / SC-Textos escribirá:
+`sintesis_descriptiva` (`fldCfipeATICMiimq`) y `descripcion_sector` (`fldBSpioukujGCcHS`). El
+tasador las edita en la sección I; sin texto guardado parten de un borrador armado sólo con los
+datos del formulario.
+
+**Defaults de la sección I sembrados en `C_DefaultsAntecedentes` (23-oct-2026, aprobado por
+Sergio):** 52 filas, 13 por cada combinación cargada (Casa y Departamento × nuevo y usado), con
+`atributo = valor` y cuatro bloques nuevos. Las opciones nuevas de los singleSelect se crearon con
+`typecast` al insertar. Script: `docs/_evidencia/T-SECCION-I-20261023/sembrar_antecedentes.py`.
+
+| `bloque` | `campo_destino` | Casa | Departamento | Origen |
+|---|---|---|---|---|
+| `emplazamiento` | `diseno_arquitectonico` | TIPICO | TIPICO | `Antecedentes!H16` |
+| `emplazamiento` | `utilidad_funcional` | ADECUADA | ADECUADA | `Antecedentes!H17` |
+| `emplazamiento` | `tipo_adosamiento` | AISLADA | EDIF DPTO | `Antecedentes!H18` |
+| `emplazamiento` | `predio_vista` | BUENO | BUENO | `Antecedentes!Z16` |
+| `emplazamiento` | `relacion_terreno_construccion` | ADECUADO | ADECUADO | `Antecedentes!Z18` |
+| `emplazamiento` | `iluminacion_natural` | ADECUADA | ADECUADA | `Antecedentes!Z19` |
+| `plan_regulador` | `cumple_uso_actual` | SI | SI | `Antecedentes!BI7` |
+| `plan_regulador` | `cumple_tipo_construccion` | SI | SI | `Antecedentes!BI8` |
+| `plan_regulador` | `cambios_plan_regulador` | NO CONTEMPLA | NO CONTEMPLA | `Antecedentes!BI10` |
+| `plan_regulador` | `ley_9135` | NO | NO | `Antecedentes!AT9` |
+| `instalaciones` | `alcantarillado` | Colector | Colector | `Antecedentes!AN15` |
+| `detalle` | `afecto_expropiacion` | NO | NO | `Portada!BK24` |
+| `detalle` | `fuente_informacion` | DOM, Plano Catastro | DOM, Plano Catastro | `Portada!BL25` |
+
+Las fórmulas de la planilla (Ley 6071/19537, agrupamiento, orientación, gas, mansarda, uso más
+probable, tipo de zona del sector, «Otros» del uso de terrenos y texto de expropiación) viven en
+`lib/tasador/antecedentes-i.ts`, no en la tabla.
+
 ## `C_DefaultsAntecedentes` · defaults de la hoja de antecedentes (IF-03)
 
 **TABLE_ID: `tblOj7nXcjeouPy09`** · creada el 22-ago-2026 en la tanda **P0.5-TAS** ·
@@ -1593,8 +1632,8 @@ default puede llevar su propia cita al Excel.
 | `clave` | `fldbKTZStDCrl5Utr` | singleLineText (**primary**) | `{tipo}·{estado_uso}·{campo_destino}·{atributo}`. La escribe el cargador |
 | `tipo_propiedad` | `fldNZVhxeoIMGCMiZ` | multipleRecordLinks → `M_TiposPropiedad` (`tbl8rxZA14xFIBGU6`) | **Eje 1.** Link y no select: `TX_Solicitudes.tipo_propiedad` (`fld701TB0LXovvQmt`) también es Link, y unir por nombre reproduciría el fallo de **P-5** |
 | `estado_uso` | `fldnXKVSv2xbPWi2j` | singleSelect: `nuevo` · `usado` | **Eje 2.** Minúscula, copiado exacto de `TX_Solicitudes.tipo_propiedad_nuevo_usado` (`fldHxx1P1ao33PWrl`) |
-| `bloque` | `fldUR8GDz3I0Xzc4D` | singleSelect: `elementos_fundamentales` · `elementos_otros` · `terminaciones_recinto` | **Tres opciones, no cuatro** — ver A-39 abajo |
-| `atributo` | `fld4kwnOUfGtFJx6I` | singleSelect: `materialidad` · `calidad` · `estado` · `pavimento` · `revestimiento_muros` · `cielo` · `iluminacion` | No existe `material_o_marca`: se **deriva** del pavimento `[Excel: Antecedentes!W46:W50]` |
+| `bloque` | `fldUR8GDz3I0Xzc4D` | singleSelect: `elementos_fundamentales` · `elementos_otros` · `terminaciones_recinto` · (23-oct-2026) `emplazamiento` · `plan_regulador` · `instalaciones` · `detalle` | **Tres opciones, no cuatro** — ver A-39 abajo. Las cuatro últimas son de la sección I (ver `antecedentes_json` arriba) |
+| `atributo` | `fld4kwnOUfGtFJx6I` | singleSelect: `materialidad` · `calidad` · `estado` · `pavimento` · `revestimiento_muros` · `cielo` · `iluminacion` · (23-oct-2026) `valor` | No existe `material_o_marca`: se **deriva** del pavimento `[Excel: Antecedentes!W46:W50]`. `valor` = campo de un solo valor de la sección I |
 | `campo_destino` | `fldZajTzom9Lvxe0Y` | singleLineText | El elemento o el recinto |
 | `valor_default` | `fldQH8JTWRQMW4Mgx` | singleLineText | Texto y no select: los catálogos son largos y distintos por campo. Vacío es valor legítimo |
 | `catalogo_ref` | `fld0NAJv7E1rLFWVX` | singleLineText | **Referencia** al rango del catálogo, no el catálogo materializado — ver A-38 |
